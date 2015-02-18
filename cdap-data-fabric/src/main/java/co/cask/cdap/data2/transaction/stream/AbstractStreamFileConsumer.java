@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.ReadFilters;
@@ -30,6 +29,7 @@ import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Function;
@@ -140,7 +140,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected final byte[] stateColumnName;
 
   private final long txTimeoutNano;
-  private final QueueName streamName;
+  private final Id.Stream streamName;
   private final StreamConfig streamConfig;
   private final ConsumerConfig consumerConfig;
   private final StreamConsumerStateStore consumerStateStore;
@@ -181,7 +181,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     this.txTimeoutNano = TimeUnit.SECONDS.toNanos(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
                                                                TxConstants.Manager.DEFAULT_TX_TIMEOUT));
-    this.streamName = QueueName.fromStream(streamConfig.getName());
+    this.streamName = streamConfig.getStreamId();
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
@@ -210,7 +210,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected abstract StateScanner scanStates(byte[] startRow, byte[] endRow) throws IOException;
 
   @Override
-  public final QueueName getStreamName() {
+  public final Id.Stream getStreamId() {
     return streamName;
   }
 
@@ -464,7 +464,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
         lastPersistedState = new StreamConsumerState(consumerState);
       }
     } catch (IOException e) {
-      LOG.error("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamName(), e);
+      LOG.error("Failed to persist consumer state for consumer {} of stream {}", consumerConfig, getStreamId(), e);
     }
   }
 

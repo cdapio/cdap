@@ -69,6 +69,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -94,6 +95,8 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     store.clear();
+    LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
+    locationFactory.create(Constants.DEFAULT_NAMESPACE).delete(true);
   }
 
   @Test

@@ -16,15 +16,13 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamWriter;
-import com.google.inject.assistedinject.Assisted;
 
 /**
  * This interface is using Guice assisted inject to create {@link co.cask.cdap.test.StreamWriter}.
  */
 public interface StreamWriterFactory {
 
-  StreamWriter create(QueueName queueName, @Assisted("accountId") String accountId, @Assisted("applicationId") String
-    applicationId);
+  StreamWriter create(Id.Stream streamId);
 }

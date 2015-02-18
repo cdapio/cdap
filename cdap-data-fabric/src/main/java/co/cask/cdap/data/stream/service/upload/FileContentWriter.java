@@ -37,7 +37,6 @@ import java.util.Map;
  */
 final class FileContentWriter implements ContentWriter {
 
-  private final String accountId;
   private final StreamConfig streamConfig;
   private final ConcurrentStreamWriter streamWriter;
   private final MutableStreamEventData streamEventData;
@@ -47,17 +46,16 @@ final class FileContentWriter implements ContentWriter {
   private final StreamDataFileWriter writer;
   private long eventCount;
 
-  FileContentWriter(String accountId, StreamConfig streamConfig, ConcurrentStreamWriter streamWriter,
+  FileContentWriter(StreamConfig streamConfig, ConcurrentStreamWriter streamWriter,
                     Location directory, Map<String, String> headers) throws IOException {
-    this.accountId = accountId;
     this.streamConfig = streamConfig;
     this.streamWriter = streamWriter;
     this.streamEventData = new MutableStreamEventData();
     this.streamEvent = new MutableStreamEvent();
 
     directory.mkdirs();
-    this.eventFile = directory.append(String.format("upload.%s.dat", streamConfig.getName()));
-    this.indexFile = directory.append(String.format("upload.%s.idx", streamConfig.getName()));
+    this.eventFile = directory.append(String.format("upload.%s.dat", streamConfig.getStreamId()));
+    this.indexFile = directory.append(String.format("upload.%s.idx", streamConfig.getStreamId()));
 
     Map<String, String> properties = createStreamFileProperties(headers);
     properties.put(StreamDataFileConstants.Property.Key.UNI_TIMESTAMP,
@@ -100,7 +98,7 @@ final class FileContentWriter implements ContentWriter {
   public void close() throws IOException {
     try {
       writer.flush();
-      streamWriter.appendFile(accountId, streamConfig.getName(), eventFile, indexFile, eventCount, writer);
+      streamWriter.appendFile(streamConfig.getStreamId(), eventFile, indexFile, eventCount, writer);
     } finally {
       Locations.deleteQuietly(Locations.getParent(eventFile), true);
     }

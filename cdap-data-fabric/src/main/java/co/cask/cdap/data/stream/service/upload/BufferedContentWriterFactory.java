@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -29,28 +30,26 @@ import java.util.Map;
  */
 public final class BufferedContentWriterFactory implements ContentWriterFactory {
 
-  private final String accountId;
-  private final String stream;
+  private final Id.Stream streamId;
   private final ConcurrentStreamWriter streamWriter;
   private final Map<String, String> headers;
 
-  public BufferedContentWriterFactory(String accountId, String stream,
-                                      ConcurrentStreamWriter streamWriter, Map<String, String> headers) {
-    this.accountId = accountId;
-    this.stream = stream;
+  public BufferedContentWriterFactory(Id.Stream streamId, ConcurrentStreamWriter streamWriter,
+                                      Map<String, String> headers) {
+    this.streamId = streamId;
     this.streamWriter = streamWriter;
     this.headers = ImmutableMap.copyOf(headers);
   }
 
   @Override
-  public String getStream() {
-    return stream;
+  public Id.Stream getStream() {
+    return streamId;
   }
 
   @Override
   public ContentWriter create(Map<String, String> headers) throws IOException {
     Map<String, String> allHeaders = Maps.newHashMap(this.headers);
     allHeaders.putAll(headers);
-    return new BufferedContentWriter(accountId, stream, streamWriter, allHeaders);
+    return new BufferedContentWriter(streamId, streamWriter, allHeaders);
   }
 }

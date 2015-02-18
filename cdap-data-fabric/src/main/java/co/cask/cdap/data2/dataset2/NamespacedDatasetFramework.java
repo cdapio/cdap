@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -41,15 +42,15 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws DatasetManagementException {
 
-    delegate.addModule(moduleName, module);
+    delegate.addModule(moduleId, module);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws DatasetManagementException {
-    delegate.deleteModule(moduleName);
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+    delegate.deleteModule(moduleId);
   }
 
   @Override
@@ -58,21 +59,21 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
 
-    delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
+    delegate.addInstance(datasetType, namespace(datasetInstanceId), props);
   }
 
   @Override
-  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    delegate.updateInstance(namespace(datasetInstanceName), props);
+    delegate.updateInstance(namespace(datasetInstanceId), props);
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
-    Collection<DatasetSpecification> specs = delegate.getInstances();
+  public Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
+    Collection<DatasetSpecification> specs = delegate.getInstances(namespaceId);
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
     ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
     for (DatasetSpecification spec : specs) {
@@ -86,13 +87,13 @@ public class NamespacedDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    return fromNamespaced(delegate.getDatasetSpec(namespace(name)));
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return fromNamespaced(delegate.getDatasetSpec(namespace(datasetInstanceId)));
   }
 
   @Override
-  public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return delegate.hasInstance(namespace(instanceName));
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return delegate.hasInstance(namespace(datasetInstanceId));
   }
 
   @Override
@@ -101,31 +102,32 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException {
-    delegate.deleteInstance(namespace(datasetInstanceName));
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
+    delegate.deleteInstance(namespace(datasetInstanceId));
   }
 
   @Override
-  public void deleteAllInstances() throws DatasetManagementException, IOException {
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     // delete all instances ONLY in this namespace
-    for (DatasetSpecification spec : getInstances()) {
-      deleteInstance(spec.getName());
+    for (DatasetSpecification spec : getInstances(namespaceId)) {
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, spec.getName());
+      deleteInstance(datasetInstanceId);
     }
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getAdmin(namespace(datasetInstanceName), classLoader);
+    return delegate.getAdmin(namespace(datasetInstanceId), classLoader);
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
                                           ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getDataset(namespace(datasetInstanceName), arguments, classLoader);
+    return delegate.getDataset(namespace(datasetInstanceId), arguments, classLoader);
   }
 
   @Nullable
@@ -137,7 +139,8 @@ public class NamespacedDatasetFramework implements DatasetFramework {
     return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
   }
 
-  private String namespace(String datasetInstanceName) {
-    return namespace.namespace(datasetInstanceName);
+  private Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
+    String namespacedInstanceName = namespace.namespace(datasetInstanceId.getId());
+    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespacedInstanceName);
   }
 }

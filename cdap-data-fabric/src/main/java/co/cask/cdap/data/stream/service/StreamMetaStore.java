@@ -16,7 +16,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Multimap;
 
 import java.util.List;
@@ -31,25 +31,25 @@ public interface StreamMetaStore {
   /**
    * Adds a stream to the meta store.
    */
-  void addStream(String accountId, String streamName) throws Exception;
+  void addStream(Id.Stream streamId) throws Exception;
 
   /**
    * Removes a stream from the meta store.
    */
-  void removeStream(String accountId, String streamName) throws Exception;
+  void removeStream(Id.Stream streamId) throws Exception;
 
   /**
    * Checks if a stream exists in the meta store.
    */
-  boolean streamExists(String accountId, String streamName) throws Exception;
+  boolean streamExists(Id.Stream streamId) throws Exception;
 
   /**
-   * List all stream specifications stored for the {@code accountId}.
+   * List all stream specifications stored for the {@code namespaceId}.
    */
-  List<StreamSpecification> listStreams(String accountId) throws Exception;
+  List<StreamSpecification> listStreams(Id.Namespace namespaceId) throws Exception;
 
   /**
-   * List all stream specifications with their associated {@link NamespaceMeta}.
+   * List all stream specifications with their associated {@link Id.Namespace}.
    */
-  Multimap<NamespaceMeta, StreamSpecification> listStreams() throws Exception;
+  Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception;
 }

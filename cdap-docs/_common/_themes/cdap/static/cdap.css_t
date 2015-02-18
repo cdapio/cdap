@@ -47,7 +47,7 @@ div.body {
     color: #3E4349;
     padding: 0 30px 30px 30px;
     font-size: 0.9em;
-    min-height: 1200px;
+    min-height: 1300px;
 }
 
 div.footer {
@@ -191,14 +191,8 @@ div.body h6 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
 div.body h3 { background-color: #E0E0E0; }
-div.body h4 { 
-    background-color: #F2F2F2;
-    margin: 30px 0px 10px 0px;
-}
-div.body h5 { 
-    background-color: #F2F2F2;
-    margin: 30px 0px 10px 0px;
-}
+div.body h4 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
+div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
 
 a.headerlink {
     color: #c60f0f;
@@ -213,9 +207,12 @@ a.headerlink:hover {
     color: white;
 }
 
+h2>a.reference.external {
+    color: #111;
+}
+
 div.body p, div.body dd, div.body li {
     line-height: 1.5em;
-    margin-right: 15px;
 }
 
 div.admonition p.admonition-title + p {
@@ -249,14 +246,14 @@ div.warning {
 }
 
 div.new-icon {
-  position:absolute;
-  z-index: 5;
-  background-image: url(./ico_new.png);
-  display: inline-block;
-  margin-left: -18px;
-  width: 22px;
-  height: 22px;
-  background-repeat: no-repeat
+    position:absolute;
+    z-index: 5;
+    background-image: url(./ico_new.png);
+    display: inline-block;
+    margin-left: -18px;
+    width: 22px;
+    height: 22px;
+    background-repeat: no-repeat
 }
 
 p.admonition-title {
@@ -272,9 +269,19 @@ p.rubric {
     font-size: 120%;
     font-weight: normal;
     color: #111;
-    margin: 30px 0px 10px -15px;
+    margin: 30px 0px 10px 0px;
     padding: 5px 0 5px 15px;
     text-shadow: 0px 1px 0 white
+}
+
+.sidebar20.sidebar {
+  width: 20%;
+  text-align: center;
+}
+
+.sidebar30.sidebar {
+  width: 30%;
+  text-align: center;
 }
 
 em {
@@ -296,9 +303,7 @@ pre {
 }
 
 tt {
-    /* background-color: #ecf0f3; */
     color: #222;
-    /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
 }

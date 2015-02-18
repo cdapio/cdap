@@ -154,7 +154,7 @@ public class FlowTest {
     TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
                                              getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream("text");
+    QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "text");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 

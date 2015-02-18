@@ -72,7 +72,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(outputName),
+        builder.add(createSpec(QueueName.fromStream(app.getNamespaceId(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
         builder.add(createSpec(QueueName.fromFlowlet(app.getNamespaceId(), app.getId(), flow,

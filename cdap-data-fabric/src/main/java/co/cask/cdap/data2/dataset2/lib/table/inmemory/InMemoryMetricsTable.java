@@ -92,6 +92,13 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void delete(byte[] row, byte[][] columns) throws Exception {
+    for (byte[] column : columns) {
+      InMemoryOrderedTableService.deleteColumns(tableName, row, column);
+    }
+  }
+
+  @Override
   public void delete(Collection<byte[]> rows) throws Exception {
     InMemoryOrderedTableService.delete(tableName, rows);
   }

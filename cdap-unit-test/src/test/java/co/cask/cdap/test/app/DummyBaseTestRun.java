@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -48,7 +47,7 @@ public class DummyBaseTestRun extends TestFrameworkTestBase {
       }
       // Since this test can runs in test suite that may contains other tests,
       // use intersect to verify to avoid seeing tables created by other tests
-      Set<String> expected = Sets.newHashSet("cdap_stream_who", "cdap_user_whom");
+      Set<String> expected = Sets.newHashSet("cdap_stream_default_who", "cdap_user_whom");
       Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();

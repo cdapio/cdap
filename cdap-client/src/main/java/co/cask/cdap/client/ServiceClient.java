@@ -61,7 +61,7 @@ public class ServiceClient {
    */
   public ServiceSpecification get(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
-    URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
+    URL url = config.resolveURLV3(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
 
@@ -95,6 +95,6 @@ public class ServiceClient {
     throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
     // Make sure the service actually exists
     get(appId, serviceId);
-    return config.resolveURL(String.format("apps/%s/services/%s/methods/", appId, serviceId));
+    return config.resolveURLV3(String.format("apps/%s/services/%s/methods/", appId, serviceId));
   }
 }

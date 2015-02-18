@@ -46,7 +46,7 @@ import java.util.Set;
  */
 public class SimpleQueueSpecificationGeneratorTest {
 
-  private static final Id.Namespace TEST_NAMESPACE_ID = DefaultId.NAMESPACE;
+  private static final String TEST_NAMESPACE_ID = DefaultId.NAMESPACE.getId();
 
   private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
     = HashBasedTable.create();
@@ -83,8 +83,10 @@ public class SimpleQueueSpecificationGeneratorTest {
     dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream:///X"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream:///Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"),
+                                    String.format("stream:///%s/X", TEST_NAMESPACE_ID)));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"),
+                                    String.format("stream:///%s/Y", TEST_NAMESPACE_ID)));
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"),
@@ -126,7 +128,8 @@ public class SimpleQueueSpecificationGeneratorTest {
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                          .iterator().next().getQueueName().toString(), "stream:///text");
+                          .iterator().next().getQueueName().toString(),
+                        String.format("stream:///%s/text", TEST_NAMESPACE_ID));
     Assert.assertEquals(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString(),
                         String.format("queue:///%s/WordCountApp/WordCountFlow/StreamSource/queue",

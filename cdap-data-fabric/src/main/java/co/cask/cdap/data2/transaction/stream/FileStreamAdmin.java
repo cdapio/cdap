@@ -15,12 +15,13 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.OSDetector;
+import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -29,9 +30,11 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -51,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -58,7 +62,7 @@ import javax.annotation.Nullable;
  */
 public class FileStreamAdmin implements StreamAdmin {
 
-  public static final String CONFIG_FILE_NAME = "config.json";
+  private static final String CONFIG_FILE_NAME = "config.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(FileStreamAdmin.class);
   private static final Gson GSON = new GsonBuilder()
@@ -103,13 +107,8 @@ public class FileStreamAdmin implements StreamAdmin {
       locations = ImmutableList.of();
     }
 
-    for (Location streamLocation : locations) {
-      try {
-        StreamConfig streamConfig = loadConfig(streamLocation);
-        streamCoordinatorClient.nextGeneration(streamConfig, StreamUtils.getGeneration(streamConfig)).get();
-      } catch (Exception e) {
-        LOG.error("Failed to truncate stream {}", streamLocation.getName(), e);
-      }
+    for (final Location streamLocation : locations) {
+      doTruncate(streamLocation);
     }
 
     // Also drop the state table
@@ -117,13 +116,12 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(QueueName name, long groupId, int instances) throws Exception {
-    Preconditions.checkArgument(name.isStream(), "%s is not a stream.", name);
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
     LOG.info("Configure instances: {} {}", groupId, instances);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
+    StreamConfig config = StreamUtils.ensureExists(this, streamId);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -149,13 +147,12 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureGroups(QueueName name, Map<Long, Integer> groupInfo) throws Exception {
-    Preconditions.checkArgument(name.isStream(), "%s is not a stream.", name);
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    LOG.info("Configure groups for {}: {}", name, groupInfo);
+    LOG.info("Configure groups for {}: {}", streamId, groupInfo);
 
-    StreamConfig config = StreamUtils.ensureExists(this, name.getSimpleName());
+    StreamConfig config = StreamUtils.ensureExists(this, streamId);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
     try {
       Set<StreamConsumerState> states = Sets.newHashSet();
@@ -204,56 +201,56 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
-    Location streamLocation = streamBaseLocation.append(streamName);
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamName);
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
     return loadConfig(streamLocation);
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
-    Location streamLocation = config.getLocation();
-    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", config.getName());
+  public void updateConfig(final Id.Stream streamId, final StreamProperties properties) throws IOException {
+    Location streamLocation = streamBaseLocation.append(streamId.getName());
+    Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId.getName());
 
-    // Check only TTL, format or threshold is changed, as only TTL, format or threshold changes are supported.
-    StreamConfig originalConfig = loadConfig(streamLocation);
-    Preconditions.checkArgument(isValidConfigUpdate(originalConfig, config),
-                                "Configuration update for stream '%s' was not valid " +
-                                  "(can only update ttl, format or threshold)",
-                                config.getName());
+    try {
+      streamCoordinatorClient.updateProperties(
+        streamId, new Callable<CoordinatorStreamProperties>() {
+          @Override
+          public CoordinatorStreamProperties call() throws Exception {
+            StreamProperties oldProperties = updateProperties(streamId, properties);
 
-    // It's a temp fix to avoid async update (through stream coordinator client overwrites changes in here.
-    // It works only if there is no concurrent updates from multiple clients
-    // A proper fix needs to be done to make concurrent updates from multiple threads/processes safe.
-    boolean formatChanged = !originalConfig.getFormat().equals(config.getFormat());
-    boolean ttlChanged = originalConfig.getTTL() != config.getTTL();
-    boolean thresholdChanged = !originalConfig.getNotificationThresholdMB().equals(config.getNotificationThresholdMB());
+            FormatSpecification format = properties.getFormat();
+            if (format != null) {
+              // if the schema has changed, we need to recreate the hive table.
+              // Changes in format and settings don't require
+              // a hive change, as they are just properties used by the stream storage handler.
+              Schema currSchema = oldProperties.getFormat().getSchema();
+              Schema newSchema = format.getSchema();
+              if (!currSchema.equals(newSchema)) {
+                alterExploreStream(streamId.getName(), false);
+                alterExploreStream(streamId.getName(), true);
+              }
+            }
 
-    if (formatChanged || ttlChanged || thresholdChanged) {
-      saveConfig(config);
-    }
-    if (ttlChanged) {
-      streamCoordinatorClient.changeTTL(originalConfig.getName(), config.getTTL());
-    }
-    if (thresholdChanged) {
-      streamCoordinatorClient.changeThreshold(originalConfig.getName(), config.getNotificationThresholdMB());
-    }
-    if (formatChanged) {
-      // if the schema has changed, we need to recreate the hive table. Changes in format and settings don't require
-      // a hive change, as they are just properties used by the stream storage handler.
-      Schema currSchema = originalConfig.getFormat().getSchema();
-      Schema newSchema = config.getFormat().getSchema();
-      if (!currSchema.equals(newSchema)) {
-        alterExploreStream(config.getName(), false);
-        alterExploreStream(config.getName(), true);
-      }
+            return new CoordinatorStreamProperties(properties.getTTL(), properties.getFormat(),
+                                                   properties.getNotificationThresholdMB(), null);
+          }
+        });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw new IOException(e);
     }
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
+    return StreamUtils.fetchStreamFilesSize(streamConfig);
+  }
+
+  @Override
+  public boolean exists(Id.Stream streamId) throws Exception {
     try {
-      return streamBaseLocation.append(name).append(CONFIG_FILE_NAME).exists();
+      return streamBaseLocation.append(streamId.getName()).append(CONFIG_FILE_NAME).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -261,40 +258,40 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void create(String name) throws Exception {
-    create(name, null);
+  public void create(Id.Stream streamId) throws Exception {
+    create(streamId, null);
   }
 
   @Override
-  public void create(String name, @Nullable Properties props) throws Exception {
-    Location streamLocation = streamBaseLocation.append(name);
+  public void create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
+    final Location streamLocation = streamBaseLocation.append(streamId.getName());
     Locations.mkdirsIfNotExists(streamLocation);
 
-    Location configLocation = streamBaseLocation.append(name).append(CONFIG_FILE_NAME);
-    if (!configLocation.createNew()) {
-      // Stream already exists
-      return;
-    }
+    streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
+      @Override
+      public StreamConfig call() throws Exception {
+        Location configLocation = streamLocation.append(CONFIG_FILE_NAME);
+        if (configLocation.exists()) {
+          return null;
+        }
 
-    Properties properties = (props == null) ? new Properties() : props;
-    long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
-                                            cConf.get(Constants.Stream.PARTITION_DURATION)));
-    long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
-                                                               cConf.get(Constants.Stream.INDEX_INTERVAL)));
-    long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL,
-                                                     cConf.get(Constants.Stream.TTL)));
-    int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
-                                                            cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        Properties properties = (props == null) ? new Properties() : props;
+        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
+                                                                       cConf.get(Constants.Stream.PARTITION_DURATION)));
+        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
+                                                                   cConf.get(Constants.Stream.INDEX_INTERVAL)));
+        long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
+        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
+                                                                cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-    StreamConfig config = new StreamConfig(name, partitionDuration, indexInterval, ttl, streamLocation,
-                                           null, threshold);
-    saveConfig(config);
-
-    // Create the notification feeds linked to that stream
-    createStreamFeeds(config);
-
-    streamCoordinatorClient.streamCreated(name);
-    alterExploreStream(name, true);
+        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval, ttl, streamLocation,
+                                               null, threshold);
+        writeConfig(config);
+        createStreamFeeds(config);
+        alterExploreStream(streamId.getName(), true);
+        return config;
+      }
+    });
   }
 
   /**
@@ -305,52 +302,62 @@ public class FileStreamAdmin implements StreamAdmin {
   private void createStreamFeeds(StreamConfig config) {
     try {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+        .setNamespaceId(config.getStreamId().getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getName()))
+        .setName(String.format("%sSize", config.getStreamId().getName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
-                                      config.getName(), config.getNotificationThresholdMB()))
+                                      config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
       notificationFeedManager.createFeed(streamFeed);
     } catch (NotificationFeedException e) {
-      LOG.error("Cannot create feed for Stream {}", config.getName(), e);
+      LOG.error("Cannot create feed for Stream {}", config.getStreamId(), e);
     }
   }
 
   @Override
-  public void truncate(String name) throws Exception {
-    StreamConfig config = getConfig(name);
-    streamCoordinatorClient.nextGeneration(config, StreamUtils.getGeneration(config)).get();
+  public void truncate(Id.Stream streamId) throws Exception {
+    doTruncate(streamBaseLocation.append(streamId.getName()));
   }
 
   @Override
-  public void drop(String name) throws Exception {
+  public void drop(Id.Stream streamId) throws Exception {
     // Same as truncate
-    truncate(name);
+    truncate(streamId);
   }
 
-  @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
-  }
-
-  private void saveConfig(StreamConfig config) throws IOException {
-    Location configLocation = streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME);
-    Location tmpConfigLocation = configLocation.getTempFile(null);
-    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
-      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
-
+  private void doTruncate(final Location streamLocation) {
+    //TODO: use actual namespace
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
     try {
-      // Windows does not allow renaming if the destination file exists so we must delete the configLocation
-      if (OSDetector.isWindows()) {
-        configLocation.delete();
-      }
-      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getName()).append(CONFIG_FILE_NAME));
-    } finally {
-      if (tmpConfigLocation.exists()) {
-        tmpConfigLocation.delete();
-      }
+      streamCoordinatorClient.updateProperties(streamId, new Callable<CoordinatorStreamProperties>() {
+        @Override
+        public CoordinatorStreamProperties call() throws Exception {
+          int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
+          Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
+          return new CoordinatorStreamProperties(null, null, null, newGeneration);
+        }
+      });
+    } catch (Exception e) {
+      LOG.error("Failed to truncate stream {}", streamId.getName(), e);
     }
+  }
+
+  private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws IOException {
+    StreamConfig config = getConfig(streamId);
+
+    StreamConfig.Builder builder = StreamConfig.builder(config);
+    if (properties.getTTL() != null) {
+      builder.setTTL(properties.getTTL());
+    }
+    if (properties.getFormat() != null) {
+      builder.setFormatSpec(properties.getFormat());
+    }
+    if (properties.getNotificationThresholdMB() != null) {
+      builder.setNotificationThreshold(properties.getNotificationThresholdMB());
+    }
+
+    writeConfig(builder.build());
+    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
   }
 
   private StreamConfig loadConfig(Location streamLocation) throws IOException {
@@ -360,18 +367,34 @@ public class FileStreamAdmin implements StreamAdmin {
       CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(configLocation), Charsets.UTF_8)),
       StreamConfig.class);
 
-    Integer threshold = config.getNotificationThresholdMB();
-    if (threshold == null) {
+    int threshold = config.getNotificationThresholdMB();
+    if (threshold <= 0) {
+      // Need to default it for existing configs that were created before notification threshold was added.
       threshold = cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
     }
 
-    return new StreamConfig(streamLocation.getName(), config.getPartitionDuration(), config.getIndexInterval(),
+    //TODO: construct namespace, streamName from location (parent.getname)
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
+    return new StreamConfig(streamId, config.getPartitionDuration(), config.getIndexInterval(),
                             config.getTTL(), streamLocation, config.getFormat(), threshold);
   }
 
-  private boolean isValidConfigUpdate(StreamConfig originalConfig, StreamConfig newConfig) {
-    return originalConfig.getIndexInterval() == newConfig.getIndexInterval()
-      && originalConfig.getPartitionDuration() == newConfig.getPartitionDuration();
+  private void writeConfig(StreamConfig config) throws IOException {
+    Location configLocation = config.getLocation().append(CONFIG_FILE_NAME);
+    Location tmpConfigLocation = configLocation.getTempFile(null);
+
+    CharStreams.write(GSON.toJson(config), CharStreams.newWriterSupplier(
+      Locations.newOutputSupplier(tmpConfigLocation), Charsets.UTF_8));
+
+    try {
+      // Windows does not allow renaming if the destination file exists so we must delete the configLocation
+      if (OSDetector.isWindows()) {
+        configLocation.delete();
+      }
+      tmpConfigLocation.renameTo(streamBaseLocation.append(config.getStreamId().getName()).append(CONFIG_FILE_NAME));
+    } finally {
+      Locations.deleteQuietly(tmpConfigLocation);
+    }
   }
 
   private void mutateStates(long groupId, int instances, Set<StreamConsumerState> states,

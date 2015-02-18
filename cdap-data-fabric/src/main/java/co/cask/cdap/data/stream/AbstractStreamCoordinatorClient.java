@@ -15,36 +15,26 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.async.ExecutorUtils;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PropertyChangeListener;
 import co.cask.cdap.common.conf.PropertyStore;
-import co.cask.cdap.common.conf.PropertyUpdater;
+import co.cask.cdap.common.conf.SyncPropertyUpdater;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**
@@ -54,29 +44,23 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamCoordinatorClient.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
-  // Executor for performing update action asynchronously
-  private final Executor updateExecutor;
-  private final CConfiguration cConf;
-  private final StreamAdmin streamAdmin;
-  private final Supplier<PropertyStore<StreamProperty>> propertyStore;
+  private PropertyStore<CoordinatorStreamProperties> propertyStore;
 
-  protected AbstractStreamCoordinatorClient(CConfiguration cConf, StreamAdmin streamAdmin) {
-    this.cConf = cConf;
-    this.streamAdmin = streamAdmin;
+  /**
+   * Starts the service.
+   *
+   * @throws Exception when starting of the service failed
+   */
+  protected abstract void doStartUp() throws Exception;
 
-    propertyStore = Suppliers.memoize(new Supplier<PropertyStore<StreamProperty>>() {
-      @Override
-      public PropertyStore<StreamProperty> get() {
-        return createPropertyStore(new StreamPropertyCodec());
-      }
-    });
-
-    // Update action should be infrequent, hence just use an executor that create a new thread everytime.
-    updateExecutor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("stream-coordinator-update-%d"));
-  }
+  /**
+   * Stops the service.
+   *
+   * @throws Exception when stopping the service could not be performed
+   */
+  protected abstract void doShutDown() throws Exception;
 
   /**
    * Creates a {@link PropertyStore}.
@@ -87,239 +71,142 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
    */
   protected abstract <T> PropertyStore<T> createPropertyStore(Codec<T> codec);
 
-  @Override
-  public ListenableFuture<Integer> nextGeneration(final StreamConfig streamConfig, final int lowerBound) {
-    return Futures.transform(propertyStore.get().update(streamConfig.getName(), new PropertyUpdater<StreamProperty>() {
-      @Override
-      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
-        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
-        updateExecutor.execute(new Runnable() {
+  /**
+   * Returns a {@link Lock} for performing exclusive operation for the given stream.
+   */
+  protected abstract Lock getLock(Id.Stream streamId);
 
-          @Override
-          public void run() {
-            try {
-              long currentTTL = (property == null) ? streamConfig.getTTL() : property.getTTL();
-              int newGeneration = ((property == null) ? lowerBound : property.getGeneration()) + 1;
-              int newThreshold = (property == null) ?
-                streamConfig.getNotificationThresholdMB() :
-                property.getThreshold();
-              // Create the generation directory
-              Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamConfig.getLocation(),
-                                                                               newGeneration));
-              resultFuture.set(new StreamProperty(newGeneration, currentTTL, newThreshold));
-            } catch (IOException e) {
-              resultFuture.setException(e);
-            }
-          }
-        });
-        return resultFuture;
+  /**
+   * Gets invoked when a stream of the given name is created.
+   */
+  protected abstract void streamCreated(Id.Stream streamId);
+
+  @Override
+  public StreamConfig createStream(Id.Stream streamId, Callable<StreamConfig> action) throws Exception {
+    Lock lock = getLock(streamId);
+    lock.lock();
+    try {
+      StreamConfig config = action.call();
+      if (config != null) {
+        streamCreated(streamId);
       }
-    }), new Function<StreamProperty, Integer>() {
-      @Override
-      public Integer apply(StreamProperty property) {
-        return property.getGeneration();
-      }
-    });
+      return config;
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public ListenableFuture<Long> changeTTL(final String streamName, final long newTTL) {
-    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
-      @Override
-      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
-        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
-        updateExecutor.execute(new Runnable() {
+  public void updateProperties(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception {
+    Lock lock = getLock(streamId);
+    lock.lock();
+    try {
+      final CoordinatorStreamProperties properties = action.call();
+      propertyStore.update(streamId.toId(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
 
-          @Override
-          public void run() {
-            try {
-              StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-              int currentGeneration = (property == null) ?
-                StreamUtils.getGeneration(streamConfig) :
-                property.getGeneration();
-              int currentThreshold = (property == null) ?
-                streamConfig.getNotificationThresholdMB() :
-                property.getThreshold();
-              resultFuture.set(new StreamProperty(currentGeneration, newTTL, currentThreshold));
-            } catch (IOException e) {
-              resultFuture.setException(e);
-            }
+        @Override
+        protected CoordinatorStreamProperties compute(@Nullable CoordinatorStreamProperties oldProperties) {
+          if (oldProperties == null) {
+            return properties;
           }
-        });
-        return resultFuture;
-      }
-    }), new Function<StreamProperty, Long>() {
-      @Override
-      public Long apply(StreamProperty property) {
-        return property.getTTL();
-      }
-    });
+          // Merge the old and new properties.
+          return new CoordinatorStreamProperties(
+            firstNotNull(properties.getTTL(), oldProperties.getTTL()),
+            firstNotNull(properties.getFormat(), oldProperties.getFormat()),
+            firstNotNull(properties.getNotificationThresholdMB(), oldProperties.getNotificationThresholdMB()),
+            firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
+        }
+      }).get();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public ListenableFuture<Integer> changeThreshold(final String streamName, final int newThreshold) {
-    return Futures.transform(propertyStore.get().update(streamName, new PropertyUpdater<StreamProperty>() {
-      @Override
-      public ListenableFuture<StreamProperty> apply(@Nullable final StreamProperty property) {
-        final SettableFuture<StreamProperty> resultFuture = SettableFuture.create();
-        updateExecutor.execute(new Runnable() {
-
-          @Override
-          public void run() {
-            try {
-              StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-              int currentGeneration = (property == null) ?
-                StreamUtils.getGeneration(streamConfig) :
-                property.getGeneration();
-              long currentTTL = (property == null) ?
-                streamConfig.getTTL() :
-                property.getTTL();
-              resultFuture.set(new StreamProperty(currentGeneration, currentTTL, newThreshold));
-            } catch (IOException e) {
-              resultFuture.setException(e);
-            }
-          }
-        });
-        return resultFuture;
-      }
-    }), new Function<StreamProperty, Integer>() {
-      @Override
-      public Integer apply(StreamProperty property) {
-        return property.getThreshold();
-      }
-    });
+  public Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener) {
+    return propertyStore.addChangeListener(streamId.toId(), new StreamPropertyChangeListener(listener));
   }
 
   @Override
-  public Cancellable addListener(String streamName, StreamPropertyListener listener) {
-    return propertyStore.get().addChangeListener(streamName,
-                                                 new StreamPropertyChangeListener(streamAdmin, streamName, listener));
+  protected final void startUp() throws Exception {
+    propertyStore = createPropertyStore(new Codec<CoordinatorStreamProperties>() {
+      @Override
+      public byte[] encode(CoordinatorStreamProperties properties) throws IOException {
+        return Bytes.toBytes(GSON.toJson(properties));
+      }
+
+      @Override
+      public CoordinatorStreamProperties decode(byte[] data) throws IOException {
+        return GSON.fromJson(Bytes.toString(data), CoordinatorStreamProperties.class);
+      }
+    });
+
+    try {
+      doStartUp();
+    } catch (Exception e) {
+      propertyStore.close();
+      throw e;
+    }
   }
 
   @Override
   protected final void shutDown() throws Exception {
-    propertyStore.get().close();
+    propertyStore.close();
     doShutDown();
   }
 
   /**
-   * Stop the service.
-   *
-   * @throws Exception when stopping the service could not be performed
+   * Returns first if first is not {@code null}, otherwise return second.
+   * It is different than Guava {@link Objects#firstNonNull(Object, Object)} in the way that it allows the second
+   * parameter to be null.
    */
-  protected abstract void doShutDown() throws Exception;
-
-  /**
-   * Object for holding property value in the property store.
-   */
-  private static final class StreamProperty {
-
-    /**
-     * Generation of the stream. {@code null} to ignore this field.
-     */
-    private final int generation;
-    /**
-     * TTL of the stream. {@code null} to ignore this field.
-     */
-    private final long ttl;
-
-    /**
-     * Notification threshold of the stream.
-     */
-    private final int threshold;
-
-    private StreamProperty(int generation, long ttl, int threshold) {
-      this.generation = generation;
-      this.ttl = ttl;
-      this.threshold = threshold;
-    }
-
-    public int getGeneration() {
-      return generation;
-    }
-
-    public long getTTL() {
-      return ttl;
-    }
-
-    public int getThreshold() {
-      return threshold;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("generation", generation)
-        .add("ttl", ttl)
-        .add("threshold", threshold)
-        .toString();
-    }
-  }
-
-  /**
-   * Codec for {@link StreamProperty}.
-   */
-  private static final class StreamPropertyCodec implements Codec<StreamProperty> {
-
-    private static final Gson GSON = new Gson();
-
-    @Override
-    public byte[] encode(StreamProperty property) throws IOException {
-      return GSON.toJson(property).getBytes(Charsets.UTF_8);
-    }
-
-    @Override
-    public StreamProperty decode(byte[] data) throws IOException {
-      return GSON.fromJson(new String(data, Charsets.UTF_8), StreamProperty.class);
-    }
+  @Nullable
+  private <T> T firstNotNull(@Nullable T first, @Nullable T second) {
+    return first != null ? first : second;
   }
 
   /**
    * A {@link PropertyChangeListener} that convert onChange callback into {@link StreamPropertyListener}.
    */
   private final class StreamPropertyChangeListener extends StreamPropertyListener
-                                                   implements PropertyChangeListener<StreamProperty> {
+    implements PropertyChangeListener<CoordinatorStreamProperties> {
 
     private final StreamPropertyListener listener;
-    // Callback from PropertyStore is
-    private StreamProperty currentProperty;
+    private CoordinatorStreamProperties oldProperties;
 
-    private StreamPropertyChangeListener(StreamAdmin streamAdmin, String streamName, StreamPropertyListener listener) {
+    private StreamPropertyChangeListener(StreamPropertyListener listener) {
       this.listener = listener;
-      try {
-        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-        this.currentProperty = new StreamProperty(StreamUtils.getGeneration(streamConfig), streamConfig.getTTL(),
-                                                  streamConfig.getNotificationThresholdMB());
-      } catch (Exception e) {
-        // It's ok if the stream config is not yet available (meaning no data has ever been writen to the stream yet.
-        this.currentProperty = new StreamProperty(0, Long.MAX_VALUE,
-                                                  cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD));
-      }
     }
 
     @Override
-    public void onChange(String name, StreamProperty newProperty) {
-      try {
-        if (newProperty != null) {
-          if (currentProperty == null || currentProperty.getGeneration() < newProperty.getGeneration()) {
-            generationChanged(name, newProperty.getGeneration());
-          }
-
-          if (currentProperty == null || currentProperty.getTTL() != newProperty.getTTL()) {
-            ttlChanged(name, newProperty.getTTL());
-          }
-
-          if (currentProperty == null || currentProperty.getThreshold() != newProperty.getThreshold()) {
-            thresholdChanged(name, newProperty.getThreshold());
-          }
-
-        } else {
-          generationDeleted(name);
-          ttlDeleted(name);
-        }
-      } finally {
-        currentProperty = newProperty;
+    public void onChange(String name, CoordinatorStreamProperties properties) {
+      Id.Stream streamId = Id.Stream.fromId(name);
+      if (properties == null) {
+        generationDeleted(streamId);
+        ttlDeleted(streamId);
+        oldProperties = null;
+        return;
       }
+
+      Integer generation = properties.getGeneration();
+      Integer oldGeneration = (oldProperties == null) ? null : oldProperties.getGeneration();
+      if (generation != null && (oldGeneration == null || generation > oldGeneration)) {
+        generationChanged(streamId, generation);
+      }
+
+      Long ttl = properties.getTTL();
+      Long oldTTL = (oldProperties == null) ? null : oldProperties.getTTL();
+      if (ttl != null && !ttl.equals(oldTTL)) {
+        ttlChanged(streamId, ttl);
+      }
+
+      Integer threshold = properties.getNotificationThresholdMB();
+      Integer oldThreshold = (oldProperties == null) ? null : oldProperties.getNotificationThresholdMB();
+
+      if (threshold != null && !threshold.equals(oldThreshold)) {
+        thresholdChanged(streamId, threshold);
+      }
+      oldProperties = properties;
     }
 
     @Override
@@ -328,45 +215,45 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void generationChanged(String streamName, int generation) {
+    public void generationChanged(Id.Stream streamId, int generation) {
       try {
-        listener.generationChanged(streamName, generation);
+        listener.generationChanged(streamId, generation);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.generationChanged", t);
       }
     }
 
     @Override
-    public void generationDeleted(String streamName) {
+    public void generationDeleted(Id.Stream streamId) {
       try {
-        listener.generationDeleted(streamName);
+        listener.generationDeleted(streamId);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.generationDeleted", t);
       }
     }
 
     @Override
-    public void ttlChanged(String streamName, long ttl) {
+    public void ttlChanged(Id.Stream streamId, long ttl) {
       try {
-        listener.ttlChanged(streamName, ttl);
+        listener.ttlChanged(streamId, ttl);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.ttlChanged", t);
       }
     }
 
     @Override
-    public void ttlDeleted(String streamName) {
+    public void ttlDeleted(Id.Stream streamId) {
       try {
-        listener.ttlDeleted(streamName);
+        listener.ttlDeleted(streamId);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.ttlDeleted", t);
       }
     }
 
     @Override
-    public void thresholdChanged(String streamName, int threshold) {
+    public void thresholdChanged(Id.Stream streamId, int threshold) {
       try {
-        listener.thresholdChanged(streamName, threshold);
+        listener.thresholdChanged(streamId, threshold);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.thresholdChanged", t);
       }

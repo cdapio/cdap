@@ -32,6 +32,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
@@ -120,12 +121,12 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public final StreamConsumer create(QueueName streamName, String namespace,
+  public final StreamConsumer create(Id.Stream streamId, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
 
-    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName.getSimpleName());
+    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamId);
 
-    String tableName = getTableName(streamName, namespace);
+    String tableName = getTableName(streamId, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
@@ -134,14 +135,14 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
                                         new TTLReadFilter(streamConfig.getTTL()));
 
     try {
-      // The old stream admin uses full URI of queue name as the name for checking existence
-      if (!oldStreamAdmin.exists(streamName.toURI().toString())) {
+      if (!oldStreamAdmin.exists(streamId)) {
         return newConsumer;
       }
 
       // For old stream consumer, the group size doesn't matter in queue based stream.
-      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamName, consumerConfig,
-                                                             queueClientFactory.createConsumer(streamName,
+      QueueName queueName = QueueName.fromStream(streamId);
+      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamId, consumerConfig,
+                                                             queueClientFactory.createConsumer(queueName,
                                                                                                consumerConfig, -1)
       );
       return new CombineStreamConsumer(oldConsumer, newConsumer);
@@ -152,9 +153,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // Delete the entry table
-    dropTable(getTableName(streamName, namespace));
+    dropTable(getTableName(streamId, namespace));
 
     // Cleanup state store
     Map<Long, Integer> groupInfo = Maps.newHashMap();
@@ -162,9 +163,10 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       groupInfo.put(groupId, 0);
     }
     try {
-      streamAdmin.configureGroups(streamName, groupInfo);
+      streamAdmin.configureGroups(streamId, groupInfo);
 
-      if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamName.toURI().toString())) {
+      //TODO: why is this code here? its queue-related, but we're in stream stuff.
+      if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamId)) {
         // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
         // String namespace = String.format("%s.%s.%s",
         //                                  programId.getNamespaceId(),
@@ -190,14 +192,14 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
-  private String getTableName(QueueName streamName, String namespace) {
-    return String.format("%s.%s.%s", tablePrefix, streamName.getSimpleName(), namespace);
+  private String getTableName(Id.Stream streamId, String namespace) {
+    return String.format("%s.%s.%s", tablePrefix, streamId.getName(), namespace);
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,
                                                  StreamConsumerState consumerState) throws IOException {
     Location streamLocation = streamConfig.getLocation();
-    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
+    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getStreamId());
 
     // Look for the latest stream generation
     final int generation = StreamUtils.getGeneration(streamConfig);
