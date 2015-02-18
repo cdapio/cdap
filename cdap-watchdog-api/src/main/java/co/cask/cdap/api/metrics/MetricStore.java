@@ -14,19 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store;
-
-import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.transport.MetricValue;
+package co.cask.cdap.api.metrics;
 
 import java.util.Collection;
 
 /**
- * Stores metric system data.
+ * Stores and provides access to metrics data.
  */
 // todo: methods should throw IOException instead of Exception
 public interface MetricStore {
@@ -43,8 +36,7 @@ public interface MetricStore {
    * @return time series that satisfy the query
    * @throws Exception
    */
-  // todo: expose metric-specific APIs instead of Cube ones
-  Collection<TimeSeries> query(CubeQuery query) throws Exception;
+  Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception;
 
   /**
    * Deletes all metric data before given timestamp. Used for applying TTL policy.
@@ -53,23 +45,22 @@ public interface MetricStore {
   void deleteBefore(long timestamp) throws Exception;
 
   /**
-   * Deletes all metric data specified by the {@link CubeQuery}
-   * @param query
+   * Deletes all metric data specified by the {@link MetricDeleteQuery}
+   * @param query specifies what to delete
    */
-  void delete(CubeDeleteQuery query) throws Exception;
+  void delete(MetricDeleteQuery query) throws Exception;
 
   /**
-   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of next available tags
-   * @param query
-   * @return
+   * Given a list of tags in the {@link MetricSearchQuery}, returns the list of next available tags
+   * @param query specifies where to search
+   * @return collection of tag value pairs in no particular order
    */
-  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
+  Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception;
 
   /**
-   * Given a list of tags in the {@link CubeExploreQuery}, returns the list of measures available
-   * @param query
-   * @return
+   * Given a list of tags in the {@link MetricSearchQuery}, returns the list of measures available
+   * @param query specifies where to search
+   * @return collection of metric names in no particular order
    */
-  Collection<String> findMetricNames(CubeExploreQuery query) throws Exception;
-
+  Collection<String> findMetricNames(MetricSearchQuery query) throws Exception;
 }

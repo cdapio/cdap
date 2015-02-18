@@ -13,8 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.data;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
+package co.cask.cdap.api.metrics;
 
 /**
  * Interpolate a value between two other time values.

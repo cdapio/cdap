@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +74,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param metrics collection of {@link co.cask.cdap.metrics.transport.MetricValue} to publish.
+   * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValue} to publish.
    * @throws Exception if there is error raised during publish.
    */
   protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;

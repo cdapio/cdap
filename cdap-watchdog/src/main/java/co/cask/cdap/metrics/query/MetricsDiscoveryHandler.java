@@ -15,13 +15,12 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
@@ -212,7 +211,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
         for (List<TagValue> tagValueList : resultSet) {
-          CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
+          MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
           Collection<String> measureNames = metricStore.findMetricNames(query);
           for (String measureName : measureNames) {
             addContext(getContext(tagValueList), measureName, metricContextsMap);
@@ -258,7 +257,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
     //todo: which resolution table to use?
-    CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
+    MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(query);
     if (nextTags.isEmpty()) {
       resultSet.add(Lists.newArrayList(tagsList));
