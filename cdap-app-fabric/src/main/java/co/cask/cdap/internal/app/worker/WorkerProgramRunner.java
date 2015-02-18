@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -86,19 +85,19 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                         options.getUserArguments(), cConf,
                                                         metricsCollectionService, datasetFramework,
                                                         txClient, discoveryServiceClient);
-    Service worker = new WorkerDriver(program, spec, context);
+    WorkerDriver worker = new WorkerDriver(program, spec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
     worker.start();
     return controller;
   }
 
-  private final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
-    private final Service service;
+  private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
+    private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(Service service, String programName, RunId runId) {
-      super(service, programName, runId);
-      this.service = service;
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, String programName, RunId runId) {
+      super(workerDriver, programName, runId);
+      this.workerDriver = workerDriver;
     }
 
     @Override
@@ -108,7 +107,7 @@ public class WorkerProgramRunner implements ProgramRunner {
         return;
       }
 
-      ((WorkerDriver) service).setInstanceCount((Integer) value);
+      workerDriver.setInstanceCount((Integer) value);
     }
   }
 }

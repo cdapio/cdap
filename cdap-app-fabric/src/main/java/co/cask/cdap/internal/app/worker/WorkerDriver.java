@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.worker;
 
-import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
@@ -28,11 +27,12 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Service;
 
 import java.util.concurrent.Executor;
 
 /**
- * A guava Service for executing {@link ServiceWorker} logic.
+ * A {@link Service} for executing {@link Worker}s.
  */
 public class WorkerDriver extends AbstractExecutionThreadService {
 

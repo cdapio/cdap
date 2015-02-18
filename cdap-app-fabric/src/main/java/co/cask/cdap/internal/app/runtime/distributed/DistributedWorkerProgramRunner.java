@@ -58,10 +58,10 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.WORKER, "Only WORKER process type is supported.");
 
-    final WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
+    WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
-    LOG.info("Launching distributed worker: {}:{}", program.getName(), workerSpec.getName());
+    LOG.info("Launching distributed worker {}", program.getName());
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, workerSpec, hConfFile, cConfFile,
                                                                             eventHandler));
