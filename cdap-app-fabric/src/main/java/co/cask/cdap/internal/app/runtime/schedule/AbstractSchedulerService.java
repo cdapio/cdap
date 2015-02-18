@@ -98,8 +98,9 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       timeScheduler.schedule(programId, programType, schedule);
     } else if (schedule instanceof StreamSizeSchedule) {
       streamSizeScheduler.schedule(programId, programType, schedule);
+    } else {
+      throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
     }
-    throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
   }
 
   @Override
