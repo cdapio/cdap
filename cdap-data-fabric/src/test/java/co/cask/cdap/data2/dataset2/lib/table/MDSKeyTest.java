@@ -107,4 +107,49 @@ public class MDSKeyTest {
     splitter.skipInt();
     Assert.assertEquals(5, splitter.getInt());
   }
+
+  @Test
+  public void testGetBytesOverflow() {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(2000);
+    builder.add(2000);
+
+    MDSKey mdsKey = builder.build();
+    MDSKey.Splitter splitter = mdsKey.split();
+
+    // splitter.getBytes and splitter.getString() will fail due to the key being composed of two large int parts
+    try {
+      splitter.getBytes();
+      Assert.fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      splitter.getString();
+      Assert.fail();
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test
+  public void getGetIntOverflow() {
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(1);
+    builder.add(2);
+    builder.add(3);
+
+    MDSKey mdsKey = builder.build();
+    MDSKey.Splitter splitter = mdsKey.split();
+
+    Assert.assertEquals(1, splitter.getInt());
+    Assert.assertEquals(2, splitter.getInt());
+    Assert.assertEquals(3, splitter.getInt());
+
+    // splitter.getInt will fail due to there only being 3 parts in the key
+    try {
+      splitter.getInt();
+      Assert.fail();
+    } catch (Exception expected) {
+    }
+  }
 }

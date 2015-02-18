@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
@@ -62,6 +63,7 @@ public final class MDSKey {
 
     public byte[] getBytes() {
       int len = byteBuffer.getInt();
+      Preconditions.checkState(byteBuffer.remaining() >= len);
       byte[] bytes = new byte[len];
       byteBuffer.get(bytes, 0, len);
       return bytes;
