@@ -43,7 +43,14 @@ angular.module(PKG.name+'.feature.operation28')
     };
 
   })
-  .controller('Op28CdapCtrl', function ($scope, op28helper, MyDataSource) {
+  .controller('Op28CdapCtrl', function ($scope, $state, op28helper, MyDataSource) {
+
+    if(!$state.params.namespace) {
+      // the controller for "ns" state should handle the case of
+      // an empty namespace. but this nested state controller will
+      // still be instantiated. avoid making useless api calls.
+      return;
+    }
 
     var dataSrc = new MyDataSource($scope);
 
@@ -68,6 +75,8 @@ angular.module(PKG.name+'.feature.operation28')
   })
   .controller('Op28SystemCtrl', function ($scope, op28helper, MyDataSource) {
 
+    var dataSrc = new MyDataSource($scope);
+
     $scope.panels = [
       ['AppFabric', 'Containers', ''],
       ['Processors', 'Cores',     ''],
@@ -87,16 +96,32 @@ angular.module(PKG.name+'.feature.operation28')
     // });
 
   })
-  .controller('Op28AppsCtrl', function ($scope, MyDataSource) {
+  .controller('Op28AppsCtrl', function ($scope, $state, $q, MyDataSource) {
 
-    $scope.apps = [{
-      name: 'foo',
-      desc: 'some app',
-      cores: 1,
-      containers: 0,
-      memory: 1024
-    }];
+    var dataSrc = new MyDataSource($scope);
 
+    $scope.apps = [];
+
+    dataSrc.request({
+        _cdapNsPath: '/apps'
+      })
+      .then(function (apps) {
+        $scope.apps = apps;
+
+        var p = [];
+        for (var i = 0; i < apps.length; i++) {
+          // p.push(dataSrc.request({
+          //   _cdapNsPath: '/metrics/query?context=ns.' +
+          //     $state.params.namespace + '.' + apps[i].id +
+          //     '&metric=resources.used.memory'
+          // }));
+        };
+
+        return $q.all(p);
+      })
+      .then(function () {
+        console.log('all done');
+      });
   })
 
   ;

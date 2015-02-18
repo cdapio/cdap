@@ -29,7 +29,7 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList) {
+        controller: function ($state, $timeout, rNsList) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.id === $state.params.namespace;
@@ -38,7 +38,14 @@ angular.module(PKG.name+'.feature.home')
           if(!n.length) {
             var d = rNsList[0].id;
             console.warn('invalid namespace, defaulting to ', d);
-            $state.go($state.current, { namespace: d }, {reload: true});
+            $timeout(function () {
+              $state.go(
+                $state.current,
+                { namespace: d },
+                {reload: true}
+              );
+            });
+
           }
         }
       })
