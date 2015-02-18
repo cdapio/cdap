@@ -146,7 +146,8 @@ public class DistributedStreamService extends AbstractStreamService {
     createHeartbeatsFeed();
     heartbeatPublisher.startAndWait();
     resourceCoordinatorClient.startAndWait();
-    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), new StreamsLeaderHandler());
+    coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(), 
+                                                                   new StreamsLeaderHandler());
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
       public void leaderOf(Set<Id.Stream> streamIds) {
