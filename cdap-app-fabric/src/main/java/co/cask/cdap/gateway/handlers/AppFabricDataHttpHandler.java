@@ -36,10 +36,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *  HttpHandler class for stream requests in app-fabric.
+ *  HttpHandler class for stream and dataset requests in app-fabric.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
+public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Access Dataset Service
@@ -56,8 +56,8 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                    StoreFactory storeFactory, DatasetFramework dsFramework) {
+  public AppFabricDataHttpHandler(Authenticator authenticator, CConfiguration configuration,
+                                  StoreFactory storeFactory, DatasetFramework dsFramework) {
     super(authenticator);
     this.store = storeFactory.create();
     this.dsFramework =
@@ -95,5 +95,53 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("stream-id") final String streamId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
                             namespaceId, streamId);
+  }
+
+  /**
+   * Returns a list of dataset associated with account.
+   */
+  @GET
+  @Path("/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) {
+    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
+  }
+
+  /**
+   * Returns a dataset associated with account.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("namespace-id") String namespaceId,
+                                      @PathParam("dataset-id") final String datasetId) {
+    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
+  }
+
+  /**
+   * Returns a list of dataset associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/datasets")
+  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") final String appId) {
+    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
+    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
+  }
+
+  /**
+   * Returns all flows associated with a dataset.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                                @PathParam("dataset-id") final String datasetId) {
+    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
+                            Constants.DEFAULT_NAMESPACE, datasetId);
   }
 }
