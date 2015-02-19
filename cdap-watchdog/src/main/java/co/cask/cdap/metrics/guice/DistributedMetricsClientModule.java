@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.io.DatumWriter;
@@ -23,7 +24,6 @@ import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.collect.KafkaMetricsCollectionService;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;

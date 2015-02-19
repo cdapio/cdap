@@ -16,7 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -37,10 +37,6 @@ public final class TimeSeries {
     this.measureName = measureName;
     this.tagValues = ImmutableMap.copyOf(tagValues);
     this.timeValues = ImmutableList.copyOf(timeValues);
-  }
-
-  public TimeSeries(TimeSeries timeSeries, Map<String, String> tagValues) {
-    this (timeSeries.measureName, tagValues, timeSeries.timeValues);
   }
 
   public String getMeasureName() {

@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.store.timeseries;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -255,7 +256,7 @@ public final class FactTable {
   }
 
   /**
-   * Given a list of {@link co.cask.cdap.metrics.store.timeseries.TagValue} and time range,
+   * Given a list of {@link co.cask.cdap.api.metrics.TagValue} and time range,
    * return all measure names of the Facts that have given tagValues and are in the given time range.
    * @param tags - list of tags to match, we return the measureNames that match this tags list.
    * @param startTs

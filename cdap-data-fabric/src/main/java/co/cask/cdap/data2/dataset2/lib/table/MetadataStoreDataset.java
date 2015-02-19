@@ -28,10 +28,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Ints;
 import com.google.gson.Gson;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -63,7 +61,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // returns first that matches
   @Nullable
-  public <T> T get(Key id, Class<T> classOfT) {
+  public <T> T get(MDSKey id, Class<T> classOfT) {
     try {
       Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
       Row row = scan.next();
@@ -83,39 +81,39 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   // lists all that has same first id parts
-  public <T> List<T> list(Key id, Class<T> classOfT) {
+  public <T> List<T> list(MDSKey id, Class<T> classOfT) {
     return list(id, classOfT, Integer.MAX_VALUE);
   }
 
   // lists all that has same first id parts, with a limit
-  public <T> List<T> list(Key id, Class<T> classOfT, int limit) {
+  public <T> List<T> list(MDSKey id, Class<T> classOfT, int limit) {
     return list(id, null, classOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   // lists all that has first id parts in range of startId and stopId
-  public <T> List<T> list(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
+  public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Class<T> classOfT, int limit,
                           Predicate<T> filter) {
     return Lists.newArrayList(listKV(startId, stopId, classOfT, limit, filter).values());
   }
 
   // returns mapping of all that has same first id parts
-  public <T> Map<Key, T> listKV(Key id, Class<T> classOfT) {
+  public <T> Map<MDSKey, T> listKV(MDSKey id, Class<T> classOfT) {
     return listKV(id, classOfT, Integer.MAX_VALUE);
   }
 
   // returns mapping of  all that has same first id parts, with a limit
-  public <T> Map<Key, T> listKV(Key id, Class<T> classOfT, int limit) {
+  public <T> Map<MDSKey, T> listKV(MDSKey id, Class<T> classOfT, int limit) {
     return listKV(id, null, classOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   // returns mapping of all that has first id parts in range of startId and stopId
-  public <T> Map<Key, T> listKV(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
+  public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Class<T> classOfT, int limit,
                                    Predicate<T> filter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
     try {
-      Map<Key, T> map = Maps.newLinkedHashMap();
+      Map<MDSKey, T> map = Maps.newLinkedHashMap();
       Scanner scan = table.scan(startKey, stopKey);
       Row next;
       while ((limit-- > 0) && (next = scan.next()) != null) {
@@ -126,7 +124,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         T value = deserialize(columnValue, classOfT);
 
         if (filter.apply(value)) {
-          Key key = new Key.Builder().add(next.getRow()).build();
+          MDSKey key = new MDSKey(next.getRow());
           map.put(key, value);
         }
       }
@@ -136,7 +134,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  public <T> void deleteAll(Key id) {
+  public <T> void deleteAll(MDSKey id) {
     byte[] prefix = id.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -155,101 +153,11 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  public <T> void write(Key id, T value) {
+  public <T> void write(MDSKey id, T value) {
     try {
       table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    }
-  }
-
-  /**
-   * Metadata entry key
-   */
-  public static final class Key {
-    private final byte[] key;
-
-    private Key(byte[] key) {
-      this.key = key;
-    }
-
-    public byte[] getKey() {
-      return key;
-    }
-
-    /**
-     * Splits the keys into the parts that comprise this.
-     */
-    public List<byte[]> split() {
-      List<byte[]> bytes = Lists.newArrayList();
-      int offset = 0;
-      while (offset < key.length) {
-        int length = Bytes.toInt(key, offset);
-        offset += Ints.BYTES;
-        bytes.add(Arrays.copyOfRange(key, offset, offset + length));
-        offset += length;
-      }
-      return bytes;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Key that = (Key) o;
-      return Bytes.equals(this.key, that.key);
-    }
-
-    @Override
-    public int hashCode() {
-      return Bytes.hashCode(key);
-    }
-
-    /**
-     * Builds {@link Key}s.
-     */
-    public static final class Builder {
-      private byte[] key;
-
-      public Builder() {
-        key = new byte[0];
-      }
-
-      public Builder(Key start) {
-        this.key = start.getKey();
-      }
-
-      public Builder add(byte[] part) {
-        key = Bytes.add(key, part);
-        return this;
-      }
-
-      public Builder add(String part) {
-        byte[] b = Bytes.toBytes(part);
-        key = Bytes.add(key, Bytes.toBytes(b.length), b);
-        return this;
-      }
-
-      public Builder add(String... parts) {
-        for (String part : parts) {
-          add(part);
-        }
-        return this;
-      }
-
-      public Builder add(long part) {
-        add(Bytes.toBytes(part));
-        return this;
-      }
-
-      public Key build() {
-        return new Key(key);
-      }
     }
   }
 
