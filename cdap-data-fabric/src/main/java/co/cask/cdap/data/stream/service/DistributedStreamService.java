@@ -227,7 +227,8 @@ public class DistributedStreamService extends AbstractStreamService {
         StreamConfig config = streamAdmin.getConfig(streamId);
         long filesSize = StreamUtils.fetchStreamFilesSize(config);
         LOG.debug("Size of the files already present for stream {}: {}", streamId, filesSize);
-        createSizeAggregator(streamId, filesSize, config.getNotificationThresholdMB());
+        createSizeAggregator(streamId, StreamUtils.getGeneration(config), filesSize,
+                             config.getNotificationThresholdMB());
       } catch (IOException e) {
         LOG.error("Could not compute sizes of files for stream {}", streamId);
         Throwables.propagate(e);
@@ -254,10 +255,14 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @param streamId stream Id to create a new aggregator for
    * @param baseCount stream size from which to start aggregating
+   * @param generation current generation of the stream
+   * @param threshold notification threshold after which to publish a notification - in MB
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, long baseCount, int threshold) {
-    LOG.debug("Creating size aggregator for stream {}", streamId);
+  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, final int generation, long baseCount,
+                                                    int threshold) {
+    LOG.debug("Creating size aggregator for stream {} with generation {}, baseCount {} and threshold {}",
+              streamId, generation, baseCount, threshold);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
@@ -272,12 +277,16 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       });
 
-    // Handle stream truncation, by creating creating a new empty aggregator for the stream
+    // Handle stream truncation, by creating a new empty aggregator for the stream
     // and cancelling the existing one
     final Cancellable truncationSubscription =
       getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
         @Override
-        public void generationChanged(Id.Stream streamId, int generation) {
+        public void generationChanged(Id.Stream streamId, int newGeneration) {
+          if (newGeneration <= generation) {
+            return;
+          }
+
           StreamSizeAggregator aggregator = aggregators.get(streamId);
           while (aggregator == null) {
             Thread.yield();
@@ -541,6 +550,7 @@ public class DistributedStreamService extends AbstractStreamService {
     private final AtomicLong countFromFiles;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
+    private final Id.Stream streamId;
     private boolean isInit;
 
     protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
@@ -550,6 +560,7 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
       this.isInit = true;
+      this.streamId = streamId;
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
@@ -568,6 +579,7 @@ public class DistributedStreamService extends AbstractStreamService {
      * @param newThreshold new notification threshold, in megabytes
      */
     public void setStreamThresholdMB(int newThreshold) {
+      LOG.debug("Updating threshold of size aggregator for stream {}: {}MB", streamId, newThreshold);
       streamThresholdMB.set(newThreshold);
     }
 
@@ -575,8 +587,10 @@ public class DistributedStreamService extends AbstractStreamService {
      * Reset the counts of this {@link StreamSizeAggregator} to zero.
      */
     public void resetCount() {
+      LOG.debug("Resetting size aggregator for stream {}", streamId);
       streamBaseCount.set(0);
       countFromFiles.set(0);
+      publishNotification(0);
     }
 
     /**
@@ -606,12 +620,12 @@ public class DistributedStreamService extends AbstractStreamService {
         init = isInit;
         isInit = false;
       }
+      LOG.trace("Check notification publishing: sum is {}, baseCount is {}", sum, streamBaseCount);
       if (init || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
           streamBaseCount.set(sum);
-          countFromFiles.set(0);
         }
       }
     }
