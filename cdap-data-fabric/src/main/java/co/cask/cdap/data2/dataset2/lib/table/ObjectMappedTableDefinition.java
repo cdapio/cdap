@@ -23,15 +23,12 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,6 +39,7 @@ import java.util.Map;
 public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<ObjectMappedTable, DatasetAdmin> {
 
   private static final Gson GSON = new Gson();
+  private static final String TABLE_NAME = "objects";
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
   public ObjectMappedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
@@ -52,18 +50,22 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    Preconditions.checkArgument(properties.getProperties().containsKey("type"));
-    Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
+    Map<String, String> props = properties.getProperties();
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.TYPE));
+    // schema can normally be derived from the type. However, we cannot use the Type in this method because
+    // this is called by the system, where the Type is often not available. for example, if somebody creates
+    // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
+    // we require schema here because we want to validate it to make sure it is supported.
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.SCHEMA));
     try {
-      Schema schema = Schema.parseJson(properties.getProperties().get("schema"));
+      Schema schema = ObjectMappedTableProperties.getSchema(props);
       validateSchema(schema);
       return DatasetSpecification.builder(instanceName, getName())
         .properties(properties.getProperties())
-        .property("schema", schema.toString())
-        .datasets(tableDef.configure("objects", properties))
+        .datasets(tableDef.configure(TABLE_NAME, properties))
         .build();
     } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to read schema. It may be malformed.", e);
+      throw new IllegalArgumentException("Could not parse schema.", e);
     } catch (UnsupportedTypeException e) {
       throw new IllegalArgumentException("Schema is of an unsupported type.", e);
     }
@@ -71,17 +73,18 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("objects"), classLoader);
+    return tableDef.getAdmin(spec.getSpecification(TABLE_NAME), classLoader);
   }
 
   @Override
   public ObjectMappedTableDataset<?> getDataset(DatasetSpecification spec, Map<String, String> arguments,
                                                 ClassLoader classLoader) throws IOException {
-    DatasetSpecification tableSpec = spec.getSpecification("objects");
+    DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
     Table table = tableDef.getDataset(tableSpec, arguments, classLoader);
 
-    TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    Schema schema = Schema.parseJson(spec.getProperty("schema"));
+    TypeRepresentation typeRep = GSON.fromJson(
+      spec.getProperty(ObjectMappedTableProperties.TYPE), TypeRepresentation.class);
+    Schema schema = Schema.parseJson(spec.getProperty(ObjectMappedTableProperties.SCHEMA));
     return new ObjectMappedTableDataset(spec.getName(), table, typeRep, schema, classLoader);
   }
 

@@ -20,7 +20,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.schedule.Schedules;
 
 /**
@@ -68,7 +69,8 @@ public class PurchaseApp extends AbstractApplication {
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
-      ObjectStores.createObjectMappedTable(getConfigurer(), "purchases", Purchase.class);
+      createDataset("purchases", ObjectMappedTable.class,
+                    ObjectMappedTableProperties.builder().setType(Purchase.class).build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is

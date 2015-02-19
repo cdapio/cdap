@@ -17,18 +17,13 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,7 +40,7 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
   @Test
   public void testGetPutDelete() throws Exception {
     createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
-                   ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
+                   ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
       ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
       Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
@@ -63,7 +58,7 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
   @Test
   public void testScan() throws Exception {
     createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
-                   ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
+                   ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
       ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
       Record record1 = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
@@ -120,20 +115,6 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTypeFails() throws Exception {
     createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "custom"),
-                   ObjectStores.objectStoreProperties(new TypeToken<Custom>() { }.getType(), DatasetProperties.EMPTY));
-  }
-
-  @Test
-  public void testSchemaIsSetAsProperty() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
-                   ObjectStores.objectStoreProperties(new TypeToken<Record>() { }.getType(), DatasetProperties.EMPTY));
-    try {
-      Schema expected = new ReflectionSchemaGenerator().generate(Record.class);
-      DatasetSpecification spec = getSpec(RECORDS_ID);
-      Schema actual = Schema.parseJson(spec.getProperty("schema"));
-      Assert.assertEquals(expected, actual);
-    } finally {
-      deleteInstance(RECORDS_ID);
-    }
+                   ObjectMappedTableProperties.builder().setType(Custom.class).build());
   }
 }

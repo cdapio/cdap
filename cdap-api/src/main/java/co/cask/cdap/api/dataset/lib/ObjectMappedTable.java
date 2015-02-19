@@ -47,14 +47,6 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
   void write(String key, T object);
 
   /**
-   * Write an object with a given key.
-   *
-   * @param key the key of the object
-   * @param object the object to be stored
-   */
-  void write(byte[] key, T object);
-
-  /**
    * Read an object with a given key.
    *
    * @param key the key of the object

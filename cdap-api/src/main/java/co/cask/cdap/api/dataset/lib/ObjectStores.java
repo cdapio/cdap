@@ -35,32 +35,6 @@ public final class ObjectStores {
   private ObjectStores() {}
 
   /**
-   * Adds a {@link ObjectMappedTable} dataset to be created at application deploy if it does not exist.
-   *
-   * @param configurer application configurer
-   * @param datasetName dataset name
-   * @param type type of objects to be stored in {@link ObjectMappedTable}
-   * @param props any additional dataset properties
-   * @throws UnsupportedTypeException
-   */
-  public static void createObjectMappedTable(ApplicationConfigurer configurer,
-                                             String datasetName, Type type, DatasetProperties props)
-    throws UnsupportedTypeException {
-
-    configurer.createDataset(datasetName, ObjectMappedTable.class, objectStoreProperties(type, props));
-  }
-
-  /**
-   * Same as {@link #createObjectMappedTable(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
-   * properties.
-   */
-  public static void createObjectMappedTable(ApplicationConfigurer configurer, String datasetName, Type type)
-    throws UnsupportedTypeException {
-
-    createObjectMappedTable(configurer, datasetName, type, DatasetProperties.EMPTY);
-  }
-
-  /**
    * Adds an {@link ObjectStore} dataset to be created at application deploy if it does not exist.
    *
    * @param configurer application configurer
@@ -127,6 +101,6 @@ public final class ObjectStores {
       .add("type", GSON.toJson(typeRep))
       .addAll(props.getProperties())
       .build();
-
   }
+
 }

@@ -58,15 +58,19 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   private final ReflectionPutWriter<T> putWriter;
   private final ReflectionRowReader<T> rowReader;
 
+  // schema is passed in as an argument because it is a required dataset property for validation purposes, so
+  // the ObjectMappedTableDefinition will always have it. We could always derive the schema from the type,
+  // but it is simpler to just pass it in.
   @SuppressWarnings("unchecked")
   public ObjectMappedTableDataset(String name, Table table, TypeRepresentation typeRep,
                                   Schema schema, @Nullable ClassLoader classLoader) {
     super(name, table);
     this.table = table;
     this.schema = schema;
-    this.putWriter = new ReflectionPutWriter<T>(schema);
     typeRep.setClassLoader(classLoader);
-    this.rowReader = new ReflectionRowReader<T>(schema, (TypeToken<T>) TypeToken.of(typeRep.toType()));
+    Type type = typeRep.toType();
+    this.putWriter = new ReflectionPutWriter<T>(schema);
+    this.rowReader = new ReflectionRowReader<T>(schema, (TypeToken<T>) TypeToken.of(type));
   }
 
   @Override
