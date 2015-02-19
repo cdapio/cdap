@@ -9,7 +9,7 @@
         </a>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.system.overview">
+        <a href="" ng-click="systemClicked=!systemClicked">
           System Configuration
         </a>
         <ul class="list-unstyled"
@@ -33,7 +33,7 @@
         </ul>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.security.overview">
+        <a href="" ng-click="securityClicked=!securityClicked">
           Systemwide Security
         </a>
         <ul class="list-unstyled"
@@ -60,7 +60,7 @@
       <li class="list-group-item"
           data-start-collapsed="1"
           bs-collapse>
-        <a bs-collapse-toggle>
+        <a href="" bs-collapse-toggle>
           Namespaces
         </a>
         <ul class="list-unstyled" bs-collapse-target>

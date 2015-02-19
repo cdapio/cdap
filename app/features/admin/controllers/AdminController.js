@@ -9,16 +9,15 @@ angular.module(PKG.name + '.feature.admin')
     // whether or not to show submenus
     $scope.submenu = {
       system: false,
-      security: false
+      security: false,
     };
 
-    $scope.$on('$stateChangeSuccess', function() {
-
-        $scope.submenu.security = $state.is('admin.security') || $state.includes('admin.security.**');
-        $scope.submenu.system = $state.is('admin.system') || $state.includes('admin.system.**');
-
+    $scope.$watch('securityClicked', function(newVal) {
+      $scope.submenu.security = newVal;
     });
-
+    $scope.$watch('systemClicked', function(newVal) {
+      $scope.submenu.system = newVal;
+    });
 
     function generateNsObject(item) {
       return {
