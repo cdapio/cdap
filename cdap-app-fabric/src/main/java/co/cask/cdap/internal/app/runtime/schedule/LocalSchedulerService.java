@@ -33,9 +33,10 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
   private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
 
   @Inject
-  public LocalSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
+  public LocalSchedulerService(Supplier<Scheduler> schedulerSupplier,
+                               StreamSizeScheduler streamSizeScheduler, StoreFactory storeFactory,
                                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
-    super(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
+    super(schedulerSupplier, streamSizeScheduler, storeFactory, programRuntimeService, preferencesStore);
   }
 
   @Override

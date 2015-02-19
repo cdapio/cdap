@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
@@ -139,8 +140,8 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     });
   }
 
-  private MetadataStoreDataset.Key getKey(String id) {
-    return new MetadataStoreDataset.Key.Builder().add(TYPE_NOTIFICATION_FEED, id).build();
+  private MDSKey getKey(String id) {
+    return new MDSKey.Builder().add(TYPE_NOTIFICATION_FEED, id).build();
   }
 
   private static final class NotificationFeedMds implements Iterable<MetadataStoreDataset> {

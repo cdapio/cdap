@@ -16,7 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.store.timeseries.TagValue;
+import co.cask.cdap.api.metrics.TagValue;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,5 +64,5 @@ public interface Cube {
    * @return {@link Collection} of measureName string that are result of the query
    * @throws Exception
    */
-  Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception;
+  Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception;
 }

@@ -57,8 +57,6 @@ import java.util.jar.Manifest;
 @Category(XSlowTests.class)
 public class AdapterClientTest extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AdapterClientTest.class);
-
   private AdapterClient adapterClient;
   private ApplicationClient applicationClient;
 
@@ -142,7 +140,7 @@ public class AdapterClientTest extends ClientTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
 
-    File tempDir = Files.createTempDir();
+    File tempDir = TMP_FOLDER.newFolder();
     try {
       File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));

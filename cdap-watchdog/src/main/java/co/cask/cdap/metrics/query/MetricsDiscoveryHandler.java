@@ -15,17 +15,17 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -58,7 +58,9 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
   private final MetricStore metricStore;
-  private final List<String> tagMappings;
+
+  private final Map<String, List<String>> oldFormatMapping;
+
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -126,7 +128,28 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   public MetricsDiscoveryHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
     this.metricStore = metricStore;
-    tagMappings = ImmutableList.of("app", "ptp", "prg", "pr2", "pr3", "pr4", "ds");
+    // This is needed to map to old v2 API format
+    // todo : remove hard-coded values and use TypeId (need to move TypeId out of app-fabric ?)
+    this.oldFormatMapping = ImmutableMap.<String, List<String>>of(
+      "f", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                            Constants.Metrics.Tag.PROGRAM_TYPE,
+                            Constants.Metrics.Tag.PROGRAM,
+                            Constants.Metrics.Tag.FLOWLET,
+                            Constants.Metrics.Tag.FLOWLET_QUEUE,
+                            Constants.Metrics.Tag.DATASET)
+      ,
+      "b", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                            Constants.Metrics.Tag.PROGRAM_TYPE,
+                            Constants.Metrics.Tag.PROGRAM,
+                            Constants.Metrics.Tag.MR_TASK_TYPE,
+                            Constants.Metrics.Tag.DATASET),
+      "u", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                                    Constants.Metrics.Tag.PROGRAM_TYPE,
+                                    Constants.Metrics.Tag.PROGRAM,
+                                    Constants.Metrics.Tag.SERVICE_RUNNABLE,
+                                    Constants.Metrics.Tag.DATASET)
+    );
+
   }
 
   @Override
@@ -188,7 +211,6 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
   }
 
   private void getMetrics(HttpRequest request, HttpResponder responder, String metricPrefix) {
-    String contextPrefix = null;
     Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     try {
       String path = request.getUri();
@@ -212,10 +234,11 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
         for (List<TagValue> tagValueList : resultSet) {
-          CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
+          MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
           Collection<String> measureNames = metricStore.findMetricNames(query);
+          String context = getContext(tagValueList);
           for (String measureName : measureNames) {
-            addContext(getContext(tagValueList), measureName, metricContextsMap);
+            addContext(context, measureName, metricContextsMap);
           }
         }
       }
@@ -249,6 +272,19 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
     for (TagValue tag : tagValueList) {
       tagValueMappings.put(tag.getTagName(), tag.getValue());
     }
+
+    String programType = tagValueMappings.get(Constants.Metrics.Tag.PROGRAM_TYPE);
+    List<String> tagMappings;
+    if (programType != null) {
+      tagMappings = oldFormatMapping.get(programType);
+      if (tagMappings == null) {
+        tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
+                                       Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.DATASET);
+      }
+    } else {
+      tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET);
+    }
+
     for (String tagKey : tagMappings) {
       contextPrefix = tagValueMappings.get(tagKey) != null ? contextPrefix + "." +
         tagValueMappings.get(tagKey) : contextPrefix;
@@ -258,7 +294,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
     //todo: which resolution table to use?
-    CubeExploreQuery query = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
+    MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(query);
     if (nextTags.isEmpty()) {
       resultSet.add(Lists.newArrayList(tagsList));
