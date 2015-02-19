@@ -59,7 +59,7 @@ public class AuthorizationClientTest {
   @Before
   public void setUp() throws Exception {
     this.aclStore = new InMemoryACLStore();
-    this.authorizationClient = new DefaultAuthorizationClient(aclStore);
+    this.authorizationClient = new SimpleAuthorizationClient(aclStore);
     aclStore.write(UNRELATED_ACL);
     aclStore.write(UNRELATED_ACL2);
   }
