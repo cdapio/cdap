@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Query that specifies parameters to delete entries from cube.
+ * Query that specifies parameters to delete entries from {@link MetricStore}.
  */
 public class MetricDeleteQuery {
 
