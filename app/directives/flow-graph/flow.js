@@ -41,24 +41,23 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
         })
           .setDefaultEdgeLabel(function () { return {}; });
 
-        
+        // First set nodes and edges.
         angular.forEach(nodes, function (node) {
           var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
+          instanceMap[node.name] = node;
           if (node.type === "STREAM") {
             g.setNode(node.name, { shape: "stream", label: nodeLabel});
+
           } else {
             g.setNode(node.name, { shape: "flowlet", label: nodeLabel});
-            instanceMap[node.name] = node;
           }
-          
-          
         });
 
         angular.forEach(edges, function (edge) {
           g.setEdge(edge.sourceName, edge.targetName);
         });
 
-
+        // Draw the flowlet shape.
         renderer.shapes().flowlet = function(parent, bbox, node) {
           var instances = getInstances(node.elem.__data__); // No other way to get name from node.
           var r = 60,
@@ -98,6 +97,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           return shapeSvg;
         };
 
+        // Draw the stream shape.
         renderer.shapes().stream = function(parent, bbox, node) {
           var w = bbox.width,
           h = bbox.height,
@@ -106,7 +106,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
             { x:   -40, y: -h - 30}, //a
             { x:   w/2, y: -h - 30}, //b
             { x: w, y: -h/2}, //c
-            { x: w/2, y: 30}, //d
+            { x: w/2, y: 30} //d
           ];
           shapeSvg = parent.insert("polygon", ":first-child")
             .attr("points", points.map(function(d) { return d.x + "," + d.y; }).join(" "))
@@ -132,9 +132,13 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           return shapeSvg;
         };
 
-        // Set up an SVG group so that we can translate the final graph.
+        // Set up an SVG group so that we can translate the final graph and tooltip.
         var svg = d3.select("svg").attr("fill", "white");
         var svgGroup = d3.select("svg g");
+        var tip = d3.tip()
+          .attr('class', 'd3-tip')
+          .offset([-10, 0]);
+        svg.call(tip);
 
         // Set up zoom support
         var zoom = d3.behavior.zoom().on("zoom", function() {
@@ -149,10 +153,15 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
         // Set up onclick after rendering.
         svg
           .selectAll("g.node")
-          .on("click", function(nodeId) {
-             $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
-          });
+          .on("click", handleNodeClick);
 
+        svg
+          .selectAll("g.node text")
+          .on('mouseover', handleShowTip)
+          .on('mouseout', handleHideTip);
+          
+
+        // Center svg.
         var initialScale = 1.1;
         var svgWidth = svg.node().getBoundingClientRect().width;
         zoom
@@ -161,10 +170,37 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           .event(svg);
         svg.attr('height', g.graph().height * initialScale + 40);
 
+        /**
+         * Handles node click and sends to flowlet page.
+         */
+        function handleNodeClick(nodeId) {
+          $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
+        }
 
+        /**
+         * Gets number of instances from node map.
+         */
         function getInstances(nodeId) {
           return instanceMap[nodeId].instances ? instanceMap[nodeId].instances : 0;
-        }  
+        }
+
+        /**
+         * Handles showing tooltip on mouseover of node name.
+         */
+        function handleShowTip(nodeId) {
+          tip
+            .html(function(d) {
+              return "<strong>" + instanceMap[nodeId].type +":</strong> <span class='tip-node-name'>"+ nodeId +"</span>";
+            })
+            .show();
+        }
+
+        /**
+         * Handles hiding tooltip on mouseout of node name.
+         */
+        function handleHideTip(nodeId) {
+          tip.hide();
+        }
       };
 
     }

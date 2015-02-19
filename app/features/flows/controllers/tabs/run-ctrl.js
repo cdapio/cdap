@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.flows')
 
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
-      if ($state.includes('flows.detail.runs.detail.*') || $state.includes('flows.detail.runs.detail.*.*')) {
+      if ($state.includes('flows.detail.runs.detail.**')) {
         tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop());
         $scope.runTabs.activeTab = (tab > 0? tab: 0);
       }
