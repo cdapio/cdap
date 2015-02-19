@@ -23,6 +23,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -70,24 +71,28 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   protected final void startScheduler() {
     try {
       timeScheduler.start();
-      streamSizeScheduler.start();
-      LOG.info("Started scheduler");
+      LOG.info("Started time scheduler");
     } catch (SchedulerException e) {
-      LOG.error("Error starting scheduler {}", e.getCause(), e);
+      LOG.error("Error starting time scheduler {}", e.getCause(), e);
       throw Throwables.propagate(e);
     }
+
+    streamSizeScheduler.start();
+    LOG.info("Started stream size scheduler");
   }
 
   /**
    * Stop the quartz scheduler service.
    */
   protected final void stopScheduler() {
+    streamSizeScheduler.stop();
+    LOG.info("Stopped stram size scheduler");
+
     try {
       timeScheduler.stop();
-      streamSizeScheduler.stop();
-      LOG.info("Stopped scheduler");
+      LOG.info("Stopped time scheduler");
     } catch (SchedulerException e) {
-      LOG.error("Error stopping scheduler {}", e.getCause(), e);
+      LOG.error("Error stopping time scheduler {}", e.getCause(), e);
       throw Throwables.propagate(e);
     }
   }
@@ -99,7 +104,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     } else if (schedule instanceof StreamSizeSchedule) {
       streamSizeScheduler.schedule(programId, programType, schedule);
     } else {
-      throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
+      throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
     }
   }
 
@@ -113,7 +118,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       } else if (schedule instanceof StreamSizeSchedule) {
         streamSizeSchedules.add(schedule);
       } else {
-        throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
+        throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
       }
     }
     if (!timeSchedules.isEmpty()) {
@@ -139,49 +144,31 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    ScheduleType type = getScheduleType(program, programType, scheduleName);
-    if (type == null) {
-      return;
-    }
-    switch (type) {
-      case TIME:
-        timeScheduler.suspendSchedule(program, programType, scheduleName);
-        break;
-      case STREAM:
-        streamSizeScheduler.suspendSchedule(program, programType, scheduleName);
-        break;
+    try {
+      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+      scheduler.suspendSchedule(program, programType, scheduleName);
+    } catch (NotFoundException e) {
+      LOG.trace("Could not suspend schedule", e);
     }
   }
 
   @Override
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    ScheduleType type = getScheduleType(program, programType, scheduleName);
-    if (type == null) {
-      return;
-    }
-    switch (type) {
-      case TIME:
-        timeScheduler.resumeSchedule(program, programType, scheduleName);
-        break;
-      case STREAM:
-        streamSizeScheduler.resumeSchedule(program, programType, scheduleName);
-        break;
+    try {
+      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+      scheduler.resumeSchedule(program, programType, scheduleName);
+    } catch (NotFoundException e) {
+      LOG.trace("Could not resume schedule", e);
     }
   }
 
   @Override
   public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    ScheduleType type = getScheduleType(program, programType, scheduleName);
-    if (type == null) {
-      return;
-    }
-    switch (type) {
-      case TIME:
-        timeScheduler.deleteSchedule(program, programType, scheduleName);
-        break;
-      case STREAM:
-        streamSizeScheduler.deleteSchedule(program, programType, scheduleName);
-        break;
+    try {
+      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+      scheduler.deleteSchedule(program, programType, scheduleName);
+    } catch (NotFoundException e) {
+      LOG.trace("Could not delete schedule", e);
     }
   }
 
@@ -193,52 +180,40 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    ScheduleType type = getScheduleType(program, programType, scheduleName);
-    if (type == null) {
-      throw new UnsupportedOperationException("Schedule could not be found in application specification");
+    try {
+      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+      return scheduler.scheduleState(program, programType, scheduleName);
+    } catch (NotFoundException e) {
+      return ScheduleState.NOT_FOUND;
     }
-    switch (type) {
-      case STREAM:
-        return streamSizeScheduler.scheduleState(program, programType, scheduleName);
-      case TIME:
-        return timeScheduler.scheduleState(program, programType, scheduleName);
-    }
-    throw new IllegalStateException("Unhandled type of schedule: " + type);
   }
 
-  private Store getStore() {
+  private synchronized Store getStore() {
     if (store == null) {
       store = storeFactory.create();
     }
     return store;
   }
 
-  private ScheduleType getScheduleType(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  private Scheduler getSchedulerForSchedule(Id.Program program, SchedulableProgramType programType,
+                                               String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
     if (appSpec == null) {
-      return null;
+      throw new NotFoundException("application", program.getApplicationId());
     }
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
     if (schedules == null || !schedules.containsKey(scheduleName)) {
-      return null;
+      throw new NotFoundException("schedule", scheduleName);
     }
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);
     Schedule schedule = scheduleSpec.getSchedule();
     if (schedule instanceof TimeSchedule) {
-      return ScheduleType.TIME;
+      return timeScheduler;
     } else if (schedule instanceof StreamSizeSchedule) {
-      return ScheduleType.STREAM;
+      return streamSizeScheduler;
     }
-    throw new IllegalStateException("Unhandled type of schedule: " + schedule.getClass());
-  }
-
-  /**
-   * Type of a schedule.
-   */
-  private static enum ScheduleType {
-    TIME,
-    STREAM
+    throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
   }
 }
