@@ -340,7 +340,7 @@ public class DistributedStreamService extends AbstractStreamService {
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
         // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not subscribe to heartbeats feed. {}", e.getMessage());
+        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
         TimeUnit.MILLISECONDS.sleep(1000);
       }
     }
@@ -390,7 +390,7 @@ public class DistributedStreamService extends AbstractStreamService {
         return;
       } catch (NotificationFeedException e) {
         // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not subscribe to heartbeats feed. {}", e.getMessage());
+        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
         TimeUnit.MILLISECONDS.sleep(1000);
       }
     }
