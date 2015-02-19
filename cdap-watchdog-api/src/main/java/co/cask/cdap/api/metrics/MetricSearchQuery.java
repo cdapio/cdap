@@ -31,6 +31,7 @@ public class MetricSearchQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
+  // todo: use NavigableMap to inform that there are no same tag names?
   private final List<TagValue> tagValues;
 
   public MetricSearchQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {

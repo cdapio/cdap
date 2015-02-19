@@ -49,6 +49,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -165,7 +166,7 @@ public class DefaultMetricStore implements MetricStore {
     for (TimeSeries timeSeries : cubeResult) {
 
       result.add(new MetricTimeSeries(timeSeries.getMeasureName(),
-                                      unMapTags(timeSeries.getTagValues(),
+                                      unmapTags(timeSeries.getTagValues(),
                                                 q.getSliceByTags().get(Constants.Metrics.Tag.PROGRAM_TYPE)),
                                       timeSeries.getTimeValues()));
     }
@@ -178,7 +179,7 @@ public class DefaultMetricStore implements MetricStore {
                                           replaceTagsIfNeeded(q.getGroupByTags()));
   }
 
-  private Map<String, String> unMapTags(Map<String, String> tagValues, String programType) {
+  private Map<String, String> unmapTags(Map<String, String> tagValues, @Nullable String programType) {
     if (programType == null) {
       return tagValues;
     }
@@ -223,7 +224,9 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
-    return cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+    Collection<TagValue> tagsFromCube = cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+    String programType = getTagValue(query.getTagValues(), Constants.Metrics.Tag.PROGRAM_TYPE);
+    return unmapTags(tagsFromCube, programType);
   }
 
   private CubeExploreQuery buildCubeSearchQuery(MetricSearchQuery query) {
@@ -254,6 +257,33 @@ public class DefaultMetricStore implements MetricStore {
       result.add(tagNameReplacement == null ? tagName : tagNameReplacement);
     }
     return result;
+  }
+
+  private Collection<TagValue> unmapTags(Collection<TagValue> nextAvailableTags, @Nullable String programType) {
+    // check if program-type is available in the query, if available , check if reverseMapping contains
+    // value for the next tag key. if so, replace the tag-key , else use existing tag-key
+    if (programType == null || (reverseMapping.get(programType) == null)) {
+      return nextAvailableTags;
+    }
+
+    List<TagValue> unMappedList = Lists.newArrayList();
+    for (TagValue tagValue : nextAvailableTags) {
+      String tag = reverseMapping.get(programType).get(tagValue.getTagName());
+      unMappedList.add(tag == null ? tagValue : new TagValue(tag, tagValue.getValue()));
+    }
+    return unMappedList;
+  }
+
+  @Nullable
+  private String getTagValue(List<TagValue> tagValues, String tagName) {
+    String programType = null;
+    for (TagValue tagValue : tagValues) {
+      if (tagValue.getTagName().equals(tagName)) {
+        programType = tagValue.getValue();
+        break;
+      }
+    }
+    return programType;
   }
 
   private MeasureType toMeasureType(MetricType type) {
