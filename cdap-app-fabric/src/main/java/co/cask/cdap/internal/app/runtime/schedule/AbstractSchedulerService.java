@@ -77,23 +77,33 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       throw Throwables.propagate(e);
     }
 
-    streamSizeScheduler.start();
-    LOG.info("Started stream size scheduler");
+    try {
+      streamSizeScheduler.start();
+      LOG.info("Started stream size scheduler");
+    } catch (Throwable t) {
+      LOG.error("Error starting stream size scheduler {}", t.getCause(), t);
+      throw Throwables.propagate(t);
+    }
   }
 
   /**
    * Stop the quartz scheduler service.
    */
   protected final void stopScheduler() {
-    streamSizeScheduler.stop();
-    LOG.info("Stopped stram size scheduler");
-
     try {
-      timeScheduler.stop();
-      LOG.info("Stopped time scheduler");
-    } catch (SchedulerException e) {
-      LOG.error("Error stopping time scheduler {}", e.getCause(), e);
-      throw Throwables.propagate(e);
+      streamSizeScheduler.stop();
+      LOG.info("Stopped stram size scheduler");
+    } catch (Throwable t) {
+      LOG.error("Error stopping stream size scheduler {}", t.getCause(), t);
+      throw Throwables.propagate(t);
+    } finally {
+      try {
+        timeScheduler.stop();
+        LOG.info("Stopped time scheduler");
+      } catch (SchedulerException e) {
+        LOG.error("Error stopping time scheduler {}", e.getCause(), e);
+        throw Throwables.propagate(e);
+      }
     }
   }
 
