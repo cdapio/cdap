@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -36,12 +35,7 @@ final class TimeSeriesResponse {
     return new Builder() {
       @Override
       public Builder addData(long timestamp, long value) {
-        return addData(new TimeValue(timestamp, value));
-      }
-
-      @Override
-      public Builder addData(TimeValue timeValue) {
-        timeValues.add(timeValue);
+        timeValues.add(new TimeValue(timestamp, value));
         return this;
       }
 
@@ -58,10 +52,21 @@ final class TimeSeriesResponse {
     this.data = data;
   }
 
+  /**
+   * Represents metric data point. Used to construct JSON response.
+   */
+  static final class TimeValue {
+    private final long time;
+    private final long value;
+
+    TimeValue(long time, long value) {
+      this.time = time;
+      this.value = value;
+    }
+  }
+
   public interface Builder {
     Builder addData(long timestamp, long value);
-
-    Builder addData(TimeValue timeValue);
 
     TimeSeriesResponse build();
   }
