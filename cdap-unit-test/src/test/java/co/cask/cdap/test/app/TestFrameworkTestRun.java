@@ -361,6 +361,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
+    TimeUnit.MILLISECONDS.sleep(200);
     manager.stop();
     applicationManager.stopAll();
     DataSetManager<KeyValueTable> dataSetManager = applicationManager.getDataSet(AppWithWorker.DATASET);
