@@ -47,7 +47,9 @@ public interface Scheduler {
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
-   * the method returns the next scheduled runtimes for all the schedules.
+   * the method returns the next scheduled runtimes for all the schedules. This method only takes
+   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + be returned.
    *
    * @param program program to fetch the next runtime.
    * @param programType type of program.
