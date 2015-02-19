@@ -379,8 +379,8 @@ public class FactTableTest {
   @Test
   public void testMaxResolution() throws Exception {
     // we use Integer.MAX_VALUE as resolution to compute all-time total values
-    InMemoryOrderedTableService.create("TotalsEntityTable");
-    InMemoryOrderedTableService.create("TotalsDataTable");
+    InMemoryTableService.create("TotalsEntityTable");
+    InMemoryTableService.create("TotalsDataTable");
     int resolution = Integer.MAX_VALUE;
     // should not matter when resolution is max
     int rollTimebaseInterval = 3600;

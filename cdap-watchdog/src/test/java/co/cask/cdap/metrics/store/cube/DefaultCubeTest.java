@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.store.cube;
 
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 
@@ -33,8 +33,8 @@ public class DefaultCubeTest extends AbstractCubeTest {
     FactTableSupplier supplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int rollTime) {
-        InMemoryOrderedTableService.create("EntityTable");
-        InMemoryOrderedTableService.create("DataTable");
+        InMemoryTableService.create("EntityTable");
+        InMemoryTableService.create("DataTable");
         return new FactTable(new InMemoryMetricsTable("DataTable"),
                              new EntityTable(new InMemoryMetricsTable("EntityTable")),
                              resolution, rollTime);
