@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.data;
+package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import org.junit.Assert;
 import org.junit.Test;
 

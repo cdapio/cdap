@@ -146,14 +146,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
                          ".ptp.b.prg.ClassicWordCount.run.run1",
-                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.pr2.m",
-                                                "ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.pr2.r"));
+                       ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.mrt.m",
+                                                "ns.yourspace.app.WCount1.ptp.b.prg.ClassicWordCount.run.run1.mrt.r"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount.run.run1.pr2.m",
+                         ".ptp.b.prg.ClassicWordCount.run.run1.mrt.m",
                        ImmutableList.<String>of("ns.yourspace.app.WCount1.ptp" +
-                                                  ".b.prg.ClassicWordCount.run.run1.pr2.m.pr3.task1"));
+                                                  ".b.prg.ClassicWordCount.run.run1.mrt.m.ins.task1"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=ns.yourspace.app.WCount1" +
-                         ".ptp.b.prg.ClassicWordCount.run.run1.pr2.m.pr3.task1",
+                         ".ptp.b.prg.ClassicWordCount.run.run1.mrt.m.ins.task1",
                        ImmutableList.<String>of());
 
     // verify "*"
@@ -278,11 +278,11 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchMetrics() throws Exception {
     // metrics in myspace
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.splitter",
+                         ".ptp.f.prg.WordCounter.run.run1.flt.splitter",
                        ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.collector",
+                         ".ptp.f.prg.WordCounter.run.run1.flt.collector",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
 
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
@@ -292,23 +292,23 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // wrong namespace
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WordCount1." +
-                         "ptp.f.prg.WordCounter.run.run1.pr2.splitter",
+                         "ptp.f.prg.WordCounter.run.run1.flt.splitter",
                        ImmutableList.<String>of());
 
 
     // metrics in yourspace
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.yourspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+                         ".ptp.f.prg.WCounter.run.run1.flt.splitter",
                        ImmutableList.<String>of("system.reads"));
 
     // wrong namespace
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WCount1" +
-                         ".ptp.f.prg.WCounter.run.run1.pr2.splitter",
+                         ".ptp.f.prg.WCounter.run.run1.flt.splitter",
                        ImmutableList.<String>of());
 
     // verify "*"
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +
-                         ".ptp.f.prg.WordCounter.run.run1.pr2.*",
+                         ".ptp.f.prg.WordCounter.run.run1.flt.*",
                        ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                 "system.writes", "system.zz", "user.reads", "user.writes"));
     verifySearchResult("/v3/metrics/search?target=metric&context=ns.myspace.app.WordCount1" +

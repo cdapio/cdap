@@ -15,15 +15,14 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricType;
-import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
