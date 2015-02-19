@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,25 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.authorization;
 
-package co.cask.cdap.api.security;
-
-import com.google.common.collect.Lists;
-
-import java.util.List;
+import co.cask.common.authorization.ACLStore;
+import co.cask.common.authorization.InMemoryACLStore;
+import co.cask.common.authorization.client.ACLStoreSupplier;
+import com.google.inject.Singleton;
 
 /**
- * Utility functions for {@link Principals}.
+ * Provides {@link co.cask.cdap.data2.dataset2.lib.table.ACLStoreTable}.
  */
-public final class Principals {
+@Singleton
+public class InMemoryACLStoreTableSupplier implements ACLStoreSupplier {
 
-  private Principals() { }
+  private static final InMemoryACLStore aclStore = new InMemoryACLStore();
 
-  public static List<Principal> fromIds(PrincipalType type, List<String> ids) {
-    List<Principal> result = Lists.newArrayList();
-    for (String id : ids) {
-      result.add(new Principal(type, id));
-    }
-    return result;
+  @Override
+  public ACLStore get() {
+    return aclStore;
   }
 }

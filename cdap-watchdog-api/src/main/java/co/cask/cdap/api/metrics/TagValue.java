@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value assigned to the {@link Fact}.
+ * Represents tag and its value.
  */
 public final class TagValue {
   private final String tagName;

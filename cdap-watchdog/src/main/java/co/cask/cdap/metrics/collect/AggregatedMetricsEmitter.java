@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricType;
-import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
