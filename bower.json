@@ -28,6 +28,7 @@
     "angular-breadcrumb": "~0.3.3",
     "angular-recursion": "~1.0.5",
     "dagre-d3": "~0.4.2",
+    "d3-tip": "~0.6.6",
     "angular-moment": "~0.9.0"
   },
   "resolutions": {

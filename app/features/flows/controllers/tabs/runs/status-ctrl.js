@@ -2,6 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowsDetailRunStatusController', function($state, $scope, MyDataSource) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+
     $scope.data = {};
     $scope.status = null;
     $scope.duration = null;
@@ -13,11 +14,18 @@ angular.module(PKG.name + '.feature.flows')
         var nodes = [];
         angular.forEach(res.connections, function(conn) {
           if (conn.sourceType === 'STREAM') {
-            nodes.push(conn.sourceName);
+            nodes.push({
+              type: conn.sourceType,
+              name: conn.sourceName
+            });
           }
         });
 
-        nodes = nodes.concat(Object.keys(res.flowlets));
+        angular.forEach(res.flowlets, function (val, key) {
+          val.type = 'FLOWLET';
+          val.name = key;
+          nodes.push(val);
+        });
 
         $scope.data = {
           nodes: nodes,

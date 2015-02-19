@@ -66,6 +66,14 @@ angular.module(PKG.name + '.feature.flows')
                   skip: true
                 }
               })
+                .state('flows.detail.runs.detail.flowlets.detail', {
+                  url: '/:flowletId',
+                  templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
+                  controller: 'FlowsFlowletDetaiController',
+                  ncyBreadcrumb: {
+                    skip: true
+                  }
+                })
               .state('flows.detail.runs.detail.data', {
                 url: '/data',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/data.html',
