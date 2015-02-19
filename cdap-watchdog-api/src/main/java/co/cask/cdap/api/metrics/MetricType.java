@@ -13,9 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.api.metrics;
 
 /**
- * This package contains interfaces and classes for CDAP security.
- *
+ * MetricType - COUNTER or GAUGE type
  */
-package co.cask.cdap.api.security;
+public enum MetricType {
+  COUNTER,
+  GAUGE
+}

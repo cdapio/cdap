@@ -55,9 +55,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -443,7 +445,7 @@ public class CLIMainTest extends StandaloneTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
 
-    File tempDir = Files.createTempDir();
+    File tempDir = TMP_FOLDER.newFolder();
     try {
       File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));

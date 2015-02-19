@@ -20,6 +20,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.google.common.base.Throwables;
@@ -125,7 +126,7 @@ public final class MapReduceContextProvider {
         // It's ok to expand to a temp dir in local directory, as the YARN container will be gone.
         Location programLocation = new LocalLocationFactory()
           .create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
-        File unpackDir = Files.createTempDir();
+        File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
         LOG.info("Create Program from {}, expand to {}", programLocation.toURI(), unpackDir);
         program = Programs.createWithUnpack(programLocation, unpackDir,
                                             taskContext.getConfiguration().getClassLoader());

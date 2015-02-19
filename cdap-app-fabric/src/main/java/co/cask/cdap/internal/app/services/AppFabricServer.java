@@ -26,6 +26,7 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -62,6 +63,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
   private final AdapterService adapterService;
+  private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
 
@@ -75,7 +77,7 @@ public final class AppFabricServer extends AbstractIdleService {
    */
   @Inject
   public AppFabricServer(CConfiguration configuration, DiscoveryService discoveryService,
-                         SchedulerService schedulerService,
+                         SchedulerService schedulerService, NotificationService notificationService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
@@ -90,6 +92,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
     this.adapterService = adapterService;
+    this.notificationService = notificationService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
   }
@@ -107,6 +110,7 @@ public final class AppFabricServer extends AbstractIdleService {
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     FileUtils.deleteDirectory(tmpDir);
 
+    notificationService.start();
     schedulerService.start();
     adapterService.start();
     programRuntimeService.start();
@@ -190,5 +194,6 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     adapterService.stopAndWait();
+    notificationService.stopAndWait();
   }
 }

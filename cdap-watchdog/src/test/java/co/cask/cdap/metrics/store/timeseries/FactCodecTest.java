@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
