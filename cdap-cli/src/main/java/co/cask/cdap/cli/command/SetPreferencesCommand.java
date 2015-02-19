@@ -19,9 +19,9 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Splitter;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -48,7 +48,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
     String runtimeArgs = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
-    Map<String, String> args = Splitter.on(",").trimResults().withKeyValueSeparator("=").split(runtimeArgs);
+    Map<String, String> args = ArgumentParser.parseMap(runtimeArgs);
 
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
