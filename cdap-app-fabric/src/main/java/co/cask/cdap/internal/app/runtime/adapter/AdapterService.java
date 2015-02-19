@@ -193,6 +193,7 @@ public class AdapterService extends AbstractIdleService {
    * @return {@link Collection} of {@link AdapterSpecification}
    */
   public Collection<AdapterSpecification> getAdapters(String namespace) {
+    // TODO: filter
     return store.getAllAdapters(Id.Namespace.from(namespace));
   }
 

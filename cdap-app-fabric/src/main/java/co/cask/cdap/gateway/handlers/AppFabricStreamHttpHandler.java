@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -59,8 +60,8 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                     StoreFactory storeFactory, DatasetFramework dsFramework,
-                                    SecureHandler secureHandler) {
-    super(authenticator, secureHandler);
+                                    AuthorizationClient authorizationClient) {
+    super(authenticator, authorizationClient);
     this.store = storeFactory.create();
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));

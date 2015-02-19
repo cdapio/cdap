@@ -24,6 +24,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -52,8 +53,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public PreferencesHttpHandler(Authenticator authenticator, PreferencesStore preferencesStore,
-                                StoreFactory storeFactory, SecureHandler secureHandler) {
-    super(authenticator, secureHandler);
+                                StoreFactory storeFactory, AuthorizationClient authorizationClient) {
+    super(authenticator, authorizationClient);
     this.preferencesStore = preferencesStore;
     this.store = storeFactory.create();
   }

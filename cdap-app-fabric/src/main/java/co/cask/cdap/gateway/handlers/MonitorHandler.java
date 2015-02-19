@@ -22,6 +22,7 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -55,8 +56,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
-                        ServiceStore serviceStore, SecureHandler secureHandler) throws Exception {
-    super(authenticator, secureHandler);
+                        ServiceStore serviceStore, AuthorizationClient authorizationClient) throws Exception {
+    super(authenticator, authorizationClient);
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
   }
