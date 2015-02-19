@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -33,12 +34,17 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.SimpleKVTable;
+import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
+import co.cask.cdap.proto.Id;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -53,12 +59,13 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +78,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private RemoteDatasetFramework framework;
+  private LocalLocationFactory locationFactory;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -78,9 +86,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   @Before
   public void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    File datasetDir = new File(tmpFolder.newFolder(), "dataset");
-    datasetDir.mkdirs();
-    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    File dataDir = new File(tmpFolder.newFolder(), "data");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
@@ -95,7 +102,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    LocalLocationFactory locationFactory = new LocalLocationFactory();
+    locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     framework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
                                            new LocalDatasetTypeClassLoaderFactory());
 
@@ -109,16 +116,15 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     InMemoryDatasetFramework mdsFramework =
       new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                   ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule()));
+                                   ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule(),
+                                                   "core", new CoreDatasetsModule()));
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
-                                                        // note: in this test we start with empty modules
-                                                        Collections.<String, DatasetModule>emptyMap()),
+                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
@@ -138,11 +144,45 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     startLatch.await(5, TimeUnit.SECONDS);
+
+    // this usually happens while creating a namespace, however not doing that in data fabric tests
+    Locations.mkdirsIfNotExists(locationFactory.create(Constants.SYSTEM_NAMESPACE));
+    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
+  }
+
+  // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
+  // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
+  // in RemoteDatasetFramework.
+  @Test
+  public void testSystemNamespace() throws DatasetManagementException {
+    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
+    DatasetFramework framework = getFramework();
+    // Adding module to system namespace should fail
+    try {
+      framework.addModule(Id.DatasetModule.from(systemNamespace, "keyValue"),
+                          new SingleTypeModule(SimpleKVTable.class));
+      Assert.fail("Should not be able to add a module to system namespace");
+    } catch (DatasetManagementException e) {
+    }
+    Assert.assertTrue(framework.hasSystemType("orderedTable"));
+    Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
+    try {
+      framework.deleteModule(Id.DatasetModule.from(systemNamespace, "orderedTable-memory"));
+      Assert.fail("Should not be able to delete a default module.");
+    } catch (DatasetManagementException e) {
+    }
+    try {
+      framework.deleteAllModules(systemNamespace);
+      Assert.fail("Should not be able to delete modules from system namespace");
+    } catch (DatasetManagementException e) {
+    }
   }
 
   @After
   public void after() {
     Services.chainStop(service, opExecutorService, txManager);
+    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()));
+    Locations.deleteQuietly(locationFactory.create(Constants.SYSTEM_NAMESPACE));
   }
 
   @Override

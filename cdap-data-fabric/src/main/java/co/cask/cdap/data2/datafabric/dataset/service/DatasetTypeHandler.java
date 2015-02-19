@@ -25,6 +25,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
@@ -64,15 +65,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private final DatasetTypeManager manager;
   private final LocationFactory locationFactory;
   private final CConfiguration cConf;
-  private final String archiveDirBase;
 
   @Inject
   public DatasetTypeHandler(DatasetTypeManager manager, LocationFactory locationFactory, CConfiguration conf) {
     this.manager = manager;
     this.locationFactory = locationFactory;
     this.cConf = conf;
-    String dataFabricDir = conf.get(Constants.Dataset.Manager.OUTPUT_DIR);
-    this.archiveDirBase = dataFabricDir + "/archive";
   }
 
   @Override
@@ -89,7 +87,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules")
   public void listModules(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
-    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules());
+    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules(Id.Namespace.from(namespaceId)));
     Collections.sort(list, new Comparator<DatasetModuleMeta>() {
       @Override
       public int compare(DatasetModuleMeta o1, DatasetModuleMeta o2) {
@@ -103,8 +101,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Cannot delete system dataset modules.");
+      return;
+    }
     try {
-      manager.deleteModules();
+      manager.deleteModules(Id.Namespace.from(namespaceId));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
@@ -116,13 +118,29 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
                                 @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Cannot deploy modules to system namespace.");
+      return null;
+    }
+
+    // verify namespace directory exists
+    final Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+      LOG.error(msg);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
+      return null;
+    }
 
     // Store uploaded content to a local temp file
-    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String tempBase = String.format("%s/%s", cConf.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
+    File tempDir = new File(tempBase, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
+
+    final Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespaceId, name);
 
     return new AbstractBodyConsumer(File.createTempFile("dataset-", ".jar", tempDir)) {
       @Override
@@ -137,16 +155,18 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
           return;
         }
 
-        LOG.info("Adding module {}, class name: {}", name, className);
+        LOG.info("Adding module {}, class name: {}", datasetModuleId, className);
 
-        Location archiveDir = locationFactory.create(archiveDirBase).append("account_placeholder");
+        String dataFabricDir = cConf.get(Constants.Dataset.Manager.OUTPUT_DIR);
+        Location archiveDir = namespaceHomeLocation.append(dataFabricDir).append(name)
+          .append(Constants.ARCHIVE_DIR);
         String archiveName = name + ".jar";
         Location archive = archiveDir.append(archiveName);
 
         // Copy uploaded content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         try {
-          conflictIfModuleExists(name);
+          conflictIfModuleExists(datasetModuleId);
 
           Locations.mkdirsIfNotExists(archiveDir);
 
@@ -154,18 +174,18 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
           Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
           // Check if the module exists one more time to minimize the window of possible conflict
-          conflictIfModuleExists(name);
+          conflictIfModuleExists(datasetModuleId);
 
           // Finally, move archive to final location
-          LOG.debug("Storing module {} jar at {}", name, archive.toURI());
+          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive.toURI());
           if (tmpLocation.renameTo(archive) == null) {
             throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
                                                 tmpLocation.toURI(), archive.toURI()));
           }
 
-          manager.addModule(name, className, archive);
+          manager.addModule(datasetModuleId, className, archive);
           // todo: response with DatasetModuleMeta of just added module (and log this info)
-          LOG.info("Added module {}", name);
+          LOG.info("Added module {}", datasetModuleId);
           responder.sendStatus(HttpResponseStatus.OK);
         } catch (Exception e) {
           // In case copy to temporary file failed, or rename failed
@@ -189,9 +209,14 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot delete modules from '%s' namespace.", namespaceId));
+      return;
+    }
     boolean deleted;
     try {
-      deleted = manager.deleteModule(name);
+      deleted = manager.deleteModule(Id.DatasetModule.from(namespaceId, name));
     } catch (DatasetModuleConflictException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -209,7 +234,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(name);
+    DatasetModuleMeta moduleMeta = manager.getModule(Id.DatasetModule.from(namespaceId, name));
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -222,7 +247,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void listTypes(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
-    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes());
+    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes(Id.Namespace.from(namespaceId)));
     Collections.sort(list, new Comparator<DatasetTypeMeta>() {
       @Override
       public int compare(DatasetTypeMeta o1, DatasetTypeMeta o2) {
@@ -237,7 +262,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getTypeInfo(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
 
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(name);
+    DatasetTypeMeta typeMeta = manager.getTypeInfo(Id.DatasetType.from(namespaceId, name));
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -248,14 +273,14 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   /**
    * Checks if the given module name already exists.
    *
-   * @param moduleName name of the module to check
+   * @param datasetModuleId {@link Id.DatasetModule} of the module to check
    * @throws DatasetModuleConflictException if the module exists
    */
-  private void conflictIfModuleExists(String moduleName) throws DatasetModuleConflictException {
-    DatasetModuleMeta existing = manager.getModule(moduleName);
+  private void conflictIfModuleExists(Id.DatasetModule datasetModuleId) throws DatasetModuleConflictException {
+    DatasetModuleMeta existing = manager.getModule(datasetModuleId);
     if (existing != null) {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
-                                     moduleName, existing);
+                                     datasetModuleId, existing);
       throw new DatasetModuleConflictException(message);
     }
   }

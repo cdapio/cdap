@@ -150,9 +150,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    // hasType is really hasDefaultType, so using system namespace
-    return clientCache.getUnchecked(Id.Namespace.from(Constants.SYSTEM_NAMESPACE)).getType(typeName) != null;
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
+  }
+
+  @Override
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getId()) != null;
   }
 
   @Override
@@ -199,6 +203,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
+        // TODO: should be namespaced?
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
         clientCache.getUnchecked(moduleId.getNamespace()).addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
       } finally {
