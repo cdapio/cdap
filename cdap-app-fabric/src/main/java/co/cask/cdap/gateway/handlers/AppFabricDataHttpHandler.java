@@ -65,7 +65,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of streams associated with account.
+   * Returns a list of streams associated with namespace.
    */
   @GET
   @Path("/streams")
@@ -98,7 +98,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of dataset associated with account.
+   * Returns a list of dataset associated with namespace.
    */
   @GET
   @Path("/datasets")
@@ -109,7 +109,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a dataset associated with account.
+   * Returns a dataset associated with namespace.
    */
   @GET
   @Path("/datasets/{dataset-id}")
