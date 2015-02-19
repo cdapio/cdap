@@ -56,7 +56,7 @@ public class StreamUtilsTest {
   }
 
   @Test
-  public void testConstructStateStoreTableName() {
+  public void testGetStateStoreTableName() {
     Id.Namespace namespace = Id.Namespace.from("foonamespace");
     String expected = "cdap.foonamespace.stream.state.store";
     Assert.assertEquals(expected, StreamUtils.getStateStoreTableName(namespace));
