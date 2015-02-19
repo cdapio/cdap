@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.metrics.guice;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
@@ -23,8 +25,6 @@ import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;

@@ -96,7 +96,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void deleteAllModules() throws DatasetManagementException {
+  public synchronized void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
     // check if there are any datasets that use non-default types that we want to remove
     for (DatasetSpecification spec : instances.values()) {
       if (!defaultTypes.contains(spec.getType())) {

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
