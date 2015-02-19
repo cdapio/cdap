@@ -337,7 +337,7 @@ public class AdapterService extends AbstractIdleService {
 
       String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
       Location destination = namespaceHomeLocation.append(appFabricDir)
-        .append(Constants.AppFabric.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
+        .append(Constants.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
                                                          ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
