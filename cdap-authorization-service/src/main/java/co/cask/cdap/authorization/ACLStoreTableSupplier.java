@@ -21,6 +21,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTable;
 import co.cask.cdap.proto.Id;
+import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.client.ACLStoreSupplier;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -58,7 +59,7 @@ public class ACLStoreTableSupplier implements ACLStoreSupplier {
   }
 
   @Override
-  public ACLStoreTable get() {
+  public ACLStore get() {
     return supplier.get();
   }
 }
