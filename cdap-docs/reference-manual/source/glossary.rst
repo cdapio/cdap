@@ -14,7 +14,8 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services, and Procedures that read from and write to the data virtualization layer in CDAP.
+      A collection of Programs, Services, and Procedures (deprectated) that read and write
+      through the data abstraction layer in CDAP.
       
    Stream
       The primary means of bringing data from external systems into CDAP in realtime; an
@@ -59,16 +60,17 @@ Glossary
       IP-to-Geo lookup and serving user-profiles.      
 
    Procedure
-      Procedures are used to query CDAP and its Datasets and retrieve results, making
+      Procedures (deprecated) are used to query CDAP and its Datasets and retrieve results, making
       synchronous calls into CDAP from an external system and perform server-side
       processing on-demand. They are similar to a stored procedure in a traditional database
       system. Procedures are typically used to post-process data at query time.
       
-   Data Virtualization
+   Data Abstraction
       Abstraction of the actual representation of data in storage.
       
-   Application Virtualization
-      Abstraction of an application to allow the same application to run in multiple implementations without modification.
+   Application Abstraction
+      Application abstraction allows the same application to run in multiple implementations 
+      and environments without modification.
       
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.

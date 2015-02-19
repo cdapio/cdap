@@ -14,20 +14,20 @@ CDAP Documentation v\ |version|
 
 .. rubric:: Introduction to the Cask Data Application Platform
 
-The Cask |(TM)| Data Application Platform (CDAP) is an open source application development
+The Cask |(TM)| Data Application Platform (CDAP) is an integrated, open source application development
 platform for the Hadoop ecosystem that provides developers with data and application
-virtualization to accelerate application development, address a broader range of real-time
+abstractions to accelerate application development, address a broader range of real-time
 and batch use cases, and deploy applications into production while satisfying enterprise
 requirements.
 
 CDAP is a layer of software running on top of Apache |(TM)| Hadoop |(R)| platforms such as the
-Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides three essential components:
+Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides essential capabilities:
 
-- Virtualization of data in the Hadoop environment through logical representations of underlying
+- Abstraction of data in the Hadoop environment through logical representations of underlying
   data;
-- Virtualization of applications through application containers; and
-- Services and tools that enable faster application creation in development and higher degrees of
-  operational control in production.
+- Portability of applications through decoupling of underlying infrastructures;
+- Services and tools that enable faster application creation in development; and 
+- Higher degrees of operational control in production through enterprise best-practices.
 
 CDAP exposes developer APIs (Application Programming Interfaces) for creating applications
 and accessing core CDAP services. CDAP defines and implements a diverse collection of services that land
@@ -49,7 +49,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
   - **Getting Started:** A quick, hands-on introduction to CDAP
   - **Overview:** The overall architecture and technology behind CDAP
-  - **Building Blocks:** The two core virtualizations in CDAP: Data and Applications, and their components
+  - **Building Blocks:** The two core abstractions in CDAP: Data and Applications, and their components
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework, tools and procedures for debugging, and packaging your completed application
   - **Ingesting Data:** Different techniques for ingesting data into CDAP

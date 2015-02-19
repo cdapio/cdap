@@ -3,24 +3,24 @@
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
-Core Virtualizations
+Core Abstractions
 ============================================
 
-.. rubric:: Data Virtualization
+.. rubric:: Data Abstractions
 
-There are two main data virtualizations: *Streams* and *Datasets*. Streams are ordered,
+There are two main data abstractions: *Streams* and *Datasets*. Streams are ordered,
 partitioned sequences of data, and are the primary means of bringing data from external
 systems into the CDAP in realtime. Datasets are abstractions on top of data, allowing you
 to access your data using higher-level abstractions and generic, reusable Java
 implementations of common data patterns instead of requiring you to manipulate data with
 low-level APIs.
 
-.. rubric:: Application Virtualization
+.. rubric:: Application Abstraction
 
-Applications are a virtualization on top of your data, hiding low-level details of
-individual programming paradigms and runtimes, while providing access to many useful and
-powerful services provided by CDAP such as the ability to dynamically scale processing
-units, distributed transactions, and service discovery. 
+Applications hide low-level details of individual programming paradigms and runtimes,
+while providing access to many useful and powerful services provided by CDAP such as the
+ability to dynamically scale processing units, distributed transactions, and service
+discovery. 
 
 Applications are abstracted away from the platform that runs the application. When you
 deploy and run the application into a specific installation of CDAP, the appropriate
@@ -31,7 +31,7 @@ seamlessly deploy it in a different environment—such as your distributed stagi
 
 .. rubric:: Data and Applications Combined
 
-With your data virtualized in CDAP as *Streams* and *Datasets*, you are able to process
+With your data abstracted in CDAP as *Streams* and *Datasets*, you are able to process
 that data in realtime or in batch using a Program (*Flow,* *MapReduce*, *Spark*,
 *Workflow*) and you can serve data to external clients using a *Service*.
 
