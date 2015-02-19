@@ -60,6 +60,12 @@ public final class MetricsConstants {
   // Number of seconds to subtract from current timestamp when query without "end" time.
   public static final long QUERY_SECOND_DELAY = 2;
 
+  // for migration purpose
+  public static final String EMPTY_TAG = "-";
+  public static final int DEFAULT_CONTEXT_DEPTH = 6;
+  public static final int DEFAULT_METRIC_DEPTH = 4;
+  public static final int DEFAULT_TAG_DEPTH = 3;
+
   private MetricsConstants() {
   }
 }
