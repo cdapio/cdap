@@ -21,30 +21,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents branch in the {@link WorkflowFork}.
+ * Represents fork in the {@link Workflow}.
  */
-public final class WorkflowForkBranch {
-  private final String name;
-  private final List<WorkflowNode> nodes;
+public final class WorkflowForkSpecification {
 
-  public WorkflowForkBranch(String name, List<WorkflowNode> nodes) {
-    this.name = name;
-    this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
+  private final List<List<WorkflowNode>> forkBranches;
+
+  public WorkflowForkSpecification(List<List<WorkflowNode>> forkBranches) {
+    this.forkBranches = Collections.unmodifiableList(new ArrayList<List<WorkflowNode>>(forkBranches));
   }
 
   /**
    *
-   * @return the name of the branch
+   * @return the list of branches for this fork
    */
-  public String getName() {
-    return name;
-  }
-
-  /**
-   *
-   * @return the list of {@link WorkflowNode} in the branch
-   */
-  public List<WorkflowNode> getNodes() {
-    return nodes;
+  public List<List<WorkflowNode>> getBranches() {
+    return forkBranches;
   }
 }

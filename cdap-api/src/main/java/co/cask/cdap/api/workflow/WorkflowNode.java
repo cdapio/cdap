@@ -17,24 +17,23 @@
 package co.cask.cdap.api.workflow;
 
 /**
- * Represents type and program associated with the nodes in the {@link Workflow}
+ * Represents node in the {@link Workflow}.
  */
 public final class WorkflowNode {
-  private final String nodeName;
+  private final String nodeId;
   private final WorkflowNodeType nodeType;
 
-  public WorkflowNode(String nodeName, WorkflowNodeType nodeType) {
-    this.nodeName = nodeName;
+  public WorkflowNode(String nodeId, WorkflowNodeType nodeType) {
+    this.nodeId = nodeId;
     this.nodeType = nodeType;
   }
 
   /**
-   * If the {@link WorkflowNodeType} of the {@link WorkflowNode} is {@link WorkflowNodeType.ACTION},
-   * the name of the node is same as the name of the program or custom action represented by the node
-   * @return the name of the {@link WorkflowNode}
+   * Get the id of the node
+   * @return
    */
-  public String getName() {
-    return nodeName;
+  public String getNodeId() {
+    return nodeId;
   }
 
   /**
@@ -56,12 +55,12 @@ public final class WorkflowNode {
 
     WorkflowNode that = (WorkflowNode) o;
 
-    return nodeName.equals(that.nodeName) && nodeType == that.nodeType;
+    return nodeId.equals(that.nodeId) && nodeType == that.nodeType;
   }
 
   @Override
   public int hashCode() {
-    int result = nodeName.hashCode();
+    int result = nodeId.hashCode();
     result = 31 * result + nodeType.hashCode();
     return result;
   }

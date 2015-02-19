@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.workflow;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,30 +73,8 @@ public interface WorkflowConfigurer {
   void addAction(WorkflowAction action);
 
   /**
-   * Adds a MapReduce program as a next sequential step to the branch specified by the input
-   * @param mapReduce the name of the MapReduce program
-   * @param branchName the name of the branch to which program needs to be added
+   * Adds a fork as a next sequential step in the {@link Workflow}
+   * @return the configurer for the fork
    */
-  void addMapReduceToBranch(String mapReduce, String branchName);
-
-  /**
-   * Adds a Spark program as a next sequential step to the branch specified by the input
-   * @param spark the name of the Spark program
-   * @param branchName the name of the branch to which the program needs to be added
-   */
-  void addSparkToBranch(String spark, String branchName);
-
-  /**
-   * Adds a custom action as a next sequential step to the branch sepcified by the input
-   * @param action the {@link WorkflowAction} to be added to the branch
-   * @param branchName the name of the branch to which the custom action needs to be added
-   */
-  void addActionToBranch(WorkflowAction action, String branchName);
-
-  /**
-   * Adds a fork as a next sequential step to the {@link Workflow}
-   * @param fork the name of the fork to be added to the {@link Workflow}
-   * @param branches {@link List} of branches to be added to the fork
-   */
-  void addFork(String fork, List<String> branches);
+  WorkflowForkConfigurer addFork();
 }

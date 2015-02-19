@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.workflow;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -109,38 +108,10 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a MapReduce program as a next sequential step to the specified fork branch
-   * @param mapReduce the name of the MapReduce program to be added
-   * @param branch the name of the branch to which the program is to be added
-   */
-  protected final void addMapReduceToBranch(String mapReduce, String branch) {
-    configurer.addMapReduceToBranch(mapReduce, branch);
-  }
-
-  /**
-   * Adds a Spark program as a next sequential step to the specified fork branch
-   * @param spark the name of the Spark program to be added
-   * @param branch the name of the branch to which the program is to be added
-   */
-  protected final void addSparkToBranch(String spark, String branch) {
-    configurer.addSparkToBranch(spark, branch);
-  }
-
-  /**
-   * Adds a custom action as a next sequential step to the specified fork branch
-   * @param action the WorkflowAction to be added
-   * @param branch the name of the branch to which the WorkflowAction is to be added
-   */
-  protected final void addActionToBranch(WorkflowAction action, String branch) {
-    configurer.addActionToBranch(action, branch);
-  }
-
-  /**
    * Adds a fork to the {@link Workflow}
-   * @param fork the name of the fork to be added to the {@link Workflow}
-   * @param branches the list of branches to be added to the {@link Workflow}
+   * @return the {@link WorkflowForkConfigurer}
    */
-  protected final void addFork(String fork, List<String> branches) {
-    configurer.addFork(fork, branches);
+  protected final WorkflowForkConfigurer addFork() {
+    return configurer.addFork();
   }
 }

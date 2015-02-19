@@ -17,7 +17,7 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowFork;
+import co.cask.cdap.api.workflow.WorkflowForkSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.gson.JsonDeserializationContext;
@@ -30,7 +30,6 @@ import com.google.gson.JsonSerializationContext;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -47,9 +46,8 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     // TODO:SAGAR how to handle upgrades
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
-    jsonObj.add("forks", serializeMap(src.getForks(), context, WorkflowFork.class));
-    jsonObj.add("mapreduces", serializeSet(src.getMapreduces(), context, String.class));
-    jsonObj.add("sparks", serializeSet(src.getSparks(), context, String.class));
+    jsonObj.add("forks", serializeMap(src.getForks(), context, WorkflowForkSpecification.class));
+    jsonObj.add("actions", serializeMap(src.getActions(), context, ScheduleProgramInfo.class));
     jsonObj.add("customActionMap", serializeMap(src.getCustomActionMap(), context, WorkflowActionSpecification.class));
 
     return jsonObj;
@@ -65,13 +63,13 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
-    Map<String, WorkflowFork> forks = deserializeMap(jsonObj.get("forks"), context, WorkflowFork.class);
-    Set<String> mapreduces = deserializeSet(jsonObj.get("mapreduces"), context, String.class);
-    Set<String> sparks = deserializeSet(jsonObj.get("sparks"), context, String.class);
+    Map<String, WorkflowForkSpecification> forks = deserializeMap(jsonObj.get("forks"), context,
+                                                                  WorkflowForkSpecification.class);
+    Map<String, ScheduleProgramInfo> actions = deserializeMap(jsonObj.get("actions"), context,
+                                                              ScheduleProgramInfo.class);
     Map<String, WorkflowActionSpecification> customActionMap = deserializeMap(jsonObj.get("customActionMap"), context,
                                                                     WorkflowActionSpecification.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes, forks, mapreduces, sparks,
-                                     customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes, forks, actions, customActionMap);
   }
 }

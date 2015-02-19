@@ -123,7 +123,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       WorkflowNode node = iterator.next();
       switch (node.getType()) {
         case ACTION:
-          ScheduleProgramInfo actionInfo = workflowSpec.getProgramInfo(node.getName());
+          ScheduleProgramInfo actionInfo = workflowSpec.getActions().get(node.getNodeId());
           switch (actionInfo.getProgramType()) {
             case MAPREDUCE:
               MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());

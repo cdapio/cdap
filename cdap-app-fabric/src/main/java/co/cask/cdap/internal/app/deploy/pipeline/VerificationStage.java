@@ -23,8 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowFork;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
+import co.cask.cdap.api.workflow.WorkflowForkSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -166,18 +165,18 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        verifyWorkflowAction(appSpec, workflowSpec.getProgramInfo(node.getName()));
+        verifyWorkflowAction(appSpec, workflowSpec.getActions().get(node.getNodeId()));
         break;
       case FORK:
-        for (Map.Entry<String, WorkflowFork> entry : workflowSpec.getForks().entrySet()) {
-          List<WorkflowForkBranch> forkBranches = entry.getValue().getBranches();
+        for (Map.Entry<String, WorkflowForkSpecification> entry : workflowSpec.getForks().entrySet()) {
+          List<List<WorkflowNode>> forkBranches = entry.getValue().getBranches();
           if (forkBranches == null) {
             throw new RuntimeException(String.format("Fork is added in the Workflow '%s' without any branches",
                                                      workflowSpec.getName()));
           }
 
-          for (WorkflowForkBranch branch : forkBranches) {
-            for (WorkflowNode n : branch.getNodes()) {
+          for (List<WorkflowNode> branch : forkBranches) {
+            for (WorkflowNode n : branch) {
               verifyWorkflowNode(appSpec, workflowSpec, n);
             }
           }
