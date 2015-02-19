@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -23,20 +23,20 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Query that specifies parameters to delete entries from cube.
+ * Query that specifies parameters to delete entries from {@link MetricStore}.
  */
-public class CubeDeleteQuery {
+public class MetricDeleteQuery {
 
   private final long startTs;
   private final long endTs;
-  private final String measureName;
+  private final String metricName;
   private final Map<String, String> sliceByTagValues;
 
-  public CubeDeleteQuery(long startTs, long endTs, String measureName,
-                         Map<String, String> sliceByTagValues) {
+  public MetricDeleteQuery(long startTs, long endTs, String metricName,
+                           Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
-    this.measureName = measureName;
+    this.metricName = metricName;
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
   }
 
@@ -48,8 +48,8 @@ public class CubeDeleteQuery {
     return endTs;
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public String getMetricName() {
+    return metricName;
   }
 
   public Map<String, String> getSliceByTags() {
@@ -61,7 +61,7 @@ public class CubeDeleteQuery {
     return Objects.toStringHelper(this)
       .add("startTs", startTs)
       .add("endTs", endTs)
-      .add("measureName", measureName)
+      .add("metricName", metricName)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .toString();
   }

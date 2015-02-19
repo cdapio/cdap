@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -26,21 +25,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Represents a single time series defined by a measure name and set of tag values.
+ * Represents a single time series defined by a metric name and set of tag values.
  */
-public final class TimeSeries {
-  private final String measureName;
+public final class MetricTimeSeries {
+  private final String metricName;
   private final Map<String, String> tagValues;
   private final List<TimeValue> timeValues;
 
-  public TimeSeries(String measureName, Map<String, String> tagValues, List<TimeValue> timeValues) {
-    this.measureName = measureName;
+  public MetricTimeSeries(String metricName, Map<String, String> tagValues, List<TimeValue> timeValues) {
+    this.metricName = metricName;
     this.tagValues = ImmutableMap.copyOf(tagValues);
     this.timeValues = ImmutableList.copyOf(timeValues);
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public String getMetricName() {
+    return metricName;
   }
 
   public Map<String, String> getTagValues() {
@@ -60,23 +59,23 @@ public final class TimeSeries {
       return false;
     }
 
-    TimeSeries that = (TimeSeries) o;
+    MetricTimeSeries that = (MetricTimeSeries) o;
 
-    return Objects.equal(measureName, that.measureName) &&
+    return Objects.equal(metricName, that.metricName) &&
       Objects.equal(tagValues, that.tagValues) &&
       Objects.equal(timeValues, that.timeValues);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(measureName, tagValues, timeValues);
+    return Objects.hashCode(metricName, tagValues, timeValues);
   }
 
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("measureName", measureName)
+      .add("metricName", metricName)
       .add("tagValues", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(tagValues))
       .add("timeValues", Joiner.on(",").join(timeValues)).toString();
   }

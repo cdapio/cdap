@@ -14,30 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 
-import java.util.Map;
+import java.util.List;
 
 /**
- * Query that specifies parameters to delete entries from cube.
+ * Defines a query to perform Exploration and Search on {@link MetricStore} data.
+ * Given a list of {@link TagValue} this explore query can be used
+ * to find next set of tags available or the measureNames belonging to this tag list.
  */
-public class CubeDeleteQuery {
-
+public class MetricSearchQuery {
   private final long startTs;
   private final long endTs;
-  private final String measureName;
-  private final Map<String, String> sliceByTagValues;
+  private final int resolution;
+  private final int limit;
+  // todo: use NavigableMap to inform that there are no same tag names?
+  private final List<TagValue> tagValues;
 
-  public CubeDeleteQuery(long startTs, long endTs, String measureName,
-                         Map<String, String> sliceByTagValues) {
+  public MetricSearchQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
-    this.measureName = measureName;
-    this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
+    this.resolution = resolution;
+    this.limit = limit;
+    this.tagValues = tagValues;
   }
 
   public long getStartTs() {
@@ -48,12 +50,16 @@ public class CubeDeleteQuery {
     return endTs;
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public int getResolution() {
+    return resolution;
   }
 
-  public Map<String, String> getSliceByTags() {
-    return sliceByTagValues;
+  public int getLimit() {
+    return limit;
+  }
+
+  public List<TagValue> getTagValues() {
+    return tagValues;
   }
 
   @Override
@@ -61,8 +67,7 @@ public class CubeDeleteQuery {
     return Objects.toStringHelper(this)
       .add("startTs", startTs)
       .add("endTs", endTs)
-      .add("measureName", measureName)
-      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
-      .toString();
+      .add("resolution", resolution)
+      .add("tagValues", Joiner.on(",").join(tagValues)).toString();
   }
 }

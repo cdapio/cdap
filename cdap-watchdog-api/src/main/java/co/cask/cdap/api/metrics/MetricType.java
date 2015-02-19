@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.transport;
+package co.cask.cdap.api.metrics;
 
 /**
  * MetricType - COUNTER or GAUGE type

@@ -16,15 +16,15 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.data.TimeSeriesInterpolator;
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.metrics.store.timeseries.Fact;
 import co.cask.cdap.metrics.store.timeseries.FactScan;
 import co.cask.cdap.metrics.store.timeseries.FactScanResult;
 import co.cask.cdap.metrics.store.timeseries.FactScanner;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -159,7 +159,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public Collection<String> getMeasureNames(CubeExploreQuery query) throws Exception {
+  public Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception {
     return resolutionToFactTable.get(query.getResolution()).getMeasureNames(query.getTagValues(),
                                                                             query.getStartTs(), query.getEndTs());
   }
