@@ -35,7 +35,7 @@ angular.module(PKG.name + '.commons')
 
       link: function (scope, elem, attr, ngModel) {
 
-        function getContext () {
+        function getBaseContext () {
           var output;
 
           if(scope.metric.type==='system') {
@@ -49,17 +49,20 @@ angular.module(PKG.name + '.commons')
               $log.warn('metric-picker using default namespace as context!');
             }
 
-          }
-
-          if(scope.metric.context) {
-            output += '.' + scope.metric.context;
+            output = 'ns.' + output;
           }
 
           return output;
         }
 
         function fetchAhead () {
-          var context = getContext();
+          var b = getBaseContext(),
+              bLen = b.length+1,
+              context = b;
+
+          if(scope.metric.context) {
+            context += '.' + scope.metric.context;
+          }
 
           dSrc.request(
             {
@@ -69,9 +72,7 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               scope.available.contexts = res.map(function(d){
-                var a = d.split('.');
-                a.shift(); // remove the first element
-                return a.join('.');
+                return d.substring(bLen);
               });
             }
           );
@@ -111,7 +112,7 @@ angular.module(PKG.name + '.commons')
 
           if(newVal.context && newVal.name) {
             ngModel.$setViewValue({
-              context: getContext(),
+              context: getBaseContext() + '.' + newVal.context,
               name: newVal.name
             });
           }
