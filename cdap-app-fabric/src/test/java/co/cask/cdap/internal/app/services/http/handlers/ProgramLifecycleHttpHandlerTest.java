@@ -345,7 +345,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
 
     // start the flow
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
+      .getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
@@ -355,7 +356,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramController.State.STOPPED.toString(), returnedBody.get(1).get("status").getAsString());
 
     // start the service
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE
+      .getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start"));
     // test status API after starting the service
     response = doPost(statusUrl2, "[{'appId': 'AppWithServices', 'programType': 'Service', 'programId': " +
       "'NoOpService'}]");
@@ -642,7 +644,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // change stream input in the wrong namespace
-    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId, "stream1", "stream2"));
+    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId, "stream1",
+                                                           "stream2"));
     // change stream input to a non-existing stream in the right namespace
     Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream1",
                                                            "notfound"));
@@ -660,7 +663,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stream1 is no longer a connection
     Assert.assertEquals(500, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream3",
                                                            "stream1"));
-    Assert.assertEquals(200, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream4", "stream1"));
+    Assert.assertEquals(200, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream4",
+                                                           "stream1"));
   }
 
   private void setAndTestRuntimeArgs(String namespace, String appId, String runnableType, String runnableId,
@@ -668,7 +672,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
-                                                           "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+                                                           "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                         namespace);
     response = doPut(versionedRuntimeArgsUrl, argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -742,7 +747,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                           APP_WITH_SCHEDULE_WORKFLOW_NAME, runtimeArguments);
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
+                                                         APP_WITH_SCHEDULE_WORKFLOW_NAME);
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
@@ -754,7 +760,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(nextRunTime);
     Assert.assertTrue(nextRunTime > current);
 
-    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME, "completed");
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_WORKFLOW_NAME,
+                                "completed");
     scheduleHistoryRuns(5, runsUrl, 0);
 
     //Check schedule status
@@ -1072,7 +1079,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private boolean dequeueOne(QueueName queueName) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
     final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
-                                                                     new ConsumerConfig(1L, 0, 1, DequeueStrategy.ROUND_ROBIN, null),
+                                                                     new ConsumerConfig(1L, 0, 1,
+                                                                                        DequeueStrategy.ROUND_ROBIN,
+                                                                                        null),
                                                                      1);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
