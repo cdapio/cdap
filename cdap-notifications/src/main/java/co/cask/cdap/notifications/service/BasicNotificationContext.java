@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -37,10 +38,13 @@ import javax.annotation.Nullable;
 public final class BasicNotificationContext implements NotificationContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicNotificationContext.class);
 
+  private final Id.Namespace namespaceId;
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
 
-  public BasicNotificationContext(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient) {
+  public BasicNotificationContext(Id.Namespace namespaceId, DatasetFramework dsFramework,
+                                  TransactionSystemClient transactionSystemClient) {
+    this.namespaceId = namespaceId;
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
   }
@@ -53,7 +57,8 @@ public final class BasicNotificationContext implements NotificationContext {
         final TransactionContext context = new TransactionContext(transactionSystemClient);
         try {
           context.start();
-          runnable.run(new DynamicDatasetContext(context, dsFramework, context.getClass().getClassLoader()) {
+          runnable.run(new DynamicDatasetContext(namespaceId, context, dsFramework,
+                                                 context.getClass().getClassLoader()) {
             @Nullable
             @Override
             protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

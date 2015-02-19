@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -91,7 +91,7 @@ public final class BatchMetricsHandler extends AuthenticatedHttpHandler {
       LOG.trace("Requests: {}", uris);
       for (URI uri : uris) {
         currPath = uri.toString();
-        CubeQuery query = MetricQueryParser.parse(uri);
+        MetricDataQuery query = MetricQueryParser.parse(uri);
 
         JsonObject json = new JsonObject();
         json.addProperty("path", uri.toString());
