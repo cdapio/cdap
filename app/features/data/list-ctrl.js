@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.data')
     var dataSrc = new MyDataSource($scope);
     $scope.dataList = [];
     dataSrc.request({
-      _cdapPathV2: '/streams'
+      _cdapNsPath: '/streams'
     })
       .then(function(res) {
         $scope.dataList = res

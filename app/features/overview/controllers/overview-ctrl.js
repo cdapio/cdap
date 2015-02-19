@@ -44,7 +44,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
     });
 
   dataSrc.request({
-    _cdapPathV2: '/data/datasets'
+    _cdapPathV2: '/datasets'
   })
     .then(function(res) {
       $scope.datasets = res;
