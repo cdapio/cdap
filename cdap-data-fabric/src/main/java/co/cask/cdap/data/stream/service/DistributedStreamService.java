@@ -57,6 +57,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.zookeeper.LeaderElection;
@@ -71,6 +72,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -107,6 +110,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private LeaderElection leaderElection;
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
+  private ExecutorService heartbeatsSubscriptionExecutor;
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
@@ -145,6 +149,8 @@ public class DistributedStreamService extends AbstractStreamService {
     coordinationSubscription = resourceCoordinatorClient.subscribe(discoverableSupplier.get().getName(),
                                                                    new StreamsLeaderHandler());
 
+    heartbeatsSubscriptionExecutor = Executors.newSingleThreadExecutor(
+      Threads.createDaemonThreadFactory("heartbeats-subscription-executor"));
     heartbeatsSubscription = subscribeToHeartbeatsFeed();
     leaderListenerCancellable = addLeaderListener(new StreamLeaderListener() {
       @Override
@@ -168,6 +174,10 @@ public class DistributedStreamService extends AbstractStreamService {
 
     if (heartbeatsSubscription != null) {
       heartbeatsSubscription.cancel();
+    }
+
+    if (heartbeatsSubscriptionExecutor != null) {
+      heartbeatsSubscriptionExecutor.shutdownNow();
     }
 
     heartbeatPublisher.stopAndWait();
@@ -299,34 +309,41 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @return a {@link Cancellable} to cancel the subscription
    * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
-   * @throws NotificationFeedException in case of any other error concerning the feed
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, NotificationFeedException {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, InterruptedException {
+    LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.DEFAULT_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
-    LOG.trace("Subscribing to stream heartbeats notification feed");
-    return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
-      @Override
-      public Type getNotificationFeedType() {
-        return StreamWriterHeartbeat.class;
-      }
-
-      @Override
-      public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
-        LOG.trace("Received heartbeat {}", heartbeat);
-        for (Map.Entry<Id.Stream, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
-          StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
-          if (streamSizeAggregator == null) {
-            LOG.trace("Aggregator for stream {} is null", entry.getKey());
-            continue;
+    while (true) {
+      try {
+        return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
+          @Override
+          public Type getNotificationFeedType() {
+            return StreamWriterHeartbeat.class;
           }
-          streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
-        }
+
+          @Override
+          public void received(StreamWriterHeartbeat heartbeat, NotificationContext notificationContext) {
+            LOG.trace("Received heartbeat {}", heartbeat);
+            for (Map.Entry<Id.Stream, Long> entry : heartbeat.getStreamsSizes().entrySet()) {
+              StreamSizeAggregator streamSizeAggregator = aggregators.get(entry.getKey());
+              if (streamSizeAggregator == null) {
+                LOG.trace("Aggregator for stream {} is null", entry.getKey());
+                continue;
+              }
+              streamSizeAggregator.bytesReceived(heartbeat.getInstanceId(), entry.getValue());
+            }
+          }
+        }, heartbeatsSubscriptionExecutor);
+      } catch (NotificationFeedException e) {
+        // Most probably, the dataset service is not up. We retry
+        LOG.warn("Could not subscribe to heartbeats feed", e);
+        TimeUnit.MILLISECONDS.sleep(200);
       }
-    });
+    }
   }
 
   /**
@@ -536,7 +553,7 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamId.getName())
+        .setName(String.format("%sSize", streamId.getName()))
         .build();
     }
 
@@ -584,7 +601,12 @@ public class DistributedStreamService extends AbstractStreamService {
         sum += size;
       }
 
-      if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
+      boolean init;
+      synchronized (this) {
+        init = isInit;
+        isInit = false;
+      }
+      if (init || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
@@ -592,7 +614,6 @@ public class DistributedStreamService extends AbstractStreamService {
           countFromFiles.set(0);
         }
       }
-      isInit = false;
     }
 
     private long toBytes(int mb) {
