@@ -24,6 +24,7 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
@@ -51,8 +52,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public NamespaceHttpHandler(Authenticator authenticator, AuthorizationClient authorizationClient,
+                              NamespaceAdmin namespaceAdmin) {
+    super(authenticator, authorizationClient);
     this.namespaceAdmin = namespaceAdmin;
   }
 

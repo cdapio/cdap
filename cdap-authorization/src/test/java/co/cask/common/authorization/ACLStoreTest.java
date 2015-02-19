@@ -17,7 +17,7 @@
 package co.cask.common.authorization;
 
 import co.cask.common.authorization.client.AuthorizationClient;
-import co.cask.common.authorization.client.DefaultAuthorizationClient;
+import co.cask.common.authorization.client.SimpleAuthorizationClient;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,7 +38,7 @@ public class ACLStoreTest {
   @Before
   public void setUp() {
     this.aclStore = new InMemoryACLStore();
-    this.authorizationClient = new DefaultAuthorizationClient(aclStore);
+    this.authorizationClient = new SimpleAuthorizationClient(aclStore);
   }
 
   @Test

@@ -546,6 +546,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
       @Override
       public ApplicationSpecification apply(AppMds mds) throws Exception {
+        // TODO: authorize
         return getApplicationSpec(mds, id);
       }
     });
@@ -556,6 +557,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
       @Override
       public Collection<ApplicationSpecification> apply(AppMds mds) throws Exception {
+        // TODO: filter based on authorization
         return Lists.transform(mds.apps.getAllApplications(id.getId()),
                                new Function<ApplicationMeta, ApplicationSpecification>() {
                                  @Override

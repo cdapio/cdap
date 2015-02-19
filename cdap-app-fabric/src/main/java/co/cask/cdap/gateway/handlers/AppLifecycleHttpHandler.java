@@ -32,11 +32,13 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -63,12 +65,15 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
+import co.cask.common.authorization.Permission;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -165,8 +170,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+                                 AdapterService adapterService, AuthorizationClient authorizationClient,
+                                 NamespaceAdmin namespaceAdmin) {
+    super(authenticator, authorizationClient);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
@@ -190,7 +196,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+
     try {
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return null;
+      }
       return deployApplication(request, responder, namespaceId, appId, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
@@ -207,8 +220,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+
     // null means use name provided by app spec
     try {
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return null;
+      }
       return deployApplication(request, responder, namespaceId, null, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
@@ -245,7 +265,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) {
+
+    // TODO: first 404 if not exists
     try {
+      if (!authorizationClient.isAuthorized(ObjectIds.application(namespaceId, appId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Id.Application id = Id.Application.from(namespaceId, appId);
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
@@ -276,7 +305,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
+
     try {
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Id.Namespace id = Id.Namespace.from(namespaceId);
       AppFabricServiceStatus status = removeAll(id);
       LOG.trace("Delete all call at AppFabricHttpHandler");
@@ -296,13 +333,27 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Namespace '%s' does not exist.", namespaceId));
-      return;
+                           @PathParam("namespace-id") final String namespaceId) {
+
+    // TODO: if user has access to anything under the namespace, pass through here
+    try {
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
+      if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("Namespace '%s' does not exist.", namespaceId));
+        return;
+      }
+      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
   }
 
   /**
@@ -313,6 +364,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
+
+    if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
@@ -330,6 +389,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId,
                                @PathParam("action") String action) {
+
+    if (!authorizationClient.isAuthorized(ObjectIds.adapter(namespaceId, adapterId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       if ("start".equals(action)) {
         adapterService.startAdapter(namespaceId, adapterId);
@@ -356,6 +423,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAdapterStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId) {
+
+    if (!authorizationClient.isAuthorized(ObjectIds.adapter(namespaceId, adapterId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
     } catch (AdapterNotFoundException e) {
@@ -370,9 +445,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
+                            @PathParam("adapter-id") String adapterId) {
+
+    if (!authorizationClient.isAuthorized(ObjectIds.adapter(namespaceId, adapterId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
-      adapterService.removeAdapter(namespaceId, adapterName);
+      adapterService.removeAdapter(namespaceId, adapterId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -387,6 +470,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {
+
+    if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
       if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
@@ -586,7 +676,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     controller.stop().get();
   }
 
-  private void getAppDetails(HttpResponder responder, String namespaceId, String appId) {
+  private void getAppDetails(HttpResponder responder, final String namespaceId, String appId) {
     if (appId != null && appId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
       return;

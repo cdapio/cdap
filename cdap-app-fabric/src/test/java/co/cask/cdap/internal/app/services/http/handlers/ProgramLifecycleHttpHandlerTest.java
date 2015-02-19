@@ -41,6 +41,7 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -51,6 +52,7 @@ import co.cask.common.http.HttpMethod;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -88,6 +90,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
   private static final String WORDCOUNT_MAPREDUCE_NAME = "VoidMapReduceJob";
   private static final String WORDCOUNT_FLOWLET_NAME = "StreamSource";
+  private static final String WORDCOUNT_STREAM_NAME = "text";
   private static final String DUMMY_APP_ID = "dummy";
   private static final String DUMMY_RUNNABLE_ID = "dummy-batch";
   private static final String SLEEP_WORKFLOW_APP_ID = "SleepWorkflowApp";
@@ -340,8 +343,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
 
     // start the flow
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
-      .getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
+                                                  ProgramType.FLOW.getCategoryName(),
+                                                  WORDCOUNT_FLOW_NAME, "start"));
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
@@ -351,8 +355,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramController.State.STOPPED.toString(), returnedBody.get(1).get("status").getAsString());
 
     // start the service
-    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE
-      .getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start"));
+    Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
+                                                  ProgramType.SERVICE.getCategoryName(),
+                                                  APP_WITH_SERVICES_SERVICE_NAME, "start"));
     // test status API after starting the service
     response = doPost(statusUrl2, "[{'appId': 'AppWithServices', 'programType': 'Service', 'programId': " +
       "'NoOpService'}]");
@@ -639,8 +644,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // change stream input in the wrong namespace
-    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId, "stream1",
-                                                           "stream2"));
+    Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE2, appId, flowId, flowletId,
+                                                           "stream1", "stream2"));
     // change stream input to a non-existing stream in the right namespace
     Assert.assertEquals(404, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream1",
                                                            "notfound"));
@@ -658,8 +663,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stream1 is no longer a connection
     Assert.assertEquals(500, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream3",
                                                            "stream1"));
-    Assert.assertEquals(200, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId, "stream4",
-                                                           "stream1"));
+    Assert.assertEquals(200, changeFLowletStreamConnection(TEST_NAMESPACE1, appId, flowId, flowletId,
+                                                           "stream4", "stream1"));
   }
 
   private void setAndTestRuntimeArgs(String namespace, String appId, String runnableType, String runnableId,
@@ -850,7 +855,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    
+
     // start service in wrong namespace
     int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                     ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
@@ -957,11 +962,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private boolean dequeueOne(QueueName queueName) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
-                                                                     new ConsumerConfig(1L, 0, 1,
-                                                                                        DequeueStrategy.ROUND_ROBIN,
-                                                                                        null),
-                                                                     1);
+    final QueueConsumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(1L, 0, 1, DequeueStrategy.ROUND_ROBIN, null), 1);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
@@ -1286,8 +1288,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     args.put("Key2", "Val1");
 
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {
-    }.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
                                                            "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          namespace);
@@ -1328,5 +1329,85 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                              new TypeToken<Map<String, String>>() {
                              }.getType());
     Assert.assertEquals(0, argsRead.size());
+  }
+
+  @Test
+  public void testAuthorization() throws Exception {
+    String appId = WORDCOUNT_APP_NAME;
+    String namespace = TEST_NAMESPACE1;
+
+    // deploy app
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String baseUrl = getVersionedAPIPath("", Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    String appBaseUrl = getVersionedAPIPath("apps/" + appId, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    String flowBaseUrl = getVersionedAPIPath("apps/" + appId + "/" + ProgramType.FLOW.getCategoryName()
+                                               + "/" + WORDCOUNT_FLOW_NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+                                             namespace);
+    String flowletBaseUrl = flowBaseUrl + "/flowlets/" + WORDCOUNT_FLOWLET_NAME;
+    String workflowBaseUrl = baseUrl + "/apps/" + APP_WITH_WORKFLOW_APP_ID
+      + "/workflows/" + APP_WITH_WORKFLOW_WORKFLOW_NAME;
+    String serviceBaseUrl = baseUrl + "/apps/" + APP_WITH_SERVICES_APP_ID
+      + "/services/" + APP_WITH_SERVICES_SERVICE_NAME;
+    String serviceRunnableBaseUrl = serviceBaseUrl + "/runnables/" + APP_WITH_SERVICES_SERVICE_NAME;
+
+    response = doGet(baseUrl + "/apps");
+    List<ApplicationRecord> apps = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                 new TypeToken<List<ApplicationRecord>>() { }.getType());
+    List<String> appIds = Lists.newArrayList();
+    for (ApplicationRecord applicationRecord : apps) {
+      appIds.add(applicationRecord.getId());
+    }
+    Assert.assertTrue(appIds.contains(WORDCOUNT_APP_NAME));
+    Assert.assertTrue(appIds.contains(APP_WITH_WORKFLOW_APP_ID));
+    Assert.assertTrue(appIds.contains(APP_WITH_SERVICES_APP_ID));
+
+    usePowerlessUser();
+    // TODO: check that batch status/instances are filtered?
+    Assert.assertEquals(200, doPost(baseUrl + "/status", "[]").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost(baseUrl + "/instances", "[]").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doDelete(baseUrl + "/queues").getStatusLine().getStatusCode());
+
+    String[] programTypes = new String[] { "flows", "procedures", "mapreduce", "spark", "workflows", "services"};
+    for (String programType : programTypes) {
+      // TODO: check that programs are filtered?
+      // TODO: unauthorized user shouldn't be able to view this endpoint
+      Assert.assertEquals(200, doGet(baseUrl + "/" + programType).getStatusLine().getStatusCode());
+      Assert.assertEquals(200, doGet(appBaseUrl + "/" + programType).getStatusLine().getStatusCode());
+    }
+
+    Assert.assertEquals(401, doPost(flowBaseUrl + "/start").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doPost(flowBaseUrl + "/stop").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(flowBaseUrl + "/runs").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(flowBaseUrl + "/runtimeargs").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(flowBaseUrl).getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(flowletBaseUrl + "/instances").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doPut(flowletBaseUrl + "/instances",
+                                   GSON.toJson(new Instances(3))).getStatusLine().getStatusCode());
+    String oldStreamId = GSON.toJson(ImmutableMap.of("oldStreamId", WORDCOUNT_STREAM_NAME));
+    Assert.assertEquals(401, doPut(flowletBaseUrl + "/connections/" + WORDCOUNT_STREAM_NAME, oldStreamId)
+      .getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(flowBaseUrl + "/live-info").getStatusLine().getStatusCode());
+
+    // workflow/schedule APIs
+    Assert.assertEquals(401, doGet(workflowBaseUrl + "/current").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(workflowBaseUrl + "/nextruntime").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doGet(workflowBaseUrl + "/schedules").getStatusLine().getStatusCode());
+
+    // service APIs
+    Assert.assertEquals(401, doGet(serviceRunnableBaseUrl + "/instances").getStatusLine().getStatusCode());
+    Assert.assertEquals(401, doPut(serviceRunnableBaseUrl + "/instances").getStatusLine().getStatusCode());
+
+    useAdminUser();
+
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

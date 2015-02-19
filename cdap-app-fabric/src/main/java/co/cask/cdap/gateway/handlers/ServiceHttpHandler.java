@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -41,8 +42,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator,
-                            ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
-    super(authenticator);
+                            ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                            AuthorizationClient authorizationClient) {
+    super(authenticator, authorizationClient);
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
   }
 

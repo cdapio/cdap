@@ -40,6 +40,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.BodyConsumer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -123,10 +124,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              AppFabricStreamHttpHandler appFabricStreamHttpHandler,
-                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
+                              AuthorizationClient authorizationClient,
+                              AppFabricStreamHttpHandler appFabricStreamHttpHandler) {
 
-    super(authenticator);
+    super(authenticator, authorizationClient);
     this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;

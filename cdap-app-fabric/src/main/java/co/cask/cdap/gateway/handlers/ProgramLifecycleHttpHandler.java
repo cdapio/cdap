@@ -32,9 +32,11 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -58,10 +60,15 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.common.authorization.IdentifiableObject;
+import co.cask.common.authorization.ObjectId;
+import co.cask.common.authorization.Permission;
+import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -205,8 +212,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      WorkflowClient workflowClient, LocationFactory locationFactory,
                                      CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore) {
-    super(authenticator);
+                                     StreamAdmin streamAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                                     AuthorizationClient authorizationClient1) {
+    super(authenticator, authorizationClient1);
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.locationFactory = locationFactory;
@@ -239,6 +247,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Program program = Id.Program.from(namespaceId, appId, id);
       ProgramType programType = ProgramType.valueOfCategoryName(type);
+
+      if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, programType, program.getId()),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       StatusMap statusMap = getStatus(program, programType);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -257,6 +273,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName) {
     try {
+      if (!authorizationClient.isAuthorized(ObjectIds.application(namespaceId, appId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
       if (appSpec == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
@@ -271,9 +294,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       String programName = scheduleSpec.getProgram().getProgramName();
       Id.Program programId = Id.Program.from(namespaceId, appId, programName);
+
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                         scheduleName).toString());
+      Scheduler.ScheduleState scheduleState = scheduler.scheduleState(programId,
+                                                                      scheduleSpec.getProgram().getProgramType(),
+                                                                      scheduleName);
+      json.addProperty("status", scheduleState.toString());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -296,14 +322,23 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    if (!isValidAction(action)) {
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
-      return;
-    }
+    // TODO: 404 if app not visible to user
 
     ProgramType programType = ProgramType.valueOfCategoryName(type);
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
+    }
+
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, programType, id),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
+    if (!isValidAction(action)) {
+      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
       return;
     }
     startStopProgram(request, responder, namespaceId, appId, programType, id, action);
@@ -385,6 +420,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, namespaceId, appId, runnableId, status, start, end, resultLimit);
@@ -400,6 +444,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") String appId,
                                      @PathParam("runnable-type") String runnableType,
                                      @PathParam("runnable-id") String runnableId) {
+
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -413,6 +458,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
+
+      // TODO: 404 if app is not visible to user
+      if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
                                                                        runnableType, runnableId);
       responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
@@ -446,6 +500,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
+
+      // TODO: 404 if app is not visible to user
+      if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       Map<String, String> args = decodeArguments(request);
       preferencesStore.setProperties(namespaceId, appId, runnableType, runnableId, args);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -466,6 +529,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (type == null) {
       responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
                                                                                 runnableType));
+      return;
+    }
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, type, runnableId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
       return;
     }
 
@@ -515,6 +586,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     try {
+      // TODO: authorize on each status request?
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null, then there was an error in decoding args and response was already sent
       if (args == null) {
@@ -535,6 +614,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.setProgramType(programType.getPrettyName());
       }
+
       responder.sendJson(HttpResponseStatus.OK, args);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -581,6 +661,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getInstances(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     try {
+      // TODO: authorize on each instance request?
+      if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null then the response has already been sent
       if (args == null) {
@@ -594,8 +682,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           continue;
         }
 
-        String programTypeStr = requestedObj.getProgramType();
-        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         // cant get instances for things that are not flows, services, or procedures
         if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
@@ -709,6 +796,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
     try {
+      // TODO: 404 if app is not visible to user
+      if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                                            SecurityRequestContext.getSubjects(),
+                                            ImmutableList.of(Permission.LIFECYCLE))) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        return;
+      }
+
       int count = store.getFlowletInstances(Id.Program.from(namespaceId, appId, flowId), flowletId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
@@ -731,7 +826,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
-    int instances = 0;
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
+    int instances;
     try {
       instances = getInstances(request);
       if (instances < 1) {
@@ -780,6 +884,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
                                             @PathParam("stream-id") String streamId) throws IOException {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       Map<String, String> arguments = decodeArguments(request);
       String oldStreamId = arguments.get("oldStreamId");
@@ -820,6 +933,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                                   " type '%s'", programCategory));
       return;
     }
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, type, programId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     getLiveInfo(request, responder, namespaceId, appId, programId, ProgramType.valueOfCategoryName(programCategory),
                 runtimeService);
   }
@@ -833,6 +955,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("flow-id") String flowId) {
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.FLOW, flowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
@@ -859,28 +989,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+                             @PathParam("app-id") String appId,
+                             @PathParam("workflow-name") String workflowId) {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
+      workflowClient.getWorkflowStatus(namespaceId, appId, workflowId, new WorkflowClient.Callback() {
+        @Override
+        public void handle(WorkflowClient.Status status) {
+          if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+            responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+            responder.sendByteArray(HttpResponseStatus.OK, status.getResult().getBytes(),
+                                    ImmutableMultimap.of(
+                                      HttpHeaders.Names.CONTENT_TYPE, "application/json; charset=utf-8"));
 
-                                           } else {
-                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                  status.getResult());
-                                           }
-                                         }
-                                       });
+          } else {
+            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
+          }
+        }
+      });
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -897,6 +1032,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, workflowId);
       List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
@@ -932,6 +1076,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.WORKFLOW, workflowId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     List<ScheduleSpecification> specList = Lists.newArrayList();
     for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
       ScheduleSpecification spec = entry.getValue();
@@ -953,6 +1105,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId,
                                   @PathParam("runnable-name") String runnableName) {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.SERVICE, serviceId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -979,11 +1140,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
         instances = workerSpec.getInstances();
       }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceInstances(instances, getRunnableCount(namespaceId, appId, ProgramType.SERVICE,
-                                                                          serviceId, runnableName)));
-
+      int runnableCount = getRunnableCount(namespaceId, appId, ProgramType.SERVICE, serviceId, runnableName);
+      ServiceInstances serviceInstances = new ServiceInstances(instances, runnableCount);
+      responder.sendJson(HttpResponseStatus.OK, serviceInstances);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1002,6 +1161,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId,
                                   @PathParam("runnable-name") String runnableName) {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.program(namespaceId, appId, ProgramType.SERVICE, serviceId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, serviceId);
@@ -1054,6 +1221,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) {
+
+    // TODO: 404 if app is not visible to user
+    if (!authorizationClient.isAuthorized(ObjectIds.namespace(namespaceId),
+                                          SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.LIFECYCLE))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1612,7 +1788,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Convenience class for representing the necessary components in the batch endpoint.
    */
-  private class BatchEndpointArgs {
+  private class BatchEndpointArgs implements IdentifiableObject {
+
+    private String namespace = null;
     private String appId = null;
     private String programType = null;
     private String programId = null;
@@ -1620,8 +1798,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     private String error = null;
     private Integer statusCode = null;
 
-    private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
+    private BatchEndpointArgs(String namespace, String appId, String programType,
+                              String programId, String runnableId, String error,
                               Integer statusCode) {
+      this.namespace = namespace;
       this.appId = appId;
       this.programType = programType;
       this.programId = programId;
@@ -1631,7 +1811,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     public BatchEndpointArgs(BatchEndpointArgs arg) {
-      this(arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
+      this(arg.namespace, arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
+    }
+
+    public String getNamespace() {
+      return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+      this.namespace = namespace;
     }
 
     public String getRunnableId() {
@@ -1672,6 +1860,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     public void setProgramType(String programType) {
       this.programType = programType;
+    }
+
+    @Override
+    public ObjectId getObjectId() {
+      return ObjectIds.program(namespace, appId, ProgramType.valueOfPrettyName(programType), programId);
     }
   }
 
