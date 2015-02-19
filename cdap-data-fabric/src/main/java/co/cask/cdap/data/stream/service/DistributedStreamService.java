@@ -340,8 +340,8 @@ public class DistributedStreamService extends AbstractStreamService {
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
         // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not subscribe to heartbeats feed", e);
-        TimeUnit.MILLISECONDS.sleep(200);
+        LOG.warn("Could not subscribe to heartbeats feed. {}", e.getMessage());
+        TimeUnit.MILLISECONDS.sleep(1000);
       }
     }
   }
@@ -390,8 +390,8 @@ public class DistributedStreamService extends AbstractStreamService {
         return;
       } catch (NotificationFeedException e) {
         // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not subscribe to heartbeats feed", e);
-        TimeUnit.MILLISECONDS.sleep(200);
+        LOG.warn("Could not subscribe to heartbeats feed. {}", e.getMessage());
+        TimeUnit.MILLISECONDS.sleep(1000);
       }
     }
   }
@@ -478,6 +478,7 @@ public class DistributedStreamService extends AbstractStreamService {
           for (StreamSpecification spec : streamMetaStore.listStreams(Id.Namespace.from(Constants.DEFAULT_NAMESPACE))) {
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
                       spec.getName());
+            // TODO use the right namespace in a future PR - Ali :)
             builder.addPartition(new ResourceRequirement.Partition(
               String.format("%s.%s", Constants.DEFAULT_NAMESPACE, spec.getName()), 1));
           }
