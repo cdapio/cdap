@@ -108,7 +108,9 @@ gulp.task('js:lib', function() {
       './bower_components/lodash/dist/lodash.js',
       './bower_components/graphlib/dist/graphlib.core.js',
       './bower_components/dagre/dist/dagre.core.js',
-      './bower_components/dagre-d3/dist/dagre-d3.core.js'
+      './bower_components/dagre-d3/dist/dagre-d3.core.js',
+      './bower_components/moment/moment.js',
+      './bower_components/angular-moment/angular-moment.js'
 
 
     ].concat([

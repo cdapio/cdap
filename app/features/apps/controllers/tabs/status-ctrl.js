@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.apps')
           'services',
           'mapreduce',
           'procedures',
-          'spark'
+          'workflows'
         ],
         basePath = '/apps/' + $stateParams.appId;
 
