@@ -30,8 +30,8 @@ Building Blocks
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
 (CDAP)—**Data** and **Applications.**
 
-An :doc:`Application <applications>` is a collection of application building blocks that read—and
-write—through the data abstraction layer in CDAP.
+An :doc:`Application <applications>` is a collection of application building blocks that read and
+write data through the data abstraction layer in CDAP.
 
 **Data abstractions** include:
 

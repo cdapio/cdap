@@ -18,9 +18,9 @@ low-level APIs.
 .. rubric:: Application Abstraction
 
 Applications hide low-level details of individual programming paradigms and runtimes,
-while providing access to many useful and powerful services provided by CDAP such as the
-ability to dynamically scale processing units, distributed transactions, and service
-discovery. 
+while providing access to many useful and powerful services provided by CDAP such as 
+distributed transactions, service discovery, and the ability to dynamically scale
+processing units.
 
 Applications are abstracted away from the platform that runs the application. When you
 deploy and run the application into a specific installation of CDAP, the appropriate
@@ -31,7 +31,7 @@ seamlessly deploy it in a different environment—such as your distributed stagi
 
 .. rubric:: Data and Applications Combined
 
-With your data abstracted in CDAP as *Streams* and *Datasets*, you are able to process
+With your data represented in CDAP as *Streams* and *Datasets*, you are able to process
 that data in realtime or in batch using a Program (*Flow,* *MapReduce*, *Spark*,
 *Workflow*) and you can serve data to external clients using a *Service*.
 

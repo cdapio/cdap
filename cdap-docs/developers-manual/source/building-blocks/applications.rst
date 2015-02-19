@@ -10,14 +10,14 @@ Applications
 
 .. highlight:: java
 
-An **Application** is a collection of building blocks that read—and write—through the data
+An **Application** is a collection of building blocks that read and write data through the data
 abstraction layer in CDAP. 
 
 **Applications** are composed from *Programs,* *Services,* and *Procedures (deprecated).*
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
-data. :doc:`Services <services>` and :doc:`Procedures (deprecated) <procedures>` are used to serve data.
+data. :doc:`Services <services>` are used to serve data.
 
 **Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
@@ -35,6 +35,7 @@ configuring each of the Application components::
           addStream(new Stream("myAppStream"));
           createDataset("myAppDataset", Table.class);
           addFlow(new MyAppFlow());
+          addService(new MyService());
           addMapReduce(new MyMapReduce());
           addWorkflow(new MyAppWorkflow());
         }
@@ -59,7 +60,7 @@ A typical design of a CDAP Application consists of:
   in realtime or batch;
 - MapReduce programs, Spark programs, and Workflows for batch processing tasks;
 - Datasets for storage of data, either raw or the processed results; and
-- Services and Procedures (deprecated) for serving data and processed results.
+- Services for serving data and processed results.
 
 Of course, not all components are required: it depends on the application. A minimal
 application could include a Stream, a Flow, a Flowlet, and a Dataset. It's possible a

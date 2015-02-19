@@ -14,8 +14,8 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services, and Procedures (deprecated) that read and write
-      through the data abstraction layer in CDAP.
+      A collection of Programs and Services that read and write through the data
+      abstraction layer in CDAP.
       
    Stream
       The primary means of bringing data from external systems into CDAP in realtime; an
@@ -69,8 +69,8 @@ Glossary
       Abstraction of the actual representation of data in storage.
       
    Application Abstraction
-      Application abstraction allows the same application to run in multiple implementations 
-      and environments without modification.
+      Application abstraction allows the same application to run in multiple  environments
+      without modification.
       
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.
