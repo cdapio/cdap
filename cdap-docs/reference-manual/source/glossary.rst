@@ -14,7 +14,7 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services, and Procedures (deprectated) that read and write
+      A collection of Programs, Services, and Procedures (deprecated) that read and write
       through the data abstraction layer in CDAP.
       
    Stream
@@ -59,11 +59,11 @@ Glossary
       processing beyond the CDAP processing paradigms. Examples could include running an
       IP-to-Geo lookup and serving user-profiles.      
 
-   Procedure
-      Procedures (deprecated) are used to query CDAP and its Datasets and retrieve results, making
+   Procedure (deprecated)
+      Procedures are used to query CDAP and its Datasets and retrieve results, making
       synchronous calls into CDAP from an external system and perform server-side
-      processing on-demand. They are similar to a stored procedure in a traditional database
-      system. Procedures are typically used to post-process data at query time.
+      processing on-demand. They are similar to a stored procedure in a traditional
+      database system. Procedures are typically used to post-process data at query time.
       
    Data Abstraction
       Abstraction of the actual representation of data in storage.
