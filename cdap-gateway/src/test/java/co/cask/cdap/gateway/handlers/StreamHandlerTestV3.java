@@ -38,30 +38,30 @@ import java.util.List;
  */
 public class StreamHandlerTestV3 extends StreamHandlerTest {
   @Override
-  protected URL constructPath(String path) throws URISyntaxException, MalformedURLException {
-    return constructPath(Constants.DEFAULT_NAMESPACE, path);
+  protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
+    return createURL(Constants.DEFAULT_NAMESPACE, path);
   }
 
-  private URL constructPath(String namespace, String path) throws URISyntaxException, MalformedURLException {
+  private URL createURL(String namespace, String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v3/namespaces/%s/%s", namespace, path)).toURL();
   }
 
   private void createStream(Id.Stream streamId) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName());
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private void sendEvent(Id.Stream streamId, String body) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName());
     HttpRequest request = HttpRequest.post(url).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private List<String> fetchEvents(Id.Stream streamId) throws Exception {
-    URL url = constructPath(streamId.getNamespaceId(), "streams/" + streamId.getName() + "/events");
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName() + "/events");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
