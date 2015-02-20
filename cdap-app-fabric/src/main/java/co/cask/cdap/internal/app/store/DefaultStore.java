@@ -1039,7 +1039,7 @@ public class DefaultStore implements Store {
     if (workerSpecification == null) {
       throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
                                          ", app id: " + id.getApplication() +
-                                         ", procedure id: " + id.getId());
+                                         ", worker id: " + id.getId());
     }
     return workerSpecification;
   }
