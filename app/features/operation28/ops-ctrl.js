@@ -43,7 +43,7 @@ angular.module(PKG.name+'.feature.operation28')
       ['AppFabric', 'Containers', 'containers'],
       ['Processors', 'Cores',     'vcores'],
       ['Memory', 'B',             'memory'],
-      ['DataFabric', 'GB',        'storage']
+      ['DataFabric', 'B',         'storage']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -64,7 +64,7 @@ angular.module(PKG.name+'.feature.operation28')
 
 
   .controller('Op28AppsCtrl',
-  function ($scope, $state, $q, MyDataSource) {
+  function ($scope, $state, $q, myHelpers, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
 
@@ -75,28 +75,37 @@ angular.module(PKG.name+'.feature.operation28')
       })
       .then(function (apps) {
         $scope.apps = apps;
+        $scope.metrics = {};
 
-        var p = [];
-        for (var i = 0; i < apps.length; i++) {
+        var p = [], // array of promises
+            m = ['vcores', 'containers', 'memory'];
 
-          var path = '/metrics/query?context=ns.' +
-              $state.params.namespace + '.app.' + apps[i].id +
-              '&metric=resources.used.*' +
-              '&groupBy=app,programType';
+        for (var i = 0; i < m.length; i++) {
 
-          // FIXME @sacha
-          console.warn(path);
-
-          // p.push(dataSrc.request({
-          //   _cdapPath: path,
-          //   method: 'POST'
-          // }));
+          p.push(
+            dataSrc
+              .request({
+                _cdapPath: '/metrics/query' +
+                  '?context=namespace.system' +
+                  '&metric=system.resources.used.' +
+                  m[i] + '&groupBy=app',
+                method: 'POST'
+              },
+              function (r) {
+                angular.forEach(r.series, function (s) {
+                  myHelpers.deepSet(
+                    $scope.apps.filter(function (one) {
+                      return one.id === s.grouping.app;
+                    })[0],
+                    'metric.' + s.metricName.split('.').pop(),
+                    s.data[0].value
+                  );
+                });
+              })
+          );
         };
 
         return $q.all(p);
-      })
-      .then(function (result) {
-        console.log('all done', result);
       });
 
 
