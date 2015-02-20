@@ -63,6 +63,7 @@ function usage() {
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
+  echo "    javadocs       Build Javadocs"
   echo "    licenses       Clean build of License Dependency PDFs"
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
@@ -79,6 +80,7 @@ function run_command() {
     docs )              build_docs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
+    javadocs )          build_javadocs; exit 1;;
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
@@ -181,6 +183,11 @@ function build_all() {
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
   bell
+}
+
+function build_javadocs() {
+  # Uses function from common
+  build_javadocs_api
 }
 
 function build_docs_javadocs() {

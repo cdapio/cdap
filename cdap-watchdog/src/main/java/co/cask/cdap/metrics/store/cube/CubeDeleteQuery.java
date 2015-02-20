@@ -40,10 +40,6 @@ public class CubeDeleteQuery {
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
   }
 
-  public CubeDeleteQuery(CubeDeleteQuery query, Map<String, String> sliceByTagValues) {
-    this(query.getStartTs(), query.getEndTs(), query.getMeasureName(), sliceByTagValues);
-  }
-
   public long getStartTs() {
     return startTs;
   }

@@ -22,14 +22,10 @@ import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
-import co.cask.cdap.data.stream.StreamFileType;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.queue.ConsumerConfig;
-import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -44,10 +40,8 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -65,9 +59,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Inject
   HBaseStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                  StreamConsumerStateStoreFactory stateStoreFactory,
-                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
-                                 QueueClientFactory queueClientFactory, HBaseStreamAdmin oldStreamAdmin) {
-    super(cConf, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
+    super(cConf, streamAdmin, stateStoreFactory);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;

@@ -16,18 +16,13 @@
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
-import co.cask.cdap.data.stream.StreamFileType;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -37,10 +32,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
@@ -57,9 +50,8 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   @Inject
   LevelDBStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                   CConfiguration cConf, LevelDBOrderedTableService tableService,
-                                   QueueClientFactory queueClientFactory, LevelDBStreamAdmin oldStreamAdmin) {
-    super(cConf, streamAdmin, stateStoreFactory, queueClientFactory, oldStreamAdmin);
+                                   CConfiguration cConf, LevelDBOrderedTableService tableService) {
+    super(cConf, streamAdmin, stateStoreFactory);
     this.cConf = cConf;
     this.tableService = tableService;
     this.dbLocks = Maps.newConcurrentMap();

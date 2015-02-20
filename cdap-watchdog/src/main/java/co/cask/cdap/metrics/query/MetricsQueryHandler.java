@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -135,7 +135,7 @@ public class MetricsQueryHandler extends AuthenticatedHttpHandler {
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {
     try {
       URI uri = new URI(MetricQueryParser.stripVersionAndMetricsFromPath(request.getUri()));
-      CubeQuery query = MetricQueryParser.parse(uri);
+      MetricDataQuery query = MetricQueryParser.parse(uri);
       responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(query));
     } catch (URISyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
