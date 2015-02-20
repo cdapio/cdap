@@ -415,20 +415,21 @@ public class DatasetTypeManager extends AbstractIdleService {
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
       T def;
+      // Find the typeMeta for the type from the right namespace
       Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, datasetTypeName);
+      DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
+      if (typeMeta == null) {
+        // not found in the user namespace. Try finding in the system namespace
+        datasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, datasetTypeName);
+        typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
+        if (typeMeta == null) {
+          // not found in the user namespace as well as system namespace. Bail out.
+          throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
+        }
+      }
       if (registry.hasType(datasetTypeName)) {
         def = registry.get(datasetTypeName);
       } else {
-        DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
-        if (typeMeta == null) {
-          // not found in the user namespace. Try finding in the system namespace
-          datasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, datasetTypeName);
-          typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
-          if (typeMeta == null) {
-            // not found in the user namespace as well as system namespace. Bail out.
-            throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
-          }
-        }
         try {
           def = new DatasetDefinitionLoader(locationFactory).load(typeMeta, registry);
         } catch (IOException e) {
