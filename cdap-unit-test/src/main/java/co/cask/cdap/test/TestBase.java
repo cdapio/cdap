@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -72,8 +73,6 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.test.internal.AppFabricClient;
@@ -304,7 +303,7 @@ public class TestBase {
     streamCoordinatorClient.startAndWait();
     testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
     // we use MetricStore directly, until RuntimeStats API changes
-    RuntimeStats.metricStore = new DefaultMetricStore(new DefaultMetricDatasetFactory(cConf, dsFramework));
+    RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
