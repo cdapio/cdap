@@ -5,7 +5,6 @@ angular.module(PKG.name + '.commons')
 
     function MetricPickerCtrl ($scope) {
 
-      console.log($stateParams);
       var ns = [$stateParams.namespace,'namespace'].join(' ');
 
       $scope.available = {

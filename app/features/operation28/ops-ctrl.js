@@ -78,19 +78,25 @@ angular.module(PKG.name+'.feature.operation28')
 
         var p = [];
         for (var i = 0; i < apps.length; i++) {
+
+          var path = '/metrics/query?context=ns.' +
+              $state.params.namespace + '.app.' + apps[i].id +
+              '&metric=resources.used.*' +
+              '&groupBy=app,programType';
+
+          // FIXME @sacha
+          console.warn(path);
+
           // p.push(dataSrc.request({
-          //   _cdapPath: '/metrics/query?context=ns.' +
-          //     $state.params.namespace + '.app' +
-          //     '&metric=resources.used.memory' +
-          //     '&groupBy=app',
+          //   _cdapPath: path,
           //   method: 'POST'
           // }));
         };
 
         return $q.all(p);
       })
-      .then(function () {
-        console.log('all done');
+      .then(function (result) {
+        console.log('all done', result);
       });
 
 
