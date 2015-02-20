@@ -482,4 +482,45 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
     return upperBound > 0;
   }
+
+  /**
+   * Migrate legacy partitions to the current format, starting a the given partition time, spending at most a limited
+   * number of seconds. The caller can invoke this repeatedly until it returns -1.
+   * @param startTime the partition time to start at
+   * @param timeLimitInSeconds the number of seconds after which to stop. This is to avoid transaction timeouts.
+   * @return the
+   */
+  public long upgradeLegacyEntries(long startTime, long timeLimitInSeconds) {
+    long timeLimit = System.currentTimeMillis() + 1000L * timeLimitInSeconds;
+    startTime = Math.max(0L, startTime);
+    byte[] startRow = Bytes.toBytes(startTime);
+    long partitionTime = startTime;
+    Scanner scanner = partitionsTable.scan(startRow, null);
+    try {
+      while (timeLimit - System.currentTimeMillis() > 0) {
+        Row row = scanner.next();
+        if (row == null) {
+          return -1; // no more legacy entries
+        }
+        if (!isLegacyPartition(row)) {
+          continue;
+        }
+        partitionTime = Bytes.toLong(row.getRow());
+        byte[] pathBytes = row.get(RELATIVE_PATH);
+        if (pathBytes != null) {
+          String path = Bytes.toString(pathBytes);
+          addPartition(partitionKeyForTime(partitionTime), path,
+                       false); // do not register in explore - it is already there
+          partitionsTable.delete(row.getRow());
+        } else {
+          LOG.info("Dropping legacy partition for time %d because it has no path.", partitionTime);
+          dropPartition(partitionTime);
+        }
+      }
+      return partitionTime + 1; // next scan can start after the last partition processed
+    } finally {
+      scanner.close();
+    }
+  }
+
 }
