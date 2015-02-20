@@ -434,9 +434,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   /**
    * Metadata tests through appfabric apis.
-   * TODO: Enable after namespacing dataset instances. unrecoverable is broken without namespaing dataset instances
    */
-  @Ignore
   @Test
   public void testGetMetadata() throws Exception {
     try {
@@ -706,9 +704,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   /**
    * Tests procedure instances.
-   * TODO: Enable after namespacing dataset instances. unrecoverable is broken without namespaing dataset instances
    */
-  @Ignore
   @Test
   public void testProcedureInstances () throws Exception {
     Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
@@ -1248,10 +1244,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doGet("/v2/apps").getStatusLine().getStatusCode());
   }
 
-  /**
-   * TODO: Enable after namespacing dataset instances. unrecoverable is broken without namespaing dataset instances
-   */
-  @Ignore
   @Test
   public void testHistoryDeleteAfterUnrecoverableReset() throws Exception {
 

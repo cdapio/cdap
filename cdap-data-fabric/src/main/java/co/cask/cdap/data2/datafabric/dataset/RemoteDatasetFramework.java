@@ -203,7 +203,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
-        // TODO: should be namespaced?
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
         clientCache.getUnchecked(moduleId.getNamespace()).addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
       } finally {

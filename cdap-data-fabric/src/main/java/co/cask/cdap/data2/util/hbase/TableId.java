@@ -52,7 +52,7 @@ public class TableId {
   public static TableId from(String datasetName) {
     Preconditions.checkArgument(datasetName != null, "Dataset name should not be null");
     // Dataset name is of the format cdap.<namespace>.<dataset-name>
-    String invalidFormatError = String.format("Incvalid format for dataset name '%s'. E" +
+    String invalidFormatError = String.format("Invalid format for dataset name '%s'. E" +
                                                 "xpected - cdap.<namespace>.<dataset-name>", datasetName);
     String [] parts = datasetName.split("\\.", 3);
     Preconditions.checkArgument(parts.length == 3, invalidFormatError);
