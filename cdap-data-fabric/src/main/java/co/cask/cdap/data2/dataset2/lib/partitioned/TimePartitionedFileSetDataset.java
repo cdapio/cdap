@@ -501,7 +501,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
    *
    * @param startTime the partition time to start at
    * @param timeLimitInSeconds the number of seconds after which to stop. This is to avoid transaction timeouts.
-   * @return the
+   * @return the start time for the next call of this method. All partitions with a lesser time stamp have been
+   *     migrated. When there are no more entries to migrate, returns -1.
    */
   public long upgradeLegacyEntries(long startTime, long timeLimitInSeconds) {
     long timeLimit = System.currentTimeMillis() + 1000L * timeLimitInSeconds;
