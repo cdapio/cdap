@@ -32,7 +32,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -105,7 +104,7 @@ public class AdapterService extends AbstractIdleService {
                         PreferencesStore preferencesStore) {
     this.configuration = configuration;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(configuration, Namespace.USER));
+                                                           new DefaultDatasetNamespace(configuration));
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
