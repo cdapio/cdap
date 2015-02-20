@@ -90,6 +90,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public void addPartition(PartitionKey key, String path) {
+    addPartition(key, path, true);
+  }
+
+  protected void addPartition(PartitionKey key, String path, boolean addToExplore) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
@@ -103,8 +107,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
     }
     partitionsTable.put(put);
-    addPartitionToExplore(key, path);
-    // TODO: make DDL operations transactional [CDAP-1393]
+    if (addToExplore) {
+      addPartitionToExplore(key, path);
+      // TODO: make DDL operations transactional [CDAP-1393]
+    }
   }
 
   protected void addPartitionToExplore(PartitionKey key, String path) {

@@ -23,8 +23,6 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
@@ -66,8 +64,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SPARK),
-      Constants.Metrics.Tag.PROGRAM, sparkId);
+      Constants.Metrics.Tag.SPARK, sparkId);
 
     return getTotalCounterByPrefix(context, metricName);
   }

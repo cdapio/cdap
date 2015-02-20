@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
@@ -53,14 +53,13 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
   private static Map<String, String> getMetricContext(Program program, TwillContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.RUN_ID, context.getRunId().getId())
-      .put(Constants.Metrics.Tag.APP, program.getApplicationId())
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(program.getType()));
+      .put(Constants.Metrics.Tag.APP, program.getApplicationId());
 
     if (program.getType() == ProgramType.FLOW) {
-      builder.put(Constants.Metrics.Tag.PROGRAM, program.getName());
+      builder.put(Constants.Metrics.Tag.FLOW, program.getName());
       builder.put(Constants.Metrics.Tag.FLOWLET, context.getSpecification().getName());
     } else {
-      builder.put(Constants.Metrics.Tag.PROGRAM, context.getSpecification().getName());
+      builder.put(ProgramTypeMetricTag.getTagName(program.getType()), context.getSpecification().getName());
     }
 
     return builder.build();
