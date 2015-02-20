@@ -39,12 +39,15 @@ import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -125,6 +128,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   static final class KafkaMetricsProcessorModule extends PrivateModule {
    @Override
     protected void configure() {
+      bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
