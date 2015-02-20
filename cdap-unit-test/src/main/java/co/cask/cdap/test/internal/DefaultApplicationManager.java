@@ -33,7 +33,6 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -377,8 +376,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      RuntimeStats.clearStats(applicationId);
     }
   }
 

@@ -696,10 +696,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s.%s",
-                                       flowProgramId.getNamespaceId(),
-                                       flowProgramId.getApplicationId(),
-                                       flowProgramId.getId());
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
       for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
         streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
                                       namespace, entry.getValue());

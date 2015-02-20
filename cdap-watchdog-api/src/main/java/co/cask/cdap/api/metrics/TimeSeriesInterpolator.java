@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.data;
+package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
