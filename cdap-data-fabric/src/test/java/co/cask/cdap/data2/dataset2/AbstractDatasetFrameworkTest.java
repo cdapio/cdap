@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.proto.Id;
@@ -86,8 +87,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // verify it got added to the right namespace
     Assert.assertTrue(framework.hasInstance(myTable));
     // and not to the system namespace
-    // TODO: Enable after namespacing instances
-    // Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "my_table")));
+    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "my_table")));
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin(myTable, null);

@@ -270,7 +270,8 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           Collection<DatasetSpecification> dependentInstances =
-            datasets.getInstanceMDS().getByTypes(ImmutableSet.copyOf(module.getTypes()));
+            datasets.getInstanceMDS().getByTypes(datasetModuleId.getNamespace(),
+                                                 ImmutableSet.copyOf(module.getTypes()));
           // cannot delete when there's instance that uses it
           if (dependentInstances.size() > 0) {
             String msg =
@@ -331,7 +332,8 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           // check if there are any instances that use types of these modules?
-          Collection<DatasetSpecification> dependentInstances = datasets.getInstanceMDS().getByTypes(typesToDelete);
+          Collection<DatasetSpecification> dependentInstances = datasets.getInstanceMDS().getByTypes(namespaceId,
+                                                                                                     typesToDelete);
           // cannot delete when there's instance that uses it
           if (dependentInstances.size() > 0) {
             String msg =
