@@ -40,6 +40,7 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
@@ -114,6 +115,7 @@ public class DFSStreamHeartbeatsTest {
         new DataSetsModules().getLocalModule(),
         new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
+        new MetricsClientRuntimeModule().getInMemoryModules(),
         // We need the distributed modules here to get the distributed stream service, which is the only one
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),
