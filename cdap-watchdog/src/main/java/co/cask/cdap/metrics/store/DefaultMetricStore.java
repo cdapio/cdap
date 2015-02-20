@@ -152,13 +152,10 @@ public class DefaultMetricStore implements MetricStore {
                                     ImmutableList.of(
                                       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
-    // component, handler, method, stream (for stream only) todo: seems like emitted context is wrong, review...
-    aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD,
-      Constants.Metrics.Tag.STREAM),
-                                    // i.e. for stream only
-                                    ImmutableList.of(Constants.Metrics.Tag.STREAM)));
+    // stream
+    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
+                                    // i.e. for streams only
+                                    ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
 
     // Datasets:
     aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),

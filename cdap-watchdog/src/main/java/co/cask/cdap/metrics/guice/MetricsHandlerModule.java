@@ -42,8 +42,6 @@ import com.google.inject.name.Names;
 public class MetricsHandlerModule extends PrivateModule {
   @Override
   protected void configure() {
-    bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-    bind(MetricStore.class).to(DefaultMetricStore.class);
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 
