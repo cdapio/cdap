@@ -17,13 +17,16 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

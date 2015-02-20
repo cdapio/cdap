@@ -45,6 +45,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
         bind(MetricStore.class).to(DefaultMetricStore.class);
+        expose(MetricStore.class);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }
@@ -58,6 +59,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
         bind(MetricStore.class).to(DefaultMetricStore.class);
+        expose(MetricStore.class);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }

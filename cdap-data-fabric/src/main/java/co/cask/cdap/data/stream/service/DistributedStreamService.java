@@ -349,8 +349,8 @@ public class DistributedStreamService extends AbstractStreamService {
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
         // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not subscribe to heartbeats feed", e);
-        TimeUnit.MILLISECONDS.sleep(200);
+        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
+        TimeUnit.MILLISECONDS.sleep(1000);
       }
     }
   }
@@ -381,7 +381,7 @@ public class DistributedStreamService extends AbstractStreamService {
   /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
-  private void createHeartbeatsFeed() throws NotificationFeedException {
+  private void createHeartbeatsFeed() throws NotificationFeedException, InterruptedException {
     // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.DEFAULT_NAMESPACE)
@@ -390,10 +390,18 @@ public class DistributedStreamService extends AbstractStreamService {
       .setDescription("Stream heartbeats feed.")
       .build();
 
-    try {
-      feedManager.getFeed(streamHeartbeatsFeed);
-    } catch (NotificationFeedNotFoundException e) {
-      feedManager.createFeed(streamHeartbeatsFeed);
+    while (true) {
+      try {
+        feedManager.getFeed(streamHeartbeatsFeed);
+        return;
+      } catch (NotificationFeedNotFoundException e) {
+        feedManager.createFeed(streamHeartbeatsFeed);
+        return;
+      } catch (NotificationFeedException e) {
+        // Most probably, the dataset service is not up. We retry
+        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
+        TimeUnit.MILLISECONDS.sleep(1000);
+      }
     }
   }
 
@@ -479,7 +487,9 @@ public class DistributedStreamService extends AbstractStreamService {
           for (StreamSpecification spec : streamMetaStore.listStreams(Id.Namespace.from(Constants.DEFAULT_NAMESPACE))) {
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
                       spec.getName());
-            builder.addPartition(new ResourceRequirement.Partition(spec.getName(), 1));
+            // TODO use the right namespace in a future PR - Ali :)
+            builder.addPartition(new ResourceRequirement.Partition(
+              String.format("%s.%s", Constants.DEFAULT_NAMESPACE, spec.getName()), 1));
           }
           return builder.build();
         } catch (Throwable e) {

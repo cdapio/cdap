@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.runtime;
 
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -41,7 +40,6 @@ import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
@@ -131,7 +129,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
    @Override
     protected void configure() {
       bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-      bind(MetricStore.class).to(DefaultMetricStore.class);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
