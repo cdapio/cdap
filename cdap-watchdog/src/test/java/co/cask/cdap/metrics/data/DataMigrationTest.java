@@ -24,11 +24,11 @@ public class DataMigrationTest {
     Preconditions.checkArgument(runId != null, "RunId cannot be null.");
     Preconditions.checkArgument(metric != null, "Metric cannot be null.");
 
-    return Bytes.concat(entityCodec.encode(MetricsEntityType.CONTEXT, context),
-                        entityCodec.encode(MetricsEntityType.METRIC, metric),
-                        entityCodec.encode(MetricsEntityType.TAG, tag == null ? MetricsConstants.EMPTY_TAG : tag),
+    return Bytes.concat(entityCodec.paddedEncode(MetricsEntityType.CONTEXT, context, 0),
+                        entityCodec.paddedEncode(MetricsEntityType.METRIC, metric, 0),
+                        entityCodec.paddedEncode(MetricsEntityType.TAG, tag == null ? MetricsConstants.EMPTY_TAG : tag, 0),
                         Bytes.toBytes(timeBase),
-                        entityCodec.encode(MetricsEntityType.RUN, runId));
+                        entityCodec.paddedEncode(MetricsEntityType.RUN, runId, 0));
   }
 
   @Test
@@ -45,8 +45,14 @@ public class DataMigrationTest {
     // 3. With the metricValue, get Context name (tag-values) and metric name and test they are equal to the initial values.
 
     String context = "zap.f.xflow.xflowlet" ;
-    Map<String, String> tagValues = ImmutableMap.of("ns", "default", "app", "zap",
-                                                    "ptp", "f", "prg", "xflow", "flt", "xflowlet");
+    ImmutableMap<String, String> tagValues = ImmutableMap.<String, String> builder().put("ns", "default")
+      .put("app", "zap")
+      .put("ptp", "f")
+      .put("prg", "xflow")
+      .put("flt", "xflowlet")
+      .put("run", "0")
+      .build();
+
     String metric = "input.reads";
     byte[] rowKey = getKey(codec, context, "0", metric, null, 10);
     DataMigration26 migration26 = new DataMigration26(codec);

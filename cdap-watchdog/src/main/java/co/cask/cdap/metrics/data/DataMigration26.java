@@ -84,11 +84,14 @@ public class DataMigration26 {
 
   // pass rowkey and scope name, since we have removed having separate tables for scope in 2.8
   public MetricValue getMetricValue(byte[] rowKey, String scope) {
-    String context = codec.decode(MetricsEntityType.CONTEXT, rowKey);
-    String metricName = codec.decode(MetricsEntityType.METRIC, rowKey);
-    String runId = codec.decode(MetricsEntityType.RUN, rowKey);
+    int offset = 0;
+    String context = codec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
+    offset += codec.getEncodedSize(MetricsEntityType.CONTEXT);
+    String metricName = codec.decode(MetricsEntityType.METRIC, rowKey, offset);
+    offset += codec.getEncodedSize(MetricsEntityType.METRIC);
+    String runId = codec.decode(MetricsEntityType.RUN, rowKey, offset);
     // todo : see which context's emit tags and add them to tag-value map ?
-    String tag = codec.decode(MetricsEntityType.TAG, rowKey);
+    //String tag = codec.decode(MetricsEntityType.TAG, rowKey);
     Map<String, String> tagValues = getContextTags(context);
     if (runId != null) {
       tagValues.put(Constants.Metrics.Tag.RUN_ID, runId);
