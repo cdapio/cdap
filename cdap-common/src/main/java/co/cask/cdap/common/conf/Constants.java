@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -680,6 +682,7 @@ public final class Constants {
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
   /**
    * Constants related to external systems.

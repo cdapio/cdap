@@ -316,7 +316,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName);
+      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, typeName);
       typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
     }
     return typeMeta;
@@ -328,7 +328,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @return true if dropped successfully, false if dataset is not found.
    * @throws Exception on error.
    */
-  private boolean dropDataset(Id.DatasetInstance datasetInstaceId, DatasetSpecification spec) throws Exception {
+  private boolean dropDataset(Id.DatasetInstance datasetInstanceId, DatasetSpecification spec) throws Exception {
     String name = spec.getName();
 
     disableExplore(name);
@@ -337,11 +337,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return false;
     }
 
-    DatasetTypeMeta typeMeta = getTypeInfo(datasetInstaceId.getNamespace(), spec.getType());
+    DatasetTypeMeta typeMeta = getTypeInfo(datasetInstanceId.getNamespace(), spec.getType());
     if (typeMeta == null) {
       return false;
     }
-    opExecutorClient.drop(datasetInstaceId, typeMeta, spec);
+    opExecutorClient.drop(datasetInstanceId, typeMeta, spec);
     return true;
   }
 

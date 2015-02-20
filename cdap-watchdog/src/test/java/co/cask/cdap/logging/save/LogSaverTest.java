@@ -106,7 +106,7 @@ public class LogSaverTest extends KafkaTestBase {
   @BeforeClass
   public static void startLogSaver() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
                           new InMemoryOrderedTableModule());
 
     String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();

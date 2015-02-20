@@ -61,7 +61,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   @BeforeClass
   public static void init() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
                           new InMemoryOrderedTableModule());
 
     Configuration txConf = HBaseConfiguration.create();

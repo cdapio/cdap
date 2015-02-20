@@ -54,9 +54,33 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
     super(table);
   }
 
+  /**
+   * Retrieves a module from the given namespace
+   *
+   * @param datasetModuleId the {@link Id.DatasetModule} for the module to retrieve
+   * @return {@link DatasetModuleMeta} for the module if found in the specified namespace, null otherwise
+   */
   @Nullable
   public DatasetModuleMeta getModule(Id.DatasetModule datasetModuleId) {
     return get(getModuleKey(datasetModuleId.getNamespaceId(), datasetModuleId.getId()), DatasetModuleMeta.class);
+  }
+
+  /**
+   * Tries to find a module in the specified namespace first. If it fails, tries to find it in the system namespace
+   *
+   * @param datasetModuleId {@link Id.DatasetModule} for the module to retrieve
+   * @return {@link DatasetModuleMeta} for the module if found either in the specified namespace or in the system
+   * namespace, null otherwise
+   */
+  @Nullable
+  public DatasetModuleMeta getModuleWithFallback(Id.DatasetModule datasetModuleId) {
+    // Try to find module in the specified namespace first
+    DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
+    // if not found, try to load it from system namespace
+    if (moduleMeta == null) {
+      moduleMeta = getModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, datasetModuleId.getId()));
+    }
+    return moduleMeta;
   }
 
   @Nullable
@@ -91,8 +115,8 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
       // second part is namespace
       splitter.skipString();
       // third part is the type name, which is what we expect
-      String key = splitter.getString();
-      types.add(getTypeMeta(namespaceId, key, entry.getValue()));
+      String typeName = splitter.getString();
+      types.add(getTypeMeta(namespaceId, typeName, entry.getValue()));
     }
     return types;
   }
@@ -136,16 +160,12 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
-      // Try to find module in the specified namespace first
-      DatasetModuleMeta usedModuleMeta = getModule(Id.DatasetModule.from(namespaceId, usedModule));
-      // if not found, try to load it from system namespace
-      if (usedModuleMeta == null) {
-        usedModuleMeta = getModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, usedModule));
-        // Module could not be found in either user or system namespace, bail out
-        Preconditions.checkState(usedModuleMeta != null,
-                                 String.format("Unable to find metadata about module %s that module %s uses.",
-                                               usedModule, moduleMeta.getName()));
-      }
+      // Try to find module in the specified namespace first, then the system namespace
+      DatasetModuleMeta usedModuleMeta = getModuleWithFallback(Id.DatasetModule.from(namespaceId, usedModule));
+      // Module could not be found in either user or system namespace, bail out
+      Preconditions.checkState(usedModuleMeta != null,
+                               String.format("Unable to find metadata about module %s that module %s uses.",
+                                             usedModule, moduleMeta.getName()));
       modulesToLoad.add(usedModuleMeta);
     }
     modulesToLoad.add(moduleMeta);
