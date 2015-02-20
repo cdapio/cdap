@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,32 +19,24 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.table.Delete;
 
-import java.util.Iterator;
-import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * A dataset that stores objects of a particular class into a table.
- * <p>
- * Supported types are:
- * </p>
- * <p>
- * <ul>
- *   <li>a plain java class</li>
- *   <li>a parametrized class</li>
- *   <li>a static inner class of one of the above</li>
- * </ul>
- *</p>
- * Interfaces and not-static inner classes are not supported. An ObjectStore will serialize the entire object and
- * store it in a single column. See {@link ObjectMappedTable} if you want object fields to be mapped to their own
- * columns.
+ * A Dataset that stores plain java Objects into a table by mapping object fields to table columns.
+ * Objects must be flat and can only contain fields of simple type. A simple type is an Integer,
+ * int, Long, long, Float, float, Double, double, String, byte[], ByteBuffer, or UUID.
+ * The object itself cannot be a simple type.
  *
- * @param <T> the type of objects in the store
+ * @param <T> the type of objects in the table
  */
 @Beta
-public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, BatchWritable<byte[], T> {
+public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
+  BatchWritable<byte[], T>, RecordScannable<StructuredRecord> {
 
   /**
    * Write an object with a given key.
@@ -64,6 +56,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Read an object with a given key.
+   *
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
@@ -71,6 +64,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Read an object with a given key.
+   *
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
@@ -78,15 +72,32 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Scans table.
+   *
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} over
-   * {@link KeyValue KeyValue&lt;byte[], T&gt;}
+   * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
-  CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
+  CloseableIterator<KeyValue<byte[], T>> scan(@Nullable String startRow, @Nullable String stopRow);
+
+  /**
+   * Scans table.
+   *
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
+   */
+  CloseableIterator<KeyValue<byte[], T>> scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
 
   /**
    * Delete the object for the specified key.
+   *
+   * @param key key of the object to be deleted
+   */
+  void delete(String key);
+
+  /**
+   * Delete the object for the specified key.
+   *
    * @param key key of the object to be deleted
    */
   void delete(byte[] key);
