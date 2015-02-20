@@ -1,13 +1,12 @@
 angular.module(PKG.name + '.feature.userprofile')
-  .controller('UserProfileController', function($scope, $http, $alert, amMoment) {
+  .controller('UserProfileController', function($scope, $http, $alert, amMoment, $state) {
     $scope.alreadyLoggedIn = false;
     $scope.credentials = {
-      username: '',
+      username: $state.params.username,
       password: ''
     };
-    $scope.moment = amMoment;
-    $scope.doLogin = function(credentials) {
 
+    $scope.doLogin = function(credentials) {
       $http({
         method: 'POST',
         url: '/accessToken',
@@ -17,7 +16,7 @@ angular.module(PKG.name + '.feature.userprofile')
         }
       })
         .success(function(res) {
-          var expirationTime = $scope.moment.preprocessDate(Date.now() + (res.expires_in * 1000));
+          var expirationTime = amMoment.preprocessDate(Date.now() + (res.expires_in * 1000));
           $scope.token = res.access_token;
           $scope.expirationTime = expirationTime.fromNow();
           $scope.alreadyLoggedIn = true;
