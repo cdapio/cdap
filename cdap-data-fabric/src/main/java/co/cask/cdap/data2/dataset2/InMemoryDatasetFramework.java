@@ -53,7 +53,6 @@ import javax.annotation.Nullable;
  */
 public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
-  private static final Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
 
   private DatasetDefinitionRegistryFactory registryFactory;
   private Map<String, ? extends DatasetModule> defaultModules;
@@ -257,14 +256,20 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   private List<String> getAvailableModuleClasses(Id.Namespace namespace) {
-    LinkedList<String> allClasses = getAllModuleClasses(systemNamespace);
-    if (systemNamespace.equals(namespace)) {
+    LinkedList<String> allClasses = getAllModuleClasses(Constants.SYSTEM_NAMESPACE_ID);
+    if (Constants.SYSTEM_NAMESPACE_ID.equals(namespace)) {
       return allClasses;
     }
     LinkedList<String> namespaceClasses = getAllModuleClasses(namespace);
     for (String namespaceClass : namespaceClasses) {
       int idx = allClasses.indexOf(namespaceClass);
       if (idx > -1) {
+        // This applies when you have the same type class in the system namespace and the current module's namespace.
+        // In such a scenario, when you reach here, allClasses has type classes from modules in the system namespace.
+        // While iterating over the type classes from modules in the current namespace, if you encounter a class that
+        // is already present in allClasses, remove it, then add the corresponding version of the class from the module
+        // in the current namespace. This is to give type classes in the current namespace precedence over type
+        // classes in the system namespace.
         allClasses.remove(idx);
         allClasses.add(idx, namespaceClass);
       } else {
@@ -328,7 +333,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (registry != null && registry.hasType(datasetType)) {
       return registry;
     }
-    registry = registries.get(systemNamespace);
+    registry = registries.get(Constants.SYSTEM_NAMESPACE_ID);
     if (registry != null && registry.hasType(datasetType)) {
       return registry;
     }
@@ -365,8 +370,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       // namespace.
       if (delegate.hasType(datasetTypeName)) {
         return delegate.get(datasetTypeName);
-      } else if (registries.containsKey(systemNamespace)) {
-        return registries.get(systemNamespace).get(datasetTypeName);
+      } else if (registries.containsKey(Constants.SYSTEM_NAMESPACE_ID)) {
+        return registries.get(Constants.SYSTEM_NAMESPACE_ID).get(datasetTypeName);
       } else {
         throw new IllegalStateException(String.format("Dataset type %s not found.", datasetTypeName));
       }

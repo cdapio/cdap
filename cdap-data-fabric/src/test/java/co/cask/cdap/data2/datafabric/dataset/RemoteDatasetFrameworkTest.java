@@ -155,11 +155,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   // in RemoteDatasetFramework.
   @Test
   public void testSystemNamespace() throws DatasetManagementException {
-    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
-      framework.addModule(Id.DatasetModule.from(systemNamespace, "keyValue"),
+      framework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "keyValue"),
                           new SingleTypeModule(SimpleKVTable.class));
       Assert.fail("Should not be able to add a module to system namespace");
     } catch (DatasetManagementException e) {
@@ -167,12 +166,12 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasSystemType("orderedTable"));
     Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
     try {
-      framework.deleteModule(Id.DatasetModule.from(systemNamespace, "orderedTable-memory"));
+      framework.deleteModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");
     } catch (DatasetManagementException e) {
     }
     try {
-      framework.deleteAllModules(systemNamespace);
+      framework.deleteAllModules(Constants.SYSTEM_NAMESPACE_ID);
       Assert.fail("Should not be able to delete modules from system namespace");
     } catch (DatasetManagementException e) {
     }

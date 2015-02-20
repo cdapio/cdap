@@ -281,16 +281,18 @@ public class DatasetTypeManager extends AbstractIdleService {
           // remove it from "usedBy" from other modules
           for (String usedModuleName : module.getUsesModules()) {
             Id.DatasetModule usedModuleId = Id.DatasetModule.from(datasetModuleId.getNamespace(), usedModuleName);
+            // not using getModuleWithFallback here because we want to know the namespace in which usedModule was found,
+            // so we can overwrite it in the MDS in the appropriate namespace
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModule(usedModuleId);
             // if the usedModule is not found in the current namespace, try finding it in the system namespace
             if (usedModule == null) {
-              usedModule = datasets.getTypeMDS().getModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE,
-                                                                                 usedModuleName));
+              usedModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, usedModuleName);
+              usedModule = datasets.getTypeMDS().getModule(usedModuleId);
               Preconditions.checkState(usedModule != null, "Could not find a module %s that the module %s uses.",
                                        usedModuleName, datasetModuleId.getId());
             }
             usedModule.removeUsedByModule(datasetModuleId.getId());
-            datasets.getTypeMDS().writeModule(datasetModuleId.getNamespace(), usedModule);
+            datasets.getTypeMDS().writeModule(usedModuleId.getNamespace(), usedModule);
           }
 
           datasets.getTypeMDS().deleteModule(datasetModuleId);
@@ -316,7 +318,7 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @param namespaceId the {@link Id.Namespace} to delete modules from.
    */
   public void deleteModules(final Id.Namespace namespaceId) throws DatasetModuleConflictException {
-    Preconditions.checkArgument(namespaceId != null && !Constants.SYSTEM_NAMESPACE.equals(namespaceId),
+    Preconditions.checkArgument(namespaceId != null && !Constants.SYSTEM_NAMESPACE_ID.equals(namespaceId),
                                 "Cannot delete modules from system namespace");
     LOG.warn("Deleting all modules from namespace {}", namespaceId);
     try {
@@ -360,7 +362,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
         // NOTE: we add default modules in the system namespace
-        Id.DatasetModule defaultModule = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, module.getKey());
+        Id.DatasetModule defaultModule = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, module.getKey());
         addModule(defaultModule, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
@@ -420,7 +422,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
         if (typeMeta == null) {
           // not found in the user namespace. Try finding in the system namespace
-          datasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, datasetTypeName);
+          datasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, datasetTypeName);
           typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
           if (typeMeta == null) {
             // not found in the user namespace as well as system namespace. Bail out.
