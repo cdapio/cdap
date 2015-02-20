@@ -75,9 +75,9 @@ function makeApp (authAddress, cdapConfig) {
     (A 404 vs warning for login vs token)
 
   */
-  app.post('/login', authorization);
+  app.post('/login', authentication);
 
-  app.post('/accessToken', authorization);
+  app.post('/accessToken', authentication);
 
   /*
     Handle POST requests made outside of the websockets from front-end.
@@ -118,7 +118,7 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
-  function authorization(req, res) {
+  function authentication(req, res) {
     var opts = {
       auth: {
         user: req.body.username,
