@@ -686,6 +686,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
+    // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
+    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
