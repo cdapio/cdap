@@ -397,6 +397,8 @@ public final class Constants {
       public static final String SERVICE = "srv";
       public static final String SERVICE_RUNNABLE = "srn";
 
+      public static final String WORKER = "wrk";
+
       public static final String FLOW = "fl";
       public static final String FLOWLET = "flt";
       public static final String FLOWLET_QUEUE = "flq";

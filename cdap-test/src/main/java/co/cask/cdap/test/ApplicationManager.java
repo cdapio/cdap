@@ -132,4 +132,19 @@ public interface ApplicationManager {
    */
   ServiceManager startService(String serviceName, Map<String, String> arguments);
 
+  /**
+   * Starts a worker.
+   * @param workerName name of the worker to be started
+   * @param arguments arguments to be passed to the worker
+   * @return {@link WorkerManager} to control the running worker
+   */
+  WorkerManager startWorker(String workerName, Map<String, String> arguments);
+
+  /**
+   * Starts a worker.
+   * @param workerName name of the worker to be started
+   * @return {@link WorkerManager} to control the running worker
+   */
+  WorkerManager startWorker(String workerName);
+
 }

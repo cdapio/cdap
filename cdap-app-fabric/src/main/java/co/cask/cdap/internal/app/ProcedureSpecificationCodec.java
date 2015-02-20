@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * Codec to serialize and deserialize {@link ProcedureSpecification}
  */
 final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<ProcedureSpecification> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.internal.app.worker.WorkerProgramRunner;
 
 /**
- * Factory for creating {@link ProgramRunner}.
+ * A TwillRunnable for running Workers in distributed mode.
  */
-public interface ProgramRunnerFactory {
+public class WorkerTwillRunnable extends AbstractProgramTwillRunnable<WorkerProgramRunner> {
 
-  /**
-   * Types of program that could be created.
-   */
-  public enum Type {
-    FLOW,
-    FLOWLET,
-    PROCEDURE,
-    MAPREDUCE,
-    SPARK,
-    WORKFLOW,
-    WEBAPP,
-    WORKER,
-    SERVICE,
-    SERVICE_COMPONENT
+  protected WorkerTwillRunnable(String name, String hConfName, String cConfName) {
+    super(name, hConfName, cConfName);
   }
 
-  ProgramRunner create(Type programType);
+  @Override
+  protected Class<WorkerProgramRunner> getProgramClass() {
+    return WorkerProgramRunner.class;
+  }
 }

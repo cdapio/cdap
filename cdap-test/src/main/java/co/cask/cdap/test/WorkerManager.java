@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
-
-import co.cask.cdap.app.runtime.ProgramRunner;
+package co.cask.cdap.test;
 
 /**
- * Factory for creating {@link ProgramRunner}.
+ * Managing the worker in an application.
  */
-public interface ProgramRunnerFactory {
+public interface WorkerManager {
 
   /**
-   * Types of program that could be created.
+   * Changes the number of instances.
+   * @param instances number of instances to change to
    */
-  public enum Type {
-    FLOW,
-    FLOWLET,
-    PROCEDURE,
-    MAPREDUCE,
-    SPARK,
-    WORKFLOW,
-    WEBAPP,
-    WORKER,
-    SERVICE,
-    SERVICE_COMPONENT
-  }
+  void setRunnableInstances(int instances);
 
-  ProgramRunner create(Type programType);
+  /**
+   * Stops the running worker.
+   */
+  void stop();
+
+  /**
+   * Checks if the worker is running.
+   * @return true if worker is running
+   */
+  boolean isRunning();
 }
