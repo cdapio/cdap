@@ -40,8 +40,7 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final HashMap<String, String> EMPTY_TAGS = new HashMap<String, String>();
   private static final String NAMESPACE = "testnamespace";
   private static final String APP = "testapp";
-  private static final String PROGRAM_TYPE = "f";
-  private static final String PROGRAM = "testprogram";
+  private static final String FLOW = "testprogram";
   private static final String RUNID = "testrun";
   private static final String FLOWLET = "testflowlet";
   private static final String INSTANCE = "testInstance";
@@ -69,8 +68,7 @@ public class AggregatedMetricsCollectionServiceTest {
     // non-empty tags.
     final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
                                          Constants.Metrics.Tag.APP, APP,
-                                         Constants.Metrics.Tag.PROGRAM_TYPE, PROGRAM_TYPE,
-                                         Constants.Metrics.Tag.PROGRAM, PROGRAM,
+                                         Constants.Metrics.Tag.FLOW, FLOW,
                                          Constants.Metrics.Tag.RUN_ID, RUNID);
 
     try {
