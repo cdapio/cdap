@@ -13,7 +13,7 @@ Applications
 An **Application** is a collection of building blocks that read and write data through the data
 abstraction layer in CDAP. 
 
-**Applications** are composed from *Programs,* *Services,* and *Procedures (deprecated).*
+**Applications** are composed from *Programs,* *Services,* and *Schedules*.
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
