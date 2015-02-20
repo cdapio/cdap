@@ -16,16 +16,16 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
@@ -97,10 +97,10 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
-      MetricQueryParser.CubeQueryBuilder builder = new MetricQueryParser.CubeQueryBuilder();
+      MetricQueryParser.MetricDataQueryBuilder builder = new MetricQueryParser.MetricDataQueryBuilder();
       MetricQueryParser.parseQueryString(new URI(request.getUri()), builder);
       builder.setSliceByTagValues(Maps.<String, String>newHashMap());
-      CubeQuery queryTimeParams = builder.build();
+      MetricDataQuery queryTimeParams = builder.build();
 
       Map<String, String> tagsSliceBy = parseTagValuesAsMap(context);
       List<String> groupByTags = parseGroupBy(groupBy);
@@ -108,12 +108,12 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
 
-      CubeQuery query = new CubeQuery(startTs, endTs,
-                                      queryTimeParams.getResolution(), metric,
-                                          // todo: figure out MeasureType
-                                      MeasureType.COUNTER, tagsSliceBy, groupByTags);
+      co.cask.cdap.api.metrics.MetricDataQuery query = new co.cask.cdap.api.metrics.MetricDataQuery(startTs, endTs,
+                                                  queryTimeParams.getResolution(), metric,
+                                                  // todo: figure out MetricType
+                                                  MetricType.COUNTER, tagsSliceBy, groupByTags);
 
-      Collection<TimeSeries> queryResult = metricStore.query(query);
+      Collection<MetricTimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
 
       responder.sendJson(HttpResponseStatus.OK, result);
@@ -181,7 +181,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
     contextPrefix = toCanonicalContext(tagValues);
-    CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
+    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
     Collection<String> result = Lists.newArrayList();
     for (TagValue tag : nextTags) {
@@ -209,17 +209,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private Collection<String> searchMetric(String contextPrefix) throws Exception {
-    CubeExploreQuery searchQuery = new CubeExploreQuery(0, Integer.MAX_VALUE - 1, 1, -1, parseTagValues(contextPrefix));
+    MetricSearchQuery searchQuery =
+      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, parseTagValues(contextPrefix));
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
 
-  private MetricQueryResult decorate(Collection<TimeSeries> timeSerieses, long startTs, long endTs) {
-    MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[timeSerieses.size()];
+  private MetricQueryResult decorate(Collection<MetricTimeSeries> series, long startTs, long endTs) {
+    MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[series.size()];
     int i = 0;
-    for (TimeSeries timeSeries : timeSerieses) {
+    for (MetricTimeSeries timeSeries : series) {
       MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
-      serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMeasureName(),
+      serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
                                                        timeSeries.getTagValues(), timeValues);
     }
     return new MetricQueryResult(startTs, endTs, serieses);

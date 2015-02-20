@@ -16,8 +16,8 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

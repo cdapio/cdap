@@ -13,22 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.data;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
+package co.cask.cdap.api.metrics;
 
 /**
- * Interpolate a value between two other time values.
+ * MetricType - COUNTER or GAUGE type
  */
-public interface Interpolator {
-
-  /**
-   * Given start and end TimeValues, and a time in-between the two, return a TimeValue for the in-between time.
-   */
-  public long interpolate(TimeValue start, TimeValue end, long ts);
-
-  /**
-   * Data points that are more than this many seconds apart will not cause interpolation to occur and will instead
-   * return 0 for any point in between.
-   */
-  public long getMaxAllowedGap();
+public enum MetricType {
+  COUNTER,
+  GAUGE
 }

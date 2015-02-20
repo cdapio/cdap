@@ -51,7 +51,7 @@ public class ExploreMetadataHttpHandlerV2 extends AbstractHttpHandler {
   @Path("data/explore/tables/{table}/info")
   public void getTableSchema(HttpRequest request, HttpResponder responder, @PathParam("table") String table) {
     exploreMetadataHttpHandler.getTableSchema(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                              table, Constants.DEFAULT_NAMESPACE);
+                                              Constants.DEFAULT_NAMESPACE, table);
   }
 
 
@@ -106,7 +106,7 @@ public class ExploreMetadataHttpHandlerV2 extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/jdbc/info/{type}")
-  public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") final String type) {
+  public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") String type) {
     exploreMetadataHttpHandler.getJDBCInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                            Constants.DEFAULT_NAMESPACE, type);
   }

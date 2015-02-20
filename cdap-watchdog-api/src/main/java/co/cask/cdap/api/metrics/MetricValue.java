@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.transport;
+package co.cask.cdap.api.metrics;
 
 import java.util.Map;
 

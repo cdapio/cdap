@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.api.security;
+package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Objects;
 
 /**
- * Represents an object that may be authorized to access various entities.
+ * Represents a value of the measure at specific timestamp.
  */
-public class Principal {
+//todo: move in higher-level package? It is used everywhere
+public final class TimeValue implements Comparable<TimeValue> {
+  private final long timestamp;
+  private final long value;
 
-  private final PrincipalType type;
-  private final String id;
-
-  public Principal(PrincipalType type, String id) {
-    this.type = type;
-    this.id = id;
+  public TimeValue(long timestamp, long value) {
+    this.timestamp = timestamp;
+    this.value = value;
   }
 
-  public PrincipalType getType() {
-    return type;
+  public long getTimestamp() {
+    return timestamp;
   }
 
-  public String getId() {
-    return id;
-  }
-
-  public String getQualifiedId() {
-    return type.getPrefix() + ":" + id;
+  public long getValue() {
+    return value;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(type, id);
+    return Objects.hashCode(timestamp, value);
   }
 
   @Override
@@ -53,15 +49,23 @@ public class Principal {
     if (this == obj) {
       return true;
     }
+
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    final Principal other = (Principal) obj;
-    return Objects.equal(this.type, other.type) && Objects.equal(this.id, other.id);
+
+    TimeValue other = (TimeValue) obj;
+
+    return timestamp == other.timestamp && value == other.value;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("type", type).add("id", id).toString();
+    return Objects.toStringHelper(this).add("ts", timestamp).add("value", value).toString();
+  }
+
+  @Override
+  public int compareTo(TimeValue o) {
+    return timestamp > o.timestamp ? 1 : (timestamp < o.timestamp ? -1 : 0);
   }
 }

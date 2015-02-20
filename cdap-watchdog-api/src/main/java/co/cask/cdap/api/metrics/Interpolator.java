@@ -13,25 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.api.security;
-
-import com.google.common.collect.Lists;
-
-import java.util.List;
+package co.cask.cdap.api.metrics;
 
 /**
- * Utility functions for {@link Principals}.
+ * Interpolate a value between two other time values.
  */
-public final class Principals {
+public interface Interpolator {
 
-  private Principals() { }
+  /**
+   * Given start and end TimeValues, and a time in-between the two, return a TimeValue for the in-between time.
+   */
+  public long interpolate(TimeValue start, TimeValue end, long ts);
 
-  public static List<Principal> fromIds(PrincipalType type, List<String> ids) {
-    List<Principal> result = Lists.newArrayList();
-    for (String id : ids) {
-      result.add(new Principal(type, id));
-    }
-    return result;
-  }
+  /**
+   * Data points that are more than this many seconds apart will not cause interpolation to occur and will instead
+   * return 0 for any point in between.
+   */
+  public long getMaxAllowedGap();
 }

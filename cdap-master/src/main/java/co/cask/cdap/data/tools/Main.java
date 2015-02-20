@@ -44,7 +44,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;

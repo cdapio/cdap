@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -115,7 +115,7 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
-  private static StreamCoordinatorClient streamCoordinatorClient;
+  private static StreamService streamService;
   private static final String adapterFolder = "adapter";
 
   @ClassRule
@@ -152,8 +152,8 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
-    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
-    streamCoordinatorClient.startAndWait();
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
 
     createNamespaces();
   }
@@ -161,7 +161,7 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() throws Exception {
     deleteNamespaces();
-    streamCoordinatorClient.stopAndWait();
+    streamService.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();

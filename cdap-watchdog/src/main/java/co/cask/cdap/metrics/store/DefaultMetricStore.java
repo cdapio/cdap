@@ -16,6 +16,15 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
@@ -29,10 +38,6 @@ import co.cask.cdap.metrics.store.cube.FactTableSupplier;
 import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
-import co.cask.cdap.metrics.transport.MetricType;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -44,6 +49,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -126,13 +132,10 @@ public class DefaultMetricStore implements MetricStore {
                                     ImmutableList.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
-    // component, handler, method, stream (for stream only) todo: seems like emitted context is wrong, review...
-    aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE,
-      Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD,
-      Constants.Metrics.Tag.STREAM),
-                                    // i.e. for stream only
-                                    ImmutableList.of(Constants.Metrics.Tag.STREAM)));
+    // stream
+    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
+                                    // i.e. for streams only
+                                    ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
 
     // dataset
     aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
@@ -154,19 +157,26 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<TimeSeries> query(CubeQuery query) throws Exception {
-    CubeQuery q =
-      new CubeQuery(query, replaceTagsIfNeeded(query.getSliceByTags()), replaceTagsIfNeeded(query.getGroupByTags()));
-    Collection<TimeSeries> cubeResult = cube.get().query(q);
-    List<TimeSeries> result = Lists.newArrayList();
+  public Collection<MetricTimeSeries> query(MetricDataQuery q) throws Exception {
+    Collection<TimeSeries> cubeResult = cube.get().query(buildCubeQuery(q));
+    List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
-      result.add(new TimeSeries(timeSeries, unMapTags(timeSeries.getTagValues(),
-                                                      query.getSliceByTags().get(Constants.Metrics.Tag.PROGRAM_TYPE))));
+
+      result.add(new MetricTimeSeries(timeSeries.getMeasureName(),
+                                      unmapTags(timeSeries.getTagValues(),
+                                                q.getSliceByTags().get(Constants.Metrics.Tag.PROGRAM_TYPE)),
+                                      timeSeries.getTimeValues()));
     }
     return result;
   }
 
-  private Map<String, String> unMapTags(Map<String, String> tagValues, String programType) {
+  private CubeQuery buildCubeQuery(MetricDataQuery q) {
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getMetricName(),
+                                          toMeasureType(q.getMetricType()), replaceTagsIfNeeded(q.getSliceByTags()),
+                                          replaceTagsIfNeeded(q.getGroupByTags()));
+  }
+
+  private Map<String, String> unmapTags(Map<String, String> tagValues, @Nullable String programType) {
     if (programType == null) {
       return tagValues;
     }
@@ -189,31 +199,41 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void delete(CubeDeleteQuery query) throws Exception {
-    CubeDeleteQuery transformedQuery = new CubeDeleteQuery(query, replaceTagsIfNeeded(query.getSliceByTags()));
-    cube.get().delete(transformedQuery);
+  public void delete(MetricDeleteQuery query) throws Exception {
+    cube.get().delete(buildCubeDeleteQuery(query));
   }
 
-  private void replaceTagValuesIfNeeded(List<TagValue> tagValues) {
-    for (int i = 0; i < tagValues.size(); i++) {
-      TagValue tagValue = tagValues.get(i);
+  private CubeDeleteQuery buildCubeDeleteQuery(MetricDeleteQuery query) {
+    Map<String, String> sliceByTagValues = replaceTagsIfNeeded(query.getSliceByTags());
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(),
+                                                           query.getMetricName(), sliceByTagValues);
+  }
+
+  private List<TagValue> replaceTagValuesIfNeeded(List<TagValue> tagValues) {
+    List<TagValue> result = Lists.newArrayList();
+    for (TagValue tagValue : tagValues) {
       String tagNameReplacement = tagMapping.get(tagValue.getTagName());
-      if (tagNameReplacement != null) {
-        tagValues.set(i, new TagValue(tagNameReplacement, tagValue.getValue()));
-      }
+      result.add(new TagValue(tagNameReplacement == null ? tagValue.getTagName() : tagNameReplacement,
+                              tagValue.getValue()));
     }
+    return result;
   }
 
   @Override
-  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
-    replaceTagValuesIfNeeded(query.getTagValues());
-    return cube.get().findNextAvailableTags(query);
+  public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
+    Collection<TagValue> tagsFromCube = cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+    String programType = getTagValue(query.getTagValues(), Constants.Metrics.Tag.PROGRAM_TYPE);
+    return unmapTags(tagsFromCube, programType);
+  }
+
+  private CubeExploreQuery buildCubeSearchQuery(MetricSearchQuery query) {
+    return new CubeExploreQuery(query.getStartTs(), query.getEndTs(), query.getResolution(), query.getLimit(),
+                                                                 replaceTagValuesIfNeeded(query.getTagValues()));
   }
 
   @Override
-  public Collection<String> findMetricNames(CubeExploreQuery query) throws Exception {
-    replaceTagValuesIfNeeded(query.getTagValues());
-    return cube.get().getMeasureNames(query);
+  public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
+    return cube.get().findMeasureNames(buildCubeSearchQuery(query));
   }
 
   private Map<String, String> replaceTagsIfNeeded(Map<String, String> tagValues) {
@@ -234,6 +254,33 @@ public class DefaultMetricStore implements MetricStore {
       result.add(tagNameReplacement == null ? tagName : tagNameReplacement);
     }
     return result;
+  }
+
+  private Collection<TagValue> unmapTags(Collection<TagValue> nextAvailableTags, @Nullable String programType) {
+    // check if program-type is available in the query, if available , check if reverseMapping contains
+    // value for the next tag key. if so, replace the tag-key , else use existing tag-key
+    if (programType == null || (reverseMapping.get(programType) == null)) {
+      return nextAvailableTags;
+    }
+
+    List<TagValue> unMappedList = Lists.newArrayList();
+    for (TagValue tagValue : nextAvailableTags) {
+      String tag = reverseMapping.get(programType).get(tagValue.getTagName());
+      unMappedList.add(tag == null ? tagValue : new TagValue(tag, tagValue.getValue()));
+    }
+    return unMappedList;
+  }
+
+  @Nullable
+  private String getTagValue(List<TagValue> tagValues, String tagName) {
+    String programType = null;
+    for (TagValue tagValue : tagValues) {
+      if (tagValue.getTagName().equals(tagName)) {
+        programType = tagValue.getValue();
+        break;
+      }
+    }
+    return programType;
   }
 
   private MeasureType toMeasureType(MetricType type) {
