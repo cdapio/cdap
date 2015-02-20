@@ -17,8 +17,6 @@
 # limitations under the License.
 #
 
-repo_version = node['cdap']['version'].to_f
-
 case node['platform_family']
 when 'debian'
   include_recipe 'apt'
@@ -28,14 +26,14 @@ when 'debian'
     components node['cdap']['repo']['apt_components']
     action :add
     arch 'amd64'
-    key "#{node['cdap']['repo']['apt_repo_url']}/#{repo_version}/pubkey.gpg"
+    key "#{node['cdap']['repo']['apt_repo_url']}/pubkey.gpg"
   end
 when 'rhel'
   include_recipe 'yum'
   yum_repository 'cask' do
     description 'Cask YUM repository'
     url node['cdap']['repo']['yum_repo_url']
-    gpgkey "#{node['cdap']['repo']['yum_repo_url']}/#{repo_version}/pubkey.gpg"
+    gpgkey "#{node['cdap']['repo']['yum_repo_url']}/pubkey.gpg"
     gpgcheck true
     action :add
   end
