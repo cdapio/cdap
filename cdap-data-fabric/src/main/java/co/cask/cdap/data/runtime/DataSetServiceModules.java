@@ -35,6 +35,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
@@ -74,6 +75,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
+    INMEMORY_DATASET_MODULES.put("objectMappedTable", new ObjectMappedTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -88,6 +90,7 @@ public class DataSetServiceModules {
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -132,6 +135,7 @@ public class DataSetServiceModules {
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -178,6 +182,7 @@ public class DataSetServiceModules {
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
