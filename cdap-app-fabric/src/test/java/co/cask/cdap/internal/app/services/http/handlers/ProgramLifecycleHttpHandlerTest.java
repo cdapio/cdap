@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.DummyAppWithTrackingTable;
@@ -517,6 +518,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // verify invalid program type
     Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+  }
+
+  /**
+   * Worker Specification tests
+   */
+  @Test
+  public void testWorkerSpecification() throws Exception {
+    // deploy AppWithWorker in namespace1 and verify
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
   }
 
   /**

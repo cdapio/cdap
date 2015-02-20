@@ -385,23 +385,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workers/{worker-id}/instances")
   public void getWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
                                  @PathParam("worker-id") final String workerId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, workerId);
-
-      if (!store.programExists(programId, ProgramType.WORKER)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Worker not found");
-        return;
-      }
-
-      int count = getWorkerInstances(programId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable throwable) {
-      LOG.error("Got exception : ", throwable);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programLifecycleHttpHandler.getWorkerInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                   appId, workerId);
   }
 
   /**
@@ -411,29 +396,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workers/{worker-id}/instances")
   public void setWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
                                  @PathParam("worker-id") final String workerId) {
-    try {
-      String accId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accId, appId, workerId);
-
-      if (!store.programExists(programId, ProgramType.WORKER)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Worker not found");
-        return;
-      }
-
-      int instances = getInstances(request);
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-
-      setWorkerInstances(programId, instances);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable t) {
-      LOG.error("Got exception : ", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programLifecycleHttpHandler.setWorkerInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                   appId, workerId);
   }
 
   /**
@@ -523,32 +487,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn("Exception when getting instances for {}.{} to {}.{}",
                programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
-    }
-  }
-
-  private void setWorkerInstances(Id.Program programId, int instances) throws Exception {
-    try {
-      store.setWorkerInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = programLifecycleHttpHandler.findRuntimeInfo(programId,
-                                                                                                  ProgramType.WORKER);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES, ImmutableMap.of(programId.getId(),
-                                                                                              instances)).get();
-      }
-    } catch (Throwable t) {
-      LOG.warn("Exception when setting instances for {}.{} to {}.{}", programId.getId(),
-               ProgramType.WORKER.getPrettyName(), t.getMessage(), t);
-      throw new Exception(t.getMessage());
-    }
-  }
-
-  private int getWorkerInstances(Id.Program programId) throws Exception {
-    try {
-      return store.getWorkerInstances(programId);
-    } catch (Throwable t) {
-      LOG.warn("Exception when getting instances for {}.{} to {}.{}", programId.getId(),
-               ProgramType.WORKER.getPrettyName(), t.getMessage(), t);
-      throw new Exception(t.getMessage());
     }
   }
 
