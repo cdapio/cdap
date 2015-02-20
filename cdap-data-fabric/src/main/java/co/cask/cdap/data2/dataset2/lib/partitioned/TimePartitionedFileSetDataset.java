@@ -486,6 +486,10 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   /**
    * Migrate legacy partitions to the current format, starting a the given partition time, spending at most a limited
    * number of seconds. The caller can invoke this repeatedly until it returns -1.
+   * <p>
+   * This method is not in the API for this dataset. It is implementation-specific. The upgrade tool must obtain an
+   * instance of {@link TimePartitionedFileSet} and cast it to this class.
+   * 
    * @param startTime the partition time to start at
    * @param timeLimitInSeconds the number of seconds after which to stop. This is to avoid transaction timeouts.
    * @return the
