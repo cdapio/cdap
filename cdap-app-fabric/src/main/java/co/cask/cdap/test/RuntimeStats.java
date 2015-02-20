@@ -22,8 +22,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -55,8 +53,7 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-      Constants.Metrics.Tag.PROGRAM, flowId,
+      Constants.Metrics.Tag.FLOW, flowId,
       Constants.Metrics.Tag.FLOWLET, flowletId);
 
     return getMetrics(
@@ -67,8 +64,7 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
-      Constants.Metrics.Tag.PROGRAM, procedureId);
+      Constants.Metrics.Tag.PROCEDURE, procedureId);
 
     return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
   }
@@ -77,8 +73,7 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
-      Constants.Metrics.Tag.PROGRAM, serviceId);
+      Constants.Metrics.Tag.SERVICE, serviceId);
 
     return getMetrics(
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");

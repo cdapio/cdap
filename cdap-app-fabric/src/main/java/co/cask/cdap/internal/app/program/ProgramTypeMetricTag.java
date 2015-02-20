@@ -16,34 +16,35 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramType;
 
 /**
  * Helper class for getting the program type id to use when emitting metrics.
  */
-public final class TypeId {
+public final class ProgramTypeMetricTag {
   /**
    * Metric contexts are of the form {applicationId}.{programType}.{programId}.{optionalComponentId},
    * where programType is some string.
    *
    * @return id of the program type for use in metrics contexts.
    */
-  public static String getMetricContextId(ProgramType programType) {
+  public static String getTagName(ProgramType programType) {
     switch (programType) {
       case FLOW:
-        return "f";
+        return Constants.Metrics.Tag.FLOW;
       case PROCEDURE:
-        return "p";
+        return Constants.Metrics.Tag.PROCEDURE;
       case MAPREDUCE:
-        return "b";
+        return Constants.Metrics.Tag.MAPREDUCE;
       case WORKFLOW:
-        return "w";
+        return Constants.Metrics.Tag.WORKFLOW;
       case SPARK:
-        return "s";
+        return Constants.Metrics.Tag.SPARK;
       case SERVICE:
-        return "u";
+        return Constants.Metrics.Tag.SERVICE;
       default:
-        return "unknown";
+        return "program";
     }
   }
 }
