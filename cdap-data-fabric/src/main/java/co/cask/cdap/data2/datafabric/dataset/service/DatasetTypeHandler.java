@@ -102,7 +102,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void deleteModules(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
     if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, "Cannot delete system dataset modules.");
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot delete modules from '%s' namespace.", namespaceId));
       return;
     }
     try {
@@ -119,11 +120,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
                                 @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
     if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, "Cannot deploy modules to system namespace.");
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot add module to '%s' namespace.", namespaceId));
       return null;
     }
 
     // verify namespace directory exists
+    // TODO: CDAP-1366 - should have a namespaceClient to make a REST API call to check if the namespace exists
     final Location namespaceHomeLocation = locationFactory.create(namespaceId);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
@@ -211,7 +214,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
     if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("Cannot delete modules from '%s' namespace.", namespaceId));
+                           String.format("Cannot delete module '%s' from '%s' namespace.", name, namespaceId));
       return;
     }
     boolean deleted;

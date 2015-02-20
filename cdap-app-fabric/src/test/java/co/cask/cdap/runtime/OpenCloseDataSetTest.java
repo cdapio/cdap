@@ -51,7 +51,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -212,7 +211,8 @@ public class OpenCloseDataSetTest {
 
   @AfterClass
   public static void tearDown() throws IOException {
-    Location location = new LocalLocationFactory(TEMP_FOLDER_SUPPLIER.get()).create(DefaultId.NAMESPACE.getId());
+    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
+      .create(DefaultId.NAMESPACE.getId());
     Locations.deleteQuietly(location, true);
   }
 }

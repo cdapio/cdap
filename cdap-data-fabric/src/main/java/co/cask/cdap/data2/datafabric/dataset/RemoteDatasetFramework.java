@@ -156,7 +156,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
-    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getId()) != null;
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName()) != null;
   }
 
   @Override

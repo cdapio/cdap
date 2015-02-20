@@ -104,10 +104,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      // try finding type info in the dataset's namespace
+      // try finding type info in the dataset's namespace first, then the system namespace
       DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
       if (typeMeta == null) {
-        // Dataset type not found in the instance's namespace and the system namespace. Bail out.
+        // Dataset type not found in the instance's namespace or the system namespace. Bail out.
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              String.format("Dataset type %s used by dataset %s not found", spec.getType(), name));
         return;

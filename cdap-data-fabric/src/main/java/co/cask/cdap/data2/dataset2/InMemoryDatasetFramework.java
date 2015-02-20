@@ -169,7 +169,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
     if (registries.containsKey(datasetTypeId.getNamespace())) {
-      return registries.get(datasetTypeId.getNamespace()).hasType(datasetTypeId.getId());
+      return registries.get(datasetTypeId.getNamespace()).hasType(datasetTypeId.getTypeName());
     }
     return false;
   }

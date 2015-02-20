@@ -61,7 +61,7 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
 
   @Nullable
   public DatasetModuleMeta getModuleByType(Id.DatasetType datasetTypeId) {
-    Id.DatasetModule datasetModuleId = get(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getId()),
+    Id.DatasetModule datasetModuleId = get(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getTypeName()),
                                            Id.DatasetModule.class);
     if (datasetModuleId == null) {
       return null;
@@ -75,7 +75,7 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
     if (moduleName == null) {
       return null;
     }
-    return getTypeMeta(datasetTypeId.getNamespace(), datasetTypeId.getId(), moduleName);
+    return getTypeMeta(datasetTypeId.getNamespace(), datasetTypeId.getTypeName(), moduleName);
   }
 
   public Collection<DatasetModuleMeta> getModules(Id.Namespace namespaceId) {
@@ -159,7 +159,7 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
   }
 
   private void writeTypeToModuleMapping(Id.DatasetType datasetTypeId, Id.DatasetModule datasetModuleId) {
-    write(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getId()), datasetModuleId);
+    write(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getTypeName()), datasetModuleId);
   }
 
   private MDSKey getModuleKey(String namespace) {

@@ -157,7 +157,7 @@ public class DatasetTypeManager extends AbstractIdleService {
             if (added) {
               // also adding this module as a dependent for all modules it uses
               usedModule.addUsedByModule(datasetModuleId.getId());
-              datasets.getTypeMDS().writeModule(datasetModuleId.getNamespace(), usedModule);
+              datasets.getTypeMDS().writeModule(usedType.getNamespace(), usedModule);
             }
           }
 

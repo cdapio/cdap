@@ -463,15 +463,15 @@ public final class Id  {
    */
   public static final class DatasetType {
     private final Namespace namespace;
-    private final String typeId;
+    private final String typeName;
 
-    public DatasetType(final Namespace namespace, final String typeId) {
+    private DatasetType(Namespace namespace, String typeName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(typeId, "Dataset type id cannot be null.");
-      Preconditions.checkArgument(isValidDatasetId(typeId), "Invalid characters found in dataset type Id. '" +
-        typeId + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
+      Preconditions.checkNotNull(typeName, "Dataset type id cannot be null.");
+      Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type Id. '" +
+        typeName + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
       this.namespace = namespace;
-      this.typeId = typeId;
+      this.typeName = typeName;
     }
 
     public Namespace getNamespace() {
@@ -482,8 +482,8 @@ public final class Id  {
       return namespace.getId();
     }
 
-    public String getId() {
-      return typeId;
+    public String getTypeName() {
+      return typeName;
     }
 
     @Override
@@ -496,19 +496,19 @@ public final class Id  {
       }
 
       DatasetType that = (DatasetType) o;
-      return namespace.equals(that.namespace) && typeId.equals(that.typeId);
+      return namespace.equals(that.namespace) && typeName.equals(that.typeName);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(namespace, typeId);
+      return Objects.hashCode(namespace, typeName);
     }
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
         .add("namespace", namespace)
-        .add("type", typeId)
+        .add("typeName", typeName)
         .toString();
     }
 
@@ -528,7 +528,7 @@ public final class Id  {
     private final Namespace namespace;
     private final String moduleId;
 
-    public DatasetModule(final Namespace namespace, final String moduleId) {
+    private DatasetModule(Namespace namespace, String moduleId) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(moduleId, "Dataset module id cannot be null.");
       Preconditions.checkArgument(isValidDatasetId(moduleId), "Invalid characters found in dataset module Id. '" +
@@ -591,7 +591,7 @@ public final class Id  {
     private final Namespace namespace;
     private final String instanceId;
 
-    public DatasetInstance(final Namespace namespace, final String instanceId) {
+    private DatasetInstance(Namespace namespace, String instanceId) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(instanceId, "Dataset instance id cannot be null.");
       Preconditions.checkArgument(isValidDatasetId(instanceId), "Invalid characters found in dataset instance id. '" +
