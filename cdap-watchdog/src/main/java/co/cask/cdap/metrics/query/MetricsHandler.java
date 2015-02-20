@@ -29,6 +29,7 @@ import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -60,6 +61,29 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   public static final String TAG_DELIM = ".";
 
   private final MetricStore metricStore;
+  private final ImmutableBiMap<String, String> userFriendlyNameToCodeName =
+    ImmutableBiMap.<String, String>builder()
+      .put("namespace", Constants.Metrics.Tag.NAMESPACE)
+      .put("cluster-metrics", Constants.Metrics.Tag.CLUSTER_METRICS)
+      .put("app", Constants.Metrics.Tag.APP)
+      .put("program-type", Constants.Metrics.Tag.PROGRAM_TYPE)
+      .put("program", Constants.Metrics.Tag.PROGRAM)
+      .put("flowlet", Constants.Metrics.Tag.FLOWLET)
+      .put("flowlet-queue", Constants.Metrics.Tag.FLOWLET_QUEUE)
+      .put("handler", Constants.Metrics.Tag.HANDLER)
+      .put("service", Constants.Metrics.Tag.SERVICE)
+      .put("service-runnable", Constants.Metrics.Tag.SERVICE_RUNNABLE)
+      .put("mr-type", Constants.Metrics.Tag.MR_TASK_TYPE)
+      .put("stream", Constants.Metrics.Tag.STREAM)
+      .put("component", Constants.Metrics.Tag.COMPONENT)
+      .put("method", Constants.Metrics.Tag.METHOD)
+      .put("dataset", Constants.Metrics.Tag.DATASET)
+      .put("instance-id", Constants.Metrics.Tag.INSTANCE_ID)
+      .put("run-id", Constants.Metrics.Tag.RUN_ID)
+      .put("scope", Constants.Metrics.Tag.SCOPE)
+      .build();
+
+  private final ImmutableBiMap<String, String> codeNameToUserFriendlyName = userFriendlyNameToCodeName.inverse();
 
   @Inject
   public MetricsHandler(Authenticator authenticator,
@@ -91,9 +115,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
-                     @QueryParam("context") String context,
-                     @QueryParam("metric") String metric,
-                     @QueryParam("groupBy") String groupBy) throws Exception {
+                    @QueryParam("context") String context,
+                    @QueryParam("metric") String metric,
+                    @QueryParam("groupBy") String groupBy) throws Exception {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
@@ -108,8 +132,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
 
-      co.cask.cdap.api.metrics.MetricDataQuery query = new co.cask.cdap.api.metrics.MetricDataQuery(startTs, endTs,
-                                                  queryTimeParams.getResolution(), metric,
+      MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
                                                   // todo: figure out MetricType
                                                   MetricType.COUNTER, tagsSliceBy, groupByTags);
 
@@ -117,6 +140,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
 
       responder.sendJson(HttpResponseStatus.OK, result);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
@@ -126,7 +152,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
     return (groupBy == null) ? Lists.<String>newArrayList() :
-    Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+      Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
   }
 
   private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
@@ -138,7 +164,10 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     // order matters
     Map<String, String> result = Maps.newLinkedHashMap();
     for (int i = 0; i < tagValues.length; i += 2) {
-      String tag = tagValues[i];
+      String tag = userFriendlyNameToCodeName.get(tagValues[i]);
+      if (tag == null) {
+        throw new IllegalArgumentException(String.format("Invalid name %s in context", tagValues[i]));
+      }
       // if odd number, the value for last tag is assumed to be null
       String val = i + 1 < tagValues.length ? tagValues[i + 1] : null;
       if (ANY_TAG_VALUE.equals(val)) {
@@ -153,6 +182,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void searchMetricAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchMetric(context));
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.warn("Exception while retrieving available metrics", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -162,6 +194,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void searchChildContextAndRespond(HttpResponder responder, String context) {
     try {
       responder.sendJson(HttpResponseStatus.OK, searchChildContext(context));
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.warn("Exception while retrieving contexts", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -180,7 +215,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
-    contextPrefix = toCanonicalContext(tagValues);
     MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
     Collection<String> result = Lists.newArrayList();
@@ -188,24 +222,14 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       if (tag.getValue() == null) {
         continue;
       }
-      String tagValue = tag.getTagName() + TAG_DELIM + tag.getValue();
-      String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
+      String replacement = codeNameToUserFriendlyName.containsKey(tag.getTagName()) ?
+        codeNameToUserFriendlyName.get(tag.getTagName()) : tag.getTagName();
+      String tagValue = replacement  + TAG_DELIM + tag.getValue();
+      String resultTag = (contextPrefix == null || contextPrefix.length() == 0) ?
+        tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
     }
     return result;
-  }
-
-  private String toCanonicalContext(List<TagValue> tagValues) {
-    StringBuilder sb = new StringBuilder();
-    boolean first = true;
-    for (TagValue tv : tagValues) {
-      if (!first) {
-        sb.append(TAG_DELIM);
-      }
-      first = false;
-      sb.append(tv.getTagName()).append(TAG_DELIM).append(tv.getValue() == null ? ANY_TAG_VALUE : tv.getValue());
-    }
-    return sb.toString();
   }
 
   private Collection<String> searchMetric(String contextPrefix) throws Exception {
