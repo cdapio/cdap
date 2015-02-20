@@ -56,22 +56,18 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
 
   @Override
   public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
-    // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
-    // String namespace = String.format("%s.%s.%s",
-    //                                  programId.getNamespaceId(),
+    // A bit hacky to assume namespace is formed by appId.flowId. See AbstractDataFabricFacade
+    // String namespace = String.format("%s.%s",
     //                                  programId.getApplicationId(),
     //                                  programId.getId());
 
-    String invalidNamespaceError = String.format("Namespace string %s must be of the form <namespace>.<app>.<flow>",
-                                                 namespace);
+    String invalidNamespaceError = String.format("Namespace string %s must be of the form <app>.<flow>", namespace);
     Iterator<String> namespaceParts = Splitter.on('.').split(namespace).iterator();
-    Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
-    String namespaceId = namespaceParts.next();
     Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
     String appId = namespaceParts.next();
     Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
     String flowId = namespaceParts.next();
 
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(namespaceId, appId, flowId));
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(streamId.getNamespaceId(), appId, flowId));
   }
 }
