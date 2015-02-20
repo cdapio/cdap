@@ -29,7 +29,7 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, $timeout, rNsList, mySessionStorage) {
+        controller: function ($state, rNsList, mySessionStorage) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.id === $state.params.namespace;
