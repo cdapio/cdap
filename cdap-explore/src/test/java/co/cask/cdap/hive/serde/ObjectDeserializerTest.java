@@ -233,6 +233,15 @@ public class ObjectDeserializerTest {
     deserializer = new ObjectDeserializer(
       names, Lists.<TypeInfo>newArrayList(TypeInfoFactory.binaryTypeInfo), Schema.of(Schema.Type.BYTES));
     Assert.assertArrayEquals(new byte[] { 1, 2, 3 }, (byte[]) deserializer.deserialize(new byte[] { 1, 2, 3 }));
+    // array<tinyint>
+    deserializer = new ObjectDeserializer(
+      names,
+      Lists.newArrayList(TypeInfoFactory.getListTypeInfo(TypeInfoFactory.byteTypeInfo)),
+      Schema.of(Schema.Type.BYTES));
+    Assert.assertArrayEquals(new Byte[] { 1, 2, 3 },
+                             (Byte[]) deserializer.deserialize(new byte[] { 1, 2, 3 }));
+    Assert.assertArrayEquals(new Byte[] { 1, 2, 3 },
+                             (Byte[]) deserializer.deserialize(ByteBuffer.wrap(new byte[] { 1, 2, 3 })));
   }
 
   @Test

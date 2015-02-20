@@ -27,11 +27,13 @@ import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
 import java.lang.reflect.Array;
@@ -190,6 +192,12 @@ public class ObjectDeserializer {
       case PRIMITIVE:
         return deserializePrimitive(field, (PrimitiveTypeInfo) typeInfo);
       case LIST:
+        // HIVE!! some versions will turn bytes into array<tinyint> instead of binary... so special case it.
+        // TODO: remove once CDAP-1556 is done
+        ListTypeInfo listTypeInfo = (ListTypeInfo) typeInfo;
+        if (isByteArray(listTypeInfo) && !(field instanceof Collection)) {
+          return deserializeByteArray(field);
+        }
         return deserializeList(field, (ListTypeInfo) typeInfo, schema.getComponentSchema());
       case MAP:
         return deserializeMap(field, (MapTypeInfo) typeInfo, schema.getMapSchema());
@@ -203,6 +211,39 @@ public class ObjectDeserializer {
         return field;
     }
     return null;
+  }
+
+  private boolean isByteArray(ListTypeInfo typeInfo) {
+    TypeInfo elementType = typeInfo.getListElementTypeInfo();
+    return (elementType.getCategory().equals(ObjectInspector.Category.PRIMITIVE) &&
+      ((PrimitiveTypeInfo) elementType).getPrimitiveCategory().equals(PrimitiveObjectInspector.PrimitiveCategory.BYTE));
+  }
+
+  // Hive's object inspector will try to cast to Object[] so we can't return a byte[]...
+  // TODO: remove once once CDAP-1556 is done
+  private Byte[] deserializeByteArray(Object primitive) {
+    // byte[], ByteBuffer, and UUID get mapped to bytes
+    byte[] raw;
+    if (primitive instanceof ByteBuffer) {
+      ByteBuffer bb = (ByteBuffer) primitive;
+      int length = bb.remaining();
+      Byte[] output = new Byte[length];
+      int pos = bb.position();
+      for (int i = 0; i < length; i++) {
+        output[i] = bb.get();
+      }
+      bb.position(pos);
+      return output;
+    } else if (primitive instanceof UUID) {
+      raw = Bytes.toBytes((UUID) primitive);
+    } else {
+      raw = (byte[]) primitive;
+    }
+    Byte[] output = new Byte[raw.length];
+    for (int i = 0; i < output.length; i++) {
+      output[i] = raw[i];
+    }
+    return output;
   }
 
   /**

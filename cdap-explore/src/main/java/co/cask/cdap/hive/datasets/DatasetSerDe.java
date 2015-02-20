@@ -109,11 +109,12 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
+    ObjectWritable objectWritable = (ObjectWritable) writable;
+    Object obj = objectWritable.get();
     try {
-      ObjectWritable objectWritable = (ObjectWritable) writable;
-      return deserializer.deserialize(objectWritable.get());
+      return deserializer.deserialize(obj);
     } catch (Throwable t) {
-      LOG.info("Unable to deserialize an object.", t);
+      LOG.error("Unable to deserialize object {}.", obj, t);
       throw new SerDeException("Unable to deserialize an object.", t);
     }
   }
