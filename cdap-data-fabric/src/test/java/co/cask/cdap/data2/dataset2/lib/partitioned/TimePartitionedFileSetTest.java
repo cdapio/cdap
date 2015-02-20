@@ -587,6 +587,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     // add some legacy partitions
     Assert.assertTrue(withCompat instanceof TimePartitionedFileSetDataset);
     final TimePartitionedFileSetDataset legacyDataset = (TimePartitionedFileSetDataset) withCompat;
+    Assert.assertTrue(legacyDataset.isLegacyDataset());
 
     final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
     newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
