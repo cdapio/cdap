@@ -12,6 +12,7 @@ angular
       PKG.name+'.feature.apps',
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
+      PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo'
     ]).name,
 

@@ -37,6 +37,13 @@
     </a>
   </li>
 
+  <li role="presentation" ng-show="currentUser" ur-sref-active="disabled">
+    <a role="menuitem" tabindex="-1" ui-sref="userProfile({username: currentUser.username})">
+      <span class="fa fa-fw fa-user"> </span>
+      Profile
+    </a>
+  </li>
+
   <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
     <a role="menuitem" tabindex="-1" href="" ng-click="securityEnabled && logout()">
       <span class="fa fa-fw fa-sign-out"></span>
