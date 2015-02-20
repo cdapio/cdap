@@ -141,10 +141,10 @@ public class AggregatedMetricsCollectionServiceTest {
   private void verifyCounterMetricsValue(MetricValue metricValue) {
     Assert.assertNotNull(metricValue);
     Map<String, String> tags = metricValue.getTags();
-    if (tags.size() == 5) {
+    if (tags.size() == 4) {
       // base collector
       Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, metricValue.getValue());
-    } else if (tags.size() == 7) {
+    } else if (tags.size() == 6) {
       // flowlet collector
       Assert.assertEquals(15L, metricValue.getValue());
     } else {
@@ -155,10 +155,10 @@ public class AggregatedMetricsCollectionServiceTest {
   private void verifyGaugeMetricsValue(MetricValue metricValue) {
     Assert.assertNotNull(metricValue);
     Map<String, String> tags = metricValue.getTags();
-    if (tags.size() == 5) {
+    if (tags.size() == 4) {
       // base collector
       Assert.assertEquals(1L, metricValue.getValue());
-    } else if (tags.size() == 7) {
+    } else if (tags.size() == 6) {
       // flowlet collector
       Assert.assertEquals((long) Integer.MAX_VALUE, metricValue.getValue());
     } else {
