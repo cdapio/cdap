@@ -114,14 +114,14 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   }
 
   /**
-   * Get the size of events ingested by a stream since its creation.
+   * Get the size of events ingested by a stream since its creation, in bytes.
    * @param streamId id of the stream
    * @return Size of events ingested by a stream since its creation
    * @throws IOException when getting an error retrieving the metric
    */
   protected long getStreamEventsSize(Id.Stream streamId) throws IOException {
     MetricDataQuery metricDataQuery = new MetricDataQuery(
-      0, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+      0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
       Integer.MAX_VALUE, "system.collect.bytes",
       MetricType.COUNTER,
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
@@ -131,8 +131,9 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
 
     try {
       Collection<MetricTimeSeries> metrics = metricStore.query(metricDataQuery);
-      if (metrics == null || metrics.size() != 1) {
-        throw new IOException("Should only collect one metric");
+      if (metrics == null || metrics.isEmpty()) {
+        // Data is not yet available, which means no data has been ingested by the stream yet
+        return 0L;
       }
 
       MetricTimeSeries metric = metrics.iterator().next();
