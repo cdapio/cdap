@@ -68,27 +68,16 @@ function makeApp (authAddress, cdapConfig) {
   });
 
 
-  // forward login requests
-  app.post('/login', function (req, res) {
-    if (!req.body.username || !req.body.password) {
-      res.status(400).send('Please specify username/password');
-    }
-    request({
-        url: authAddress.get(),
-        auth: {
-          user: req.body.username,
-          password: req.body.password
-        }
-      },
-      function (nerr, nres, nbody) {
-        if (nerr || nres.statusCode !== 200) {
-          res.status(nres.statusCode).send(nbody);
-        } else {
-          res.send(nbody);
-        }
-      }
-    );
-  });
+  /*
+    For now both login and accessToken APIs do the same thing.
+    This is only for semantic differntiation. In the future ideally
+    these endpoints will vary based on success failure conditions.
+    (A 404 vs warning for login vs token)
+
+  */
+  app.post('/login', authorization);
+
+  app.post('/accessToken', authorization);
 
   /*
     Handle POST requests made outside of the websockets from front-end.
@@ -129,6 +118,26 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
+  function authorization(req, res) {
+    var opts = {
+      auth: {
+        user: req.body.username,
+        password: req.body.password
+      },
+      url: authAddress.get()
+    };
+
+    request(opts,
+      function (nerr, nres, nbody) {
+
+        if (nerr || nres.statusCode !== 200) {
+          res.status(nres.statusCode).send(nbody);
+        } else {
+          res.send(nbody);
+        }
+      }
+    );
+  }
 
   app.get('/test/playground', [
     httpStaticLogger,

@@ -24,8 +24,8 @@ angular.module(PKG.name + '.feature.userprofile')
         })
         .error(function(res) {
           $alert({
-            title: 'Metal balls!',
-            content: 'You goofed up username and password',
+            title: 'User Authentication Error!',
+            content: 'Either Username or Password is wrong. Please try again',
             type: 'danger'
           });
         });
