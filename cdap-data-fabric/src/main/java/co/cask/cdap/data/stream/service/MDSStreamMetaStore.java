@@ -15,17 +15,18 @@
  */
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
@@ -76,7 +77,9 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
           @Override
           public StreamMds get() {
             try {
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, STREAM_META_TABLE, "table",
+              Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                       STREAM_META_TABLE);
+              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, streamMetaDatasetInstanceId, "table",
                                                                DatasetProperties.EMPTY,
                                                                DatasetDefinition.NO_ARGUMENTS, null);
 
@@ -127,7 +130,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, List<StreamSpecification>>() {
       @Override
       public List<StreamSpecification> apply(StreamMds mds) throws Exception {
-        return mds.streams.list(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM, namespaceId.getId()).build(),
+        return mds.streams.list(new MDSKey.Builder().add(TYPE_STREAM, namespaceId.getId()).build(),
                                 StreamSpecification.class);
       }
     });
@@ -140,13 +143,15 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
         @Override
         public Multimap<Id.Namespace, StreamSpecification> apply(StreamMds mds) throws Exception {
           ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
-          Map<MetadataStoreDataset.Key, StreamSpecification> streamSpecs =
-            mds.streams.listKV(new MetadataStoreDataset.Key.Builder().add(TYPE_STREAM).build(),
+          Map<MDSKey, StreamSpecification> streamSpecs =
+            mds.streams.listKV(new MDSKey.Builder().add(TYPE_STREAM).build(),
                                StreamSpecification.class);
-          for (Map.Entry<MetadataStoreDataset.Key, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
-            List<byte[]> keyParts = streamSpecEntry.getKey().split();
-            // Namespace id is the key part with index 1.
-            String namespaceId = Bytes.toString(keyParts.get(1));
+          for (Map.Entry<MDSKey, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
+            MDSKey.Splitter splitter = streamSpecEntry.getKey().split();
+            // skip the first name ("stream")
+            splitter.skipString();
+            // Namespace id is the next part.
+            String namespaceId = splitter.getString();
             builder.put(Id.Namespace.from(namespaceId), streamSpecEntry.getValue());
           }
           return builder.build();
@@ -154,8 +159,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
       });
   }
 
-  private MetadataStoreDataset.Key getKey(Id.Stream streamId) {
-    return new MetadataStoreDataset.Key.Builder()
+  private MDSKey getKey(Id.Stream streamId) {
+    return new MDSKey.Builder()
       .add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getName()).build();
   }
 

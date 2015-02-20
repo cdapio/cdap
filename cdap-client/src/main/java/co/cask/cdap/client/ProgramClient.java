@@ -80,8 +80,8 @@ public class ProgramClient {
   public void start(String appId, ProgramType programType, String programName, Map<String, String> runtimeArgs)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
-                                              appId, programType.getCategoryName(), programName));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/start",
+                                                          appId, programType.getCategoryName(), programName));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -102,8 +102,8 @@ public class ProgramClient {
   public void start(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
-                                              appId, programType.getCategoryName(), programName));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/start",
+                                                          appId, programType.getCategoryName(), programName));
     HttpRequest request = HttpRequest.post(url).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -124,7 +124,8 @@ public class ProgramClient {
   public void stop(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/stop", appId, programType.getCategoryName(), programName));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/stop",
+                                                          appId, programType.getCategoryName(), programName));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -174,8 +175,8 @@ public class ProgramClient {
   public String getStatus(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/status",
-                                              appId, programType.getCategoryName(), programName));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/status",
+                                                          appId, programType.getCategoryName(), programName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
@@ -233,8 +234,8 @@ public class ProgramClient {
   public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/live-info",
-                                              appId, programType.getCategoryName(), programName));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/live-info",
+                                                          appId, programType.getCategoryName(), programName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -258,7 +259,8 @@ public class ProgramClient {
   public int getFlowletInstances(String appId, String flowId, String flowletId)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/flows/%s/flowlets/%s/instances",
+                                                          appId, flowId, flowletId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -282,7 +284,8 @@ public class ProgramClient {
   public void setFlowletInstances(String appId, String flowId, String flowletId, int instances)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/flows/%s/flowlets/%s/instances",
+                                                          appId, flowId, flowletId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -396,8 +399,8 @@ public class ProgramClient {
   public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                              appId, serviceId, runnableId));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
+                                                          appId, serviceId, runnableId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -421,8 +424,8 @@ public class ProgramClient {
   public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                              appId, serviceId, runnableId));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
+                                                          appId, serviceId, runnableId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -452,8 +455,9 @@ public class ProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/runs?%s",
-                                          appId, programType.getCategoryName(), programId, queryParams));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/runs?%s",
+                                                          appId, programType.getCategoryName(),
+                                                          programId, queryParams));
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -483,8 +487,9 @@ public class ProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/runs?%s",
-                                              appId, programType.getCategoryName(), programId, queryParams));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/runs?%s",
+                                                          appId, programType.getCategoryName(),
+                                                          programId, queryParams));
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -512,8 +517,9 @@ public class ProgramClient {
   public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
-                                              appId, programType.getCategoryName(), programId, start, stop));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
+                                                          appId, programType.getCategoryName(),
+                                                          programId, start, stop));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
@@ -538,8 +544,8 @@ public class ProgramClient {
   public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
-                                              appId, serviceId, runnableId, start, stop));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
+                                                          appId, serviceId, runnableId, start, stop));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -551,7 +557,7 @@ public class ProgramClient {
 
   /**
    * Gets the runtime args of a program.
-   * 
+   *
    * @param appId ID of the application tat the program belongs to
    * @param programType type of the program
    * @param programId ID of the program
@@ -563,7 +569,8 @@ public class ProgramClient {
   public Map<String, String> getRuntimeArgs(String appId, ProgramType programType, String programId)
     throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(path), config.getAccessToken(),
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveNamespacedURLV3(path),
+                                               config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
@@ -585,7 +592,8 @@ public class ProgramClient {
   public void setRuntimeArgs(String appId, ProgramType programType, String programId, Map<String, String> runtimeArgs)
     throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
-    HttpRequest request = HttpRequest.put(config.resolveURL(path)).withBody(GSON.toJson(runtimeArgs)).build();
+    HttpRequest request = HttpRequest.put(config.resolveNamespacedURLV3(path))
+      .withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);

@@ -173,6 +173,7 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   }
 
   @Override
+  @Deprecated
   public void setUnicodeStream(int i, InputStream inputStream, int i2) throws SQLException {
     throw new SQLFeatureNotSupportedException();
   }

@@ -124,18 +124,20 @@ public class UnitTestManager implements TestManager {
   @Override
   public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
                                                              DatasetProperties props) throws Exception {
-
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, props);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
+    return datasetFramework.getAdmin(datasetInstanceId, null);
   }
 
   @Beta
   @Override
   public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                              String datasetInstanceName) throws Exception {
-
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
-    return datasetFramework.getAdmin(datasetInstanceName, null);
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, DatasetProperties.EMPTY);
+    return datasetFramework.getAdmin(datasetInstanceId, null);
   }
 
   /**
@@ -146,8 +148,10 @@ public class UnitTestManager implements TestManager {
    */
   @Beta
   public final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
+    //TODO: Expose namespaces later. Hardcoding to default right now.
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceName, new HashMap<String, String>(), null);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {
       final TransactionContext txContext;
       // not every dataset is TransactionAware. FileSets for example, are not transactional.

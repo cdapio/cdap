@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _reference-index:
 
@@ -13,9 +13,12 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 
 - |http|_ CDAP has an HTTP interface for a multitude of purposes: everything from 
   sending data events to a Stream or to inspect the contents of a Stream through checking
-  the status of various System and Custom CDAP services.
+  the status of various System and Custom CDAP services. V3 of the API includes the
+  namespacing of applications, data and metadata to achieve application and data
+  isolation. This is an inital step towards introducing `multi-tenancy
+  <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
-
+  
 .. |java| replace:: **Javadocs:**
 .. _java: javadocs/index.html
 
@@ -37,4 +40,5 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |licenses| replace:: **Licenses and Dependencies:**
 .. _licenses: licenses/index.html
 
-- |licenses|_ License information for the CDAP Product and Documentation and CDAP Dependent Packages, Licenses, and License URLs.
+- |licenses|_ License information for the CDAP Product and Documentation and CDAP
+  Dependent Packages, Licenses, and License URLs.

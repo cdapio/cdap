@@ -16,10 +16,10 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and stores it in

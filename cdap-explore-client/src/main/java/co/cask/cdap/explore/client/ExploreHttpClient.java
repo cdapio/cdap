@@ -107,16 +107,6 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
-  protected QueryHandle doAddPartition(String datasetName, long time, String path) throws ExploreException {
-    HttpResponse response = doPut(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time),
-                                  GSON.toJson(ImmutableMap.of("path", path)), null);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException("Cannot add partition with time " + time + "to dataset " + datasetName +
-                                 ". Reason: " + getDetails(response));
-  }
-
   protected QueryHandle doAddPartition(String datasetName, PartitionKey key, String path) throws ExploreException {
     Map<String, String> args = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
@@ -127,15 +117,6 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot add partition with key " + key + "to dataset " + datasetName +
-                                 ". Reason: " + getDetails(response));
-  }
-
-  protected QueryHandle doDropPartition(String datasetName, long time) throws ExploreException {
-    HttpResponse response = doDelete(String.format("data/explore/datasets/%s/partitions/%d", datasetName, time));
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException("Cannot drop partition with time " + time + "from dataset " + datasetName +
                                  ". Reason: " + getDetails(response));
   }
 

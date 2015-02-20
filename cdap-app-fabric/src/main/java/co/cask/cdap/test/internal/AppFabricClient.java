@@ -23,6 +23,7 @@ import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
@@ -62,7 +64,9 @@ import java.util.jar.Manifest;
  */
 public class AppFabricClient {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricClient.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
 
   private final AppFabricHttpHandler httpHandler;
   private final ServiceHttpHandler serviceHttpHandler;
@@ -170,7 +174,7 @@ public class AppFabricClient {
     httpHandler.getWorkflowSchedules(request, responder, appId, wflowId);
 
     List<ScheduleSpecification> schedules = responder.decodeResponseContent(
-      new TypeToken<List<ScheduleSpecification>>() { });
+      new TypeToken<List<ScheduleSpecification>>() { }, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
   }
