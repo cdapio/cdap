@@ -8,13 +8,6 @@ angular.module(PKG.name+'.feature.operation28')
   .controller('Op28CdapCtrl',
   function ($scope, $state, op28helper, MyDataSource) {
 
-    if(!$state.params.namespace) {
-      // the controller for "ns" state should handle the case of
-      // an empty namespace. but this nested state controller will
-      // still be instantiated. avoid making useless api calls.
-      return;
-    }
-
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
