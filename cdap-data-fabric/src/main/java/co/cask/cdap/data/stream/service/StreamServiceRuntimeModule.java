@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
@@ -25,6 +26,7 @@ import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -107,14 +109,25 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
 
   private static final class NoopStreamService extends AbstractIdleService implements StreamService {
 
+    private StreamCoordinatorClient coordinatorClient;
+
+    @Inject(optional = true)
+    public void setCoordinatorClient(StreamCoordinatorClient coordinatorClient) {
+      this.coordinatorClient = coordinatorClient;
+    }
+
     @Override
     protected void startUp() throws Exception {
-      // no-op
+      if (coordinatorClient != null) {
+        coordinatorClient.startAndWait();
+      }
     }
 
     @Override
     protected void shutDown() throws Exception {
-      // no-op
+      if (coordinatorClient != null) {
+        coordinatorClient.stopAndWait();
+      }
     }
   }
 }
