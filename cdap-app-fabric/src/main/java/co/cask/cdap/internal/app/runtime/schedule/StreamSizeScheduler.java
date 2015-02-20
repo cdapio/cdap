@@ -60,6 +60,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * {@link Scheduler} that triggers program executions based on data availability in streams.
@@ -126,18 +127,24 @@ public class StreamSizeScheduler implements Scheduler {
       // Create a new StreamSubscriber, if one doesn't exist for the stream passed in the schedule
       Id.Stream streamId = Id.Stream.from(program.getNamespaceId(), streamSizeSchedule.getStreamName());
       StreamSubscriber streamSubscriber = new StreamSubscriber(streamId);
-      StreamSubscriber previous = streamSubscribers.putIfAbsent(streamId, streamSubscriber);
-      if (previous == null) {
-        streamSubscriber.start();
-      } else {
-        streamSubscriber = previous;
-      }
+      synchronized (this) {
+        // This block is synchronized so that we can't have the following situation:
+        // - creation of a schedule, using an existing StreamSubscriber which has one other schedule
+        // - deletion of the other schedule, leading to deletion of existing StreamSubscriber
+        // - add the the first schedule to the StreamSubscriber, which has been removed from streamSubscribers
 
-      // Add the scheduleTask to the StreamSubscriber
-      streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule, active, baseRunSize, baseRunTs,
-                                          persist);
-      scheduleSubscribers.put(getScheduleId(program, programType, streamSizeSchedule.getName()),
-                              streamSubscriber);
+        StreamSubscriber previous = streamSubscribers.putIfAbsent(streamId, streamSubscriber);
+        if (previous == null) {
+          streamSubscriber.start();
+        } else {
+          streamSubscriber = previous;
+        }
+
+        // Add the scheduleTask to the StreamSubscriber
+        streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
+                                            active, baseRunSize, baseRunTs, persist);
+        scheduleSubscribers.put(getScheduleId(program, programType, streamSizeSchedule.getName()), streamSubscriber);
+      }
     } catch (NotificationFeedException e) {
       LOG.error("Notification feed does not exist for streamSizeSchedule {}", streamSizeSchedule);
       throw Throwables.propagate(e);
@@ -195,8 +202,8 @@ public class StreamSizeScheduler implements Scheduler {
   public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
     StreamSubscriber subscriber = scheduleSubscribers.remove(getScheduleId(programId, programType, scheduleName));
     if (subscriber != null) {
+      subscriber.deleteSchedule(programId, programType, scheduleName);
       synchronized (this) {
-        subscriber.deleteSchedule(programId, programType, scheduleName);
         if (subscriber.isEmpty()) {
           subscriber.cancel();
           Id.Stream streamId = subscriber.getStreamId();
@@ -231,7 +238,7 @@ public class StreamSizeScheduler implements Scheduler {
     }
   }
 
-  private Store getStore() {
+  private synchronized Store getStore() {
     if (store == null) {
       store = storeFactory.create();
     }
@@ -255,21 +262,21 @@ public class StreamSizeScheduler implements Scheduler {
    * it contains to perform operations on the schedules - suspend, resume, etc.
    */
   private final class StreamSubscriber implements NotificationHandler<StreamSizeNotification>, Cancellable {
-
-    private final Id.Stream streamId;
-
     // Key is the schedule ID
     private final ConcurrentMap<String, StreamSizeScheduleTask> scheduleTasks;
+    private final Object lastNotificationLock;
+    private final Id.Stream streamId;
+    private final AtomicInteger activeTasks;
 
     private Cancellable notificationSubscription;
     private ScheduledFuture<?> scheduledPolling;
     private StreamSizeNotification lastNotification;
-    private int activeTasks;
 
     private StreamSubscriber(Id.Stream streamId) {
       this.streamId = streamId;
       this.scheduleTasks = Maps.newConcurrentMap();
-      this.activeTasks = 0;
+      this.lastNotificationLock = new Object();
+      this.activeTasks = new AtomicInteger(0);
     }
 
     public void start() throws NotificationFeedException, NotificationFeedNotFoundException {
@@ -296,28 +303,38 @@ public class StreamSizeScheduler implements Scheduler {
       // time, we don't have to poll the stream many times
 
       StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
-      synchronized (this) {
-        StreamSizeScheduleTask previous =
-          scheduleTasks.putIfAbsent(getScheduleId(programId, programType, streamSizeSchedule.getName()),
-                                    newTask);
-        if (previous == null) {
-          if (active) {
-            activeTasks++;
-          }
+      StreamSizeScheduleTask previous =
+        scheduleTasks.putIfAbsent(getScheduleId(programId, programType, streamSizeSchedule.getName()),
+                                  newTask);
+      if (previous != null) {
+        // We cannot replace an existing schedule - that functionality is not wanted - yet
+        return;
+      }
 
-          // Initialize the schedule task
-          if (baseRunSize == -1 && baseRunTs == -1) {
-            // This is likely to be the first time that we schedule this task - ie it was not in the schedule store
-            // before. Hence we set the base metrics properly
-            long baseTs = System.currentTimeMillis();
-            long baseSize = pollStream();
-            newTask.startSchedule(baseSize, baseTs, active, persist);
-            lastNotification = new StreamSizeNotification(baseTs, baseSize);
-            received(lastNotification, null);
-          } else {
-            newTask.startSchedule(baseRunSize, baseRunTs, active, persist);
-          }
+      // Initialize the schedule task
+      if (baseRunSize == -1 && baseRunTs == -1) {
+        // This is likely to be the first time that we schedule this task - ie it was not in the schedule store
+        // before. Hence we set the base metrics properly
+        long baseTs = System.currentTimeMillis();
+        long baseSize = pollStream();
+        newTask.startSchedule(baseSize, baseTs, active, persist);
+        synchronized (lastNotificationLock) {
+          lastNotification = new StreamSizeNotification(baseTs, baseSize);
         }
+      } else {
+        newTask.startSchedule(baseRunSize, baseRunTs, active, persist);
+      }
+
+      if (active) {
+        activeTasks.incrementAndGet();
+      }
+
+      if (lastNotification != null) {
+        // In all cases, when creating a schedule - either if it comes from the store or not,
+        // we want to pass it the last seen notification
+        // This call will send the notification to all the active tasks. The ones which are active before
+        // that method is called will therefore see the notification twice. It is fine though.
+        received(lastNotification, null);
       }
     }
 
@@ -331,7 +348,7 @@ public class StreamSizeScheduler implements Scheduler {
       }
       synchronized (this) {
         if (task.suspend()) {
-          activeTasks--;
+          activeTasks.decrementAndGet();
         }
       }
     }
@@ -340,32 +357,24 @@ public class StreamSizeScheduler implements Scheduler {
      * Resume a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
-      synchronized (this) {
-        StreamSizeScheduleTask task = scheduleTasks.get(getScheduleId(programId, programType, scheduleName));
-        if (task == null) {
-          return;
-        }
-        if (task.resume() && ++activeTasks == 1) {
-          // There were no active tasks until then, that means polling the stream was disabled.
-          // We need to check if it is necessary to poll the stream at this time, if the last
-          // notification received was too long ago
-
-          // lastNotification cannot be null, since when creating one scheduleTask, we instantiate it
-          // TODO this will change once we have a schedule store, and one schedule can be added that is suspended
-          // TODO test that configuration
-          if (lastNotification != null) {
-            long lastNotificationTs = lastNotification.getTimestamp();
-            if (lastNotificationTs + TimeUnit.SECONDS.toMillis(pollingDelay) <= System.currentTimeMillis()) {
-              long streamSize = pollStream();
-              lastNotification = new StreamSizeNotification(System.currentTimeMillis(), streamSize);
-            }
+      StreamSizeScheduleTask task = scheduleTasks.get(getScheduleId(programId, programType, scheduleName));
+      if (task == null || !task.resume()) {
+        return;
+      }
+      if (activeTasks.incrementAndGet() == 1) {
+        // There were no active tasks until then, that means polling the stream was disabled.
+        // We need to check if it is necessary to poll the stream at this time, if the last
+        // notification received was too long ago, or if there is no last seen notification
+        synchronized (lastNotificationLock) {
+          if (lastNotification == null ||
+            (lastNotification.getTimestamp()
+              + TimeUnit.SECONDS.toMillis(pollingDelay) <= System.currentTimeMillis())) {
+            long streamSize = pollStream();
+            lastNotification = new StreamSizeNotification(System.currentTimeMillis(), streamSize);
           }
         }
-
-        if (lastNotification != null) {
-          task.received(lastNotification);
-        }
       }
+      task.received(lastNotification);
     }
 
     /**
@@ -374,7 +383,7 @@ public class StreamSizeScheduler implements Scheduler {
     public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
       StreamSizeScheduleTask scheduleTask = scheduleTasks.remove(getScheduleId(programId, programType, scheduleName));
       if (scheduleTask != null && scheduleTask.isRunning()) {
-        activeTasks--;
+        activeTasks.decrementAndGet();
       }
     }
 
@@ -409,9 +418,17 @@ public class StreamSizeScheduler implements Scheduler {
 
     @Override
     public void received(StreamSizeNotification notification, NotificationContext notificationContext) {
+      // We only pass the stream size notification to the schedule tasks if the notification
+      // came after the last seen notification
+      boolean send = false;
       cancelPollingAndScheduleNext();
-      if (lastNotification == null || notification.getTimestamp() > lastNotification.getTimestamp()) {
-        lastNotification = notification;
+      synchronized (lastNotificationLock) {
+        if (lastNotification == null || notification.getTimestamp() > lastNotification.getTimestamp()) {
+          send = true;
+          lastNotification = notification;
+        }
+      }
+      if (send) {
         sendNotificationToActiveTasks(notification);
       }
     }
@@ -470,7 +487,7 @@ public class StreamSizeScheduler implements Scheduler {
         @Override
         public void run() {
           // We only perform polling if at least one scheduleTask is active
-          if (activeTasks > 0) {
+          if (activeTasks.get() > 0) {
             long size = pollStream();
 
             // We don't need a notification context here
@@ -527,6 +544,9 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     public void received(StreamSizeNotification notification) {
+      if (!running) {
+        return;
+      }
       long pastRunSize;
       long pastRunTs;
       synchronized (this) {
