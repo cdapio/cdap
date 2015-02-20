@@ -16,10 +16,13 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -42,7 +45,15 @@ final class BasicWorkflowContext implements WorkflowContext {
     this.specification = specification;
     this.logicalStartTime = logicalStartTime;
     this.programWorkflowRunner = programWorkflowRunner;
-    this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+
+    SchedulableProgramType type = SchedulableProgramType.CUSTOM_ACTION;
+
+    if (specification.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
+      type = SchedulableProgramType.valueOf(specification.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE));
+    }
+
+    this.runtimeArgs = RuntimeArguments.extractScope(Scope.scopeFor(type.toString()), specification.getName(),
+                                                     runtimeArgs);
   }
 
   @Override
