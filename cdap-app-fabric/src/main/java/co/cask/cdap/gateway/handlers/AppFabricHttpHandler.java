@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -134,7 +133,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
     this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
+      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricStreamHttpHandler = appFabricStreamHttpHandler;

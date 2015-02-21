@@ -16,12 +16,16 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
+  public static final String ARCHIVE_DIR = "archive";
 
   /**
    * Global Service names.
@@ -121,7 +125,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
-    public static final String ARCHIVE_DIR = "archive";
   }
 
   /**
@@ -696,6 +699,7 @@ public final class Constants {
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
   /**
    * Constants related to external systems.
