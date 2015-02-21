@@ -17,11 +17,13 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.metrics.query.MetricQueryResult;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -103,8 +105,8 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
     }
 
     // Check metrics to verify that the metric for events processed is specific to each stream
-    checkEventsProcessed(streamId1, 10, 10);
-    checkEventsProcessed(streamId2, 2, 10);
+    checkEventsProcessed(streamId1, 10L, 10);
+    checkEventsProcessed(streamId2, 2L, 10);
   }
 
 
@@ -137,9 +139,9 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
     return events;
   }
   
-  private void checkEventsProcessed(Id.Stream streamId, int expectedCount, int retries) throws Exception {
+  private void checkEventsProcessed(Id.Stream streamId, long expectedCount, int retries) throws Exception {
     for (int i = 0; i < retries; i++) {
-      int numProcessed = getNumProcessed(streamId);
+      long numProcessed = getNumProcessed(streamId);
       if (numProcessed == expectedCount) {
         return;
       }
@@ -149,31 +151,23 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   }
 
 
-  private int getNumProcessed(Id.Stream streamId) throws Exception {
-    String path = String.format("/v3/metrics/query?metric=system.collect.events&context=ns.%s.str.%s",
-                                streamId.getNamespaceId(), streamId.getName());
-    System.out.println(path);
+  private long getNumProcessed(Id.Stream streamId) throws Exception {
+    String path =
+      String.format("/v3/metrics/query?metric=system.collect.events&context=namespace.%s.stream.%s&aggregate=true",
+                    streamId.getNamespaceId(), streamId.getName());
     HttpRequest request = HttpRequest.post(getEndPoint(path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
-    System.out.println(response.getResponseBodyAsString());
     return getNumEventsFromResponse(response.getResponseBodyAsString());
   }
 
-  private int getNumEventsFromResponse(String response) {
-    // response format:
-    // [{"measureName":"system.collect.events","tagValues":{},"timeValues":[{"timestamp":0,"value":12}]}]
+  private long getNumEventsFromResponse(String response) {
+    MetricQueryResult metricQueryResult = new Gson().fromJson(response, MetricQueryResult.class);
+    MetricQueryResult.TimeSeries[] series = metricQueryResult.getSeries();
 
-    JsonElement jsonResponse = new JsonParser().parse(response);
-    JsonArray jsonArray = jsonResponse.getAsJsonArray();
-    if (jsonArray.size() == 0) {
+    if (series.length == 0) {
       return 0;
     }
-    return jsonArray.get(0)
-      .getAsJsonObject().get("timeValues")
-      .getAsJsonArray().get(0)
-      .getAsJsonObject().get("value")
-      .getAsInt();
+    return series[0].getData()[0].getValue();
   }
-
 }
