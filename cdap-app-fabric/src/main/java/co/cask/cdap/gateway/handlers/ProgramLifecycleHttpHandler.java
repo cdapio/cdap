@@ -745,6 +745,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     getProgramsByApp(responder, namespaceId, appId, ProgramType.SERVICE.getCategoryName());
   }
 
+  /**
+   * Returns a list of workers associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers")
+  public void getWorkersByApp(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.WORKER.getCategoryName());
+  }
+
   protected void getProgramsByApp(HttpResponder responder, String namespaceId, String appId, String programCategory) {
     ProgramType type = getProgramType(programCategory);
     if (type == null) {
