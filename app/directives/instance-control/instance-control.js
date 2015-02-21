@@ -25,11 +25,9 @@ angular.module(PKG.name + '.commons')
             _cdapPathV2: scope.basepath + '/instances',
             data: {'instances': scope.model.requested}
           }).then(function success (response) {
-            console.log('here')
             scope.model.provisioned = scope.model.requested;
+          }).finally(function () {
             scope.processing = false;
-          }, function error () {
-            console.log (arguments);
           });
 
         }
