@@ -36,6 +36,8 @@ angular.module(PKG.name + '.commons')
             data: {'instances': scope.model.requested}
           }).then(function success (response) {
             scope.model.provisioned = scope.model.requested;
+          }, function error (err) {
+            //pass
           }).finally(function () {
             scope.processing = false;
           });
