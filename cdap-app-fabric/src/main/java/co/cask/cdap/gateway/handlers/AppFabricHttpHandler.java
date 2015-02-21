@@ -961,7 +961,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder) {
     appFabricDataHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                          Constants.DEFAULT_NAMESPACE);
+                                        Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -982,7 +982,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId) {
     appFabricDataHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId);
+                                             Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1035,8 +1035,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("dataset-id") final String datasetId) {
-    appFabricDataHttpHandler.getFlowsByDataset(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, datasetId);
+    appFabricDataHttpHandler.getProgramsByDataset(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                  Constants.DEFAULT_NAMESPACE,
+                                                  datasetId, ProgramType.FLOW.getCategoryName());
   }
 
   /**
