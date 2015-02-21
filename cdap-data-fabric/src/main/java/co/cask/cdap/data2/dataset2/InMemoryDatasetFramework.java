@@ -61,6 +61,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private final Set<String> defaultTypes = Sets.newHashSet();
   private final Map<Id.Namespace, List<String>> nonDefaultTypes = Maps.newHashMap();
   private final Map<Id.DatasetInstance, DatasetSpecification> instances = Maps.newHashMap();
+  private final List<Id.Namespace> namespaces = Lists.newArrayList();
 
   // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
   // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
@@ -338,6 +339,22 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       return registry;
     }
     return null;
+  }
+
+  @Override
+  public synchronized void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    if (namespaces.contains(namespaceId)) {
+      throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceId.getId()));
+    }
+    namespaces.add(namespaceId);
+  }
+
+  @Override
+  public synchronized void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    if (!namespaces.contains(namespaceId)) {
+      throw new DatasetManagementException(String.format("Namespace %s does not exist", namespaceId.getId()));
+    }
+    namespaces.remove(namespaceId);
   }
 
   // NOTE: this class is needed to collect all types added by a module
