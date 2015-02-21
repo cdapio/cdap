@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.AppWritingtoStream;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeProcedure;
@@ -31,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for {@link ProgramClient}.
@@ -116,4 +118,16 @@ public class ProgramClientTestRun extends ClientTestBase {
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
 
   }
+
+  @Test
+  public void testStreamWrite() throws Exception {
+    appClient.deploy(createAppJarFile(AppWritingtoStream.class));
+    programClient.start(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW1);
+    programClient.start(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW2);
+    TimeUnit.SECONDS.sleep(10);
+    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW1);
+    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW2);
+    appClient.delete(AppWritingtoStream.APPNAME);
+  }
+
 }
