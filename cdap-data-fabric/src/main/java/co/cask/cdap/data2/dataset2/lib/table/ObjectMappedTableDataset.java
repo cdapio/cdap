@@ -63,14 +63,15 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   private final Schema tableSchema;
   private final String keyName;
   private final Schema.Type keyType;
-
+  private final TypeRepresentation typeRepresentation;
   private final ReflectionPutWriter<T> putWriter;
-  private final ReflectionRowReader<T> rowReader;
+  // we get this lazily, since we may not have the actual Type when using this as a RecordScannable,
+  // but we do expect to have it when using it in a program context
+  private ReflectionRowReader<T> rowReader;
 
   // schema is passed in as an argument because it is a required dataset property for validation purposes, so
   // the ObjectMappedTableDefinition will always have it. We could always derive the schema from the type,
   // but it is simpler to just pass it in.
-  @SuppressWarnings("unchecked")
   public ObjectMappedTableDataset(String name, Table table, TypeRepresentation typeRep,
                                   Schema objectSchema, String keyName, Schema.Type keyType,
                                   @Nullable ClassLoader classLoader) {
@@ -83,10 +84,39 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     this.tableSchema  = getTableSchema(objectSchema, keyName, keyType);
     this.keyName = keyName;
     this.keyType = keyType;
-    typeRep.setClassLoader(classLoader);
-    Type type = typeRep.toType();
+    this.typeRepresentation = typeRep;
+    this.typeRepresentation.setClassLoader(classLoader);
     this.putWriter = new ReflectionPutWriter<T>(objectSchema);
-    this.rowReader = new ReflectionRowReader<T>(objectSchema, (TypeToken<T>) TypeToken.of(type));
+  }
+
+  @SuppressWarnings("unchecked")
+  private ReflectionRowReader<T> getReflectionRowReader() {
+    if (rowReader == null) {
+      try {
+        // this can throw a runtime exception from a ClassNotFoundException
+        Type type = typeRepresentation.toType();
+        this.rowReader = new ReflectionRowReader<T>(objectSchema, (TypeToken<T>) TypeToken.of(type));
+      } catch (RuntimeException e) {
+        String missingClass = isClassNotFoundException(e);
+        if (missingClass != null) {
+          LOG.error("Cannot load dataset because class {} could not be found. This is probably because the " +
+                      "type parameter of the dataset is not present in the dataset's jar file. See the developer " +
+                      "guide for more information.", missingClass);
+        }
+        throw e;
+      }
+    }
+    return this.rowReader;
+  }
+
+  private String isClassNotFoundException(Throwable e) {
+    if (e instanceof ClassNotFoundException) {
+      return e.getMessage();
+    }
+    if (e.getCause() != null) {
+      return isClassNotFoundException(e.getCause());
+    }
+    return null;
   }
 
   @Override
@@ -270,7 +300,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
       if (row.isEmpty()) {
         return null;
       }
-      return rowReader.read(row, objectSchema);
+      return getReflectionRowReader().read(row, objectSchema);
     } catch (Exception e) {
       // should not happen. Can happen if somebody changes the type in an incompatible way?
       throw new DataSetException("Failed to decode object: " + e.getMessage(), e);

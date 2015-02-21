@@ -33,9 +33,11 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.partitioned.FieldTypes;
+import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.schema.SchemaConverter;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
@@ -47,6 +49,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -67,6 +70,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.POST;
@@ -181,19 +185,60 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
       // Note: Namespacing will come later.
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      DatasetSpecification datasetSpec = datasetFramework.getDatasetSpec(datasetInstanceId);
+      if (datasetSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        return;
+      }
+
+      String createStatement = null;
+      // some datasets cannot be instantiated here. For example, ObjectMappedTable is often parameterized with a type
+      // that is only available in a program context and not available here in the system context.
+      // explore should only have logic related to exploration and not dataset logic.
+      // TODO: refactor exploration (CDAP-1573)
+      String datasetType = datasetSpec.getType();
+      // special casing here... but we really should clean this up
+      // there are two ways to refer to each dataset type...
+      if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
+        ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
+        // ObjectMappedTable must contain a schema in its properties
+        String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
+        if (schemaStr == null) {
+          responder.sendString(HttpResponseStatus.NOT_FOUND, "Schema not found for dataset " + datasetInstanceId);
+          return;
+        }
+        try {
+          Schema schema = Schema.parseJson(schemaStr);
+          String hiveSchema = SchemaConverter.toHiveSchema(schema);
+          createStatement = generateCreateDatasetStatement(datasetName, hiveSchema);
+          executeCreate(datasetName, datasetType, createStatement, responder);
+          return;
+        } catch (IOException e) {
+          // shouldn't happen because ObjectMappedTableDefinition is supposed to verify this,
+          // but put in for completeness
+          responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                               "Unable to parse schema for dataset " + datasetInstanceId);
+          return;
+        } catch (UnsupportedTypeException e) {
+          // shouldn't happen because ObjectMappedTableDefinition is supposed to verify this,
+          // but put in for completeness
+          responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                               "Schema for dataset " + datasetInstanceId + " is not unsupported.");
+          return;
+        }
+      }
+
       Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
-      DatasetSpecification datasetSpec = datasetFramework.getDatasetSpec(datasetInstanceId);
 
-      String createStatement = null;
       // To be enabled for explore, a dataset must either be RecordScannable/Writable,
       // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       try {
         if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
-          createStatement = generateCreateStatement(datasetName, dataset, datasetSpec);
+          createStatement = generateCreateDatasetStatement(datasetName, hiveSchemaFor(dataset));
 
         } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
           // this cannot fail because we were able to instantiate the dataset
@@ -212,26 +257,32 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (createStatement == null) {
-        // This is not an error: whether the dataset is explorable may not be known where this call originates from.
-        LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-
-      LOG.debug("Running create statement for dataset {} with class {} - {}",
-                datasetName, dataset.getClass().getName(), createStatement);
-
-      QueryHandle handle = exploreService.execute(createStatement);
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      executeCreate(datasetName, datasetType, createStatement, responder);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  private void executeCreate(String datasetName, String datasetType, String createStatement,
+                             HttpResponder responder) throws ExploreException, SQLException {
+
+    if (createStatement == null) {
+      // This is not an error: whether the dataset is explorable may not be known where this call originates from.
+      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return;
+    }
+
+    LOG.debug("Running create statement for dataset {} of type {} - {}",
+              datasetName, datasetType, createStatement);
+
+    QueryHandle handle = exploreService.execute(createStatement);
+    JsonObject json = new JsonObject();
+    json.addProperty("handle", handle.getHandle());
+    responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   private Dataset instantiateDataset(Id.DatasetInstance datasetInstanceId, HttpResponder responder) throws Exception {
@@ -279,17 +330,31 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
       // Note: namespacing will come later
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+
+      String deleteStatement = null;
+      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
+      if (spec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        return;
+      }
+
+      String datasetType = spec.getType();
+      if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
+        ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
+        deleteStatement = generateDeleteStatement(datasetName);
+        executeDelete(datasetName, deleteStatement, responder);
+        return;
+      }
+
       Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
       }
 
-      String deleteStatement = null;
       if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
         deleteStatement = generateDeleteStatement(datasetName);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         // this cannot fail because we were able to instantiate the dataset
-        DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
         if (spec != null) {
           Map<String, String> properties = spec.getProperties();
           if (FileSetProperties.isExploreEnabled(properties)) {
@@ -298,36 +363,41 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         }
       }
 
-      if (deleteStatement == null) {
-        // This is not an error: whether the dataset is explorable may not be known where this call originates from.
-        LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-
-      // If table does not exist, nothing to be done
-      try {
-        exploreService.getTableInfo(null, getHiveTableName(datasetName));
-      } catch (TableNotFoundException e) {
-        // Ignore exception, since this means table was not found.
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-
-      LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
-
-      QueryHandle handle = exploreService.execute(deleteStatement);
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      executeDelete(datasetName, deleteStatement, responder);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  private void executeDelete(String datasetName, String deleteStatement,
+                             HttpResponder responder) throws ExploreException, SQLException {
+    if (deleteStatement == null) {
+      // This is not an error: whether the dataset is explorable may not be known where this call originates from.
+      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return;
+    }
+
+    // If table does not exist, nothing to be done
+    try {
+      exploreService.getTableInfo(null, getHiveTableName(datasetName));
+    } catch (TableNotFoundException e) {
+      // Ignore exception, since this means table was not found.
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return;
+    }
+
+    LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
+
+    QueryHandle handle = exploreService.execute(deleteStatement);
+    JsonObject json = new JsonObject();
+    json.addProperty("handle", handle.getHandle());
+    responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   @POST
@@ -472,17 +542,53 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                          Constants.Explore.CDAP_NAME, streamId);
   }
 
-  public static String generateCreateStatement(String name, Dataset dataset, DatasetSpecification datasetSpec)
-    throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(dataset, datasetSpec);
+  public static String generateCreateDatasetStatement(String name, String hiveSchema) throws UnsupportedTypeException {
+    Map<String, String> serdeProperties = ImmutableMap.of(Constants.Explore.DATASET_NAME, name);
+    Map<String, String> tableProperties = ImmutableMap.of(Constants.Explore.CDAP_NAME, name);
+    return generateCreateStatement(name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                                   serdeProperties, tableProperties);
+  }
+
+  // TODO: move this and friends to separate class just for building create table statements and clean up.
+  public static String generateCreateStatement(String name, String hiveSchema,
+                                               String storageHandler,
+                                               Map<String, String> serdeProperties,
+                                               Map<String, String> tableProperties) throws UnsupportedTypeException {
+
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
-                           "TBLPROPERTIES ('%s'='%s')",
-                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
-                         Constants.Explore.DATASET_NAME, name,
-                         // this is set so we know what dataset it is created from, and so we know it's from CDAP
-                         Constants.Explore.CDAP_NAME, name);
+    StringBuilder builder = new StringBuilder()
+      .append("CREATE EXTERNAL TABLE IF NOT EXISTS ")
+      .append(tableName)
+      .append(" ")
+      .append(hiveSchema)
+      .append(" COMMENT \"CDAP Dataset\" STORED BY \"")
+      .append(storageHandler)
+      .append("\"");
+
+    if (serdeProperties != null && !serdeProperties.isEmpty()) {
+      builder.append(" WITH SERDEPROPERTIES(");
+      for (Map.Entry<String, String> serdeProperty : serdeProperties.entrySet()) {
+        builder.append("\"");
+        builder.append(serdeProperty.getKey());
+        builder.append("\" = \"");
+        builder.append(serdeProperty.getValue());
+        builder.append("\"");
+      }
+      builder.append(")");
+    }
+
+    if (tableProperties != null && !tableProperties.isEmpty()) {
+      builder.append(" TBLPROPERTIES (");
+      for (Map.Entry<String, String> tableProperty : tableProperties.entrySet()) {
+        builder.append("'");
+        builder.append(tableProperty.getKey());
+        builder.append("'='");
+        builder.append(tableProperty.getValue());
+        builder.append("'");
+      }
+      builder.append(")");
+    }
+    return builder.toString();
   }
 
   public static String generateFileSetCreateStatement(String name, Dataset dataset, Map<String, String> properties)
@@ -576,30 +682,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Given a record-enabled dataset, determine the hive schema for the dataset. Will first try to look up
-   * the schema from the dataset properties. If that is not present, it will try and determine the schema from
-   * the record type of the dataset.
+   * Given a record-enabled dataset, determine the hive schema for the dataset.
    *
    * @param dataset The dataset
-   * @param datasetSpec The specification of the dataset.
    * @return the hive schema
    * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
    * or if the row type is not a record or contains null types.
    */
-  static String hiveSchemaFor(Dataset dataset, DatasetSpecification datasetSpec) throws UnsupportedTypeException {
-    // look for schema in the dataset properties
-    String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
-    if (schemaStr != null) {
-      try {
-        Schema schema = Schema.parseJson(schemaStr);
-        return SchemaConverter.toHiveSchema(schema);
-      } catch (IOException e) {
-        LOG.error("Unable to parse schema from dataset properties.", e);
-        throw new UnsupportedTypeException(e);
-      }
-    }
-
-    // otherwise, try and determine from the record type
+  static String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
     if (dataset instanceof RecordScannable) {
       return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
     } else if (dataset instanceof RecordWritable) {

@@ -46,7 +46,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
 
     datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE, ObjectMappedTableProperties.builder()
       .setType(Record.class)
