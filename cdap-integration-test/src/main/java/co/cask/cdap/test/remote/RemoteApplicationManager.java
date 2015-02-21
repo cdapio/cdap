@@ -32,6 +32,7 @@ import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -247,6 +248,42 @@ public class RemoteApplicationManager implements ApplicationManager {
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
     return new RemoteServiceManager(serviceId, clientConfig);
+  }
+
+  @Override
+  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
+    final ProgramId workerId = new ProgramId(applicationId, workerName, ProgramType.WORKER);
+    return new WorkerManager() {
+      @Override
+      public void setRunnableInstances(int instances) {
+        Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
+        try {
+          programClient.setWorkerInstances(applicationId, workerName, instances);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+
+      @Override
+      public void stop() {
+        stopProgram(workerId);
+      }
+
+      @Override
+      public boolean isRunning() {
+        try {
+          String status = programClient.getStatus(applicationId, ProgramType.WORKER, workerName);
+          return "RUNNING".equals(status);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName) {
+    return startWorker(workerName, ImmutableMap.<String, String>of());
   }
 
   @Override
