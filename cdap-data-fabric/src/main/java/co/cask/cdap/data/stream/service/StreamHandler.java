@@ -41,7 +41,6 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
@@ -182,23 +181,21 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
+    try {
+      String accountID = getAuthenticatedAccountId(request);
+      // Verify stream name
+      Id.Stream streamId = Id.Stream.from(accountID, stream);
 
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
+      // TODO: Modify the REST API to support custom configurations.
+      streamAdmin.create(streamId);
+      streamMetaStore.addStream(streamId);
 
-    // Verify stream name
-    if (!isValidName(stream)) {
+      // TODO: For create successful, 201 Created should be returned instead of 200.
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
-      return;
+                           e.getMessage());
     }
-
-    // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(streamId);
-    streamMetaStore.addStream(streamId);
-
-    // TODO: For create successful, 201 Created should be returned instead of 200.
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
@@ -411,15 +408,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         }
       }
     };
-  }
-
-  private boolean isValidName(String streamName) {
-    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
   /**

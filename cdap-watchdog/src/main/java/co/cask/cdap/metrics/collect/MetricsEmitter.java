@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.api.metrics.MetricValue;
 
 /**
  * A MetricsEmitter is a class that is able to emit {@link MetricValue}.

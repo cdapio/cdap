@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.DummyAppWithTrackingTable;
@@ -540,6 +541,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // deploy AppWithWorker in namespace1 and verify
+    response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     // verify program specification
     verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                                WORDCOUNT_FLOW_NAME);
@@ -549,6 +554,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                APP_WITH_SERVICES_SERVICE_NAME);
     verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
                                APP_WITH_WORKFLOW_WORKFLOW_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
 
     // verify invalid namespace
     Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
@@ -561,6 +568,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // verify invalid runnable type
     Assert.assertEquals(405, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                                                  "random", APP_WITH_WORKFLOW_WORKFLOW_NAME));
+
+    // verify invalid runnable type
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
   }
 
   @Test

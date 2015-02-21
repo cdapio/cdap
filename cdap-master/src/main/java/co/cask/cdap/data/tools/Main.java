@@ -25,7 +25,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -44,7 +43,8 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
+import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
@@ -211,7 +211,7 @@ public class Main {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+                                     new DefaultDatasetNamespace(cConf));
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "orderedTable"),
                                new HBaseOrderedTableModule());
@@ -227,7 +227,7 @@ public class Main {
     // We assume that all tables in USER namespace belong to OrderedTable type datasets. So we loop thru them
     // and upgrading with the help of HBaseOrderedTableAdmin
     final CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf, Namespace.USER);
+    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
 
     Configuration hConf = injector.getInstance(Configuration.class);
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
@@ -235,8 +235,10 @@ public class Main {
 
     for (HTableDescriptor desc : hAdmin.listTables()) {
       String tableName = desc.getNameAsString();
+      TableId tableId = TableId.from(tableName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
       // todo: it works now, but we will want to change it if namespacing of datasets in HBase is more than +prefix
-      if (namespace.fromNamespaced(tableName) != null) {
+      if (namespace.fromNamespaced(datasetInstanceId) != null) {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
         final boolean supportsIncrement =

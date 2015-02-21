@@ -15,14 +15,14 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.Interpolator;
+import co.cask.cdap.api.metrics.Interpolators;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.Interpolator;
-import co.cask.cdap.metrics.data.Interpolators;
-import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -64,22 +64,29 @@ final class MetricQueryParser {
     SPARK
   }
 
+  // we need to duplicate that as we don't have dependency on app-fabric
   public enum ProgramType {
-    FLOWS("f"),
-    MAPREDUCE("b"),
-    PROCEDURES("p"),
-    HANDLERS("h"),
-    SERVICES("u"),
-    SPARK("s");
+    FLOWS("f", Constants.Metrics.Tag.FLOW),
+    MAPREDUCE("b", Constants.Metrics.Tag.MAPREDUCE),
+    PROCEDURES("p", Constants.Metrics.Tag.PROCEDURE),
+    HANDLERS("h", Constants.Metrics.Tag.HANDLER),
+    SERVICES("u", Constants.Metrics.Tag.SERVICE),
+    SPARK("s", Constants.Metrics.Tag.SPARK);
 
     private final String code;
+    private final String tagName;
 
-    private ProgramType(String code) {
+    private ProgramType(String code, String tagName) {
       this.code = code;
+      this.tagName = tagName;
     }
 
     public String getCode() {
       return code;
+    }
+
+    public String getTagName() {
+      return tagName;
     }
   }
 
@@ -140,19 +147,19 @@ final class MetricQueryParser {
     return path.substring(startPos, path.length());
   }
 
-  static CubeDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
-    CubeQueryBuilder builder = new CubeQueryBuilder();
+  static MetricDeleteQuery parseDelete(URI requestURI, String metricPrefix) throws MetricsPathException {
+    MetricDataQueryBuilder builder = new MetricDataQueryBuilder();
     parseContext(requestURI.getPath(), builder);
     builder.setStartTs(0);
     builder.setEndTs(Integer.MAX_VALUE - 1);
     builder.setMetricName(metricPrefix);
 
-    CubeQuery query = builder.build();
-    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMeasureName(), query.getSliceByTags());
+    MetricDataQuery query = builder.build();
+    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMetricName(), query.getSliceByTags());
   }
 
-  static CubeQuery parse(URI requestURI) throws MetricsPathException {
-    CubeQueryBuilder builder = new CubeQueryBuilder();
+  static MetricDataQuery parse(URI requestURI) throws MetricsPathException {
+    MetricDataQueryBuilder builder = new MetricDataQueryBuilder();
     // metric will be at the end.
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
@@ -161,8 +168,7 @@ final class MetricQueryParser {
     if (index != -1) {
       String strippedPath = uriPath.substring(0, index);
       if (strippedPath.startsWith("/system/cluster")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                    Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE));
         builder.setScope("system");
       } else if (strippedPath.startsWith("/system/transactions")) {
         builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
@@ -184,7 +190,7 @@ final class MetricQueryParser {
    * Context starts after the scope and looks something like:
    * system/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}
    */
-  static void parseContext(String path, CubeQueryBuilder builder) throws MetricsPathException {
+  static void parseContext(String path, MetricDataQueryBuilder builder) throws MetricsPathException {
     Map<String, String> tagValues = Maps.newHashMap();
 
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
@@ -304,12 +310,6 @@ final class MetricQueryParser {
   static void parseSubContext(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
 
-    // todo
-//    if (!pathParts.hasNext()) {
-//      return;
-//    }
-//    builder.setTypeId(urlDecode(pathParts.next()));
-
     if (!pathParts.hasNext()) {
       return;
     }
@@ -319,16 +319,14 @@ final class MetricQueryParser {
     ProgramType programType;
     try {
       programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      tagValues.put(Constants.Metrics.Tag.PROGRAM_TYPE, programType.getCode());
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
 
-    // contextPrefix should look like appId.f right now, if we're looking at a flow
     if (!pathParts.hasNext()) {
       return;
     }
-    tagValues.put(Constants.Metrics.Tag.PROGRAM, pathParts.next());
+    tagValues.put(programType.getTagName(), pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;
@@ -438,7 +436,7 @@ final class MetricQueryParser {
   /**
    * From the query string determine the query type, time range and related parameters.
    */
-  public static void parseQueryString(URI requestURI, CubeQueryBuilder builder) throws MetricsPathException {
+  public static void parseQueryString(URI requestURI, MetricDataQueryBuilder builder) throws MetricsPathException {
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
     parseTimeseries(queryParams, builder);
   }
@@ -447,7 +445,7 @@ final class MetricQueryParser {
     return queryParams.get(RESOLUTION).get(0).equals(AUTO_RESOLUTION);
   }
 
-  private static void parseTimeseries(Map<String, List<String>> queryParams, CubeQueryBuilder builder) {
+  private static void parseTimeseries(Map<String, List<String>> queryParams, MetricDataQueryBuilder builder) {
     int count;
     long startTime;
     long endTime;
@@ -518,7 +516,7 @@ final class MetricQueryParser {
     }
   }
 
-  private static void setInterpolator(Map<String, List<String>> queryParams, CubeQueryBuilder builder) {
+  private static void setInterpolator(Map<String, List<String>> queryParams, MetricDataQueryBuilder builder) {
     Interpolator interpolator = null;
 
     if (queryParams.containsKey(INTERPOLATE)) {
@@ -538,7 +536,7 @@ final class MetricQueryParser {
     builder.setInterpolator(interpolator);
   }
 
-  static class CubeQueryBuilder {
+  static class MetricDataQueryBuilder {
     private long startTs;
     private long endTs;
     private int resolution;
@@ -577,10 +575,10 @@ final class MetricQueryParser {
       this.limit = limit;
     }
 
-    public CubeQuery build() {
+    public MetricDataQuery build() {
       String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
-      return new CubeQuery(startTs, endTs, resolution, limit, measureName, MeasureType.COUNTER,
-                           sliceByTagValues, new ArrayList<String>(), interpolator);
+      return new MetricDataQuery(startTs, endTs, resolution, limit, measureName, MetricType.COUNTER,
+                                 sliceByTagValues, new ArrayList<String>(), interpolator);
     }
 
     public void setInterpolator(Interpolator interpolator) {

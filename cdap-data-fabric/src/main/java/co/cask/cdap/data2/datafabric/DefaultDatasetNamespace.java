@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,42 +18,60 @@ package co.cask.cdap.data2.datafabric;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.proto.Id;
 
 import javax.annotation.Nullable;
 
 /**
- * Default dataset namespace, which namespace by configuration setting {@link Constants.Dataset#TABLE_PREFIX}.
+ * Default dataset namespace, which namespaces by configuration setting {@link Constants.Dataset#TABLE_PREFIX} and
+ * the {@link Id.Namespace} in which the dataset instance was created
  */
 public class DefaultDatasetNamespace implements DatasetNamespace {
-  private final String namespacePrefix;
-  private final Namespace namespace;
+  private final String rootPrefix;
 
-  public DefaultDatasetNamespace(CConfiguration conf, Namespace namespace) {
-    String namespacePrefix = conf.get(Constants.Dataset.TABLE_PREFIX);
-    this.namespacePrefix = namespacePrefix + ".";
-    this.namespace = namespace;
+  public DefaultDatasetNamespace(CConfiguration conf) {
+    String root = conf.get(Constants.Dataset.TABLE_PREFIX);
+    this.rootPrefix = root + ".";
   }
 
   @Override
-  public String namespace(String name) {
-    return namespacePrefix + namespace.namespace(name);
+  public Id.DatasetInstance namespace(String datasetInstanceName) {
+    return namespace(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
+  }
+
+  @Override
+  public Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
+    String namespaced = namespace(datasetInstanceId.getNamespace(), datasetInstanceId.getId());
+    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespaced);
+  }
+
+  @Override
+  public String namespace(Id.Namespace namespaceId, String suffix) {
+    return rootPrefix + namespaceId.getId() + "." + suffix;
   }
 
   @Override
   @Nullable
-  public String fromNamespaced(String name) {
-    if (!contains(name)) {
-      return null;
-    }
-    return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
+  public Id.DatasetInstance fromNamespaced(String datasetInstanceName) {
+    return fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
   }
 
   @Override
-  public boolean contains(String name) {
-    return name.startsWith(namespacePrefix) &&
-      namespace.contains(name.substring(namespacePrefix.length()));
+  @Nullable
+  public Id.DatasetInstance fromNamespaced(Id.DatasetInstance datasetInstanceId) {
+    String namespacedDatasetName = datasetInstanceId.getId();
+    if (!contains(namespacedDatasetName, datasetInstanceId.getNamespaceId())) {
+      return null;
+    }
+    String prefix = rootPrefix + datasetInstanceId.getNamespaceId() + ".";
+    String nonNamespaced = namespacedDatasetName.substring(prefix.length());
+    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), nonNamespaced);
   }
 
+  @Override
+  public boolean contains(String name, String namespaceId) {
+    String prefix = rootPrefix + namespaceId + ".";
+    return name.startsWith(prefix);
+  }
 }

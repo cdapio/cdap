@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
@@ -50,8 +49,8 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   HBaseStreamConsumerStateStoreFactory(Configuration hConf, CConfiguration conf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
     this.storeTableName =
-      HBaseTableUtil.getHBaseTableName(new DefaultDatasetNamespace(conf, Namespace.SYSTEM)
-                                         .namespace((QueueConstants.STREAM_TABLE_PREFIX) + ".state.store"));
+      HBaseTableUtil.getHBaseTableName(new DefaultDatasetNamespace(conf)
+                                         .namespace((QueueConstants.STREAM_TABLE_PREFIX) + ".state.store").getId());
     this.tableUtil = tableUtil;
   }
 

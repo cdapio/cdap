@@ -30,8 +30,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.TempFolder;
@@ -110,7 +110,7 @@ public class SchedulerTest {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
-      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
+      js = new DatasetBasedTimeScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
     } else {
       js = new RAMJobStore();
     }

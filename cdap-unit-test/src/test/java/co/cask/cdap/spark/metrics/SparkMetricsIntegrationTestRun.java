@@ -16,15 +16,13 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TagValue;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
@@ -66,22 +64,21 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SPARK),
-      Constants.Metrics.Tag.PROGRAM, sparkId);
+      Constants.Metrics.Tag.SPARK, sparkId);
 
     return getTotalCounterByPrefix(context, metricName);
   }
 
   private static long getTotalCounterByPrefix(Map<String, String> context, String metricNameSuffix) throws Exception {
-    CubeQuery query = getTotalCounterQuery(context);
+    MetricDataQuery query = getTotalCounterQuery(context);
 
     // todo: allow group by metric name when querying Cube instead
     String metricName = findMetricName(context, query.getStartTs(), query.getEndTs(),
                                        query.getResolution(), metricNameSuffix);
-    query = new CubeQuery(query, metricName);
+    query = new MetricDataQuery(query, metricName);
 
     try {
-      Collection<TimeSeries> result = RuntimeStats.metricStore.query(query);
+      Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
       if (result.isEmpty()) {
         return 0;
       }
@@ -110,7 +107,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
     Collection<String> metricNames =
       RuntimeStats.metricStore.findMetricNames(
-        new CubeExploreQuery(startTs, endTs, resolution, Integer.MAX_VALUE, tagValues));
+        new MetricSearchQuery(startTs, endTs, resolution, Integer.MAX_VALUE, tagValues));
 
     String metricName = null;
     for (String name : metricNames) {
@@ -122,8 +119,8 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     return metricName;
   }
 
-  private static CubeQuery getTotalCounterQuery(Map<String, String> context) {
-    return new CubeQuery(0, 0, Integer.MAX_VALUE, null, MeasureType.COUNTER, context, new ArrayList<String>());
+  private static MetricDataQuery getTotalCounterQuery(Map<String, String> context) {
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, null, MetricType.COUNTER, context, new ArrayList<String>());
   }
 
 }
