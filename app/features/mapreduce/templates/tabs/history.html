@@ -1,35 +1,3 @@
 <div ng-controller="MapreduceDetailController">
-
-  <table class="table table-striped table-responsive" cask-sortable>
-    <thead>
-      <tr ng-class="{'sort-enabled': runs.length>0}">
-        <th> Run ID </th>
-        <th data-predicate="start" data-predicate-default="reverse"> Start Time </th>
-        <th> End Time </th>
-        <th> Duration </th>
-        <th> Result </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="run in runs | orderBy:sortable.predicate:sortable.reverse">
-        <td> {{run.runid}} </td>
-        <td> {{ (run.start * 1000) | date: 'medium'}}</td>
-        <td>
-          <span ng-show="run.end">{{ (run.end * 1000) | date: 'medium'}}</span>
-          <span ng-hide="run.end"> N/A </span>
-          </td>
-        <td>
-          <span ng-show="run.end"> {{ (run.end - run.start) * 1000  | amDurationFormat}}</span>
-          <span ng-hide="run.end"> N/A </span>
-        </td>
-        <td> {{run.status}}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div ng-hide="runs.length > 0">
-    <div class="well well-lg text-center h2">
-      <div> No History so far.</div>
-    </div>
-  </div>
+  <div ng-include="'/assets/partials/program/history-template.html'"></div>
 </div>
