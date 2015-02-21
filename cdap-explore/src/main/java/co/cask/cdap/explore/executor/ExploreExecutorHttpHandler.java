@@ -434,7 +434,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static String getHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
-    return name.replaceAll("\\.","_").replaceAll("-", "_").toLowerCase();
+    return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
   }
 
   /**
