@@ -29,7 +29,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -331,21 +330,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
     return false;
   }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * TODO: Should use {@link RESTMigrationUtils#rewriteV2RequestToV3} instead
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
-  }
-
 
   protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
                                 Data type, String namespace, String name, String appId) {
