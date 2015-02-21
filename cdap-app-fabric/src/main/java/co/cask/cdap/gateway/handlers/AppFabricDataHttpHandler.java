@@ -80,7 +80,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
-                              @PathParam("app-id") final String appId) {
+                              @PathParam("app-id") String appId) {
     dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
   }
 
@@ -91,7 +91,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("stream-id") final String streamId) {
+                               @PathParam("stream-id") String streamId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
                             namespaceId, streamId);
   }
@@ -113,7 +113,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId,
-                                      @PathParam("dataset-id") final String datasetId) {
+                                      @PathParam("dataset-id") String datasetId) {
     dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
   }
 
@@ -124,7 +124,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") final String appId) {
+                               @PathParam("app-id") String appId) {
     dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
   }
 
@@ -135,7 +135,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("dataset-id") final String datasetId) {
+                                @PathParam("dataset-id") String datasetId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
                             namespaceId, datasetId);
   }
