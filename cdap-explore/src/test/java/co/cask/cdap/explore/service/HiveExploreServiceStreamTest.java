@@ -154,6 +154,20 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   @Test
+  public void testStreamNameWithHyphen() throws Exception {
+    createStream("stream-test");
+    sendStreamEvent("stream-test", Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+
+    // Streams with '-' are replaced with '_'
+    String cleanStreamName = "stream_test";
+
+    runCommand("select body from " + getTableName(cleanStreamName), true,
+               Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
+  }
+
+
+  @Test
   public void testJoinOnStreams() throws Exception {
     createStream("jointest1");
     createStream("jointest2");
