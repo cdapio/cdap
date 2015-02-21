@@ -47,7 +47,7 @@ import java.util.SortedMap;
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
  */
-public abstract class AbstractQueueConsumer implements QueueConsumer, TransactionAware, Closeable {
+public abstract class AbstractQueueConsumer implements QueueConsumer, TransactionAware {
 
   private static final DequeueResult<byte[]> EMPTY_RESULT = DequeueResult.Empty.result();
 

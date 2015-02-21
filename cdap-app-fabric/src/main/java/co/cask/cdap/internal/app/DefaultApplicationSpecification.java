@@ -23,6 +23,7 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -48,6 +49,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, WorkflowSpecification> workflows;
   private final Map<String, ServiceSpecification> services;
   private final Map<String, ScheduleSpecification> schedules;
+  private final Map<String, WorkerSpecification> workers;
 
   public DefaultApplicationSpecification(String name, String description,
                                          Map<String, StreamSpecification> streams,
@@ -59,7 +61,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
                                          Map<String, ServiceSpecification> services,
-                                         Map<String, ScheduleSpecification> schedules) {
+                                         Map<String, ScheduleSpecification> schedules,
+                                         Map<String, WorkerSpecification> workers) {
     this.name = name;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
@@ -72,6 +75,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.workflows = ImmutableMap.copyOf(workflows);
     this.services = ImmutableMap.copyOf(services);
     this.schedules = ImmutableMap.copyOf(schedules);
+    this.workers = ImmutableMap.copyOf(workers);
   }
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
@@ -80,7 +84,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(), spec.getProcedures(),
                                                spec.getMapReduce(), spec.getSpark(), spec.getWorkflows(),
-                                               spec.getServices(), spec.getSchedules());
+                                               spec.getServices(), spec.getSchedules(), spec.getWorkers());
   }
 
   @Override
@@ -139,6 +143,11 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public Map<String, ServiceSpecification> getServices() {
     return services;
+  }
+
+  @Override
+  public Map<String, WorkerSpecification> getWorkers() {
+    return workers;
   }
 
   @Override

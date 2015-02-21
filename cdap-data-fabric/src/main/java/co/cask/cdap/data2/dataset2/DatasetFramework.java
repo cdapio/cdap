@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -72,6 +73,7 @@ public interface DatasetFramework {
   /**
    * Deletes dataset modules and its types in the specified namespace.
    *
+   * @param namespaceId the {@link Id.Namespace} to delete all modules from.
    * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
@@ -136,10 +138,21 @@ public interface DatasetFramework {
   boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
 
   /**
-   * @return true if type exists, false otherwise
+   * Checks if the specified type exists in the 'system' namespace
+   *
+   * @return true if type exists in the 'system' namespace, false otherwise
    * @throws DatasetManagementException
    */
-  boolean hasType(String typeName) throws DatasetManagementException;
+  boolean hasSystemType(String typeName) throws DatasetManagementException;
+
+  /**
+   * Checks if the specified type exists in the specified namespace
+   *
+   * @return true if type exists in the specified namespace, false otherwise
+   * @throws DatasetManagementException
+   */
+  @VisibleForTesting
+  boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.

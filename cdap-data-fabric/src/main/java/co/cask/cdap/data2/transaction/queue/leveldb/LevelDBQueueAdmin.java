@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -58,7 +57,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     String unqualifiedTableNamePrefix =
       type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
-    this.tableNamePrefix = new DefaultDatasetNamespace(conf, Namespace.SYSTEM).namespace(unqualifiedTableNamePrefix);
+    this.tableNamePrefix = new DefaultDatasetNamespace(conf).namespace(unqualifiedTableNamePrefix).getId();
   }
 
   // TODO: CDAP-1177 Move these functions to an abstract base class to share with HBaseQueueAdmin

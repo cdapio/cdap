@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -100,23 +100,26 @@ public class RoutingToDataSetsTest {
 
   @Test
   public void testTypeHandlerRequests() throws Exception {
-    Assert.assertEquals("listModules", doRequest("/data/modules", "GET"));
-    Assert.assertEquals("post:myModule", doRequest("/data/modules/myModule", "POST"));
-    Assert.assertEquals("delete:myModule", doRequest("/data/modules/myModule", "DELETE"));
-    Assert.assertEquals("get:myModule", doRequest("/data/modules/myModule", "GET"));
-    Assert.assertEquals("listTypes", doRequest("/data/types", "GET"));
-    Assert.assertEquals("getType:myType", doRequest("/data/types/myType", "GET"));
+    Assert.assertEquals("listModules", doRequest("/namespaces/myspace/data/modules", "GET"));
+    Assert.assertEquals("post:myModule", doRequest("/namespaces/myspace/data/modules/myModule", "POST"));
+    Assert.assertEquals("delete:myModule", doRequest("/namespaces/myspace/data/modules/myModule", "DELETE"));
+    Assert.assertEquals("get:myModule", doRequest("/namespaces/myspace/data/modules/myModule", "GET"));
+    Assert.assertEquals("listTypes", doRequest("/namespaces/myspace/data/types", "GET"));
+    Assert.assertEquals("getType:myType", doRequest("/namespaces/myspace/data/types/myType", "GET"));
   }
 
   @Test
   public void testInstanceHandlerRequests() throws Exception {
-    Assert.assertEquals("list", doRequest("/data/datasets", "GET"));
-    Assert.assertEquals("post:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "POST"));
-    Assert.assertEquals("delete:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "DELETE"));
-    Assert.assertEquals("get:cdap.user.myInstance", doRequest("/data/datasets/myInstance", "GET"));
+    Assert.assertEquals("list", doRequest("/namespaces/myspace/data/datasets", "GET"));
+    Assert.assertEquals("post:cdap.myspace.myInstance",
+                        doRequest("/namespaces/myspace/data/datasets/myInstance", "POST"));
+    Assert.assertEquals("delete:cdap.myspace.myInstance",
+                        doRequest("/namespaces/myspace/data/datasets/myInstance", "DELETE"));
+    Assert.assertEquals("get:cdap.myspace.myInstance",
+                        doRequest("/namespaces/myspace/data/datasets/myInstance", "GET"));
   }
 
-  @Path(Constants.Gateway.API_VERSION_2)
+  @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
   public static final class MockDatasetTypeHandler extends AbstractHttpHandler {
     @GET
     @Path("/data/modules")
@@ -157,7 +160,7 @@ public class RoutingToDataSetsTest {
     }
   }
 
-  @Path(Constants.Gateway.API_VERSION_2)
+  @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
   public static final class DatasetInstanceHandler extends AbstractHttpHandler {
     @GET
     @Path("/data/datasets/")
@@ -188,7 +191,7 @@ public class RoutingToDataSetsTest {
   }
 
   private String doRequest(String resource, String requestMethod) throws Exception {
-    resource = String.format("http://localhost:%d%s" + resource, port, Constants.Gateway.API_VERSION_2);
+    resource = String.format("http://localhost:%d%s" + resource, port, Constants.Gateway.API_VERSION_3);
     URL url = new URL(resource);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(requestMethod);
