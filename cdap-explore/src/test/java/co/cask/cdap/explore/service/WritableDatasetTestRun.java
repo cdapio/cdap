@@ -142,7 +142,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void testTablesWithSpecialChars() throws Exception {
     Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
-    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "underscore_table");
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "hyphen-table");
     try {
       initKeyValueTable(myTable1, true);
       initKeyValueTable(myTable2, true);
@@ -152,7 +152,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
-      result = exploreClient.submit("select * from underscore_table").get();
+      result = exploreClient.submit("select * from hyphen_table").get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
