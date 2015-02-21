@@ -130,9 +130,7 @@
   "kerberos.auth.enabled": "false",
   "log.retention.duration.days": "7",
   "hdfs.lib.dir": "/cdap/lib",
-
-  "router.server.address": "metrics-ui1064-1000.dev.continuuity.net",
-
+  "router.server.address": "localhost",
   "data.tx.client.provider": "thread-local",
   "explore.enabled": "true",
   "metrics.num.cores": "2",
