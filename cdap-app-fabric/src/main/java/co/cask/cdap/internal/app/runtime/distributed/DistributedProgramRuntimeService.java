@@ -349,7 +349,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
       super(metricsCollectionService.getCollector(
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE)));
+        ImmutableMap.<String, String>of()));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {
@@ -557,7 +557,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.APP, programId.getApplicationId(),
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId(),
+                           Constants.Metrics.Tag.APP, programId.getApplicationId(),
                            ProgramTypeMetricTag.getTagName(type), programId.getId());
   }
 
