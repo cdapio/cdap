@@ -107,7 +107,7 @@ public abstract class StreamConsumerTestBase {
     StreamConsumer consumer = consumerFactory.create(streamId, "fifo.rollback",
                                                      new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     StreamConsumer otherConsumer = consumerFactory.create(otherStreamId, "fifo.rollback",
-                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
 
     // Try to dequeue using both consumers
     TransactionContext context = createTxContext(consumer);
