@@ -63,9 +63,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.SERVICE.getCategoryName());
+    programLifecycleHttpHandler.getServicesByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**

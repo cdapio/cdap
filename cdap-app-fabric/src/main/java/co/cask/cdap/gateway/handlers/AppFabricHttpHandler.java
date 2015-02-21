@@ -923,15 +923,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of flows associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.FLOW.getCategoryName());
+    programLifecycleHttpHandler.getFlowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -947,15 +946,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of mapreduce associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.MAPREDUCE.getCategoryName());
+    programLifecycleHttpHandler.getMapreduceByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -965,21 +963,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.SPARK.getCategoryName());
+    programLifecycleHttpHandler.getSparkByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of workflows associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.WORKFLOW.getCategoryName());
+    programLifecycleHttpHandler.getWorkflowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
