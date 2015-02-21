@@ -73,8 +73,8 @@ public interface WorkflowConfigurer {
   void addAction(WorkflowAction action);
 
   /**
-   * Adds a fork as a next sequential step in the {@link Workflow}
+   * Forks the execution of the {@link Workflow} into multiple branches
    * @return the configurer for the fork
    */
-  WorkflowForkConfigurer addFork();
+  WorkflowForkConfigurer fork();
 }

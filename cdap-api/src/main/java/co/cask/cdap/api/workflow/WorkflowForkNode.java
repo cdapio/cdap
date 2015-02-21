@@ -16,26 +16,28 @@
 
 package co.cask.cdap.api.workflow;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents fork in the {@link Workflow}.
+ * Represents the FORK node in the {@link Workflow}
  */
-public final class WorkflowForkSpecification {
+public class WorkflowForkNode extends WorkflowNode {
+  private final List<WorkflowForkBranch> branches;
 
-  private final List<List<WorkflowNode>> forkBranches;
-
-  public WorkflowForkSpecification(List<List<WorkflowNode>> forkBranches) {
-    this.forkBranches = Collections.unmodifiableList(new ArrayList<List<WorkflowNode>>(forkBranches));
+  public WorkflowForkNode(String nodeId, List<WorkflowForkBranch> branches) {
+    super(nodeId, WorkflowNodeType.FORK);
+    this.branches = branches;
   }
 
-  /**
-   *
-   * @return the list of branches for this fork
-   */
-  public List<List<WorkflowNode>> getBranches() {
-    return forkBranches;
+  public List<WorkflowForkBranch> getBranches() {
+    return branches;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("WorkflowForkNode{");
+    sb.append("branches=").append(branches);
+    sb.append('}');
+    return sb.toString();
   }
 }

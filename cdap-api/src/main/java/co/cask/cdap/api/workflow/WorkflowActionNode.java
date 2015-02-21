@@ -14,23 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.workflow;
-
-import co.cask.cdap.api.workflow.Workflow;
+package co.cask.cdap.api.workflow;
 
 /**
- * Provides unique id for the nodes in the {@link Workflow}
+ * Represents the ACTION node in the {@link Workflow}.
  */
-class WorkflowNodeIdProvider {
+public class WorkflowActionNode extends WorkflowNode {
+  private final ScheduleProgramInfo program;
 
-  private int nodeId = -1;
+  public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
+    super(nodeId, WorkflowNodeType.ACTION);
+    this.program = program;
+  }
 
   /**
    *
-   * @return the new id that can be assigned to the node in the {@link Workflow}
+   * @return the program information associated with the {@link WorkflowNode}
    */
-  String getUniqueNodeId() {
-    nodeId++;
-    return String.valueOf(nodeId);
+  public ScheduleProgramInfo getProgram() {
+    return this.program;
   }
 }

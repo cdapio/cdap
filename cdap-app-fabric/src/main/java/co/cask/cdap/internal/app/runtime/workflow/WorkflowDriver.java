@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -123,7 +124,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       WorkflowNode node = iterator.next();
       switch (node.getType()) {
         case ACTION:
-          ScheduleProgramInfo actionInfo = workflowSpec.getActions().get(node.getNodeId());
+          WorkflowActionNode actionNode = (WorkflowActionNode) node;
+          ScheduleProgramInfo actionInfo = actionNode.getProgram();
           switch (actionInfo.getProgramType()) {
             case MAPREDUCE:
               MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());

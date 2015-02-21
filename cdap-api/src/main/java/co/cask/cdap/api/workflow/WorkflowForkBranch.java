@@ -14,23 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.workflow;
+package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.workflow.Workflow;
+import java.util.List;
 
 /**
- * Provides unique id for the nodes in the {@link Workflow}
+ * Represents single branch on the {@link WorkflowForkNode}.
  */
-class WorkflowNodeIdProvider {
+public class WorkflowForkBranch {
+  private List<WorkflowNode> branch;
 
-  private int nodeId = -1;
+  public WorkflowForkBranch(List<WorkflowNode> branch) {
+    this.branch = branch;
+  }
 
   /**
    *
-   * @return the new id that can be assigned to the node in the {@link Workflow}
+   * @return the list of {@link WorkflowNode} on the {@link WorkflowForkBranch}
    */
-  String getUniqueNodeId() {
-    nodeId++;
-    return String.valueOf(nodeId);
+  public List<WorkflowNode> getNodes() {
+    return branch;
   }
 }

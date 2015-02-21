@@ -18,8 +18,9 @@ package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkSpecification;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import com.clearspring.analytics.util.Lists;
 
@@ -32,19 +33,20 @@ import javax.annotation.Nullable;
  */
 public class DefaultWorkflowForkConfigurer implements WorkflowForkConfigurer {
 
-  private final WorkflowForkConfigurer parentForkConfigurer;
+  private final DefaultWorkflowForkConfigurer parentForkConfigurer;
   private final DefaultWorkflowConfigurer workflowConfigurer;
-  private final String forkId;
+  private final String forkNodeId;
 
-  private final List<List<WorkflowNode>> branches = Lists.newArrayList();
+  private final List<WorkflowForkBranch> branches = Lists.newArrayList();
   private List<WorkflowNode> currentBranch;
 
   public DefaultWorkflowForkConfigurer(DefaultWorkflowConfigurer workflowConfigurer,
-                                       @Nullable WorkflowForkConfigurer parentForkConfigurer, String forkId) {
+                                       @Nullable DefaultWorkflowForkConfigurer parentForkConfigurer,
+                                       String forkNodeId) {
     this.parentForkConfigurer = parentForkConfigurer;
     this.workflowConfigurer = workflowConfigurer;
     currentBranch = Lists.newArrayList();
-    this.forkId = forkId;
+    this.forkNodeId = forkNodeId;
   }
 
   @Override
@@ -66,21 +68,30 @@ public class DefaultWorkflowForkConfigurer implements WorkflowForkConfigurer {
   }
 
   @Override
-  public WorkflowForkConfigurer addFork() {
+  public WorkflowForkConfigurer fork() {
     return workflowConfigurer.getWorkflowForkConfigurer(this);
   }
 
   @Override
   public WorkflowForkConfigurer also() {
-    branches.add(currentBranch);
+    branches.add(new WorkflowForkBranch(currentBranch));
     currentBranch = Lists.newArrayList();
     return this;
+  }
+
+  public void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branch) {
+    currentBranch.add(new WorkflowForkNode(forkNodeId, branch));
   }
 
   @Nullable
   @Override
   public WorkflowForkConfigurer join() {
-    workflowConfigurer.addWorkflowForkSpecification(forkId, new WorkflowForkSpecification(branches));
+    branches.add(new WorkflowForkBranch(currentBranch));
+    if (parentForkConfigurer == null) {
+      workflowConfigurer.addWorkflowForkNode(forkNodeId, branches);
+    } else {
+      parentForkConfigurer.addWorkflowForkNode(forkNodeId, branches);
+    }
     return parentForkConfigurer;
   }
 }

@@ -20,12 +20,13 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkSpecification;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
@@ -49,8 +50,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   private WorkflowNodeIdProvider nodeIdProvider;
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
-  private final Map<String, ScheduleProgramInfo> actions = Maps.newHashMap();
-  private final Map<String, WorkflowForkSpecification> forks = Maps.newHashMap();
   private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
 
   public DefaultWorkflowConfigurer(Workflow workflow) {
@@ -92,8 +91,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
         break;
     }
     String nodeId = nodeIdProvider.getUniqueNodeId();
-    actions.put(nodeId, new ScheduleProgramInfo(programType, programName));
-    return new WorkflowNode(nodeId, WorkflowNodeType.ACTION);
+    return new WorkflowActionNode(nodeId, new ScheduleProgramInfo(programType, programName));
   }
 
   WorkflowNode getWorkflowCustomActionNode(WorkflowAction action) {
@@ -103,15 +101,13 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     return getWorkflowActionNode(spec.getName(), SchedulableProgramType.CUSTOM_ACTION);
   }
 
-  WorkflowForkConfigurer getWorkflowForkConfigurer(@Nullable WorkflowForkConfigurer parentForkConfigurer) {
-    String nodeId = nodeIdProvider.getUniqueNodeId();
-    WorkflowForkConfigurer configurer = new DefaultWorkflowForkConfigurer(this, parentForkConfigurer, nodeId);
-    nodes.add(new WorkflowNode(nodeId, WorkflowNodeType.FORK));
-    return configurer;
+  WorkflowForkConfigurer getWorkflowForkConfigurer(@Nullable DefaultWorkflowForkConfigurer parentForkConfigurer) {
+    String forkNodeId = nodeIdProvider.getUniqueNodeId();
+    return  new DefaultWorkflowForkConfigurer(this, parentForkConfigurer, forkNodeId);
   }
 
-  void addWorkflowForkSpecification(String forkId, WorkflowForkSpecification forkSpecification) {
-    forks.put(forkId, forkSpecification);
+  void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branches) {
+    nodes.add(new WorkflowForkNode(forkNodeId, branches));
   }
 
   @Override
@@ -130,11 +126,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   }
 
   @Override
-  public WorkflowForkConfigurer addFork() {
+  public WorkflowForkConfigurer fork() {
     return getWorkflowForkConfigurer(null);
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, nodes, forks, actions, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes, customActionMap);
   }
 }

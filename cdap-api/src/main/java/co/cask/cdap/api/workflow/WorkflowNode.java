@@ -19,9 +19,9 @@ package co.cask.cdap.api.workflow;
 /**
  * Represents node in the {@link Workflow}.
  */
-public final class WorkflowNode {
-  private final String nodeId;
-  private final WorkflowNodeType nodeType;
+public abstract class WorkflowNode {
+  protected final String nodeId;
+  protected final WorkflowNodeType nodeType;
 
   public WorkflowNode(String nodeId, WorkflowNodeType nodeType) {
     this.nodeId = nodeId;
@@ -29,8 +29,8 @@ public final class WorkflowNode {
   }
 
   /**
-   * Get the id of the node
-   * @return
+   *
+   * @return the id of the {@link WorkflowNode}
    */
   public String getNodeId() {
     return nodeId;
