@@ -130,7 +130,7 @@ public class ServiceProgramRunner extends AbstractInMemoryProgramRunner {
 
   @Override
   public ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                        Arguments userArguments) {
+                                               Arguments userArguments) {
     Map<String, String> options = ImmutableMap.of(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
                                                   ProgramOptionConstants.INSTANCES, Integer.toString(instances),
                                                   ProgramOptionConstants.RUN_ID, runId.getId(),
