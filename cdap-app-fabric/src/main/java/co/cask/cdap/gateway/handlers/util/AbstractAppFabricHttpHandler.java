@@ -397,6 +397,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     ApplicationSpecification appSpec = store.getApplication(new Id.Application(
       namespace, programId.getApplicationId()));
+    if (appSpec == null) {
+      return "";
+    }
     if (type == Data.DATASET) {
       Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
