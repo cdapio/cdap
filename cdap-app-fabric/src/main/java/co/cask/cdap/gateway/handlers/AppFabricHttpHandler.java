@@ -132,8 +132,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricDataHttpHandler = appFabricDataHttpHandler;

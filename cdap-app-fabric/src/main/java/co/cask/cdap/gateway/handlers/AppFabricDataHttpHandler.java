@@ -60,8 +60,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
                                   StoreFactory storeFactory, DatasetFramework dsFramework) {
     super(authenticator);
     this.store = storeFactory.create();
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
   }
 
   /**
@@ -104,8 +103,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets")
   public void getDatasets(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
-    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
   }
 
   /**
@@ -116,8 +114,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespaceId,
                                       @PathParam("dataset-id") final String datasetId) {
-    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
   }
 
   /**
@@ -128,8 +125,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") final String appId) {
-    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
   }
 
   /**
@@ -140,8 +136,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                 @PathParam("dataset-id") final String datasetId) {
-    //TODO: use namespace passed in, once datasets are namespaced (https://issues.cask.co/browse/CDAP-775)
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
-                            Constants.DEFAULT_NAMESPACE, datasetId);
+                            namespaceId, datasetId);
   }
 }

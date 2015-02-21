@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
@@ -42,19 +41,26 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetDatasets() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
 
-    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-
-    response = doGet(getVersionedAPIPath("datasets",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE));
+    // No datasets should be in another namespace where the apps were not deployed
+    response = doGet(getVersionedAPIPath("datasets", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> responseList = new Gson().fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertTrue(responseList.isEmpty());
+
+    // Datasets should exist in the namespace that app was deployed to
+    response = doGet(getVersionedAPIPath("datasets",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    responseString = EntityUtils.toString(response.getEntity());
+    responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
     Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
       .put("mydataset", KeyValueTable.class.getName())
       .put("myds", KeyValueTable.class.getName())
@@ -72,14 +78,19 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetDatasetSpecification() throws Exception {
-    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // Querying for the dataset with the same name but different namespace should not be found
     response = doGet(getVersionedAPIPath("datasets/myds",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE));
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("datasets/myds",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());
-    Map<String, String> receivedSpec = new Gson().fromJson(responseString, MAP_STRING_STRING_TYPE);
+    Map<String, String> receivedSpec = GSON.fromJson(responseString, MAP_STRING_STRING_TYPE);
     ImmutableMap<String, String> expectedDatasetSpec =
       ImmutableMap.of("type", "Dataset",
                       "id", "myds",
@@ -90,14 +101,19 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetDatasetsByApp() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // Querying for the datasets in a different namespace should not find them.
     response = doGet(getVersionedAPIPath("apps/WordCountApp/datasets",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE));
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("apps/WordCountApp/datasets",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> responseList = new Gson().fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, responseList.size());
     ImmutableMap<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
       .put("mydataset", KeyValueTable.class.getName()).build();
@@ -113,20 +129,25 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetFlowsByDataset() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // Querying for the flows in a different namespace should not find them.
+    response = doGet(getVersionedAPIPath("datasets/mydataset/flows",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     response = doGet(getVersionedAPIPath("datasets/mydataset/flows",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE));
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> responseList = new Gson().fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
 
     ImmutableMap<String, String> expectedFlow = ImmutableMap.of("type", "Flow",
-                                                      "app", "WordCountApp",
-                                                      "id", "WordCountFlow",
-                                                      "name", "WordCountFlow",
-                                                      "description", "Flow for counting words");
+                                                                "app", "WordCountApp",
+                                                                "id", "WordCountFlow",
+                                                                "name", "WordCountFlow",
+                                                                "description", "Flow for counting words");
     Assert.assertEquals(1, responseList.size());
     Assert.assertEquals(expectedFlow, responseList.get(0));
   }
