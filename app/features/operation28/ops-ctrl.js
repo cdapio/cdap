@@ -11,10 +11,10 @@ angular.module(PKG.name+'.feature.operation28')
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['Collect', 'EPS',    'collect.events'],
-      ['Process', '%',      'process.busyness'],
-      ['Store', 'B/s',      'dataset.store.bytes'],
-      ['Query', 'QPS',      'query.requests']
+      ['Collect', 'EPS',   'collect.events'],
+      ['Process', '%',     'process.busyness'],
+      ['Store',   'B/S',   'dataset.store.bytes'],
+      ['Query',   'QPS',   'query.requests']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -40,10 +40,10 @@ angular.module(PKG.name+'.feature.operation28')
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['AppFabric', 'Containers', 'containers'],
-      ['Processors', 'Cores',     'vcores'],
-      ['Memory', 'B',             'memory'],
-      ['DataFabric', 'B',         'storage']
+      ['AppFabric',  'Containers', 'containers'],
+      ['Processors', 'Cores',      'vcores'],
+      ['Memory',     'B',          'memory'],
+      ['DataFabric', 'B',          'storage']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -118,9 +118,18 @@ angular.module(PKG.name+'.feature.operation28')
   .factory('op28helper', function () {
 
     function panelMap (d) {
+      var unit = d[1],
+          useByteFilter = false;
+
+      if(unit.substr(0,1)==='B') {
+        useByteFilter = true;
+        unit = unit.substr(1);
+      }
+
       return {
         title: d[0],
-        unit: d[1],
+        unit: unit,
+        useByteFilter: useByteFilter,
         chart: {
           metric: d[2],
           context: 'system',

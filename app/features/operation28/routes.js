@@ -22,7 +22,7 @@ angular.module(PKG.name+'.feature.operation28')
               $state.go('operations.cdap');
             }
           });
-          $scope.isEnterprise = true; // MY_CONFIG.isEnterprise;
+          $scope.isEnterprise = MY_CONFIG.isEnterprise;
         }
       })
         .state('operations.cdap', {

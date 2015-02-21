@@ -3,7 +3,7 @@
 angular.module(PKG.name+'.filters').filter('bytes', function() {
   return function(bytes, precision) {
     if (bytes<1 || isNaN(parseFloat(bytes)) || !isFinite(bytes)) {
-      return 'n/a';
+      return '0 bytes';
     }
     if (typeof precision === 'undefined') {
       precision = bytes>1023 ? 1 : 0;
