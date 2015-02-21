@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -83,6 +84,20 @@ public class ProcedureClientTestRun extends ClientTestBase {
     }
     // revert namespace to continue execution of test
     clientConfig.setNamespace(testNamespace);
+
+    // Validate that procedure calls can not be in non-V2 APIs
+    String testVersion = clientConfig.getApiVersion();
+    clientConfig.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+    try {
+      procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
+                           ImmutableMap.of("customer", "joe"));
+      Assert.fail("Procedure calls should not be supported in non-v2 APIs.");
+    } catch (IllegalStateException e) {
+      String expectedErrMsg = "Procedure operations are only supported in V2 APIs.";
+      Assert.assertEquals(expectedErrMsg, e.getMessage());
+    }
+    // revert apiVersion to continue execution of test
+    clientConfig.setApiVersion(testVersion);
 
     // stop procedure
     programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
