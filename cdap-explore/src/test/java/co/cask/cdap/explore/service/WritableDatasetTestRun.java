@@ -51,11 +51,6 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
   private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
   private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
-  // '.' are replaced with "_" in hive, so create a dataset with . in name.
-  private static final Id.DatasetInstance tableWithDotInName = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
-  // '_' are replaced with "_" in hive, so create a dataset with . in name.
-  private static final Id.DatasetInstance tableWithUnderscore = Id.DatasetInstance.from(NAMESPACE_ID,
-                                                                                        "underscore_table");
 
   @BeforeClass
   public static void start() throws Exception {
@@ -141,7 +136,9 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testTablesWithSpecialChars() throws Exception {
+    // '.' are replaced with "_" in hive, so create a dataset with . in name.
     Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+    // '_' are replaced with "_" in hive, so create a dataset with . in name.
     Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "hyphen-table");
     try {
       initKeyValueTable(myTable1, true);
