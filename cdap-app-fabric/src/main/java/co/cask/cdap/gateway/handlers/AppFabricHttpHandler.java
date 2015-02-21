@@ -109,7 +109,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
-  private final AppFabricStreamHttpHandler appFabricStreamHttpHandler;
+  private final AppFabricDataHttpHandler appFabricDataHttpHandler;
 
 
   /**
@@ -122,7 +122,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              AppFabricStreamHttpHandler appFabricStreamHttpHandler,
+                              AppFabricDataHttpHandler appFabricDataHttpHandler,
                               PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
 
     super(authenticator);
@@ -132,11 +132,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
-    this.appFabricStreamHttpHandler = appFabricStreamHttpHandler;
+    this.appFabricDataHttpHandler = appFabricDataHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
   }
@@ -607,14 +606,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
-    try {
-      return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                            Constants.DEFAULT_NAMESPACE, appId, archiveName);
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
-      return null;
-    }
-
+    return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE, appId, archiveName);
   }
 
   /**
@@ -625,13 +618,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
-    try {
-      return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                            Constants.DEFAULT_NAMESPACE, null, archiveName);
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
-      return null;
-    }
+    return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE, null, archiveName);
   }
 
   /**
@@ -994,8 +982,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder) {
-    appFabricStreamHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                          Constants.DEFAULT_NAMESPACE);
+    appFabricDataHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                        Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1015,8 +1003,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId) {
-    appFabricStreamHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId);
+    appFabricDataHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                             Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1025,7 +1013,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/datasets")
   public void getDatasets(HttpRequest request, HttpResponder responder) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
+    appFabricDataHttpHandler.getDatasets(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                         Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1035,7 +1024,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
+    appFabricDataHttpHandler.getDatasetSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
@@ -1045,7 +1035,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") final String appId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
+    appFabricDataHttpHandler.getDatasetsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1055,8 +1046,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("stream-id") final String streamId) {
-    appFabricStreamHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                Constants.DEFAULT_NAMESPACE, streamId);
+    appFabricDataHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, streamId);
   }
 
   /**
@@ -1066,8 +1057,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("dataset-id") final String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
-                            Constants.DEFAULT_NAMESPACE, datasetId);
+    appFabricDataHttpHandler.getFlowsByDataset(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
