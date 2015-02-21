@@ -194,15 +194,8 @@ gulp.task('tpl', function() {
   Markup
  */
 gulp.task('html:partials', function() {
-  return merge(
-    gulp.src('./app/features/**/*.html')
-      .pipe(gulp.dest('./dist/assets/features')),
-
-    gulp.src('./app/partials/**/*.html')
-      .pipe(gulp.dest('./dist/assets/partials'))
-
-  );
-
+  return gulp.src('./app/features/**/*.html')
+      .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
