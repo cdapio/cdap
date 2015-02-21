@@ -34,10 +34,10 @@ public class DatasetMetaTableUtil {
   public static final String META_TABLE_NAME = "datasets.type";
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
-  private static final Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
-                                                                                        META_TABLE_NAME);
-  private static final Id.DatasetInstance instanceTableInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
-                                                                                            INSTANCE_TABLE_NAME);
+  private static final Id.DatasetInstance metaTableInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID,  META_TABLE_NAME);
+  private static final Id.DatasetInstance instanceTableInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME);
 
   private final DatasetFramework framework;
 
@@ -72,8 +72,9 @@ public class DatasetMetaTableUtil {
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
-    Id.DatasetModule typeMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "typeMDSModule");
-    Id.DatasetModule instanceMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "instanceMDSModule");
+    // meta tables should be in the system namespace
+    Id.DatasetModule typeMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "typeMDSModule");
+    Id.DatasetModule instanceMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "instanceMDSModule");
     framework.addModule(typeMDSModuleId, new SingleTypeModule(DatasetTypeMDS.class));
     framework.addModule(instanceMDSModuleId, new SingleTypeModule(DatasetInstanceMDS.class));
   }

@@ -64,22 +64,29 @@ final class MetricQueryParser {
     SPARK
   }
 
+  // we need to duplicate that as we don't have dependency on app-fabric
   public enum ProgramType {
-    FLOWS("f"),
-    MAPREDUCE("b"),
-    PROCEDURES("p"),
-    HANDLERS("h"),
-    SERVICES("u"),
-    SPARK("s");
+    FLOWS("f", Constants.Metrics.Tag.FLOW),
+    MAPREDUCE("b", Constants.Metrics.Tag.MAPREDUCE),
+    PROCEDURES("p", Constants.Metrics.Tag.PROCEDURE),
+    HANDLERS("h", Constants.Metrics.Tag.HANDLER),
+    SERVICES("u", Constants.Metrics.Tag.SERVICE),
+    SPARK("s", Constants.Metrics.Tag.SPARK);
 
     private final String code;
+    private final String tagName;
 
-    private ProgramType(String code) {
+    private ProgramType(String code, String tagName) {
       this.code = code;
+      this.tagName = tagName;
     }
 
     public String getCode() {
       return code;
+    }
+
+    public String getTagName() {
+      return tagName;
     }
   }
 
@@ -161,8 +168,7 @@ final class MetricQueryParser {
     if (index != -1) {
       String strippedPath = uriPath.substring(0, index);
       if (strippedPath.startsWith("/system/cluster")) {
-        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                                                    Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+        builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE));
         builder.setScope("system");
       } else if (strippedPath.startsWith("/system/transactions")) {
         builder.setSliceByTagValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
@@ -304,12 +310,6 @@ final class MetricQueryParser {
   static void parseSubContext(Iterator<String> pathParts, Map<String, String> tagValues)
     throws MetricsPathException {
 
-    // todo
-//    if (!pathParts.hasNext()) {
-//      return;
-//    }
-//    builder.setTypeId(urlDecode(pathParts.next()));
-
     if (!pathParts.hasNext()) {
       return;
     }
@@ -319,16 +319,14 @@ final class MetricQueryParser {
     ProgramType programType;
     try {
       programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
-      tagValues.put(Constants.Metrics.Tag.PROGRAM_TYPE, programType.getCode());
     } catch (IllegalArgumentException e) {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
 
-    // contextPrefix should look like appId.f right now, if we're looking at a flow
     if (!pathParts.hasNext()) {
       return;
     }
-    tagValues.put(Constants.Metrics.Tag.PROGRAM, pathParts.next());
+    tagValues.put(programType.getTagName(), pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;

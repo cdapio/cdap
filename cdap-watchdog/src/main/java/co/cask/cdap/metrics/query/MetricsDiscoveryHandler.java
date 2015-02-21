@@ -56,6 +56,7 @@ import javax.ws.rs.QueryParam;
 public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
+  private static final String PROGRAM = "program";
 
   private final MetricStore metricStore;
 
@@ -132,20 +133,17 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
     // todo : remove hard-coded values and use TypeId (need to move TypeId out of app-fabric ?)
     this.oldFormatMapping = ImmutableMap.<String, List<String>>of(
       "f", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
-                            Constants.Metrics.Tag.PROGRAM_TYPE,
-                            Constants.Metrics.Tag.PROGRAM,
+                            PROGRAM,
                             Constants.Metrics.Tag.FLOWLET,
                             Constants.Metrics.Tag.FLOWLET_QUEUE,
                             Constants.Metrics.Tag.DATASET)
       ,
       "b", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
-                            Constants.Metrics.Tag.PROGRAM_TYPE,
-                            Constants.Metrics.Tag.PROGRAM,
+                                    PROGRAM,
                             Constants.Metrics.Tag.MR_TASK_TYPE,
                             Constants.Metrics.Tag.DATASET),
       "u", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
-                                    Constants.Metrics.Tag.PROGRAM_TYPE,
-                                    Constants.Metrics.Tag.PROGRAM,
+                                    PROGRAM,
                                     Constants.Metrics.Tag.SERVICE_RUNNABLE,
                                     Constants.Metrics.Tag.DATASET)
     );
@@ -227,9 +225,9 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         for (Map.Entry<String, String> tag : tagValues.entrySet()) {
           tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
         }
-        if (tagsList.size() > 3) {
+        if (tagsList.size() > 2) {
           // todo : adding null for runId,should we support searching with runId ?
-          tagsList.add(4, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
+          tagsList.add(3, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
         }
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
@@ -273,19 +271,35 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
       tagValueMappings.put(tag.getTagName(), tag.getValue());
     }
 
-    String programType = tagValueMappings.get(Constants.Metrics.Tag.PROGRAM_TYPE);
+    String programType = null;
+    String programPart = null;
+    for (MetricQueryParser.ProgramType type : MetricQueryParser.ProgramType.values()) {
+      String val = tagValueMappings.get(type.getTagName());
+      if (val != null) {
+        // we need it in a form of f.myFlow
+        programPart = type.getCode() + "." + val;
+        programType = type.getCode();
+        break;
+      }
+    }
+
     List<String> tagMappings;
     if (programType != null) {
       tagMappings = oldFormatMapping.get(programType);
       if (tagMappings == null) {
-        tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM_TYPE,
-                                       Constants.Metrics.Tag.PROGRAM, Constants.Metrics.Tag.DATASET);
+        tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, PROGRAM, Constants.Metrics.Tag.DATASET);
       }
     } else {
       tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET);
     }
 
     for (String tagKey : tagMappings) {
+      // we need to insert two parts in this case: type and program name
+      if (PROGRAM.equals(tagKey)) {
+        contextPrefix += programPart != null ? "." + programPart : "";
+        // we know programType != null
+        continue;
+      }
       contextPrefix = tagValueMappings.get(tagKey) != null ? contextPrefix + "." +
         tagValueMappings.get(tagKey) : contextPrefix;
     }
