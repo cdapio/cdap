@@ -56,6 +56,8 @@ public class VersionMigrationUtils {
   public static void assertProcedureSupported(ClientConfig config) {
     Preconditions.checkState(isProcedureSupported(config),
                              "Procedure operations are only supported in the default namespace.");
+    Preconditions.checkState(Constants.Gateway.API_VERSION_2_TOKEN.equals(config.getApiVersion()),
+                             "Procedure operations are only supported in V2 APIs");
   }
 
   /**
