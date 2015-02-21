@@ -51,6 +51,11 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
   private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
   private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
+  // '.' are replaced with "_" in hive, so create a dataset with . in name.
+  private static final Id.DatasetInstance tableWithDotInName = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+  // '_' are replaced with "_" in hive, so create a dataset with . in name.
+  private static final Id.DatasetInstance tableWithUnderscore = Id.DatasetInstance.from(NAMESPACE_ID,
+                                                                                        "underscore_table");
 
   @BeforeClass
   public static void start() throws Exception {
@@ -131,6 +136,29 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       result.close();
     } finally {
       datasetFramework.deleteInstance(MY_TABLE);
+    }
+  }
+
+  @Test
+  public void testTablesWithSpecialChars() throws Exception {
+    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "underscore_table");
+    try {
+      initKeyValueTable(myTable1, true);
+      initKeyValueTable(myTable2, true);
+
+      ExploreExecutionResult result = exploreClient.submit("select * from dot_table").get();
+
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+      result = exploreClient.submit("select * from underscore_table").get();
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+    } finally {
+      datasetFramework.deleteInstance(myTable1);
+      datasetFramework.deleteInstance(myTable2);
     }
   }
 
