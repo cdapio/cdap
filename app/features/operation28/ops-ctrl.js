@@ -64,50 +64,45 @@ angular.module(PKG.name+'.feature.operation28')
 
 
   .controller('Op28AppsCtrl',
-  function ($scope, $state, $q, myHelpers, MyDataSource) {
+  function ($scope, $state, myHelpers, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
 
     $scope.apps = [];
 
-    dataSrc.request({
+    dataSrc
+      .poll({
         _cdapNsPath: '/apps'
-      })
-      .then(function (apps) {
+      },
+      function (apps) {
         $scope.apps = apps;
-        $scope.metrics = {};
 
-        var p = [], // array of promises
-            m = ['vcores', 'containers', 'memory'];
+        var m = ['vcores', 'containers', 'memory'];
 
         for (var i = 0; i < m.length; i++) {
 
-          p.push(
-            dataSrc
-              .request({
-                _cdapPath: '/metrics/query' +
-                  '?context=namespace.system' +
-                  '&metric=system.resources.used.' +
-                  m[i] + '&groupBy=app',
-                method: 'POST'
-              },
-              function (r) {
-                angular.forEach(r.series, function (s) {
-                  myHelpers.deepSet(
-                    $scope.apps.filter(function (one) {
-                      return one.id === s.grouping.app;
-                    })[0],
-                    'metric.' + s.metricName.split('.').pop(),
-                    s.data[0].value
-                  );
-                });
-              })
-          );
-        };
+          dataSrc
+            .request({
+              _cdapPath: '/metrics/query' +
+                '?context=namespace.system' +
+                '&metric=system.resources.used.' +
+                m[i] + '&groupBy=app',
+              method: 'POST'
+            },
+            function (r) {
+              angular.forEach(r.series, function (s) {
+                myHelpers.deepSet(
+                  $scope.apps.filter(function (one) {
+                    return one.id === s.grouping.app;
+                  })[0],
+                  'metric.' + s.metricName.split('.').pop(),
+                  s.data[0].value
+                );
+              });
+            });
+        }
 
-        return $q.all(p);
       });
-
 
   })
 
