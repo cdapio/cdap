@@ -72,7 +72,9 @@ angular.module(PKG.name+'.services')
         if(data.statusCode!==200 || data.warning) {
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, data.resource)) {
-              scope.$apply(b.errorCallback.bind(null, data.response));
+              if(b.errorCallback) {
+                scope.$apply(b.errorCallback.bind(null, data.response));
+              }
             }
           });
           return; // errors are handled at $rootScope level
