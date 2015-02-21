@@ -55,11 +55,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,6 +231,29 @@ public class CLIMainTest extends StandaloneTestBase {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
     }
+  }
+
+  @Test
+  public void testProcedureInNonDefaultNamespace() throws Exception {
+    testCommandOutputContains(cli, "create namespace foo", "Namespace 'foo' created successfully");
+    testCommandOutputContains(cli, "use namespace foo", "Now using namespace 'foo'");
+
+    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
+
+    String expectedErrMsg = "Error: Procedure operations are only supported in the default namespace.";
+    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure status " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure live " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure instances " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure instances " + qualifiedProcedureId + " 2", expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure runtimeargs " + qualifiedProcedureId + " key=1", expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure runtimeargs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure logs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+      + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", expectedErrMsg);
+    testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, expectedErrMsg);
+
+    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
   }
 
   @Test
