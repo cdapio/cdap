@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
@@ -52,7 +53,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllServices(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllServices(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -61,8 +63,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.SERVICE.getCategoryName());
+    programLifecycleHttpHandler.getProgramsByApp(responder,
+                                                 Constants.DEFAULT_NAMESPACE,
+                                                 appId, ProgramType.SERVICE.getCategoryName());
   }
 
   /**
@@ -74,8 +77,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") String appId,
                            @PathParam("service-id") String serviceId,
                            @PathParam("runnable-name") String runnableName) {
-    programLifecycleHttpHandler.getServiceInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                    appId, serviceId, runnableName);
+    programLifecycleHttpHandler.getServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
   }
 
   /**
@@ -88,8 +91,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("service-id") String serviceId,
                            @PathParam("runnable-name") String runnableName) {
 
-    programLifecycleHttpHandler.setServiceInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                    appId, serviceId, runnableName);
+    programLifecycleHttpHandler.setServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
   }
 
   @GET
@@ -97,7 +100,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") String appId,
                               @PathParam("service-id") String serviceId) {
-    programLifecycleHttpHandler.liveInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                         ProgramType.SERVICE.getCategoryName(), serviceId);
+    programLifecycleHttpHandler.liveInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                         Constants.DEFAULT_NAMESPACE,
+                                         appId, ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 }
