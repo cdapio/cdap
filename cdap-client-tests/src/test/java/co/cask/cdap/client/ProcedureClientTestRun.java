@@ -70,6 +70,20 @@ public class ProcedureClientTestRun extends ClientTestBase {
                                          ImmutableMap.of("customer", "joe"));
     Assert.assertEquals(GSON.toJson(ImmutableMap.of("customer", "realjoe")), result);
 
+    // Validate that procedure calls can not be made to non-default namespaces
+    String testNamespace = clientConfig.getNamespace();
+    clientConfig.setNamespace("fooNamespace");
+    try {
+      procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
+                           ImmutableMap.of("customer", "joe"));
+      Assert.fail("Procedure calls should not be supported in non-default namespaces.");
+    } catch (IllegalStateException e) {
+      String expectedErrMsg = "Procedure operations are only supported in the default namespace.";
+      Assert.assertEquals(expectedErrMsg, e.getMessage());
+    }
+    // revert namespace to continue execution of test
+    clientConfig.setNamespace(testNamespace);
+
     // stop procedure
     programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
