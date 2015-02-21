@@ -71,7 +71,7 @@ angular.module(PKG.name+'.feature.operation28')
     $scope.apps = [];
 
     dataSrc
-      .poll({
+      .request({
         _cdapNsPath: '/apps'
       },
       function (apps) {
@@ -82,7 +82,7 @@ angular.module(PKG.name+'.feature.operation28')
         for (var i = 0; i < m.length; i++) {
 
           dataSrc
-            .request({
+            .poll({
               _cdapPath: '/metrics/query' +
                 '?context=namespace.system' +
                 '&metric=system.resources.used.' +
