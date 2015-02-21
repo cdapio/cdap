@@ -17,16 +17,12 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.queue.QueueEntry;
-import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
@@ -43,7 +39,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
@@ -107,7 +102,7 @@ public abstract class StreamConsumerTestBase {
     StreamConsumer consumer = consumerFactory.create(streamId, "fifo.rollback",
                                                      new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     StreamConsumer otherConsumer = consumerFactory.create(otherStreamId, "fifo.rollback",
-                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
 
     // Try to dequeue using both consumers
     TransactionContext context = createTxContext(consumer);
@@ -306,81 +301,6 @@ public abstract class StreamConsumerTestBase {
     for (StreamConsumer consumer : consumers) {
       consumer.close();
     }
-  }
-
-  @Test
-  public void testCombineConsumer() throws Exception {
-    String stream = "testCombineConsumer";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
-    StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(streamId);
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-
-    // Writer 10 messages to new stream
-    writeEvents(streamConfig, "New event ", 10);
-
-    QueueClientFactory oldStreamFactory = getQueueClientFactory();
-
-    // Write 10 messages to old stream
-    StreamEventCodec streamEventCodec = new StreamEventCodec();
-    QueueProducer producer = oldStreamFactory.createProducer(QueueName.fromStream(streamId));
-    TransactionContext txContext = createTxContext((TransactionAware) producer);
-    for (int i = 0; i < 10; i++) {
-      txContext.start();
-      String msg = "Old event " + i;
-      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(msg));
-      producer.enqueue(new QueueEntry(streamEventCodec.encodePayload(event)));
-      txContext.finish();
-    }
-    if (producer instanceof Closeable) {
-      ((Closeable) producer).close();
-    }
-
-    streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
-
-    // Create a consumer, that should be able to see all old events before the new events
-    StreamConsumer consumer = getConsumerFactory().create(streamId, "combine.consumer",
-                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
-
-    txContext = createTxContext(consumer);
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("Old event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      // Would expect one empty result during the switch
-      DequeueResult<StreamEvent> result = consumer.poll(10, 0, TimeUnit.SECONDS);
-      Assert.assertTrue(result.isEmpty());
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("New event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    consumer.close();
   }
 
   @Test

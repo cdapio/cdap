@@ -31,8 +31,8 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
+import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.AppFabricStreamHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
@@ -271,7 +271,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
-      handlerBinder.addBinding().to(AppFabricStreamHttpHandler.class);
+      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);

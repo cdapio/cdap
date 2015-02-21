@@ -362,11 +362,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     if (type == Data.DATASET) {
       DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
-      String typeName = null;
-      if (dsSpec != null) {
-        typeName = dsSpec.getType();
-      }
-      return GSON.toJson(makeDataSetRecord(name, typeName));
+      return dsSpec == null ? "" : GSON.toJson(makeDataSetRecord(name, dsSpec.getType()));
     } else if (type == Data.STREAM) {
       StreamSpecification spec = store.getStream(namespace, name);
       return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -401,6 +397,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     ApplicationSpecification appSpec = store.getApplication(new Id.Application(
       namespace, programId.getApplicationId()));
+    if (appSpec == null) {
+      return "";
+    }
     if (type == Data.DATASET) {
       Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());

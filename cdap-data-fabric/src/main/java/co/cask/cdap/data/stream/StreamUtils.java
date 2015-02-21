@@ -442,11 +442,12 @@ public final class StreamUtils {
     // streamBaseLocation = /.../<namespace>/streams/<streamName>,
     // as constructed by FileStreamAdmin#getStreamConfigLocation
     Location streamsDir = Locations.getParent(streamBaseLocation);
-    Preconditions.checkNotNull(streamsDir, "Parent directory of stream base location %s was null.", streamBaseLocation);
+    Preconditions.checkNotNull(streamsDir,
+                               "Streams directory of stream base location %s was null.", streamBaseLocation);
 
     Location namespaceDir = Locations.getParent(streamsDir);
-    Preconditions.checkNotNull(namespaceDir, "Grandparent directory of stream base location %s was null.",
-                               streamBaseLocation);
+    Preconditions.checkNotNull(namespaceDir,
+                               "Namespace directory of stream base location %s was null.", streamBaseLocation);
 
     String namespace = namespaceDir.getName();
     String streamName = streamBaseLocation.getName();
