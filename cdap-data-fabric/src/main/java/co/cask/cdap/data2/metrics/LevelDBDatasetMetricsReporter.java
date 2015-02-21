@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,23 @@
 
 package co.cask.cdap.data2.metrics;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,17 +50,19 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   private final MetricsCollectionService metricsService;
   private final LevelDBOrderedTableService ldbService;
   private final DatasetNamespace userDsNamespace;
+  private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
 
   @Inject
   public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
-                                       LevelDBOrderedTableService ldbService,
+                                       LevelDBOrderedTableService ldbService, DatasetFramework dsFramework,
                                        CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf, Namespace.USER);
+    this.userDsNamespace = new DefaultDatasetNamespace(conf);
+    this.dsFramework = dsFramework;
   }
 
   @Override
@@ -92,18 +98,26 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
     for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
-      String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetName == null) {
+      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
+      if (datasetInstance == null) {
         // not a user dataset
         continue;
       }
-      // use the first part of the dataset name, would use history if dataset name is history.objects.kv
-      if (datasetName.contains(".")) {
-        datasetName = datasetName.substring(0, datasetName.indexOf("."));
+      datasetInstance.getId();
+      try {
+        Collection<DatasetSpecification> instances = dsFramework.getInstances(datasetInstance.getNamespace());
+        for (DatasetSpecification spec : instances) {
+          spec.getName();
+        }
+      } catch (DatasetManagementException e) {
+        e.printStackTrace();
       }
+      // use the first part of the dataset name, would use history if dataset name is history.objects.kv
       MetricsCollector collector =
         metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                                                    Constants.Metrics.Tag.DATASET, datasetName));
+                                                    Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
+
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
       collector.gauge("dataset.size.mb", sizeInMb);

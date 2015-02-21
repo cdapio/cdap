@@ -47,12 +47,10 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
-  private final CLIConfig cliConfig;
 
   @Inject
   public CreateStreamConversionAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
-    this.cliConfig = cliConfig;
     this.adapterClient = adapterClient;
   }
 
@@ -97,7 +95,7 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
     adapterConfig.source = new AdapterConfig.Source(sourceName, Collections.<String, String>emptyMap());
     adapterConfig.sink = new AdapterConfig.Sink(sinkName, sinkProps);
 
-    adapterClient.create(cliConfig.getCurrentNamespace(), adapterName, adapterConfig);
+    adapterClient.create(adapterName, adapterConfig);
     output.printf("Successfully created adapter named '%s' with config '%s'\n",
                   adapterName, GSON.toJson(adapterConfig));
   }
@@ -128,19 +126,27 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return new StringBuilder()
-      .append("Creates a stream conversion ")
+      .append("Creates a ")
+      .append(ElementType.STREAM.getPrettyName())
+      .append(" conversion ")
       .append(ElementType.ADAPTER.getPrettyName())
-      .append(" that periodically reads from a stream and writes to a time-partitioned fileset. ")
+      .append(" that periodically reads from a ")
+      .append(ElementType.STREAM.getPrettyName())
+      .append(" and writes to a time-partitioned fileset. <")
       .append(ArgumentName.FREQUENCY)
-      .append(" is a number followed by a 'm', 'h', or 'd' for minute, hour, or day.")
+      .append("> is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. <")
       .append(ArgumentName.FORMAT)
-      .append(" is the name of the stream format, such as 'text', 'avro', 'csv', or 'tsv'.")
+      .append("> is the name of the ")
+      .append(ElementType.STREAM.getPrettyName())
+      .append(" format, such as 'text', 'avro', 'csv', or 'tsv'. <")
       .append(ArgumentName.SCHEMA)
-      .append(" is a sql-like schema of comma separated column name followed by column type.")
+      .append("> is a sql-like schema of comma separated column name followed by column type. <")
       .append(ArgumentName.HEADERS)
-      .append(" is a comma separated list of stream headers to include in the output schema.")
+      .append("> is a comma separated list of ")
+      .append(ElementType.STREAM.getPrettyName())
+      .append(" headers to include in the output schema. <")
       .append(ArgumentName.DATASET)
-      .append(" is the name of the time partitioned file set to write to.")
+      .append("> is the name of the time-partitioned fileset to write to.")
       .toString();
   }
 }

@@ -359,8 +359,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("collect.my.events", 10);
 
     collector = collectionService.getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                      Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE));
     collector.increment("resources.total.my.storage", 10);
 
     // Wait for collection to happen

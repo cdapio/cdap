@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -134,7 +133,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
     this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
+      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricStreamHttpHandler = appFabricStreamHttpHandler;
@@ -379,6 +378,28 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Gets number of instances for a worker.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void getWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
+    programLifecycleHttpHandler.getWorkerInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                   appId, workerId);
+  }
+
+  /**
+   * Sets number of instances for a worker.
+   */
+  @PUT
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void setWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
+    programLifecycleHttpHandler.setWorkerInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                   appId, workerId);
+  }
+
+  /**
    * Returns number of instances for a procedure.
    */
   @GET
@@ -395,7 +416,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int count = getProgramInstances(programId);
+      int count = getProcedureInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -404,7 +425,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
 
   /**
    * Sets number of instances for a procedure.
@@ -429,7 +449,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      setProgramInstances(programId, instances);
+      setProcedureInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -443,7 +463,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * TODO: This method should move to {@link ProgramLifecycleHttpHandler} when set and get instances v3 APIs are
    * implemented.
    */
-  private void setProgramInstances(Id.Program programId, int instances) throws Exception {
+  private void setProcedureInstances(Id.Program programId, int instances) throws Exception {
     try {
       store.setProcedureInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
@@ -453,13 +473,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                             ImmutableMap.of(programId.getId(), instances)).get();
       }
     } catch (Throwable throwable) {
-      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+      LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
     }
   }
 
-  private int getProgramInstances(Id.Program programId) throws Exception {
+  private int getProcedureInstances(Id.Program programId) throws Exception {
     try {
       return store.getProcedureInstances(programId);
     } catch (Throwable throwable) {
@@ -845,6 +865,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Returns a list of worker jobs associated with an account.
+   */
+  @GET
+  @Path("/workers")
+  public void getAllWorkers(HttpRequest request, HttpResponder responder) {
+    programLifecycleHttpHandler.getAllWorkers(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+  }
+
+  /**
    * Returns a list of workflows associated with an account.
    */
   @GET
@@ -925,6 +954,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
                                                  ProgramType.WORKFLOW.getCategoryName());
+  }
+
+  /**
+   * Returns a list of workers associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers")
+  public void getWorkersByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.WORKER.getCategoryName());
   }
 
   /**
@@ -1045,8 +1084,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in consolesettings
       consoleSettingsStore.delete();
 
-      dsFramework.deleteAllInstances();
-      dsFramework.deleteAllModules();
+      dsFramework.deleteAllInstances(namespaceId);
+      dsFramework.deleteAllModules(namespaceId);
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
@@ -1098,7 +1137,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       LOG.info("Deleting all datasets for account '" + account + "'.");
 
-      dsFramework.deleteAllInstances();
+      dsFramework.deleteAllInstances(namespaceId);
 
       LOG.info("All datasets for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

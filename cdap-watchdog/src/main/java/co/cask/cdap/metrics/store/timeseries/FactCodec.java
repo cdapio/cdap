@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.store.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;

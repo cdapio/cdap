@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.logging.appender.kafka;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
@@ -56,12 +57,12 @@ public class TestKafkaLogging extends KafkaTestBase {
   private static InMemoryTxSystemClient txClient = null;
   private static DatasetFramework dsFramework;
   private static CConfiguration cConf;
-  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void init() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "table"), new InMemoryOrderedTableModule());
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
+                          new InMemoryOrderedTableModule());
 
     Configuration txConf = HBaseConfiguration.create();
     TransactionManager txManager = new TransactionManager(txConf);

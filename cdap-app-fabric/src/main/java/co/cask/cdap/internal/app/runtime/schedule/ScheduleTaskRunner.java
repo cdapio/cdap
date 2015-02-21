@@ -123,14 +123,25 @@ public final class ScheduleTaskRunner {
    * Executes a program and block until it is completed.
    */
   private void executeAndBlock(final Program program, ProgramOptions options) throws JobExecutionException {
-    ProgramController controller = runtimeService.run(program, options).getController();
-    store.setStart(program.getId(), controller.getRunId().getId(),
-                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
+    final ProgramController controller = runtimeInfo.getController();
     final Id.Program programId = program.getId();
     final String runId = controller.getRunId().getId();
     final CountDownLatch latch = new CountDownLatch(1);
+
     controller.addListener(new AbstractListener() {
+      @Override
+      public void init(ProgramController.State state) {
+        store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        if (state == ProgramController.State.STOPPED) {
+          stopped();
+        }
+        if (state == ProgramController.State.ERROR) {
+          error(controller.getFailureCause());
+        }
+      }
+
       @Override
       public void stopped() {
         store.setStop(programId, runId,

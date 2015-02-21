@@ -22,10 +22,10 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Map;
-import javax.ws.rs.HEAD;
 
 /**
  * Sets the Format Specification of a stream.
@@ -59,7 +58,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     Schema schema = getSchema(arguments);
     Map<String, String> settings = Collections.emptyMap();
     if (arguments.hasArgument(ArgumentName.SETTINGS.toString())) {
-      settings = Splitter.on(" ").withKeyValueSeparator("=").split(arguments.get(ArgumentName.SETTINGS.toString()));
+      settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()));
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
@@ -103,7 +102,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or avro-like json schema and <")
       .append(ArgumentName.SETTINGS)
-      .append("> is specified in the format \"key1=v1, key2=v2\"")
+      .append("> is specified in the format \"key1=v1, key2=v2\".")
       .toString();
   }
 }

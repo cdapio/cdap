@@ -18,7 +18,7 @@ package co.cask.cdap.api.schedule;
 
 
 /**
- * Defines a cron-based schedule for running a program. 
+ * Defines a cron-based schedule for running a program.
  */
 public class Schedule {
 
@@ -26,12 +26,20 @@ public class Schedule {
 
   private final String description;
 
+  // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
 
+  @Deprecated
   public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
+  }
+
+  protected Schedule(String name, String description) {
+    this.name = name;
+    this.description = description;
+    this.cronEntry = null;
   }
 
   /**
@@ -50,7 +58,9 @@ public class Schedule {
 
   /**
    * @return Cron expression for the schedule.
+   * @deprecated As of version 2.8.0, do not use this method anymore
    */
+  @Deprecated
   public String getCronEntry() {
     return cronEntry;
   }

@@ -68,16 +68,16 @@ import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinitio
 public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
 
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -104,7 +104,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteInstance("my_table");
+    datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
@@ -113,18 +113,20 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
     Id.DatasetModule module2 = Id.DatasetModule.from(NAMESPACE_ID, "module2");
+    Id.DatasetInstance myTableNotRecordScannable = Id.DatasetInstance.from(NAMESPACE_ID,
+                                                                           "my_table_not_record_scannable");
     datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
-    datasetFramework.addInstance("NotRecordScannableTableDef", "my_table_not_record_scannable",
+    datasetFramework.addInstance("NotRecordScannableTableDef", myTableNotRecordScannable,
                                  DatasetProperties.EMPTY);
 
-    datasetFramework.deleteInstance("my_table_not_record_scannable");
+    datasetFramework.deleteInstance(myTableNotRecordScannable);
     datasetFramework.deleteModule(module2);
   }
 
   @Test
   public void testTable() throws Exception {
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     Transaction tx = transactionManager.startShort(100);
     table.startTx(tx);
@@ -286,11 +288,16 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void previewResultsTest() throws Exception {
-    datasetFramework.addInstance("keyStructValueTable", "my_table_2", DatasetProperties.EMPTY);
-    datasetFramework.addInstance("keyStructValueTable", "my_table_3", DatasetProperties.EMPTY);
-    datasetFramework.addInstance("keyStructValueTable", "my_table_4", DatasetProperties.EMPTY);
-    datasetFramework.addInstance("keyStructValueTable", "my_table_5", DatasetProperties.EMPTY);
-    datasetFramework.addInstance("keyStructValueTable", "my_table_6", DatasetProperties.EMPTY);
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_2");
+    Id.DatasetInstance myTable3 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_3");
+    Id.DatasetInstance myTable4 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_4");
+    Id.DatasetInstance myTable5 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_5");
+    Id.DatasetInstance myTable6 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_6");
+    datasetFramework.addInstance("keyStructValueTable", myTable2, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", myTable3, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", myTable4, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", myTable5, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", myTable6, DatasetProperties.EMPTY);
 
     try {
       QueryHandle handle = exploreService.execute("show tables");
@@ -327,11 +334,11 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       }
 
     } finally {
-      datasetFramework.deleteInstance("my_table_2");
-      datasetFramework.deleteInstance("my_table_3");
-      datasetFramework.deleteInstance("my_table_4");
-      datasetFramework.deleteInstance("my_table_5");
-      datasetFramework.deleteInstance("my_table_6");
+      datasetFramework.deleteInstance(myTable2);
+      datasetFramework.deleteInstance(myTable3);
+      datasetFramework.deleteInstance(myTable4);
+      datasetFramework.deleteInstance(myTable5);
+      datasetFramework.deleteInstance(myTable6);
     }
   }
 
@@ -478,16 +485,16 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testJoin() throws Exception {
-
+    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_1");
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "my_table_1", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", myTable1, DatasetProperties.EMPTY);
 
     try {
       Transaction tx1 = transactionManager.startShort(100);
 
       // Accessing dataset instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =
-        datasetFramework.getDataset("my_table_1", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(myTable1, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
       table.startTx(tx1);
 
@@ -566,7 +573,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                                          "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
     } finally {
-      datasetFramework.deleteInstance("my_table_1");
+      datasetFramework.deleteInstance(myTable1);
     }
   }
 

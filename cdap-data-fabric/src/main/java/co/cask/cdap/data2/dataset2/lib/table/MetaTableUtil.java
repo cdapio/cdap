@@ -21,31 +21,35 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.Namespace;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.proto.Id;
 
 /**
  * Common utility for managing system metadata tables needed by various services.
  */
 public abstract class MetaTableUtil {
 
+  // Namespace for meta tables is 'system'
+  protected static final Id.Namespace SYSTEM_NAMESPACE = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
+
   protected final DatasetFramework dsFramework;
 
   public MetaTableUtil(DatasetFramework framework, CConfiguration conf) {
-    this.dsFramework =
-      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+    this.dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
   }
 
   public OrderedTable getMetaTable() throws Exception {
-    return DatasetsUtil.getOrCreateDataset(dsFramework, getMetaTableName(), OrderedTable.class.getName(),
+    Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName());
+    return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, OrderedTable.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 
   public void upgrade() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(getMetaTableName(), null);
+    DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName()), null);
     if (admin != null) {
       admin.upgrade();
     }

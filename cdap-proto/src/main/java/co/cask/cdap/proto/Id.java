@@ -36,6 +36,19 @@ public final class Id  {
   }
 
   /**
+   * Allow '.' and '$' for dataset ids since they can be fully qualified class names
+   */
+  private static boolean isValidDatasetId(String datasetId) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9'))
+      .or(CharMatcher.is('.'))
+      .or(CharMatcher.is('$')).matchesAllOf(datasetId);
+  }
+
+  /**
    * Represents ID of a namespace.
    */
   public static final class Namespace {
@@ -70,6 +83,11 @@ public final class Id  {
 
     public static Namespace from(String namespace) {
       return new Namespace(namespace);
+    }
+
+    @Override
+    public String toString() {
+      return id;
     }
   }
 
@@ -366,7 +384,8 @@ public final class Id  {
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
       Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
-      Preconditions.checkArgument(isId(streamName), "Stream name has an incorrect format.");
+      Preconditions.checkArgument(isId(streamName),
+                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
 
       this.namespace = namespace;
       this.streamName = streamName;
@@ -440,32 +459,82 @@ public final class Id  {
   }
 
   /**
+   * Dataset Type Id identifies a given dataset module.
+   */
+  public static final class DatasetType {
+    private final Namespace namespace;
+    private final String typeName;
+
+    private DatasetType(Namespace namespace, String typeName) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(typeName, "Dataset type id cannot be null.");
+      Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type Id. '" +
+        typeName + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
+      this.namespace = namespace;
+      this.typeName = typeName;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    public String getTypeName() {
+      return typeName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      DatasetType that = (DatasetType) o;
+      return namespace.equals(that.namespace) && typeName.equals(that.typeName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, typeName);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("typeName", typeName)
+        .toString();
+    }
+
+    public static DatasetType from(Namespace id, String typeId) {
+      return new DatasetType(id, typeId);
+    }
+
+    public static DatasetType from(String namespaceId, String typeId) {
+      return new DatasetType(Namespace.from(namespaceId), typeId);
+    }
+  }
+
+  /**
    * Dataset Module Id identifies a given dataset module.
    */
   public static final class DatasetModule {
     private final Namespace namespace;
     private final String moduleId;
 
-    public DatasetModule(final Namespace namespace, final String moduleId) {
+    private DatasetModule(Namespace namespace, String moduleId) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(moduleId, "Dataset module id cannot be null.");
-      Preconditions.checkArgument(isValidModuleId(moduleId), "Invalid characters found in module Id. " +
-        "Module id can contain alphabets, numbers or _, -, . characters");
+      Preconditions.checkArgument(isValidDatasetId(moduleId), "Invalid characters found in dataset module Id. '" +
+        moduleId + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
       this.namespace = namespace;
       this.moduleId = moduleId;
-    }
-
-    /**
-     * Allow '.' and '$' for modules since module ids can be fully qualified class names
-     */
-    private boolean isValidModuleId(String moduleId) {
-      return CharMatcher.inRange('A', 'Z')
-        .or(CharMatcher.inRange('a', 'z'))
-        .or(CharMatcher.is('-'))
-        .or(CharMatcher.is('_'))
-        .or(CharMatcher.is('.'))
-        .or(CharMatcher.is('$'))
-        .or(CharMatcher.inRange('0', '9')).matchesAllOf(moduleId);
     }
 
     public Namespace getNamespace() {
@@ -512,6 +581,69 @@ public final class Id  {
 
     public static DatasetModule from(String namespaceId, String moduleId) {
       return new DatasetModule(Namespace.from(namespaceId), moduleId);
+    }
+  }
+
+  /**
+   * Dataset Instance Id identifies a given dataset instance.
+   */
+  public static final class DatasetInstance {
+    private final Namespace namespace;
+    private final String instanceId;
+
+    private DatasetInstance(Namespace namespace, String instanceId) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(instanceId, "Dataset instance id cannot be null.");
+      Preconditions.checkArgument(isValidDatasetId(instanceId), "Invalid characters found in dataset instance id. '" +
+        instanceId + "'. Instance id can contain alphabets, numbers or _, -, . or $ characters");
+      this.namespace = namespace;
+      this.instanceId = instanceId;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    public String getId() {
+      return instanceId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      DatasetInstance that = (DatasetInstance) o;
+      return namespace.equals(that.namespace) && instanceId.equals(that.instanceId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, instanceId);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("instance", instanceId)
+        .toString();
+    }
+
+    public static DatasetInstance from(Namespace id, String instanceId) {
+      return new DatasetInstance(id, instanceId);
+    }
+
+    public static DatasetInstance from(String namespaceId, String instanceId) {
+      return new DatasetInstance(Namespace.from(namespaceId), instanceId);
     }
   }
 }

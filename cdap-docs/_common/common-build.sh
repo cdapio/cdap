@@ -154,9 +154,13 @@ function build_javadocs_full() {
   MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
-function build_javadocs_sdk() {
+function build_javadocs_api() {
   cd $PROJECT_PATH
   MAVEN_OPTS="-Xmx512m"  mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+}
+
+function build_javadocs_sdk() {
+  build_javadocs_api
   copy_javadocs_sdk
 }
 

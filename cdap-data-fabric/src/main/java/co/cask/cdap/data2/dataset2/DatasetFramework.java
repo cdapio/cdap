@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -51,31 +52,32 @@ public interface DatasetFramework {
 
   /**
    * Adds dataset types by adding dataset module to the system.
+   *
    * @param moduleId dataset module id
    * @param module dataset module
    * @throws ModuleConflictException when module with same name is already registered or this module registers a type
    *         with a same name as one of the already registered by another module types
    * @throws DatasetManagementException in case of problems
    */
-  void addModule(Id.DatasetModule moduleId, DatasetModule module)
-    throws DatasetManagementException;
+  void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.
+   *
    * @param moduleId dataset module id
    * @throws ModuleConflictException when module cannot be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
-  void deleteModule(Id.DatasetModule moduleId)
-    throws DatasetManagementException;
+  void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException;
 
   /**
-   * Deletes dataset modules and its types from the system.
+   * Deletes dataset modules and its types in the specified namespace.
+   *
+   * @param namespaceId the {@link Id.Namespace} to delete all modules from.
    * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
-  void deleteAllModules()
-    throws DatasetManagementException;
+  void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -86,13 +88,13 @@ public interface DatasetFramework {
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
    * @param datasetTypeName dataset instance type name
-   * @param datasetInstanceName dataset instance name
+   * @param datasetInstanceId dataset instance name
    * @param props dataset instance properties
    * @throws InstanceConflictException if dataset instance with this name already exists
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void addInstance(String datasetTypeName, String datasetInstanceName, DatasetProperties props)
+  void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -103,72 +105,91 @@ public interface DatasetFramework {
    * method to build {@link co.cask.cdap.api.dataset.DatasetSpecification} with new properties,
    * which describes dataset instance and {@link DatasetAdmin} is used to upgrade
    * {@link Dataset} for the dataset instance.
-   * @param datasetInstanceName dataset instance name
+   * @param datasetInstanceId dataset instance name
    * @param props dataset instance properties
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void updateInstance(String datasetInstanceName, DatasetProperties props)
+  void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
-   * @return a collection of {@link co.cask.cdap.api.dataset.DatasetSpecification}s for all datasets
+   * Get all dataset instances in the specified namespace
+   *
+   * @param namespaceId the specified namespace id
+   * @return a collection of {@link DatasetSpecification}s for all datasets in the specified namespace
    */
-  Collection<DatasetSpecification> getInstances() throws DatasetManagementException;
+  Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException;
 
   /**
+   * Gets the {@link DatasetSpecification} for the specified dataset instance id
+   *
+   * @param datasetInstanceId the {@link Id.DatasetInstance} for which the {@link DatasetSpecification} is desired
    * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
-  DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException;
+  DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
 
   /**
+   * @param datasetInstanceId the {@link Id.DatasetInstance} to check for existence
    * @return true if instance exists, false otherwise
    * @throws DatasetManagementException
    */
-  boolean hasInstance(String instanceName) throws DatasetManagementException;
+  boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
 
   /**
-   * @return true if type exists, false otherwise
+   * Checks if the specified type exists in the 'system' namespace
+   *
+   * @return true if type exists in the 'system' namespace, false otherwise
    * @throws DatasetManagementException
    */
-  boolean hasType(String typeName) throws DatasetManagementException;
+  boolean hasSystemType(String typeName) throws DatasetManagementException;
+
+  /**
+   * Checks if the specified type exists in the specified namespace
+   *
+   * @return true if type exists in the specified namespace, false otherwise
+   * @throws DatasetManagementException
+   */
+  @VisibleForTesting
+  boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.
    *
-   * @param datasetInstanceName dataset instance name
+   * @param datasetInstanceId dataset instance name
    * @throws InstanceConflictException if dataset instance cannot be deleted because of its dependencies
    * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException;
+  void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException;
 
   /**
-   * Deletes all dataset instances from the system.
+   * Deletes all dataset instances in the specified namespace.
    *
+   * @param namespaceId the specified namespace id
    * @throws IOException when deletion of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void deleteAllInstances() throws DatasetManagementException, IOException;
+  void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.
-   * @param datasetInstanceName dataset instance name
    * @param <T> dataset admin type
+   * @param datasetInstanceId dataset instance name
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset admin or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
    * @throws IOException when there's trouble to instantiate {@link DatasetAdmin}
    */
   @Nullable
-  <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, @Nullable ClassLoader classLoader)
+  <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset to be used to perform data operations.
-   * @param datasetInstanceName dataset instance name
    * @param <T> dataset type to be returned
+   * @param datasetInstanceId dataset instance id
    * @param arguments runtime arguments for the dataset instance
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
@@ -176,7 +197,7 @@ public interface DatasetFramework {
    * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
    */
   @Nullable
-  <T extends Dataset> T getDataset(String datasetInstanceName, @Nullable Map<String, String> arguments,
+  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 }

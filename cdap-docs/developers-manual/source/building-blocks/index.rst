@@ -24,6 +24,7 @@ Building Blocks
     Spark Programs <spark-programs>
     Procedures <procedures>
     Services <services>
+    Namespaces <namespaces>
     Transaction System <transaction-system>
 
 This section covers the :doc:`core virtualizations <core>` in the Cask Data Application Platform
@@ -46,6 +47,10 @@ write to—the data virtualization layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Procedures <procedures>`
 - :doc:`Services <services>`
+
+A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
+Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
+All applications and data live in an explicit CDAP namespace.
 
 Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
 that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,

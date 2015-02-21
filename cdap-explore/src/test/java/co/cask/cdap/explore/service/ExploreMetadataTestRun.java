@@ -17,11 +17,10 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
@@ -38,21 +37,23 @@ import org.junit.experimental.categories.Category;
 @Category(SlowTests.class)
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
+  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
 
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
-    datasetFramework.addInstance("keyStructValueTable", "other_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", otherTable, DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteInstance("other_table");
+    datasetFramework.deleteInstance(MY_TABLE);
+    datasetFramework.deleteInstance(otherTable);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 

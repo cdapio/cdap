@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,28 +16,79 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.proto.Id;
+
 import javax.annotation.Nullable;
 
 /**
- * Performs namespacing for data set names.
+ * Performs namespacing for datasets.
  */
 public interface DatasetNamespace {
-  /**
-   * @param name name of the dataset
-   * @return namespaced name of the dataset
-   */
-  String namespace(String name);
 
   /**
-   * @param name namespaced name of the dataset
-   * @return original name of the dataset or null if name is not within this namespace
+   * Namespaces (applies the namespace as a prefix) to the specified dataset instance name
+   * Used for dataset instances in the system namespace
+   * Calls #namespace(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName)
+   * @see #namespace(Id.DatasetInstance)
+   *
+   * @param datasetInstanceName name of the dataset instance to be namespaced
+   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   */
+  Id.DatasetInstance namespace(String datasetInstanceName);
+
+  /**
+   * Namespaces (applies the namespace as a prefix) to the specified {@link Id.DatasetInstance}
+   * {@code
+   * String namespacedInstanceName = datasetInstanceId.getNamespace() + "." + datasetInstanceId.getId();
+   * return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespacedInstanceName)
+   * }
+   * e.g. If Id.DatasetInstance(default, purchases) is passed, it will return
+   * Id.DatasetInstance(default, cdap.default.purchases)
+   *
+   * @param datasetInstanceId {@link Id.DatasetInstance} for the dataset instance to be namespaced
+   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   */
+  Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId);
+
+  /**
+   * Namespaces (applies the namespace as a prefix) to the specified suffix
+   * Used for applying namespace to part table names
+   *
+   * @param namespaceId the {@link Id.Namespace} to namespace the suffix with
+   * @param suffix the suffix to namespace
+   * @return String containing the suffix prefixed with the specified namespace
+   */
+  String namespace(Id.Namespace namespaceId, String suffix);
+
+  /**
+   * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the specified instance name
+   * Used for dataset instance names in the system namespace
+   * Calls #fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName)
+   * @see #fromNamespaced(Id.DatasetInstance)
+   *
+   * @param datasetInstanceName namespaced name of the dataset
+   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
    */
   @Nullable
-  String fromNamespaced(String name);
+  Id.DatasetInstance fromNamespaced(String datasetInstanceName);
 
   /**
+   * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the instance name in the
+   * specified {@link Id.DatasetInstance}
+   * e.g. e.g. If Id.DatasetInstance(default, cdap.default.purchases) is passed, this will return
+   * Id.DatasetInstance(default, purchases)
+   *
+   * @param datasetInstanceId namespaced {@link Id.DatasetInstance} of the dataset
+   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
+   */
+  @Nullable
+  Id.DatasetInstance fromNamespaced(Id.DatasetInstance datasetInstanceId);
+
+  /**
+   * Checks if the specified namespace contains the specified dataset instance name
+   *
    * @param name namespaced name of the dataset
    * @return true if the dataset belongs to this namespace
    */
-  boolean contains(String name);
+  boolean contains(String name, String namespaceId);
 }

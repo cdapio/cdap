@@ -19,7 +19,7 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.metrics.Metrics;
 import com.google.common.base.Charsets;
@@ -36,7 +36,7 @@ import java.net.URL;
 public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
-  private ObjectStore<Purchase> store;
+  private ObjectMappedTable<Purchase> store;
   private Metrics metrics; // Declare the custom metrics
 
   private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);

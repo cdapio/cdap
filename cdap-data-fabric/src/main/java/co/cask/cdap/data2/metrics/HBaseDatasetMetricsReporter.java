@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -59,7 +59,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf, Namespace.USER);
+    this.userDsNamespace = new DefaultDatasetNamespace(conf);
   }
 
   @Override
@@ -104,19 +104,13 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
     for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
-      String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetName == null) {
+      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
+      if (datasetInstance == null) {
         // not a user dataset
         continue;
       }
-
-      // use the first part of the dataset name, would use history if dataset name is history.objects.kv
-      if (datasetName.contains(".")) {
-        datasetName = datasetName.substring(0, datasetName.indexOf("."));
-      }
       MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                                                    Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
 
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());

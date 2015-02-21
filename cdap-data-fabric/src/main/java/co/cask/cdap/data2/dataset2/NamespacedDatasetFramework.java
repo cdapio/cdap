@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
  * Wrapper for {@link DatasetFramework} that namespaces dataset instances names.
  */
 public class NamespacedDatasetFramework implements DatasetFramework {
+
   private final DatasetNamespace namespace;
   private final DatasetFramework delegate;
 
@@ -54,30 +55,30 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteAllModules() throws DatasetManagementException {
-    delegate.deleteAllModules();
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.deleteAllModules(namespaceId);
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
 
-    delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
+    delegate.addInstance(datasetType, namespace(datasetInstanceId), props);
   }
 
   @Override
-  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    delegate.updateInstance(namespace(datasetInstanceName), props);
+    delegate.updateInstance(namespace(datasetInstanceId), props);
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
-    Collection<DatasetSpecification> specs = delegate.getInstances();
+  public Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
+    Collection<DatasetSpecification> specs = delegate.getInstances(namespaceId);
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
     ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
     for (DatasetSpecification spec : specs) {
-      DatasetSpecification s = fromNamespaced(spec);
+      DatasetSpecification s = fromNamespaced(namespaceId, spec);
       if (s != null) {
         builder.add(s);
       }
@@ -87,58 +88,68 @@ public class NamespacedDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    return fromNamespaced(delegate.getDatasetSpec(namespace(name)));
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return fromNamespaced(datasetInstanceId.getNamespace(), delegate.getDatasetSpec(namespace(datasetInstanceId)));
   }
 
   @Override
-  public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return delegate.hasInstance(namespace(instanceName));
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return delegate.hasInstance(namespace(datasetInstanceId));
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    return delegate.hasType(typeName);
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return delegate.hasSystemType(typeName);
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, IOException {
-    delegate.deleteInstance(namespace(datasetInstanceName));
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return delegate.hasType(datasetTypeId);
   }
 
   @Override
-  public void deleteAllInstances() throws DatasetManagementException, IOException {
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
+    delegate.deleteInstance(namespace(datasetInstanceId));
+  }
+
+  @Override
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     // delete all instances ONLY in this namespace
-    for (DatasetSpecification spec : getInstances()) {
-      deleteInstance(spec.getName());
+    for (DatasetSpecification spec : getInstances(namespaceId)) {
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, spec.getName());
+      deleteInstance(datasetInstanceId);
     }
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getAdmin(namespace(datasetInstanceName), classLoader);
+    return delegate.getAdmin(namespace(datasetInstanceId), classLoader);
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
                                           ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
-    return delegate.getDataset(namespace(datasetInstanceName), arguments, classLoader);
+    return delegate.getDataset(namespace(datasetInstanceId), arguments, classLoader);
   }
 
   @Nullable
-  private DatasetSpecification fromNamespaced(@Nullable DatasetSpecification spec) {
+  private DatasetSpecification fromNamespaced(Id.Namespace namespaceId, @Nullable DatasetSpecification spec) {
     if (spec == null) {
       return null;
     }
-    String notNamespaced = namespace.fromNamespaced(spec.getName());
-    return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
+    Id.DatasetInstance namespaced = Id.DatasetInstance.from(namespaceId, spec.getName());
+    Id.DatasetInstance notNamespaced = namespace.fromNamespaced(namespaced);
+    if (notNamespaced == null) {
+      return null;
+    }
+    return DatasetSpecification.changeName(spec, notNamespaced.getId());
   }
 
-  private String namespace(String datasetInstanceName) {
-    return namespace.namespace(datasetInstanceName);
+  private Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
+    return namespace.namespace(datasetInstanceId);
   }
 }
