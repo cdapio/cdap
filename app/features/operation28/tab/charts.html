@@ -10,8 +10,13 @@
       <div class="panel-body">
 
         <p class="text-center">
-          <span class="badge">{{panel.chart.lastValue}}</span>
-          <strong>{{panel.unit}}</strong>
+          <span ng-if="panel.unit!=='B'">
+            <span class="badge">{{panel.chart.lastValue}}</span>
+            {{panel.unit}}
+          </span>
+          <span ng-if="panel.unit==='B'">
+            {{panel.chart.lastValue | bytes}}
+          </span>
         </p>
 
       </div>

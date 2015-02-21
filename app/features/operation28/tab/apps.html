@@ -20,7 +20,7 @@
         <span class="badge">{{one.metric.vcores}}</span>
       </td>
       <td>
-        <span class="badge">{{one.metric.memory}}</span> B
+        {{one.metric.memory | bytes}}
       </td>
     </tr>
   </tbody>
