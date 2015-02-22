@@ -12,11 +12,4 @@ angular.module(PKG.name + '.feature.streams')
       }
     ];
 
-    dataSrc.request({
-      _cdapPathV2: '/streams/' + $state.params.streamId
-    })
-      .then(function(streams) {
-        $scope.stream = streams;
-      });
-
   });
