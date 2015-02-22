@@ -316,7 +316,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
@@ -338,8 +337,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
-    testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
+    testPreferencesOutput(cli, String.format("get namespace preferences"), propMap);
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
