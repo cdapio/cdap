@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.client.app.StandaloneDataset;
 import co.cask.cdap.client.app.StandaloneDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -146,5 +147,16 @@ public class DatasetClientTestRun extends ClientTestBase {
     moduleClient.deleteAll();
     Assert.assertEquals(numBaseModules, moduleClient.list().size());
     Assert.assertEquals(numBaseTypes, typeClient.list().size());
+  }
+
+  @Test
+  public void testSystemTypes() throws Exception {
+    // Tests that a dataset can be created in a namespace, even if the type does not exist in that namespace.
+    // The dataset type is being resolved from the system namespace.
+    String datasetName = "tableTypeDataset";
+    Assert.assertFalse(typeClient.exists(Table.class.getName()));
+    Assert.assertFalse(datasetClient.exists(datasetName));
+    datasetClient.create(datasetName, Table.class.getName());
+    Assert.assertTrue(datasetClient.exists(datasetName));
   }
 }
