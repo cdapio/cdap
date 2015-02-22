@@ -4,7 +4,6 @@ angular.module(PKG.name + '.feature.apps')
           'flows',
           'services',
           'mapreduce',
-          'procedures',
           'workflows'
         ],
         basePath = '/apps/' + $stateParams.appId;
