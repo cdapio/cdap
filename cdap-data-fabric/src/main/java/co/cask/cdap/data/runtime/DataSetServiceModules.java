@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.DistributedUnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.UnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -118,6 +121,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
 
@@ -165,6 +171,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
 
@@ -214,6 +223,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(DistributedUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
   }
