@@ -27,6 +27,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.DiscoveryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceClient;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -88,6 +90,12 @@ public final class AppFabricTestModule extends AbstractModule {
       @Override
       protected void configure() {
         bind(Scheduler.class).annotatedWith(Assisted.class).toInstance(createNoopScheduler());
+      }
+    });
+    install(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(NamespaceClient.class).to(DiscoveryNamespaceClient.class);
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
