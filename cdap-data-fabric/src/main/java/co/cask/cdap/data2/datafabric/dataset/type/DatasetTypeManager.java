@@ -25,6 +25,7 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
@@ -82,6 +83,7 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    deleteSystemModules();
     deployDefaultModules();
   }
 
@@ -373,6 +375,27 @@ public class DatasetTypeManager extends AbstractIdleService {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
         throw Throwables.propagate(th);
       }
+    }
+  }
+
+  private void deleteSystemModules() {
+    try {
+      mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
+        @Override
+        public Void call(MDSDatasets context) throws Exception {
+          DatasetTypeMDS typeMDS = context.getTypeMDS();
+          Collection<DatasetModuleMeta> allDatasets = typeMDS.getModules(Constants.SYSTEM_NAMESPACE_ID);
+          for (DatasetModuleMeta ds : allDatasets) {
+            if (ds.getJarLocation() == null) {
+              LOG.info("Deleting system dataset module: {}", ds.toString());
+              typeMDS.deleteModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, ds.getName()));
+            }
+          }
+          return null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
   }
 
