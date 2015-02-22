@@ -18,8 +18,8 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.proto.Id;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -32,7 +32,7 @@ public class DatasetsProxyRule implements ProxyRule {
   private final DefaultDatasetNamespace namespace;
 
   public DatasetsProxyRule(CConfiguration conf) {
-    this.namespace = new DefaultDatasetNamespace(conf, Namespace.USER);
+    this.namespace = new DefaultDatasetNamespace(conf);
   }
 
   @Override
@@ -68,21 +68,27 @@ public class DatasetsProxyRule implements ProxyRule {
       // five parts with '/' wrapping them
       int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() +
         uriParts[4].length() + 6;
+      String namespaceId = uriParts[2];
       String datasetName = uriParts[5];
-      request.setUri(processDatasetPath(path, insertAt, datasetName));
+      request.setUri(processDatasetPath(path, insertAt, datasetName, namespaceId));
     } else if ((uriParts.length == 8) && uriParts[3].equals("data") && uriParts[4].equals("explore")
       && uriParts[5].equals("datasets") && uriParts[7].equals("schema")) {
       // six parts with '/' wrapping them
       int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() +
         uriParts[4].length() + uriParts[5].length() + 7;
+      String namespaceId = uriParts[2];
       String datasetName = uriParts[6];
-      request.setUri(processDatasetPath(path, insertAt, datasetName));
+      request.setUri(processDatasetPath(path, insertAt, datasetName, namespaceId));
     }
     return request;
   }
 
   private String processDatasetPath(String path, int insertAt, String datasetName) {
-    String newPath = path.substring(0, insertAt) + namespace.namespace(datasetName);
+    return processDatasetPath(path, insertAt, datasetName, Constants.DEFAULT_NAMESPACE);
+  }
+
+  private String processDatasetPath(String path, int insertAt, String datasetName, String namespaceId) {
+    String newPath = path.substring(0, insertAt) + namespace.namespace(Id.Namespace.from(namespaceId), datasetName);
     if (insertAt + datasetName.length() < path.length()) {
       int copyAfter = insertAt + datasetName.length();
       newPath = newPath + path.substring(copyAfter);

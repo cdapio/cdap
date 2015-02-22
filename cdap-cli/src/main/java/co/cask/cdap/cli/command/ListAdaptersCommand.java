@@ -67,6 +67,6 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists all " + ElementType.ADAPTER.getPluralPrettyName();
+    return String.format("Lists all %s.", ElementType.ADAPTER.getPluralPrettyName());
   }
 }

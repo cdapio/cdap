@@ -19,6 +19,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -58,6 +60,10 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     for (Cancellable subscription : truncationSubscriptions) {
       subscription.cancel();
     }
+  }
+
+  public Map<Id.Stream, AtomicLong> getStreamSizes() {
+    return ImmutableMap.copyOf(streamSizes);
   }
 
   @Override

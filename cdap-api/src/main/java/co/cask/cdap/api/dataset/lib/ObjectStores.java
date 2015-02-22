@@ -21,10 +21,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Type;
 
@@ -32,14 +30,13 @@ import java.lang.reflect.Type;
  * Utility for describing {@link ObjectStore} and similar datasets within application configuration.
  */
 public final class ObjectStores {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+  private static final Gson GSON = new Gson();
 
   private ObjectStores() {}
 
   /**
-   * Adds {@link ObjectStore} dataset to be created at application deploy if not exists.
+   * Adds an {@link ObjectStore} dataset to be created at application deploy if it does not exist.
+   *
    * @param configurer application configurer
    * @param datasetName dataset name
    * @param type type of objects to be stored in {@link ObjectStore}
@@ -90,6 +87,7 @@ public final class ObjectStores {
 
   /**
    * Creates properties for {@link ObjectStore} dataset instance.
+   *
    * @param type type of objects to be stored in dataset
    * @return {@link DatasetProperties} for the dataset
    * @throws UnsupportedTypeException
@@ -99,10 +97,10 @@ public final class ObjectStores {
     Schema schema = new ReflectionSchemaGenerator().generate(type);
     TypeRepresentation typeRep = new TypeRepresentation(type);
     return DatasetProperties.builder()
-      .add("schema", GSON.toJson(schema))
+      .add("schema", schema.toString())
       .add("type", GSON.toJson(typeRep))
       .addAll(props.getProperties())
       .build();
-
   }
+
 }

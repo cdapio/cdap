@@ -33,11 +33,11 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -324,8 +324,18 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new DefaultServiceManager(accountId, serviceId, appFabricClient,
-                                     discoveryServiceClient, this);
+    return new DefaultServiceManager(accountId, serviceId, appFabricClient, discoveryServiceClient, this);
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName) {
+    return startWorker(workerName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
+    final ProgramId workerId = startProgram(workerName, arguments, ProgramType.WORKER);
+    return new DefaultWorkerManager(accountId, workerId, appFabricClient, discoveryServiceClient, this);
   }
 
   @Override
@@ -377,8 +387,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      RuntimeStats.clearStats(applicationId);
     }
   }
 

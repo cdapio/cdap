@@ -31,8 +31,8 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
+import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.AppFabricStreamHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
@@ -52,12 +52,12 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
-import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.store.DefaultStoreFactory;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
@@ -271,7 +271,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
-      handlerBinder.addBinding().to(AppFabricStreamHttpHandler.class);
+      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
@@ -300,7 +300,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore,
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
                                                                     final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;

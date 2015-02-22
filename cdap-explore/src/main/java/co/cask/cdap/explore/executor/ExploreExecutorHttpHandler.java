@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,9 +75,9 @@ import javax.ws.rs.PathParam;
 /**
  * Handler that implements internal explore APIs.
  */
-@Path(Constants.Gateway.API_VERSION_2 + "/data/explore")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
   private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
@@ -95,11 +95,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("streams/{stream}/enable")
-  public void enableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                           @PathParam("stream") final String streamName) {
+  public void enableStream(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId, @PathParam("stream") String streamName) {
     try {
-      //TODO: get this from path in v3 stream api
-      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+      Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
 
       String streamLocationURI;
       StreamConfig streamConfig;
@@ -142,11 +141,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("streams/{stream}/disable")
-  public void disableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("stream") final String streamName) {
+  public void disableStream(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId, @PathParam("stream") String streamName) {
     try {
-      //TODO: get this from path in v3 stream api
-      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+      Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
 
       LOG.debug("Disabling explore for stream {}", streamName);
 
@@ -177,8 +175,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("/datasets/{dataset}/enable")
-  public void enableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                            @PathParam("dataset") final String datasetName) {
+  public void enableDataset(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
       // Note: Namespacing will come later.
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
@@ -273,8 +271,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("/datasets/{dataset}/disable")
-  public void disableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                             @PathParam("dataset") final String datasetName) {
+  public void disableDataset(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
       // Note: namespacing will come later
@@ -333,7 +331,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/datasets/{dataset}/partitions")
   public void addPartition(HttpRequest request, HttpResponder responder,
-                           @PathParam("dataset") final String datasetName) {
+                           @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
       // Note: Namespacing will come later.
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
@@ -385,7 +383,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/datasets/{dataset}/deletePartition")
   public void dropPartition(HttpRequest request, HttpResponder responder,
-                            @PathParam("dataset") final String datasetName) {
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("dataset") String datasetName) {
     try {
       // Note: Namespacing will come later.
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
@@ -434,8 +433,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private static String getHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
-    // For now replace . with _ since Hive tables cannot have . in them.
-    return name.replaceAll("\\.", "_").toLowerCase();
+    // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
+    return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
   }
 
   /**

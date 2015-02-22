@@ -574,6 +574,107 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
   }
 
+  // tests that 2.8+ tpfs can upgrade legacy partitions to new format
+  @Test
+  public void testUpgrade() throws Exception {
+
+    // this should give us one instance that thinks it may have pre-2.8 partitions, and one that does not
+    Map<String, String> legacyArgs = ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true");
+    final TimePartitionedFileSet withCompat = getInstance(TPFS_INSTANCE, legacyArgs);
+    final TimePartitionedFileSet withoutCompat = getInstance(TPFS_INSTANCE);
+    TransactionAware[] txAwares = { (TransactionAware) withCompat, (TransactionAware) withCompat };
+
+    // add some legacy partitions
+    Assert.assertTrue(withCompat instanceof TimePartitionedFileSetDataset);
+    final TimePartitionedFileSetDataset legacyDataset = (TimePartitionedFileSetDataset) withCompat;
+    Assert.assertTrue(legacyDataset.isLegacyDataset());
+
+    final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        legacyDataset.addLegacyPartition(time, "8:42");
+        legacyDataset.addLegacyPartition(time + HOUR, "9:42");
+        legacyDataset.addLegacyPartition(time + 2 * HOUR, "10:42");
+      }
+    });
+
+    // add some new partitions
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        withCompat.addPartition(time + 3 * HOUR, "11:42");
+        withCompat.addPartition(time + 4 * HOUR, "12:42");
+      }
+    });
+
+    // with compatibility on, we should see all partitions
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(0, MAX));
+        Assert.assertEquals(ImmutableMap.of(time, "8:42",
+                                            time + HOUR, "9:42",
+                                            time + 2 * HOUR, "10:42",
+                                            time + 3 * HOUR, "11:42",
+                                            time + 4 * HOUR, "12:42"), withCompat.getPartitions(0, MAX));
+      }
+    });
+
+    // with compatibility off, we should see only new partitions
+    final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
+
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // querying with partition filter does not see legacy partitions
+        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(null));
+        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(filter2014));
+        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(0, time + YEAR));
+        Assert.assertEquals(ImmutableMap.of(time + 3 * HOUR, "11:42",
+                                            time + 4 * HOUR, "12:42"), withoutCompat.getPartitions(0, time + YEAR));
+      }
+    });
+
+    // migrate legacy partitions
+    long migratedTime = 0;
+    while (migratedTime >= 0) {
+      migratedTime = newTransactionExecutor(txAwares).execute(
+        new TransactionExecutor.Function<Long, Long>() {
+          @Override
+          public Long apply(Long startTime) throws Exception {
+            return legacyDataset.upgradeLegacyEntries(startTime, 1L);
+          }},
+        migratedTime);
+    }
+
+    // now we should see all partitions with and without backwards compatibility
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(null));
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(0, MAX));
+        Assert.assertEquals(ImmutableMap.of(time, "8:42",
+                                            time + HOUR, "9:42",
+                                            time + 2 * HOUR, "10:42",
+                                            time + 3 * HOUR, "11:42",
+                                            time + 4 * HOUR, "12:42"), withCompat.getPartitions(0, MAX));
+      }
+    });
+    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withoutCompat.getPartitionPaths(null));
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withoutCompat.getPartitionPaths(0, MAX));
+        Assert.assertEquals(ImmutableMap.of(time, "8:42",
+                                            time + HOUR, "9:42",
+                                            time + 2 * HOUR, "10:42",
+                                            time + 3 * HOUR, "11:42",
+                                            time + 4 * HOUR, "12:42"), withoutCompat.getPartitions(0, MAX));
+      }
+    });
+  }
+
   private static Set<String> pp(String... paths) {
     return ImmutableSet.copyOf(paths);
   }

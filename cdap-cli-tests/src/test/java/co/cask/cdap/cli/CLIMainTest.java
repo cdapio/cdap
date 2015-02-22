@@ -234,6 +234,29 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  public void testProcedureInNonDefaultNamespace() throws Exception {
+    testCommandOutputContains(cli, "create namespace foo", "Namespace 'foo' created successfully");
+    testCommandOutputContains(cli, "use namespace foo", "Now using namespace 'foo'");
+
+    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
+
+    String expectedErrMsg = "Error: Procedure operations are only supported in the default namespace.";
+    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure status " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure live " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure instances " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure instances " + qualifiedProcedureId + " 2", expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure runtimeargs " + qualifiedProcedureId + " key=1", expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure runtimeargs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure logs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+      + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", expectedErrMsg);
+    testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, expectedErrMsg);
+
+    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
+  }
+
+  @Test
   public void testService() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
@@ -443,7 +466,7 @@ public class CLIMainTest extends StandaloneTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
 
-    File tempDir = Files.createTempDir();
+    File tempDir = TMP_FOLDER.newFolder();
     try {
       File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));

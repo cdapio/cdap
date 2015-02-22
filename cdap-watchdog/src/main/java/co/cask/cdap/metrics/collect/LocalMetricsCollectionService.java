@@ -15,11 +15,10 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;

@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.transport.MetricValue;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -40,8 +40,7 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final HashMap<String, String> EMPTY_TAGS = new HashMap<String, String>();
   private static final String NAMESPACE = "testnamespace";
   private static final String APP = "testapp";
-  private static final String PROGRAM_TYPE = "f";
-  private static final String PROGRAM = "testprogram";
+  private static final String FLOW = "testprogram";
   private static final String RUNID = "testrun";
   private static final String FLOWLET = "testflowlet";
   private static final String INSTANCE = "testInstance";
@@ -69,8 +68,7 @@ public class AggregatedMetricsCollectionServiceTest {
     // non-empty tags.
     final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
                                          Constants.Metrics.Tag.APP, APP,
-                                         Constants.Metrics.Tag.PROGRAM_TYPE, PROGRAM_TYPE,
-                                         Constants.Metrics.Tag.PROGRAM, PROGRAM,
+                                         Constants.Metrics.Tag.FLOW, FLOW,
                                          Constants.Metrics.Tag.RUN_ID, RUNID);
 
     try {
@@ -143,10 +141,10 @@ public class AggregatedMetricsCollectionServiceTest {
   private void verifyCounterMetricsValue(MetricValue metricValue) {
     Assert.assertNotNull(metricValue);
     Map<String, String> tags = metricValue.getTags();
-    if (tags.size() == 5) {
+    if (tags.size() == 4) {
       // base collector
       Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, metricValue.getValue());
-    } else if (tags.size() == 7) {
+    } else if (tags.size() == 6) {
       // flowlet collector
       Assert.assertEquals(15L, metricValue.getValue());
     } else {
@@ -157,10 +155,10 @@ public class AggregatedMetricsCollectionServiceTest {
   private void verifyGaugeMetricsValue(MetricValue metricValue) {
     Assert.assertNotNull(metricValue);
     Map<String, String> tags = metricValue.getTags();
-    if (tags.size() == 5) {
+    if (tags.size() == 4) {
       // base collector
       Assert.assertEquals(1L, metricValue.getValue());
-    } else if (tags.size() == 7) {
+    } else if (tags.size() == 6) {
       // flowlet collector
       Assert.assertEquals((long) Integer.MAX_VALUE, metricValue.getValue());
     } else {

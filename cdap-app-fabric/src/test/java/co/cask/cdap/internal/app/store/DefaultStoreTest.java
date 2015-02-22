@@ -45,6 +45,7 @@ import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -681,9 +682,10 @@ public class DefaultStoreTest {
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = new Schedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = new Schedule("Schedule2", "Every Hour", "0 * * * ?");
-  private static final Schedule scheduleWithSameName = new Schedule("Schedule2", "Every minute", "* * * * ?");
+  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
+  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Schedule scheduleWithSameName = Schedules.createTimeSchedule("Schedule2", "Every minute",
+                                                                                    "* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =

@@ -20,7 +20,9 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import co.cask.cdap.api.schedule.Schedules;
 
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
@@ -63,13 +65,14 @@ public class PurchaseApp extends AbstractApplication {
     addService(new CatalogLookupService());
 
     // Schedule the workflow
-    scheduleWorkflow("DailySchedule", "0 4 * * *", "PurchaseHistoryWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("DailySchedule", "", "0 4 * * *"), "PurchaseHistoryWorkflow");
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
-      ObjectStores.createObjectStore(getConfigurer(), "purchases", Purchase.class);
+      createDataset("purchases", ObjectMappedTable.class,
+                    ObjectMappedTableProperties.builder().setType(Purchase.class).build());
     } catch (UnsupportedTypeException e) {
-      // This exception is thrown by ObjectStore if its parameter type cannot be 
+      // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
       // because PurchaseHistory and Purchase are actual classes.

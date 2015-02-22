@@ -16,10 +16,10 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.data.Interpolator;
-import co.cask.cdap.metrics.data.Interpolators;
+import co.cask.cdap.api.metrics.Interpolator;
+import co.cask.cdap.api.metrics.Interpolators;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -30,7 +30,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
