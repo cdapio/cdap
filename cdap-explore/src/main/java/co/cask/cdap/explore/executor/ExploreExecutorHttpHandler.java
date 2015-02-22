@@ -682,9 +682,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Given a record-enabled dataset, determine the hive schema for the dataset.
+   * Given a record-enabled dataset, its record type and generate a schema string compatible with Hive.
    *
-   * @param dataset The dataset
+   * @param dataset The data set
    * @return the hive schema
    * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
    * or if the row type is not a record or contains null types.
