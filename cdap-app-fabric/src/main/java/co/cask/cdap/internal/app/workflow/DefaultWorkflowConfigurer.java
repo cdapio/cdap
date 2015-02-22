@@ -101,11 +101,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     return getWorkflowActionNode(spec.getName(), SchedulableProgramType.CUSTOM_ACTION);
   }
 
-  WorkflowForkConfigurer getWorkflowForkConfigurer(@Nullable DefaultWorkflowForkConfigurer parentForkConfigurer) {
-    String forkNodeId = nodeIdProvider.getUniqueNodeId();
-    return  new DefaultWorkflowForkConfigurer(this, parentForkConfigurer, forkNodeId);
-  }
-
   void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branches) {
     nodes.add(new WorkflowForkNode(forkNodeId, branches));
   }
@@ -125,9 +120,14 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     nodes.add(getWorkflowCustomActionNode(action));
   }
 
+  public WorkflowNodeIdProvider getNodeIdProvider() {
+    return nodeIdProvider;
+  }
+
   @Override
-  public WorkflowForkConfigurer fork() {
-    return getWorkflowForkConfigurer(null);
+  public WorkflowForkConfigurer<Void> fork() {
+    String forkNodeId = nodeIdProvider.getUniqueNodeId();
+    return new DefaultWorkflowForkConfigurer<Void>(this, null, forkNodeId);
   }
 
   public WorkflowSpecification createSpecification() {
