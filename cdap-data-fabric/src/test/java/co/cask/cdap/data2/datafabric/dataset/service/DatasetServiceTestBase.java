@@ -147,7 +147,8 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
                                  new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
-                                 new HashSet<DatasetMetricsReporter>());
+                                 new HashSet<DatasetMetricsReporter>(),
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -188,6 +189,12 @@ public abstract class DatasetServiceTestBase {
 
   protected URL getUrl(String resource) throws MalformedURLException {
     return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
+  }
+
+  protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
+    String resource = String.format("%s/namespaces/%s/data/admin/%s",
+                                    Constants.Gateway.API_VERSION_3, namespace, operation);
+    return new URL("http://" + "localhost" + ":" + getPort() + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {

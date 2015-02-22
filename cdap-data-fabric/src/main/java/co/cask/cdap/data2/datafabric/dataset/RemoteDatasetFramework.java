@@ -199,6 +199,16 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) type.getDataset(instanceInfo.getSpec(), arguments);
   }
 
+  @Override
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).createNamespace();
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).deleteNamespace();
+  }
+
   private void addModule(Id.DatasetModule moduleId, Class<?> typeClass) throws DatasetManagementException {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");

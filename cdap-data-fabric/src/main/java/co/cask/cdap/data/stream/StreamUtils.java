@@ -20,6 +20,7 @@ import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.io.LocationStatus;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Processor;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -421,6 +422,36 @@ public final class StreamUtils {
       Locations.processLocations(location, false, processor);
     }
     return processor.getResult();
+  }
+
+  /**
+   * Gets a table name for stream consumer state stores within a given namespace.
+   * @param namespace the namespace for which the table is for.
+   * @return constructed table name
+   */
+  public static String getStateStoreTableName(Id.Namespace namespace) {
+    return String.format("cdap.%s.%s.state.store", namespace.getId(), QueueConstants.STREAM_TABLE_PREFIX);
+  }
+
+  /**
+   * Gets a {@link Id.Stream} given a stream's base directory.
+   * @param streamBaseLocation the location of the stream's directory
+   * @return Id of the stream associated with the location
+   */
+  public static Id.Stream getStreamIdFromLocation(Location streamBaseLocation) {
+    // streamBaseLocation = /.../<namespace>/streams/<streamName>,
+    // as constructed by FileStreamAdmin#getStreamConfigLocation
+    Location streamsDir = Locations.getParent(streamBaseLocation);
+    Preconditions.checkNotNull(streamsDir,
+                               "Streams directory of stream base location %s was null.", streamBaseLocation);
+
+    Location namespaceDir = Locations.getParent(streamsDir);
+    Preconditions.checkNotNull(namespaceDir,
+                               "Namespace directory of stream base location %s was null.", streamBaseLocation);
+
+    String namespace = namespaceDir.getName();
+    String streamName = streamBaseLocation.getName();
+    return Id.Stream.from(namespace, streamName);
   }
 
   private StreamUtils() {

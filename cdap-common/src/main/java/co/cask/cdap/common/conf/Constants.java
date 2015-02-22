@@ -298,7 +298,7 @@ public final class Constants {
      */
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
-    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String STREAM_HANDLER_NAME = "stream_rest";
     public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
@@ -700,6 +700,9 @@ public final class Constants {
    */
   public static final String SYSTEM_NAMESPACE = "system";
   public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
+
+  public static final String TRASH_LOCATION = "fs.trash.location";
+  public static final String DEFAULT_TRASH_LOCATION = ".Trash";
 
   /**
    * Constants related to external systems.

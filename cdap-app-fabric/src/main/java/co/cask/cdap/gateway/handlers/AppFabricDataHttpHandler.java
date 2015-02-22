@@ -36,10 +36,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *  HttpHandler class for stream requests in app-fabric.
+ *  HttpHandler class for stream and dataset requests in app-fabric.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
+public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Access Dataset Service
@@ -56,16 +56,15 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricStreamHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                    StoreFactory storeFactory, DatasetFramework dsFramework) {
+  public AppFabricDataHttpHandler(Authenticator authenticator, CConfiguration configuration,
+                                  StoreFactory storeFactory, DatasetFramework dsFramework) {
     super(authenticator);
     this.store = storeFactory.create();
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
   }
 
   /**
-   * Returns a list of streams associated with account.
+   * Returns a list of streams in a namespace.
    */
   @GET
   @Path("/streams")
@@ -81,7 +80,7 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
-                              @PathParam("app-id") final String appId) {
+                              @PathParam("app-id") String appId) {
     dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
   }
 
@@ -92,8 +91,52 @@ public class AppFabricStreamHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("stream-id") final String streamId) {
+                               @PathParam("stream-id") String streamId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
                             namespaceId, streamId);
+  }
+
+  /**
+   * Returns a list of dataset associated with namespace.
+   */
+  @GET
+  @Path("/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) {
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
+  }
+
+  /**
+   * Returns a dataset associated with namespace.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("namespace-id") String namespaceId,
+                                      @PathParam("dataset-id") String datasetId) {
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
+  }
+
+  /**
+   * Returns a list of dataset associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/datasets")
+  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId) {
+    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
+  }
+
+  /**
+   * Returns all flows associated with a dataset.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                                @PathParam("dataset-id") String datasetId) {
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
+                            namespaceId, datasetId);
   }
 }
