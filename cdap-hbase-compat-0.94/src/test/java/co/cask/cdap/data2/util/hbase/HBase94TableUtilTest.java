@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -28,5 +31,19 @@ public class HBase94TableUtilTest extends AbstractHBaseTableUtilTest {
   @Override
   protected HBaseTableUtil getTableUtil() {
     return new HBase94TableUtil();
+  }
+
+  @Override
+  protected String getTableNameAsString(TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+      return tableId.getTableName();
+    }
+    return Joiner.on(".").join(getTableUtil().toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+  }
+
+  @Override
+  protected boolean namespacesSupported() {
+    return false;
   }
 }

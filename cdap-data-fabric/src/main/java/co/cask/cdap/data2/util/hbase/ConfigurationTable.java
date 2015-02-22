@@ -18,6 +18,7 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,24 +72,22 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration conf) throws IOException {
-    String tableName = dsNamespace.namespace(TABLE_NAME).getId();
-    byte[] tableBytes = Bytes.toBytes(tableName);
-
+    TableId tableId = TableId.from(conf.get(Constants.Dataset.TABLE_PREFIX), Constants.SYSTEM_NAMESPACE, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HTableDescriptor htd = new HTableDescriptor(tableBytes);
-      htd.addFamily(new HColumnDescriptor(FAMILY));
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-      tableUtil.createTableIfNotExists(admin, tableName, htd);
+      HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+      htd.addFamily(new HColumnDescriptor(FAMILY));
+      tableUtil.createTableIfNotExists(admin, tableId, htd);
 
       long now = System.currentTimeMillis();
       long previous = now - 1;
       byte[] typeBytes = Bytes.toBytes(type.name());
       LOG.info("Writing new config row with key " + type);
       // populate the configuration data
-      table = new HTable(hbaseConf, tableBytes);
+      table = tableUtil.getHTable(hbaseConf, tableId);
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
       for (Map.Entry<String, String> e : conf) {
@@ -104,13 +103,13 @@ public class ConfigurationTable {
       try {
         admin.close();
       } catch (IOException ioe) {
-        LOG.error("Error closing HBaseAdmin: " + ioe.getMessage(), ioe);
+        LOG.error("Error closing HBaseAdmin: ", ioe);
       }
       if (table != null) {
         try {
           table.close();
         } catch (IOException ioe) {
-          LOG.error("Error closing HTable for " + tableName, ioe);
+          LOG.error("Error closing HBaseAdmin: " + ioe.getMessage(), ioe);
         }
       }
     }
@@ -127,17 +126,17 @@ public class ConfigurationTable {
    */
   public CConfiguration read(Type type, String namespace) throws IOException {
     String tableName = dsNamespace.namespace(TABLE_NAME).getId();
-
-    CConfiguration conf = null;
+    CConfiguration conf = CConfiguration.create();
     HTable table = null;
     try {
-      table = new HTable(hbaseConf, tableName);
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+      table = tableUtil.getHTable(hbaseConf, TableId.from(conf.get(Constants.Dataset.TABLE_PREFIX),
+                                                          Constants.SYSTEM_NAMESPACE, TABLE_NAME));
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);
       Result result = table.get(get);
       int propertyCnt = 0;
       if (result != null && !result.isEmpty()) {
-        conf = CConfiguration.create();
         conf.clear();
         Map<byte[], byte[]> kvs = result.getFamilyMap(FAMILY);
         for (Map.Entry<byte[], byte[]> e : kvs.entrySet()) {
@@ -155,7 +154,7 @@ public class ConfigurationTable {
         try {
           table.close();
         } catch (IOException ioe) {
-          LOG.error("Error closing HTable for " + tableName, ioe);
+          LOG.error("Error closing HTable for " + Constants.SYSTEM_NAMESPACE + ":" + tableName, ioe);
         }
       }
     }
