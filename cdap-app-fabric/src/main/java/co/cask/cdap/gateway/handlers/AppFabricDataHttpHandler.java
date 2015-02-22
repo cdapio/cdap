@@ -64,7 +64,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of streams associated with namespace.
+   * Returns a list of streams in a namespace.
    */
   @GET
   @Path("/streams")

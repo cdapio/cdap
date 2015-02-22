@@ -52,9 +52,9 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
-      //TODO: namespace the tableName (have to modify tableNamePrefix)
-      // <cdap namespace>.system.stream.<stream name>
-      return getTableNamePrefix() + "." + queueName.getSecondComponent();
+      // TODO: don't prefix with namespace if ('default' == namespace).
+      // <cdap namespace>.system.stream.<namespace>.<stream name>
+      return getTableNamePrefix() + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -76,6 +76,11 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   protected List<? extends Class<? extends Coprocessor>> getCoprocessors() {
     // we don't want eviction CP here, hence overriding
     return ImmutableList.of(tableUtil.getDequeueScanObserverClassForVersion());
+  }
+
+  @Override
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+    dropAllInNamespace(namespace.getId());
   }
 
   @Override

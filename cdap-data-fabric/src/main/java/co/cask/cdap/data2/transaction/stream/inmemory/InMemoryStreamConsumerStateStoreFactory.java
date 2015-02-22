@@ -16,14 +16,13 @@
 
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -33,28 +32,26 @@ import java.io.IOException;
  */
 public final class InMemoryStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
   private final InMemoryOrderedTableService tableService;
-  private final String tableName;
-  private InMemoryOrderedTable table;
 
   @Inject
-  InMemoryStreamConsumerStateStoreFactory(CConfiguration conf, InMemoryOrderedTableService tableService) {
+  InMemoryStreamConsumerStateStoreFactory(InMemoryOrderedTableService tableService) {
     this.tableService = tableService;
-    this.tableName = new DefaultDatasetNamespace(conf)
-      .namespace(QueueConstants.STREAM_TABLE_PREFIX + ".state.store").getId();
   }
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
-    if (table == null) {
+    Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
+    String tableName = StreamUtils.getStateStoreTableName(namespace);
+    if (!tableService.exists(tableName)) {
       tableService.create(tableName);
-      table = new InMemoryOrderedTable(tableName);
     }
+    InMemoryOrderedTable table = new InMemoryOrderedTable(tableName);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 
   @Override
-  public synchronized void dropAll() throws IOException {
-    table = null;
+  public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
+    String tableName = StreamUtils.getStateStoreTableName(namespace);
     tableService.drop(tableName);
   }
 }

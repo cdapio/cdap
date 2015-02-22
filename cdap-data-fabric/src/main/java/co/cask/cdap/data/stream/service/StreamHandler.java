@@ -163,8 +163,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (streamMetaStore.streamExists(streamId)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -182,9 +181,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
     try {
-      String accountID = getAuthenticatedAccountId(request);
       // Verify stream name
-      Id.Stream streamId = Id.Stream.from(accountID, stream);
+      Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
       // TODO: Modify the REST API to support custom configurations.
       streamAdmin.create(streamId);
@@ -203,9 +201,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
@@ -223,8 +219,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
     streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
@@ -237,9 +232,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -259,8 +252,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -280,16 +272,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
-
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
       return;
     }
 
-    StreamProperties properties = getAndValidateConfig(streamId, request, responder);
+    StreamProperties properties = getAndValidateConfig(request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
     // to the responder so we just need to return.
     if (properties == null) {
@@ -343,7 +333,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
    * will be return.
    */
-  private StreamProperties getAndValidateConfig(Id.Stream streamId, HttpRequest request, HttpResponder responder) {
+  private StreamProperties getAndValidateConfig(HttpRequest request, HttpResponder responder) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {

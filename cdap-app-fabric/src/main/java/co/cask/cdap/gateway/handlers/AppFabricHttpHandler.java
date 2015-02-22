@@ -813,7 +813,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams")
   public void deleteStreams(HttpRequest request, HttpResponder responder) {
     try {
-      streamAdmin.dropAll();
+      //TODO: move this to v3 namespaced-stream handler when delete is implemented for streams
+      String namespace = Constants.DEFAULT_NAMESPACE;
+      streamAdmin.dropAllInNamespace(Id.Namespace.from(namespace));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Error while deleting streams", e);
@@ -1104,10 +1106,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       appLifecycleHttpHandler.deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(namespaceId);
-      // todo: delete only for specified account
       // delete queues and streams data
-      queueAdmin.dropAll();
-      streamAdmin.dropAll();
+      queueAdmin.dropAllInNamespace(namespaceId.getId());
+      streamAdmin.dropAllInNamespace(namespaceId);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

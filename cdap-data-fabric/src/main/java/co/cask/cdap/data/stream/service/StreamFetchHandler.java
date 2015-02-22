@@ -106,8 +106,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
                     @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
 
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
       return;
     }
