@@ -73,7 +73,6 @@ public class PurchaseApp extends AbstractApplication {
       createDataset("purchases", ObjectMappedTable.class,
                     ObjectMappedTableProperties.builder()
                       .setType(Purchase.class)
-                      .setExploreKeyType(Schema.Type.STRING)
                       .build());
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
