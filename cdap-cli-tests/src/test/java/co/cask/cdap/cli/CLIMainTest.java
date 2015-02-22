@@ -352,11 +352,22 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
     propMap.clear();
     propMap.put("key", "somevalue");
     testPreferencesOutput(cli, "get instance preferences", propMap);
+    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load namespace preferences " + file.getAbsolutePath() + " xml", "successful");
+    propMap.clear();
+    propMap.put("xml", "green");
+    testPreferencesOutput(cli, "get namespace preferences", propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
 
     //Try invalid Json
@@ -368,6 +379,16 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
+
+    //Try invalid xml
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
   }
 
   @Test

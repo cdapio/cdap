@@ -26,6 +26,8 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.ConversionException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -53,6 +55,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
     printStream.printf(SUCCESS + "\n", type.getPrettyName());
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
@@ -63,16 +66,26 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       throw new IllegalArgumentException("Not a file: " + file);
     }
 
-    if (contentType.isEmpty() || (!contentType.equals("json"))) {
-      throw new IllegalArgumentException("Unsupported file format. Only json format is supported");
+    if (contentType.isEmpty() || !(contentType.equals("json") || contentType.equals("xml"))) {
+      throw new IllegalArgumentException("Unsupported file format. Only json and xml formats are supported");
     }
 
     FileReader reader = new FileReader(file);
     Map<String, String> args = Maps.newHashMap();
     try {
-      args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      if (contentType.equals("json")) {
+        args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      } else {
+        XStream xStream = new XStream();
+        xStream.alias("map", Map.class);
+        args = (Map<String, String>) xStream.fromXML(reader);
+      }
     } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Json Syntax in File is invalid. Support only for string-to-string map.");
+      throw new BadRequestException(
+        String.format("Json Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
+    } catch (ConversionException e) {
+      throw new BadRequestException(
+        String.format("XML Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
     } finally {
       reader.close();
     }
