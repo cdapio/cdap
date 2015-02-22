@@ -27,6 +27,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,15 +58,23 @@ public class DatasetClientTestRun extends ClientTestBase {
     datasetClient = new DatasetClient(clientConfig);
     moduleClient = new DatasetModuleClient(clientConfig);
     typeClient = new DatasetTypeClient(clientConfig);
+    NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
     try {
-      new NamespaceClient(clientConfig).create(new NamespaceMeta.Builder().setId(TEST_NAMESPACE).build());
+      namespaceClient.create(new NamespaceMeta.Builder().setId(TEST_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
     }
     try {
-      new NamespaceClient(clientConfig).create(new NamespaceMeta.Builder().setId(OTHER_NAMESPACE).build());
+      namespaceClient.create(new NamespaceMeta.Builder().setId(OTHER_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
     }
     clientConfig.setNamespace(TEST_NAMESPACE);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
+    namespaceClient.delete(TEST_NAMESPACE);
+    namespaceClient.delete(OTHER_NAMESPACE);
   }
 
   @Test
