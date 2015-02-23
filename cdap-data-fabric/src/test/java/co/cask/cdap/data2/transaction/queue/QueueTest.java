@@ -117,7 +117,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     // verify that queue is gone and stream is still there
     final QueueConsumer qConsumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -466,13 +466,13 @@ public abstract class QueueTest {
 
   @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
@@ -588,7 +588,7 @@ public abstract class QueueTest {
     txContext.finish();
 
     // Reset queues
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
 
     // we gonna need another one to check again to avoid caching side-affects
     QueueConsumer consumer2 = queueClientFactory.createConsumer(
