@@ -31,7 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * Monitor handler V2 implementation
  */
 @Path(Constants.Gateway.API_VERSION_2)
 public class MonitorHandlerV2 extends AbstractMonitorHandler {
