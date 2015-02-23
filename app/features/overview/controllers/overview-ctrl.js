@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
 
   if(!$state.params.namespace) {
     // the controller for "ns" state should handle the case of
@@ -17,7 +17,20 @@ function ($scope, MyDataSource, $state) {
   $scope.hideWelcomeMessage = false;
 
   var dataSrc = new MyDataSource($scope),
-      partialPath = '/assets/features/overview/templates/';
+      partialPath = '/assets/features/overview/templates/',
+      PREFKEY = 'feature.admin.welcomeIsHidden';
+
+  myLocalStorage.get(PREFKEY)
+    .then(function (v) {
+      $scope.welcomeIsHidden = v;
+    });
+
+  $scope.hideWelcome = function () {
+    myLocalStorage.set(PREFKEY, true);
+    $scope.welcomeIsHidden = true;
+  };
+
+  $scope.isEnterprise = MY_CONFIG.isEnterprise;
 
   dataSrc.request({
     _cdapNsPath: '/apps'

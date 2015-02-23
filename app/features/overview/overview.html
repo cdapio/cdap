@@ -1,13 +1,13 @@
-<div ng-hide="hideWelcomeMessage">
+<div ng-hide="welcomeIsHidden">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcomeMessage=true">
+      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcome()">
         <span class="fa fa-close"></span>
         <span class="sr-only"> Hide Welcome Message </span>
       </button>
       <h3>
         Welcome!
-        <small> CDAP is designed to meet your needs! </small>
+        <small> Your Cask Data Application Platform is designed to meet your needs, whether you are a developer, operator, or admin. </small>
       </h3>
     </div>
     <div class="panel-body">
@@ -15,33 +15,31 @@
           <div class="col-sm-4">
             <h2> First </h2>
             <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
+              Note the slider at top, which allows you to switch between object-oriented Development mode, metrics-oriented Operations mode, and configuration-oriented Management mode. You can set any of these screens as your start screen.
             </p>
           </div>
           <div class="col-sm-4">
             <h2> Next </h2>
             <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
+              Note the search at upper right. This allows you to browse, search, and jump directly to specific datasets or apps on your platform.
             </p>
           </div>
           <div class="col-sm-4">
             <h2> Finally </h2>
             <p class="text-justify">
-              It is a long established fact that a reader will be distracted by the readable content of
-              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-              making it look like readable English.
+              On this Development screen we show you the status of your sustem, data and apps. If you are only interested in data and will not be deploying apps on your platform, you can hide the apps content via the Hide feature.
             </p>
           </div>
         </div>
     </div>
   </div>
+</div>
+
+<div ng-show="isEnterprise">
+  <hr />
+  <h3> CDAP Health </h3>
+  <p>This is a section for Enterprise users.</p>
+  <hr />
 </div>
 
 <section class="data-apps">
