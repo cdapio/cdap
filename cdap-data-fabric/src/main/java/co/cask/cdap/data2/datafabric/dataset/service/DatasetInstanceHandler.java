@@ -18,7 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
@@ -197,10 +197,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    if (creationProperties.getProperties().containsKey(OrderedTable.PROPERTY_TTL)) {
+    if (creationProperties.getProperties().containsKey(Table.PROPERTY_TTL)) {
       long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
-        (creationProperties.getProperties().get(OrderedTable.PROPERTY_TTL)));
-      creationProperties.getProperties().put(OrderedTable.PROPERTY_TTL, String.valueOf(ttl));
+        (creationProperties.getProperties().get(Table.PROPERTY_TTL)));
+      creationProperties.getProperties().put(Table.PROPERTY_TTL, String.valueOf(ttl));
     }
     return  creationProperties;
   }
@@ -387,7 +387,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       new Maps.EntryTransformer<String, String, String>() {
         @Override
         public String transformEntry(String key, String value) {
-          if (key.equals(OrderedTable.PROPERTY_TTL)) {
+          if (key.equals(Table.PROPERTY_TTL)) {
             return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
           } else {
             return value;

@@ -51,7 +51,7 @@ public class HBaseScanner implements Scanner {
           break;
         }
 
-        Map<byte[], byte[]> rowMap = HBaseOrderedTable.getRowMap(result);
+        Map<byte[], byte[]> rowMap = HBaseTable.getRowMap(result);
         if (rowMap.size() > 0) {
           return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap);
         }
