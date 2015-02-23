@@ -53,7 +53,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   // note: these constants should be same as in DefaultStore - this needs refactoring, but currently these pieces
   // dependent
   private static final String NOTIFICATION_FEED_TABLE = "app.meta";
-  private static final String TYPE_NOTIFICATION_FEED = "feed";
+  public static final String TYPE_NOTIFICATION_FEED = "feed";
 
   private Transactional<NotificationFeedMds, MetadataStoreDataset> txnl;
 

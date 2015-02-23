@@ -100,6 +100,20 @@ public interface ProgramController {
       this.runStatus = runStatus;
     }
 
+    /**
+     * Gives the {@link ProgramController.State} for a given {@link ProgramRunStatus}
+     * @param status : the status
+     * @return the state for the status or null if there is no defined state for the given status
+     */
+    public static State getControllerStateByStatus (ProgramRunStatus status) {
+      for (ProgramController.State state : ProgramController.State.values()) {
+        if (state.getRunStatus() == status) {
+          return state;
+        }
+      }
+      return null;
+    }
+    
     public ProgramRunStatus getRunStatus() {
       return runStatus;
     }
