@@ -35,4 +35,12 @@ public class WorkflowForkBranch {
   public List<WorkflowNode> getNodes() {
     return branch;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("WorkflowForkBranch{");
+    sb.append("branch=").append(branch);
+    sb.append('}');
+    return sb.toString();
+  }
 }

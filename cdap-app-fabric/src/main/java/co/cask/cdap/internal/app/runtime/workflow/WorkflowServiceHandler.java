@@ -23,9 +23,12 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.lang.reflect.Type;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -39,9 +42,9 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
                                                          new WorkflowActionSpecificationCodec())
                                     .create();
 
-  private final Supplier<WorkflowStatus> statusSupplier;
+  private final Supplier<Map<String, WorkflowStatus>> statusSupplier;
 
-  WorkflowServiceHandler(Supplier<WorkflowStatus> statusSupplier) {
+  WorkflowServiceHandler(Supplier<Map<String, WorkflowStatus>> statusSupplier) {
     this.statusSupplier = statusSupplier;
   }
 
@@ -51,6 +54,7 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
   @GET
   @Path("/status")
   public void handleStatus(HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, statusSupplier.get(), WorkflowStatus.class, GSON);
+    Type mapType = new TypeToken<Map<String, WorkflowStatus>>() { }.getType();
+    responder.sendJson(HttpResponseStatus.OK, statusSupplier.get(), mapType, GSON);
   }
 }

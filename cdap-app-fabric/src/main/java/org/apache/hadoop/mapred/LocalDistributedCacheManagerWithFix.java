@@ -107,7 +107,7 @@ class LocalDistributedCacheManagerWithFix {
     MRApps.setupDistributedCache(conf, localResources);
     // Generating unique numbers for FSDownload.
     AtomicLong uniqueNumberGenerator =
-      new AtomicLong(System.currentTimeMillis());
+      new AtomicLong(System.nanoTime());
 
     // Find which resources are to be put on the local classpath
     Map<String, Path> classpaths = new HashMap<String, Path>();

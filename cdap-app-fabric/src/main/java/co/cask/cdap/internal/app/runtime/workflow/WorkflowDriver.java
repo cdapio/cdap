@@ -22,7 +22,10 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowForkBranch;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -51,6 +54,15 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Core of Workflow engine that drives the execution of Workflow.
@@ -68,7 +80,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private NettyHttpService httpService;
   private volatile boolean running;
-  private volatile WorkflowStatus workflowStatus;
+  private ConcurrentHashMap<String, WorkflowStatus> status = new ConcurrentHashMap<String, WorkflowStatus>();
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
@@ -81,8 +93,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       ? Long.parseLong(options.getArguments()
                          .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
-    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program, 
-                                                                         runId, options.getUserArguments(), 
+    this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
+                                                                         runId, options.getUserArguments(),
                                                                          logicalStartTime);
   }
 
@@ -107,6 +119,103 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
   }
 
+  private void executeWorkflowAction(ApplicationSpecification appSpec, WorkflowActionNode node,
+                                     InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+
+    WorkflowActionSpecification actionSpec;
+    ScheduleProgramInfo actionInfo = node.getProgram();
+    switch (actionInfo.getProgramType()) {
+      case MAPREDUCE:
+        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
+        String mapReduce = mapReduceSpec.getName();
+        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
+          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
+        break;
+      case SPARK:
+        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
+        String spark = sparkSpec.getName();
+        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
+          spark, spark, SchedulableProgramType.SPARK));
+        break;
+      case CUSTOM_ACTION:
+        actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
+        break;
+      default:
+        LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
+                  actionInfo.getProgramName());
+        throw new IllegalStateException("Workflow stopped without executing all tasks");
+    }
+
+    WorkflowStatus workflowStatus = new WorkflowStatus(state(), actionSpec, node.getNodeId());
+    status.put(node.getNodeId(), workflowStatus);
+
+    WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
+    try {
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+      try {
+        action.run();
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
+      }
+    } catch (Throwable t) {
+      LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
+      // this will always rethrow
+      Throwables.propagateIfPossible(t, Exception.class);
+    } finally {
+      // Destroy the action.
+      destroy(actionSpec, action);
+    }
+    status.remove(node.getNodeId());
+  }
+
+  private void executeNode(final ApplicationSpecification appSpec, WorkflowNode node,
+                           final InstantiatorFactory instantiator, final ClassLoader classLoader) throws Exception {
+    WorkflowNodeType nodeType = node.getType();
+    switch (nodeType) {
+      case ACTION:
+        executeWorkflowAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader);
+        break;
+      case FORK:
+        WorkflowForkNode fork = (WorkflowForkNode) node;
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        CompletionService<String> completionService =
+          new ExecutorCompletionService<String>(executorService);
+
+        for (final WorkflowForkBranch branch : fork.getBranches()) {
+          completionService.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+              Iterator<WorkflowNode> iterator = branch.getNodes().iterator();
+              while (!Thread.currentThread().isInterrupted() && iterator.hasNext() && running) {
+                executeNode(appSpec, iterator.next(), instantiator, classLoader);
+              }
+              return branch.toString();
+            }
+          });
+        }
+
+        try {
+          for (int i = 0; i < fork.getBranches().size(); i++) {
+            Future<String> f = completionService.take();
+            try {
+              LOG.info("Execution of branch {} for fork {} completed", f.get(), fork);
+            } catch (ExecutionException ex) {
+              LOG.info("Exception occurred in the execution of the fork node {}", fork);
+              throw ex;
+            }
+          }
+
+        } finally {
+          executorService.shutdown();
+          executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+        }
+
+        break;
+      default:
+        break;
+    }
+  }
+
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
@@ -118,61 +227,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
 
     Iterator<WorkflowNode> iterator = workflowSpec.getNodes().iterator();
-    int step = 0;
     while (running && iterator.hasNext()) {
-      WorkflowActionSpecification actionSpec;
-      WorkflowNode node = iterator.next();
-      switch (node.getType()) {
-        case ACTION:
-          WorkflowActionNode actionNode = (WorkflowActionNode) node;
-          ScheduleProgramInfo actionInfo = actionNode.getProgram();
-          switch (actionInfo.getProgramType()) {
-            case MAPREDUCE:
-              MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-              String mapReduce = mapReduceSpec.getName();
-              actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-                mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
-              break;
-            case SPARK:
-              SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-              String spark = sparkSpec.getName();
-              actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-                spark, spark, SchedulableProgramType.SPARK));
-              break;
-            case CUSTOM_ACTION:
-              actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
-              break;
-            default:
-              LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
-                        actionInfo.getProgramName());
-              throw new IllegalStateException("Workflow stopped without executing all tasks");
-          }
-          workflowStatus = new WorkflowStatus(state(), actionSpec, step++);
-
-          WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
-          try {
-            ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
-            try {
-              action.run();
-            } finally {
-              ClassLoaders.setContextClassLoader(oldClassLoader);
-            }
-          } catch (Throwable t) {
-            LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
-            // this will always rethrow
-            Throwables.propagateIfPossible(t, Exception.class);
-          } finally {
-            // Destroy the action.
-            destroy(actionSpec, action);
-          }
-          break;
-        case FORK:
-          // not-implemented yet
-          break;
-        case CONDITION:
-          break;
-        default:
-      }
+      executeNode(appSpec, iterator.next(), instantiator, classLoader);
     }
 
     // If there is some task left when the loop exited, it must be called by explicit stop of this driver.
@@ -214,8 +270,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
-                                                 logicalStartTime, 
-                                                 workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec), 
+                                                 logicalStartTime,
+                                                 workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec),
                                                  runtimeArgs));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
@@ -251,11 +307,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return builder.build();
   }
 
-  private Supplier<WorkflowStatus> createStatusSupplier() {
-    return new Supplier<WorkflowStatus>() {
+  private Supplier<Map<String, WorkflowStatus>> createStatusSupplier() {
+    return new Supplier<Map<String, WorkflowStatus>>() {
       @Override
-      public WorkflowStatus get() {
-        return workflowStatus;
+      public Map<String, WorkflowStatus> get() {
+        return status;
       }
     };
   }

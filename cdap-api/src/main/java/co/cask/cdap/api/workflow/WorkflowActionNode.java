@@ -34,4 +34,12 @@ public class WorkflowActionNode extends WorkflowNode {
   public ScheduleProgramInfo getProgram() {
     return this.program;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("WorkflowActionNode{");
+    sb.append("program=").append(program);
+    sb.append('}');
+    return sb.toString();
+  }
 }

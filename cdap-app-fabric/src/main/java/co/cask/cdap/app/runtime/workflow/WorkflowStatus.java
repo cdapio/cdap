@@ -25,12 +25,12 @@ public final class WorkflowStatus {
 
   private  Service.State state;
   private  WorkflowActionSpecification currentAction;
-  private  int currentStep;
+  private  String currentNodeId;
 
-  public WorkflowStatus(Service.State state, WorkflowActionSpecification currentAction, int currentStep) {
+  public WorkflowStatus(Service.State state, WorkflowActionSpecification currentAction, String currentNodeId) {
     this.state = state;
     this.currentAction = currentAction;
-    this.currentStep = currentStep;
+    this.currentNodeId = currentNodeId;
   }
 
   public Service.State getState() {

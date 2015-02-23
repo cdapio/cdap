@@ -27,8 +27,11 @@ import co.cask.cdap.MultiStreamApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
+import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.config.PreferencesStore;
@@ -40,6 +43,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
@@ -56,6 +60,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -68,6 +73,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -82,8 +90,11 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
+  protected static final Type MAP_STRING_WORKFLOWSTATUS_TYPE = new TypeToken<Map<String, WorkflowStatus>>()
+  { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
@@ -724,6 +735,83 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
       .API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     deleteApplication(60, deleteUrl, 200);
+  }
+
+  private String createInput() throws IOException {
+    File inputDir = tmpFolder.newFolder();
+
+    File inputFile = new File(inputDir.getPath() + "/words.txt");
+    inputFile.deleteOnExit();
+    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
+    try {
+      writer.write("this text has");
+      writer.newLine();
+      writer.write("two words text inside");
+    } finally {
+      writer.close();
+    }
+    return inputDir.getAbsolutePath();
+  }
+
+  private void checkCurrentRuns(int retries, String url, int currentRunningProgramsExpected) throws Exception {
+    int trial = 0;
+    String json;
+    Map<String, WorkflowStatus> output = null;
+    HttpResponse response;
+    while (trial++ < retries) {
+      response = doGet(url);
+      if (response.getStatusLine().getStatusCode() == 200) {
+        json = EntityUtils.toString(response.getEntity());
+        output = GSON.fromJson(json, MAP_STRING_WORKFLOWSTATUS_TYPE);
+        Assert.assertTrue(output.size() == currentRunningProgramsExpected);
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertNotNull(output);
+    Assert.assertTrue(output.size() == currentRunningProgramsExpected);
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowForkApp() throws Exception {
+    // Steps for the test
+    // 1. Deploy the Workflow app containing fork node
+    // 2. Check the current run of the Workflow. It should return 404
+    // 3. Start the Workflow
+    // 4. Check the current run of the workflow. It should have 2 programs running in parallel
+    // 5. Check workflow run gets completed successfully
+
+    final String oneInputPath = createInput();
+    final java.io.File oneOutputPath = new java.io.File(tmpFolder.newFolder(), "output");
+    final String anotherInputPath = createInput();
+    final java.io.File anotherOutputPath = new java.io.File(tmpFolder.newFolder(), "output");
+
+    HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(404, getWorkflowCurrentStatus(TEST_NAMESPACE2, "WorkflowAppWithFork", "WorkflowWithFork"));
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    runtimeArguments.put("oneInputPath", oneInputPath);
+    runtimeArguments.put("oneOutputPath", oneOutputPath.getAbsolutePath());
+    runtimeArguments.put("anotherInputPath", anotherInputPath);
+    runtimeArguments.put("anotherOutputPath", anotherOutputPath.getAbsolutePath());
+
+    setAndTestRuntimeArgs(TEST_NAMESPACE2, "WorkflowAppWithFork", ProgramType.WORKFLOW.getCategoryName(),
+                          "WorkflowWithFork", runtimeArguments);
+
+    int status = getRunnableStartStop(TEST_NAMESPACE2, "WorkflowAppWithFork", ProgramType.WORKFLOW.getCategoryName(),
+                                      "WorkflowWithFork", "start");
+    Assert.assertEquals(200, status);
+
+    String currentUrl = String.format("apps/%s/workflows/%s/current", "WorkflowAppWithFork", "WorkflowWithFork");
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    int currentRunningProgramsExpected = 2;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, "WorkflowAppWithFork", "WorkflowWithFork", "completed");
+    scheduleHistoryRuns(180, runsUrl, 0);
   }
 
   @Category(XSlowTests.class)
