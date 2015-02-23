@@ -17,14 +17,12 @@
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -40,13 +38,11 @@ import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEU
  * admin for queues in leveldb.
  */
 @Singleton
-public class LevelDBQueueAdmin implements QueueAdmin {
+public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueAdmin.class);
 
   private final LevelDBTableService service;
-  private final String unqualifiedTableNamePrefix;
-  private final DefaultDatasetNamespace namespace;
 
   @Inject
   public LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service) {
@@ -55,75 +51,8 @@ public class LevelDBQueueAdmin implements QueueAdmin {
 
   protected LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service,
                               QueueConstants.QueueType type) {
+    super(conf, type);
     this.service = service;
-    // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    // system scope
-    unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
-    namespace = new DefaultDatasetNamespace(conf);
-  }
-
-  // TODO: CDAP-1177 Move these functions to an abstract base class to share with HBaseQueueAdmin
-  /**
-   * @param queueTableName actual queue table name
-   * @return namespace id that this queue belongs to
-   */
-  public static String getNamespaceId(String queueTableName) {
-    // last three parts are namespaceId, appName and flow
-    String[] parts = queueTableName.split("\\.");
-    String namespaceId;
-    if (parts.length == 6) {
-      // cdap.<namespace>.system.queue.<app>.<flow>
-      namespaceId = parts[1];
-    } else {
-      throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
-                                                         "Expected 'cdap.system.queue.<app>.<flow>' or " +
-                                                         "'cdap.system.queue.<namespace>.<app>.<flow>'. " +
-                                                         "Received '%s'",
-                                                       queueTableName));
-    }
-    return namespaceId;
-  }
-
-  /**
-   * @param queueTableName actual queue table name
-   * @return app name this queue belongs to
-   */
-  public static String getApplicationName(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
-    String[] parts = queueTableName.split("\\.");
-    return parts[parts.length - 2];
-  }
-
-  /**
-   * @param queueTableName actual queue table name
-   * @return flow name this queue belongs to
-   */
-  public static String getFlowName(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
-    String[] parts = queueTableName.split("\\.");
-    return parts[parts.length - 1];
-  }
-
-  /**
-   * This determines the actual table name from the table name prefix and the name of the queue.
-   * @param queueName The name of the queue.
-   * @return the full name of the table that holds this queue.
-   */
-  public String getActualTableName(QueueName queueName) {
-    if (queueName.isQueue()) {
-      // <root namespace>.<queue namespace>.system.queue.<app>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(),
-                                 queueName.getSecondComponent(),
-                                 queueName.getThirdComponent());
-    } else {
-      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
-    }
-  }
-
-  private String getTableNameForFlow(String namespaceId, String app, String flow) {
-    String tablePrefix = getTableNamePrefix(namespaceId);
-    String tableName = tablePrefix + "." + app + "." + flow;
-    return HBaseTableUtil.getHBaseTableName(tableName);
   }
 
   /**
@@ -233,13 +162,6 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   @Override
   public void upgrade() throws Exception {
     // No-op
-  }
-
-  protected String getTableNamePrefix(String namespaceId) {
-    // returns String with format:  '<root namespace>.<namespaceId>.system.(stream|queue)'
-    String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
-                                                                     unqualifiedTableNamePrefix)).getId();
-    return HBaseTableUtil.getHBaseTableName(tablePrefix);
   }
 
   private void dropAllTablesWithPrefix(String tableNamePrefix) throws Exception {

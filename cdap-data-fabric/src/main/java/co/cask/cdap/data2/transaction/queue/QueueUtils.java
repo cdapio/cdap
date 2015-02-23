@@ -21,7 +21,7 @@ package co.cask.cdap.data2.transaction.queue;
 public final class QueueUtils {
 
   public static String determineQueueConfigTableName(String queueTableName) {
-    // the name of this table has the form: <cdap root namespace>.<system namespace>.(queue|stream).<queue namespace>.*
+    // the name of this table has the form: <cdap root namespace>.<queue namespace>.<system namespace>.(queue|stream).*
     // beware that the cdap name space may also contain ., but there must be at least two .
 
     int firstDot = queueTableName.indexOf('.');
