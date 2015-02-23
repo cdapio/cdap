@@ -34,9 +34,9 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
 
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
     // system scope
-    unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "."
+    this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "."
       + (type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX);
-    namespace = new DefaultDatasetNamespace(conf);
+    this.namespace = new DefaultDatasetNamespace(conf);
   }
 
   /**
