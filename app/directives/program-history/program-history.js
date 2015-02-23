@@ -3,11 +3,20 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'EA',
       scope: {
-        runs: '='
+        model: '=runs'
       },
       templateUrl: 'program-history/program-history.html',
-      link: function(scope, element, attrs) {
-        scope.runs = attrs.runs;
+      controller: function ($scope) {
+        $scope.$watch('model', function (newVal) {
+            if (!angular.isArray(newVal)) {
+              return;
+            }
+            $scope.runs = newVal.map(function (run) {
+              return angular.extend({
+                duration: ( run.end? (run.end - run.start) : 0 )
+              }, run);
+            });
+        });
       }
     }
   });
