@@ -65,7 +65,16 @@ public class PurchaseApp extends AbstractApplication {
     addService(new CatalogLookupService());
 
     // Schedule the workflow
-    scheduleWorkflow(Schedules.createTimeSchedule("DailySchedule", "", "0 4 * * *"), "PurchaseHistoryWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("DailySchedule", "Schedule execution every day", "0 4 * * *"),
+                     "PurchaseHistoryWorkflow");
+
+    // Schedule the workflow based on the data coming in the purchaseStream stream
+    scheduleWorkflow(
+      Schedules.createDataSchedule("DataSchedule",
+                                   "Schedule execution when 1MB of data is ingested in the purchaseStream",
+                                   Schedules.Source.STREAM, "purchaseStream", 1),
+      "PurchaseHistoryWorkflow"
+    );
 
     try {
       createDataset("history", PurchaseHistoryStore.class, PurchaseHistoryStore.properties());
