@@ -91,6 +91,7 @@ public class ServiceProgramRunner extends AbstractInMemoryProgramRunner {
    * @return A {@link Table} with component name in the row, instance id in the column and the {@link ProgramController}
    *         of the component runner as the cell value.
    */
+  // TODO: Move this method to AbstractInMemoryProgramRunner to reduce duplication of code.
   private Table<String, Integer, ProgramController> startAllComponents(Program program, RunId runId,
                                                                        Arguments userArguments,
                                                                        ServiceSpecification spec) {
