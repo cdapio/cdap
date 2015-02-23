@@ -61,7 +61,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
 
-  public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
+  public void getServiceInstance(HttpRequest request, HttpResponder responder,
                                  String serviceName) throws Exception {
     JsonObject reply = new JsonObject();
     if (!serviceManagementMap.containsKey(serviceName)) {
@@ -79,8 +79,8 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
-                                 final String serviceName) {
+  public void setServiceInstance(HttpRequest request, HttpResponder responder,
+                                 String serviceName) {
     try {
       if (!serviceManagementMap.containsKey(serviceName)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Invalid Service Name");
@@ -118,7 +118,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
 
-  public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
+  public void getBootStatus(HttpRequest request, HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
     for (String service : serviceManagementMap.keySet()) {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
@@ -130,8 +130,8 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, result);
   }
 
-  public void monitor(final HttpRequest request, final HttpResponder responder,
-                      final String serviceName) {
+  public void monitor(HttpRequest request, HttpResponder responder,
+                      String serviceName) {
     if (!serviceManagementMap.containsKey(serviceName)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
@@ -154,7 +154,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     List<SystemServiceMeta> response = Lists.newArrayList();
     SortedSet<String> services = new TreeSet<String>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<String>(services);
