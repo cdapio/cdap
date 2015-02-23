@@ -768,7 +768,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     runtimeArguments.put("mapreduce.OneMR.input.path", createInput("OneMRInput"));
     runtimeArguments.put("mapreduce.AnotherMR.input.path", createInput("AnotherMRInput"));
     runtimeArguments.put("spark.*.input.path", createInput("SparkInput"));
-    runtimeArguments.put("custom_action.OneAction.input.path", createInput("OneActionInput"));
 
     runtimeArguments.put("output.path", new File(tmpFolder.newFolder(), "ProgramOutput").getAbsolutePath());
     runtimeArguments.put("mapreduce.OneMR.output.path",

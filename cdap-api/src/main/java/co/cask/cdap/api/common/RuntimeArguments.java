@@ -77,24 +77,20 @@ public final class RuntimeArguments {
 
   /**
    * Extracts the scope from the argument as identified by its prefix.
+   * After extracting the scope, argument is added back to the argument map.
    *
-   * 1. Argument can be prefixed by "<scopetype>.<name>.". e.g. mapreduce.myMapReduce.read.timeout=30. In this case
-   * only MapReduce program named 'myMapReduce' will receive the argument read.timeout=30.
-   * 2. Argument can be prefixed by "<scopetype>.*.". e.g. mapreduce.*.read.timeout=30. In this case all the underlying
-   * MapReduce programs will receive the argument read.timeout=30.
-   * 3. If the argument is not prefixed with any scope, it is considered global and is passed further without any
-   * changes. e.g. read.timeout=30
-   *
-   * Arguments scoped by DATASET are only filtered while inside the dataset scope. They are passed from other
-   * scopes without any modifications.
-   *
-   * Arguments prefixed by "<scopetype>.<name>." have higher precedence than those prefixed by "<scopetype>.*.".
-   * Arguments specified at the global level have lowest precedence.
+   * 1. Argument can be prefixed by "&lt;scope>.&lt;name>.". e.g. mapreduce.myMapReduce.read.timeout=30. In this case
+   * the MapReduce program named 'myMapReduce' will receive two arguments - mapreduce.myMapReduce.read.timeout=30 and
+   * read.timeout=30. However MapReduce programs other than 'myMapReduce' will receive only one argument -
+   * mapreduce.myMapReduce.read.timeout=30
+   * 2. Argument can be prefixed by "&lt;scope>.*.". e.g. mapreduce.*.read.timeout=30. In this case all the underlying
+   * MapReduce programs will receive the arguments mapreduce.*.read.timeout=30 and read.timeout=30.
+   * 3. Argument not prefixed with any scope is passed further without any changes. e.g. read.timeout=30
    *
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
-   * @return a map that contains only the keys that start with &lt;scope>.&lt;name>., with that prefix removed.
+   * @return a map that contains the arguments with and without prefix
    */
   public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
@@ -103,7 +99,10 @@ public final class RuntimeArguments {
 
     String prefix = scope + DOT + name + DOT;
     String wildCardPrefix = scope + DOT + ASTERISK + DOT;
+
     Map<String, String> result = Maps.newHashMap();
+    result.putAll(arguments);
+
     Map<String, String> prefixMatchedArgs = Maps.newHashMap();
     Map<String, String> wildCardPrefixMatchedArgs = Maps.newHashMap();
 
@@ -115,43 +114,12 @@ public final class RuntimeArguments {
       } else if (entry.getKey().startsWith(prefix)) {
         // Argument is prefixed with "<scope>.<name>."
         prefixMatchedArgs.put(entry.getKey().substring(prefix.length()), entry.getValue());
-      } else {
-        // Add global or retainable arguments
-        addGlobalArgument(entry.getKey(), entry.getValue(), scope, result);
       }
     }
 
     result.putAll(wildCardPrefixMatchedArgs);
     result.putAll(prefixMatchedArgs);
     return result;
-  }
-
-  /**
-   * Adds a key to the scoped argument map.
-   * Key is added if -
-   * 1. It is not prefixed with any scope e.g. read.timeout=30
-   * 2. It is prefixed with the retainable scope. In this case key is retained in the argument map till the scope the
-   * key becomes current. e.g. dataset.read.timeout=30. The key is prefixed with the DATASET scope which is retainable.
-   * This key is retained in the argument map till the current scope becomes DATASET at which point it will be removed.
-   * @param key key of the argument to be added
-   * @param value value of the argument to be added
-   * @param currentScope current scope
-   * @param result map which holds the scoped arguments
-   */
-  private static void addGlobalArgument(String key, String value, Scope currentScope, Map<String, String> result) {
-    boolean addArgument = true;
-    for (Scope s : Scope.values()) {
-      String prefix = s + DOT;
-      if (key.startsWith(prefix)) {
-        if (!s.retainableScope() || s.equals(currentScope)) {
-          addArgument = false;
-        }
-        break;
-      }
-    }
-    if (addArgument) {
-      result.put(key, value);
-    }
   }
 
   /**
