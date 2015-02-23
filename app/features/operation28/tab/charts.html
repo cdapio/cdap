@@ -11,8 +11,7 @@
 
         <p class="text-center">
           <span ng-hide="panel.useByteFilter">
-            <span class="badge">{{panel.chart.lastValue}}</span>
-            {{panel.unit}}
+            {{panel.chart.lastValue}} {{panel.unit}}
           </span>
           <span ng-show="panel.useByteFilter">
             {{panel.chart.lastValue | bytes}}{{panel.unit}}

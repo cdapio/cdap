@@ -90,15 +90,19 @@ angular.module(PKG.name+'.feature.operation28')
               method: 'POST'
             },
             function (r) {
-              angular.forEach(r.series, function (s) {
-                myHelpers.deepSet(
-                  $scope.apps.filter(function (one) {
-                    return one.id === s.grouping.app;
-                  })[0],
-                  'metric.' + s.metricName.split('.').pop(),
-                  s.data[0].value
-                );
+
+              angular.forEach($scope.apps, function (app) {
+                angular.forEach(r.series, function (s) {
+                  if(app.id === s.grouping.app) {
+                    myHelpers.deepSet(
+                      app,
+                      'metric.' + s.metricName.split('.').pop(),
+                      s.data[0].value
+                    );
+                  }
+                });
               });
+
             });
         }
 
