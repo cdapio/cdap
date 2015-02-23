@@ -46,7 +46,7 @@ public class MonitorHandlerV2 extends AbstractMonitorHandler {
    */
   @Path("/system/services/{service-name}/instances")
   @GET
-  public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
+  public void getServiceInstance(HttpRequest request, HttpResponder responder,
                                  @PathParam("service-name") String serviceName) throws Exception {
 
     super.getServiceInstance(request, responder, serviceName);
@@ -57,28 +57,28 @@ public class MonitorHandlerV2 extends AbstractMonitorHandler {
    */
   @Path("/system/services/{service-name}/instances")
   @PUT
-  public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
-                                 @PathParam("service-name") final String serviceName) {
+  public void setServiceInstance(HttpRequest request, HttpResponder responder,
+                                 @PathParam("service-name") String serviceName) {
     super.setServiceInstance(request, responder, serviceName);
   }
 
   // Return the status of CDAP services in JSON format
   @Path("/system/services/status")
   @GET
-  public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
+  public void getBootStatus(HttpRequest request, HttpResponder responder) {
     super.getBootStatus(request, responder);
   }
 
   @Path("/system/services/{service-name}/status")
   @GET
-  public void monitor(final HttpRequest request, final HttpResponder responder,
-                      @PathParam("service-name") final String serviceName) {
+  public void monitor(HttpRequest request, HttpResponder responder,
+                      @PathParam("service-name") String serviceName) {
     super.monitor(request, responder, serviceName);
   }
 
   @Path("/system/services")
   @GET
-  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     super.getServiceSpec(request, responder);
   }
 }
