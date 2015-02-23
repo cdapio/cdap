@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -31,10 +31,10 @@ import java.io.IOException;
  * Factory for creating {@link StreamConsumerStateStore} in memory.
  */
 public final class InMemoryStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
-  private final InMemoryOrderedTableService tableService;
+  private final InMemoryTableService tableService;
 
   @Inject
-  InMemoryStreamConsumerStateStoreFactory(InMemoryOrderedTableService tableService) {
+  InMemoryStreamConsumerStateStoreFactory(InMemoryTableService tableService) {
     this.tableService = tableService;
   }
 
@@ -45,7 +45,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
     if (!tableService.exists(tableName)) {
       tableService.create(tableName);
     }
-    InMemoryOrderedTable table = new InMemoryOrderedTable(tableName);
+    InMemoryTable table = new InMemoryTable(tableName);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 

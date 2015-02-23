@@ -35,6 +35,7 @@ public interface ProgramRunnerFactory {
     WORKFLOW,
     WEBAPP,
     WORKER,
+    WORKER_COMPONENT,
     SERVICE,
     SERVICE_COMPONENT
   }

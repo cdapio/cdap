@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.iq80.leveldb.DB;
@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  */
 public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   @Inject
-  private LevelDBOrderedTableService service;
+  private LevelDBTableService service;
 
   public LevelDBKVTableDefinition(String name) {
     super(name);
@@ -64,9 +64,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
     private final String tableName;
-    protected final LevelDBOrderedTableService service;
+    protected final LevelDBTableService service;
 
-    private DatasetAdminImpl(String tableName, LevelDBOrderedTableService service) throws IOException {
+    private DatasetAdminImpl(String tableName, LevelDBTableService service) throws IOException {
       this.tableName = tableName;
       this.service = service;
     }
@@ -113,9 +113,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final String tableName;
-    private final LevelDBOrderedTableService service;
+    private final LevelDBTableService service;
 
-    public KVTableImpl(String tableName, LevelDBOrderedTableService service) throws IOException {
+    public KVTableImpl(String tableName, LevelDBTableService service) throws IOException {
       this.tableName = tableName;
       this.service = service;
     }

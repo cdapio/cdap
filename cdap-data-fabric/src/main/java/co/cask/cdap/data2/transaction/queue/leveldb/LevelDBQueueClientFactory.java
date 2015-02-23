@@ -16,8 +16,8 @@
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -42,7 +42,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
   private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
 
-  private final LevelDBOrderedTableService service;
+  private final LevelDBTableService service;
   private final ExecutorService evictionExecutor;
   private final LevelDBQueueAdmin queueAdmin;
   private final LevelDBStreamAdmin streamAdmin;
@@ -50,7 +50,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBQueueClientFactory(LevelDBOrderedTableService service,
+  public LevelDBQueueClientFactory(LevelDBTableService service,
                                    LevelDBQueueAdmin queueAdmin,
                                    LevelDBStreamAdmin streamAdmin) throws Exception {
     this.service = service;
@@ -68,7 +68,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   public QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
-    LevelDBOrderedTableCore core = new LevelDBOrderedTableCore(admin.getActualTableName(queueName), service);
+    LevelDBTableCore core = new LevelDBTableCore(admin.getActualTableName(queueName), service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
@@ -79,7 +79,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
     return new LevelDBQueueProducer(
-      new LevelDBOrderedTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
+      new LevelDBTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
   }
 
   /**
