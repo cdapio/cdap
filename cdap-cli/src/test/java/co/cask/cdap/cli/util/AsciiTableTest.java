@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.util;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,6 +35,24 @@ public class AsciiTableTest {
       ImmutableList.of(
         "r1\n456,r11,r1",
         "r2,r2222\n123,r",
+        "r3333,r3,r3\n1"
+      ),
+      new RowMaker<String>() {
+        @Override
+        public Object[] makeRow(String object) {
+          return object.split(",");
+        }
+      }
+    ).print(System.out);
+  }
+
+  @Test
+  public void testBigCell() {
+    new AsciiTable<String>(
+      new String[] {"c1", "c2", "c3333"},
+      ImmutableList.of(
+        "r1zz" + Strings.repeat("z", 300) + "456,r11,r1",
+        "r2,r2222 zzzzzzz z z z zzzzzz z zzzzzzzzz zzzzzzz zzzzzzz zzzzzzz zzzzz zzz123,r",
         "r3333,r3,r3\n1"
       ),
       new RowMaker<String>() {
