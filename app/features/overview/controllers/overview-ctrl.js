@@ -18,7 +18,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
 
   var dataSrc = new MyDataSource($scope),
       partialPath = '/assets/features/overview/templates/',
-      PREFKEY = 'feature.admin.welcomeIsHidden';
+      PREFKEY = 'feature.overview.welcomeIsHidden';
 
   myLocalStorage.get(PREFKEY)
     .then(function (v) {
