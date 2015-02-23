@@ -25,7 +25,7 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
@@ -78,7 +78,7 @@ public class LevelDBQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBOrderedTableService.getInstance().clearTables();
+    LevelDBTableService.getInstance().clearTables();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class

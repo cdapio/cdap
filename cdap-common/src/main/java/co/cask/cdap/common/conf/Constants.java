@@ -701,9 +701,6 @@ public final class Constants {
   public static final String SYSTEM_NAMESPACE = "system";
   public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
-  public static final String TRASH_LOCATION = "fs.trash.location";
-  public static final String DEFAULT_TRASH_LOCATION = ".Trash";
-
   /**
    * Constants related to external systems.
    */

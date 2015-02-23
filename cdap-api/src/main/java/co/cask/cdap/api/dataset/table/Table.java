@@ -29,6 +29,19 @@ import javax.annotation.Nullable;
  */
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>, Dataset {
   /**
+   * Property set to configure time-to-live on data within this dataset. The value given is in milliseconds.
+   * Once a cell's data has surpassed the given value in age,
+   * the cell's data will no longer be visible and may be garbage collected.
+   */
+  String PROPERTY_TTL = "dataset.table.ttl";
+
+  /**
+   * Property set to configure read-less increment support for a dataset.  When not set, calling the
+   * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write operation.
+   */
+  String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
+
+  /**
    * Reads values of all columns of the specified row.
    * <p>
    * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less

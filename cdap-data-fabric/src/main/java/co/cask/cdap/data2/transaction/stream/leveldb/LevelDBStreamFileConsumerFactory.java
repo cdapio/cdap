@@ -20,8 +20,8 @@ import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -44,13 +44,13 @@ import javax.annotation.Nullable;
 public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileConsumerFactory {
 
   private final CConfiguration cConf;
-  private final LevelDBOrderedTableService tableService;
+  private final LevelDBTableService tableService;
   private final ConcurrentMap<String, Object> dbLocks;
 
   @Inject
   LevelDBStreamFileConsumerFactory(StreamAdmin streamAdmin,
                                    StreamConsumerStateStoreFactory stateStoreFactory,
-                                   CConfiguration cConf, LevelDBOrderedTableService tableService) {
+                                   CConfiguration cConf, LevelDBTableService tableService) {
     super(cConf, streamAdmin, stateStoreFactory);
     this.cConf = cConf;
     this.tableService = tableService;
@@ -66,7 +66,7 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
     tableService.ensureTableExists(tableName);
 
-    LevelDBOrderedTableCore tableCore = new LevelDBOrderedTableCore(tableName, tableService);
+    LevelDBTableCore tableCore = new LevelDBTableCore(tableName, tableService);
     Object dbLock = getDBLock(tableName);
     return new LevelDBStreamFileConsumer(cConf, streamConfig, consumerConfig, reader,
                                          stateStore, beginConsumerState, extraFilter,

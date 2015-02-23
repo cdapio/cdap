@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import com.google.inject.Inject;
@@ -40,14 +40,14 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueAdmin.class);
 
-  private final LevelDBOrderedTableService service;
+  private final LevelDBTableService service;
 
   @Inject
-  public LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
+  public LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service) {
     this(conf, service, QUEUE);
   }
 
-  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBOrderedTableService service,
+  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service,
                               QueueConstants.QueueType type) {
     super(conf, type);
     this.service = service;
