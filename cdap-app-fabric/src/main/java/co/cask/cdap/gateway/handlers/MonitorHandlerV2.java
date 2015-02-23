@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,36 +20,24 @@ import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Monitor Handler V3
+ * Monitor handler V2 implementation
  */
-@Path(Constants.Gateway.API_VERSION_3)
-public class MonitorHandler extends AbstractMonitorHandler {
-
+@Path(Constants.Gateway.API_VERSION_2)
+public class MonitorHandlerV2 extends AbstractMonitorHandler {
   @Inject
-  public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
-                        ServiceStore serviceStore) throws Exception {
+  public MonitorHandlerV2(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
+                          ServiceStore serviceStore) throws Exception {
     super(authenticator, serviceMap, serviceStore);
   }
 
@@ -70,7 +58,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
   @Path("/system/services/{service-name}/instances")
   @PUT
   public void setServiceInstance(HttpRequest request, HttpResponder responder,
-                                 @PathParam("service-name") final String serviceName) {
+                                 @PathParam("service-name") String serviceName) {
     super.setServiceInstance(request, responder, serviceName);
   }
 
