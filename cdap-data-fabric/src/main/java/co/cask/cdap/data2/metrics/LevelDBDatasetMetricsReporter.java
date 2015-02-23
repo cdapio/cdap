@@ -26,11 +26,15 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -43,6 +47,7 @@ import java.util.concurrent.TimeUnit;
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
 public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBDatasetMetricsReporter.class);
   private static final int BYTES_IN_MB = 1024 * 1024;
 
   private final int reportIntervalInSec;
@@ -96,31 +101,42 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     }
   }
 
-  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
+  private static boolean isValidDatasetId(String datasetId) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9'))
+      .or(CharMatcher.is('.'))
+      .or(CharMatcher.is('$')).matchesAllOf(datasetId);
+  }
+
+  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat)
+    throws DatasetManagementException {
     for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
       Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetInstance == null) {
         // not a user dataset
         continue;
       }
-      datasetInstance.getId();
-      try {
-        Collection<DatasetSpecification> instances = dsFramework.getInstances(datasetInstance.getNamespace());
-        for (DatasetSpecification spec : instances) {
-          spec.getName();
+
+      Collection<DatasetSpecification> instances = dsFramework.getInstances(datasetInstance.getNamespace());
+      for (DatasetSpecification spec : instances) {
+        if (statEntry.getKey().startsWith(spec.getName())) {
+          datasetInstance = userDsNamespace.fromNamespaced(spec.getName());
+          break;
         }
-      } catch (DatasetManagementException e) {
-        e.printStackTrace();
       }
+
       // use the first part of the dataset name, would use history if dataset name is history.objects.kv
       MetricsCollector collector =
         metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
                                                     Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
 
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
+      metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.gauge("dataset.size.mb", sizeInMb);
+      collector.gauge("dataset.size.mb", 100);
     }
   }
 }

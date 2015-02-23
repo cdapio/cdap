@@ -54,7 +54,7 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   @Override
   @Nullable
   public Id.DatasetInstance fromNamespaced(String datasetInstanceName) {
-    return fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
+    return fromNamespaced(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetInstanceName));
   }
 
   @Override
