@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.flows')
           if (run.runid === $state.params.runId) {
             $scope.status = run.status;
             $scope.duration = (run.end? run.end - run.start: Date.now() - run.start);
-            $scope.startTime = run.start;
+            $scope.startTime = run.start*1000;
           }
         });
       });
