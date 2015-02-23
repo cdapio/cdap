@@ -33,8 +33,8 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scope
-    unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
-    namespace = new DefaultDatasetNamespace(conf);
+    this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
+    this.namespace = new DefaultDatasetNamespace(conf);
   }
 
   /**
