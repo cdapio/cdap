@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Codec to serialize and serialize {@link ServiceSpecification}
+ * Codec to serialize and deserialize {@link ServiceSpecification}
  */
 public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
 

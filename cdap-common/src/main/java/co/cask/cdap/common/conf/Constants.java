@@ -16,12 +16,16 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
+  public static final String ARCHIVE_DIR = "archive";
 
   /**
    * Global Service names.
@@ -121,7 +125,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
-    public static final String ARCHIVE_DIR = "archive";
   }
 
   /**
@@ -295,7 +298,7 @@ public final class Constants {
      */
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
-    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String STREAM_HANDLER_NAME = "stream_rest";
     public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
@@ -378,23 +381,40 @@ public final class Constants {
       // NOTES:
       //   * tag names must be unique (keeping all possible here helps to ensure that)
       //   * tag names better be short to reduce the serialized metric value size
+
+      public static final String NAMESPACE = "ns";
+
       public static final String RUN_ID = "run";
       public static final String INSTANCE_ID = "ins";
+
       public static final String COMPONENT = "cmp";
-      public static final String STREAM = "str";
-      public static final String DATASET = "ds";
-      public static final String SERVICE = "srv";
-      public static final String SERVICE_RUNNABLE = "srn";
       public static final String HANDLER = "hnd";
       public static final String METHOD = "mtd";
-      public static final String MR_TASK_TYPE = "mrt";
+
+      public static final String STREAM = "str";
+
+      public static final String DATASET = "ds";
+
       public static final String APP = "app";
-      public static final String PROGRAM = "prg";
-      public static final String PROGRAM_TYPE = "ptp";
+
+      public static final String SERVICE = "srv";
+      public static final String SERVICE_RUNNABLE = "srn";
+
+      public static final String WORKER = "wrk";
+
+      public static final String FLOW = "fl";
       public static final String FLOWLET = "flt";
       public static final String FLOWLET_QUEUE = "flq";
-      public static final String CLUSTER_METRICS = "cls";
-      public static final String NAMESPACE = "ns";
+
+      public static final String MAPREDUCE = "mr";
+      public static final String MR_TASK_TYPE = "mrt";
+
+      public static final String WORKFLOW = "wf";
+
+      public static final String SPARK = "sp";
+
+      public static final String PROCEDURE = "pr";
+
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
     }
@@ -680,6 +700,7 @@ public final class Constants {
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
   /**
    * Constants related to external systems.

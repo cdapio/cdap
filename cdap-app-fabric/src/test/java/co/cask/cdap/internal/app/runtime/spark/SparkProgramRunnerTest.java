@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -38,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.DefaultId;
 import co.cask.cdap.test.internal.TempFolder;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -82,8 +82,6 @@ public class SparkProgramRunnerTest {
   final String testString1 = "persisted data";
   final String testString2 = "distributed systems";
 
-  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
-
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -110,11 +108,11 @@ public class SparkProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf, Namespace.USER));
+                                                 new DefaultDatasetNamespace(conf));
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     datasetInstantiator =
-      new DatasetInstantiator(namespaceId, datasetFramework, injector.getInstance(CConfiguration.class),
+      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
                               SparkProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
@@ -128,8 +126,8 @@ public class SparkProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances(namespaceId)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, spec.getName()));
+    for (DatasetSpecification spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }
 

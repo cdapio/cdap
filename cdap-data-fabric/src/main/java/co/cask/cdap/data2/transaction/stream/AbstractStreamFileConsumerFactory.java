@@ -17,7 +17,6 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
@@ -64,8 +63,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix =
-      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
+    this.tablePrefix = new DefaultDatasetNamespace(cConf).namespace(QueueConstants.STREAM_TABLE_PREFIX).getId();
   }
 
   /**
