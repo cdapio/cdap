@@ -54,8 +54,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
                               QueueConstants.QueueType type) {
     this.service = service;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    String unqualifiedTableNamePrefix =
-      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    String unqualifiedTableNamePrefix = type.toString();
     this.tableNamePrefix = new DefaultDatasetNamespace(conf).namespace(unqualifiedTableNamePrefix).getId();
   }
 
