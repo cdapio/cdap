@@ -703,6 +703,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
+    // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
+    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
@@ -736,6 +738,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 90000L)
   public void testSQLQuery() throws Exception {
+    // Deploying app makes sure that the default namespace is available.
+    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
@@ -750,7 +754,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try {
 
       // run a query over the dataset
-      ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+      ResultSet results = connection.prepareStatement("select first from cdap_default_mytable where second = '1'")
         .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));

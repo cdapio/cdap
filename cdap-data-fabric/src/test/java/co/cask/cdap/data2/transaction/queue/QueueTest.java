@@ -27,6 +27,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -50,7 +51,6 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -154,7 +154,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    streamAdmin.dropAll();
+    streamAdmin.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
     // verify that queue is gone and stream is still there
     final QueueConsumer qConsumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -304,12 +304,8 @@ public abstract class QueueTest {
     txContext.finish();
 
     txContext.start();
-    if (fifoConsumer instanceof Closeable) {
-      ((Closeable) fifoConsumer).close();
-    }
-    if (hashConsumer instanceof Closeable) {
-      ((Closeable) hashConsumer).close();
-    }
+    fifoConsumer.close();
+    hashConsumer.close();
     txContext.finish();
 
     verifyQueueIsEmpty(queueName, 2, 1);
@@ -650,9 +646,7 @@ public abstract class QueueTest {
           } catch (Exception e) {
             LOG.error(e.getMessage(), e);
           } finally {
-            if (producer instanceof Closeable) {
-              Closeables.closeQuietly((Closeable) producer);
-            }
+            Closeables.closeQuietly(producer);
           }
         }
       });
@@ -683,9 +677,7 @@ public abstract class QueueTest {
       txContext.finish();
     }
 
-    if (consumer instanceof Closeable) {
-      Closeables.closeQuietly((Closeable) consumer);
-    }
+    Closeables.closeQuietly(consumer);
 
     Assert.assertEquals(expectedSum, dequeueSum);
   }
@@ -718,9 +710,7 @@ public abstract class QueueTest {
       txContext.finish();
     }
 
-    if (consumer instanceof Closeable) {
-      ((Closeable) consumer).close();
-    }
+    consumer.close();
 
     // Consume 2 odd entries
     consumer = queueClientFactory.createConsumer(
@@ -736,9 +726,7 @@ public abstract class QueueTest {
     txContext.finish();
 
     // Close the consumer and re-create with the same instance ID, it should keep consuming
-    if (consumer instanceof Closeable) {
-      ((Closeable) consumer).close();
-    }
+    consumer.close();
 
     // Consume the rest odd entries
     consumer = queueClientFactory.createConsumer(
@@ -772,12 +760,8 @@ public abstract class QueueTest {
     Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
     txContext.finish();
 
-    if (producer instanceof Closeable) {
-      ((Closeable) producer).close();
-    }
-    if (consumer instanceof Closeable) {
-      ((Closeable) consumer).close();
-    }
+    producer.close();
+    consumer.close();
 
     forceEviction(queueName);
 
@@ -790,9 +774,7 @@ public abstract class QueueTest {
     Assert.assertEquals(55, Bytes.toInt(consumer2.dequeue().iterator().next()));
     txContext.finish();
 
-    if (consumer2 instanceof Closeable) {
-      ((Closeable) consumer2).close();
-    }
+    consumer2.close();
 
     // now all should be evicted
     verifyQueueIsEmpty(queueName, 2, 1);
@@ -866,18 +848,13 @@ public abstract class QueueTest {
               LOG.info("Dequeue avg {} entries per seconds for {}",
                        (double) dequeueCount * 1000 / elapsed, queueName.getSimpleName());
 
-              if (consumer instanceof Closeable) {
-                txContext.start();
-                ((Closeable) consumer).close();
-                txContext.finish();
-              }
+              txContext.start();
+              consumer.close();
+              txContext.finish();
 
               completeLatch.countDown();
             } finally {
-              if (consumer instanceof Closeable) {
-
-                ((Closeable) consumer).close();
-              }
+              consumer.close();
             }
           } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -957,9 +934,7 @@ public abstract class QueueTest {
                      (double) count * 1000 / elapsed, queueName.getSimpleName());
             stopwatch.stop();
           } finally {
-            if (producer instanceof Closeable) {
-              ((Closeable) producer).close();
-            }
+            producer.close();
           }
         } catch (Exception e) {
           LOG.error(e.getMessage(), e);
@@ -988,9 +963,7 @@ public abstract class QueueTest {
           txContext.abort();
           throw Throwables.propagate(e);
         } finally {
-          if (consumer instanceof Closeable) {
-            ((Closeable) consumer).close();
-          }
+          consumer.close();
         }
       }
     }
@@ -1006,12 +979,11 @@ public abstract class QueueTest {
     DequeueResult<byte[]> result = consumer.dequeue();
     if (!result.isEmpty()) {
       StringBuilder resultString = new StringBuilder();
-      Iterator<byte[]> resultIter = result.iterator();
-      while (resultIter.hasNext()) {
+      for (byte[] aResult : result) {
         if (resultString.length() > 0) {
           resultString.append(", ");
         }
-        resultString.append(Bytes.toInt(resultIter.next()));
+        resultString.append(Bytes.toInt(aResult));
       }
       LOG.info("Queue should be empty but returned result: " + result.toString() + ", value = " +
                resultString.toString());
