@@ -42,7 +42,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Monitor Handler returns the status of different discoverable services
+ * Monitor Handler V3
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class MonitorHandler extends AbstractMonitorHandler {

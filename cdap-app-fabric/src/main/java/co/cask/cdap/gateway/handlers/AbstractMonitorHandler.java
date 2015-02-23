@@ -42,7 +42,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * Monitor Handler returns the status of different discoverable services
  */
 public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   private final Map<String, MasterServiceManager> serviceManagementMap;
