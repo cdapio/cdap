@@ -65,22 +65,18 @@ public class UnderlyingSystemNamespaceAdmin {
   /**
    * Delete a namespace from the underlying system
    * Can perform operations such as deleting directories, deleting namespaces, etc.
-   * The default implementation soft deletes the namespace directory on the filesystem.
+   * The default implementation deletes the namespace directory on the filesystem.
    * Subclasses can override to add more logic such as delete namespaces in HBase, etc.
    *
    * @param namespaceId {@link Id.Namespace} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace
    */
   protected void delete(Id.Namespace namespaceId) throws IOException {
+    // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = locationFactory.create(namespaceId.getId());
-    Location trashLocation = locationFactory.create(cConf.get(Constants.TRASH_LOCATION,
-                                                              Constants.DEFAULT_TRASH_LOCATION));
-    Locations.mkdirsIfNotExists(trashLocation);
-    if (namespaceHome.exists()) {
-      if (namespaceHome.renameTo(trashLocation.append(namespaceId.getId())) == null) {
+    if (namespaceHome.exists() && !namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
                                             namespaceHome.toURI().toString(), namespaceId.getId()));
-      }
     } else {
       // warn that namespace home was not found and skip delete step
       LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
