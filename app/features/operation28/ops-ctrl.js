@@ -13,7 +13,7 @@ angular.module(PKG.name+'.feature.operation28')
     $scope.panels = [
       ['Collect', 'EPS',   'collect.events'],
       ['Process', '%',     'process.busyness'],
-      ['Store',   'B/S',   'dataset.store.bytes'],
+      ['Store',   '/S',    'dataset.store.bytes', true],
       ['Query',   'QPS',   'query.requests']
     ].map(op28helper.panelMap);
 
@@ -42,8 +42,8 @@ angular.module(PKG.name+'.feature.operation28')
     $scope.panels = [
       ['AppFabric',  'Containers', 'containers'],
       ['Processors', 'Cores',      'vcores'],
-      ['Memory',     'B',          'memory'],
-      ['DataFabric', 'B',          'storage']
+      ['Memory',     '',           'memory', true],
+      ['DataFabric', '',           'storage', true]
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -113,18 +113,10 @@ angular.module(PKG.name+'.feature.operation28')
   .factory('op28helper', function () {
 
     function panelMap (d) {
-      var unit = d[1],
-          useByteFilter = false;
-
-      if(unit.substr(0,1)==='B') {
-        useByteFilter = true;
-        unit = unit.substr(1);
-      }
-
       return {
         title: d[0],
-        unit: unit,
-        useByteFilter: useByteFilter,
+        unit: d[1],
+        useByteFilter: d[3],
         chart: {
           metric: d[2],
           context: 'system',
