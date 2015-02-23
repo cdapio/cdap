@@ -170,6 +170,11 @@ public final class Constants {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
 
+    // Table dataset property that defines whether table is transactional or not.
+    // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
+    // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
+    public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
+
     /**
      * DatasetManager service configuration.
      */
