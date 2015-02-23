@@ -47,7 +47,6 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(ServiceCommands.class))
         .add(injector.getInstance(AdapterCommands.class))
         .add(injector.getInstance(PreferencesCommandSet.class))
-          //TODO: uncomment when namespace is ready
         .add(injector.getInstance(NamespaceCommands.class))
         .build());
   }

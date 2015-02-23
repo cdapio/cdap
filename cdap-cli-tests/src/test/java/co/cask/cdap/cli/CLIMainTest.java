@@ -292,7 +292,7 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsKV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started Service");
     try {
@@ -304,7 +304,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-      String runtimeArgs2KV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
       testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
@@ -404,6 +404,7 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " inv", "Unsupported");
   }
 
   @Test

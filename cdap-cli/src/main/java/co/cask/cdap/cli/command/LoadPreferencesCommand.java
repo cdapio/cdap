@@ -66,19 +66,17 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       throw new IllegalArgumentException("Not a file: " + file);
     }
 
-    if (contentType.isEmpty() || !(contentType.equals("json") || contentType.equals("xml"))) {
-      throw new IllegalArgumentException("Unsupported file format. Only json and xml formats are supported");
-    }
-
     FileReader reader = new FileReader(file);
     Map<String, String> args = Maps.newHashMap();
     try {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-      } else {
+      } else if (contentType.equals("xml")) {
         XStream xStream = new XStream();
         xStream.alias("map", Map.class);
         args = (Map<String, String>) xStream.fromXML(reader);
+      } else {
+        throw new IllegalArgumentException("Unsupported file format. Only json and xml formats are supported");
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
