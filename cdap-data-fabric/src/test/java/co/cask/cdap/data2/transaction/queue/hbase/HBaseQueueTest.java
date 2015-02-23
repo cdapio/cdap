@@ -187,14 +187,14 @@ public abstract class HBaseQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
@@ -282,7 +282,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     } finally {
       hTable.close();
-      queueAdmin.dropAll();
+      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
   }
 
@@ -311,7 +311,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix();
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix(Constants.DEFAULT_NAMESPACE);
     Assert.assertTrue(queueTablename.startsWith("test."));
   }
 

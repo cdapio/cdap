@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
@@ -89,9 +90,10 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
-  private final String tableNamePrefix;
   private final String configTableName;
   private final QueueConstants.QueueType type;
+  private final String unqualifiedTableNamePrefix;
+  private final DefaultDatasetNamespace namespace;
 
   private HBaseAdmin admin;
 
@@ -112,12 +114,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.cConf = cConf;
     this.tableUtil = tableUtil;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    String unqualifiedTableNamePrefix =
-      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    // system scope
+    unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "."
+      + (type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX);
     this.type = type;
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
-    this.tableNamePrefix =
-      HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix).getId());
+    namespace = new DefaultDatasetNamespace(cConf);
     this.configTableName =
       HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME).getId());
     this.locationFactory = locationFactory;
@@ -137,7 +138,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
    */
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
-      // <cdap namespace>.system.queue.<namespace>.<app>.<flow>
+      // <root namespace>.<queue namespace>.system.queue.<app>.<flow>
       return getTableNameForFlow(queueName.getFirstComponent(),
                                  queueName.getSecondComponent(),
                                  queueName.getThirdComponent());
@@ -147,11 +148,9 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   private String getTableNameForFlow(String namespaceId, String app, String flow) {
-    StringBuilder tableName = new StringBuilder(tableNamePrefix).append(".");
-    if (!Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
-      tableName.append(namespaceId).append(".");
-    }
-    return tableName.append(app).append(".").append(flow).toString();
+    String tablePrefix = getTableNamePrefix(namespaceId);
+    String tableName = tablePrefix + "." + app + "." + flow;
+    return HBaseTableUtil.getHBaseTableName(tableName);
   }
 
   /**
@@ -192,15 +191,12 @@ public class HBaseQueueAdmin implements QueueAdmin {
    * @return namespace id that this queue belongs to
    */
   public static String getNamespaceId(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
+    // last three parts are namespaceId, appName and flow
     String[] parts = queueTableName.split("\\.");
     String namespaceId;
-    if (parts.length == 5) {
-      // cdap.system.queue.<app>.<flow>
-      namespaceId = Constants.DEFAULT_NAMESPACE;
-    } else if (parts.length == 6) {
-      // cdap.system.queue.<namespace>.<app>.<flow>
-      namespaceId = parts[parts.length - 3];
+    if (parts.length == 6) {
+      // cdap.<namespace>.system.queue.<app>.<flow>
+      namespaceId = parts[1];
     } else {
       throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
                                                          "Expected 'cdap.system.queue.<app>.<flow>' or " +
@@ -418,16 +414,9 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAll() throws Exception {
-    dropTablesWithPrefix(tableNamePrefix);
-    // drop config table last
-    drop(Bytes.toBytes(configTableName));
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    dropTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
+    dropTablesWithPrefix(String.format("%s.", getTableNamePrefix(namespaceId)));
     deleteConsumerConfigurations(namespaceId);
   }
 
@@ -547,12 +536,22 @@ public class HBaseQueueAdmin implements QueueAdmin {
     for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
       String tableName = Bytes.toString(desc.getName());
       // It's important to skip config table enabled.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+      if (isDataTable(tableName) && !tableName.equals(configTableName)) {
         LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         upgrade(tableName, properties);
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
       }
     }
+  }
+
+  private boolean isDataTable(String tableName) {
+    String[] parts = tableName.split("\\.");
+    if (parts.length != 6) {
+      return false;
+    }
+    String namespace = parts[1];
+    String tableNamePrefix = getTableNamePrefix(namespace);
+    return tableName.startsWith(tableNamePrefix);
   }
 
   private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
@@ -627,8 +626,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return mutations;
   }
 
-  protected String getTableNamePrefix() {
-    return tableNamePrefix;
+  protected String getTableNamePrefix(String namespaceId) {
+    // returns String with format:  '<root namespace>.<namespaceId>.system.(stream|queue)'
+    String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
+                                                                     unqualifiedTableNamePrefix)).getId();
+    return HBaseTableUtil.getHBaseTableName(tablePrefix);
   }
 
   public String getConfigTableName() {
