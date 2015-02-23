@@ -24,8 +24,9 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -57,13 +58,16 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
   private final ServiceClient serviceClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient, CLIConfig cliConfig) {
+  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient, CLIConfig cliConfig,
+                            TableRenderer tableRenderer) {
     super(cliConfig);
     this.clientConfig = clientConfig;
     this.restClient = RESTClient.create(clientConfig);
     this.serviceClient = serviceClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -91,24 +95,18 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
     HttpResponse response = restClient.execute(builder.build(), clientConfig.getAccessToken());
 
-    new AsciiTable<HttpResponse>(
-      new String[] { "status", "headers", "body size", "body"},
-      ImmutableList.of(response),
-      new RowMaker<HttpResponse>() {
+    Table table = Table.builder()
+      .setHeader("status", "headers", "body size", "body")
+      .setRows(ImmutableList.of(response), new RowMaker<HttpResponse>() {
         @Override
         public Object[] makeRow(HttpResponse httpResponse) {
           ByteBuffer byteBuffer = ByteBuffer.wrap(httpResponse.getResponseBody());
           long bodySize = byteBuffer.remaining();
-
-          return new Object[] {
-            httpResponse.getResponseCode(),
-            formatHeaders(httpResponse),
-            bodySize,
-            getBody(byteBuffer)
-          };
+          return new Object[]{httpResponse.getResponseCode(), formatHeaders(httpResponse),
+            bodySize, getBody(byteBuffer)};
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

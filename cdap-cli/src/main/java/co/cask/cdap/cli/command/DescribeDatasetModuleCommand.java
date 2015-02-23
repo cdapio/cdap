@@ -20,13 +20,14 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -37,11 +38,14 @@ import java.io.PrintStream;
 public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetModuleClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig) {
+  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig,
+                                      TableRenderer tableRenderer) {
     super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -49,10 +53,9 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
     String moduleName = arguments.get(ArgumentName.DATASET_MODULE.toString());
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleName);
 
-    new AsciiTable<DatasetModuleMeta>(
-      new String[] { "name", "className", "jarLocation", "types", "usesModules", "usedByModules" },
-      Lists.newArrayList(datasetModuleMeta),
-      new RowMaker<DatasetModuleMeta>() {
+    Table table = Table.builder()
+      .setHeader("name", "className", "jarLocation", "types", "usesModules", "usedByModules")
+      .setRows(ImmutableList.of(datasetModuleMeta), new RowMaker<DatasetModuleMeta>() {
         @Override
         public Object[] makeRow(DatasetModuleMeta object) {
           return new Object[] { object.getName(), object.getClassName(), object.getJarLocation(),
@@ -61,7 +64,8 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
             Joiner.on(", ").join(object.getUsedByModules())
           };
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

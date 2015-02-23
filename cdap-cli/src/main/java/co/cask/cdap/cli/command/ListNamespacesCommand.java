@@ -17,8 +17,9 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
@@ -31,25 +32,27 @@ import java.io.PrintStream;
  * {@link Command} to list namespaces.
  */
 public class ListNamespacesCommand implements Command {
+
   private final NamespaceClient namespaceClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListNamespacesCommand(NamespaceClient namespaceClient) {
+  public ListNamespacesCommand(NamespaceClient namespaceClient, TableRenderer tableRenderer) {
     this.namespaceClient = namespaceClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    new AsciiTable<NamespaceMeta>(
-      new String[]{"id", "display_name", "description"},
-      namespaceClient.list(),
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
         @Override
         public Object[] makeRow(NamespaceMeta object) {
           return new Object[] {object.getId(), object.getName(), object.getDescription()};
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

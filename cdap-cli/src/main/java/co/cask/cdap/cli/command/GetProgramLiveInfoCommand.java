@@ -20,13 +20,14 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 import java.io.PrintStream;
 
@@ -37,11 +38,14 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
+  private final TableRenderer tableRenderer;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig,
+                                      TableRenderer tableRenderer) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -55,30 +59,28 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
     DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(appId, elementType.getProgramType(), programId);
 
-    new AsciiTable<DistributedProgramLiveInfo>(
-      new String[] { "app", "type", "id", "runtime", "yarn app id"},
-      Lists.newArrayList(liveInfo),
-      new RowMaker<DistributedProgramLiveInfo>() {
+    Table table = Table.builder()
+      .setHeader("app", "type", "id", "runtime", "yarn app id")
+      .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
         @Override
         public Object[] makeRow(DistributedProgramLiveInfo object) {
           return new Object[] { object.getApp(), object.getType(), object.getId(), object.getRuntime(),
             object.getYarnAppId() };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
 
     if (liveInfo.getContainers() != null) {
-      new AsciiTable<Containers.ContainerInfo>(
-        new String[] { "containers", "instance", "host", "container", "memory", "virtual cores", "debug port" },
-        liveInfo.getContainers(),
-        new RowMaker<Containers.ContainerInfo>() {
+      Table containersTable = Table.builder()
+        .setHeader("containers", "instance", "host", "container", "memory", "virtual cores", "debug port")
+        .setRows(liveInfo.getContainers(), new RowMaker<Containers.ContainerInfo>() {
           @Override
           public Object[] makeRow(Containers.ContainerInfo object) {
             return new Object[] { "", object.getInstance(), object.getHost(), object.getContainer(),
               object.getMemory(), object.getVirtualCores(), object.getDebugPort() };
           }
-        }
-      ).print(output);
+        }).build();
+      tableRenderer.render(output, containersTable);
     }
   }
 

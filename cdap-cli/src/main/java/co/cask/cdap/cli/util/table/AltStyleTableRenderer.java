@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,8 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.cli.util;
+package co.cask.cdap.cli.util.table;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -25,10 +24,9 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
- * Utility class to print an ASCII table. e.g.
+ * {@link TableRenderer} implementation to print an ASCII table in the alt style. e.g.
  *
  * +=======================================================================+
  * | pid                                  | end status | start      | stop |
@@ -43,41 +41,46 @@ import javax.annotation.Nullable;
  * | d9cae8f9-3fd3-45f4-b4e9-102ef38cf4e1 | STOPPED    | 1405371545 | 0    |
  * +=======================================================================+
  *
- * @param <T> type of object that the rows represent
+ * E.g. when cells are multiple lines:
+ *
+ * +========================================================================================+
+ * | c1                         | c2                         | c3333                        |
+ * +========================================================================================+
+ * | r1zzzzzzzzzzzzzzzzzzzzzzzz | r11                        | r1                           |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * |----------------------------------------------------------------------------------------|
+ * | r2                         | r2222 zzzzzzz z z z zzzzzz | r                            |
+ * |                            | z z zzzzzzzzz zzzzzzz zzzz |                              |
+ * |----------------------------------------------------------------------------------------|
+ * | r3333                      | r3                         | r3                           |
+ * |                            |                            | 1                            |
+ * +========================================================================================+
  */
-public class AsciiTable<T> {
+public class AltStyleTableRenderer implements TableRenderer {
 
-  private final List<String> header;
-  private final List<T> records;
-  private final RowMaker<T> rowMaker;
-
-  /**
-   * @param header strings representing the header of the table
-   * @param records list of objects that represent the rows
-   * @param rowMaker makes Object arrays from a row object
-   */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker) {
-    this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
-    this.records = records;
-    this.rowMaker = rowMaker;
-  }
-
-  /**
-   * Prints the ASCII table to the {@link PrintStream} output.
-   *
-   * @param output {@link PrintStream} to print to
-   */
-  public void print(PrintStream output) {
+  @Override
+  public void render(PrintStream output, Table table) {
+    List<String> header = table.getHeader();
+    List<Row> rows = Lists.newArrayList();
 
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
     boolean useRowDivider = false;
-    List<Row> rows = Lists.newArrayList();
-    for (T row : records) {
-      useRowDivider = generateRow(rowMaker.makeRow(row), rows) || useRowDivider;
+    for (String[] row : table.getRows()) {
+      useRowDivider = generateRow(row, rows) || useRowDivider;
     }
 
-    int[] columnWidths = calculateColumnWidths(header, rows);
+    int[] columnWidths = calculateColumnWidths(table.getHeader(), rows);
 
     // If has header, prints the header.
     if (!header.isEmpty()) {
@@ -150,7 +153,7 @@ public class AsciiTable<T> {
    * @param collection Collection for collecting the generated {@link Row} object.
    * @return Returns true if the row spans multiple lines.
    */
-  private boolean generateRow(Object[] columns, Collection<? super Row> collection) {
+  private boolean generateRow(String[] columns, Collection<? super Row> collection) {
     ImmutableList.Builder<Cell> builder = ImmutableList.builder();
 
     boolean multiLines = false;

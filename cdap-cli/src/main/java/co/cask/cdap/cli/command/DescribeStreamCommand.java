@@ -21,12 +21,13 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -37,11 +38,13 @@ import java.io.PrintStream;
 public class DescribeStreamCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.streamClient = streamClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -49,17 +52,16 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
     String streamId = arguments.get(ArgumentName.STREAM.toString());
     StreamProperties config = streamClient.getConfig(streamId);
 
-    new AsciiTable<StreamProperties>(
-      new String[] { "ttl", "format", "schema" },
-      Lists.newArrayList(config),
-      new RowMaker<StreamProperties>() {
+    Table table = Table.builder()
+      .setHeader("ttl", "format", "schema")
+      .setRows(ImmutableList.of(config), new RowMaker<StreamProperties>() {
         @Override
         public Object[] makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
           return new Object[] { object.getTTL(), format.getName(), format.getSchema().toString() };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

@@ -21,8 +21,9 @@ import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -40,11 +41,13 @@ import javax.inject.Inject;
 public class ListAllProgramsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ApplicationClient appClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.appClient = appClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -55,17 +58,16 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
       allProgramsList.addAll(subList);
     }
 
-    new AsciiTable<ProgramRecord>(
-      new String[] { "type", "app", "id", "description" },
-      allProgramsList,
-      new RowMaker<ProgramRecord>() {
+    Table table = Table.builder()
+      .setHeader("type", "app", "id", "description")
+      .setRows(allProgramsList, new RowMaker<ProgramRecord>() {
         @Override
         public Object[] makeRow(ProgramRecord object) {
           return new Object[] { object.getType().getCategoryName(), object.getApp(),
             object.getId(), object.getDescription() };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

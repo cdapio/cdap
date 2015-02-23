@@ -19,8 +19,9 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
@@ -35,25 +36,27 @@ import java.util.List;
 public class ListDatasetModulesCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient client;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig) {
+  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.client = client;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetModuleMeta> list = client.list();
-    new AsciiTable<DatasetModuleMeta>(
-      new String[] { "name", "className" },
-      list,
-      new RowMaker<DatasetModuleMeta>() {
+    List<DatasetModuleMeta> modules = client.list();
+    Table table = Table.builder()
+      .setHeader("name", "className")
+      .setRows(modules, new RowMaker<DatasetModuleMeta>() {
         @Override
         public Object[] makeRow(DatasetModuleMeta object) {
           return new String[] { object.getName(), object.getClassName() };
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

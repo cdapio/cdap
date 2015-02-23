@@ -25,8 +25,9 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
@@ -40,11 +41,13 @@ import java.util.List;
 public class GetServiceEndpointsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ServiceClient serviceClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public GetServiceEndpointsCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
+  public GetServiceEndpointsCommand(ServiceClient serviceClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.serviceClient = serviceClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -58,10 +61,9 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
     String serviceId = appAndServiceId[1];
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(appId, serviceId);
 
-    new AsciiTable<ServiceHttpEndpoint>(
-      new String[] { "method", "path"},
-      endpoints,
-      new RowMaker<ServiceHttpEndpoint>() {
+    Table table = Table.builder()
+      .setHeader("method", "path")
+      .setRows(endpoints, new RowMaker<ServiceHttpEndpoint>() {
         @Override
         public Object[] makeRow(ServiceHttpEndpoint endpoint) {
           return new Object[] {
@@ -69,8 +71,8 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
             endpoint.getPath()
           };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

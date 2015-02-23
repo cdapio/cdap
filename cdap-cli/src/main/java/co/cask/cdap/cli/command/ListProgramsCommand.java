@@ -19,8 +19,9 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -36,25 +37,29 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
   private final ProgramType programType;
+  private final TableRenderer tableRenderer;
 
-  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig) {
+  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig,
+                             TableRenderer tableRenderer) {
     super(cliConfig);
     this.programType = programType;
     this.appClient = appClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<ProgramRecord> programs = appClient.listAllPrograms(programType);
-    new AsciiTable<ProgramRecord>(
-      new String[] { "app", "id", "description" },
-      programs,
-      new RowMaker<ProgramRecord>() {
+
+    Table table = Table.builder()
+      .setHeader("app", "id", "description")
+      .setRows(programs, new RowMaker<ProgramRecord>() {
         @Override
         public Object[] makeRow(ProgramRecord object) {
           return new Object[] { object.getApp(), object.getId(), object.getDescription() };
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

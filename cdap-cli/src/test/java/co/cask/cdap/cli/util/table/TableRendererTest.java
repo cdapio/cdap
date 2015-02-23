@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,35 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.cli.util;
+package co.cask.cdap.cli.util.table;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * A test for testing {@link AsciiTable} formatting. Not run as part of unit-test.
- * Just to have it handy to test format in IDE.
+ *
  */
 @Ignore
-public class AsciiTableTest {
+public abstract class TableRendererTest {
+
+  public abstract TableRenderer getRenderer();
 
   @Test
   public void testFormat() {
-    new AsciiTable<String>(
-      new String[] {"c1", "c2", "c3333"},
-      ImmutableList.of(
-        "r1\n456,r11,r1",
-        "r2,r2222\n123,r",
-        "r3333,r3,r3\n1"
-      ),
-      new RowMaker<String>() {
-        @Override
-        public Object[] makeRow(String object) {
-          return object.split(",");
-        }
-      }
-    ).print(System.out);
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333")
+      .setRows(ImmutableList.of(
+        new String[]{"r1\n456", "r11", "r1"},
+        new String[]{"r2", "r2222\n123", "r"},
+        new String[]{"r3333", "r3", "r3\n1"}))
+      .build();
+    getRenderer().render(System.out, table);
   }
+
 }

@@ -21,8 +21,9 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -37,11 +38,13 @@ import java.util.List;
 public class GetStreamEventsCommand extends AbstractCommand {
 
   private final StreamClient streamClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.streamClient = streamClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -56,14 +59,12 @@ public class GetStreamEventsCommand extends AbstractCommand {
     // Get a list of stream events and prints it.
     List<StreamEvent> events = streamClient.getEvents(streamId, startTime, endTime,
                                                       limit, Lists.<StreamEvent>newArrayList());
-    new AsciiTable<StreamEvent>(
-      new String[] { "timestamp", "headers", "body size", "body"},
-      events,
-      new RowMaker<StreamEvent>() {
+    Table table = Table.builder()
+      .setHeader("timestamp", "headers", "body size", "body")
+      .setRows(events, new RowMaker<StreamEvent>() {
         @Override
         public Object[] makeRow(StreamEvent event) {
           long bodySize = event.getBody().remaining();
-
           return new Object[] {
             event.getTimestamp(),
             event.getHeaders().isEmpty() ? "" : formatHeader(event.getHeaders()),
@@ -71,8 +72,9 @@ public class GetStreamEventsCommand extends AbstractCommand {
             getBody(event.getBody())
           };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
+
     output.printf("Fetched %d events from stream %s", events.size(), streamId);
     output.println();
   }

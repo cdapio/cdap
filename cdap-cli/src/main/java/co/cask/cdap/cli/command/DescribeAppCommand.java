@@ -20,8 +20,9 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -39,11 +40,13 @@ import java.util.Map;
 public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.applicationClient = applicationClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -55,17 +58,16 @@ public class DescribeAppCommand extends AbstractAuthCommand {
       programsList.addAll(subList);
     }
 
-    new AsciiTable<ProgramRecord>(
-      new String[] { "app", "type", "id", "description" },
-      programsList,
-      new RowMaker<ProgramRecord>() {
+    Table table = Table.builder()
+      .setHeader("app", "type", "id", "description")
+      .setRows(programsList, new RowMaker<ProgramRecord>() {
         @Override
         public Object[] makeRow(ProgramRecord object) {
           return new Object[] { object.getApp(), object.getType().getCategoryName(),
             object.getId(), object.getDescription() };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

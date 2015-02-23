@@ -21,8 +21,9 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
@@ -37,11 +38,14 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
+  private final TableRenderer tableRenderer;
 
-  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig,
+                                  TableRenderer tableRenderer) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -73,16 +77,15 @@ public class GetProgramRunsCommand extends AbstractCommand {
       throw new IllegalArgumentException("Unrecognized program element type for history: " + elementType);
     }
 
-    new AsciiTable<RunRecord>(
-      new String[] { "pid", "end status", "start", "stop" },
-      records,
-      new RowMaker<RunRecord>() {
+    Table table = Table.builder()
+      .setHeader("pid", "end status", "start", "stop")
+      .setRows(records, new RowMaker<RunRecord>() {
         @Override
         public Object[] makeRow(RunRecord object) {
           return new Object[] { object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs() };
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

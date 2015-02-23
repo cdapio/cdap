@@ -22,8 +22,9 @@ import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -51,11 +52,13 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   private static final long DEFAULT_TIMEOUT_MIN = Long.MAX_VALUE;
   private final QueryClient queryClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig) {
+  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.queryClient = queryClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -82,13 +85,16 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
       }
       List<QueryResult> rows = Lists.newArrayList(executionResult);
       executionResult.close();
-      new AsciiTable(header, rows, new RowMaker<QueryResult>() {
-        @Override
-        public Object[] makeRow(QueryResult object) {
-          return object.getColumns().toArray();
-        }
-      }).print(output);
 
+      Table table = Table.builder()
+        .setHeader(header)
+        .setRows(rows, new RowMaker<QueryResult>() {
+          @Override
+          public Object[] makeRow(QueryResult object) {
+            return object.getColumns().toArray();
+          }
+        }).build();
+      tableRenderer.render(output, table);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
@@ -116,7 +122,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).", 
+    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).",
                          ElementType.QUERY.getPrettyName(), ArgumentName.TIMEOUT);
   }
 
