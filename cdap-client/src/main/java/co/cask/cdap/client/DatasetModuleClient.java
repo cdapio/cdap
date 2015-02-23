@@ -68,7 +68,7 @@ public class DatasetModuleClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<DatasetModuleMeta> list() throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("data/modules");
+    URL url = config.resolveNamespacedURLV3("data/modules");
     return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
   }
@@ -86,7 +86,7 @@ public class DatasetModuleClient {
   public void add(String moduleName, String className, File moduleJarFile)
     throws BadRequestException, AlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/modules/%s", moduleName));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
@@ -114,7 +114,7 @@ public class DatasetModuleClient {
     throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException, IOException,
     UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/modules/%s", moduleName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_CONFLICT,
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -133,7 +133,7 @@ public class DatasetModuleClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public boolean exists(String moduleName) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/modules/%s", moduleName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -200,7 +200,7 @@ public class DatasetModuleClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void deleteAll() throws DatasetModuleCannotBeDeletedException, IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("data/modules");
+    URL url = config.resolveNamespacedURLV3("data/modules");
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -220,7 +220,7 @@ public class DatasetModuleClient {
    */
   public DatasetModuleMeta get(String moduleName) throws DatasetModuleNotFoundException, IOException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/modules/%s", moduleName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

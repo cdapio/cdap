@@ -288,4 +288,18 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertFalse(framework.hasType(tableType));
     Assert.assertFalse(framework.hasType(simpleKvType));
   }
+
+  @Test
+  public void testNamespaces() throws DatasetManagementException {
+    DatasetFramework framework = getFramework();
+
+    Id.Namespace namespace = Id.Namespace.from("yourspace");
+    framework.createNamespace(namespace);
+    try {
+      framework.createNamespace(namespace);
+      Assert.fail("Should not be able to create a duplicate namespace");
+    } catch (DatasetManagementException e) {
+    }
+    framework.deleteNamespace(namespace);
+  }
 }
