@@ -62,7 +62,7 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no Flow, Procedure, MapReduce job, or Service defined; " +
+      "Application %s has no Flow, Procedure, Worker, MapReduce job, or Service defined; " +
         "should have at least one of them defined"
     );
   }

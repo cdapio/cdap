@@ -62,6 +62,6 @@ public class ListAppsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Lists all " + ElementType.APP.getPluralPrettyName();
+    return String.format("Lists all %s.", ElementType.APP.getPluralPrettyName());
   }
 }

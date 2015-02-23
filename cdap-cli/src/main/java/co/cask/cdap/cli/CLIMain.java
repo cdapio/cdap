@@ -73,13 +73,12 @@ public class CLIMain {
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier(), cliConfig),
-        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
+        new HelpCommand(getCommandsSupplier()),
+        new SearchCommandsCommand(getCommandsSupplier())
       )));
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
-    cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
@@ -98,19 +97,24 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
+    setCLIPrompt(cliConfig.getCurrentNamespace(), cliConfig.getURI());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(String newNamespace, URI newURI) {
-        cli.getReader().setPrompt("cdap (" + newURI + "//" + newNamespace + ")> ");
+        setCLIPrompt(newNamespace, newURI);
       }
     });
+  }
+
+  private void setCLIPrompt(String namespace, URI uri) {
+    cli.getReader().setPrompt("cdap (" + uri + "//" + namespace + ")> ");
   }
 
   public CLI getCLI() {
     return this.cli;
   }
 
-  private Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
+  public Supplier<Iterable<CommandSet<Command>>> getCommandsSupplier() {
     return new Supplier<Iterable<CommandSet<Command>>>() {
       @Override
       public Iterable<CommandSet<Command>> get() {

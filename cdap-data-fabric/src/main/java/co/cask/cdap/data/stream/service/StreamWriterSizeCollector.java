@@ -19,12 +19,20 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Keep track of the sizes of the files written by one {@link StreamHandlerV2}.
  */
 public interface StreamWriterSizeCollector extends Service {
 
   // TODO have one implementation of this
+
+  /**
+   * @return the streamSizes tracked by this StreamWriterSizeCollector.
+   */
+  Map<Id.Stream, AtomicLong> getStreamSizes();
 
   /**
    * Get the total amount of bytes collected for the stream {@code streamId} so far.

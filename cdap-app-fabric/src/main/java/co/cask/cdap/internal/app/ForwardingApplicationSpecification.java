@@ -23,6 +23,7 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -97,6 +98,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, ServiceSpecification> getServices() {
     return delegate.getServices();
+  }
+
+  @Override
+  public Map<String, WorkerSpecification> getWorkers() {
+    return delegate.getWorkers();
   }
 
   @Override

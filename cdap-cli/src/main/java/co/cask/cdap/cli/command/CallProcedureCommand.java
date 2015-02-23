@@ -76,7 +76,7 @@ public class CallProcedureCommand extends AbstractAuthCommand implements Categor
 
   @Override
   public String getDescription() {
-    return "Calls a " + ElementType.PROCEDURE.getPrettyName();
+    return String.format("Calls a %s.", ElementType.PROCEDURE.getPrettyName());
   }
 
   @Override

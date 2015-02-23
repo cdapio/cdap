@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.guice;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
@@ -29,7 +30,6 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.metrics.store.MetricStore;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -42,8 +42,6 @@ import com.google.inject.name.Names;
 public class MetricsHandlerModule extends PrivateModule {
   @Override
   protected void configure() {
-    bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-    bind(MetricStore.class).to(DefaultMetricStore.class);
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 

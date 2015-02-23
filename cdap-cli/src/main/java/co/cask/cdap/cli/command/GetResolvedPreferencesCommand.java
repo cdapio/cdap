@@ -38,6 +38,6 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getDescription() {
-    return "Gets the resolved preferences of a " + type.getPrettyName();
+    return String.format("Gets the resolved preferences of a %s.", type.getPrettyName());
   }
 }

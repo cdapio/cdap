@@ -29,7 +29,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -257,6 +256,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
         case SERVICE:
           createProgramRecords(appSpec.getName(), type, appSpec.getServices().values(), programRecords);
           break;
+        case WORKER:
+          createProgramRecords(appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
+          break;
         case WORKFLOW:
           createProgramRecords(appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
           break;
@@ -329,21 +331,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return false;
   }
 
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * TODO: Should use {@link RESTMigrationUtils#rewriteV2RequestToV3} instead
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
-  }
-
-
   protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
                                 Data type, String namespace, String name, String appId) {
     try {
@@ -374,12 +361,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
                                Id.Program programId, Data type, String name) {
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     if (type == Data.DATASET) {
-      DatasetSpecification dsSpec = getDatasetSpec(dsFramework, name);
-      String typeName = null;
-      if (dsSpec != null) {
-        typeName = dsSpec.getType();
-      }
-      return GSON.toJson(makeDataSetRecord(name, typeName));
+      DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
+      return dsSpec == null ? "" : GSON.toJson(makeDataSetRecord(name, dsSpec.getType()));
     } else if (type == Data.STREAM) {
       StreamSpecification spec = store.getStream(namespace, name);
       return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -389,15 +372,16 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   private String listDataEntities(Store store, DatasetFramework dsFramework,
                                   Id.Program programId, Data type) throws Exception {
+    Id.Namespace namespaceId = Id.Namespace.from(programId.getNamespaceId());
     if (type == Data.DATASET) {
-      Collection<DatasetSpecification> instances = dsFramework.getInstances();
+      Collection<DatasetSpecification> instances = dsFramework.getInstances(namespaceId);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
       for (DatasetSpecification instance : instances) {
         result.add(makeDataSetRecord(instance.getName(), instance.getType()));
       }
       return GSON.toJson(result);
     } else if (type == Data.STREAM) {
-      Collection<StreamSpecification> specs = store.getAllStreams(new Id.Namespace(programId.getNamespaceId()));
+      Collection<StreamSpecification> specs = store.getAllStreams(namespaceId);
       List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
       for (StreamSpecification spec : specs) {
         result.add(makeStreamRecord(spec.getName(), null));
@@ -413,12 +397,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     Id.Namespace namespace = new Id.Namespace(programId.getNamespaceId());
     ApplicationSpecification appSpec = store.getApplication(new Id.Application(
       namespace, programId.getApplicationId()));
+    if (appSpec == null) {
+      return "";
+    }
     if (type == Data.DATASET) {
       Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
       for (String dsName : dataSetsUsed) {
         String typeName = null;
-        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, dsName);
+        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, dsName);
         if (dsSpec != null) {
           typeName = dsSpec.getType();
         }
@@ -438,9 +425,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   @Nullable
-  private DatasetSpecification getDatasetSpec(DatasetFramework dsFramework, String dsName) {
+  private DatasetSpecification getDatasetSpec(DatasetFramework dsFramework, Id.Namespace namespaceId, String dsName) {
     try {
-      return dsFramework.getDatasetSpec(dsName);
+      return dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespaceId, dsName));
     } catch (Exception e) {
       LOG.warn("Couldn't get spec for dataset: " + dsName);
       return null;
@@ -518,10 +505,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   private List<ProgramRecord> listProgramsByDataAccess(Store store, DatasetFramework dsFramework,
                                                        Id.Program programId, ProgramType type,
                                                        Data data, String name) throws Exception {
+    Id.Namespace namespaceId = programId.getApplication().getNamespace();
     // search all apps for programs that use this
     List<ProgramRecord> result = Lists.newArrayList();
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(
-      new Id.Namespace(programId.getNamespaceId()));
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
     if (appSpecs != null) {
       for (ApplicationSpecification appSpec : appSpecs) {
         if (type == ProgramType.FLOW) {
@@ -552,7 +539,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     // if no programs were found, check whether the data exists, return [] if yes, null if not
     boolean exists = false;
     if (data == Data.DATASET) {
-      exists = dsFramework.hasInstance(name);
+      exists = dsFramework.hasInstance(Id.DatasetInstance.from(namespaceId, name));
     } else if (data == Data.STREAM) {
       exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
     }

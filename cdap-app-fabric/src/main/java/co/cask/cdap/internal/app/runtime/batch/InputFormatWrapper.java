@@ -49,7 +49,7 @@ public class InputFormatWrapper<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     // this should be called when the job is submitted from the MapReduceRuntimeService
     return getInputFormat(context.getConfiguration(),
-                          Thread.currentThread().getContextClassLoader()).getSplits(context);
+                          context.getConfiguration().getClassLoader()).getSplits(context);
   }
 
   @Override

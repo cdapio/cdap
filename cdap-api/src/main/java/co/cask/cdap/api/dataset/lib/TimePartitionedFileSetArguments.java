@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * Helpers for manipulating runtime arguments of time-partitioned file sets.
  */
 @Beta
-public class TimePartitionedFileSetArguments {
+public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments {
 
   public static final String OUTPUT_PARTITION_TIME = "output.partition.time";
   public static final String INPUT_START_TIME = "input.start.time";
