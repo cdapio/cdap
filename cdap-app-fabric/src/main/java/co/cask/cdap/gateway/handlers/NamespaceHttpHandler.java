@@ -105,10 +105,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Cannot create namespace %s. '%s' and '%s' are reserved namespaces.",
-                                         namespaceId,
-                                         Constants.DEFAULT_NAMESPACE,
-                                         Constants.SYSTEM_NAMESPACE));
+                           String.format("Cannot delete the namespace '%s'. '%s' is a reserved namespace.",
+                                         namespaceId, namespaceId));
       return;
     }
 
@@ -147,10 +145,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
     if (isReserved(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("Cannot delete namespace '%s'. '%s' and '%s' are reserved namespaces.",
-                                         namespace,
-                                         Constants.DEFAULT_NAMESPACE,
-                                         Constants.SYSTEM_NAMESPACE));
+                           String.format("Cannot delete the namespace '%s'. '%s' is a reserved namespace.",
+                                         namespace, namespace));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -175,6 +171,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isReserved(String namespaceId) {
-    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId);
+    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId) ||
+      Constants.Logging.SYSTEM_NAME.equals(namespaceId);
   }
 }

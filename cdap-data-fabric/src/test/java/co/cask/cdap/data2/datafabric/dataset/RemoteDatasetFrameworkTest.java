@@ -20,11 +20,11 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -130,7 +130,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
                                  new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
-                                 new HashSet<DatasetMetricsReporter>());
+                                 new HashSet<DatasetMetricsReporter>(),
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);
@@ -145,9 +146,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(locationFactory.create(Constants.SYSTEM_NAMESPACE));
-    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
+    framework.createNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.createNamespace(NAMESPACE_ID);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -178,10 +178,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   }
 
   @After
-  public void after() {
+  public void after() throws DatasetManagementException {
     Services.chainStop(service, opExecutorService, txManager);
-    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()));
-    Locations.deleteQuietly(locationFactory.create(Constants.SYSTEM_NAMESPACE));
+    framework.deleteNamespace(NAMESPACE_ID);
+    framework.deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @Override

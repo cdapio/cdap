@@ -60,7 +60,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
 
   protected abstract URL createURL(String path) throws URISyntaxException, MalformedURLException;
 
-  private HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
+  protected HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
     urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);

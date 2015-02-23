@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.app.AdapterApp;
 import co.cask.cdap.cli.app.FakeApp;
+import co.cask.cdap.cli.app.FakeDataset;
 import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
@@ -28,6 +29,7 @@ import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -212,6 +214,19 @@ public class CLIMainTest extends StandaloneTestBase {
     DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               "Successfully created dataset");
+    testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+
+    NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
+    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
+    cliConfig.setCurrentNamespace("bar");
+    // list of dataset instances is different in 'foo' namespace
+    testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+
+    // also can not create dataset instances if the type it depends on exists only in a different namespace.
+    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+                              "Error: dataset type '" + datasetType.getName() + "' was not found");
+
+    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
       testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
     } finally {

@@ -136,6 +136,16 @@ public class NamespacedDatasetFramework implements DatasetFramework {
     return delegate.getDataset(namespace(datasetInstanceId), arguments, classLoader);
   }
 
+  @Override
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.createNamespace(namespaceId);
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.deleteNamespace(namespaceId);
+  }
+
   @Nullable
   private DatasetSpecification fromNamespaced(Id.Namespace namespaceId, @Nullable DatasetSpecification spec) {
     if (spec == null) {
