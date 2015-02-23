@@ -1,8 +1,8 @@
 <div ncy-breadcrumb></div>
 <my-file-select class="pull-right" on-file-select="onFileSelected($files)"> </my-file-select>
 <table class="table table-striped table-responsive" cask-sortable>
-  <thead ng-class="{'sort-enabled': apps.length>0}">
-    <tr>
+  <thead>
+    <tr ng-class="{'sort-enabled': apps.length>0}">
       <th data-predicate="name" data-predicate-default="reverse"> Name </th>
       <th> Version </th>
       <th> Deployed </th>

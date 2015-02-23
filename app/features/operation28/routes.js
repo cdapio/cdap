@@ -13,6 +13,7 @@ angular.module(PKG.name+'.feature.operation28')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'operations'
         },
+        parent: 'ns',
         url: '/operations',
         templateUrl: path + 'ops.html',
         controller: function ($scope, $state, MY_CONFIG) {

@@ -28,8 +28,11 @@ angular.module(PKG.name+'.feature.dashboard')
           method: 'POST'
         },
         (function (result) {
-          result.data.splice(result.data.length-1, 1);
-          this.data = result.data;
+          if(result.series && result.series.length) {
+            var data = result.series[0];
+            data.splice(data.length-1, 1);
+            this.data = data;
+          }
         }).bind(this)
       );
     };

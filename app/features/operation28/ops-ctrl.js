@@ -3,6 +3,109 @@
  */
 
 angular.module(PKG.name+'.feature.operation28')
+/* ------------------------------------------------------ */
+
+  .controller('Op28CdapCtrl',
+  function ($scope, $state, op28helper, MyDataSource) {
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.panels = [
+      ['Collect', 'EPS',    'collect.events'],
+      ['Process', '%',      'process.busyness'],
+      ['Store', 'B/s',      'dataset.store.bytes'],
+      ['Query', 'QPS',      'query.requests']
+    ].map(op28helper.panelMap);
+
+    angular.forEach($scope.panels, function (panel) {
+      var c = panel.chart;
+      dataSrc.poll({
+          _cdapPathV2: '/metrics/system/' +
+              c.metric + '?start=now-60s&end=now',
+          method: 'GET'
+        },
+        op28helper.pollCb.bind(c)
+      );
+    });
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
+  .controller('Op28SystemCtrl',
+  function ($scope, op28helper, MyDataSource) {
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.panels = [
+      ['AppFabric', 'Containers', 'containers'],
+      ['Processors', 'Cores',     'vcores'],
+      ['Memory', 'B',             'memory'],
+      ['DataFabric', 'GB',        'storage']
+    ].map(op28helper.panelMap);
+
+    angular.forEach($scope.panels, function (panel) {
+      var c = panel.chart;
+      dataSrc.poll({
+          _cdapPathV2: '/metrics/system/resources.used.'
+            + c.metric + '?start=now-60s&end=now',
+          method: 'GET'
+        },
+        op28helper.pollCb.bind(c)
+      );
+    });
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
+  .controller('Op28AppsCtrl',
+  function ($scope, $state, $q, MyDataSource) {
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.apps = [];
+
+    dataSrc.request({
+        _cdapNsPath: '/apps'
+      })
+      .then(function (apps) {
+        $scope.apps = apps;
+
+        var p = [];
+        for (var i = 0; i < apps.length; i++) {
+
+          var path = '/metrics/query?context=ns.' +
+              $state.params.namespace + '.app.' + apps[i].id +
+              '&metric=resources.used.*' +
+              '&groupBy=app,programType';
+
+          // FIXME @sacha
+          console.warn(path);
+
+          // p.push(dataSrc.request({
+          //   _cdapPath: path,
+          //   method: 'POST'
+          // }));
+        };
+
+        return $q.all(p);
+      })
+      .then(function (result) {
+        console.log('all done', result);
+      });
+
+
+  })
+
+
+/* ------------------------------------------------------ */
+
+
   .factory('op28helper', function () {
 
     function panelMap (d) {
@@ -41,57 +144,6 @@ angular.module(PKG.name+'.feature.operation28')
       panelMap: panelMap,
       pollCb: pollCb
     };
-
-  })
-  .controller('Op28CdapCtrl', function ($scope, op28helper, MyDataSource) {
-
-    var dataSrc = new MyDataSource($scope);
-
-    $scope.panels = [
-      ['Collect', 'EPS',    'collect.events'],
-      ['Process', '%',      'process.busyness'],
-      ['Store', 'B/s',      'dataset.store.bytes'],
-      ['Query', 'QPS',      'query.requests']
-    ].map(op28helper.panelMap);
-
-    angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart;
-      dataSrc.poll({
-          _cdapPathV2: '/metrics/system/' +
-              c.metric + '?start=now-60s&end=now',
-          method: 'GET'
-        },
-        op28helper.pollCb.bind(c)
-      );
-    });
-
-  })
-  .controller('Op28SystemCtrl', function ($scope, op28helper, MyDataSource) {
-
-    $scope.panels = [
-      ['AppFabric', 'Containers', ''],
-      ['Processors', 'Cores',     ''],
-      ['Memory', 'B',             ''],
-      ['DataFabric', 'GB',        '']
-    ].map(op28helper.panelMap);
-
-    // angular.forEach($scope.panels, function (panel) {
-    //   var c = panel.chart;
-    //   dataSrc.poll({
-    //       _cdapPathV2: '/metrics/system/'
-    //         + c.metric + '?start=now-60s&end=now',
-    //       method: 'GET'
-    //     },
-    //     op28helper.pollCb.bind(c)
-    //   );
-    // });
-
-  })
-  .controller('Op28AppsCtrl', function ($scope, MyDataSource) {
-
-
-    console.log('TODO: Op28AppsCtrl');
-
 
   })
 
