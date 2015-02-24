@@ -139,7 +139,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
       MetricTimeSeries metric = metrics.iterator().next();
       List<TimeValue> timeValues = metric.getTimeValues();
       if (timeValues == null || timeValues.size() != 1) {
-        throw new IOException("Should only collect one time value");
+        throw new IOException("Should collect exactly one time value");
       }
       return timeValues.get(0).getValue();
     } catch (Exception e) {
