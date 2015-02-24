@@ -13,10 +13,10 @@ Applications
 An **Application** is a collection of application virtualizations that read from—and write
 to—the data virtualization layer in CDAP. 
 
-**Application virtualizations** include *Programs,* *Services,* and *Procedures.*
+**Application virtualizations** include *Programs,* *Workers,* *Services,* and *Procedures.*
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
-:doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
+:doc:`Workflows <workflows>`, :doc: `Workers <workers>`, :doc:`Spark Programs <spark-programs>`, and are used to process
 data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
 
 **Data virtualizations** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
@@ -59,7 +59,8 @@ A typical design of a CDAP Application consists of:
 - Flows, consisting of Flowlets linked together, to process the ingested data
   in realtime or batch;
 - MapReduce programs, Spark programs, and Workflows for batch processing tasks;
-- Datasets for storage of data, either raw or the processed results; and
+- Datasets for storage of data, either raw or the processed results;
+- Workers for processing data in an ad-hoc manner that doesn't fit into real-time/batch paradigms
 - Services and Procedures for serving data and processed results.
 
 Of course, not all components are required: it depends on the application. A minimal

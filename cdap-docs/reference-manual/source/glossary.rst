@@ -14,7 +14,7 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services, and Procedures that read from and write to the data virtualization layer in CDAP.
+      A collection of Programs, Services, Workers, and Procedures that read from and write to the data virtualization layer in CDAP.
       
    Stream
       The primary means of bringing data from external systems into CDAP in realtime; an
@@ -63,6 +63,11 @@ Glossary
       synchronous calls into CDAP from an external system and perform server-side
       processing on-demand. They are similar to a stored procedure in a traditional database
       system. Procedures are typically used to post-process data at query time.
+
+   Worker
+      Workers are typically long running programs that can be used to execute tasks. Each instance
+      of a worker runs in its own YARN container and the number of instances may be updated via the
+      CDAP Console, REST APIs or CLI. Datasets can be accessed inside Workers.
       
    Data Virtualization
       Abstraction of the actual representation of data in storage.

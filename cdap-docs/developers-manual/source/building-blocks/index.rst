@@ -22,6 +22,7 @@ Building Blocks
     Workflows <workflows>
     Schedules <schedules>
     Spark Programs <spark-programs>
+    Workers <workers>
     Procedures <procedures>
     Services <services>
     Namespaces <namespaces>
@@ -44,6 +45,7 @@ write to—the data virtualization layer in CDAP.
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
+- :doc:`Workers <workers>`
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Procedures <procedures>`
 - :doc:`Services <services>`

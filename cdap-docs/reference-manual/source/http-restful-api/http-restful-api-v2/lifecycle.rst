@@ -12,7 +12,7 @@ Lifecycle HTTP RESTful API
 .. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, Procedures, MapReduce programs, Workflows, and Custom Services.
+Flows, Procedures, MapReduce programs, Workflows, Workers, and Custom Services.
 
 .. highlight:: console
 
@@ -31,7 +31,7 @@ and its content as the body of the request::
   <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
-However, be sure to stop all of its Flows, Procedures and MapReduce programs before updating the Application.
+However, be sure to stop all of its Flows, Workers, Procedures and MapReduce programs before updating the Application.
 
 
 Deployed Applications
@@ -76,7 +76,7 @@ HTTP Responses
 
 Delete an Application
 ---------------------
-To delete an Application together with all of its Flows, Procedures and MapReduce programs, submit an HTTP DELETE::
+To delete an Application together with all of its Flows, Workers, Procedures and MapReduce programs, submit an HTTP DELETE::
 
   DELETE <base-url>/apps/<application-name>
 
@@ -98,7 +98,7 @@ because they belong to your account, not the Application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an Application is deployed, you can start and stop its Flows, Workers, Procedures, MapReduce
 programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>
@@ -113,9 +113,9 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+     - One of ``flows``, ``procedures``, ``workers``, ``mapreduce``, ``workflows`` or ``services``
    * - ``<program-id>``
-     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *Workers*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
@@ -136,9 +136,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+     - One of ``flow``, ``procedure``, ``workers``, ``mapreduce``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *Procedure*, *Worker*, *MapReduce*, *Workflow*, or *Custom Service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -227,7 +227,7 @@ Container Information
 ---------------------
 
 To find out the address of an program's container host and the container’s debug port, you can query
-CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
+CDAP for a Procedure, Worker, Flow or Service’s live info via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/<program-type>/<program-id>/live-info
 
@@ -240,9 +240,9 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``procedures`` or ``services``
+     - One of ``flows``, ``worker``, ``procedures`` or ``services``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *Procedure* or *Custom Service*)
+     - Name of the program (*Flow*, *Worker*, *Procedure* or *Custom Service*)
 
 Example::
 
@@ -273,9 +273,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``flow``, ``procedure``, or ``service``
+     - One of ``flow``, ``worker``, ``procedure``, or ``service``
    * - ``"programId"``
-     - Name of the program (*Flow*, *Procedure*, or *Custom Service*) being called
+     - Name of the program (*Flow*, *Worker*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
      - Name of the *Flowlet* or *Service* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
@@ -421,6 +421,44 @@ Example
      - Find out the number of instances of the Procedure *Greeting*
        in the Application *HelloWorld*
 
+Scaling Workers
+...............
+You can query or change the number of instances of a Worker by using the ``instances``
+parameter with HTTP GET or PUT methods::
+
+  GET <base-url>/apps/<app-id>/workers/<worker-id>/instances
+  PUT <base-url>/apps/<app-id>/workers/<worker-id>/instances
+
+with the arguments as a JSON string in the body::
+
+  { "instances" : <quantity> }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<worker-id>``
+     - Name of the Worker
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Example
+.......
+.. list-table::
+:widths: 20 80
+   :stub-columns: 1
+
+     * - HTTP Method
+       - ``GET <base-url>/apps/HelloWorld/workers/DataWorker/instances``
+       ``instances``
+   * - Description
+     - Find out the number of instances of the Worker *DataWorker*
+       in the Application *HelloWorld*
+
 Scaling Services
 ................
 You can query or change the number of instances of a Service
@@ -466,7 +504,7 @@ Example
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, Procedures, MapReduce programs, Spark programs, Workflows, and
+To see all the runs of a selected program (Flows, Procedures, Workers, MapReduce programs, Spark programs, Workflows, and
 Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
@@ -482,7 +520,7 @@ end time and program status::
    * - ``<app-id>``
      - Name of the Application
    * - ``<program-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``workers``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
      - Name of the program
 
