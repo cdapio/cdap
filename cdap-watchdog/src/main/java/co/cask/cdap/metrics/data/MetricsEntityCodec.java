@@ -169,11 +169,40 @@ final class MetricsEntityCodec {
   }
 
   /**
+   * Decodes a byte[] into '.' separated entity string.
+   */
+  public String decode26(MetricsEntityType type, byte[] encoded, int offset) {
+    StringBuilder builder = new StringBuilder();
+    // we use 2 bytes idSize in 2.6
+    int idSize = 2;
+    int length = getDepth(type);
+    Preconditions.checkArgument(length > 0, "Too few bytes to decode.");
+
+    for (int i = 0; i < length; i++) {
+      long id = decodeId(encoded, offset + i * idSize, idSize);
+      if (id == 0) {
+        // It's the padding byte, break the loop.
+        break;
+      }
+      builder.append(entityTable.getName(id, type.getType() + i))
+        .append('.');
+    }
+
+    builder.setLength(builder.length() - 1);
+    return builder.toString();
+  }
+
+  /**
    * Returns the number of bytes that the given entity type would occupy.
    */
   public int getEncodedSize(MetricsEntityType type) {
     return getDepth(type) * entityTable.getIdSize();
   }
+
+  public int getEncodedSize26(MetricsEntityType type) {
+    return getDepth(type) * 2;
+  }
+
 
   /**
    * Creates a CacheLoader for entity name to encoded byte[].

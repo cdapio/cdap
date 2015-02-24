@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.metrics;
 
+import com.google.common.base.Objects;
+
 import java.util.Map;
 
 /**
@@ -54,5 +56,11 @@ public class MetricValue {
 
   public MetricType getType() {
     return type;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this).add("tags", tags).add("metricName", name).
+      add("value", value).add("type", type).toString();
   }
 }

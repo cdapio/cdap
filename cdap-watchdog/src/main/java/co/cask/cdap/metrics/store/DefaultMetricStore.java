@@ -26,6 +26,7 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.metrics.data.DataMigration26;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
 import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
@@ -56,6 +57,10 @@ public class DefaultMetricStore implements MetricStore {
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
+    this(dsFactory, new int[] {1, 60, 3600, Integer.MAX_VALUE});
+  }
+
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
@@ -67,7 +72,7 @@ public class DefaultMetricStore implements MetricStore {
       @Override
       public Cube get() {
         // 1 sec, 1 min, 1 hour and "all time totals"
-        return new DefaultCube(new int[] {1, 60, 3600, Integer.MAX_VALUE}, factTableSupplier, createAggregations());
+        return new DefaultCube(resolutions, factTableSupplier, createAggregations());
       }
     });
   }

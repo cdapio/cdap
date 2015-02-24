@@ -44,6 +44,7 @@ public final class MetricsConstants {
 
   // v2 to avoid conflict with data of older metrics system
   public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
+  public static final String OLD_DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
   public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
   public static final long DEFAULT_RETENTION_HOURS = 2;

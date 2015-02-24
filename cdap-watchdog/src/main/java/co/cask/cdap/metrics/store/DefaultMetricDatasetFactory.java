@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
@@ -28,6 +29,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.data.DataMigration26;
 import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
@@ -52,6 +54,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private final CConfiguration cConf;
   private final Supplier<EntityTable> entityTable;
   private final DatasetFramework dsFramework;
+  private boolean first = true;
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
@@ -147,6 +150,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
+    DataMigration26 migration26 = new DataMigration26(conf, datasetFramework, factory);
+    migration26.decodeAggregatesTable26();
   }
 
   private int getRollTime(int resolution) {
