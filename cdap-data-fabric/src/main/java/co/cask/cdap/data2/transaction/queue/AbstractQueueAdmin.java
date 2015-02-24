@@ -23,8 +23,6 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 
-import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEUE;
-
 /**
  * Common implementation of table-based QueueAdmin
  */
@@ -35,8 +33,8 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
 
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
     // system scoped
-    this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "."
-      + (type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX);
+    // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
     this.unqualifiedConfigTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
     this.namespace = new DefaultDatasetNamespace(conf);
   }

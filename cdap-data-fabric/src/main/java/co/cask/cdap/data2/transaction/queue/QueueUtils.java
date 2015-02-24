@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,8 @@ public final class QueueUtils {
       throw new IllegalArgumentException(
         "Unable to determine config table name from queue table name '" + queueTableName + "'");
     }
-    int qpos = queueTableName.indexOf(QueueConstants.QUEUE_TABLE_PREFIX, secondDot + 1);
-    int spos = queueTableName.indexOf(QueueConstants.STREAM_TABLE_PREFIX, secondDot + 1);
+    int qpos = queueTableName.indexOf(QueueConstants.QueueType.QUEUE.toString(), secondDot + 1);
+    int spos = queueTableName.indexOf(QueueConstants.QueueType.STREAM.toString(), secondDot + 1);
     int pos;
     if (qpos < 0) {
       pos = spos;
