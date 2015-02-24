@@ -222,15 +222,25 @@ public class DistributedStreamService extends AbstractStreamService {
         continue;
       }
 
-      try {
-        StreamConfig config = streamAdmin.getConfig(streamId);
-        long filesSize = getStreamEventsSize(streamId);
-        LOG.debug("Size of the events already present for stream {}: {}", streamId, filesSize);
-        createSizeAggregator(streamId, filesSize, config.getNotificationThresholdMB());
-      } catch (IOException e) {
-        LOG.error("Could not compute sizes of files for stream {}", streamId);
-        Throwables.propagate(e);
+      StreamConfig config;
+      long eventsSize;
+      while (true) {
+        try {
+          config = streamAdmin.getConfig(streamId);
+          eventsSize = getStreamEventsSize(streamId);
+          LOG.debug("Size of the events ingested in stream {}: {}", streamId, eventsSize);
+          break;
+        } catch (IOException e) {
+          LOG.info("Could not compute sizes of files for stream {}. Retrying in 1 sec.", streamId);
+          try {
+            TimeUnit.SECONDS.sleep(1);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw Throwables.propagate(ie);
+          }
+        }
       }
+      createSizeAggregator(streamId, eventsSize, config.getNotificationThresholdMB());
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
