@@ -65,7 +65,7 @@ public class AsciiTable<T> {
    * @param width maximum width of the table
    * @param newline string to split on to force line breaks
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width, String newline) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker, int width, String newline) {
     this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
     this.records = records;
     this.rowMaker = rowMaker;
@@ -79,7 +79,7 @@ public class AsciiTable<T> {
    * @param rowMaker makes Object arrays from a row object
    * @param width maximum width of the table
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker, int width) {
     this(header, records, rowMaker, width, DEFAULT_NEWLINE);
   }
 
@@ -88,7 +88,7 @@ public class AsciiTable<T> {
    * @param records list of objects that represent the rows
    * @param rowMaker makes Object arrays from a row object
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker) {
     this(header, records, rowMaker, DEFAULT_WIDTH, DEFAULT_NEWLINE);
   }
 
