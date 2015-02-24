@@ -37,7 +37,9 @@ import java.util.Map;
  *   <li>a static inner class of one of the above</li>
  * </ul>
  *</p>
- * Interfaces and not-static inner classes are not supported.
+ * Interfaces and not-static inner classes are not supported. An ObjectStore will serialize the entire object and
+ * store it in a single column. See {@link ObjectMappedTable} if you want object fields to be mapped to their own
+ * columns.
  *
  * @param <T> the type of objects in the store
  */

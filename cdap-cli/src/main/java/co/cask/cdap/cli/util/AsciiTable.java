@@ -47,19 +47,49 @@ import javax.annotation.Nullable;
  */
 public class AsciiTable<T> {
 
+  private static final int DEFAULT_WIDTH = 80;
+  private static final int MIN_COLUMN_WIDTH = 5;
+  private static final String DEFAULT_NEWLINE = System.getProperty("line.separator");
+
   private final List<String> header;
   private final Iterable<T> records;
   private final RowMaker<T> rowMaker;
+  private final int width;
+  private final Splitter newlineSplitter;
+
+
+  /**
+   * @param header strings representing the header of the table
+   * @param records list of objects that represent the rows
+   * @param rowMaker makes Object arrays from a row object
+   * @param width maximum width of the table
+   * @param newline string to split on to force line breaks
+   */
+  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width, String newline) {
+    this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
+    this.records = records;
+    this.rowMaker = rowMaker;
+    this.width = width;
+    this.newlineSplitter = Splitter.on(newline);
+  }
+
+  /**
+   * @param header strings representing the header of the table
+   * @param records list of objects that represent the rows
+   * @param rowMaker makes Object arrays from a row object
+   * @param width maximum width of the table
+   */
+  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width) {
+    this(header, records, rowMaker, width, DEFAULT_NEWLINE);
+  }
 
   /**
    * @param header strings representing the header of the table
    * @param records list of objects that represent the rows
    * @param rowMaker makes Object arrays from a row object
    */
-  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker) {
-    this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
-    this.records = records;
-    this.rowMaker = rowMaker;
+  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker) {
+    this(header, records, rowMaker, DEFAULT_WIDTH, DEFAULT_NEWLINE);
   }
 
   /**
@@ -68,20 +98,19 @@ public class AsciiTable<T> {
    * @param output {@link PrintStream} to print to
    */
   public void print(PrintStream output) {
-
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
     boolean useRowDivider = false;
-    List<Row> rows = Lists.newArrayList();
-    if (records != null) {
-      for (T row : records) {
-        if (row != null) {
-          useRowDivider = generateRow(rowMaker.makeRow(row), rows) || useRowDivider;
-        }
-      }
+    List<Object[]> objectRows = Lists.newArrayList();
+    for (T row : records) {
+      objectRows.add(rowMaker.makeRow(row));
     }
+    int[] columnWidths = calculateColumnWidths(header, objectRows, width);
 
-    int[] columnWidths = calculateColumnWidths(header, rows);
+    List<Row> rows = Lists.newArrayList();
+    for (Object[] objectRow : objectRows) {
+      useRowDivider = generateRow(objectRow, columnWidths, rows) || useRowDivider;
+    }
 
     // If has header, prints the header.
     if (!header.isEmpty()) {
@@ -151,17 +180,37 @@ public class AsciiTable<T> {
    * Generates a record row. A record row can span across multiple lines on the screen.
    *
    * @param columns The set of columns to output.
+   * @param columnWidths The widths of each column.
    * @param collection Collection for collecting the generated {@link Row} object.
    * @return Returns true if the row spans multiple lines.
    */
-  private boolean generateRow(Object[] columns, Collection<? super Row> collection) {
+  private boolean generateRow(Object[] columns, int[] columnWidths, Collection<? super Row> collection) {
     ImmutableList.Builder<Cell> builder = ImmutableList.builder();
 
     boolean multiLines = false;
-    Splitter splitter = Splitter.on(System.getProperty("line.separator"));
-    for (Object field : columns) {
+    for (int column = 0; column < columns.length; column++) {
+      Object field = columns[column];
+      int width = columnWidths[column];
+
       String fieldString = field == null ? "" : field.toString();
-      Cell cell = new Cell(splitter.split(fieldString));
+      Iterable<String> splitField = newlineSplitter.split(fieldString);
+      List<String> cellLines = Lists.newArrayList();
+      for (String splitFieldLine : splitField) {
+        if (splitFieldLine.length() <= width) {
+          cellLines.add(splitFieldLine);
+        } else {
+          // line is too long, split and only allow width-long lines
+          int startSplitIdx = 0;
+          int endSplitIdx = width;
+          while (endSplitIdx < splitFieldLine.length()) {
+            cellLines.add(splitFieldLine.substring(startSplitIdx, endSplitIdx));
+            startSplitIdx += width - 1;
+            endSplitIdx += width - 1;
+          }
+        }
+      }
+
+      Cell cell = new Cell(cellLines);
       multiLines = multiLines || cell.size() > 1;
       builder.add(cell);
     }
@@ -175,24 +224,33 @@ public class AsciiTable<T> {
    *
    * @param header The table header.
    * @param rows All rows that is going to display.
+   * @param maxTableWidth Maximum width of the table.
    * @return An array of integers, with contains maximum width for each column.
    */
-  private int[] calculateColumnWidths(List<String> header, List<Row> rows) {
-    int[] widths = new int[header.isEmpty() ? rows.get(0).size() : header.size()];
+  private int[] calculateColumnWidths(List<String> header, Iterable<Object[]> rows, int maxTableWidth) {
+    int[] widths;
+    if (!header.isEmpty()) {
+      widths = new int[header.size()];
+    } else if (rows.iterator().hasNext()) {
+      widths = new int[rows.iterator().next().length];
+    } else {
+      return new int[0];
+    }
 
+    // distribute maxTableWidth equally to each column
+    int remainingWidth = maxTableWidth;
     for (int i = 0; i < header.size(); i++) {
-      widths[i] = header.get(i).length();
+      widths[i] = (int) (maxTableWidth * 1.0 / header.size());
+      remainingWidth -= widths[i];
+    }
+    // fix any rounding issues by resizing the last column width
+    widths[widths.length - 1] += remainingWidth;
+
+    // apply MIN_COLUMN_WIDTH constraint
+    for (int i = 0; i < widths.length; i++) {
+      widths[i] = Math.max(widths[i], MIN_COLUMN_WIDTH);
     }
 
-    // Find the maximum width for each column by consulting the width of each cell.
-    for (Row row : rows) {
-      for (int i = 0; i < row.size(); i++) {
-        Cell cell = row.get(i);
-        if (cell.getWidth() > widths[i]) {
-          widths[i] = cell.getWidth();
-        }
-      }
-    }
     return widths;
   }
 

@@ -60,7 +60,7 @@ public class DatasetTypeClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<DatasetTypeMeta> list() throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("data/types");
+    URL url = config.resolveNamespacedURLV3("data/types");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
   }
@@ -76,7 +76,7 @@ public class DatasetTypeClient {
    */
   public DatasetTypeMeta get(String typeName)
     throws DatasetTypeNotFoundException, IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/types/%s", typeName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/types/%s", typeName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -96,7 +96,7 @@ public class DatasetTypeClient {
    */
   public boolean exists(String typeName)
     throws DatasetTypeNotFoundException, IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/types/%s", typeName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/types/%s", typeName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -131,7 +131,7 @@ public class DatasetTypeClient {
   /**
    * Waits for a dataset type to be deleted.
    *
-   * @param moduleName Name of the dataset type to check
+   * @param typeName Name of the dataset type to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
@@ -139,14 +139,14 @@ public class DatasetTypeClient {
    * @throws TimeoutException if the dataset type was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForDeleted(final String moduleName, long timeout, TimeUnit timeoutUnit)
+  public void waitForDeleted(final String typeName, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(moduleName);
+          return exists(typeName);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {

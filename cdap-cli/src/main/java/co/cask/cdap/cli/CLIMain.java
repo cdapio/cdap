@@ -99,12 +99,17 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
+    setCLIPrompt(cliConfig.getCurrentNamespace(), cliConfig.getURI());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(String newNamespace, URI newURI) {
-        cli.getReader().setPrompt(cliConfig.getPrompt());
+        setCLIPrompt(newNamespace, newURI);
       }
     });
+  }
+
+  private void setCLIPrompt(String namespace, URI uri) {
+    cli.getReader().setPrompt("cdap (" + uri + "//" + namespace + ")> ");
   }
 
   public CLI getCLI() {

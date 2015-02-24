@@ -18,6 +18,7 @@ package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.command.CallProcedureCommand;
 import co.cask.cdap.cli.command.ExecuteQueryCommand;
+import co.cask.cdap.cli.command.PreferencesCommandSet;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -46,10 +47,8 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(DatasetCommands.class))
         .add(injector.getInstance(ServiceCommands.class))
         .add(injector.getInstance(AdapterCommands.class))
-        //TODO: uncomment to expose Preferences cli commands
-//      .add(injector.getInstance(PreferencesCommandSet.class))
-        //TODO: uncomment when namespace is ready
-      .add(injector.getInstance(NamespaceCommands.class))
+        .add(injector.getInstance(PreferencesCommandSet.class))
+        .add(injector.getInstance(NamespaceCommands.class))
         .build());
   }
 }

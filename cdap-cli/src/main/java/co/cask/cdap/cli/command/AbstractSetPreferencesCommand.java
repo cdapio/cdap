@@ -54,10 +54,10 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         break;
 
       case NAMESPACE:
-        if (programIdParts.length != 1) {
+        if (programIdParts.length != 0) {
           throw new CommandInputError(this);
         }
-        client.setNamespacePreferences(programIdParts[0], args);
+        client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
         printSuccessMessage(printStream, type);
         break;
 

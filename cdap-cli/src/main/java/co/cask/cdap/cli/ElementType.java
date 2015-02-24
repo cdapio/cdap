@@ -73,6 +73,11 @@ public enum ElementType {
           ArgumentName.FLOWLET,
           Capability.SCALE),
 
+  WORKER("Worker", "Workers", "worker", "workers",
+         ProgramType.WORKER, null, ArgumentName.WORKER,
+         Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
+         Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+
   PROCEDURE("Procedure", "Procedures", "procedure", "procedures",
             ProgramType.PROCEDURE, null,
             ArgumentName.PROCEDURE,

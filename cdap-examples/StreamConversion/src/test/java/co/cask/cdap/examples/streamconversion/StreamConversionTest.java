@@ -93,7 +93,7 @@ public class StreamConversionTest extends TestBase {
     // query with SQL
     Connection connection = getTestManager().getQueryClient();
     ResultSet results = connection.prepareStatement("SELECT year, month, day, hour, minute " +
-                                                      "FROM cdap_user_converted " +
+                                                      "FROM cdap_default_converted " +
                                                       "WHERE body = '17'").executeQuery();
 
     // should return only one row, with correct time fields

@@ -20,14 +20,13 @@ import co.cask.cdap.data2.queue.ForwardingQueueConsumer;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.tephra.TransactionAware;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * A {@link TransactionAware} {@link QueueConsumer} that removes itself from dataset context when closed.
  * All queue operations are forwarded to another {@link QueueConsumer}.
  */
-final class CloseableQueueConsumer extends ForwardingQueueConsumer implements Closeable {
+final class CloseableQueueConsumer extends ForwardingQueueConsumer {
 
   private final DatasetInstantiator context;
 
@@ -39,9 +38,7 @@ final class CloseableQueueConsumer extends ForwardingQueueConsumer implements Cl
   @Override
   public void close() throws IOException {
     try {
-      if (consumer instanceof Closeable) {
-        ((Closeable) consumer).close();
-      }
+      consumer.close();
     } finally {
       context.removeTransactionAware(this);
     }

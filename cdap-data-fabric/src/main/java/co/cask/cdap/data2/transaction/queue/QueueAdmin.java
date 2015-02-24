@@ -28,11 +28,6 @@ import javax.annotation.Nullable;
 public interface QueueAdmin {
 
   /**
-   * Deletes all entries for all queues.
-   */
-  void dropAll() throws Exception;
-
-  /**
    * Deletes all queues in a namespace
    * @param namespaceId the namespace to delete flows in
    */
@@ -45,7 +40,7 @@ public interface QueueAdmin {
   void dropAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
-   * Clears all queues for a flow, for example if the flow is upgraded and old .
+   * Clears all queues for a flow, for example if the flow is upgraded and old.
    * todo: make this independent of the concept of a flow
    */
   void clearAllForFlow(String namespaceId, String app, String flow) throws Exception;
