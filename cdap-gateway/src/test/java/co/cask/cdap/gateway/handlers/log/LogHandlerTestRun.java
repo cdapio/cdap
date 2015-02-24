@@ -253,6 +253,22 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
+  @Test
+  public void testSystemLogsV2() throws Exception {
+    testPrevSystemLogs("v2", Constants.Service.APP_FABRIC_HTTP);
+    testPrevSystemLogs("v2", Constants.Service.MASTER_SERVICES);
+
+    testNextSystemLogs("v2", Constants.Service.APP_FABRIC_HTTP);
+    testNextSystemLogs("v2", Constants.Service.MASTER_SERVICES);
+  }
+
+  @Test
+  public void testSystemLogsV3() throws Exception {
+    testPrevSystemLogs("v3", Constants.Service.APP_FABRIC_HTTP);
+    testPrevSystemLogs("v3", Constants.Service.MASTER_SERVICES);
+    testNextSystemLogs("v3", Constants.Service.APP_FABRIC_HTTP);
+    testNextSystemLogs("v3", Constants.Service.MASTER_SERVICES);
+  }
 
   private void testNext(String appId, String entityType, String entityId, boolean escape) throws Exception {
     testNext(appId, entityType, entityId, escape, null, null);
@@ -385,6 +401,18 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
     }
+  }
+
+  private void testNextSystemLogs(String version, String serviceName) throws Exception {
+    String prevUrl = String.format("/%s/system/services/%s/logs/next?max=10", version, serviceName);
+    HttpResponse response = doGet(prevUrl);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  private void testPrevSystemLogs(String version, String serviceName) throws Exception {
+    String prevUrl = String.format("/%s/system/services/%s/logs/prev?max=10", version, serviceName);
+    HttpResponse response = doGet(prevUrl);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }
 
   private void testPrevNoMax(String appId, String entityType, String entityId, @Nullable String version,
