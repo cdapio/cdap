@@ -278,5 +278,5 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
-  boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue) throws Exception;
+  boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue);
 }
