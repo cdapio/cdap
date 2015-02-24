@@ -73,7 +73,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
     String ttlProp = spec.getProperties().get(Table.PROPERTY_TTL);
     if (ttlProp != null) {
-      int ttl = Integer.parseInt(ttlProp);
+      long ttl = Long.parseLong(ttlProp);
       if (ttl > 0) {
         columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
       }
