@@ -80,12 +80,6 @@ public class DefaultMetricStore implements MetricStore {
     aggs.add(new DefaultAggregation(ImmutableList.of(
       Constants.Metrics.Tag.NAMESPACE)));
 
-    // Applications:
-    aggs.add(new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET),
-      // i.e. for programs only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP)));
-
     // Programs:
 
     // Note that dataset tag goes before runId and such. This is a trade-off between efficiency of two query types:
