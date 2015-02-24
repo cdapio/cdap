@@ -170,7 +170,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
-  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) {
     return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
   }
 

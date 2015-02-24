@@ -304,7 +304,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * pass-through to the underlying table.
    */
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) {
     // if the swap is on a column other than the column key, then
     // the index is not affected - just execute the swap.
     // also, if the swap is on the index column, but the old value
