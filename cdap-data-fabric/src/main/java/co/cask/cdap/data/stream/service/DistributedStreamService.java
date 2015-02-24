@@ -317,7 +317,7 @@ public class DistributedStreamService extends AbstractStreamService {
    * @return a {@link Cancellable} to cancel the subscription
    * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, InterruptedException {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.SYSTEM_NAMESPACE)
@@ -346,9 +346,7 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
   }
@@ -379,7 +377,7 @@ public class DistributedStreamService extends AbstractStreamService {
   /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
-  private void createHeartbeatsFeed() throws NotificationFeedException, InterruptedException {
+  private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.SYSTEM_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
@@ -395,10 +393,19 @@ public class DistributedStreamService extends AbstractStreamService {
         feedManager.createFeed(streamHeartbeatsFeed);
         return;
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
+    }
+  }
+
+  private void waitBeforeRetryHeartbeatsFeedOperation() {
+    // Most probably, the dataset service is not up. We retry
+    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
+    try {
+      TimeUnit.SECONDS.sleep(1);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
     }
   }
 

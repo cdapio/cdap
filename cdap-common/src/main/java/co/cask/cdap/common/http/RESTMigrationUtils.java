@@ -37,6 +37,12 @@ public class RESTMigrationUtils {
     return request;
   }
 
+  public static HttpRequest rewriteV2RequestToV3WithoutNamespace(HttpRequest request) {
+    String originalUri = request.getUri();
+    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3));
+    return request;
+  }
+
   private RESTMigrationUtils() {
   }
 }
