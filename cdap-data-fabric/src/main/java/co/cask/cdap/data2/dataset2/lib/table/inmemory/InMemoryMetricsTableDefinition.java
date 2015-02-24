@@ -48,8 +48,8 @@ public class InMemoryMetricsTableDefinition
   }
 
   @Override
-  public InMemoryOrderedTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
-    return new InMemoryOrderedTableAdmin(spec.getName());
+    return new InMemoryTableAdmin(spec.getName());
   }
 }

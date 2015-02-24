@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.SlowTests;
@@ -70,7 +69,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     // use leveldb implementations, since stream input format examines the filesystem
     // to determine input splits.
-    startServices(CConfiguration.create(), true);
+    initialize(CConfiguration.create(), true);
 
     createStream(streamName);
     sendStreamEvent(streamName, headers, Bytes.toBytes(body1));
@@ -153,6 +152,20 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.<QueryResult>newArrayList());
   }
+
+  @Test
+  public void testStreamNameWithHyphen() throws Exception {
+    createStream("stream-test");
+    sendStreamEvent("stream-test", Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+
+    // Streams with '-' are replaced with '_'
+    String cleanStreamName = "stream_test";
+
+    runCommand("select body from " + getTableName(cleanStreamName), true,
+               Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
+  }
+
 
   @Test
   public void testJoinOnStreams() throws Exception {

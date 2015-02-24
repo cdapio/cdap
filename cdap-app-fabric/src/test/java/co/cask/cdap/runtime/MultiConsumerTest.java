@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,9 +26,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.runtime.app.MultiApp;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.DefaultId;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
@@ -81,7 +81,7 @@ public class MultiConsumerTest {
 
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
-    DatasetInstantiator datasetInstantiator = new DatasetInstantiator(Id.Namespace.from("myspace"), datasetFramework,
+    DatasetInstantiator datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework,
                                                                       CConfiguration.create(),
                                                                       getClass().getClassLoader(), null);
 

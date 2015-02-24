@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -64,8 +63,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   @Inject
   public MDSStreamMetaStore(CConfiguration conf, final TransactionSystemClient txClient, DatasetFramework framework) {
 
-    final DatasetFramework dsFramework =
-      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+    final DatasetFramework dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
 
     txnl = Transactional.of(
         new TransactionExecutorFactory() {

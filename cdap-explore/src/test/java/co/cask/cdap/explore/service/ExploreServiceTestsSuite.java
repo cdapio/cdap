@@ -36,7 +36,7 @@ public class ExploreServiceTestsSuite {
 
   @BeforeClass
   public static void init() throws Exception {
-    BaseHiveExploreServiceTest.startServices();
+    BaseHiveExploreServiceTest.initialize();
     BaseHiveExploreServiceTest.runBefore = false;
     BaseHiveExploreServiceTest.runAfter = false;
   }

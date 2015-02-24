@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -47,7 +46,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
     this.dsFramework = new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
-                                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+                                                      new DefaultDatasetNamespace(cConf));
     this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 

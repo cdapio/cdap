@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,7 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -57,9 +56,11 @@ public class ConfigurationTable {
   private static final byte[] FAMILY = Bytes.toBytes("f");
 
   private final Configuration hbaseConf;
+  private final DefaultDatasetNamespace dsNamespace;
 
   public ConfigurationTable(Configuration hbaseConf) {
     this.hbaseConf = hbaseConf;
+    this.dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
   }
 
   /**
@@ -70,7 +71,7 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration conf) throws IOException {
-    String tableName = getTableName(conf.get(Constants.Dataset.TABLE_PREFIX));
+    String tableName = dsNamespace.namespace(TABLE_NAME).getId();
     byte[] tableBytes = Bytes.toBytes(tableName);
 
     // must create the table if it doesn't exist
@@ -125,7 +126,7 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
   public CConfiguration read(Type type, String namespace) throws IOException {
-    String tableName = getTableName(namespace);
+    String tableName = dsNamespace.namespace(TABLE_NAME).getId();
 
     CConfiguration conf = null;
     HTable table = null;
@@ -159,9 +160,5 @@ public class ConfigurationTable {
       }
     }
     return conf;
-  }
-
-  private static String getTableName(String namespace) {
-    return namespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
   }
 }
