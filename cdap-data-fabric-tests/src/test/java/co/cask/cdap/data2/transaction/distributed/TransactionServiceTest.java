@@ -16,7 +16,7 @@
 package co.cask.cdap.data2.transaction.distributed;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -28,8 +28,8 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -97,7 +97,7 @@ public class TransactionServiceTest {
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
       zkClient.startAndWait();
 
-      final OrderedTable table = createTable("myTable");
+      final Table table = createTable("myTable");
       try {
         // tx service client
         // NOTE: we can init it earlier than we start services, it should pick them up when they are available
@@ -154,7 +154,7 @@ public class TransactionServiceTest {
     }
   }
 
-  private void verifyGetAndPut(final OrderedTable table, TransactionExecutor txExecutor,
+  private void verifyGetAndPut(final Table table, TransactionExecutor txExecutor,
                                final String verifyGet, final String toPut)
     throws TransactionFailureException, InterruptedException {
 
@@ -169,13 +169,13 @@ public class TransactionServiceTest {
     });
   }
 
-  private OrderedTable createTable(String tableName) throws Exception {
-    InMemoryOrderedTableService.create(tableName);
-    return new InMemoryOrderedTable(tableName);
+  private Table createTable(String tableName) throws Exception {
+    InMemoryTableService.create(tableName);
+    return new InMemoryTable(tableName);
   }
 
   private void dropTable(String tableName, CConfiguration cConf) throws Exception {
-    InMemoryOrderedTableService.drop(tableName);
+    InMemoryTableService.drop(tableName);
   }
 
   static TransactionService createTxService(String zkConnectionString, int txServicePort,

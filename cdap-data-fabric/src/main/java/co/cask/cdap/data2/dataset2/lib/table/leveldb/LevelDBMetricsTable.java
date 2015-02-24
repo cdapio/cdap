@@ -49,10 +49,10 @@ public class LevelDBMetricsTable implements MetricsTable {
     }
   };
 
-  private final LevelDBOrderedTableCore core;
+  private final LevelDBTableCore core;
 
-  public LevelDBMetricsTable(String tableName, LevelDBOrderedTableService service) throws IOException {
-    this.core = new LevelDBOrderedTableCore(tableName, service);
+  public LevelDBMetricsTable(String tableName, LevelDBTableService service) throws IOException {
+    this.core = new LevelDBTableCore(tableName, service);
   }
 
   @Override

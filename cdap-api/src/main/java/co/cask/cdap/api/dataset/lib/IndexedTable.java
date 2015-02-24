@@ -152,6 +152,11 @@ public class IndexedTable extends AbstractDataset implements Table {
     return table.get(row, startColumn, stopColumn, limit);
   }
 
+  @Override
+  public List<Row> get(List<Get> gets) {
+    return table.get(gets);
+  }
+
   /**
    * Reads table rows by the given secondary index key.  If no rows are indexed by the given key, then a
    * {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.

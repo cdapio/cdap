@@ -66,13 +66,15 @@ public class WorkerProgramRunner implements ProgramRunner {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-    int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "0"));
+    int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
     Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
-    int instanceCount = appSpec.getWorkers().get(program.getName()).getInstances();
+    int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-    RunId runId = RunIds.generate();
+    String runIdOption = options.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+    Preconditions.checkNotNull(runIdOption, "Missing runId");
+    RunId runId = RunIds.fromString(runIdOption);
 
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");

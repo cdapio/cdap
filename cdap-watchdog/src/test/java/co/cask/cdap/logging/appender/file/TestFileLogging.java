@@ -26,7 +26,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.AsyncLogAppender;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -69,7 +69,7 @@ public class TestFileLogging {
   public static void setUpContext() throws Exception {
     dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
     dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
-                          new InMemoryOrderedTableModule());
+                          new InMemoryTableModule());
 
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
