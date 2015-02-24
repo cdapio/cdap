@@ -327,10 +327,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     List<QueueName> queueNameList = Arrays.asList(queueNames);
     consumerConfigCaches.invalidateAll(queueNameList);
     for (Optional<ConsumerConfigCache> consumerConfigCache : consumerConfigCaches.getAll(queueNameList).values()) {
-      if (!consumerConfigCache.isPresent()) {
-        continue;
+      if (consumerConfigCache.isPresent()) {
+        consumerConfigCache.get().updateCache();
       }
-      consumerConfigCache.get().updateCache();
     }
   }
 

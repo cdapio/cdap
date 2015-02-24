@@ -497,7 +497,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
+  /**
+   * @param tableName being checked
+   * @return true if the given table is the actual table for the queue (opposed to the config table for the queue
+   * or tables for things other than queues).
+   */
   private boolean isDataTable(String tableName) {
+    // checks if table is constructed by getActualTableName(String)
     String[] parts = tableName.split("\\.");
     if (parts.length != 6) {
       return false;

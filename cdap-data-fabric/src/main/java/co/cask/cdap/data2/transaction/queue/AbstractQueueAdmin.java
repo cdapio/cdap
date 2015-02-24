@@ -28,14 +28,14 @@ import co.cask.cdap.proto.Id;
  */
 public abstract class AbstractQueueAdmin implements QueueAdmin {
   private final String unqualifiedTableNamePrefix;
-  private final String unqualifiedConfigTableNamePrefix;
+  private final String unqualifiedConfigTableNameSuffix;
   protected final DefaultDatasetNamespace namespace;
 
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
-    // system scoped
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    // system scoped
     this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
-    this.unqualifiedConfigTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
+    this.unqualifiedConfigTableNameSuffix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
     this.namespace = new DefaultDatasetNamespace(conf);
   }
 
@@ -79,7 +79,6 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     return parts[parts.length - 1];
   }
 
-
   /**
    * This determines the actual table name from the table name prefix and the name of the queue.
    * @param queueName The name of the queue.
@@ -113,10 +112,10 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     return getConfigTableName(queueName.getFirstComponent());
   }
 
-  public String getConfigTableName(String namespaceId) {
+  protected String getConfigTableName(String namespaceId) {
     // returns String with format:  '<root namespace>.<namespaceId>.system.queue.config'
     String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
-                                                                     unqualifiedConfigTableNamePrefix)).getId();
+                                                                     unqualifiedConfigTableNameSuffix)).getId();
     return HBaseTableUtil.getHBaseTableName(tablePrefix);
   }
 }
