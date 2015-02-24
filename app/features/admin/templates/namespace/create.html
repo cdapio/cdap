@@ -3,6 +3,7 @@
       role="form"
       ng-submit="submitHandler()"
 >
+
   <div class="form-group">
     <label class="col-sm-2 control-label" for="namespaceName">ID</label>
     <div class="col-sm-10">
@@ -14,6 +15,7 @@
       >
     </div>
   </div>
+
   <div class="form-group">
     <label class="col-sm-2 control-label" for="namespaceDisplayName">Name</label>
     <div class="col-sm-10">
@@ -25,6 +27,7 @@
       >
     </div>
   </div>
+
   <div class="form-group">
     <label  class="col-sm-2 control-label" for="namespaceDescription">Descriptiom</label>
     <div class="col-sm-10">
@@ -36,7 +39,8 @@
       ></textarea>
     </div>
   </div>
-  <div class="form-group">
+
+<!--   <div class="form-group">
     <label  class="col-sm-2 control-label" for="namespaceProperties">Properties</label>
     <div class="col-sm-2">
       <input type="text"
@@ -60,11 +64,13 @@
              class="btn btn-default"
       >+</a>
     </div>
-  </div>
+  </div> -->
+
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
+      <a ui-sref="admin.overview" class="btn btn-default">Cancel</a>
       <button type="submit" class="btn btn-primary">Create</button>
-      <button type="reset" class="btn btn-default">Reset</button>
     </div>
   </div>
+
 </form>

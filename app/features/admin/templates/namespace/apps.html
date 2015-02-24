@@ -1,16 +1,19 @@
-<h2> {{$state.params.nsadmin}}: Applications </h2>
-
-<div class="btn-group">
-    <my-file-select ng-controller="AdminNamespaceAppController" data-button-label="Add App" on-file-select="onFileSelected($files)"> </my-file-select>
-    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
-    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button>
+<div class="row">
+    <div class="col-xs-6">
+        <h2> {{$state.params.nsadmin}}: Applications </h2>
+    </div>
+    <div class="col-xs-6 text-right h2">
+    <!--     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
+        <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button> -->
+        <my-file-select ng-controller="AdminNamespaceAppController" data-button-label="Add App" on-file-select="onFileSelected($files)"> </my-file-select>
+    </div>
 </div>
 
 <table class="table table-striped table-responsive" cask-sortable>
     <thead>
       <tr ng-class="{'sort-enabled': apps.length>0}">
         <th data-predicate="name" data-predicate-default="reverse">Name</th>
-        <th>Version</th>
+        <!-- <th>Version</th> -->
         <th>Type</th>
         <th>Description</th>
       </tr>
@@ -22,7 +25,7 @@
                     <strong ng-bind="app.name"> </strong>
                 </a>
             </td>
-            <td ng-bind="app.version"></td>
+            <!-- <td ng-bind="app.version"></td> -->
             <td ng-bind="app.type"></td>
             <td ng-bind="app.description"></td>
         </tr>

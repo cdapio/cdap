@@ -3,67 +3,69 @@
 
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
-        <a ui-sref="admin.overview" href="">
+        <a ui-sref="admin.overview"
+           ui-sref-active="current">
           Management Home
         </a>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.system.overview" href="">
+        <a href="" ng-click="submenu.system=!submenu.system">
           System Configuration
         </a>
         <ul class="list-unstyled"
             ng-show="submenu.system">
-          <li>
+<!--           <li>
             <a ui-sref="admin.system.instance" href="">
               Instance
             </a>
-          </li>
+          </li> -->
           <li>
-            <a ui-sref="admin.system.services" href="">
+            <a ui-sref="admin.system.services"
+               ng-class="{ current: $state.includes('admin.system.services.**') }">
               Services
             </a>
           </li>
-          <li>
+<!--           <li>
             <a ui-sref="admin.system.notifications" href="">
               Notifications
             </a>
-          </li>
+          </li> -->
         </ul>
       </li>
       <li class="list-group-item">
-        <a ui-sref="admin.security.overview" href="">
+        <a href="" ng-click="submenu.security=!submenu.security">
           Systemwide Security
         </a>
         <ul class="list-unstyled"
             ng-show="submenu.security">
+<!--             <li>
+              <a ui-sref="admin.security.permissions" href="">
+                Global Permissions
+              </a>
+            </li> -->
           <li>
-            <a ui-sref="admin.security.permissions" href="">
-              Global Permissions
-            </a>
-          </li>
-          <li>
-            <a ui-sref="admin.security.tokens" href="">
+            <a ui-sref="admin.security.tokens"
+               ng-class="{ current: $state.includes('admin.security.tokens.**') }">
               Access Tokens
             </a>
           </li>
-          <li>
+<!--           <li>
             <a ui-sref="admin.security.logs" href="">
               Audit Logs
             </a>
-          </li>
+          </li> -->
         </ul>
       </li>
 
-      <li
-        class="list-group-item"
-        data-start-collapsed="1"
-        bs-collapse>
-        <a bs-collapse-toggle href="">
+      <li class="list-group-item">
+        <a href="" ng-click="submenu.namespaces=!submenu.namespaces">
           Namespaces
         </a>
-        <ul class="list-unstyled" bs-collapse-target>
+        <ul class="list-unstyled"
+            ng-show="submenu.namespaces">
           <li>
-            <a ui-sref="admin.namespace.create" href="">
+            <a ui-sref="admin.namespace.create"
+               ui-sref-active="current">
               Create Namespace
             </a>
           </li>

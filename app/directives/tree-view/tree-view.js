@@ -9,8 +9,8 @@ angular.module(PKG.name + '.commons')
       compile: function(element) {
         return RecursionHelper.compile(element);
       },
-      controller: function($scope) {
-        $scope.showSubMenu = false;
+      controller: function($scope, $state) {
+        $scope.state = $state;
       }
     };
   });
