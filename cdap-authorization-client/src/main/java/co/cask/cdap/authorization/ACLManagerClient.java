@@ -21,20 +21,18 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,6 +41,8 @@ import java.util.Set;
 public class ACLManagerClient {
 
   private static final Gson GSON = new Gson();
+  private static final Type ACL_SET_TYPE = new TypeToken<Set<ACLEntry>>() { }.getType();
+
   private final Supplier<URI> baseURISupplier;
   private final Supplier<Multimap<String, String>> headersSupplier;
 
@@ -55,31 +55,18 @@ public class ACLManagerClient {
     this(baseURISupplier, null);
   }
 
-  public String appendQuery(String path, ACLStore.Query query) {
-    List<String> arguments = Lists.newArrayList();
-
-    if (query != null) {
-      if (query.getSubjectId() != null) {
-        arguments.add("subject=" + query.getSubjectId().getRep());
-      }
-      if (query.getObjectId() != null) {
-        arguments.add("object=" + query.getObjectId().getRep());
-      }
-      if (query.getPermission() != null) {
-        arguments.add("permission=" + query.getPermission().getName());
-      }
-    }
-
-    if (!arguments.isEmpty()) {
-      return path + "?" + Joiner.on("&").join(arguments);
-    }
-
-    return path;
-  }
-
-  public Set<ACLEntry> getGlobalACLs(ACLStore.Query query) throws IOException {
-    String path = appendQuery("/v1/acls/global", query);
-    HttpRequest request = HttpRequest.get(resolveURL(path)).addHeaders(getHeaders()).build();
+  /**
+   * TODO
+   *
+   * @param query
+   * @return
+   * @throws IOException
+   */
+  public Set<ACLEntry> searchACLs(ACLStore.Query query) throws IOException {
+    HttpRequest request = HttpRequest.get(resolveURL("/v3/acls/search"))
+      .withBody(GSON.toJson(query))
+      .addHeaders(getHeaders())
+      .build();
     HttpResponse response = HttpRequests.execute(request);
 
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -87,12 +74,19 @@ public class ACLManagerClient {
                               ": " + response.getResponseMessage());
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<Set<ACLEntry>>() { }).getResponseObject();
+    return ObjectResponse.<Set<ACLEntry>>fromJsonBody(response, ACL_SET_TYPE).getResponseObject();
   }
 
-  public Set<ACLEntry> getACLs(String namespaceId, ACLStore.Query query) throws IOException {
-    String path = appendQuery("/v1/acls/namespace/" + namespaceId, query);
-    HttpRequest request = HttpRequest.get(resolveURL(path)).addHeaders(getHeaders()).build();
+  /**
+   * TODO
+   *
+   * @return
+   * @throws IOException
+   */
+  public Set<ACLEntry> getACLs() throws IOException {
+    HttpRequest request = HttpRequest.get(resolveURL("/v3/acls"))
+      .addHeaders(getHeaders())
+      .build();
     HttpResponse response = HttpRequests.execute(request);
 
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -100,36 +94,20 @@ public class ACLManagerClient {
                               ": " + response.getResponseMessage());
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<Set<ACLEntry>>() { }).getResponseObject();
+    return ObjectResponse.<Set<ACLEntry>>fromJsonBody(response, ACL_SET_TYPE).getResponseObject();
   }
 
-  public Set<ACLEntry> listACLs() throws IOException {
-    String path = "/v1/acls";
-    HttpRequest request = HttpRequest.get(resolveURL(path)).addHeaders(getHeaders()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException("Unexpected response: " + response.getResponseCode() +
-                              ": " + response.getResponseMessage());
-    }
-
-    return ObjectResponse.fromJsonBody(response, new TypeToken<Set<ACLEntry>>() { }).getResponseObject();
-  }
-
-  public void deleteGlobalACLs(ACLStore.Query query) throws IOException {
-    String path = appendQuery("/v1/acls/global", query);
-    HttpRequest request = HttpRequest.delete(resolveURL(path)).addHeaders(getHeaders()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException("Unexpected response: " + response.getResponseCode() +
-                              ": " + response.getResponseMessage());
-    }
-  }
-
-  public void deleteACLs(String namespaceId, ACLStore.Query query) throws IOException {
-    String path = appendQuery("/v1/acls/namespace/" + namespaceId, query);
-    HttpRequest request = HttpRequest.delete(resolveURL(path)).addHeaders(getHeaders()).build();
+  /**
+   * TODO
+   *
+   * @param query
+   * @throws IOException
+   */
+  public void deleteACLs(ACLStore.Query query) throws IOException {
+    HttpRequest request = HttpRequest.post(resolveURL("/v3/acls/delete"))
+      .withBody(GSON.toJson(query))
+      .addHeaders(getHeaders())
+      .build();
     HttpResponse response = HttpRequests.execute(request);
 
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -151,38 +129,14 @@ public class ACLManagerClient {
    * @param entry the {@link ACLEntry} to create
    * @throws java.io.IOException if an error occurred when contacting the authorization service
    */
-  public void createACL(String namespaceId, ACLEntry entry) throws IOException {
-    HttpRequest request = HttpRequest.post(resolveURL("/v1/acls/namespace/" + namespaceId))
-      .withBody(GSON.toJson(entry)).addHeaders(getHeaders()).build();
+  public void createACL(ACLEntry entry) throws IOException {
+    HttpRequest request = HttpRequest.post(resolveURL("/v3/acls"))
+      .withBody(GSON.toJson(entry))
+      .addHeaders(getHeaders())
+      .build();
     HttpResponse response = HttpRequests.execute(request);
 
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK &&
-      response.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
-      throw new IOException("Unexpected response: " + response.getResponseCode() +
-                              ": " + response.getResponseMessage());
-    }
-  }
-
-  /**
-   * Creates an {@link ACLEntry} for the global namespace, subject, and a permission.
-   * This allows the subject to access the object for the specified permission.
-   *
-   * <p>
-   * For example, if object is "secretFile", subject is "Bob", and permission is "WRITE", then "Bob"
-   * would be allowed to write to the "secretFile", assuming that what is doing the writing is protecting
-   * the "secretFile" via a call to one of the {@code verifyAuthorized()} or {@code isAuthorized()} calls.
-   * </p>
-   *
-   * @param entry the {@link ACLEntry} to create
-   * @throws java.io.IOException if an error occurred when contacting the authorization service
-   */
-  public void createGlobalACL(ACLEntry entry) throws IOException {
-    HttpRequest request = HttpRequest.post(resolveURL("/v1/acls/global"))
-      .withBody(GSON.toJson(entry)).addHeaders(getHeaders()).build();
-    HttpResponse response = HttpRequests.execute(request);
-
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK &&
-      response.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Unexpected response: " + response.getResponseCode() +
                               ": " + response.getResponseMessage());
     }
@@ -193,6 +147,6 @@ public class ACLManagerClient {
   }
 
   private Multimap<String, String> getHeaders() {
-    return headersSupplier == null ? HashMultimap.<String, String>create() : headersSupplier.get();
+    return headersSupplier == null ? ImmutableMultimap.<String, String>of() : headersSupplier.get();
   }
 }

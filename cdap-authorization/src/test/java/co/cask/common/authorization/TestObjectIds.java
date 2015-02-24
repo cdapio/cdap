@@ -16,18 +16,18 @@
 package co.cask.common.authorization;
 
 /**
- * Various helper functions to construct {@link co.cask.common.authorization.SubjectId}s.
+ * Various helper functions to construct {@link co.cask.common.authorization.ObjectId}s.
  */
-public class SubjectIds {
+public class TestObjectIds {
 
-  public static final String USER = "user";
-  public static final String GROUP = "group";
+  public static final String NAMESPACE = "namespace";
+  public static final String APPLICATION = "app";
 
-  public static SubjectId user(String id) {
-    return new SubjectId(USER, id);
+  public static ObjectId namespace(String id) {
+    return new ObjectId(NAMESPACE, id);
   }
 
-  public static SubjectId group(String id) {
-    return new SubjectId(GROUP, id);
+  public static ObjectId application(String namespaceId, String id) {
+    return new ObjectId(new ObjectId(NAMESPACE, namespaceId), APPLICATION, id);
   }
 }

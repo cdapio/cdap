@@ -30,9 +30,9 @@ import com.google.common.base.Objects;
  */
 public class ACLEntry {
 
-  private ObjectId object;
-  private SubjectId subject;
-  private Permission permission;
+  private final ObjectId object;
+  private final SubjectId subject;
+  private final Permission permission;
 
   public ACLEntry(ObjectId object, SubjectId subject, Permission permission) {
     this.object = object;
@@ -56,18 +56,6 @@ public class ACLEntry {
 
   public Permission getPermission() {
     return permission;
-  }
-
-  public void setObject(ObjectId object) {
-    this.object = object;
-  }
-
-  public void setSubject(SubjectId subject) {
-    this.subject = subject;
-  }
-
-  public void setPermission(Permission permission) {
-    this.permission = permission;
   }
 
   @Override

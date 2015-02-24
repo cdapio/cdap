@@ -43,9 +43,9 @@ public class ACLStoreTest {
 
   @Test
   public void testAuthorized() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     aclStore.write(new ACLEntry(objectId, currentUser, permission));
@@ -54,9 +54,9 @@ public class ACLStoreTest {
 
   @Test
   public void testUnauthorizedNoACLEntry() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     try {
@@ -74,9 +74,9 @@ public class ACLStoreTest {
 
   @Test
   public void testUnauthorizedWrongPermission() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     Permission wrongPermission = Permission.ADMIN;
@@ -98,12 +98,12 @@ public class ACLStoreTest {
 
   @Test
   public void testUnauthorizedWrongUser() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
-    SubjectId wrongUser = SubjectIds.user("wrong");
+    SubjectId wrongUser = TestSubjectIds.user("wrong");
     Assert.assertNotEquals(wrongUser, currentUser);
     aclStore.write(new ACLEntry(objectId, wrongUser, permission));
 
@@ -122,12 +122,12 @@ public class ACLStoreTest {
 
   @Test
   public void testUnauthorizedWrongObject() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
-    ObjectId wrongObject = ObjectIds.application(namespaceId, "wrong");
+    ObjectId wrongObject = TestObjectIds.application(namespaceId, "wrong");
     Assert.assertNotEquals(wrongObject, objectId);
     aclStore.write(new ACLEntry(wrongObject, currentUser, permission));
 
@@ -146,11 +146,11 @@ public class ACLStoreTest {
 
   @Test
   public void testUnauthorizedWrongNamespace() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     String otherNamespaceId = "otherNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
-    ObjectId objectIdInOtherNamespace = ObjectIds.application(otherNamespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
+    ObjectId objectIdInOtherNamespace = TestObjectIds.application(otherNamespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     aclStore.write(new ACLEntry(objectIdInOtherNamespace, currentUser, permission));
@@ -170,7 +170,7 @@ public class ACLStoreTest {
 
   @Test
   public void testFilter() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     Permission permission = Permission.WRITE;
 
@@ -200,7 +200,7 @@ public class ACLStoreTest {
 
     @Override
     public ObjectId getObjectId() {
-      return ObjectIds.application(namespaceId, id);
+      return TestObjectIds.application(namespaceId, id);
     }
 
     @Override
