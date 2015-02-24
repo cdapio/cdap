@@ -25,4 +25,5 @@ import co.cask.common.authorization.ACLStore;
  */
 @Beta
 public interface ACLStoreTable extends Dataset, ACLStore {
+  public static final String TYPE = "aclStoreTable";
 }

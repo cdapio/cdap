@@ -76,7 +76,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   private String getV2RoutingService(String [] uriParts, AllowedMethod requestMethod, HttpRequest request) {
     if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
-      return Constants.Service.ACL;
+      return Constants.Service.ACL_MANAGER;
     } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
       return Constants.Service.METRICS;
     } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {

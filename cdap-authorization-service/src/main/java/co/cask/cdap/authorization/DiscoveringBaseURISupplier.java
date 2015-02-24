@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.authorization;
 
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
@@ -37,7 +38,7 @@ public class DiscoveringBaseURISupplier implements Supplier<URI> {
     this.addressSupplier = new Supplier<InetSocketAddress>() {
       @Override
       public InetSocketAddress get() {
-        ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(ACLManagerService.DISCOVERABLE_NAME);
+        ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(Constants.Service.ACL_MANAGER);
         Preconditions.checkState(serviceDiscovered.iterator().hasNext());
         Discoverable discoverable = serviceDiscovered.iterator().next();
         return discoverable.getSocketAddress();

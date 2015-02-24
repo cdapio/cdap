@@ -37,7 +37,7 @@ import com.google.inject.Singleton;
 public class ACLStoreTableSupplier implements ACLStoreSupplier {
 
   private static final String TABLE_NAME = "aclStoreTable";
-  private static final Id.DatasetInstance TABLE_ID = new Id.DatasetInstance(
+  private static final Id.DatasetInstance TABLE_ID = Id.DatasetInstance.from(
     new Id.Namespace(Constants.SYSTEM_NAMESPACE), TABLE_NAME);
 
   private final Supplier<ACLStoreTable> supplier;
@@ -49,7 +49,7 @@ public class ACLStoreTableSupplier implements ACLStoreSupplier {
       @Override
       public ACLStoreTable get() {
         try {
-          return DatasetsUtil.getOrCreateDataset(datasetFramework, TABLE_ID, ACLStoreTable.class.getName(),
+          return DatasetsUtil.getOrCreateDataset(datasetFramework, TABLE_ID, ACLStoreTable.TYPE,
                                                  DatasetProperties.EMPTY, ImmutableMap.<String, String>of(), null);
         } catch (Exception e) {
           throw Throwables.propagate(e);

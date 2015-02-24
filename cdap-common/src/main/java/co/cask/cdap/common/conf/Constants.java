@@ -31,7 +31,7 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
-    public static final String ACL = "acl";
+    public static final String ACL_MANAGER = "acl.manager";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
