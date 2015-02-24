@@ -153,7 +153,8 @@ public class SchedulerServiceTest {
       spec.getSpark(),
       spec.getWorkflows(),
       spec.getServices(),
-      builder.build()
+      builder.build(),
+      spec.getWorkers()
     );
   }
 }

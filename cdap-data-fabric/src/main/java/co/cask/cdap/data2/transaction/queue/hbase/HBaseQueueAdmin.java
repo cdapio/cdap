@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -113,14 +112,13 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.cConf = cConf;
     this.tableUtil = tableUtil;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    String unqualifiedTableNamePrefix =
-      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    String unqualifiedTableNamePrefix = type.toString();
     this.type = type;
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf, Namespace.SYSTEM);
+    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
     this.tableNamePrefix =
-      HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix));
+      HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix).getId());
     this.configTableName =
-      HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME));
+      HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME).getId());
     this.locationFactory = locationFactory;
   }
 
@@ -338,7 +336,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   private void deleteConsumerConfigurations(String namespaceId) throws IOException {
-    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespace(namespaceId));
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
   }
 
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {

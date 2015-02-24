@@ -44,7 +44,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
 
     datasetFramework.addModule(extensiveSchema, new ExtensiveSchemaTableDefinition.ExtensiveSchemaTableModule());
 

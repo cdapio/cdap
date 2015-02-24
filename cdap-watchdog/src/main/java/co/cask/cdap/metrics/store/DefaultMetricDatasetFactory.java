@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -57,8 +56,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
     this.cConf = cConf;
     this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf));
 
     this.entityTable = Suppliers.memoize(new Supplier<EntityTable>() {
 

@@ -16,9 +16,9 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
@@ -46,17 +46,17 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
                                                                              Iterable<StreamFileOffset>> {
 
   protected final StreamConfig streamConfig;
-  protected final QueueName name;
+  protected final Id.Stream streamId;
 
   protected StreamConsumerStateStore(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;
-    this.name = QueueName.fromStream(streamConfig.getStreamId());
+    this.streamId = streamConfig.getStreamId();
   }
 
   @Override
   public final void getAll(Collection<? super StreamConsumerState> result) throws IOException {
     SortedMap<byte[], byte[]> states = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    fetchAll(name.toBytes(), states);
+    fetchAll(streamId.toBytes(), states);
 
     for (Map.Entry<byte[], byte[]> entry : states.entrySet()) {
       byte[] column = entry.getKey();
@@ -70,7 +70,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
   @Override
   public final void getByGroup(long groupId, Collection<? super StreamConsumerState> result) throws IOException {
     SortedMap<byte[], byte[]> states = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    fetchAll(name.toBytes(), Bytes.toBytes(groupId), states);
+    fetchAll(streamId.toBytes(), Bytes.toBytes(groupId), states);
 
     for (Map.Entry<byte[], byte[]> entry : states.entrySet()) {
       byte[] column = entry.getKey();
@@ -86,13 +86,13 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
 
   @Override
   public final StreamConsumerState get(long groupId, int instanceId) throws IOException {
-    byte[] value = fetch(name.toBytes(), getColumn(groupId, instanceId));
+    byte[] value = fetch(streamId.toBytes(), getColumn(groupId, instanceId));
     return value == null ? null : new StreamConsumerState(groupId, instanceId, decodeOffsets(value));
   }
 
   @Override
   public final void save(StreamConsumerState state) throws IOException {
-    store(name.toBytes(), getColumn(state.getGroupId(), state.getInstanceId()), encodeOffsets(state.getState()));
+    store(streamId.toBytes(), getColumn(state.getGroupId(), state.getInstanceId()), encodeOffsets(state.getState()));
   }
 
   @Override
@@ -106,7 +106,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
       values.put(getColumn(state.getGroupId(), state.getInstanceId()), os.toByteArray());
     }
 
-    store(name.toBytes(), values.build());
+    store(streamId.toBytes(), values.build());
   }
 
   @Override
@@ -115,7 +115,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
     for (StreamConsumerState state : states) {
       columns.add(getColumn(state.getGroupId(), state.getInstanceId()));
     }
-    delete(name.toBytes(), columns);
+    delete(streamId.toBytes(), columns);
   }
 
   /**

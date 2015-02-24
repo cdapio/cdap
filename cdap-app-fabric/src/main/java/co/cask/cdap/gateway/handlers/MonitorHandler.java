@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,23 +42,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Monitor Handler returns the status of different discoverable services
+ * Monitor Handler V3
  */
-@Path(Constants.Gateway.API_VERSION_2)
-public class MonitorHandler extends AbstractAppFabricHttpHandler {
-  private final Map<String, MasterServiceManager> serviceManagementMap;
-  private static final String STATUSOK = Constants.Monitor.STATUS_OK;
-  private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
-  private static final String NOTAPPLICABLE = "NA";
-  private static final Gson GSON = new Gson();
-  private final ServiceStore serviceStore;
+@Path(Constants.Gateway.API_VERSION_3)
+public class MonitorHandler extends AbstractMonitorHandler {
 
   @Inject
   public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
                         ServiceStore serviceStore) throws Exception {
-    super(authenticator);
-    this.serviceManagementMap = serviceMap;
-    this.serviceStore = serviceStore;
+    super(authenticator, serviceMap, serviceStore);
   }
 
   /**
@@ -66,22 +58,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
    */
   @Path("/system/services/{service-name}/instances")
   @GET
-  public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
+  public void getServiceInstance(HttpRequest request, HttpResponder responder,
                                  @PathParam("service-name") String serviceName) throws Exception {
-    JsonObject reply = new JsonObject();
-    if (!serviceManagementMap.containsKey(serviceName)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
-      return;
-    }
-    MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
-    if (serviceManager.isServiceEnabled()) {
-      int actualInstance = serviceManagementMap.get(serviceName).getInstances();
-      reply.addProperty("provisioned", actualInstance);
-      reply.addProperty("requested", getSystemServiceInstanceCount(serviceName));
-      responder.sendJson(HttpResponseStatus.OK, reply);
-    } else {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
-    }
+
+    super.getServiceInstance(request, responder, serviceName);
   }
 
   /**
@@ -89,114 +69,28 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
    */
   @Path("/system/services/{service-name}/instances")
   @PUT
-  public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
+  public void setServiceInstance(HttpRequest request, HttpResponder responder,
                                  @PathParam("service-name") final String serviceName) {
-    try {
-      if (!serviceManagementMap.containsKey(serviceName)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Invalid Service Name");
-        return;
-      }
-
-      MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
-      int instance = getInstances(request);
-      if (!serviceManager.isServiceEnabled()) {
-        responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
-        return;
-      }
-
-      Integer currentInstance = getSystemServiceInstanceCount(serviceName);
-      if (instance < serviceManager.getMinInstances() || instance > serviceManager.getMaxInstances()) {
-        String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
-                                        serviceManager.getMaxInstances());
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, response);
-        return;
-      } else if (instance == currentInstance) {
-        responder.sendStatus(HttpResponseStatus.OK);
-        return;
-      }
-
-      serviceStore.setServiceInstance(serviceName, instance);
-      if (serviceManager.setInstances(instance)) {
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation did not succeed");
-      }
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           String.format("Error updating instances for service: %s", serviceName));
-    }
+    super.setServiceInstance(request, responder, serviceName);
   }
 
   // Return the status of CDAP services in JSON format
   @Path("/system/services/status")
   @GET
-  public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
-    Map<String, String> result = new HashMap<String, String>();
-    for (String service : serviceManagementMap.keySet()) {
-      MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
-      if (masterServiceManager.isServiceEnabled() && masterServiceManager.canCheckStatus()) {
-        String status = masterServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
-        result.put(service, status);
-      }
-    }
-    responder.sendJson(HttpResponseStatus.OK, result);
+  public void getBootStatus(HttpRequest request, HttpResponder responder) {
+    super.getBootStatus(request, responder);
   }
 
   @Path("/system/services/{service-name}/status")
   @GET
-  public void monitor(final HttpRequest request, final HttpResponder responder,
-                      @PathParam("service-name") final String serviceName) {
-    if (!serviceManagementMap.containsKey(serviceName)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
-      return;
-    }
-    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
-    if (!masterServiceManager.isServiceEnabled()) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
-      return;
-    }
-    if (masterServiceManager.canCheckStatus() && masterServiceManager.isServiceAvailable()) {
-      JsonObject json = new JsonObject();
-      json.addProperty("status", STATUSOK);
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } else if (masterServiceManager.canCheckStatus()) {
-      JsonObject json = new JsonObject();
-      json.addProperty("status", STATUSNOTOK);
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Operation not valid for this service");
-    }
+  public void monitor(HttpRequest request, HttpResponder responder,
+                      @PathParam("service-name") String serviceName) {
+    super.monitor(request, responder, serviceName);
   }
 
   @Path("/system/services")
   @GET
-  public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
-    List<SystemServiceMeta> response = Lists.newArrayList();
-    SortedSet<String> services = new TreeSet<String>(serviceManagementMap.keySet());
-    List<String> serviceList = new ArrayList<String>(services);
-    for (String service : serviceList) {
-      MasterServiceManager serviceManager = serviceManagementMap.get(service);
-      if (serviceManager.isServiceEnabled()) {
-        String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
-        String canCheck = serviceManager.canCheckStatus() ? (
-                          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
-        //TODO: Add metric name for Event Rate monitoring
-        response.add(new SystemServiceMeta(service, serviceManager.getDescription(), canCheck, logs,
-                                           serviceManager.getMinInstances(), serviceManager.getMaxInstances(),
-                                           getSystemServiceInstanceCount(service), serviceManager.getInstances()));
-      }
-    }
-    responder.sendJson(HttpResponseStatus.OK, response);
-  }
-
-  private int getSystemServiceInstanceCount(String serviceName) throws Exception {
-    Integer count = serviceStore.getServiceInstance(serviceName);
-
-    //In standalone mode, this count will be null. And thus we just return the actual instance count.
-    if (count == null) {
-      return serviceManagementMap.get(serviceName).getInstances();
-    } else {
-      return count;
-    }
+  public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
+    super.getServiceSpec(request, responder);
   }
 }

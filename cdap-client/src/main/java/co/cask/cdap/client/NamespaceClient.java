@@ -63,18 +63,11 @@ public class NamespaceClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {
-    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
-    String origVersion = config.getApiVersion();
-    try {
-      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-      HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("namespaces"),
-                                                 config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURLV3("namespaces"),
+                                               config.getAccessToken());
 
-      return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() {
-      }).getResponseObject();
-    } finally {
-      config.setApiVersion(origVersion);
-    }
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() {
+    }).getResponseObject();
   }
 
   /**
@@ -87,23 +80,16 @@ public class NamespaceClient {
    * @throws NotFoundException if the specified namespace is not found
    */
   public NamespaceMeta get(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
-    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
-    String origVersion = config.getApiVersion();
-    try {
-      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-      HttpResponse response = restClient.execute(HttpMethod.GET,
-                                                 config.resolveURL(String.format("namespaces/%s", namespaceId)),
-                                                 config.getAccessToken(),
-                                                 HttpURLConnection.HTTP_NOT_FOUND);
-      if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-        throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
-      }
-
-      return ObjectResponse.fromJsonBody(response, new TypeToken<NamespaceMeta>() {
-      }).getResponseObject();
-    } finally {
-      config.setApiVersion(origVersion);
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+                                               config.resolveURLV3(String.format("namespaces/%s", namespaceId)),
+                                               config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
     }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<NamespaceMeta>() {
+    }).getResponseObject();
   }
 
   /**
@@ -117,23 +103,16 @@ public class NamespaceClient {
    */
   public void delete(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException,
     CannotBeDeletedException {
-    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
-    String origVersion = config.getApiVersion();
-    try {
-      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-      HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                                 config.resolveURL(String.format("namespaces/%s", namespaceId)),
-                                                 config.getAccessToken(),
-                                                 HttpURLConnection.HTTP_NOT_FOUND,
-                                                 HttpURLConnection.HTTP_FORBIDDEN);
-      if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-        throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
-      }
-      if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-        throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
-      }
-    } finally {
-      config.setApiVersion(origVersion);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE,
+                                               config.resolveURLV3(String.format("namespaces/%s", namespaceId)),
+                                               config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_FORBIDDEN);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+    }
+    if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
+      throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
     }
   }
 
@@ -148,11 +127,7 @@ public class NamespaceClient {
    */
   public void create(NamespaceMeta namespaceMeta)
     throws IOException, UnAuthorizedAccessTokenException, AlreadyExistsException, BadRequestException {
-    // TODO: CDAP-1136 - remove the following apiVersion set/reset logic all APIs are migrated to v3
-    String origVersion = config.getApiVersion();
-    try {
-      config.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-      URL url = config.resolveURL(String.format("namespaces/%s", namespaceMeta.getId()));
+      URL url = config.resolveURLV3(String.format("namespaces/%s", namespaceMeta.getId()));
       JsonObject jsonObject = new JsonObject();
       String name = namespaceMeta.getName();
       String description = namespaceMeta.getDescription();
@@ -173,8 +148,5 @@ public class NamespaceClient {
                                                                     namespaceMeta.getId()))) {
         throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
       }
-    } finally {
-      config.setApiVersion(origVersion);
-    }
   }
 }

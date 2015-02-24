@@ -64,12 +64,15 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
         // note: we can deploy module or create module from Dataset class
         // note: it seems dangerous to instantiate dataset module here, but this will be fine when we move deploy into
         //       isolated user's environment (e.g. separate yarn container)
-        Id.DatasetModule moduleId = Id.DatasetModule.from(input.getId().getNamespaceId(), moduleName);
+        Id.Namespace moduleNamespace = input.getId().getNamespace();
+        Id.DatasetModule moduleId = Id.DatasetModule.from(moduleNamespace, moduleName);
         if (DatasetModule.class.isAssignableFrom(clazz)) {
           datasetFramework.addModule(moduleId, (DatasetModule) clazz.newInstance());
         } else if (Dataset.class.isAssignableFrom(clazz)) {
           // checking if type is in already
-          if (!datasetFramework.hasType(clazz.getName())) {
+          // note: this does not allow upgrade even for user modules. Re-visit when upgrade is possible
+          if (!datasetFramework.hasSystemType(clazz.getName()) &&
+            !datasetFramework.hasType(Id.DatasetType.from(moduleNamespace, clazz.getName()))) {
             datasetFramework.addModule(moduleId, new SingleTypeModule((Class<Dataset>) clazz));
           }
         } else {
