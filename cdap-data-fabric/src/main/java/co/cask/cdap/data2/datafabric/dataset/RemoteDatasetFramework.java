@@ -150,9 +150,13 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    // hasType is really hasDefaultType, so using system namespace
-    return clientCache.getUnchecked(Id.Namespace.from(Constants.SYSTEM_NAMESPACE)).getType(typeName) != null;
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
+  }
+
+  @Override
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName()) != null;
   }
 
   @Override
@@ -193,6 +197,16 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
     return (T) type.getDataset(instanceInfo.getSpec(), arguments);
+  }
+
+  @Override
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).createNamespace();
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).deleteNamespace();
   }
 
   private void addModule(Id.DatasetModule moduleId, Class<?> typeClass) throws DatasetManagementException {

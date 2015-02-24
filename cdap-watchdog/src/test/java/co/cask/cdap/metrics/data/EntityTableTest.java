@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class EntityTableTest {
 
   @Test
   public void testGetId() throws Exception {
-    InMemoryOrderedTableService.create("testGetId");
+    InMemoryTableService.create("testGetId");
     MetricsTable table = new InMemoryMetricsTable("testGetId");
 
     EntityTable entityTable = new EntityTable(table);
@@ -57,7 +57,7 @@ public class EntityTableTest {
 
   @Test
   public void testRecycleAfterMaxId() throws Exception {
-    InMemoryOrderedTableService.create("testRecycleId");
+    InMemoryTableService.create("testRecycleId");
     MetricsTable table = new InMemoryMetricsTable("testRecycleId");
 
     EntityTable entityTable = new EntityTable(table, 101);
@@ -76,7 +76,7 @@ public class EntityTableTest {
 
   @Test
   public void testGetName() throws Exception {
-    InMemoryOrderedTableService.create("testGetName");
+    InMemoryTableService.create("testGetName");
     MetricsTable table = new InMemoryMetricsTable("testGetName");
 
     EntityTable entityTable = new EntityTable(table);

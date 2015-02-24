@@ -33,6 +33,7 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,10 +69,8 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
-    //TODO: use streamMetaStore.listStreams() instead
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
+    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
       StreamConfig config = streamAdmin.getConfig(streamId);
       long filesSize = StreamUtils.fetchStreamFilesSize(config);
       createSizeAggregator(streamId, StreamUtils.getGeneration(config), filesSize, config.getNotificationThresholdMB());
@@ -87,11 +86,9 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void runOneIteration() throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
-    //TODO: use streamMetaStore.listStreams() instead
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
+    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamId);
       if (streamSizeAggregator == null) {
         // First time that we see this Stream here

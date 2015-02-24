@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Performs deletion of unused stream files.
@@ -38,25 +39,31 @@ public final class StreamFileJanitor {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileJanitor.class);
 
   private final StreamAdmin streamAdmin;
-  private final Location streamBaseLocation;
+  private final LocationFactory locationFactory;
+  private final String streamBaseDirPath;
 
   @Inject
   public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin, LocationFactory locationFactory) {
     this.streamAdmin = streamAdmin;
-    this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
+    this.locationFactory = locationFactory;
   }
 
   /**
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws IOException {
-    if (!streamBaseLocation.exists()) {
-      return;
-    }
-    for (Location streamLocation : streamBaseLocation.list()) {
-      //TODO: construct namespace from streamLocation (Locations.parent.getname)
-      Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamLocation.getName());
-      clean(streamAdmin.getConfig(streamId), System.currentTimeMillis());
+    List<Location> namespaceDirs = locationFactory.create("").list();
+    for (Location namespaceDir : namespaceDirs) {
+      Location streamBaseLocation = namespaceDir.append(streamBaseDirPath);
+      if (!streamBaseLocation.exists()) {
+        continue;
+      }
+
+      for (Location streamLocation : streamBaseLocation.list()) {
+        Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
+        clean(streamAdmin.getConfig(streamId), System.currentTimeMillis());
+      }
     }
   }
 

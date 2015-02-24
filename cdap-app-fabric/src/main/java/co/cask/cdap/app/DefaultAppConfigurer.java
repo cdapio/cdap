@@ -239,6 +239,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services,
-                                               schedules);
+                                               schedules, workers);
   }
 }

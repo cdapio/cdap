@@ -131,7 +131,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private Put getIncrementalPut(byte[] row) {
     Put put = new Put(row);
-    put.setAttribute(HBaseOrderedTable.DELTA_WRITE, Bytes.toBytes(true));
+    put.setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true));
     return put;
   }
 
