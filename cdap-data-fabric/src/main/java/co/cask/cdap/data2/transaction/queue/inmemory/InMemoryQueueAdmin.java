@@ -74,13 +74,8 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAll() throws Exception {
-    queueService.resetQueues();
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespace(namespaceId));
+    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
   }
 
   @Override

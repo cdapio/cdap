@@ -15,12 +15,13 @@
  */
 package co.cask.cdap.data2.queue;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Implementation of this interface enqueues methods should be thread safe.
  */
-public interface QueueProducer {
+public interface QueueProducer extends Closeable {
 
   /**
    * Enqueues a {@link QueueEntry}.

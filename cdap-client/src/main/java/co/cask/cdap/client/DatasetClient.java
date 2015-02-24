@@ -68,7 +68,7 @@ public class DatasetClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<DatasetSpecification> list() throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("data/datasets");
+    URL url = config.resolveNamespacedURLV3("data/datasets");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetSpecification>>() { }).getResponseObject();
   }
@@ -86,7 +86,7 @@ public class DatasetClient {
   public void create(String datasetName, DatasetInstanceConfiguration properties)
     throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
@@ -123,7 +123,7 @@ public class DatasetClient {
    */
   public void delete(String datasetName) throws DatasetNotFoundException, IOException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -140,7 +140,7 @@ public class DatasetClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public boolean exists(String datasetName) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -206,7 +206,7 @@ public class DatasetClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void truncate(String datasetName) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/datasets/%s/admin/truncate", datasetName));
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s/admin/truncate", datasetName));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }
 
