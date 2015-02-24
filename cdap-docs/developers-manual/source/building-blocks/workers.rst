@@ -51,7 +51,7 @@ Their instances may be updated via the :ref:`Command Line Interface <cli-availab
     }
   }
 
-Workers can access and use ``Dataset``\s via a ``DatasetContext`` inside their ``run`` method.
+Workers can access and use ``Dataset``\s via a ``DatasetContext`` inside their ``run`` method::
 
   @Override
   public void run() {
