@@ -346,14 +346,7 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          throw Throwables.propagate(ie);
-        }
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
   }
@@ -400,15 +393,19 @@ public class DistributedStreamService extends AbstractStreamService {
         feedManager.createFeed(streamHeartbeatsFeed);
         return;
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          throw Throwables.propagate(ie);
-        }
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
+    }
+  }
+
+  private void waitBeforeRetryHeartbeatsFeedOperation() {
+    // Most probably, the dataset service is not up. We retry
+    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
+    try {
+      TimeUnit.SECONDS.sleep(1);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
     }
   }
 

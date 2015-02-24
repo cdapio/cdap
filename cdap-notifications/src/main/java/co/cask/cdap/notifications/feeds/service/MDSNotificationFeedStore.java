@@ -82,7 +82,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
 
             return new NotificationFeedMds(new MetadataStoreDataset(mdsTable));
           } catch (Exception e) {
-            LOG.error("Failed to access app.meta table", e);
+            LOG.debug("Failed to access app.meta table: {}", e);
             throw Throwables.propagate(e);
           }
         }
