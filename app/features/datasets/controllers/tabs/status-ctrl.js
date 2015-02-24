@@ -7,20 +7,43 @@ angular.module(PKG.name + '.feature.datasets')
       var dataSrc = new MyDataSource($scope),
           currentDataset = $state.params.datasetId;
 
-      ['reads', 'writes', 'bytes'].forEach(fetchMetric);
+      [
+        {
+          name: 'system.dataset.store.bytes',
+          scopeProperty: 'storage'
+        },
+        {
+          name: 'system.dataset.store.reads',
+          scopeProperty: 'reads'
+        },
+        {
+          name: 'system.dataset.store.writes',
+          scopeProperty: 'writes'
+        }
+      ].forEach(fetchMetric);
 
       function fetchMetric(metric) {
-        dataSrc.poll({
-          _cdapPathV2: '/metrics/system/datasets/' + currentDataset + '/dataset.store.'+ metric +'?aggregate=true'
-        }, function(res) {
-          $scope[metric] = res.data;
-        });
+        var path = '/metrics/query?metric=' +
+                    metric.name +
+                    '&context=ns.' +
+                    $state.params.namespace +
+                    '.ds.' +
+                    $state.params.datasetId;
+
+        dataSrc.request({
+          _cdapPath : path ,
+          method: 'POST'
+        })
+          .then(function(metricData) {
+            var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
+            $scope[metric.scopeProperty] = data;
+          });
       }
 
       var query = myHelpers.objectQuery;
       // Temporary API until we get a status API for each dataset.
       dataSrc.request({
-        _cdapPathV2: '/data/datasets'
+        _cdapNsPath: '/data/datasets'
       })
         .then(function(res) {
           var match = res.filter(function(ds) {
