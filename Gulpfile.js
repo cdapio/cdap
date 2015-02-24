@@ -304,7 +304,7 @@ gulp.task('watch', ['build'], function() {
     .on('change', plug.livereload.changed);
 
   gulp.watch(['./app/**/*.js', '!./app/**/*-test.js'], ['js:app']);
-  gulp.watch('./app/**/*.{less,css}', ['css:app']);
+  gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
   gulp.watch('./app/img/**/*', ['img']);

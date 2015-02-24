@@ -3,7 +3,9 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
-    $scope.runTabs = ['status', 'flowlets', 'data', 'configuration', 'log'];
+    // $scope.runTabs = ['status', 'flowlets', 'data', 'configuration', 'log'];
+    $scope.runTabs = ['status', 'log'];
+
     $scope.runs = null;
     $scope.currentRun = null;
 

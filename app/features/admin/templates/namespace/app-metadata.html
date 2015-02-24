@@ -1,16 +1,17 @@
-<h2> {{$state.params.nsadmin | caskCapitalizeFilter}}: Apps </h2>
-
 <div class="row">
     <div class="col-xs-6">
         <h3 ng-bind="apps.name | caskCapitalizeFilter"></h3>
     </div>
-    <div class="col-xs-6 text-right h3">
-        <a class="btn btn-default"
-          data-template="/assets/features/admin/templates/partials/app-dd.html"
-          bs-dropdown>
-            Actions
-            <span class="caret"></span>
-        </a>
+    <div class="col-xs-6">
+
+        <div class="h3 text-right">
+          <a class="btn btn-default"
+            data-template="/assets/features/admin/templates/partials/app-dd.html"
+            bs-dropdown>
+              Actions
+              <span class="caret"></span>
+          </a>
+        </div>
     </div>
 </div>
 
@@ -23,15 +24,15 @@
         </td>
     </tr>
     <tr>
-        <th>ID:</th>
+        <th>ID</th>
         <td ng-bind="apps.id"></td>
     </tr>
     <tr>
-        <th>Display Name:</th>
+        <th>Display Name</th>
         <td ng-bind="apps.name"></td>
     </tr>
     <tr>
-        <th>Description:</th>
+        <th>Description</th>
         <td ng-bind="apps.description"></td>
     </tr>
 <!--     <tr>

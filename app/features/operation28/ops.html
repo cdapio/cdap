@@ -7,15 +7,15 @@
     <li role="presentation" ui-sref-active="active" ng-show="isEnterprise">
       <a ui-sref="operations.system" role="tab">System Resources</a>
     </li>
-    <li role="presentation" ui-sref-active="active">
+    <li role="presentation" ui-sref-active="active" ng-show="isEnterprise">
       <a ui-sref="operations.apps" role="tab">App Resources</a>
     </li>
-    <li role="presentation" class="pull-right">
+<!--     <li role="presentation" class="pull-right">
       <a ui-sref="dashboard">
         <span class="fa fa-bar-chart"></span>
         <span class="sr-only">Dashboard</span>
       </a>
-    </li>
+    </li> -->
   </ul>
 
   <br />

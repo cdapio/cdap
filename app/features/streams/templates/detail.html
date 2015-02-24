@@ -8,14 +8,20 @@
   </div>
   <div class="col-sm-6 text-right">
     <span class="btn-group h3">
-      <a class="btn btn-default" data-animation="am-flip-x" bs-dropdown="dropdown">
+      <a class="btn btn-default" data-animation="am-flip-x" bs-dropdown="dropdown" disabled>
         Action <span class="caret"></span>
       </a>
     </span>
   </div>
 
 </div>
-<my-tabs
+
+<!-- <my-tabs ng-if="false"
   data-tabs-partial-path="/assets/features/streams/templates/tabs/"
   data-tabs-list="['Status','Explore','Programs','Metadata','Resources']">
+</my-tabs>
+ -->
+<my-tabs
+  data-tabs-partial-path="/assets/features/streams/templates/tabs/"
+  data-tabs-list="['Status']">
 </my-tabs>
