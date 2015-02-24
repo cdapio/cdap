@@ -124,14 +124,6 @@ public class StreamSizeSchedulerTest {
     TimeUnit.SECONDS.sleep(5);
     runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(6, runs);
-
-    // Simulate truncation of the stream, which will send a notification with size 0
-    notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 0));
-    TimeUnit.MILLISECONDS.sleep(1000);
-
-    // The first schedule should be triggered after sending a notification containing only 1MB
-    notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 1024 * 1025));
-    waitForRuns(PROGRAM_ID, 7);
   }
 
   private void waitForRuns(Id.Program programId, int expectedRuns) throws Exception {
