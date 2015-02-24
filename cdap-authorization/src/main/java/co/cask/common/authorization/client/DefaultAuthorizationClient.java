@@ -114,7 +114,6 @@ public class DefaultAuthorizationClient implements AuthorizationClient {
       Set<ACLEntry> aclEntries = getACLStore().search(queries);
       for (ACLEntry aclEntry : aclEntries) {
         outRemainingRequiredPermission.remove(aclEntry.getPermission());
-        outRemainingRequiredPermission.remove(Permission.ANY);
         if (outRemainingRequiredPermission.isEmpty()) {
           return;
         }

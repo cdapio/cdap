@@ -43,14 +43,14 @@ public class AuthorizationClientTest {
   private static final ACLEntry UNRELATED_ACL = new ACLEntry(
     TestObjectIds.application("unrelatedNamespace", "unrelatedApp"),
     TestSubjectIds.user("unrelatedUser"),
-    Permission.READ
+    Permission.CREATE
   );
 
 
   private static final ACLEntry UNRELATED_ACL2 = new ACLEntry(
     TestObjectIds.application("unrelatedNamespace", "unrelatedApp2"),
     TestSubjectIds.user("unrelatedUser"),
-    Permission.READ
+    Permission.CREATE
   );
 
   private AuthorizationClient authorizationClient;
@@ -69,7 +69,7 @@ public class AuthorizationClientTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     aclStore.write(new ACLEntry(objectId, currentUser, permission));
     authorizationClient.authorize(objectId, ImmutableSet.of(currentUser), ImmutableSet.of(permission));
@@ -80,7 +80,7 @@ public class AuthorizationClientTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     try {
       authorizationClient.authorize(objectId, ImmutableSet.of(currentUser), ImmutableSet.of(permission));
@@ -100,7 +100,7 @@ public class AuthorizationClientTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     Permission wrongPermission = Permission.ADMIN;
     Assert.assertNotEquals(wrongPermission, permission);
@@ -124,7 +124,7 @@ public class AuthorizationClientTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     SubjectId wrongUser = TestSubjectIds.user("wrong");
     Assert.assertNotEquals(wrongUser, currentUser);
@@ -148,7 +148,7 @@ public class AuthorizationClientTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     ObjectId wrongObject = TestObjectIds.application(namespaceId, "wrong");
     Assert.assertNotEquals(wrongObject, objectId);
@@ -171,7 +171,7 @@ public class AuthorizationClientTest {
   public void testFilter() throws Exception {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     TestApp someApp = new TestApp(namespaceId, "someApp");
     TestApp secretApp = new TestApp(namespaceId, "secretApp");
@@ -191,7 +191,7 @@ public class AuthorizationClientTest {
     ObjectId app = TestObjectIds.application(mainNamespace.getId(), "someApp");
 
     SubjectId user = TestSubjectIds.user("bob");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     Assert.assertFalse(authorizationClient.isAuthorized(app, ImmutableList.of(user), ImmutableList.of(permission)));
 
