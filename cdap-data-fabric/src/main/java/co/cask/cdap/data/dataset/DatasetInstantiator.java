@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -80,8 +79,7 @@ public class DatasetInstantiator implements DatasetContext {
     this.metricsCollector = metricsCollector;
     // todo: should be passed in already namespaced. Refactor
     this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
   }
 
   @Override

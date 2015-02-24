@@ -21,6 +21,7 @@ import com.google.common.base.Objects;
 /**
  * Notification sent by the stream service when a stream has ingested a certain amount of data,
  * determined in the configuration of the stream.
+ * The size is the absolute size of data ever ingested by the stream, in bytes.
  */
 public class StreamSizeNotification {
   private final long timestamp;

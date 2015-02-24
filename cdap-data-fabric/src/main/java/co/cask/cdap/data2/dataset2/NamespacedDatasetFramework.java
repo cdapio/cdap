@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
  * Wrapper for {@link DatasetFramework} that namespaces dataset instances names.
  */
 public class NamespacedDatasetFramework implements DatasetFramework {
+
   private final DatasetNamespace namespace;
   private final DatasetFramework delegate;
 
@@ -77,7 +78,7 @@ public class NamespacedDatasetFramework implements DatasetFramework {
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
     ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
     for (DatasetSpecification spec : specs) {
-      DatasetSpecification s = fromNamespaced(spec);
+      DatasetSpecification s = fromNamespaced(namespaceId, spec);
       if (s != null) {
         builder.add(s);
       }
@@ -88,7 +89,7 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return fromNamespaced(delegate.getDatasetSpec(namespace(datasetInstanceId)));
+    return fromNamespaced(datasetInstanceId.getNamespace(), delegate.getDatasetSpec(namespace(datasetInstanceId)));
   }
 
   @Override
@@ -97,8 +98,13 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    return delegate.hasType(typeName);
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return delegate.hasSystemType(typeName);
+  }
+
+  @Override
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return delegate.hasType(datasetTypeId);
   }
 
   @Override
@@ -130,17 +136,30 @@ public class NamespacedDatasetFramework implements DatasetFramework {
     return delegate.getDataset(namespace(datasetInstanceId), arguments, classLoader);
   }
 
+  @Override
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.createNamespace(namespaceId);
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    delegate.deleteNamespace(namespaceId);
+  }
+
   @Nullable
-  private DatasetSpecification fromNamespaced(@Nullable DatasetSpecification spec) {
+  private DatasetSpecification fromNamespaced(Id.Namespace namespaceId, @Nullable DatasetSpecification spec) {
     if (spec == null) {
       return null;
     }
-    String notNamespaced = namespace.fromNamespaced(spec.getName());
-    return notNamespaced == null ? null : DatasetSpecification.changeName(spec, notNamespaced);
+    Id.DatasetInstance namespaced = Id.DatasetInstance.from(namespaceId, spec.getName());
+    Id.DatasetInstance notNamespaced = namespace.fromNamespaced(namespaced);
+    if (notNamespaced == null) {
+      return null;
+    }
+    return DatasetSpecification.changeName(spec, notNamespaced.getId());
   }
 
   private Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
-    String namespacedInstanceName = namespace.namespace(datasetInstanceId.getId());
-    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespacedInstanceName);
+    return namespace.namespace(datasetInstanceId);
   }
 }

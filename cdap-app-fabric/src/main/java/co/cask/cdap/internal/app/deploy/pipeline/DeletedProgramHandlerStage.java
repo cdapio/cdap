@@ -109,10 +109,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        String namespace = String.format("%s.%s.%s",
-                                         programId.getNamespaceId(),
-                                         programId.getApplicationId(),
-                                         programId.getId());
+        String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
           streamConsumerFactory.dropAll(Id.Stream.from(appSpec.getId().getNamespaceId(), entry.getKey()),
                                         namespace, entry.getValue());

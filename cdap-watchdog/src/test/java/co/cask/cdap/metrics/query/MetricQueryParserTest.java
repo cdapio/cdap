@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,7 +40,7 @@ public class MetricQueryParserTest {
 
   @Test
   public void testQueryArgs() throws MetricsPathException {
-    CubeQuery query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?count=60"));
+    MetricDataQuery query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?count=60"));
     Assert.assertEquals(60, query.getLimit());
 
     query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
@@ -86,7 +86,7 @@ public class MetricQueryParserTest {
   @Test
   public void testRelativeTimeArgs() throws MetricsPathException  {
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=61&end=now-5s"));
     assertTimestamp(now - 5, query.getEndTs());
     assertTimestamp(now - 65, query.getStartTs());
@@ -136,48 +136,38 @@ public class MetricQueryParserTest {
 
   @Test
   public void testOverview() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(URI.create("/system/reads?aggregate=true"));
+    MetricDataQuery query = MetricQueryParser.parse(URI.create("/system/reads?aggregate=true"));
     Assert.assertTrue(query.getSliceByTags().isEmpty());
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
   }
 
   @Test
   public void testApps() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
+    MetricDataQuery query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
   }
 
   @Test
   public void testFlow() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.bytes", query.getMeasureName());
+    Assert.assertEquals("system.process.bytes", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/some.metric?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1");
-    Assert.assertEquals("system.some.metric", query.getMeasureName());
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/loads?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f");
-    Assert.assertEquals("system.loads", query.getMeasureName());
+               Tag.FLOW, "flow1");
+    Assert.assertEquals("system.some.metric", query.getMetricName());
 
     //flow with runId
     query = MetricQueryParser.parse(
@@ -185,9 +175,8 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1");
-    Assert.assertEquals("system.some.metric", query.getMeasureName());
+               Tag.FLOW, "flow1");
+    Assert.assertEquals("system.some.metric", query.getMetricName());
     Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
 
     //flowlet with runId
@@ -196,30 +185,28 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.some.metric", query.getMeasureName());
+    Assert.assertEquals("system.some.metric", query.getMetricName());
     Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test(expected = MetricsPathException.class)
   public void testMultipleRunIdInvalidPath() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/runs/1235/flowlets/flowlet1/some.metric?summary=true"));
   }
 
   @Test
   public void testQueues() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.bytes.in", query.getMeasureName());
+    Assert.assertEquals("system.process.bytes.in", query.getMetricName());
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -227,10 +214,9 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.bytes.out", query.getMeasureName());
+    Assert.assertEquals("system.process.bytes.out", query.getMetricName());
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -238,10 +224,9 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.events.in", query.getMeasureName());
+    Assert.assertEquals("system.process.events.in", query.getMetricName());
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -249,10 +234,9 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.events.out", query.getMeasureName());
+    Assert.assertEquals("system.process.events.out", query.getMetricName());
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -261,61 +245,48 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.process.events.out", query.getMeasureName());
+    Assert.assertEquals("system.process.events.out", query.getMetricName());
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
   public void testMapReduce() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/mappers/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b",
-               Tag.PROGRAM, "mapred1",
+               Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reducers/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b",
-               Tag.PROGRAM, "mapred1",
+               Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "r");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b",
-               Tag.PROGRAM, "mapred1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/mapreduce/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+               Tag.MAPREDUCE, "mapred1");
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b",
-               Tag.PROGRAM, "mapred1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+               Tag.MAPREDUCE, "mapred1");
+    Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
 
     query = MetricQueryParser.parse(
@@ -323,95 +294,79 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "b",
-               Tag.PROGRAM, "mapred1",
+               Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
   public void testProcedure() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/procedures/proc1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "p",
-               Tag.PROGRAM, "proc1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/procedures/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "p");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+               Tag.PROCEDURE, "proc1");
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/procedures/proc1/runs/run123/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "p",
-               Tag.PROGRAM, "proc1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+               Tag.PROCEDURE, "proc1");
+    Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
   public void testUserServices() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "u",
-               Tag.PROGRAM, "serve1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+               Tag.SERVICE, "serve1");
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "u",
-               Tag.PROGRAM, "serve1",
+               Tag.SERVICE, "serve1",
                Tag.SERVICE_RUNNABLE, "run1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "u",
-               Tag.PROGRAM, "serve1",
+               Tag.SERVICE, "serve1",
                Tag.SERVICE_RUNNABLE, "run1");
-    Assert.assertEquals("system.reads", query.getMeasureName());
+    Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
   public void testSpark() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/sparkmetric?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "s",
-               Tag.PROGRAM, "fakespark");
-    Assert.assertEquals("system.sparkmetric", query.getMeasureName());
+               Tag.SPARK, "fakespark");
+    Assert.assertEquals("system.sparkmetric", query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/runs/runid123/sparkmetric?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "s",
-               Tag.PROGRAM, "fakespark");
-    Assert.assertEquals("system.sparkmetric", query.getMeasureName());
+               Tag.SPARK, "fakespark");
+    Assert.assertEquals("system.sparkmetric", query.getMetricName());
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -428,16 +383,15 @@ public class MetricQueryParserTest {
 
   @Test
   public void testDataset() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/run1/" +
                    "flowlets/flowlet1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1",
+               Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
+    Assert.assertEquals("system.store.reads", query.getMetricName());
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("run1", query.getSliceByTags().get(Tag.RUN_ID));
 
@@ -446,9 +400,8 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1");
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
+               Tag.FLOW, "flow1");
+    Assert.assertEquals("system.store.reads", query.getMetricName());
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
@@ -456,75 +409,65 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f",
-               Tag.PROGRAM, "flow1");
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
+               Tag.FLOW, "flow1");
+    Assert.assertEquals("system.store.reads", query.getMetricName());
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("123", query.getSliceByTags().get(Tag.RUN_ID));
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/datasets/dataset1/apps/app1/flows/store.reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f");
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
-    Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
+    Assert.assertEquals("system.store.reads", query.getMetricName());
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals("system.store.reads", query.getMeasureName());
+    Assert.assertEquals("system.store.reads", query.getMetricName());
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
   }
 
   @Test
   public void testStream() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/streams/stream1/collect.events?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals("system.collect.events", query.getMeasureName());
+    Assert.assertEquals("system.collect.events", query.getMetricName());
     Assert.assertEquals("stream1", query.getSliceByTags().get(Tag.STREAM));
   }
 
 
   @Test
   public void testService() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/services/appfabric/query.received?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                "system",
                Tag.COMPONENT, "appfabric");
-    Assert.assertEquals("system.query.received", query.getMeasureName());
+    Assert.assertEquals("system.query.received", query.getMetricName());
   }
 
 
   @Test
   public void testHandler() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/services/appfabric/handlers/AppFabricHttpHandler/runs/123/" +
                    "response.server-error?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                "system",
                Tag.COMPONENT, "appfabric",
                Tag.HANDLER, "AppFabricHttpHandler");
-    Assert.assertEquals("system.response.server-error", query.getMeasureName());
+    Assert.assertEquals("system.response.server-error", query.getMetricName());
     Assert.assertEquals("123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
   public void testMethod() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/services/metrics/handlers/MetricsQueryHandler/methods/handleComponent/" +
                    "response.successful?aggregate=true"));
     verifyTags(query.getSliceByTags(),
@@ -532,7 +475,7 @@ public class MetricQueryParserTest {
                Tag.COMPONENT, "metrics",
                Tag.HANDLER, "MetricsQueryHandler",
                Tag.METHOD, "handleComponent");
-    Assert.assertEquals("system.response.successful", query.getMeasureName());
+    Assert.assertEquals("system.response.successful", query.getMetricName());
   }
 
   @Test(expected = MetricsPathException.class)
@@ -544,22 +487,21 @@ public class MetricQueryParserTest {
 
   @Test
   public void testCluster() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     verifyTags(query.getSliceByTags(), "system");
-    Assert.assertTrue(Boolean.parseBoolean(query.getSliceByTags().get(Tag.CLUSTER_METRICS)));
-    Assert.assertEquals("system.resources.total.storage", query.getMeasureName());
+    Assert.assertEquals("system.resources.total.storage", query.getMetricName());
   }
 
 
   @Test
   public void testTransactions() throws MetricsPathException  {
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/transactions/invalid?count=1&start=12345678&interpolate=step"));
     verifyTags(query.getSliceByTags(),
                "system",
                Tag.COMPONENT, "transactions");
-    Assert.assertEquals("system.invalid", query.getMeasureName());
+    Assert.assertEquals("system.invalid", query.getMetricName());
   }
 
   @Test
@@ -567,20 +509,19 @@ public class MetricQueryParserTest {
     String weirdMetric = "/weird?me+tr ic#$name////";
     // encoded version or weirdMetric
     String encodedWeirdMetric = "%2Fweird%3Fme%2Btr%20ic%23%24name%2F%2F%2F%2F";
-    CubeQuery query = MetricQueryParser.parse(
+    MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/user/apps/app1/flows/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROGRAM_TYPE, "f");
-    Assert.assertEquals("user." + weirdMetric, query.getMeasureName());
+               Tag.APP, "app1");
+    Assert.assertEquals("user." + weirdMetric, query.getMetricName());
 
     query = MetricQueryParser.parse(
       URI.create("/user/apps/app1/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals("user." + weirdMetric, query.getMeasureName());
+    Assert.assertEquals("user." + weirdMetric, query.getMetricName());
   }
 
 

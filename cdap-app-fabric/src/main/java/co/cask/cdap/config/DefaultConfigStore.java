@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -66,8 +65,8 @@ public class DefaultConfigStore implements ConfigStore {
   @Inject
   public DefaultConfigStore(CConfiguration cConf, final DatasetFramework datasetFramework,
                             TransactionExecutorFactory executorFactory) {
-    final DatasetFramework dsFramework = new NamespacedDatasetFramework(
-      datasetFramework, new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+    final DatasetFramework dsFramework = new NamespacedDatasetFramework(datasetFramework,
+                                                                        new DefaultDatasetNamespace(cConf));
     txnl = Transactional.of(executorFactory, new Supplier<ConfigTable>() {
       @Override
       public ConfigTable get() {
