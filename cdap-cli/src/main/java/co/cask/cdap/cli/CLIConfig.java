@@ -48,41 +48,24 @@ import java.util.Properties;
  */
 public class CLIConfig {
 
-  public static final String PROP_VERIFY_SSL_CERT = "verify.ssl.cert";
-  public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
-
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
-  private final boolean hostnameProvided;
+  private final String accessTokenFile;
+  private final boolean autoconnect;
 
   private List<ConnectionChangeListener> connectionChangeListeners;
-  private ConnectionInfo connectionInfo;
 
   /**
-   * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
+   * @param launchConfig initial configuration
    */
-  public CLIConfig(String hostname) {
-    this.hostnameProvided = hostname != null && !hostname.isEmpty();
-    this.clientConfig = createClientConfig(hostname);
+  public CLIConfig(CLILaunchConfig launchConfig) {
+    this.autoconnect = launchConfig.isAutoconnect();
+    this.clientConfig = launchConfig.createClientConfig();
+    this.accessTokenFile = launchConfig.getAccessTokenFile();
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
     this.connectionChangeListeners = Lists.newArrayList();
-  }
-
-  public CLIConfig() {
-    this(null);
-  }
-
-  private ClientConfig createClientConfig(String hostname) {
-    ClientConfig.Builder clientConfigBuilder = new ClientConfig.Builder();
-    if (hostname != null) {
-      clientConfigBuilder.setHostname(hostname);
-    }
-    if (System.getProperty(PROP_VERIFY_SSL_CERT) != null) {
-      clientConfigBuilder.setVerifySSLCert(Boolean.parseBoolean(System.getProperty(PROP_VERIFY_SSL_CERT)));
-    }
-    return clientConfigBuilder.build();
   }
 
   public String getCurrentNamespace() {
@@ -96,14 +79,13 @@ public class CLIConfig {
     }
   }
 
-  public boolean isHostnameProvided() {
-    return hostnameProvided;
-  }
+  public void tryConnect(PrintStream output, boolean verbose) throws Exception {
+    ClientConfig newClientConfig = new ClientConfig.Builder(clientConfig).build();
 
-  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
-
-    this.connectionInfo = connectionInfo;
     try {
+      if (!isAuthenticationEnabled(connectionInfo)) {
+        return null;
+      }
       AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, verbose);
       checkConnection(clientConfig, connectionInfo, accessToken);
       setHostname(connectionInfo.getHostname());
@@ -112,6 +94,7 @@ public class CLIConfig {
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
 
+      clientConfig.set(newClientConfig);
       if (verbose) {
         output.printf("Successfully connected CDAP instance at %s:%d\n",
                       connectionInfo.getHostname(), connectionInfo.getPort());
@@ -121,6 +104,13 @@ public class CLIConfig {
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
                                           e.getMessage()));
     }
+  }
+
+  private AuthenticationClient getAuthenticationClient(ClientConfig clientConfig) {
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(clientConfig.getHostname(), clientConfig.getPort(),
+                                           clientConfig.isSSLEnabled());
+    return authenticationClient;
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
@@ -149,9 +139,7 @@ public class CLIConfig {
   private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo, PrintStream output,
                                          boolean verbose) throws IOException {
 
-    if (!isAuthenticationEnabled(connectionInfo)) {
-      return null;
-    }
+
 
     try {
       AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
@@ -196,13 +184,6 @@ public class CLIConfig {
     }
 
     return accessToken;
-  }
-
-  private AuthenticationClient getAuthenticationClient(ConnectionInfo connectionInfo) {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(connectionInfo.getHostname(), connectionInfo.getPort(),
-                                           connectionInfo.isSSLEnabled());
-    return authenticationClient;
   }
 
   private AccessToken getSavedAccessToken(String hostname) {
@@ -309,32 +290,5 @@ public class CLIConfig {
    */
   public interface ConnectionChangeListener {
     void onConnectionChanged(String currentNamespace, URI newURI);
-  }
-
-  /**
-   * Connection information to a CDAP instance.
-   */
-  public static final class ConnectionInfo {
-    private final String hostname;
-    private final int port;
-    private final boolean sslEnabled;
-
-    public ConnectionInfo(String hostname, int port, boolean sslEnabled) {
-      this.hostname = hostname;
-      this.port = port;
-      this.sslEnabled = sslEnabled;
-    }
-
-    public String getHostname() {
-      return hostname;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    public boolean isSSLEnabled() {
-      return sslEnabled;
-    }
   }
 }
