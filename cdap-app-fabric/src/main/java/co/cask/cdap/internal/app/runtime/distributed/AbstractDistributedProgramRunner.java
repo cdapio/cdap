@@ -126,6 +126,12 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
+        // Add yarn queue name if defined
+        String yarnQueue = cConf.get(Constants.AppFabric.APP_YARN_QUEUE);
+        if (yarnQueue != null) {
+          LOG.info("Setting YARN queue for app {} as {}", program.getId(), yarnQueue);
+          twillPreparer.setSchedulerQueue(yarnQueue);
+        }
         TwillController twillController = twillPreparer
           .withDependencies(new HBaseTableUtilFactory().get().getClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))

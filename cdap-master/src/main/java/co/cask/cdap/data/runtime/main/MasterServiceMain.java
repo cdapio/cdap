@@ -525,6 +525,13 @@ public class MasterServiceMain extends DaemonMain {
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    
+    // Add yarn queue name if defined
+    String queueName = cConf.get(Constants.Service.YARN_QUEUE);
+    if (queueName != null) {
+      LOG.info("Setting YARN queue to {} for master services", queueName);
+      preparer.setSchedulerQueue(queueName);
+    }
 
     // Add system logback file to the preparer
     URL logbackUrl = getClass().getResource("/logback.xml");
