@@ -140,7 +140,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                 spark, spark, SchedulableProgramType.SPARK));
               break;
             case CUSTOM_ACTION:
-              actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
+              actionSpec = actionNode.getActionSpecification();
+              Preconditions.checkNotNull(actionSpec);
               break;
             default:
               LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),

@@ -16,15 +16,27 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+
+import javax.annotation.Nullable;
+
 /**
  * Represents the ACTION node in the {@link Workflow}.
  */
 public class WorkflowActionNode extends WorkflowNode {
   private final ScheduleProgramInfo program;
+  private final WorkflowActionSpecification actionSpecification;
 
   public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
     super(nodeId, WorkflowNodeType.ACTION);
     this.program = program;
+    this.actionSpecification = null;
+  }
+
+  public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification) {
+    super(nodeId, WorkflowNodeType.ACTION);
+    this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, actionSpecification.getName());
+    this.actionSpecification = actionSpecification;
   }
 
   /**
@@ -33,5 +45,24 @@ public class WorkflowActionNode extends WorkflowNode {
    */
   public ScheduleProgramInfo getProgram() {
     return this.program;
+  }
+
+  /**
+   *
+   * @return the {@link WorkflowActionSpecification} for the custom action represented by this {@link WorkflowNode}
+   */
+  @Nullable
+  public WorkflowActionSpecification getActionSpecification() {
+    return actionSpecification;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("WorkflowActionNode{");
+    sb.append("nodeId=").append(nodeId);
+    sb.append(", program=").append(program);
+    sb.append(", actionSpecification=").append(actionSpecification);
+    sb.append('}');
+    return sb.toString();
   }
 }

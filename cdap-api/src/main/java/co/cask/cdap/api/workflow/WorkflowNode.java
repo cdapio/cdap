@@ -43,25 +43,4 @@ public abstract class WorkflowNode {
   public WorkflowNodeType getType() {
     return nodeType;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    WorkflowNode that = (WorkflowNode) o;
-
-    return nodeId.equals(that.nodeId) && nodeType == that.nodeType;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = nodeId.hashCode();
-    result = 31 * result + nodeType.hashCode();
-    return result;
-  }
 }

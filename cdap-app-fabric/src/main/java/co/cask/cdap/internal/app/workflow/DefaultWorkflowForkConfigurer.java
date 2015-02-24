@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
  */
 public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<T> {
 
-  private final WorkflowForkConfigurer<T> parentForkConfigurer;
+  private final T parentForkConfigurer;
   private final WorkflowConfigurer workflowConfigurer;
   private final String forkNodeId;
 
@@ -43,7 +43,7 @@ public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<
   private List<WorkflowNode> currentBranch;
 
   public DefaultWorkflowForkConfigurer(WorkflowConfigurer workflowConfigurer,
-                                       @Nullable WorkflowForkConfigurer<T> parentForkConfigurer,
+                                       @Nullable T parentForkConfigurer,
                                        String forkNodeId) {
     this.parentForkConfigurer = parentForkConfigurer;
     this.workflowConfigurer = workflowConfigurer;
@@ -53,21 +53,21 @@ public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<
 
   @Override
   public WorkflowForkConfigurer<T> addMapReduce(String mapReduce) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowActionNode
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowActionNode
       (mapReduce, SchedulableProgramType.MAPREDUCE));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<T> addSpark(String spark) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowActionNode
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowActionNode
       (spark, SchedulableProgramType.CUSTOM_ACTION));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<T> addAction(WorkflowAction action) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowCustomActionNode(action));
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowCustomActionNode(action));
     return this;
   }
 
@@ -76,7 +76,7 @@ public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<
   public WorkflowForkConfigurer<WorkflowForkConfigurer<T>> fork() {
     String forkNodeId = ((DefaultWorkflowConfigurer) workflowConfigurer).getNodeIdProvider().getUniqueNodeId();
     return new DefaultWorkflowForkConfigurer<WorkflowForkConfigurer<T>>
-        (workflowConfigurer, (WorkflowForkConfigurer<WorkflowForkConfigurer<T>>) this, forkNodeId);
+        (workflowConfigurer, (WorkflowForkConfigurer<T>) this, forkNodeId);
   }
 
   @Override
@@ -97,11 +97,10 @@ public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<
     branches.add(new WorkflowForkBranch(currentBranch));
     if (parentForkConfigurer == null) {
       ((DefaultWorkflowConfigurer) workflowConfigurer).addWorkflowForkNode(forkNodeId, branches);
-      return null;
     } else {
       ((DefaultWorkflowForkConfigurer<WorkflowForkConfigurer<T>>) parentForkConfigurer)
         .addWorkflowForkNode(forkNodeId, branches);
-      return (T) parentForkConfigurer;
     }
+    return parentForkConfigurer;
   }
 }

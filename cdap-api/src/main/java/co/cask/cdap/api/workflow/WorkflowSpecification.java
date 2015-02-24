@@ -37,19 +37,15 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final Map<String, String> properties;
 
   private List<WorkflowNode> nodes = Lists.newArrayList();
-  private Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
 
   public WorkflowSpecification(String className, String name, String description,
-                                      Map<String, String> properties, List<WorkflowNode> nodes,
-                                      Map<String, WorkflowActionSpecification> customActionMap) {
+                                      Map<String, String> properties, List<WorkflowNode> nodes) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
-    this.customActionMap = Collections.unmodifiableMap(
-      new HashMap<String, WorkflowActionSpecification>(customActionMap));
   }
 
   @Override
@@ -81,10 +77,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return nodes;
   }
 
-  public Map<String, WorkflowActionSpecification> getCustomActionMap() {
-    return customActionMap;
-  }
-
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("WorkflowSpecification{");
@@ -93,7 +85,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append(", description='").append(description).append('\'');
     sb.append(", properties=").append(properties);
     sb.append(", nodes=").append(nodes);
-    sb.append(", customActionMap=").append(customActionMap);
     sb.append('}');
     return sb.toString();
   }

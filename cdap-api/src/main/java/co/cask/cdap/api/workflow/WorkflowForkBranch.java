@@ -22,10 +22,10 @@ import java.util.List;
  * Represents single branch on the {@link WorkflowForkNode}.
  */
 public class WorkflowForkBranch {
-  private List<WorkflowNode> branch;
+  private List<WorkflowNode> nodes;
 
-  public WorkflowForkBranch(List<WorkflowNode> branch) {
-    this.branch = branch;
+  public WorkflowForkBranch(List<WorkflowNode> nodes) {
+    this.nodes = nodes;
   }
 
   /**
@@ -33,6 +33,14 @@ public class WorkflowForkBranch {
    * @return the list of {@link WorkflowNode} on the {@link WorkflowForkBranch}
    */
   public List<WorkflowNode> getNodes() {
-    return branch;
+    return nodes;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("WorkflowForkBranch{");
+    sb.append("nodes=").append(nodes);
+    sb.append('}');
+    return sb.toString();
   }
 }

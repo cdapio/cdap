@@ -42,7 +42,6 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
-    jsonObj.add("customActionMap", serializeMap(src.getCustomActionMap(), context, WorkflowActionSpecification.class));
 
     return jsonObj;
   }
@@ -57,9 +56,7 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
-    Map<String, WorkflowActionSpecification> customActionMap = deserializeMap(jsonObj.get("customActionMap"), context,
-                                                                    WorkflowActionSpecification.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes);
   }
 }

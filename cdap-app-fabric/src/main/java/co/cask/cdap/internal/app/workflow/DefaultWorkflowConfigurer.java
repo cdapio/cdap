@@ -32,11 +32,9 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link WorkflowConfigurer}.
@@ -50,7 +48,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   private WorkflowNodeIdProvider nodeIdProvider;
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
-  private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
 
   public DefaultWorkflowConfigurer(Workflow workflow) {
     this.className = workflow.getClass().getName();
@@ -74,7 +71,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     this.properties = ImmutableMap.copyOf(properties);
   }
 
-  WorkflowNode getWorkflowActionNode(String programName, SchedulableProgramType programType) {
+  WorkflowNode createWorkflowActionNode(String programName, SchedulableProgramType programType) {
     switch (programType) {
       case MAPREDUCE:
         Preconditions.checkNotNull(programName, "MapReduce name is null.");
@@ -94,11 +91,10 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     return new WorkflowActionNode(nodeId, new ScheduleProgramInfo(programType, programName));
   }
 
-  WorkflowNode getWorkflowCustomActionNode(WorkflowAction action) {
+  WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    customActionMap.put(spec.getName(), spec);
-    return getWorkflowActionNode(spec.getName(), SchedulableProgramType.CUSTOM_ACTION);
+    return new WorkflowActionNode(nodeIdProvider.getUniqueNodeId(), spec);
   }
 
   void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branches) {
@@ -107,17 +103,17 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
 
   @Override
   public void addMapReduce(String mapReduce) {
-    nodes.add(getWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
+    nodes.add(createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
   }
 
   @Override
   public void addSpark(String spark) {
-    nodes.add(getWorkflowActionNode(spark, SchedulableProgramType.SPARK));
+    nodes.add(createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
   }
 
   @Override
   public void addAction(WorkflowAction action) {
-    nodes.add(getWorkflowCustomActionNode(action));
+    nodes.add(createWorkflowCustomActionNode(action));
   }
 
   public WorkflowNodeIdProvider getNodeIdProvider() {
@@ -131,6 +127,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, nodes, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes);
   }
 }

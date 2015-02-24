@@ -36,7 +36,8 @@ public class WorkflowForkNode extends WorkflowNode {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("WorkflowForkNode{");
-    sb.append("branches=").append(branches);
+    sb.append("nodeId=").append(nodeId);
+    sb.append(", branches=").append(branches);
     sb.append('}');
     return sb.toString();
   }

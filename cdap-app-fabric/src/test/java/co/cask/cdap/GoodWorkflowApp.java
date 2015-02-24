@@ -50,33 +50,33 @@ public class GoodWorkflowApp extends AbstractApplication {
       fork()
         .addMapReduce("DummyMR")
         .fork()
-        .addAction(new DummyAction())
-        .fork()
-        .fork()
-        .addMapReduce("DummyMR")
-        .addAction(new DummyAction())
+          .addAction(new DummyAction())
+          .fork()
+            .fork()
+              .addMapReduce("DummyMR")
+              .addAction(new DummyAction())
+            .also()
+              .addMapReduce("DummyMR")
+            .join()
+            .addMapReduce("DummyMR")
+          .also()
+            .addMapReduce("DummyMR")
+          .join()
         .also()
-        .addMapReduce("DummyMR")
+          .addAction(new DummyAction())
         .join()
-        .addMapReduce("DummyMR")
-        .also()
-        .addMapReduce("DummyMR")
-        .join()
-        .also()
+      .also()
         .addAction(new DummyAction())
-        .join()
-        .also()
-        .addAction(new DummyAction())
-        .join();
+      .join();
 
       addMapReduce("DummyMR");
 
       // simple fork
       fork()
         .addAction(new DummyAction())
-        .also()
+      .also()
         .addMapReduce("DummyMR")
-        .join();
+      .join();
     }
   }
 
