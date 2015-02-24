@@ -44,7 +44,7 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
   private static final ACLEntry NAMESPACE_ACL = new ACLEntry(
     ObjectIds.namespace("testNamespace"),
     SubjectIds.user("bob"),
-    Permission.LIFECYCLE
+    Permission.START
   );
 
   private static final ACLEntry SIMPLE_ACL = new ACLEntry(
@@ -68,7 +68,7 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
   private static final ACLEntry OTHER_ACL2 = new ACLEntry(
     ObjectIds.application("otherNamespace", "otherApp"),
     SubjectIds.user("otherUser"),
-    Permission.LIFECYCLE
+    Permission.START
   );
 
   private static final ACLEntry UNRELATED_ACL = new ACLEntry(
@@ -191,7 +191,7 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     aclStore.write(SIMPLE_ACL_PARENT);
 
     ACLEntry sameObjectAndSubject = new ACLEntry(SIMPLE_ACL.getObject(), SIMPLE_ACL.getSubject(),
-                                                 Permission.LIFECYCLE);
+                                                 Permission.START);
     Assert.assertNotEquals(sameObjectAndSubject.getPermission(), SIMPLE_ACL.getPermission());
 
     testSearchAndDelete(ImmutableList.of(SIMPLE_ACL, sameObjectAndSubject),
@@ -231,22 +231,6 @@ public class ACLStoreTableDatasetTest extends AbstractDatasetTest {
     for (ACLEntry entry : expectedEntriesAfterDelete) {
       Assert.assertTrue("Expected '" + entry + "' to exist", aclStore.exists(entry));
     }
-  }
-
-  @Test
-  public void testAnyPermission() throws Exception {
-    // asking for ANY permission gives ACL with ANY permission if any ACLs exist
-    // for the (object, subject) pair for any permissions
-    SubjectId currentUser = SubjectIds.user("bob");
-    String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
-
-    aclStore.write(new ACLEntry(objectId, currentUser, Permission.READ));
-
-    Assert.assertTrue(aclStore.exists(new ACLEntry(objectId, currentUser, Permission.ANY)));
-    Set<ACLEntry> searchResults = aclStore.search(new ACLStore.Query(objectId, currentUser, Permission.ANY));
-    Assert.assertEquals(1, searchResults.size());
-    Assert.assertTrue(searchResults.contains(new ACLEntry(objectId, currentUser, Permission.ANY)));
   }
 
   @Test
