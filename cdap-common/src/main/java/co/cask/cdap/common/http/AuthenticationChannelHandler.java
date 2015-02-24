@@ -32,8 +32,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.security.auth.login.CredentialNotFoundException;
-
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code SecurityRequestContext}.
  */
@@ -44,7 +42,7 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
 
   /**
    * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
-   * Returns a 401 if the identifier is malformed. 
+   * Returns a 401 if the identifier is malformed.
    */
   @Override
   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -52,17 +50,9 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
     if (message instanceof HttpRequest) {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) message;
-      String userIdHeader = request.getHeader(Constants.Security.Headers.USER_ID);
-      if (userIdHeader == null) {
-        throw new CredentialNotFoundException("No userId was found in request.");
-      }
-
-      currentUserId = userIdHeader;
-      SecurityRequestContext.setUserId(userIdHeader);
+      String currentUserId = request.getHeader(Constants.Security.Headers.USER_ID);
+      SecurityRequestContext.setUserId(currentUserId);
     } else if (message instanceof HttpChunk) {
-      if (currentUserId == null) {
-        throw new CredentialNotFoundException("No userId was found in request.");
-      }
       SecurityRequestContext.setUserId(currentUserId);
     }
 
