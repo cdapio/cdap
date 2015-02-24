@@ -56,7 +56,7 @@ public class Permission {
   private final String name;
   private final byte[] id;
 
-  public Permission(String name, byte[] id) {
+  private Permission(String name, byte[] id) {
     this.name = name;
     this.id = id;
   }
@@ -66,7 +66,7 @@ public class Permission {
       return ID_INDEX.get(id);
     }
 
-    throw new IllegalArgumentException("Unknown id: " + Arrays.toString(id));
+    throw new IllegalArgumentException("No Permission with id: " + Arrays.toString(id));
   }
 
   public static Permission fromName(String name) {
@@ -74,7 +74,7 @@ public class Permission {
       return NAME_INDEX.get(name);
     }
 
-    throw new IllegalArgumentException("Unknown name: " + name);
+    throw new IllegalArgumentException("No Permission with name: " + name);
   }
 
   public String getName() {

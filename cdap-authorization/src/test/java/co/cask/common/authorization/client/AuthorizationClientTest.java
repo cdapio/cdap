@@ -21,10 +21,10 @@ import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.IdentifiableObject;
 import co.cask.common.authorization.InMemoryACLStore;
 import co.cask.common.authorization.ObjectId;
-import co.cask.common.authorization.ObjectIds;
 import co.cask.common.authorization.Permission;
 import co.cask.common.authorization.SubjectId;
-import co.cask.common.authorization.SubjectIds;
+import co.cask.common.authorization.TestObjectIds;
+import co.cask.common.authorization.TestSubjectIds;
 import co.cask.common.authorization.UnauthorizedException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -41,15 +41,15 @@ import java.util.List;
 public class AuthorizationClientTest {
 
   private static final ACLEntry UNRELATED_ACL = new ACLEntry(
-    ObjectIds.application("unrelatedNamespace", "unrelatedApp"),
-    SubjectIds.user("unrelatedUser"),
+    TestObjectIds.application("unrelatedNamespace", "unrelatedApp"),
+    TestSubjectIds.user("unrelatedUser"),
     Permission.READ
   );
 
 
   private static final ACLEntry UNRELATED_ACL2 = new ACLEntry(
-    ObjectIds.application("unrelatedNamespace", "unrelatedApp2"),
-    SubjectIds.user("unrelatedUser"),
+    TestObjectIds.application("unrelatedNamespace", "unrelatedApp2"),
+    TestSubjectIds.user("unrelatedUser"),
     Permission.READ
   );
 
@@ -66,9 +66,9 @@ public class AuthorizationClientTest {
 
   @Test
   public void testAuthorized() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     aclStore.write(new ACLEntry(objectId, currentUser, permission));
@@ -77,9 +77,9 @@ public class AuthorizationClientTest {
 
   @Test
   public void testUnauthorizedNoACLEntry() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     try {
@@ -97,9 +97,9 @@ public class AuthorizationClientTest {
 
   @Test
   public void testUnauthorizedWrongPermission() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
     Permission wrongPermission = Permission.ADMIN;
@@ -121,12 +121,12 @@ public class AuthorizationClientTest {
 
   @Test
   public void testUnauthorizedWrongUser() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
-    SubjectId wrongUser = SubjectIds.user("wrong");
+    SubjectId wrongUser = TestSubjectIds.user("wrong");
     Assert.assertNotEquals(wrongUser, currentUser);
     aclStore.write(new ACLEntry(objectId, wrongUser, permission));
 
@@ -145,12 +145,12 @@ public class AuthorizationClientTest {
 
   @Test
   public void testUnauthorizedWrongObject() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
+    ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     Permission permission = Permission.WRITE;
 
-    ObjectId wrongObject = ObjectIds.application(namespaceId, "wrong");
+    ObjectId wrongObject = TestObjectIds.application(namespaceId, "wrong");
     Assert.assertNotEquals(wrongObject, objectId);
     aclStore.write(new ACLEntry(wrongObject, currentUser, permission));
 
@@ -169,7 +169,7 @@ public class AuthorizationClientTest {
 
   @Test
   public void testFilter() throws Exception {
-    SubjectId currentUser = SubjectIds.user("bob");
+    SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     Permission permission = Permission.WRITE;
 
@@ -186,11 +186,11 @@ public class AuthorizationClientTest {
 
   @Test
   public void testHierarchy() throws Exception {
-    ObjectId mainNamespace = ObjectIds.namespace("main");
-    ObjectId unusedNamespace = ObjectIds.namespace("unused");
-    ObjectId app = ObjectIds.application(mainNamespace.getId(), "someApp");
+    ObjectId mainNamespace = TestObjectIds.namespace("main");
+    ObjectId unusedNamespace = TestObjectIds.namespace("unused");
+    ObjectId app = TestObjectIds.application(mainNamespace.getId(), "someApp");
 
-    SubjectId user = SubjectIds.user("bob");
+    SubjectId user = TestSubjectIds.user("bob");
     Permission permission = Permission.WRITE;
 
     Assert.assertFalse(authorizationClient.isAuthorized(app, ImmutableList.of(user), ImmutableList.of(permission)));
@@ -223,7 +223,7 @@ public class AuthorizationClientTest {
 
     @Override
     public ObjectId getObjectId() {
-      return ObjectIds.application(namespaceId, id);
+      return TestObjectIds.application(namespaceId, id);
     }
 
     @Override

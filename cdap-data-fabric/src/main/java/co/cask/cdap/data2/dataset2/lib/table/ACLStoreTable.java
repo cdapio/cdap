@@ -16,14 +16,12 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.common.authorization.ACLStore;
 
 /**
  * A dataset that stores ACLs.
  */
-@Beta
 public interface ACLStoreTable extends Dataset, ACLStore {
   public static final String TYPE = "aclStoreTable";
 }
