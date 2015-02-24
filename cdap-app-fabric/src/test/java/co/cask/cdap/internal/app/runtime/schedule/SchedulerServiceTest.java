@@ -26,14 +26,12 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -45,7 +43,6 @@ import java.util.List;
 public class SchedulerServiceTest {
   public static SchedulerService schedulerService;
   public static NotificationFeedManager notificationFeedManager;
-  public static StreamAdmin streamAdmin;
   public static Store store;
   public static LocationFactory locationFactory;
 
@@ -65,10 +62,8 @@ public class SchedulerServiceTest {
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
     notificationFeedManager = AppFabricTestHelper.getInjector().getInstance(NotificationFeedManager.class);
-    streamAdmin = AppFabricTestHelper.getInjector().getInstance(StreamAdmin.class);
-    streamAdmin.create(STREAM_ID);
     store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
-    locationFactory = new LocalLocationFactory();
+    locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
   }
 
   @AfterClass

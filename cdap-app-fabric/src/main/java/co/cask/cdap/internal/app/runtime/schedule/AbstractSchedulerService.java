@@ -23,6 +23,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -92,7 +93,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   protected final void stopScheduler() {
     try {
       streamSizeScheduler.stop();
-      LOG.info("Stopped stram size scheduler");
+      LOG.info("Stopped stream size scheduler");
     } catch (Throwable t) {
       LOG.error("Error stopping stream size scheduler {}", t.getCause(), t);
       throw Throwables.propagate(t);
@@ -159,6 +160,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       scheduler.suspendSchedule(program, programType, scheduleName);
     } catch (NotFoundException e) {
       LOG.trace("Could not suspend schedule", e);
+      Throwables.propagate(e);
     }
   }
 
@@ -169,6 +171,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       scheduler.resumeSchedule(program, programType, scheduleName);
     } catch (NotFoundException e) {
       LOG.trace("Could not resume schedule", e);
+      Throwables.propagate(e);
     }
   }
 
@@ -179,6 +182,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       scheduler.deleteSchedule(program, programType, scheduleName);
     } catch (NotFoundException e) {
       LOG.trace("Could not delete schedule", e);
+      Throwables.propagate(e);
     }
   }
 
@@ -189,7 +193,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
     try {
       Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
       return scheduler.scheduleState(program, programType, scheduleName);
@@ -209,12 +213,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                                                String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
     if (appSpec == null) {
-      throw new NotFoundException("application", program.getApplicationId());
+      throw new ApplicationNotFoundException(program.getApplicationId());
     }
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
     if (schedules == null || !schedules.containsKey(scheduleName)) {
-      throw new NotFoundException("schedule", scheduleName);
+      throw new ScheduleNotFoundException(scheduleName);
     }
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);
