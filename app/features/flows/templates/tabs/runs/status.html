@@ -9,7 +9,7 @@
   </div>
   <div class="col-sm-3">
     <span> Duration </span>
-    <div ng-bind="duration"></div>
+    <div ng-bind="duration*1000 | amDurationFormat"></div>
   </div>
   <div class="col-sm-3 text-right">
     <div ng-show="status == 'RUNNING'"
