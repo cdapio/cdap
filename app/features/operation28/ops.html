@@ -1,10 +1,10 @@
 <section>
 
-  <ul class="nav nav-tabs" role="tablist">
+  <ul class="nav nav-tabs" role="tablist" ng-show="isEnterprise">
     <li role="presentation" ui-sref-active="active">
       <a ui-sref="operations.cdap" role="tab">CDAP</a>
     </li>
-    <li role="presentation" ui-sref-active="active" ng-show="isEnterprise">
+    <li role="presentation" ui-sref-active="active">
       <a ui-sref="operations.system" role="tab">System Resources</a>
     </li>
     <li role="presentation" ui-sref-active="active">
