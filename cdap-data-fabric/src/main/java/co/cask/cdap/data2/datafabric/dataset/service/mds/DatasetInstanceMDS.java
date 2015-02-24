@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
@@ -31,44 +33,45 @@ import javax.annotation.Nullable;
 /**
  * Dataset instances metadata store
  */
-public final class DatasetInstanceMDS extends AbstractObjectsStore {
+public final class DatasetInstanceMDS extends MetadataStoreDataset {
   /**
    * Prefix for rows containing instance info.
    * NOTE: even though we don't have to have it now we may want to store different type of data in one table, so
    *       the prefix may help us in future
    */
-  private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
+  private static final String INSTANCE_PREFIX = "i_";
 
-  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
-    super(spec, table);
+  public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") Table table) {
+    super(table);
   }
 
   @Nullable
-  public DatasetSpecification get(String name) {
-    return get(getInstanceKey(name), DatasetSpecification.class);
+  public DatasetSpecification get(Id.DatasetInstance datasetInstanceId) {
+    return get(getInstanceKey(datasetInstanceId.getNamespace(), datasetInstanceId.getId()),
+               DatasetSpecification.class);
   }
 
-  public void write(DatasetSpecification instanceSpec) {
-    put(getInstanceKey(instanceSpec.getName()), instanceSpec);
+  public void write(Id.Namespace namespaceId, DatasetSpecification instanceSpec) {
+    write(getInstanceKey(namespaceId, instanceSpec.getName()), instanceSpec);
   }
 
-  public boolean delete(String name) {
-    if (get(name) == null) {
+  public boolean delete(Id.DatasetInstance datasetInstanceId) {
+    if (get(datasetInstanceId) == null) {
       return false;
     }
-    delete(getInstanceKey(name));
+    deleteAll(getInstanceKey(datasetInstanceId.getNamespace(), datasetInstanceId.getId()));
     return true;
   }
 
-  public Collection<DatasetSpecification> getAll() {
-    Map<String, DatasetSpecification> instances = scan(INSTANCE_PREFIX, DatasetSpecification.class);
+  public Collection<DatasetSpecification> getAll(Id.Namespace namespaceId) {
+    Map<MDSKey, DatasetSpecification> instances = listKV(getInstanceKey(namespaceId), DatasetSpecification.class);
     return instances.values();
   }
 
-  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames) {
+  public Collection<DatasetSpecification> getByTypes(Id.Namespace namespaceId, Set<String> typeNames) {
     List<DatasetSpecification> filtered = Lists.newArrayList();
 
-    for (DatasetSpecification spec : getAll()) {
+    for (DatasetSpecification spec : getAll(namespaceId)) {
       if (typeNames.contains(spec.getType())) {
         filtered.add(spec);
       }
@@ -77,11 +80,15 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return filtered;
   }
 
-  public void deleteAll() {
-    deleteAll(INSTANCE_PREFIX);
+  private MDSKey getInstanceKey(Id.Namespace namespaceId) {
+    return getInstanceKey(namespaceId, null);
   }
 
-  private byte[] getInstanceKey(String name) {
-    return Bytes.add(INSTANCE_PREFIX, Bytes.toBytes(name));
+  private MDSKey getInstanceKey(Id.Namespace namespaceId, @Nullable String instanceName) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(INSTANCE_PREFIX).add(namespaceId.getId());
+    if (instanceName != null) {
+      builder.add(instanceName);
+    }
+    return builder.build();
   }
 }

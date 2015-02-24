@@ -26,6 +26,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfi
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -52,6 +53,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private ConsumerConfigCache configCache;
 
+  private int prefixBytes;
   private String namespaceId;
   private String appName;
   private String flowName;
@@ -59,8 +61,20 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   @Override
   public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
-      String tableName = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString();
+      HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
+      String tableName = tableDesc.getNameAsString();
       String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
+
+      String prefixBytes = tableDesc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES);
+      try {
+        // Default to SALT_BYTES for the older salted queue implementation.
+        this.prefixBytes = prefixBytes == null ? HBaseQueueAdmin.SALT_BYTES : Integer.parseInt(prefixBytes);
+      } catch (NumberFormatException e) {
+        // Shouldn't happen for table created by cdap.
+        LOG.error("Unable to parse value of '" + HBaseQueueAdmin.PROPERTY_PREFIX_BYTES + "' property. " +
+                    "Default to " + HBaseQueueAdmin.SALT_BYTES, e);
+        this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
+      }
 
       namespaceId = HBaseQueueAdmin.getNamespaceId(tableName);
       appName = HBaseQueueAdmin.getApplicationName(tableName);
@@ -145,19 +159,22 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       while (!result.isEmpty()) {
         totalRows++;
         // Check if it is eligible for eviction.
-        KeyValue keyValue = result.get(0);
+        KeyValue kv = result.get(0);
 
         // If current queue is unknown or the row is not a queue entry of current queue,
         // it either because it scans into next queue entry or simply current queue is not known.
         // Hence needs to find the currentQueue
-        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, keyValue)) {
+        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, prefixBytes, kv.getBuffer(),
+                                                                kv.getRowOffset(), kv.getRowLength())) {
           // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
         }
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          QueueName queueName = QueueEntryRow.getQueueName(namespaceId, appName, flowName, keyValue);
+          QueueName queueName = QueueEntryRow.getQueueName(namespaceId,
+                                                           appName, flowName, prefixBytes,
+                                                           kv.getBuffer(), kv.getRowOffset(), kv.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
           consumerConfig = configCache.getConsumerConfig(currentQueue);
@@ -255,12 +272,12 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // However, the second condition alone is not good enough as it's possible that in hash partitioning,
       // only one consumer is keep consuming when the other consumer never proceed.
       return consumedGroups == consumerConfig.getNumGroups()
-          || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
+        || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
     }
 
     private int compareRowKey(KeyValue kv, byte[] row) {
-      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
-                             kv.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
+      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + prefixBytes,
+                             kv.getRowLength() - prefixBytes, row, 0, row.length);
     }
 
     /**

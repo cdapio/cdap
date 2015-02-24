@@ -521,7 +521,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, "random", ProgramType.FLOW.getCategoryName()));
 
     // verify invalid program type
-    Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+  }
+
+  /**
+   * Worker Specification tests
+   */
+  @Test
+  public void testWorkerSpecification() throws Exception {
+    // deploy AppWithWorker in namespace1 and verify
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
   }
 
   /**

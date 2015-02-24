@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -85,6 +86,7 @@ public abstract class DatasetServiceTestBase {
   private InMemoryDiscoveryService discoveryService;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
+  private LocalLocationFactory locationFactory;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
 
@@ -96,11 +98,12 @@ public abstract class DatasetServiceTestBase {
   @Before
   public void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    File datasetDir = new File(tmpFolder.newFolder(), "dataset");
-    if (!DirUtils.mkdirs(datasetDir)) {
-      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir));
+    File dataDir = new File(tmpFolder.newFolder(), "data");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
+    if (!DirUtils.mkdirs(dataDir)) {
+      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", dataDir));
     }
-    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
@@ -115,7 +118,7 @@ public abstract class DatasetServiceTestBase {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    LocalLocationFactory locationFactory = new LocalLocationFactory();
+    locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
                                              new LocalDatasetTypeClassLoaderFactory());
 
@@ -144,7 +147,8 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
                                  new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
-                                 new HashSet<DatasetMetricsReporter>());
+                                 new HashSet<DatasetMetricsReporter>(),
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -159,11 +163,14 @@ public abstract class DatasetServiceTestBase {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     startLatch.await(5, TimeUnit.SECONDS);
+    // this usually happens while creating a namespace, however not doing that in data fabric tests
+    Locations.mkdirsIfNotExists(locationFactory.create(Constants.DEFAULT_NAMESPACE));
   }
 
   @After
   public void after() {
     Services.chainStop(service, opExecutorService, txManager);
+    Locations.deleteQuietly(locationFactory.create(Constants.DEFAULT_NAMESPACE));
   }
 
   private synchronized int getPort() {
@@ -182,6 +189,12 @@ public abstract class DatasetServiceTestBase {
 
   protected URL getUrl(String resource) throws MalformedURLException {
     return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
+  }
+
+  protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
+    String resource = String.format("%s/namespaces/%s/data/admin/%s",
+                                    Constants.Gateway.API_VERSION_3, namespace, operation);
+    return new URL("http://" + "localhost" + ":" + getPort() + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {

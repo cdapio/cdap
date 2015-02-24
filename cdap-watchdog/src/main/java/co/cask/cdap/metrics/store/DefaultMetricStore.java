@@ -78,6 +78,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private static List<Aggregation> createAggregations() {
+    // NOTE: changing aggregations will require more work than just changing the below code. See CDAP-1466 for details.
     List<Aggregation> aggs = Lists.newLinkedList();
 
     // Namespaces:
@@ -92,30 +93,37 @@ public class DefaultMetricStore implements MetricStore {
 
     // Programs:
 
+    // Note that dataset tag goes before runId and such. This is a trade-off between efficiency of two query types:
+    // * program metrics
+    // * dataset metrics per program
+    // It makes the former a bit slower, but bearable, as program usually doesn't access many datasets. While it speeds
+    // up the latter significantly, otherwise (if dataset tag is after runId and such) queries like
+    // "writes into dataset A per program" would be potentially scannig thru whole program history.
+
     // flow
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.FLOWLET, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.FLOWLET_QUEUE, Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.FLOWLET,
+                       Constants.Metrics.Tag.INSTANCE_ID, Constants.Metrics.Tag.FLOWLET_QUEUE),
       // i.e. for flows only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW)));
     // mapreduce
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.MR_TASK_TYPE, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.MR_TASK_TYPE,
+                       Constants.Metrics.Tag.INSTANCE_ID),
       // i.e. for mapreduce only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.MAPREDUCE)));
     // service
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.SERVICE_RUNNABLE, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.SERVICE_RUNNABLE,
+                       Constants.Metrics.Tag.INSTANCE_ID),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
@@ -123,8 +131,8 @@ public class DefaultMetricStore implements MetricStore {
     // procedure
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROCEDURE, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.INSTANCE_ID, Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.PROCEDURE, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
       // i.e. for procedure only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.PROCEDURE)));
@@ -132,8 +140,8 @@ public class DefaultMetricStore implements MetricStore {
     // workflow
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID),
       // i.e. for workflow only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKFLOW)));
@@ -141,23 +149,13 @@ public class DefaultMetricStore implements MetricStore {
     // spark
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.RUN_ID,
-                       Constants.Metrics.Tag.DATASET),
+                       Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID),
       // i.e. for spark only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK)));
 
-    // System components:
-
-    // component, handler, method
-    aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-      Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
-                                    // i.e. for components only
-                                    ImmutableList.of(
-                                      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
-
-    // stream
+    // Streams:
     aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
                                     // i.e. for streams only
                                     ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
@@ -166,6 +164,15 @@ public class DefaultMetricStore implements MetricStore {
     aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
                                     // i.e. for datasets only
                                     ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
+
+    // System components:
+    aggs.add(new DefaultAggregation(ImmutableList.of(
+      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+      Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+                                    // i.e. for components only
+                                    ImmutableList.of(
+                                      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+
 
     return aggs;
   }

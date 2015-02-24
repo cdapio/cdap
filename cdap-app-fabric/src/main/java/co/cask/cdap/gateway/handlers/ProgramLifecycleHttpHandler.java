@@ -687,15 +687,76 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     programList(responder, namespaceId, ProgramType.WORKER, null, store);
   }
 
+  /********************** Programs by app APIs **********************************************************/
+  // Due to a bug in Netty, splitting the programsByApp up to avoid conflict resolution
+  // https://issues.cask.co/browse/NETTY-3
   /**
-   * Returns a list of programs associated with an application within a namespace.
+   * Returns a list of flows associated with an application within a namespace.
    */
   @GET
-  @Path("/apps/{app-id}/{program-category}")
-  public void getProgramsByApp(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/flows")
+  public void getFlowsByApp(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.FLOW.getCategoryName());
+  }
+
+  /**
+   * Returns a list of mapreduce programs associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce")
+  public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.MAPREDUCE.getCategoryName());
+  }
+
+  /**
+   * Returns a list of workflows associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows")
+  public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.WORKFLOW.getCategoryName());
+  }
+
+  /**
+   * Returns a list of spark programs associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/spark")
+  public void getSparkByApp(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.SPARK.getCategoryName());
+  }
+
+  /**
+   * Returns a list of services associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/services")
+  public void getServicesByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId,
-                               @PathParam("program-category") String programCategory) {
+                               @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.SERVICE.getCategoryName());
+  }
+
+  /**
+   * Returns a list of workers associated with an application within a namespace.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers")
+  public void getWorkersByApp(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, namespaceId, appId, ProgramType.WORKER.getCategoryName());
+  }
+
+  protected void getProgramsByApp(HttpResponder responder, String namespaceId, String appId, String programCategory) {
     ProgramType type = getProgramType(programCategory);
     if (type == null) {
       responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
@@ -757,7 +818,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                         ProgramType.WORKER, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(programId.getId(), instances)).get();
+                                              ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1107,9 +1168,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                         ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of("runnable", runnableName,
-                                                              "newInstances", String.valueOf(instances),
-                                                              "oldInstances", String.valueOf(oldInstances))).get();
+                                              ImmutableMap.of(runnableName, String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);

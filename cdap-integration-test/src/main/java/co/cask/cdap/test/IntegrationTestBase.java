@@ -26,11 +26,11 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
@@ -190,9 +190,8 @@ public class IntegrationTestBase {
   }
 
   private boolean isUserDataset(DatasetSpecification specification) {
-    final DefaultDatasetNamespace systemDatasetNamespace = new DefaultDatasetNamespace(
-      CConfiguration.create(), Namespace.SYSTEM);
-    return !systemDatasetNamespace.contains(specification.getName());
+    final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
+    return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
   }
 
   private void assertNoUserDatasets() throws Exception {
