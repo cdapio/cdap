@@ -75,23 +75,4 @@ public class ConnectCommand implements Command {
   public String getDescription() {
     return "Connects to a CDAP instance.";
   }
-
-  /**
-   * Tries default connection specified by CConfiguration.
-   */
-  public void tryDefaultConnection(PrintStream output, boolean verbose) {
-    CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    String hostname = cConf.get(Constants.Router.ADDRESS);
-    int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-      cConf.getInt(Constants.Router.ROUTER_PORT);
-    CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
-
-    try {
-      cliConfig.tryConnect(connectionInfo, output, verbose);
-    } catch (Exception e) {
-      // NO-OP
-    }
-  }
 }
