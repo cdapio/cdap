@@ -48,10 +48,9 @@ angular.module(PKG.name + '.commons')
               $log.warn('metric-picker using default namespace as context!');
             }
 
-            output = 'ns.' + output;
           }
 
-          return output;
+          return 'namespace.' + output;
         }
 
         function fetchAhead () {

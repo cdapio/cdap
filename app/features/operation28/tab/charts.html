@@ -10,8 +10,12 @@
       <div class="panel-body">
 
         <p class="text-center">
-          <span class="badge">{{panel.chart.lastValue}}</span>
-          <strong>{{panel.unit}}</strong>
+          <span ng-hide="panel.useByteFilter">
+            {{panel.chart.lastValue}} {{panel.unit}}
+          </span>
+          <span ng-show="panel.useByteFilter">
+            {{panel.chart.lastValue | bytes}}{{panel.unit}}
+          </span>
         </p>
 
       </div>
