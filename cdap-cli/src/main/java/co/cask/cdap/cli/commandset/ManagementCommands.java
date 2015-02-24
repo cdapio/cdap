@@ -21,7 +21,6 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.common.authorization.ACLEntry;
 import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.ObjectId;
@@ -49,13 +48,12 @@ public class ManagementCommands extends CommandSet<Command> {
 
   @Inject
   public ManagementCommands(Injector injector) {
-    super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(CreateACLEntryCommand.class))
-        .add(injector.getInstance(DeleteACLEntryCommand.class))
-        .add(injector.getInstance(ListACLEntriesCommand.class))
-        .add(injector.getInstance(SearchACLEntriesCommand.class))
-        .build());
+    super(ImmutableList.<Command>builder()
+            .add(injector.getInstance(CreateACLEntryCommand.class))
+            .add(injector.getInstance(DeleteACLEntryCommand.class))
+            .add(injector.getInstance(ListACLEntriesCommand.class))
+            .add(injector.getInstance(SearchACLEntriesCommand.class))
+            .build());
   }
 
   private static TypedId fromString(String typedId) {
@@ -80,20 +78,12 @@ public class ManagementCommands extends CommandSet<Command> {
       @Override
       public Object[] makeRow(ACLEntry object) {
         return new Object[] {
-          customToString(object.getObject()),
-          customToString(object.getSubject()),
+          object.getObject().getRep(),
+          object.getSubject().getRep(),
           object.getPermission().getName()
         };
       }
     }).print(printStream);
-  }
-
-  private static Object customToString(SubjectId subject) {
-    return subject.getRep();
-  }
-
-  private static String customToString(ObjectId object) {
-    return object.getRep() + (object.getParent() == null ? "" : " {parent=" + customToString(object.getParent()) + "}");
   }
 
   /**
@@ -111,7 +101,7 @@ public class ManagementCommands extends CommandSet<Command> {
 
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      List<ACLEntry> entries = Lists.newArrayList(client.listACLs());
+      List<ACLEntry> entries = Lists.newArrayList(client.getACLs());
       Collections.sort(entries, new Comparator<ACLEntry>() {
         @Override
         public int compare(ACLEntry o1, ACLEntry o2) {
@@ -147,7 +137,7 @@ public class ManagementCommands extends CommandSet<Command> {
 
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String objectTypeAndId = arguments.get("object-type:object-id", "");
+      String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id", "");
       TypedId typedId = fromString(objectTypeAndId);
       ObjectId objectId = typedId == null ? null : new ObjectId(typedId);
 
@@ -155,21 +145,13 @@ public class ManagementCommands extends CommandSet<Command> {
       typedId = fromString(subjectTypeAndId);
       SubjectId subjectId = typedId == null ? null : new SubjectId(typedId);
 
-      Set<ACLEntry> entries;
-      if (ObjectId.GLOBAL.equals(objectId)) {
-        ACLStore.Query query = new ACLStore.Query(objectId, subjectId, null);
-        entries = client.getGlobalACLs(query);
-      } else {
-        ACLStore.Query query = new ACLStore.Query(objectId, subjectId, null);
-        entries = client.getACLs(cliConfig.getCurrentNamespace(), query);
-      }
-
+      Set<ACLEntry> entries = client.searchACLs(new ACLStore.Query(objectId, subjectId, null));
       printACLs(entries, printStream);
     }
 
     @Override
     public String getPattern() {
-      return "search acls [object <object-type:object-id>] [subject <subject-type:subject-id>]";
+      return "search acls [object <parent-type:parent-id;object-type:object-id>] [subject <subject-type:subject-id>]";
     }
 
     @Override
@@ -193,28 +175,20 @@ public class ManagementCommands extends CommandSet<Command> {
 
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String objectTypeAndId = arguments.get("object-type:object-id");
-      ObjectId objectId = new ObjectId(fromString(objectTypeAndId));
+      String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id");
+      ObjectId objectId = ObjectId.fromRep(objectTypeAndId);
 
       String subjectTypeAndId = arguments.get("subject-type:subject-id");
-      SubjectId subjectId = new SubjectId(fromString(subjectTypeAndId));
+      SubjectId subjectId = SubjectId.fromRep(subjectTypeAndId);
 
       Permission permission = Permission.fromName(arguments.get("permission"));
-
-      if (ObjectId.GLOBAL.equals(objectId)) {
-        client.createGlobalACL(new ACLEntry(objectId, subjectId, permission));
-      } else {
-        if (ObjectIds.NAMESPACE.equals(objectId.getType())) {
-          client.createACL(cliConfig.getCurrentNamespace(), new ACLEntry(null, subjectId, permission));
-        } else {
-          client.createACL(cliConfig.getCurrentNamespace(), new ACLEntry(objectId, subjectId, permission));
-        }
-      }
+      client.createACL(new ACLEntry(objectId, subjectId, permission));
     }
 
     @Override
     public String getPattern() {
-      return "create acl object <object-type:object-id> subject <subject-type:subject-id> permission <permission>";
+      return "create acl object <parent-type:parent-id;object-type:object-id>" +
+        " subject <subject-type:subject-id> permission <permission>";
     }
 
     @Override
@@ -238,7 +212,7 @@ public class ManagementCommands extends CommandSet<Command> {
 
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String objectTypeAndId = arguments.get("object-type:object-id");
+      String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id");
       ObjectId objectId = new ObjectId(fromString(objectTypeAndId));
 
       String subjectTypeAndId = arguments.get("subject-type:subject-id");
@@ -246,12 +220,13 @@ public class ManagementCommands extends CommandSet<Command> {
 
       Permission permission = Permission.fromName(arguments.get("permission"));
 
-      client.deleteACLs(cliConfig.getCurrentNamespace(), new ACLStore.Query(objectId, subjectId, permission));
+      client.deleteACLs(new ACLStore.Query(objectId, subjectId, permission));
     }
 
     @Override
     public String getPattern() {
-      return "delete acl object <object-type:object-id> subject <subject-type:subject-id> permission <permission>";
+      return "delete acl object <parent-type:parent-id;object-type:object-id>" +
+        " subject <subject-type:subject-id> permission <permission>";
     }
 
     @Override

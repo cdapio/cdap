@@ -28,6 +28,10 @@ public class SubjectId extends TypedId {
     super(typedId.getType(), typedId.getId());
   }
 
+  public static SubjectId fromRep(String rep) {
+    return new SubjectId(TypedId.fromRep(rep));
+  }
+
   public String getRep() {
     return getType() + ":" + getId();
   }
