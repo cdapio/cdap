@@ -4,17 +4,17 @@
       <div class="row">
         <div class="col-sm-3">
           <h4> Storage </h4>
-          <em ng-if="bytes"> {{bytes}} Kb/s</em>
-          <em ng-if="!bytes"> N/A </em>
+          <em ng-if="storage"> {{storage | bytes}} </em>
+          <em ng-if="!storage"> N/A </em>
         </div>
         <div class="col-sm-3">
           <h4> Writes </h4>
-          <em ng-if="writes"> {{writes}} Kb/s</em>
+          <em ng-if="writes"> {{writes | bytes}} </em>
           <em ng-if="!writes"> N/A </em>
         </div>
         <div class="col-sm-3">
           <h4> Reads </h4>
-          <em ng-if="reads"> {{reads}} Kb/s</em>
+          <em ng-if="reads"> {{reads | bytes}} </em>
           <em ng-if="!reads"> N/A </em>
         </div>
         <div class="col-sm-3">

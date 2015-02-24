@@ -9,8 +9,8 @@ angular.module(PKG.name + '.feature.datasets')
 
       [
         {
-          name: 'system.dataset.store.ops',
-          scopeProperty: 'bytes'
+          name: 'system.dataset.store.bytes',
+          scopeProperty: 'storage'
         },
         {
           name: 'system.dataset.store.reads',
@@ -45,7 +45,7 @@ angular.module(PKG.name + '.feature.datasets')
       var query = myHelpers.objectQuery;
       // Temporary API until we get a status API for each dataset.
       dataSrc.request({
-        _cdapPathV2: '/data/datasets'
+        _cdapNsPath: '/data/datasets'
       })
         .then(function(res) {
           var match = res.filter(function(ds) {
