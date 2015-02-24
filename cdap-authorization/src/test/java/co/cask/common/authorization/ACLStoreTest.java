@@ -46,7 +46,7 @@ public class ACLStoreTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     aclStore.write(new ACLEntry(objectId, currentUser, permission));
     authorizationClient.authorize(objectId, ImmutableSet.of(currentUser), ImmutableSet.of(permission));
@@ -57,7 +57,7 @@ public class ACLStoreTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     try {
       authorizationClient.authorize(objectId, ImmutableSet.of(currentUser), ImmutableSet.of(permission));
@@ -77,7 +77,7 @@ public class ACLStoreTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     Permission wrongPermission = Permission.ADMIN;
     Assert.assertNotEquals(wrongPermission, permission);
@@ -101,7 +101,7 @@ public class ACLStoreTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     SubjectId wrongUser = TestSubjectIds.user("wrong");
     Assert.assertNotEquals(wrongUser, currentUser);
@@ -125,7 +125,7 @@ public class ACLStoreTest {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     ObjectId wrongObject = TestObjectIds.application(namespaceId, "wrong");
     Assert.assertNotEquals(wrongObject, objectId);
@@ -151,7 +151,7 @@ public class ACLStoreTest {
     String otherNamespaceId = "otherNamespace";
     ObjectId objectId = TestObjectIds.application(namespaceId, "someApp");
     ObjectId objectIdInOtherNamespace = TestObjectIds.application(otherNamespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     aclStore.write(new ACLEntry(objectIdInOtherNamespace, currentUser, permission));
 
@@ -172,7 +172,7 @@ public class ACLStoreTest {
   public void testFilter() throws Exception {
     SubjectId currentUser = TestSubjectIds.user("bob");
     String namespaceId = "someNamespace";
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     TestApp someApp = new TestApp(namespaceId, "someApp");
     TestApp secretApp = new TestApp(namespaceId, "secretApp");

@@ -61,7 +61,7 @@ public class ACLManagerServiceTest {
     SubjectId currentUser = SubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     Set<ACLEntry> beforeAcls = aclManagerClient.searchACLs(new ACLStore.Query(objectId, currentUser));
     Assert.assertEquals(0, beforeAcls.size());
@@ -82,7 +82,7 @@ public class ACLManagerServiceTest {
     SubjectId currentUser = SubjectIds.user("bob");
     String namespaceId = "someNamespace";
     ObjectId objectId = ObjectIds.application(namespaceId, "someApp");
-    Permission permission = Permission.WRITE;
+    Permission permission = Permission.DELETE;
 
     ACLEntry entry = new ACLEntry(objectId, currentUser, permission);
     aclManagerClient.createACL(entry);

@@ -57,13 +57,9 @@ public class ACLStoreTableDataset extends AbstractDataset implements ACLStoreTab
 
   @Override
   public boolean exists(ACLEntry entry) throws Exception {
-    if (entry.getPermission() == Permission.ANY) {
-      List<ACLEntry> any = store.readAllByIndex(getKey(new ACLEntry(entry.getObject(), entry.getSubject(), null)));
-      return !any.isEmpty();
-    } else if (entry.getPermission() != Permission.ADMIN) {
-      if (store.read(getKey(new ACLEntry(entry.getObject(), entry.getSubject(), Permission.ADMIN))) != null) {
-        return true;
-      }
+    if (entry.getPermission() != Permission.ADMIN && store.read(
+      getKey(new ACLEntry(entry.getObject(), entry.getSubject(), Permission.ADMIN))) != null) {
+      return true;
     }
 
     return store.read(getKey(entry)) != null;
@@ -79,32 +75,20 @@ public class ACLStoreTableDataset extends AbstractDataset implements ACLStoreTab
     // TODO: Optimize or use different underlying dataset to minimize number of calls
     Set<ACLEntry> result = Sets.newHashSet();
     for (Query query : queries) {
-      if (query.getPermission() != null && query.getPermission() == Permission.ANY) {
-        // return all ACL entries with permission that isn't ANY
-        List<ACLEntry> entriesForAny = Lists.newArrayList();
-        Query partialAnyQuery = new Query(query.getObjectId(), query.getSubjectId(), null);
-        byte[] secondaryKeyForPartialAny = getKey(partialAnyQuery);
-        List<ACLEntry> entriesForPartialAny = store.readAllByIndex(secondaryKeyForPartialAny);
-        for (ACLEntry entry : entriesForPartialAny) {
-          entriesForAny.add(new ACLEntry(entry.getObject(), entry.getSubject(), Permission.ANY));
+      if (query.getPermission() != null && query.getPermission() != Permission.ADMIN) {
+        // non-ADMIN permission - ADMIN permission implies all other permissions,
+        // so also add ACL entries if ADMIN permission exists
+        Query queryForAdmin = new Query(query.getObjectId(), query.getSubjectId(), Permission.ADMIN);
+        byte[] secondaryKeyForAdmin = getKey(queryForAdmin);
+        List<ACLEntry> entriesForAdmin = store.readAllByIndex(secondaryKeyForAdmin);
+        for (ACLEntry entry : entriesForAdmin) {
+          result.add(new ACLEntry(entry.getObject(), entry.getSubject(), query.getPermission()));
         }
-        result.addAll(entriesForAny);
-      } else {
-        if (query.getPermission() != null && query.getPermission() != Permission.ADMIN) {
-          // non-ADMIN permission - ADMIN permission implies all other permissions,
-          // so also add ACL entries if ADMIN permission exists
-          Query queryForAdmin = new Query(query.getObjectId(), query.getSubjectId(), Permission.ADMIN);
-          byte[] secondaryKeyForAdmin = getKey(queryForAdmin);
-          List<ACLEntry> entriesForAdmin = store.readAllByIndex(secondaryKeyForAdmin);
-          for (ACLEntry entry : entriesForAdmin) {
-            result.add(new ACLEntry(entry.getObject(), entry.getSubject(), query.getPermission()));
-          }
-        }
-
-        byte[] secondaryKey = getKey(query);
-        List<ACLEntry> entries = store.readAllByIndex(secondaryKey);
-        result.addAll(entries);
       }
+
+      byte[] secondaryKey = getKey(query);
+      List<ACLEntry> entries = store.readAllByIndex(secondaryKey);
+      result.addAll(entries);
     }
     return result;
   }
