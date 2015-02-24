@@ -4,13 +4,13 @@
       <div class="row">
         <div class="col-sm-6">
           <h4> Storage </h4>
-          <!-- TODO: Use Bytes filter -->
-          <em ng-if="bytes"> {{bytes}} B</em>
-          <em ng-if="!bytes"> N/A </em>
+          <em ng-if="storage"> {{storage | bytes}} </em>
+          <em ng-if="!storage"> N/A </em>
         </div>
         <div class="col-sm-6">
           <h4> Total Events Processed </h4>
-          <em> {{events}}</em>
+          <em ng-if="events"> {{events}} </em>
+          <em ng-if="!events"> N/A </em>
         </div>
       </div>
     </div>

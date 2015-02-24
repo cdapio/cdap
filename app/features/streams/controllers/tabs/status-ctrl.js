@@ -5,14 +5,13 @@ angular.module(PKG.name + '.feature.streams')
       _cdapNsPath: '/streams/' + $state.params.streamId + '/info'
     })
       .then(function(stream) {
-        $scope.stream = stream;
         $scope.schema = stream.format.schema.fields;
       });
 
     [
       {
         name: 'system.collect.bytes',
-        scopeProperty: 'bytes'
+        scopeProperty: 'storage'
       },
       {
         name: 'system.collect.events',
