@@ -75,9 +75,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   }
 
   private String getV2RoutingService(String [] uriParts, AllowedMethod requestMethod, HttpRequest request) {
-    if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
-      return Constants.Service.ACL_MANAGER;
-    } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
+    if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
       return Constants.Service.METRICS;
     } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
       if ((uriParts.length >= 3) && uriParts[2].equals("explore")
@@ -131,7 +129,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   }
 
   private String getV3RoutingService(String [] uriParts, AllowedMethod requestMethod, HttpRequest request) {
-    if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
+    if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
+      return Constants.Service.ACL_MANAGER;
+    } else if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {

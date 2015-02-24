@@ -19,10 +19,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.common.authorization.ACLStore;
+import co.cask.common.authorization.client.ACLStoreSupplier;
 import co.cask.common.authorization.client.AuthorizationClient;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -39,8 +41,9 @@ public class ACLManagerService extends AbstractIdleService {
 
   private Cancellable cancelDiscovery;
 
+  @Inject
   public ACLManagerService(CConfiguration configuration, DiscoveryService discoveryService,
-                           ACLStore aclStore, AuthorizationClient authorizationClient) {
+                           ACLStoreSupplier aclStore, AuthorizationClient authorizationClient) {
     this.discoveryService = discoveryService;
     this.httpService = new CommonNettyHttpServiceBuilder(configuration)
       .addHttpHandlers(ImmutableList.of(new ACLManagerHandler(aclStore, authorizationClient)))

@@ -20,6 +20,8 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.authorization.ACLManagerService;
+import co.cask.cdap.authorization.AuthorizationModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -85,6 +87,7 @@ public class StandaloneMain {
   private final ServiceStore serviceStore;
   private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
+  private final ACLManagerService aclManagerService;
 
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
@@ -112,6 +115,7 @@ public class StandaloneMain {
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
+    aclManagerService = injector.getInstance(ACLManagerService.class);
 
     this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
@@ -154,6 +158,7 @@ public class StandaloneMain {
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
+    aclManagerService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -200,6 +205,8 @@ public class StandaloneMain {
       }
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
+
+      aclManagerService.stopAndWait();
       // now the stream writer and the explore service (they need tx)
       streamService.stopAndWait();
       if (exploreExecutorService != null) {
@@ -375,7 +382,8 @@ public class StandaloneMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new StreamAdminModules().getStandaloneModules(),
+      new AuthorizationModule().getStandaloneModule()
     );
   }
 }

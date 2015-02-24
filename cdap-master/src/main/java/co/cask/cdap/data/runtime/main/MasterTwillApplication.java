@@ -64,13 +64,14 @@ public class MasterTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     TwillSpecification.Builder.RunnableSetter runnableSetter =
+      addACLManager(
         addDatasetOpExecutor(
             addLogSaverService(
                 addStreamService(
                     addTransactionService(
                         addMetricsProcessor (
                             addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+                                TwillSpecification.Builder.with().setName(NAME).withRunnable())))))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
@@ -184,6 +185,23 @@ public class MasterTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(new StreamHandlerRunnable(Constants.Service.STREAMS, "cConf.xml", "hConf.xml"), resourceSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addACLManager(TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.ACL_MANAGER);
+
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+      .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES, 1))
+      .setMemory(cConf.getInt(Constants.Stream.CONTAINER_MEMORY_MB, 512), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
+      .build();
+
+    return builder.add(new StreamHandlerRunnable(Constants.Service.ACL_MANAGER,
+                                                 "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

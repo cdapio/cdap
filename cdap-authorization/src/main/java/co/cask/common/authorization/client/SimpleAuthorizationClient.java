@@ -39,7 +39,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of {@link AuthorizationClient} which uses {@link ACLStore}.
+ * Default implementation of {@link AuthorizationClient} which uses {@link ACLStore}.
  */
 public class SimpleAuthorizationClient implements AuthorizationClient {
 
@@ -77,34 +77,30 @@ public class SimpleAuthorizationClient implements AuthorizationClient {
   public boolean isAuthorized(Iterable<ObjectId> objects, Iterable<SubjectId> subjects,
                               Iterable<Permission> requiredPermissions) {
 
-    // TODO: check isAuthorized of parent objects
-    Set<Permission> remainingRequiredPermission = Sets.newHashSet(requiredPermissions);
-    Set<ObjectId> visitedObjectIds = Sets.newHashSet();
+    try {
+      // TODO: check isAuthorized of parent objects
+      Set<Permission> remainingRequiredPermission = Sets.newHashSet(requiredPermissions);
+      Set<ObjectId> visitedObjectIds = Sets.newHashSet();
 
-    // TODO: go from most general (GLOBAL -> NAMESPACE -> APP)
-    for (ObjectId object : objects) {
-      // TODO: consider doing only a single aclStore call
-      for (ObjectId parentObject : object.getParents()) {
-        try {
+      // TODO: go from most general (GLOBAL -> NAMESPACE -> APP)
+      for (ObjectId object : objects) {
+        // TODO: consider doing only a single aclStore call
+        for (ObjectId parentObject : object.getParents()) {
           checkAuthorized(remainingRequiredPermission, visitedObjectIds, parentObject, subjects);
           if (remainingRequiredPermission.isEmpty()) {
             // Early exit if all permissions are fulfilled
             return true;
           }
-        } catch (Exception e) {
-          // Ignore since we assume unauthorized if there's an issue getting the ACLs
         }
-      }
 
-      try {
         checkAuthorized(remainingRequiredPermission, visitedObjectIds, object, subjects);
         if (remainingRequiredPermission.isEmpty()) {
           // Early exit if all permissions are fulfilled
           return true;
         }
-      } catch (Exception e) {
-        // Ignore since we assume unauthorized if there's an issue getting the ACLs
       }
+    } catch (Exception e) {
+      // If any ACLStore calls failed, fall through to return false
     }
 
     return false;

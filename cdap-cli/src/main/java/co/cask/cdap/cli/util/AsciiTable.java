@@ -52,7 +52,7 @@ public class AsciiTable<T> {
   private static final String DEFAULT_NEWLINE = System.getProperty("line.separator");
 
   private final List<String> header;
-  private final List<T> records;
+  private final Iterable<T> records;
   private final RowMaker<T> rowMaker;
   private final int width;
   private final Splitter newlineSplitter;
@@ -65,7 +65,7 @@ public class AsciiTable<T> {
    * @param width maximum width of the table
    * @param newline string to split on to force line breaks
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width, String newline) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker, int width, String newline) {
     this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
     this.records = records;
     this.rowMaker = rowMaker;
@@ -79,7 +79,7 @@ public class AsciiTable<T> {
    * @param rowMaker makes Object arrays from a row object
    * @param width maximum width of the table
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker, int width) {
     this(header, records, rowMaker, width, DEFAULT_NEWLINE);
   }
 
@@ -88,7 +88,7 @@ public class AsciiTable<T> {
    * @param records list of objects that represent the rows
    * @param rowMaker makes Object arrays from a row object
    */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker) {
+  public AsciiTable(@Nullable String[] header, Iterable<T> records, RowMaker<T> rowMaker) {
     this(header, records, rowMaker, DEFAULT_WIDTH, DEFAULT_NEWLINE);
   }
 
@@ -98,7 +98,6 @@ public class AsciiTable<T> {
    * @param output {@link PrintStream} to print to
    */
   public void print(PrintStream output) {
-
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
     boolean useRowDivider = false;
@@ -205,9 +204,14 @@ public class AsciiTable<T> {
           int endSplitIdx = width;
           while (endSplitIdx < splitFieldLine.length()) {
             cellLines.add(splitFieldLine.substring(startSplitIdx, endSplitIdx));
-            startSplitIdx += width - 1;
-            endSplitIdx += width - 1;
+            startSplitIdx = endSplitIdx;
+            endSplitIdx = startSplitIdx + width + 1;
           }
+          // add any remaining part of the splitFieldLine string
+          if (startSplitIdx < splitFieldLine.length() - 1) {
+            cellLines.add(splitFieldLine.substring(startSplitIdx, splitFieldLine.length()));
+          }
+          multiLines = true;
         }
       }
 

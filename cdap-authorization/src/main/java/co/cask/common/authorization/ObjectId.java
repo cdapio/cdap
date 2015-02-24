@@ -39,12 +39,35 @@ public class ObjectId extends TypedId {
   }
 
   public ObjectId(String type, String id) {
-    super(type, id);
-    this.parent = ObjectId.GLOBAL;
+    this(ObjectId.GLOBAL, type, id);
   }
 
   public ObjectId(TypedId typedId) {
-    super(typedId.getType(), typedId.getId());
+    this(typedId.getType(), typedId.getId());
+  }
+
+  public ObjectId(ObjectId parent, TypedId typedId) {
+    this(parent, typedId.getType(), typedId.getId());
+  }
+
+  public static ObjectId fromRep(String rep) {
+    if (GLOBAL_TYPE.equals(rep)) {
+      return ObjectId.GLOBAL;
+    }
+
+    String[] tokens = rep.split(";");
+    if (tokens.length == 0) {
+      throw new IllegalArgumentException("Invalid rep format: " + rep);
+    }
+
+    ObjectId result = GLOBAL;
+    for (String token : tokens) {
+      if (GLOBAL_TYPE.equals(token)) {
+        continue;
+      }
+      result = new ObjectId(result, TypedId.fromRep(token));
+    }
+    return result;
   }
 
   /**

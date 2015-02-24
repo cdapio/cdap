@@ -33,6 +33,14 @@ public class TypedId {
     this.id = id;
   }
 
+  public static TypedId fromRep(String rep) {
+    String[] tokens = rep.split(":");
+    if (tokens.length == 0) {
+      throw new IllegalArgumentException("Invalid rep format: " + rep);
+    }
+    return new TypedId(tokens[0], tokens.length <= 1 ? "" : tokens[1]);
+  }
+
   public String getType() {
     return type;
   }

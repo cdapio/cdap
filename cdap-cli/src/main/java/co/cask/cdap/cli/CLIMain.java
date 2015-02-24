@@ -79,6 +79,7 @@ public class CLIMain {
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
+    cli.getReader().setPrompt(cliConfig.getPrompt());
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
@@ -89,6 +90,7 @@ public class CLIMain {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
         } else {
+          e.printStackTrace();
           output.println("Error: " + e.getMessage());
         }
 

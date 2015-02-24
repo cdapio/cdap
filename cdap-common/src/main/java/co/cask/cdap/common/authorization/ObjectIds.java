@@ -16,6 +16,7 @@
 package co.cask.cdap.common.authorization;
 
 import co.cask.common.authorization.ObjectId;
+import com.google.common.base.Preconditions;
 
 /**
  * Various helper functions to construct {@link ObjectId}s.
@@ -36,5 +37,27 @@ public class ObjectIds {
 
   public static ObjectId adapter(String namespaceId, String id) {
     return new ObjectId(namespace(namespaceId), ADAPTER, id);
+  }
+
+  public static ObjectId validate(ObjectId objectId) {
+    if (ObjectId.GLOBAL.getType().equals(objectId.getType())) {
+      return objectId;
+    } else if (NAMESPACE.equals(objectId.getType())) {
+      Preconditions.checkArgument(ObjectId.GLOBAL.equals(objectId.getParent()),
+                                  "Parent of namespace must be GLOBAL");
+      validate(objectId.getParent());
+    } else if (APPLICATION.equals(objectId.getType())) {
+      Preconditions.checkArgument(NAMESPACE.equals(objectId.getParent().getType()),
+                                  "Parent of app must be a NAMESPACE");
+      validate(objectId.getParent());
+    } else if (ADAPTER.equals(objectId.getType())) {
+      Preconditions.checkArgument(NAMESPACE.equals(objectId.getParent().getType()),
+                                  "Parent of adapter must be a NAMESPACE");
+      validate(objectId.getParent());
+    } else {
+      throw new IllegalArgumentException("Unknown object type: " + objectId.getType());
+    }
+
+    return objectId;
   }
 }
