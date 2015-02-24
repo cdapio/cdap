@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -30,6 +32,7 @@ import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.After;
@@ -37,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -872,6 +876,91 @@ public abstract class TableTest<T extends Table> {
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
 
+    } finally {
+      admin.drop();
+    }
+  }
+
+  @Test
+  public void testMultiGetWithTx() throws Exception {
+    DatasetAdmin admin = getTableAdmin("testMultiGet");
+    admin.create();
+    try {
+      Transaction tx = txClient.startShort();
+      Table table = getTable("testMultiGet");
+      ((TransactionAware) table).startTx(tx);
+      for (int i = 0; i < 100; i++) {
+        table.put(new Put(Bytes.toBytes("r" + i)).add(C1, V1).add(C2, V2));
+      }
+      Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) table).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table).commitTx());
+      Assert.assertTrue(txClient.commit(tx));
+
+      Transaction tx2 = txClient.startShort();
+      ((TransactionAware) table).startTx(tx2);
+      List<Get> gets = Lists.newArrayListWithCapacity(100);
+      for (int i = 0; i < 100; i++) {
+        gets.add(new Get(Bytes.toBytes("r" + i)));
+      }
+      List<Row> results = table.get(gets);
+      Assert.assertTrue(txClient.commit(tx2));
+      for (int i = 0; i < 100; i++) {
+        Row row = results.get(i);
+        Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
+        byte[] val = row.get(C1);
+        Assert.assertNotNull(val);
+        Assert.assertArrayEquals(V1, val);
+        byte[] val2 = row.get(C2);
+        Assert.assertNotNull(val2);
+        Assert.assertArrayEquals(V2, val2);
+      }
+
+      Transaction tx3 = txClient.startShort();
+      ((TransactionAware) table).startTx(tx3);
+      gets = Lists.newArrayListWithCapacity(100);
+      for (int i = 0; i < 100; i++) {
+        gets.add(new Get("r" + i).add(C1));
+      }
+      results = table.get(gets);
+      Assert.assertTrue(txClient.commit(tx3));
+      for (int i = 0; i < 100; i++) {
+        Row row = results.get(i);
+        Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
+        byte[] val = row.get(C1);
+        Assert.assertNotNull(val);
+        Assert.assertArrayEquals(V1, val);
+        // should have only returned column 1
+        byte[] val2 = row.get(C2);
+        Assert.assertNull(val2);
+      }
+
+      // retrieve different columns per row
+      Transaction tx4 = txClient.startShort();
+      ((TransactionAware) table).startTx(tx4);
+      gets = Lists.newArrayListWithCapacity(100);
+      for (int i = 0; i < 100; i++) {
+        Get get = new Get("r" + i);
+        // evens get C1, odds get C2
+        get.add(i % 2 == 0 ? C1 : C2);
+        gets.add(get);
+      }
+      results = table.get(gets);
+      Assert.assertTrue(txClient.commit(tx4));
+      for (int i = 0; i < 100; i++) {
+        Row row = results.get(i);
+        Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
+        byte[] val1 = row.get(C1);
+        byte[] val2 = row.get(C2);
+        if (i % 2 == 0) {
+          Assert.assertNotNull(val1);
+          Assert.assertArrayEquals(V1, val1);
+          Assert.assertNull(val2);
+        } else {
+          Assert.assertNull(val1);
+          Assert.assertNotNull(val2);
+          Assert.assertArrayEquals(V2, val2);
+        }
+      }
     } finally {
       admin.drop();
     }

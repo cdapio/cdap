@@ -17,7 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
@@ -26,7 +28,10 @@ import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -41,9 +46,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -88,6 +95,33 @@ public class HBaseTable extends BufferingTable {
   public void startTx(Transaction tx) {
     super.startTx(tx);
     this.tx = tx;
+  }
+
+  @Override
+  public List<Row> get(List<co.cask.cdap.api.dataset.table.Get> gets) {
+    List<Get> hbaseGets = Lists.transform(gets, new Function<co.cask.cdap.api.dataset.table.Get, Get>() {
+      @Nullable
+      @Override
+      public Get apply(@Nullable co.cask.cdap.api.dataset.table.Get get) {
+        List<byte[]> cols = get.getColumns();
+        return createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][]));
+      }
+    });
+    try {
+      Result[] results = hTable.get(hbaseGets);
+      List<Row> rows = Lists.transform(Arrays.asList(results), new Function<Result, Row>() {
+        @Nullable
+        @Override
+        public Row apply(@Nullable Result result) {
+          Map<byte[], byte[]> familyMap = result.getFamilyMap(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+          return new co.cask.cdap.api.dataset.table.Result(result.getRow(),
+              familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
+        }
+      });
+      return rows;
+    } catch (IOException ioe) {
+      throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
+    }
   }
 
   @Override
@@ -200,16 +234,32 @@ public class HBaseTable extends BufferingTable {
     return new HBaseScanner(resultScanner);
   }
 
-  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
+  private Get createGet(byte[] row, @Nullable byte[][] columns) {
     Get get = new Get(row);
-    // todo: uncomment when doing caching fetching data in-memory
-    // get.setCacheBlocks(false);
     get.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
-    if (columns != null) {
+    if (columns != null && columns.length > 0) {
       for (byte[] column : columns) {
         get.addColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column);
       }
+    } else {
+      get.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
     }
+
+    try {
+      // no tx logic needed
+      if (tx == null) {
+        get.setMaxVersions(1);
+      } else {
+        txCodec.addToOperation(get, tx);
+      }
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
+    return get;
+  }
+
+  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
+    Get get = createGet(row, columns);
 
     // no tx logic needed
     if (tx == null) {
