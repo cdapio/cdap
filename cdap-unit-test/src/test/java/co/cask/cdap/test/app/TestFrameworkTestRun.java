@@ -38,6 +38,7 @@ import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
@@ -352,6 +353,22 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(expected = IllegalArgumentException.class)
   public void testServiceWithInvalidHandler() throws Exception {
     deployApplication(AppWithInvalidHandler.class);
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testAppWithWorker() throws Exception {
+    ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
+    LOG.info("Deployed.");
+    WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
+    TimeUnit.MILLISECONDS.sleep(200);
+    manager.stop();
+    applicationManager.stopAll();
+    DataSetManager<KeyValueTable> dataSetManager = applicationManager.getDataSet(AppWithWorker.DATASET);
+    KeyValueTable table = dataSetManager.get();
+    Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
+    Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
+    Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
   }
 
   @Category(SlowTests.class)
@@ -686,6 +703,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
+    // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
+    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
@@ -719,6 +738,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 90000L)
   public void testSQLQuery() throws Exception {
+    // Deploying app makes sure that the default namespace is available.
+    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
@@ -733,7 +754,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try {
 
       // run a query over the dataset
-      ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+      ResultSet results = connection.prepareStatement("select first from cdap_default_mytable where second = '1'")
         .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));

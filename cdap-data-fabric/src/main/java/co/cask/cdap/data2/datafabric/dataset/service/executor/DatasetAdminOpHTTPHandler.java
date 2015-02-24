@@ -93,7 +93,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     DatasetProperties props = params.getProperties();
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
-    LOG.info("Creating dataset instance {}, type meta: {}, props: {}", name, typeMeta, props);
+    LOG.info("Creating dataset instance {}.{}, type meta: {}, props: {}", namespaceId, name, typeMeta, props);
     DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
     if (type == null) {

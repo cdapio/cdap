@@ -199,11 +199,9 @@ public class DistributedStreamService extends AbstractStreamService {
   protected void runOneIteration() throws Exception {
     LOG.trace("Performing heartbeat publishing in Stream service instance {}", instanceId);
     ImmutableMap.Builder<Id.Stream, Long> sizes = ImmutableMap.builder();
-    Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
-    //TODO: use listStreams() across all namespaces, not just default namespace.
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(namespace)) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
-      sizes.put(streamId, streamWriterSizeCollector.getTotalCollected(streamId));
+    Map<Id.Stream, AtomicLong> streamSizes = streamWriterSizeCollector.getStreamSizes();
+    for (Map.Entry<Id.Stream, AtomicLong> streamSize : streamSizes.entrySet()) {
+      sizes.put(streamSize.getKey(), streamSize.getValue().get());
     }
     StreamWriterHeartbeat heartbeat = new StreamWriterHeartbeat(System.currentTimeMillis(), instanceId, sizes.build());
     LOG.trace("Publishing heartbeat {}", heartbeat);
@@ -319,10 +317,10 @@ public class DistributedStreamService extends AbstractStreamService {
    * @return a {@link Cancellable} to cancel the subscription
    * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, InterruptedException {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
@@ -348,9 +346,7 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
   }
@@ -381,10 +377,9 @@ public class DistributedStreamService extends AbstractStreamService {
   /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
-  private void createHeartbeatsFeed() throws NotificationFeedException, InterruptedException {
-    // TODO worry about namespaces here. Should we create one heartbeat feed per namespace?
+  private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Stream heartbeats feed.")
@@ -398,10 +393,19 @@ public class DistributedStreamService extends AbstractStreamService {
         feedManager.createFeed(streamHeartbeatsFeed);
         return;
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
+    }
+  }
+
+  private void waitBeforeRetryHeartbeatsFeedOperation() {
+    // Most probably, the dataset service is not up. We retry
+    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
+    try {
+      TimeUnit.SECONDS.sleep(1);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
     }
   }
 
@@ -484,12 +488,10 @@ public class DistributedStreamService extends AbstractStreamService {
           // Create one requirement for the resource coordinator for all the streams.
           // One stream is identified by one partition
           ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
-          for (StreamSpecification spec : streamMetaStore.listStreams(Id.Namespace.from(Constants.DEFAULT_NAMESPACE))) {
-            LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.",
-                      spec.getName());
-            // TODO use the right namespace in a future PR - Ali :)
-            builder.addPartition(new ResourceRequirement.Partition(
-              String.format("%s.%s", Constants.DEFAULT_NAMESPACE, spec.getName()), 1));
+          for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+            Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
+            LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.", streamId);
+            builder.addPartition(new ResourceRequirement.Partition(streamId.toId(), 1));
           }
           return builder.build();
         } catch (Throwable e) {

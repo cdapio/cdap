@@ -32,7 +32,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -116,9 +115,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   @Override
   public void close() throws IOException {
-    if (consumer instanceof Closeable) {
-      ((Closeable) consumer).close();
-    }
+    consumer.close();
   }
 
   @Override

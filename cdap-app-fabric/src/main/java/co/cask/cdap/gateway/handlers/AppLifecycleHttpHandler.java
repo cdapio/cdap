@@ -479,7 +479,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
     final Location archive =
-      namespaceHomeLocation.append(appFabricDir).append(Constants.AppFabric.ARCHIVE_DIR).append(archiveName);
+      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
 
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 

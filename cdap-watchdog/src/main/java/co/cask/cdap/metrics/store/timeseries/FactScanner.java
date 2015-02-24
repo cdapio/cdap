@@ -90,6 +90,9 @@ public final class FactScanner implements Iterator<FactScanResult> {
 
           // Decode context and metric from key
           String measureName = codec.getMeasureName(rowKey);
+          // todo: codec.getTagValues(rowKey) needs to un-encode tag names which may result in read in entity table
+          //       (depending on the cache and its state). To avoid that, we can pass to scanner the list of tag names
+          //       as we *always* know it (it is given) at the time of scanning
           List<TagValue> tagValues = codec.getTagValues(rowKey);
 
           boolean exhausted = false;
