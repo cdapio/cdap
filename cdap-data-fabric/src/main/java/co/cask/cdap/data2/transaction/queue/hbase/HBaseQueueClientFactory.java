@@ -57,15 +57,15 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   // for testing only
   String getConfigTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableName();
+    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableName(queueName);
   }
 
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
-                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
+                                      ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig,
-                                                                     createHTable(admin.getConfigTableName()));
+    HTable configTable = createHTable(admin.getConfigTableName(queueName));
+    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
     return queueUtil.getQueueConsumer(consumerConfig, createHTable(admin.getActualTableName(queueName)),
                                       queueName, stateStore.getState(), stateStore);
   }

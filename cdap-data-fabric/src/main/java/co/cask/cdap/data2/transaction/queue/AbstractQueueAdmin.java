@@ -28,12 +28,14 @@ import co.cask.cdap.proto.Id;
  */
 public abstract class AbstractQueueAdmin implements QueueAdmin {
   private final String unqualifiedTableNamePrefix;
+  private final String unqualifiedConfigTableNamePrefix;
   protected final DefaultDatasetNamespace namespace;
 
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
+    // system scoped
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    // system scope
     this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
+    this.unqualifiedConfigTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
     this.namespace = new DefaultDatasetNamespace(conf);
   }
 
@@ -104,6 +106,17 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     // returns String with format:  '<root namespace>.<namespaceId>.system.(stream|queue)'
     String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
                                                                      unqualifiedTableNamePrefix)).getId();
+    return HBaseTableUtil.getHBaseTableName(tablePrefix);
+  }
+
+  public String getConfigTableName(QueueName queueName) {
+    return getConfigTableName(queueName.getFirstComponent());
+  }
+
+  public String getConfigTableName(String namespaceId) {
+    // returns String with format:  '<root namespace>.<namespaceId>.system.queue.config'
+    String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
+                                                                     unqualifiedConfigTableNamePrefix)).getId();
     return HBaseTableUtil.getHBaseTableName(tablePrefix);
   }
 }
