@@ -21,7 +21,6 @@ import co.cask.cdap.common.authorization.SubjectIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.authorization.ACLEntry;
 import co.cask.common.authorization.ACLStore;
-import co.cask.common.authorization.InMemoryACLStore;
 import co.cask.common.authorization.ObjectId;
 import co.cask.common.authorization.Permission;
 import co.cask.common.authorization.SubjectId;
@@ -46,9 +45,8 @@ public class ACLManagerServiceTest {
   @Before
   public void setUp() throws Exception {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    ACLStore aclStore = new InMemoryACLStore();
     aclManagerService = new ACLManagerService(CConfiguration.create(), discoveryService,
-                                              aclStore, new NoopAuthorizationClient());
+                                              new InMemoryACLStoreTableSupplier(), new NoopAuthorizationClient());
     aclManagerClient = new ACLManagerClient(new DiscoveringBaseURISupplier(discoveryService));
     aclManagerService.startAndWait();
   }

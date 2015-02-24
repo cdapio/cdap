@@ -479,6 +479,8 @@ public final class Constants {
     public static final String ENABLED = "security.enabled";
     /** Enables authorization. */
     public static final String AUTHORIZATION_ENABLED = "security.authorization.enabled";
+    /** Admin users. Grants full access to these users. */
+    public static final String ADMINS = "security.admins";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */
