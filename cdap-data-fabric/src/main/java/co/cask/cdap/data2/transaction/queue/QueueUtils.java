@@ -49,10 +49,7 @@ public final class QueueUtils {
         "Unable to determine config table name from queue table name '" + queueTableName + "'");
     }
 
-    // this will be reverted once queue config table is also namespaced
-    String[] parts = queueTableName.split("\\.");
-    return parts[0] + "." + parts[2] + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
-//    return queueTableName.substring(0, pos) + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
+    return queueTableName.substring(0, pos) + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
   }
 
   private QueueUtils() { }
