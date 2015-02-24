@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.increment.hbase96;
 
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.hbase.MockRegionServerServices;
 import com.google.common.collect.Lists;
@@ -85,7 +85,7 @@ public class IncrementSummingScannerTest {
       // test handling of a single increment value alone
       Put p = new Put(Bytes.toBytes("r1"));
       p.add(familyBytes, columnBytes, Bytes.toBytes(3L));
-      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       Scan scan = new Scan();
@@ -120,7 +120,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 5; i++) {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes((long) (i + 1)));
       }
-      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       scan = new Scan(Bytes.toBytes("r3"));
@@ -140,7 +140,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 3; i++) {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
-      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       // this put will appear as a "total" sum prior to all the delta puts
@@ -189,7 +189,7 @@ public class IncrementSummingScannerTest {
       for (int i = 2; i >= 0; i--) {
         p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
-      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+      p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       scan = new Scan(Bytes.toBytes("r5"));
@@ -228,7 +228,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 50; i++) {
         Put p = new Put(row1);
         p.add(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         ts++;
         region.put(p);
       }
@@ -242,7 +242,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 10; i++) {
         Put p = new Put(row2);
         p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
 
@@ -270,7 +270,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 30; i++) {
         Put p = new Put(row2);
         p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
 
@@ -290,7 +290,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 100; i++) {
         Put p = new Put(row2);
         p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
 
@@ -323,7 +323,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 5; i++) {
         Put p = new Put(Bytes.toBytes("r1"), now++);
         p.add(familyBytes, columnBytes, Bytes.toBytes(1L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
         counter1++;
       }
@@ -356,7 +356,7 @@ public class IncrementSummingScannerTest {
       for (int i = 0; i < 5; i++) {
         Put p = new Put(Bytes.toBytes("r2"), now + i);
         p.add(familyBytes, columnBytes, Bytes.toBytes(2L));
-        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
         counter2 += 2;
       }

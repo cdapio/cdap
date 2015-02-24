@@ -45,7 +45,6 @@ public class Table {
     return new Builder();
   }
 
-  @Nullable
   public List<String> getHeader() {
     return header;
   }

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.cli.util.table;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -39,4 +40,15 @@ public abstract class TableRendererTest {
     getRenderer().render(System.out, table);
   }
 
+  @Test
+  public void testBigCell() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333")
+      .setRows(ImmutableList.of(
+        new String[]{"r1zz" + Strings.repeat("z", 300) + "456", "r11", "r1"},
+        new String[]{"r2", "r2222 zzzzzzz z z z zzzzzz z zzzzzzzzz zzzzzzz zzzzzzz zzzzzzz zzzzz zzz123", "r"},
+        new String[]{"r3333", "r3", "r3\n1"}))
+      .build();
+    getRenderer().render(System.out, table);
+  }
 }

@@ -294,7 +294,7 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsKV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started Service");
     try {
@@ -306,7 +306,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-      String runtimeArgs2KV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
       testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
@@ -333,7 +333,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
@@ -355,8 +354,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
-    testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
+    testPreferencesOutput(cli, String.format("get namespace preferences"), propMap);
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
@@ -371,11 +369,22 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
     propMap.clear();
     propMap.put("key", "somevalue");
     testPreferencesOutput(cli, "get instance preferences", propMap);
+    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load namespace preferences " + file.getAbsolutePath() + " xml", "successful");
+    propMap.clear();
+    propMap.put("xml", "green");
+    testPreferencesOutput(cli, "get namespace preferences", propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
 
     //Try invalid Json
@@ -387,6 +396,17 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
+
+    //Try invalid xml
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " inv", "Unsupported");
   }
 
   @Test

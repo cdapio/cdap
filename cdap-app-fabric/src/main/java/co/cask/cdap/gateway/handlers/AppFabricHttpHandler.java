@@ -40,23 +40,18 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.BodyConsumer;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.Closeables;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -110,6 +105,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
   private final AppFabricDataHttpHandler appFabricDataHttpHandler;
+  private final TransactionHttpHandler transactionHttpHandler;
 
 
   /**
@@ -123,7 +119,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                               AppFabricDataHttpHandler appFabricDataHttpHandler,
-                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
+                              TransactionHttpHandler transactionHttpHandler) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -136,6 +133,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricDataHttpHandler = appFabricDataHttpHandler;
+    this.transactionHttpHandler = transactionHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
   }
@@ -155,32 +153,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/state")
   @GET
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
-    try {
-      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      InputStream in = txClient.getSnapshotInputStream();
-      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-      try {
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.<String, String>of());
-        while (true) {
-          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
-          byte[] readBytes = new byte[4096];
-          int res = in.read(readBytes, 0, 4096);
-          if (res == -1) {
-            break;
-          }
-          // If failed to send chunk, IOException will be raised.
-          // It'll just propagated to the netty-http library to handle it
-          chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
-        }
-        Closeables.closeQuietly(chunkResponder);
-      } finally {
-        in.close();
-      }
-    } catch (Exception e) {
-      LOG.error("Could not take transaction manager snapshot", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+
+    transactionHttpHandler.getTxManagerSnapshot(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                                responder);
   }
 
   /**
@@ -190,21 +165,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/{tx-id}/invalidate")
   @POST
   public void invalidateTx(HttpRequest request, HttpResponder responder,
-                           @PathParam("tx-id") final String txId) {
-    try {
-      long txIdLong = Long.parseLong(txId);
-      boolean success = txClient.invalidate(txIdLong);
-      if (success) {
-        LOG.info("Transaction {} successfully invalidated", txId);
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        LOG.info("Transaction {} could not be invalidated: not in progress.", txId);
-        responder.sendStatus(HttpResponseStatus.CONFLICT);
-      }
-    } catch (NumberFormatException e) {
-      LOG.info("Could not invalidate transaction: {} is not a valid tx id", txId);
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-    }
+                           @PathParam("tx-id") String txId) {
+
+    transactionHttpHandler.invalidateTx(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                        responder, txId);
   }
 
   /**
@@ -213,8 +177,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/state")
   @POST
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
-    txClient.resetState();
-    responder.sendStatus(HttpResponseStatus.OK);
+    transactionHttpHandler.resetTxManagerState(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                               responder);
   }
 
   /**

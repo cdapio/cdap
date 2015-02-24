@@ -106,7 +106,7 @@ a TTL (time-to-live) property, you can use::
 
   createDataset("frequentCustomers", KeyValueTable.class,
     DatasetProperties.builder()
-                     .add(OrderedTable.PROPERTY_TTL, "3600")      
+                     .add(Table.PROPERTY_TTL, "3600")      
                      .build());
 
 You can pass other properties, such as for 

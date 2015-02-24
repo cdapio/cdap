@@ -38,7 +38,7 @@ import static co.cask.common.cli.util.Parser.OPTIONAL_PART_ENDING;
 public class ArgumentParser {
 
   /**
-   * Parses a map in the format: "key1=a key2=b .."
+   * Parses a map in the format: "key1=a, key2=b, .."
    *
    * @param mapString {@link String} representation of the map
    * @return the map
@@ -47,7 +47,7 @@ public class ArgumentParser {
     if (mapString == null || mapString.isEmpty()) {
       return ImmutableMap.of();
     }
-    return Splitter.on(" ").withKeyValueSeparator("=").split(mapString);
+    return Splitter.on(",").omitEmptyStrings().trimResults().withKeyValueSeparator("=").split(mapString);
   }
 
   /**
