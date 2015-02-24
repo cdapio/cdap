@@ -37,31 +37,37 @@ angular.module(PKG.name + '.feature.admin')
         children: [
           {
             state: 'admin.namespace.detail.metadata({nsadmin: "' + item.id +'" })',
+            matchingState: 'admin.namespace.detail.metadata.**',
             label: 'Metadata',
             children: []
           },
           // {
           //   state: 'admin.namespace.detail.settings({nsadmin: "' + item.id +'" })',
+          //   matchingState: 'admin.namespace.detail.settings.**',
           //   label: 'Settings',
           //   children: []
           // },
           // {
           //   state: 'admin.namespace.detail.users({nsadmin: "' + item.id +'" })',
+          //   matchingState: 'admin.namespace.detail.users.**',
           //   label: 'Users',
           //   children: []
           // },
           // {
           //   state: 'admin.namespace.detail.datatypes({nsadmin: "' + item.id +'" })',
+          //   matchingState: 'admin.namespace.detail.datatypes.**',
           //   label: 'Data Types',
           //   children: []
           // },
           // {
           //   state: 'admin.namespace.detail.datasets({nsadmin: "' + item.id +'" })',
+          //   matchingState: 'admin.namespace.detail.datasets.**',
           //   label: 'Datasets',
           //   children: []
           // },
           {
             state: 'admin.namespace.detail.apps({nsadmin: "' + item.id +'" })',
+            matchingState: 'admin.namespace.detail.apps.**',
             label: 'Apps',
             children: []
           }

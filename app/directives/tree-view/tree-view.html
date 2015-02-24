@@ -1,13 +1,13 @@
-<li ng-repeat="menu in menus">
+<li ng-repeat="menu in model">
   <a ui-sref="{{menu.state || 'home'}}"
-     ng-class="{ current: menu.isCurrent }"
+     ng-class="{ current: state.includes(menu.matchingState) }"
      ng-show="menu.children.length == 0"
      ng-bind="menu.label"
      ng-click="isOpen[menu.label]=!isOpen[menu.label]">
   </a>
   <a href=""
      ng-show="menu.children.length > 0"
-     ng-class="{ current: menu.isCurrent }"
+     ng-class="{ current: menu.matchingState }"
      ng-click="isOpen[menu.label]=!isOpen[menu.label]">
     <span ng-bind="menu.label"></span>
   </a>
