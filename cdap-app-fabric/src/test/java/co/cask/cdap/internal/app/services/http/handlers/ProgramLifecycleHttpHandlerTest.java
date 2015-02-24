@@ -530,6 +530,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   /**
+   * Worker Specification tests
+   */
+  @Test
+  public void testWorkerSpecification() throws Exception {
+    // deploy AppWithWorker in namespace1 and verify
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
+  }
+
+  /**
    * Program specification tests through appfabric apis.
    */
   @Test

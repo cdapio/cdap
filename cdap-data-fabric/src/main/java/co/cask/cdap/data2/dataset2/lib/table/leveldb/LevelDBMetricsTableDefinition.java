@@ -33,7 +33,7 @@ public class LevelDBMetricsTableDefinition
   extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
 
   @Inject
-  private LevelDBOrderedTableService service;
+  private LevelDBTableService service;
 
   public LevelDBMetricsTableDefinition(String name) {
     super(name);
@@ -55,6 +55,6 @@ public class LevelDBMetricsTableDefinition
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
-    return new LevelDBOrderedTableAdmin(spec, service);
+    return new LevelDBTableAdmin(spec, service);
   }
 }
