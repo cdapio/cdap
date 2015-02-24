@@ -51,18 +51,21 @@ public class ObjectId extends TypedId {
   }
 
   public static ObjectId fromRep(String rep) {
+    if (GLOBAL_TYPE.equals(rep)) {
+      return ObjectId.GLOBAL;
+    }
+
     String[] tokens = rep.split(";");
     if (tokens.length == 0) {
       throw new IllegalArgumentException("Invalid rep format: " + rep);
     }
 
-    ObjectId result = null;
+    ObjectId result = GLOBAL;
     for (String token : tokens) {
-      if (result == null) {
-        result = new ObjectId(TypedId.fromRep(token));
-      } else {
-        result = new ObjectId(result, TypedId.fromRep(token));
+      if (GLOBAL_TYPE.equals(token)) {
+        continue;
       }
+      result = new ObjectId(result, TypedId.fromRep(token));
     }
     return result;
   }

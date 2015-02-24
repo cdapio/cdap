@@ -39,7 +39,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Simple implementation of {@link AuthorizationClient} which uses {@link ACLStore}.
+ * Default implementation of {@link AuthorizationClient} which uses {@link ACLStore}.
  */
 public class SimpleAuthorizationClient implements AuthorizationClient {
 
@@ -100,7 +100,7 @@ public class SimpleAuthorizationClient implements AuthorizationClient {
         }
       }
     } catch (Exception e) {
-      // Error making ACLStore call, fall through to return false
+      // If any ACLStore calls failed, fall through to return false
     }
 
     return false;

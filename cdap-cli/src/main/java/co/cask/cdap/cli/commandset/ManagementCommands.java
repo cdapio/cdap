@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.common.authorization.ObjectIds;
 import co.cask.common.authorization.ACLEntry;
 import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.ObjectId;
@@ -139,7 +140,7 @@ public class ManagementCommands extends CommandSet<Command> {
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
       String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id", "");
       TypedId typedId = fromString(objectTypeAndId);
-      ObjectId objectId = typedId == null ? null : new ObjectId(typedId);
+      ObjectId objectId = typedId == null ? null : ObjectIds.validate(new ObjectId(typedId));
 
       String subjectTypeAndId = arguments.get("subject-type:subject-id", "");
       typedId = fromString(subjectTypeAndId);
@@ -176,7 +177,7 @@ public class ManagementCommands extends CommandSet<Command> {
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
       String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id");
-      ObjectId objectId = ObjectId.fromRep(objectTypeAndId);
+      ObjectId objectId = ObjectIds.validate(ObjectId.fromRep(objectTypeAndId));
 
       String subjectTypeAndId = arguments.get("subject-type:subject-id");
       SubjectId subjectId = SubjectId.fromRep(subjectTypeAndId);
@@ -213,7 +214,7 @@ public class ManagementCommands extends CommandSet<Command> {
     @Override
     public void perform(Arguments arguments, PrintStream printStream) throws Exception {
       String objectTypeAndId = arguments.get("parent-type:parent-id;object-type:object-id");
-      ObjectId objectId = new ObjectId(fromString(objectTypeAndId));
+      ObjectId objectId = ObjectIds.validate(new ObjectId(fromString(objectTypeAndId)));
 
       String subjectTypeAndId = arguments.get("subject-type:subject-id");
       SubjectId subjectId = new SubjectId(fromString(subjectTypeAndId));

@@ -23,7 +23,6 @@ import co.cask.common.authorization.ObjectId;
 import co.cask.common.authorization.Permission;
 import co.cask.common.authorization.client.ACLStoreSupplier;
 import co.cask.common.authorization.client.AuthorizationClient;
-import co.cask.common.authorization.client.DefaultAuthorizationClient;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -39,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
