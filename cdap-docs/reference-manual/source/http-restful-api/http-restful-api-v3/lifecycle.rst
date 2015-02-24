@@ -121,7 +121,7 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ```mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
      - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
        being called
