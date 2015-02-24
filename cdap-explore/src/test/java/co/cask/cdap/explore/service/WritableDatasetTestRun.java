@@ -54,7 +54,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 
@@ -131,6 +131,31 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       result.close();
     } finally {
       datasetFramework.deleteInstance(MY_TABLE);
+    }
+  }
+
+  @Test
+  public void testTablesWithSpecialChars() throws Exception {
+    // '.' are replaced with "_" in hive, so create a dataset with . in name.
+    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+    // '_' are replaced with "_" in hive, so create a dataset with . in name.
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "hyphen-table");
+    try {
+      initKeyValueTable(myTable1, true);
+      initKeyValueTable(myTable2, true);
+
+      ExploreExecutionResult result = exploreClient.submit("select * from dot_table").get();
+
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+      result = exploreClient.submit("select * from hyphen_table").get();
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+    } finally {
+      datasetFramework.deleteInstance(myTable1);
+      datasetFramework.deleteInstance(myTable2);
     }
   }
 

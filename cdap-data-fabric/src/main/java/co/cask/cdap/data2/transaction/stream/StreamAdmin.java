@@ -30,9 +30,9 @@ import javax.annotation.Nullable;
 public interface StreamAdmin {
 
   /**
-   * Deletes all entries for all streams.
+   * Deletes all entries for all streams within a namespace
    */
-  void dropAll() throws Exception;
+  void dropAllInNamespace(Id.Namespace namespace) throws Exception;
 
   /**
    * Sets the number of consumer instances for the given consumer group in a stream.

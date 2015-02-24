@@ -55,6 +55,13 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String flowletId = programIdParts[2];
         instances = programClient.getFlowletInstances(appId, flowId, flowletId);
         break;
+      case WORKER:
+        if (programIdParts.length < 2)  {
+          throw new CommandInputError(this);
+        }
+        String workerId = programIdParts[1];
+        instances = programClient.getWorkerInstances(appId, workerId);
+        break;
       case PROCEDURE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);

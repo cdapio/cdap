@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http;
 
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -116,6 +117,8 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
+  private static ServiceStore serviceStore;
+
   private static final String adapterFolder = "adapter";
 
   @ClassRule
@@ -154,6 +157,8 @@ public abstract class AppFabricTestBase {
     metricsService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
+    serviceStore = injector.getInstance(ServiceStore.class);
+    serviceStore.startAndWait();
 
     createNamespaces();
   }

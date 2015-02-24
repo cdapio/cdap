@@ -32,7 +32,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.Iterator;
@@ -86,9 +85,7 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
 
       @Override
       public void close() throws IOException {
-        if (producer instanceof Closeable) {
-          ((Closeable) producer).close();
-        }
+        producer.close();
       }
 
       @Override

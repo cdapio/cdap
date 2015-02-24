@@ -19,10 +19,9 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -40,13 +39,12 @@ public abstract class MetaTableUtil {
   protected final DatasetFramework dsFramework;
 
   public MetaTableUtil(DatasetFramework framework, CConfiguration conf) {
-    this.dsFramework =
-      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+    this.dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
   }
 
-  public OrderedTable getMetaTable() throws Exception {
+  public Table getMetaTable() throws Exception {
     Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName());
-    return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, OrderedTable.class.getName(),
+    return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 

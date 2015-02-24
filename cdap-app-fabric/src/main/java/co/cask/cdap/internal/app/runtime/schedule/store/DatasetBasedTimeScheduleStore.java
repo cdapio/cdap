@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -56,7 +57,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
-  private OrderedTable table;
+  private Table table;
 
   @Inject
   public DatasetBasedTimeScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
@@ -211,7 +212,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   // Persist the job information to dataset
-  private void persistJob(OrderedTable table, JobDetail job) throws Exception {
+  private void persistJob(Table table, JobDetail job) throws Exception {
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
@@ -220,14 +221,14 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
-  private void removeTrigger(OrderedTable table, TriggerKey key) throws Exception {
+  private void removeTrigger(Table table, TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     table.delete(TRIGGER_KEY, col);
   }
 
 
-  private void removeJob(OrderedTable table, JobKey key) throws Exception {
+  private void removeJob(Table table, JobKey key) throws Exception {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     table.delete(JOB_KEY, col);
@@ -236,7 +237,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
-    Map<byte[], byte[]> result = table.get(TRIGGER_KEY, col);
+    Row result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
     if (!result.isEmpty()) {
       bytes = result.get(col[0]);
@@ -249,7 +250,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   // Persist the trigger information to dataset
-  private void persistTrigger(OrderedTable table, OperableTrigger trigger,
+  private void persistTrigger(Table table, OperableTrigger trigger,
                               Trigger.TriggerState state) throws Exception {
 
     byte[][] cols = new byte[1][];
@@ -270,9 +271,9 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          Map<byte[], byte[]> result = table.get(JOB_KEY);
+          Row result = table.get(JOB_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.values()) {
+            for (byte[] bytes : result.getColumns().values()) {
               JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
               LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
               jobs.add(jobDetail);
@@ -283,7 +284,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
           result = table.get(TRIGGER_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.values()) {
+            for (byte[] bytes : result.getColumns().values()) {
               TriggerStatus trigger = (TriggerStatus) SerializationUtils.deserialize(bytes);
               if (trigger.state.equals(Trigger.TriggerState.NORMAL)) {
                 triggers.add(trigger.trigger);

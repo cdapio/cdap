@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.DistributedUnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.UnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -36,12 +39,13 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
@@ -69,13 +73,14 @@ public class DataSetServiceModules {
   static {
     INMEMORY_DATASET_MODULES = Maps.newLinkedHashMap();
     // NOTE: order is important due to dependencies between modules
-    INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryOrderedTableModule());
+    INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryTableModule());
     INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("aclStoreTable", new ACLStoreTableModule());
     INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
+    INMEMORY_DATASET_MODULES.put("objectMappedTable", new ObjectMappedTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -84,13 +89,14 @@ public class DataSetServiceModules {
       protected void configure() {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
+        defaultModules.put("orderedTable-memory", new InMemoryTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -118,6 +124,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
 
@@ -129,13 +138,14 @@ public class DataSetServiceModules {
       protected void configure() {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
+        defaultModules.put("orderedTable-leveldb", new LevelDBTableModule());
         defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -165,6 +175,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
 
@@ -176,13 +189,14 @@ public class DataSetServiceModules {
       protected void configure() {
         // NOTE: order is important due to dependencies between modules
         Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
+        defaultModules.put("orderedTable-hbase", new HBaseTableModule());
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
+        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -214,6 +228,9 @@ public class DataSetServiceModules {
 
         bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
+
+        bind(UnderlyingSystemNamespaceAdmin.class).to(DistributedUnderlyingSystemNamespaceAdmin.class);
+        expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
   }

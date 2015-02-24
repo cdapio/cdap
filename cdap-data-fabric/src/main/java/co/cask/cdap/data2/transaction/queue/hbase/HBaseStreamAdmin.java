@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,15 +46,14 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
                           HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, QueueConstants.QueueType.STREAM, locationFactory, tableUtil);
+    super(hConf, cConf, locationFactory, tableUtil, QueueConstants.QueueType.STREAM);
   }
 
   @Override
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
-      //TODO: namespace the tableName (have to modify tableNamePrefix)
-      // <cdap namespace>.system.stream.<stream name>
-      return getTableNamePrefix() + "." + queueName.getSecondComponent();
+      // <root namespace>.<stream namespace>.system.stream.<stream name>
+      return getTableNamePrefix(queueName.getFirstComponent()) + "." + queueName.getSecondComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -76,6 +75,11 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   protected List<? extends Class<? extends Coprocessor>> getCoprocessors() {
     // we don't want eviction CP here, hence overriding
     return ImmutableList.of(tableUtil.getDequeueScanObserverClassForVersion());
+  }
+
+  @Override
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+    dropAllInNamespace(namespace.getId());
   }
 
   @Override

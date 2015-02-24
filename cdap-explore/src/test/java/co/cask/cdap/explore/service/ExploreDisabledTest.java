@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -52,6 +53,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -64,12 +66,14 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
-  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+  private static LocationFactory locationFactory;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -87,10 +91,15 @@ public class ExploreDisabledTest {
     Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    // This happens when you create a namespace. However, simulating that scenario by creating a directory here instead.
+    Locations.mkdirsIfNotExists(locationFactory.create(namespaceId.getId()));
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    Locations.deleteQuietly(locationFactory.create(namespaceId.getId()));
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();

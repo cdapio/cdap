@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -63,7 +62,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
                                   DatasetFramework framework) {
 
     final DatasetFramework dsFramework =
-      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
 
     txnl = Transactional.of(
       new TransactionExecutorFactory() {
@@ -83,7 +82,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
 
             return new NotificationFeedMds(new MetadataStoreDataset(mdsTable));
           } catch (Exception e) {
-            LOG.error("Failed to access app.meta table", e);
+            LOG.debug("Failed to access app.meta table", e);
             throw Throwables.propagate(e);
           }
         }
