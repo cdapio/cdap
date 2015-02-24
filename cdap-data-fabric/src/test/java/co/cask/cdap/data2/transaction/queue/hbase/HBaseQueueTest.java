@@ -319,7 +319,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     ExecutionException {
     updateConfigCaches(queueNames);
     for (QueueName queueName : queueNames) {
-      Assert.assertFalse("for " + queueName, getConfigCache(queueName).isPresent());
+      Optional<ConsumerConfigCache> cache = getConfigCache(queueName);
+      // either the config table has to be missing, or the queue entries in the config table are not present
+      if (!cache.isPresent()) {
+        continue;
+      }
+      Assert.assertTrue("for " + queueName, cache.get().getConsumerConfig(queueName.toBytes()) == null);
     }
   }
 
