@@ -16,19 +16,22 @@
 package co.cask.cdap.authorization;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.authorization.ObjectIds;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.common.authorization.ACLEntry;
 import co.cask.common.authorization.ACLStore;
 import co.cask.common.authorization.ObjectId;
 import co.cask.common.authorization.Permission;
-import co.cask.common.authorization.SubjectId;
 import co.cask.common.authorization.client.ACLStoreSupplier;
+import co.cask.common.authorization.client.AuthorizationClient;
+import co.cask.common.authorization.client.DefaultAuthorizationClient;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -40,81 +43,68 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Handler for getting and setting ACL entries.
  *
  * TODO: SSL and authorization for this
  */
-@Path("/v1")
+@Path("/v3")
 public class ACLManagerHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ACLManagerHandler.class);
   private static final Gson GSON = new Gson();
 
   private final Supplier<ACLStore> aclStoreSupplier;
+  private final AuthorizationClient authorizationClient;
 
   @Inject
-  public ACLManagerHandler(ACLStoreSupplier aclStoreSupplier) {
+  public ACLManagerHandler(ACLStoreSupplier aclStoreSupplier, AuthorizationClient authorizationClient) {
     this.aclStoreSupplier = aclStoreSupplier;
+    this.authorizationClient = authorizationClient;
   }
 
-  public ACLManagerHandler(ACLStore aclStore) {
+  public ACLManagerHandler(ACLStore aclStore, AuthorizationClient authorizationClient) {
     this.aclStoreSupplier = Suppliers.ofInstance(aclStore);
+    this.authorizationClient = authorizationClient;
   }
 
-  @GET
-  @Path("/acls/global")
-  public void getGlobalACLs(HttpRequest request, HttpResponder responder,
-                            @QueryParam("subject") String subjectString,
-                            @QueryParam("permission") String permissionString) {
-
-    // TODO: validate input
-    SubjectId subject = string2SubjectId(subjectString);
-    ObjectId objectId = ObjectId.GLOBAL;
-    Permission permission = permissionString != null ? Permission.fromName(permissionString) : null;
-
+  @POST
+  @Path("/acls/search")
+  public void searchACLs(HttpRequest request, HttpResponder responder) {
+    ACLStore.Query query;
     try {
-      Set<ACLEntry> result = getACLStore().search(new ACLStore.Query(objectId, subject, permission));
-      String response = GSON.toJson(result);
-      responder.sendString(HttpResponseStatus.OK, response);
-    } catch (Exception e) {
-      LOG.error("Error getting ACLs matching subject={} permission={}",
-                subjectString, permissionString, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      query = parseQuery(request);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
     }
-  }
 
-  @GET
-  @Path("/acls/namespace/{namespace-id}")
-  public void getACLs(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") String namespaceId,
-                      @QueryParam("object") String objectString,
-                      @QueryParam("subject") String subjectString,
-                      @QueryParam("permission") String permissionString) {
-
-    // TODO: validate input
-    SubjectId subject = string2SubjectId(subjectString);
-    ObjectId namespace = ObjectIds.namespace(namespaceId);
-    ObjectId objectId = objectString == null ? namespace : string2ObjectId(namespace, objectString);
-    Permission permission = permissionString != null ? Permission.fromName(permissionString) : null;
+    if (!authorizationClient.isAuthorized(query.getObjectId(), SecurityRequestContext.getSubjects(),
+                                     ImmutableList.of(Permission.ADMIN))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
-      Set<ACLEntry> result = getACLStore().search(new ACLStore.Query(objectId, subject, permission));
+      Set<ACLEntry> result = getACLStore().search(query);
       String response = GSON.toJson(result);
       responder.sendString(HttpResponseStatus.OK, response);
     } catch (Exception e) {
-      LOG.error("Error getting ACLs matching namespace={} object={} subject={} permission={}",
-                namespaceId, objectString, subjectString, permissionString, e);
+      LOG.error("Error getting app ACLs matching query={}", query, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @GET
   @Path("/acls")
-  public void listACLs(HttpRequest request, HttpResponder responder) {
+  public void getACLs(HttpRequest request, HttpResponder responder) {
+    if (!authorizationClient.isAuthorized(ObjectId.GLOBAL, SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.ADMIN))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
+
     try {
       Set<ACLEntry> result = getACLStore().search(new ACLStore.Query(null, null, null));
       String response = GSON.toJson(result);
@@ -125,118 +115,82 @@ public class ACLManagerHandler extends AbstractHttpHandler {
     }
   }
 
-  @DELETE
-  @Path("/acls/global")
-  public void deleteGlobalACLs(HttpRequest request, HttpResponder responder,
-                               @QueryParam("subject") String subjectString,
-                               @QueryParam("permission") String permissionString) {
-
-    // TODO: validate input
-    SubjectId subject = string2SubjectId(subjectString);
-    ObjectId objectId = ObjectId.GLOBAL;
-    Permission permission = permissionString != null ? Permission.fromName(permissionString) : null;
-
+  @POST
+  @Path("/acls/delete")
+  public void deleteACLs(HttpRequest request, HttpResponder responder) {
+    ACLStore.Query query;
     try {
-      getACLStore().delete(new ACLStore.Query(objectId, subject, permission));
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Error deleting ACLs matching subject={} permission={}", subjectString, permissionString, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      query = parseQuery(request);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
     }
-  }
 
-  @DELETE
-  @Path("/acls/namespace/{namespace-id}")
-  public void deleteACLs(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @QueryParam("object") String objectString,
-                         @QueryParam("subject") String subjectString,
-                         @QueryParam("permission") String permissionString) {
-
-    // TODO: validate input
-    SubjectId subject = string2SubjectId(subjectString);
-    ObjectId namespace = ObjectIds.namespace(namespaceId);
-    ObjectId objectId = objectString == null ? namespace : string2ObjectId(namespace, objectString);
-    Permission permission = permissionString != null ? Permission.fromName(permissionString) : null;
+    if (!authorizationClient.isAuthorized(query.getObjectId(), SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.ADMIN))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
-      getACLStore().delete(new ACLStore.Query(objectId, subject, permission));
+      getACLStore().delete(query);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      LOG.error("Error deleting ACLs matching namespace={} object={} subject={} permission={}",
-                namespaceId, objectString, subjectString, permissionString, e);
+      LOG.error("Error deleting ACLs matching {}", query.toString(), e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @POST
-  @Path("/acls/global")
-  public void createGlobalACL(HttpRequest request, HttpResponder responder) {
-    String body = Bytes.toString(request.getContent().toByteBuffer());
-    ACLEntry aclEntry = GSON.fromJson(body, ACLEntry.class);
-    aclEntry.setObject(ObjectId.GLOBAL);
+  @Path("/acls")
+  public void createACL(HttpRequest request, HttpResponder responder) {
+    ACLEntry entry;
+    try {
+      entry = parseACLEntry(request);
+    } catch (IllegalArgumentException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    if (!authorizationClient.isAuthorized(entry.getObject(), SecurityRequestContext.getSubjects(),
+                                          ImmutableList.of(Permission.ADMIN))) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      return;
+    }
 
     try {
-      getACLStore().write(aclEntry);
+      getACLStore().write(entry);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      LOG.error("Error creating global ACL: {}", aclEntry, e);
+      LOG.error("Error creating ACL: {}", entry, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  @POST
-  @Path("/acls/namespace/{namespace-id}")
-  public void createACL(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
-    ObjectId namespace = ObjectIds.namespace(namespaceId);
-
-    String body = Bytes.toString(request.getContent().toByteBuffer());
-    ACLEntry aclEntry = GSON.fromJson(body, ACLEntry.class);
-    if (aclEntry.getObject() == null) {
-      aclEntry.setObject(namespace);
-    } else {
-      aclEntry.getObject().setParent(namespace);
-    }
-
+  private ACLEntry parseACLEntry(HttpRequest request) throws IllegalArgumentException {
     try {
-      getACLStore().write(aclEntry);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Error creating ACL in '{}' namespace: {}", namespaceId, aclEntry, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      String body = Bytes.toString(request.getContent().toByteBuffer());
+      ACLEntry entry = GSON.fromJson(body, ACLEntry.class);
+      if (entry.getObject() == null || entry.getSubject() == null || entry.getPermission() == null) {
+        throw new IllegalArgumentException();
+      }
+      return entry;
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException();
     }
   }
 
-  private SubjectId string2SubjectId(String subjectIdString) {
-    if (subjectIdString == null) {
-      return null;
+  private ACLStore.Query parseQuery(HttpRequest request) throws IllegalArgumentException {
+    try {
+      String body = Bytes.toString(request.getContent().toByteBuffer());
+      ACLStore.Query query = GSON.fromJson(body, ACLStore.Query.class);
+      if (query.getObjectId() == null && query.getSubjectId() != null && query.getPermission() != null) {
+        throw new IllegalArgumentException();
+      }
+      return query;
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException();
     }
-
-    String[] split = subjectIdString.split(":");
-    if (split.length == 2) {
-      return new SubjectId(split[0], split[1]);
-    }
-
-    throw new IllegalArgumentException("Invalid subjectId format: " + subjectIdString);
-  }
-
-  private ObjectId string2ObjectId(ObjectId parent, String objectIdString) {
-    if (objectIdString == null) {
-      return null;
-    }
-
-    if (ObjectId.GLOBAL.getType().equals(objectIdString)) {
-      return ObjectId.GLOBAL;
-    }
-
-    String[] split = objectIdString.split(":");
-    if (split.length == 1) {
-      return new ObjectId(parent, split[0], "");
-    } else if (split.length == 2) {
-      return new ObjectId(parent, split[0], split[1]);
-    }
-
-    throw new IllegalArgumentException("Invalid objectId format: " + objectIdString);
   }
 
   private ACLStore getACLStore() {

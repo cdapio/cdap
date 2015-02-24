@@ -15,6 +15,7 @@
  */
 package co.cask.common.authorization;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
 import java.util.Iterator;
@@ -114,6 +115,15 @@ public interface ACLStore {
     @Override
     public Iterator<Query> iterator() {
       return Iterators.singletonIterator(this);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("objectId", objectId)
+        .add("subjectId", subjectId)
+        .add("permission", permission)
+        .toString();
     }
   }
 }

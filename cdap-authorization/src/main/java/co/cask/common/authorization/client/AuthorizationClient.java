@@ -81,8 +81,13 @@ public interface AuthorizationClient {
   /**
    * Filters out objects that none of the subjectIds are allowed to access,
    * leaving only the objects that at least one of the subjectIds are allowed to access.
-   *
    * Generally used for listing objects that a user has access to.
+   *
+   * @param objects object to filter
+   * @param subjects subjects to consider
+   * @param requiredPermissions permissions that are required
+   * @param <T> type of the object, which implements {@link IdentifiableObject}
+   * @return filtered objects
    */
   public <T extends IdentifiableObject> Iterable<T> filter(Iterable<T> objects,
                                                            Iterable<SubjectId> subjects,
@@ -91,8 +96,14 @@ public interface AuthorizationClient {
   /**
    * Filters out objects that none of the subjectIds are allowed to access,
    * leaving only the objects that at least one of the subjectIds are allowed to access.
-   *
    * Generally used for listing objects that a user has access to.
+   *
+   * @param objects object to filter
+   * @param subjects subjects to consider
+   * @param requiredPermissions permissions that are required
+   * @param objectIdFunction function to get the {@link ObjectId} of each the object
+   * @param <T> type of the object
+   * @return filtered objects
    */
   public <T> Iterable<T> filter(Iterable<T> objects,
                                 Iterable<SubjectId> subjects,

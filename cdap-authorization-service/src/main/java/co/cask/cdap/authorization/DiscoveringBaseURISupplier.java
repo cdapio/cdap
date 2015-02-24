@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.authorization;
 
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
@@ -24,6 +26,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@link ACLManagerClient} that uses {@link DiscoveryServiceClient} to obtain the base URL.
@@ -37,9 +40,8 @@ public class DiscoveringBaseURISupplier implements Supplier<URI> {
     this.addressSupplier = new Supplier<InetSocketAddress>() {
       @Override
       public InetSocketAddress get() {
-        ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(ACLManagerService.DISCOVERABLE_NAME);
-        Preconditions.checkState(serviceDiscovered.iterator().hasNext());
-        Discoverable discoverable = serviceDiscovered.iterator().next();
+        ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.ACL_MANAGER);
+        Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(10, TimeUnit.SECONDS);
         return discoverable.getSocketAddress();
       }
     };

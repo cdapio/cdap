@@ -15,7 +15,10 @@
  */
 package co.cask.cdap.common.http;
 
+import co.cask.cdap.common.authorization.SubjectIds;
+import co.cask.common.authorization.SubjectId;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 
 /**
  * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
@@ -39,5 +42,15 @@ public final class SecurityRequestContext {
    */
   public static void setUserId(String userIdParam) {
     userId.set(userIdParam);
+  }
+
+  public static Iterable<SubjectId> getSubjects() {
+    ImmutableList.Builder<SubjectId> builder = ImmutableList.builder();
+    Optional<String> userIdOptional = getUserId();
+    if (userIdOptional.isPresent()) {
+      builder.add(SubjectIds.user(userIdOptional.get()));
+    }
+    // TODO: fetch users
+    return builder.build();
   }
 }
