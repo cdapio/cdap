@@ -147,8 +147,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
-    DataMigration26 migration26 = new DataMigration26(conf, datasetFramework, factory);
-    migration26.decodeAggregatesTable26();
+//    DataMigration26 migration26 = new DataMigration26(conf, datasetFramework, factory);
+//    migration26.decodeAggregatesTable26();
   }
 
   private int getRollTime(int resolution) {

@@ -170,11 +170,13 @@ public class Main {
   }
 
   private void upgradeSystemDatasets(Injector injector) throws Exception {
+    System.out.println("Upgrading System Datasets");
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     // Setting up all system datasets to be upgraded, collecting them from respective components
     DatasetFramework framework = createRegisteredDatasetFramework(injector);
+    System.out.println("Setup datasets");
     // dataset service
-    /*DatasetMetaTableUtil.setupDatasets(framework);
+    DatasetMetaTableUtil.setupDatasets(framework);
     // app metadata
     DefaultStore.setupDatasets(framework);
     // config store
@@ -182,11 +184,11 @@ public class Main {
     // logs metadata
     LogSaverTableUtil.setupDatasets(framework);
     // scheduler metadata
-    ScheduleStoreTableUtil.setupDatasets(framework);*/
+    ScheduleStoreTableUtil.setupDatasets(framework);
     // metrics data
     DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
 
-    /*// Upgrade all datasets in system namespace
+    // Upgrade all datasets in system namespace
     Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
     for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
       System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
@@ -194,7 +196,7 @@ public class Main {
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
       System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
-    }*/
+    }
   }
 
   public static void main(String[] args) throws Exception {
