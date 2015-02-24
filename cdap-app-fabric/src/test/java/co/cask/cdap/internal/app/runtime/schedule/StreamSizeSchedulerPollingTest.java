@@ -17,22 +17,21 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithStreamSizeSchedule;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.stream.StreamFileType;
-import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
-import org.apache.twill.filesystem.Location;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -40,7 +39,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,8 +49,8 @@ public class StreamSizeSchedulerPollingTest {
   public static StreamSizeScheduler streamSizeScheduler;
   public static NotificationFeedManager notificationFeedManager;
   public static NotificationService notificationService;
-  public static StreamAdmin streamAdmin;
   public static Store store;
+  public static MetricStore metricStore;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -72,9 +70,9 @@ public class StreamSizeSchedulerPollingTest {
     notificationFeedManager = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationFeedManager.class);
     notificationService = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationService.class);
     streamSizeScheduler = AppFabricTestHelper.getInjector(cConf).getInstance(StreamSizeScheduler.class);
-    streamAdmin = AppFabricTestHelper.getInjector(cConf).getInstance(StreamAdmin.class);
     StoreFactory storeFactory = AppFabricTestHelper.getInjector(cConf).getInstance(StoreFactory.class);
     store = storeFactory.create();
+    metricStore = AppFabricTestHelper.getInjector(cConf).getInstance(MetricStore.class);
   }
 
   @Test
@@ -88,20 +86,12 @@ public class StreamSizeSchedulerPollingTest {
     int runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(0, runs);
 
-    // By writing to the stream files directly, no notification will be triggered.
+    // By updating the stream metrics directly, no notification will be triggered.
     // Hence we can test the polling logic
-    StreamConfig config = streamAdmin.getConfig(STREAM_ID);
-    Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(), 0);
-    Location partitionLocation = StreamUtils.createPartitionLocation(generationLocation, 0, Long.MAX_VALUE);
-    Location streamLocation = StreamUtils.createStreamLocation(partitionLocation, "bucket0", 0, StreamFileType.EVENT);
-    OutputStream outputStream = streamLocation.getOutputStream();
-
-    // We write a little more than 1MB of data, as we know that the schedule is triggered for 1MB
-    byte[] bytes = new byte[1024];
-    for (int i = 0; i < 1025; i++) {
-      outputStream.write(bytes);
-    }
-    outputStream.flush();
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
 
     waitForRuns(PROGRAM_ID, 1);
 
@@ -120,11 +110,11 @@ public class StreamSizeSchedulerPollingTest {
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
 
 
-    // We write another 1MB of data, triggering both schedules
-    for (int i = 0; i < 1025; i++) {
-      outputStream.write(bytes);
-    }
-    outputStream.flush();
+    // We fake the writing of another 1MB of data, triggering both schedules
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    2 * 1024 * 1024, MetricType.COUNTER));
 
     // Should not have any run when the schedule is suspended
     TimeUnit.SECONDS.sleep(5);

@@ -16,6 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.Arguments;
@@ -51,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentMap;
@@ -73,7 +79,7 @@ public class StreamSizeScheduler implements Scheduler {
 
   private final long pollingDelay;
   private final NotificationService notificationService;
-  private final StreamAdmin streamAdmin;
+  private final MetricStore metricStore;
   private final StoreFactory storeFactory;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
@@ -87,13 +93,13 @@ public class StreamSizeScheduler implements Scheduler {
   private ScheduledExecutorService streamPollingExecutor;
 
   @Inject
-  public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, StreamAdmin streamAdmin,
+  public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
                              StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
                              PreferencesStore preferencesStore) {
     this.pollingDelay = TimeUnit.SECONDS.toMillis(
       cConf.getLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY));
     this.notificationService = notificationService;
-    this.streamAdmin = streamAdmin;
+    this.metricStore = metricStore;
     this.storeFactory = storeFactory;
     this.programRuntimeService = programRuntimeService;
     this.preferencesStore = preferencesStore;
@@ -341,10 +347,24 @@ public class StreamSizeScheduler implements Scheduler {
       if (baseRunSize == -1 && baseRunTs == -1) {
         // This is the first time that we schedule this task - ie it was not in the schedule store
         // before. Hence we set the base metrics properly
-        StreamSize streamSize = pollStream();
-        newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(), active, persist);
-        synchronized (lastNotificationLock) {
-          lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
+        try {
+          StreamSize streamSize = getStreamEventsSize();
+          newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(), active, persist);
+          synchronized (lastNotificationLock) {
+            if (lastNotification == null || lastNotification.getTimestamp() < streamSize.getTimestamp()) {
+              lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
+            }
+          }
+        } catch (IOException e) {
+          // In case polling the stream events size failed, we can initialize the schedule task to the last notification
+          // info if it exists, or to 0. This won't be very accurate, but this is the best info we have at that time
+          synchronized (lastNotificationLock) {
+            if (lastNotification != null) {
+              newTask.startSchedule(lastNotification.getSize(), lastNotification.getTimestamp(), active, persist);
+            } else {
+              newTask.startSchedule(0L, System.currentTimeMillis(), active, persist);
+            }
+          }
         }
       } else {
         newTask.startSchedule(baseRunSize, baseRunTs, active, persist);
@@ -379,7 +399,7 @@ public class StreamSizeScheduler implements Scheduler {
      * Resume a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType, String scheduleName)
-      throws ScheduleNotFoundException{
+      throws ScheduleNotFoundException {
       int activeTasksNow;
       StreamSizeScheduleTask task;
       synchronized (this) {
@@ -400,8 +420,12 @@ public class StreamSizeScheduler implements Scheduler {
         synchronized (lastNotificationLock) {
           if (lastNotification == null ||
             (lastNotification.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
-            StreamSize streamSize = pollStream();
-            lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
+            try {
+              StreamSize streamSize = getStreamEventsSize();
+              lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
+            } catch (IOException e) {
+              LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error", scheduleName, e);
+            }
           }
         }
       }
@@ -457,15 +481,16 @@ public class StreamSizeScheduler implements Scheduler {
       // We only pass the stream size notification to the schedule tasks if the notification
       // came after the last seen notification
       boolean send = false;
+      cancelPollingAndScheduleNext();
       synchronized (lastNotificationLock) {
-        if (lastNotification == null || notification.getTimestamp() > lastNotification.getTimestamp()) {
+        if (lastNotification == null || notification == lastNotification ||
+          notification.getTimestamp() > lastNotification.getTimestamp()) {
           send = true;
           lastNotification = notification;
         }
       }
       if (send) {
         sendNotificationToActiveTasks(notification);
-        cancelPollingAndScheduleNext();
       }
     }
 
@@ -519,26 +544,50 @@ public class StreamSizeScheduler implements Scheduler {
         public void run() {
           // We only perform polling if at least one scheduleTask is active
           if (activeTasks.get() > 0) {
-            StreamSize streamSize = pollStream();
+            try {
+              StreamSize streamSize = getStreamEventsSize();
 
-            // We don't need a notification context here
-            received(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()), null);
+              // We don't need a notification context here
+              received(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()), null);
+            } catch (IOException e) {
+              LOG.debug("Ignoring stream events size polling after error", e);
+            }
           }
         }
       };
     }
 
     /**
-     * @return size of the stream queried directly from the file system
+     * @return size of events ingested by the stream so far, queried using the metric system
      */
-    private StreamSize pollStream() {
+    private StreamSize getStreamEventsSize() throws IOException {
+      MetricDataQuery metricDataQuery = new MetricDataQuery(
+        0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+        Integer.MAX_VALUE, "system.collect.bytes",
+        MetricType.COUNTER,
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
+                        Constants.Metrics.Tag.STREAM, streamId.getName()),
+        ImmutableList.<String>of()
+      );
+
       try {
-        // Note we can't store the stream config, because its generation might change at every moment
-        long size = streamAdmin.fetchStreamSize(streamAdmin.getConfig(streamId));
-        return new StreamSize(size, System.currentTimeMillis());
-      } catch (IOException e) {
-        LOG.error("Could not poll size for stream {}", streamId);
-        throw Throwables.propagate(e);
+        Collection<MetricTimeSeries> metrics = metricStore.query(metricDataQuery);
+        if (metrics == null || metrics.isEmpty()) {
+          // Data is not yet available, which means no data has been ingested by the stream yet
+          return new StreamSize(0L, System.currentTimeMillis());
+        }
+
+        MetricTimeSeries metric = metrics.iterator().next();
+        List<TimeValue> timeValues = metric.getTimeValues();
+        if (timeValues == null || timeValues.size() != 1) {
+          throw new IOException("Should collect exactly one time value");
+        }
+        TimeValue timeValue = timeValues.get(0);
+        // The metric store gives us 0 as the timestamp, hence we cannot use it here
+        return new StreamSize(timeValue.getValue(), System.currentTimeMillis());
+      } catch (Exception e) {
+        Throwables.propagateIfInstanceOf(e, IOException.class);
+        throw new IOException(e);
       }
     }
   }
@@ -583,8 +632,10 @@ public class StreamSizeScheduler implements Scheduler {
       long pastRunTs;
       synchronized (this) {
         if (notification.getSize() < baseSize) {
-          // This can happen when a stream is truncated: the baseSize is still the old size,
-          // but we receive notification with way less data
+          // This can happen if no notification is received for a stream for some time, and we poll the stream events
+          // size using metrics, and some metric events have hit their TTL. In that case it's impossible to know
+          // how much data was ingested, and how much data has hit the TTL. Resetting the base attributes is the best
+          // we can do.
           baseSize = notification.getSize();
           baseTs = notification.getTimestamp();
           return;
