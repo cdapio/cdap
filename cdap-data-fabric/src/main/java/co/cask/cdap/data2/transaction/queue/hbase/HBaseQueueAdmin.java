@@ -112,8 +112,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.cConf = cConf;
     this.tableUtil = tableUtil;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    String unqualifiedTableNamePrefix =
-      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    String unqualifiedTableNamePrefix = type.toString();
     this.type = type;
     DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
     this.tableNamePrefix =
