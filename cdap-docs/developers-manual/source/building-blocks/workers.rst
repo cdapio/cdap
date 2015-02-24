@@ -1,6 +1,6 @@
 .. meta::
-:author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
 .. _workers:
 
@@ -8,8 +8,8 @@
 Workers
 ============================================
 
-Workers can be used to run background processes. Workers provide an ability to write data processing
-logic that doesn't fit well in Flows or MapReduce etc.
+Workers can be used to run background processes. Workers provide the ability to write data processing logic
+that doesn't fit into the other paradigms such as Flows and MapReduce or realtime and batch.
 
 You can add workers to your application by calling the ``addWorker`` method in the Application's
 ``configure`` method::
@@ -24,9 +24,9 @@ You can add workers to your application by calling the ``addWorker`` method in t
     }
   }
 
-Workers have semantics similar to a Java thread and are run as one when CDAP is run in In-Memory
-or Standalone Mode. In distributed mode, each instance of worker run in its own YARN container.
-Their instances may be updated via the CDAP Console or the REST APIs.
+Workers have semantics similar to a Java thread and are run in a thread when CDAP is run in either In-Memory
+or Standalone Modes. In distributed mode, each instance of a worker runs in its own YARN container.
+Their instances may be updated via the :ref:`Command Line Interface <cli-available-commands>` or a :ref:`RESTful API <http-restful-api-lifecycle>`::
 
   public class ProcessWorker extends AbstractWorker {
 
@@ -67,5 +67,5 @@ Workers can access and use ``Dataset``\s via a ``DatasetContext`` inside their `
 Operations executed on ``Dataset``\s within a ``run`` are committed as part of a single transaction.
 The transaction is started before ``run`` is invoked and is committed upon successful execution. Exceptions
 thrown while committing the transaction or thrown by user-code result in a rollback of the transaction.
-It is recommended that ``TransactionConflictException`` be caught and handled appropriately, for example
-you can retry the ``Dataset`` operation.
+It is recommended that ``TransactionConflictException`` be caught and handled appropriately; for example
+you can retry a ``Dataset`` operation.

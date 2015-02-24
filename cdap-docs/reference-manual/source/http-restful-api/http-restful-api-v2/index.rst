@@ -33,7 +33,7 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 
 - :doc:`Introduction: <introduction>` conventions, status codes, and working with CDAP Security
 - :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the lifecycle of Flows,
-  Procedures, Workers, MapReduce Programs, Workflows, and Custom Services
+  Procedures, MapReduce Programs, Workflows, and Custom Services
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
 - :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP Datasets

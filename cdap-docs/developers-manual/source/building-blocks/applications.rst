@@ -60,7 +60,7 @@ A typical design of a CDAP Application consists of:
   in realtime or batch;
 - MapReduce programs, Spark programs, and Workflows for batch processing tasks;
 - Datasets for storage of data, either raw or the processed results;
-- Workers for processing data in an ad-hoc manner that doesn't fit into real-time/batch paradigms
+- Workers for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
 - Services and Procedures for serving data and processed results.
 
 Of course, not all components are required: it depends on the application. A minimal

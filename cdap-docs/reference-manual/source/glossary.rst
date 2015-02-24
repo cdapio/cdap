@@ -65,9 +65,10 @@ Glossary
       system. Procedures are typically used to post-process data at query time.
 
    Worker
-      Workers are typically long running programs that can be used to execute tasks. Each instance
-      of a worker runs in its own YARN container and the number of instances may be updated via the
-      CDAP Console, REST APIs or CLI. Datasets can be accessed inside Workers.
+      Workers are typically long-running background programs that can be used to execute tasks.
+      Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
+      a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
+      via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.
       
    Data Virtualization
       Abstraction of the actual representation of data in storage.
