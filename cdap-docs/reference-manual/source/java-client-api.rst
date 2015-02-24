@@ -44,6 +44,7 @@ The Java Client API allows you to interact with these CDAP components:
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
+- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
 
 Alphabetical list:
 
@@ -53,6 +54,7 @@ Alphabetical list:
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
+- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
 - `ProcedureClient: <#procedure-client>`_ interacting with Procedures
 - `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Programs, User Services, and Workflows
 - `QueryClient: <#query-client>`_ querying Datasets
@@ -118,6 +120,34 @@ ApplicationClient
   // List programs belonging to an application
   appClient.listPrograms("Purchase");
 
+.. _preferences-client:
+PreferencesClient
+-----------------
+::
+  ClientConfig clientConfig;
+
+  //Construct the client used to interact with CDAP
+  PreferencesClient preferencesClient = new PreferencesClient(clientConfig);
+
+  Map<String, String> propMap = Maps.newHashMap();
+  propMap.put("k1", "v1");
+  //Set Preferences at Instance level
+  preferencesClient.setInstancePreferences(propMap);
+
+  //Get Preferences at Instance level
+  preferencesClient.getInstancePreferences();
+
+  //Delete Preferences at Instance level
+  preferencesClient.deleteInstancePreferences();
+
+  //Set Preferences of MyApp application which is deployed in Dev namespace
+  preferencesClient.setApplicationPreferences("Dev", "MyApp", propMap);
+
+  //Get only the Preferences of MyApp application which is deployed in Dev namespace
+  preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
+
+  //Get resolved Preferences (collapsed with higher level(s) of preferences)
+  preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
 
 .. _program-client:
 
