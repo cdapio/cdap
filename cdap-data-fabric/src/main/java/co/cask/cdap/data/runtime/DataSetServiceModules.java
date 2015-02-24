@@ -37,6 +37,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
+import co.cask.cdap.data2.dataset2.lib.table.ACLStoreTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
@@ -77,6 +78,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+    INMEMORY_DATASET_MODULES.put("aclStoreTable", new ACLStoreTableModule());
     INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
     INMEMORY_DATASET_MODULES.put("objectMappedTable", new ObjectMappedTableModule());
   }
@@ -90,6 +92,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
@@ -140,6 +143,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
         defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
@@ -190,6 +194,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
+        defaultModules.put("aclStoreTable", new ACLStoreTableModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
         defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
 
