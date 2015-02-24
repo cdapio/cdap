@@ -34,7 +34,7 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testInvalidateTx() throws Exception {
-    TransactionSystemClient txClient = AppFabricTestBase.getTxClient();
+    TransactionSystemClient txClient = getTxClient();
 
     Transaction tx1 = txClient.startShort();
     HttpResponse response = doPost("/v3/transactions/" + tx1.getWritePointer() + "/invalidate");
