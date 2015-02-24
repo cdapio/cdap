@@ -4,20 +4,31 @@ angular.module(PKG.name + '.feature.admin')
     myNamespace.getList()
       .then(function(list) {
         $scope.nsList = list.map(generateNsObject);
+        handleSubmenus();
       });
 
     // whether or not to show submenus
     $scope.submenu = {
       system: false,
       security: false,
+      namespaces: false
     };
 
-    $scope.$watch('securityClicked', function(newVal) {
-      $scope.submenu.security = newVal;
-    });
-    $scope.$watch('systemClicked', function(newVal) {
-      $scope.submenu.system = newVal;
-    });
+    $scope.$on('$stateChangeSuccess', handleSubmenus);
+
+    function handleSubmenus() {
+        if (!$scope.submenu.security) {
+          $scope.submenu.security = $state.is('admin.security') || $state.includes('admin.security.**');
+        }
+        if (!$scope.submenu.system) {
+          $scope.submenu.system = $state.is('admin.system') || $state.includes('admin.system.**');
+        }
+
+        if (!$scope.submenu.namespaces) {
+          $scope.submenu.namespaces = $state.is('admin.namespace') || $state.includes('admin.namespace.**');
+        }
+    }
+
 
     function generateNsObject(item) {
       return {

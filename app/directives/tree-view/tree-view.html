@@ -1,15 +1,17 @@
-<li ng-repeat="menu in model"
-    data-start-collapsed="0"
-    bs-collapse>
+<li ng-repeat="menu in menus">
   <a ui-sref="{{menu.state || 'home'}}"
-     ui-sref-active="current"
+     ng-class="{ current: menu.isCurrent }"
      ng-show="menu.children.length == 0"
-     ng-bind="menu.label">
+     ng-bind="menu.label"
+     ng-click="isOpen[menu.label]=!isOpen[menu.label]">
   </a>
-  <a ng-show="menu.children.length > 0">
-    <span ng-bind="menu.label" bs-collapse-toggle></span>
+  <a href=""
+     ng-show="menu.children.length > 0"
+     ng-class="{ current: menu.isCurrent }"
+     ng-click="isOpen[menu.label]=!isOpen[menu.label]">
+    <span ng-bind="menu.label"></span>
   </a>
-  <ul class="list-unstyled" bs-collapse-target>
+  <ul class="list-unstyled" ng-show="isOpen[menu.label]">
     <my-tree-view data-model="menu.children"> </my-tree-view>
   </ul>
 </li>

@@ -9,7 +9,7 @@
         </a>
       </li>
       <li class="list-group-item">
-        <a href="" ng-click="systemClicked=!systemClicked">
+        <a href="" ng-click="submenu.system=!submenu.system">
           System Configuration
         </a>
         <ul class="list-unstyled"
@@ -21,7 +21,7 @@
           </li> -->
           <li>
             <a ui-sref="admin.system.services"
-               ui-sref-active="current">
+               ng-class="{ current: $state.includes('admin.system.services.**') }">
               Services
             </a>
           </li>
@@ -33,7 +33,7 @@
         </ul>
       </li>
       <li class="list-group-item">
-        <a href="" ng-click="securityClicked=!securityClicked">
+        <a href="" ng-click="submenu.security=!submenu.security">
           Systemwide Security
         </a>
         <ul class="list-unstyled"
@@ -45,7 +45,7 @@
             </li> -->
           <li>
             <a ui-sref="admin.security.tokens"
-               ui-sref-active="current">
+               ng-class="{ current: $state.includes('admin.security.tokens.**') }">
               Access Tokens
             </a>
           </li>
@@ -57,13 +57,12 @@
         </ul>
       </li>
 
-      <li class="list-group-item"
-          data-start-collapsed="1"
-          bs-collapse>
-        <a href="" bs-collapse-toggle>
+      <li class="list-group-item">
+        <a href="" ng-click="submenu.namespaces=!submenu.namespaces">
           Namespaces
         </a>
-        <ul class="list-unstyled" bs-collapse-target>
+        <ul class="list-unstyled"
+            ng-show="submenu.namespaces">
           <li>
             <a ui-sref="admin.namespace.create"
                ui-sref-active="current">
