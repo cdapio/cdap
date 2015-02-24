@@ -7,14 +7,14 @@
         <label>
           Provisioned
           <br />
-          <p class="form-control-static" ng-bind="instances.provisioned"></p>
+          <p class="form-control-static" ng-bind="model.provisioned"></p>
         </label>
         <label>
           Requested
           <br />
-          <input ng-placeholder="instances.requested" type="number" min="0" name="requested" class="form-control" ng-model="instances.requested"/>
+          <input ng-placeholder="model.requested" type="number" min="0" name="requested" class="form-control" ng-model="model.requested"/>
         </label>
-        <button type="button" class="btn btn-default" ng-disabled="instances.provisioned === instances.requested || processing" ng-click="handleSet()">Set</button>
+        <button type="button" class="btn btn-default" ng-disabled="model.provisioned === model.requested || processing" ng-click="handleSet()">Set</button>
         <span ng-if="processing" class="fa fa-refresh fa-spin"></span>
     </form>
   </div>

@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminServiceDetailController',
 function ($scope, $state, MyDataSource) {
     $scope.basePath = '/system/services/' + $state.params.serviceName;
-    $scope.myDataSrc = new MyDataSource($scope);
+    var myDataSrc = new MyDataSource($scope);
 
-    $scope.myDataSrc.request({
+    myDataSrc.request({
       _cdapPathV2: $scope.basePath  + '/instances'
     })
       .then(function(response) {
