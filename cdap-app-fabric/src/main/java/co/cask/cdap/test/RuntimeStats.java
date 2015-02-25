@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
@@ -77,6 +78,20 @@ public final class RuntimeStats {
 
     return getMetrics(
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
+  }
+
+  @Deprecated
+  public static void clearStats(final String applicationId) {
+    try {
+      // null for "all metric names"
+      metricStore.delete(
+        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                                              Constants.Metrics.Tag.APP, applicationId)));
+    } catch (Exception e) {
+      // Should never happen in unit test
+      throw Throwables.propagate(e);
+    }
   }
 
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
