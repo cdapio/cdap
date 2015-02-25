@@ -1079,6 +1079,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Return the number of instances of a service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void getServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId) {
+    getServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
+  }
+
+  /**
    * Return the number of instances for the given runnable of a service.
    */
   @GET
@@ -1125,6 +1137,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Set instances of a service.
+   */
+  @PUT
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void setServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId) {
+    setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
   }
 
   /**

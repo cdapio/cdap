@@ -405,8 +405,8 @@ Scaling Services
 You can query or change the number of instances of a Service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
-  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -424,12 +424,8 @@ with the arguments as a JSON string in the body::
      - Name of the Application
    * - ``<service-id>``
      - Name of the Service
-   * - ``<runnable-id>``
-     - Name of the Service
    * - ``<quantity>``
      - Number of instances to be used
-
-**Note:** In this release the ``runnable-id`` is the same as the ``service-id``.
 
 .. rubric:: Example
 .. list-table::
@@ -437,7 +433,7 @@ with the arguments as a JSON string in the body::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances``
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application
        *PurchaseHistory* in the namespace *default*
