@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.services')
-  .factory('myFileUploader', function($rootScope, $q, $window, $alert, cfpLoadingBar) {
+  .factory('myFileUploader', function($q, $window, $alert, cfpLoadingBar, myAuth) {
     function upload(fileObj){
       var deferred = $q.defer();
-      if (!$rootScope.currentUser) {
+      if (!myAuth.currentUser) {
         deferred.reject(400);
         $alert({
           title: 'Must specify user: ',
@@ -21,7 +21,7 @@ angular.module(PKG.name + '.services')
         xhr.setRequestHeader('Content-type', 'application/octet-stream');
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
         xhr.setRequestHeader('X-ApiKey', '');
-        xhr.setRequestHeader('Authorization', 'Bearer ' + $rootScope.currentUser.token);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
         xhr.send(fileObj.file);
         cfpLoadingBar.start();
         xhr.onreadystatechange = function () {
