@@ -171,9 +171,6 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
       case FORK:
         verifyWorkflowFork(appSpec, workflowSpec, node);
         break;
-      case CONDITION:
-        // no-op
-        break;
       default:
         break;
     }

@@ -19,9 +19,9 @@ package co.cask.cdap.api.workflow;
 /**
  * Defines an interface for the fork in the {@link Workflow}.
  * @param <T> the type of the object returned by the join method. For the outer fork
- *           created by the {@link WorkflowConfigurer}, join method returns {@link Void}.
- *           For the nested fork created by the {@link WorkflowForkConfigurer}, join method
- *           returns {@link WorkflowForkConfigurer} of the parent fork.
+ *            created by the {@link WorkflowConfigurer}, join method returns {@link WorkflowConfigurer}.
+ *            For the nested fork created by the {@link WorkflowForkConfigurer}, join method
+ *            returns {@link WorkflowForkConfigurer} of the parent fork.
  */
 public interface WorkflowForkConfigurer<T> {
   /**
@@ -49,7 +49,7 @@ public interface WorkflowForkConfigurer<T> {
    * Adds a nested fork to the current fork
    * @return the configurer for the nested fork
    */
-  WorkflowForkConfigurer<WorkflowForkConfigurer<T>> fork();
+  WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork();
 
   /**
    * Adds a branch to the {@link WorkflowForkNode}

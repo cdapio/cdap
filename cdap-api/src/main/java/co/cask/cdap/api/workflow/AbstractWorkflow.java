@@ -109,9 +109,10 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a fork to the {@link Workflow}
+   *
    * @return the {@link WorkflowForkConfigurer} to configure actions in the fork
    */
-  protected final WorkflowForkConfigurer<Void> fork() {
+  protected final WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return configurer.fork();
   }
 }

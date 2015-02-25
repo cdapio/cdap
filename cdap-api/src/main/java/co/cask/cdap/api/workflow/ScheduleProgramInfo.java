@@ -69,7 +69,7 @@ public final class ScheduleProgramInfo {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("ScheduleProgramInfo{");
+    StringBuilder sb = new StringBuilder("ScheduleProgramInfo{");
     sb.append("programName='").append(programName).append('\'');
     sb.append(", programType=").append(programType);
     sb.append('}');

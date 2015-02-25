@@ -170,9 +170,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         case FORK:
           // not-implemented yet
           break;
-        case CONDITION:
-          break;
         default:
+          break;
       }
     }
 
