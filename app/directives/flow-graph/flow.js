@@ -170,7 +170,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
                                       'scale(' + d3.event.scale + ')');
         });
-        svg.call(zoom);
+        // svg.call(zoom);
 
         // Run the renderer. This is what draws the final graph.
         renderer(d3.select('svg g'), g);
