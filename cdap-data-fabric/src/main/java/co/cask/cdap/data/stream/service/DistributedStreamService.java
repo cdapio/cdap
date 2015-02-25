@@ -285,6 +285,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
     StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamId, baseCount, threshold,
                                                                   thresholdSubscription);
+    newAggregator.init();
     aggregators.put(streamId, newAggregator);
     return newAggregator;
   }
@@ -560,9 +561,14 @@ public class DistributedStreamService extends AbstractStreamService {
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(String.format("%sSize", streamId.getName()))
         .build();
+    }
 
+    /**
+     * Initialize this {@link StreamSizeAggregator}.
+     */
+    public void init() {
       // Publish an initialization notification
-      publishNotification(baseCount);
+      publishNotification(streamInitSize);
     }
 
     @Override

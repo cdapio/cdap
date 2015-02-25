@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,6 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
   private final ConcurrentMap<Id.Stream, AtomicLong> streamSizes;
   private final List<Cancellable> truncationSubscriptions;
 
-  @Inject
   public BasicStreamWriterSizeCollector() {
     this.streamSizes = Maps.newConcurrentMap();
     this.truncationSubscriptions = Lists.newArrayList();
