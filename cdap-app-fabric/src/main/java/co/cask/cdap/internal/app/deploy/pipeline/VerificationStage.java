@@ -24,7 +24,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -186,8 +185,8 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     Preconditions.checkNotNull(forkNode.getBranches(), String.format("Fork is added in the Workflow '%s' without" +
                                                                        " any branches", workflowSpec.getName()));
 
-    for (WorkflowForkBranch branch : forkNode.getBranches()) {
-      for (WorkflowNode n : branch.getNodes()) {
+    for (List<WorkflowNode> branch : forkNode.getBranches()) {
+      for (WorkflowNode n : branch) {
         verifyWorkflowNode(appSpec, workflowSpec, n);
       }
     }

@@ -55,9 +55,9 @@ public class WorkflowVerificationTest {
     WorkflowForkNode fork1 = (WorkflowForkNode) node;
     Assert.assertTrue(fork1.getBranches().size() == 2);
 
-    List<WorkflowNode> fork1Branch1 = fork1.getBranches().get(0).getNodes();
+    List<WorkflowNode> fork1Branch1 = fork1.getBranches().get(0);
     Assert.assertTrue(fork1Branch1.size() == 2);
-    List<WorkflowNode> fork1Branch2 = fork1.getBranches().get(1).getNodes();
+    List<WorkflowNode> fork1Branch2 = fork1.getBranches().get(1);
     Assert.assertTrue(fork1Branch2.size() == 1);
 
 
@@ -66,9 +66,9 @@ public class WorkflowVerificationTest {
                                                                              "DummyMR")));
 
     WorkflowForkNode fork2 = (WorkflowForkNode) fork1Branch1.get(1);
-    List<WorkflowNode> fork2Branch1 = fork2.getBranches().get(0).getNodes();
+    List<WorkflowNode> fork2Branch1 = fork2.getBranches().get(0);
     Assert.assertTrue(fork2Branch1.size() == 2);
-    List<WorkflowNode> fork2Branch2 = fork2.getBranches().get(1).getNodes();
+    List<WorkflowNode> fork2Branch2 = fork2.getBranches().get(1);
     Assert.assertTrue(fork2Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork2Branch1.get(0);
@@ -77,15 +77,15 @@ public class WorkflowVerificationTest {
 
 
     WorkflowForkNode fork3 = (WorkflowForkNode) fork2Branch1.get(1);
-    List<WorkflowNode> fork3Branch1 = fork3.getBranches().get(0).getNodes();
+    List<WorkflowNode> fork3Branch1 = fork3.getBranches().get(0);
     Assert.assertTrue(fork3Branch1.size() == 2);
-    List<WorkflowNode> fork3Branch2 = fork3.getBranches().get(1).getNodes();
+    List<WorkflowNode> fork3Branch2 = fork3.getBranches().get(1);
     Assert.assertTrue(fork3Branch2.size() == 1);
 
     WorkflowForkNode fork4 = (WorkflowForkNode) fork3Branch1.get(0);
-    List<WorkflowNode> fork4Branch1 = fork4.getBranches().get(0).getNodes();
+    List<WorkflowNode> fork4Branch1 = fork4.getBranches().get(0);
     Assert.assertTrue(fork4Branch1.size() == 2);
-    List<WorkflowNode> fork4Branch2 = fork4.getBranches().get(1).getNodes();
+    List<WorkflowNode> fork4Branch2 = fork4.getBranches().get(1);
     Assert.assertTrue(fork4Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork4Branch1.get(0);
@@ -123,9 +123,9 @@ public class WorkflowVerificationTest {
 
     node = nodes.get(3);
     WorkflowForkNode fork5 = (WorkflowForkNode) node;
-    List<WorkflowNode> fork5Branch1 = fork5.getBranches().get(0).getNodes();
+    List<WorkflowNode> fork5Branch1 = fork5.getBranches().get(0);
     Assert.assertTrue(fork5Branch1.size() == 1);
-    List<WorkflowNode> fork5Branch2 = fork5.getBranches().get(1).getNodes();
+    List<WorkflowNode> fork5Branch2 = fork5.getBranches().get(1);
     Assert.assertTrue(fork5Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork5Branch1.get(0);

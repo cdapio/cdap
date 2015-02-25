@@ -22,14 +22,14 @@ import java.util.List;
  * Represents the FORK node in the {@link Workflow}
  */
 public class WorkflowForkNode extends WorkflowNode {
-  private final List<WorkflowForkBranch> branches;
+  private final List<List<WorkflowNode>> branches;
 
-  public WorkflowForkNode(String nodeId, List<WorkflowForkBranch> branches) {
+  public WorkflowForkNode(String nodeId, List<List<WorkflowNode>> branches) {
     super(nodeId, WorkflowNodeType.FORK);
     this.branches = branches;
   }
 
-  public List<WorkflowForkBranch> getBranches() {
+  public List<List<WorkflowNode>> getBranches() {
     return branches;
   }
 

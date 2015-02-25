@@ -20,11 +20,10 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
-import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -73,7 +72,8 @@ final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
 
   private void serializeForkNode(WorkflowNode node, JsonObject jsonObj, JsonSerializationContext context) {
     WorkflowForkNode forkNode = (WorkflowForkNode) node;
-    jsonObj.add("branches", serializeList(forkNode.getBranches(), context, WorkflowForkBranch.class));
+    Type type = new TypeToken<List<List<WorkflowNode>>>() { }.getType();
+    jsonObj.add("branches", context.serialize(forkNode.getBranches(), type));
   }
 
   @Override
@@ -113,7 +113,8 @@ final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
   }
 
   private WorkflowNode createForkNode(String nodeId, JsonObject jsonObj, JsonDeserializationContext context) {
-    List<WorkflowForkBranch> branches =  deserializeList(jsonObj.get("branches"), context, WorkflowForkBranch.class);
+    Type type = new TypeToken<List<List<WorkflowNode>>>() { }.getType();
+    List<List<WorkflowNode>> branches =  context.deserialize(jsonObj.get("branches"), type);
     return new WorkflowForkNode(nodeId, branches);
   }
 }

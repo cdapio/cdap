@@ -23,7 +23,6 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
@@ -45,7 +44,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
   private String name;
   private String description;
   private Map<String, String> properties;
-  private WorkflowNodeIdProvider nodeIdProvider;
+  private int nodeIdentifier = 0;
 
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
@@ -53,7 +52,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
-    nodeIdProvider = new WorkflowNodeIdProvider();
   }
 
   @Override
@@ -87,18 +85,18 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
       default:
         break;
     }
-    String nodeId = nodeIdProvider.getUniqueNodeId();
-    return new WorkflowActionNode(nodeId, new ScheduleProgramInfo(programType, programName));
+
+    return new WorkflowActionNode(null, new ScheduleProgramInfo(programType, programName));
   }
 
   WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    return new WorkflowActionNode(nodeIdProvider.getUniqueNodeId(), spec);
+    return new WorkflowActionNode(null, spec);
   }
 
-  void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branches) {
-    nodes.add(new WorkflowForkNode(forkNodeId, branches));
+  void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
+    nodes.add(new WorkflowForkNode(null, branches));
   }
 
   @Override
@@ -116,17 +114,60 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     nodes.add(createWorkflowCustomActionNode(action));
   }
 
-  public WorkflowNodeIdProvider getNodeIdProvider() {
-    return nodeIdProvider;
-  }
-
   @Override
   public WorkflowForkConfigurer<Void> fork() {
-    String forkNodeId = nodeIdProvider.getUniqueNodeId();
-    return new DefaultWorkflowForkConfigurer<Void>(this, null, forkNodeId);
+    return new DefaultWorkflowForkConfigurer<Void>(this, null);
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, nodes);
+    return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes));
+  }
+
+  private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {
+    List<WorkflowNode> nodesWithId = Lists.newArrayList();
+    for (WorkflowNode node : nodes) {
+      nodesWithId.add(createNodeWithId(node));
+    }
+
+    return nodesWithId;
+  }
+
+  private WorkflowNode createNodeWithId(WorkflowNode node) {
+    WorkflowNode nodeWithId = null;
+    switch (node.getType()) {
+      case ACTION:
+        nodeWithId = createActionNodeWithId(node);
+        break;
+      case FORK:
+        nodeWithId = createForkNodeWithId(node);
+        break;
+      case CONDITION:
+        // no-op
+        break;
+      default:
+        break;
+    }
+    return nodeWithId;
+  }
+
+  private WorkflowNode createActionNodeWithId(WorkflowNode node) {
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    ScheduleProgramInfo program = actionNode.getProgram();
+    if (program.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), actionNode.getActionSpecification());
+    } else {
+      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), program);
+    }
+  }
+
+  private WorkflowNode createForkNodeWithId(WorkflowNode node) {
+    String forkNodeId = Integer.toString(nodeIdentifier++);
+    List<List<WorkflowNode>> branches = Lists.newArrayList();
+    WorkflowForkNode forkNode = (WorkflowForkNode) node;
+
+    for (List<WorkflowNode> branch : forkNode.getBranches()) {
+      branches.add(createNodesWithId(branch));
+    }
+    return new WorkflowForkNode(forkNodeId, branches);
   }
 }
