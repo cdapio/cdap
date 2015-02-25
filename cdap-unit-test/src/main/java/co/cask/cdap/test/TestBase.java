@@ -171,9 +171,14 @@ public class TestBase {
    *
    * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
-  protected void clear() throws Exception {
-    TestManager testManager = getTestManager();
-    testManager.clear();
+  protected void clear() {
+    try {
+      TestManager testManager = getTestManager();
+      testManager.clear();
+    } catch (Exception e) {
+      // Unchecked exception to maintain compatibility until we remove this method
+      Throwables.propagate(e);
+    }
   }
 
   @Before
