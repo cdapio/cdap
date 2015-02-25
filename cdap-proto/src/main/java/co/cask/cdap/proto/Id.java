@@ -56,8 +56,8 @@ public final class Id  {
     private final String id;
 
     public Namespace(String id) {
-      Preconditions.checkNotNull(id, "Namespace cannot be null.");
-      Preconditions.checkArgument(isId(id), "Namespace has an incorrect format.");
+      Preconditions.checkNotNull(id, "Namespace '" + id + "' cannot be null.");
+      Preconditions.checkArgument(isId(id), "Namespace '" + id + "' has an incorrect format.");
       this.id = id;
     }
 

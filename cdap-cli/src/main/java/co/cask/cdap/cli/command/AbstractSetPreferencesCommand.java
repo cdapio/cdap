@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
+import co.cask.cdap.proto.Id;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -73,8 +74,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -82,8 +83,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -91,8 +92,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -100,8 +101,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -109,8 +110,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -118,8 +119,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.setProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                     programIdParts[1], args);
+        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                     type.getPluralName(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 

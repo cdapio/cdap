@@ -18,7 +18,12 @@ package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.commandset.DefaultCommands;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.common.cli.Command;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -32,7 +37,14 @@ public class GenerateCLIDocsTable {
   private final Command printDocsCommand;
 
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig).getCommandsSupplier());
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CLIConfig.class).toInstance(cliConfig);
+        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+      }
+    });
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(injector.getInstance(DefaultCommands.class));
   }
 
   public static void main(String[] args) throws Exception {

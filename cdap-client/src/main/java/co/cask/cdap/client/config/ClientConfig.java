@@ -18,6 +18,7 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Optional;
@@ -57,13 +58,13 @@ public class ClientConfig {
   private boolean sslEnabled;
   private String hostname;
   private int port;
-  private String namespace;
+  private Id.Namespace namespace;
   private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, String namespace, boolean sslEnabled, int unavailableRetryLimit,
+  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
@@ -106,8 +107,8 @@ public class ClientConfig {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
   }
 
-  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
+  private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace.getId() + "/" + path).toURL();
   }
 
   /**
@@ -160,7 +161,7 @@ public class ClientConfig {
   /**
    * @return namespace currently active
    */
-  public String getNamespace() {
+  public Id.Namespace getNamespace() {
     return namespace;
   }
 
@@ -193,7 +194,7 @@ public class ClientConfig {
     this.port = port;
   }
 
-  public void setNamespace(String namespace) {
+  public void setNamespace(Id.Namespace namespace) {
     this.namespace = namespace;
   }
 
@@ -212,6 +213,14 @@ public class ClientConfig {
   public void setAllTimeouts(int timeout) {
     this.defaultHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
     this.uploadHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
+  }
+
+  public void setURI(URI uri) {
+    this.hostname = uri.getHost();
+    this.sslEnabled = "https".equals(uri.getScheme());
+    if (uri.getPort() != -1) {
+      this.port = uri.getPort();
+    }
   }
 
   @Nullable
@@ -238,7 +247,7 @@ public class ClientConfig {
 
     private String hostname = DEFAULT_HOST;
     private Optional<Integer> port = Optional.absent();
-    private String namespace = Constants.DEFAULT_NAMESPACE;
+    private Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
@@ -308,7 +317,7 @@ public class ClientConfig {
       return this;
     }
 
-    public Builder setNamespace(String namespace) {
+    public Builder setNamespace(Id.Namespace namespace) {
       this.namespace = namespace;
       return this;
     }

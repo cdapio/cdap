@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -79,8 +80,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -88,8 +90,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -97,8 +100,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -106,8 +110,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -115,8 +120,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
@@ -124,8 +130,9 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        client.deleteProgramPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], type.getPluralName(),
-                                        programIdParts[1]);
+        client.deleteProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1]);
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 
