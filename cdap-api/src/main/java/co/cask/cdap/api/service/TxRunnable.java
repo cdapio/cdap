@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.Dataset;
  * access to and use datasets.
  * @deprecated As of version 2.8.0, replaced by {@link co.cask.cdap.api.TxRunnable}
  */
+@Deprecated
 public interface TxRunnable {
 
   /**
