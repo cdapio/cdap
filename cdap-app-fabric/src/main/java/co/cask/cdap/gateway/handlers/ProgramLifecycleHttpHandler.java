@@ -1079,7 +1079,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the number of instances of a service handler.
+   * Return the number of instances of a service.
    */
   @GET
   @Path("/apps/{app-id}/services/{service-id}/instances")
@@ -1140,7 +1140,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Set instances of a service handler.
+   * Set instances of a service.
    */
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/instances")

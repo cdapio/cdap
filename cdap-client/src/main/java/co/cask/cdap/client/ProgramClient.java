@@ -391,7 +391,7 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the number of instances of a service handler.
+   * Gets the number of instances of a service.
    *
    * @param appId ID of the application that the service belongs to
    * @param serviceId Id of the service
@@ -439,7 +439,7 @@ public class ProgramClient {
   }
 
   /**
-   * Sets the number of instances of a service handler.
+   * Sets the number of instances of a service.
    *
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
