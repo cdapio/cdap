@@ -14,7 +14,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
     scope: {
-      model: '=',
+      model: '='
     },
     controller: function($scope) {
 
