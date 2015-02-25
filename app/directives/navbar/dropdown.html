@@ -37,7 +37,7 @@
     </a>
   </li>
 
-  <li role="presentation" ng-show="currentUser" ur-sref-active="disabled">
+  <li role="presentation" ng-show="currentUser && securityEnabled" ur-sref-active="disabled">
     <a role="menuitem" tabindex="-1" ui-sref="userprofile">
       <span class="fa fa-fw fa-user"> </span>
       Profile
