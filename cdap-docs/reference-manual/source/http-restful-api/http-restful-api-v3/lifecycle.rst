@@ -475,11 +475,11 @@ Example
 :widths: 20 80
    :stub-columns: 1
 
-       * - HTTP Method
-         - ``GET <base-url>/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
+   * - HTTP Method
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
        ``instances``
    * - Description
-     - Find out the number of instances of the Worker *DataWorker*
+     - Retrieve the number of instances of the Worker *DataWorker*
        in the Application *HelloWorld* in the namespace *default*
 
 .. _rest-program-runs:

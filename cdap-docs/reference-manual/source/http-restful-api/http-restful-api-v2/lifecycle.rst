@@ -31,7 +31,7 @@ and its content as the body of the request::
   <JAR binary content>
 
 Invoke the same command to update an Application to a newer version.
-However, be sure to stop all of its Flows, Workers, Procedures and MapReduce programs before updating the Application.
+However, be sure to stop all of its Flows, Procedures and MapReduce programs before updating the Application.
 
 
 Deployed Applications
@@ -466,7 +466,7 @@ Example
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, Procedures, Workers, MapReduce programs, Spark programs, Workflows, and
+To see all the runs of a selected program (Flows, Procedures, MapReduce programs, Spark programs, Workflows, and
 Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
@@ -482,7 +482,7 @@ end time and program status::
    * - ``<app-id>``
      - Name of the Application
    * - ``<program-type>``
-     - One of ``flows``, ``workers``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
      - Name of the program
 

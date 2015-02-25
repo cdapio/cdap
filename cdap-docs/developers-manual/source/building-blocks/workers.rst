@@ -4,9 +4,9 @@
 
 .. _workers:
 
-============================================
+=======
 Workers
-============================================
+=======
 
 Workers can be used to run background processes. Workers provide the ability to write data processing logic
 that doesn't fit into the other paradigms such as Flows and MapReduce or realtime and batch.
@@ -68,15 +68,16 @@ Workers can access and use ``Dataset``\s via a ``DatasetContext`` inside their `
 Operations executed on ``Dataset``\s within a ``run`` are committed as part of a single transaction.
 The transaction is started before ``run`` is invoked and is committed upon successful execution. Exceptions
 thrown while committing the transaction or thrown by user-code result in a rollback of the transaction.
-It is recommended that ``TransactionConflictException`` be caught and handled appropriately; for example
+It is recommended that ``TransactionConflictException`` be caught and handled appropriately; for example,
 you can retry a ``Dataset`` operation.
 
-Services can be discovered inside Workers. Service can either belong to the same application or another
+Services can be discovered from inside of Workers. Services can either belong to the same application or to another
 application in the same namespace. WorkerContext can be used to discover the URL of the Service of interest::
 
   @Override
   public void run() {
     URL url = getContext().getServiceURL("myService");
-    //To discover Service in another application: getContext().getServiceURL("anotherAppName", "serviceId");
+    //To discover a Service in another application in the same namespace, use:
+    url = getContext().getServiceURL("anotherAppName", "anotherServiceId");
   }
 

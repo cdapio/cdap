@@ -138,7 +138,7 @@ The general form of a metrics request is::
 
 The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Workers, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce, Workflows and Workers) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
