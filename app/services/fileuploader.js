@@ -20,7 +20,6 @@ angular.module(PKG.name + '.services')
         xhr.open('POST', path, true);
         xhr.setRequestHeader('Content-type', 'application/octet-stream');
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
-        xhr.setRequestHeader('X-ApiKey', '');
         xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
         xhr.send(fileObj.file);
         cfpLoadingBar.start();
