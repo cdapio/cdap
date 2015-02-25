@@ -2,7 +2,6 @@ angular.module(PKG.name + '.services')
   .factory('myFileUploader', function($rootScope, $q, $window, $alert, cfpLoadingBar) {
     function upload(fileObj){
       var deferred = $q.defer();
-      console.log($rootScope.currentUser);
       if (!$rootScope.currentUser) {
         deferred.reject(400);
         $alert({
@@ -14,7 +13,7 @@ angular.module(PKG.name + '.services')
         var xhr = new $window.XMLHttpRequest();
         xhr.upload.addEventListener('progress', function (e) {
           if (e.type === 'progress') {
-            console.log('App Upload in progress!');
+            console.info('App Upload in progress!');
           }
         });
         var path = fileObj.path;
