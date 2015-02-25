@@ -14,27 +14,21 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
     scope: {
-      model: '='
+      model: '=',
+    },
+    controller: function($scope) {
+
+      function update(newVal, oldVal) {
+        if (angular.isObject(newVal) && Object.keys(newVal).length) {
+          $scope.render();
+        }
+      }
+
+      $scope.$watch('model', update);
+      $scope.$watchCollection('model.metrics', update);
+
     },
     link: function (scope, elem, attr) {
-
-      var first = false; // making sure that the svg element is created first
-
-      scope.$watch('model', function(newVal, oldVal) {
-
-        if (angular.isObject(newVal) && Object.keys(newVal).length) {
-          scope.render();
-          first = true;
-        }
-
-        scope.$watchCollection('model.metrics', function(a, b) {
-          if (first) {
-            scope.render();
-          }
-        });
-      });
-
-
 
       scope.render = function (){
         var nodes = scope.model.nodes;
