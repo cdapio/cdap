@@ -1,26 +1,26 @@
-<table class="table table-responsive" ng-show="apps.length">
+<table class="table table-responsive" ng-show="apps.length" cask-sortable>
   <thead>
-    <tr>
-      <th>Application</th>
-      <th>Containers</th>
-      <th>Cores</th>
-      <th>Memory</th>
+    <tr ng-class="{'sort-enabled': apps.length>0}">
+      <th data-predicate="name">Application</th>
+      <th data-predicate="metric.containers">Containers</th>
+      <th data-predicate="metric.vcores">Cores</th>
+      <th data-predicate="metric.memory">Memory</th>
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat="one in apps">
+    <tr ng-repeat="one in apps | orderBy:sortable.predicate:sortable.reverse">
       <td>
         <strong>{{one.name}}</strong><br />
         <em>{{one.description}}</em>
       </td>
       <td>
-        <span class="badge">{{one.containers}}</span>
+        <span class="badge">{{one.metric.containers}}</span>
       </td>
       <td>
-        <span class="badge">{{one.cores}}</span>
+        <span class="badge">{{one.metric.vcores}}</span>
       </td>
       <td>
-        <span class="badge">{{one.memory}}</span> B
+        {{one.metric.memory | bytes}}
       </td>
     </tr>
   </tbody>

@@ -1,10 +1,15 @@
+<br />
 <div class="status" ng-controller="CdapAppDetailStatusController">
   <div class="panel panel-default">
-    <div class="panel-heading">
+    <div class="panel-heading clearfix">
+
+      <div class="btn-group pull-right">
+        <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
+        <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
+        <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
+      </div>
+
       Programs
-      <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'"></button>
-      <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'"></button>
-      <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'">Deployed</button>
     </div>
 
     <div class="panel-body">

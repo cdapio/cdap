@@ -11,10 +11,10 @@ angular.module(PKG.name+'.feature.operation28')
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['Collect', 'EPS',    'collect.events'],
-      ['Process', '%',      'process.busyness'],
-      ['Store', 'B/s',      'dataset.store.bytes'],
-      ['Query', 'QPS',      'query.requests']
+      ['Collect', 'EPS',   'collect.events'],
+      ['Process', '%',     'process.busyness'],
+      ['Store',   '/S',    'dataset.store.bytes', true],
+      ['Query',   'QPS',   'query.requests']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -40,10 +40,10 @@ angular.module(PKG.name+'.feature.operation28')
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['AppFabric', 'Containers', 'containers'],
-      ['Processors', 'Cores',     'vcores'],
-      ['Memory', 'B',             'memory'],
-      ['DataFabric', 'GB',        'storage']
+      ['AppFabric',  'Containers', 'containers'],
+      ['Processors', 'Cores',      'vcores'],
+      ['Memory',     '',           'memory', true],
+      ['DataFabric', '',           'storage', true]
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -64,41 +64,49 @@ angular.module(PKG.name+'.feature.operation28')
 
 
   .controller('Op28AppsCtrl',
-  function ($scope, $state, $q, MyDataSource) {
+  function ($scope, $state, myHelpers, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
 
     $scope.apps = [];
 
-    dataSrc.request({
+    dataSrc
+      .request({
         _cdapNsPath: '/apps'
-      })
-      .then(function (apps) {
+      },
+      function (apps) {
         $scope.apps = apps;
 
-        var p = [];
-        for (var i = 0; i < apps.length; i++) {
+        var m = ['vcores', 'containers', 'memory'];
 
-          var path = '/metrics/query?context=ns.' +
-              $state.params.namespace + '.app.' + apps[i].id +
-              '&metric=resources.used.*' +
-              '&groupBy=app,programType';
+        for (var i = 0; i < m.length; i++) {
 
-          // FIXME @sacha
-          console.warn(path);
+          dataSrc
+            .poll({
+              _cdapPath: '/metrics/query' +
+                '?context=namespace.system' +
+                '&metric=system.resources.used.' +
+                m[i] + '&groupBy=app',
+              method: 'POST'
+            },
+            function (r) {
 
-          // p.push(dataSrc.request({
-          //   _cdapPath: path,
-          //   method: 'POST'
-          // }));
-        };
+              angular.forEach($scope.apps, function (app) {
+                angular.forEach(r.series, function (s) {
+                  if(app.id === s.grouping.app) {
+                    myHelpers.deepSet(
+                      app,
+                      'metric.' + s.metricName.split('.').pop(),
+                      s.data[0].value
+                    );
+                  }
+                });
+              });
 
-        return $q.all(p);
-      })
-      .then(function (result) {
-        console.log('all done', result);
+            });
+        }
+
       });
-
 
   })
 
@@ -112,6 +120,7 @@ angular.module(PKG.name+'.feature.operation28')
       return {
         title: d[0],
         unit: d[1],
+        useByteFilter: d[3],
         chart: {
           metric: d[2],
           context: 'system',

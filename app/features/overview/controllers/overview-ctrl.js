@@ -44,7 +44,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
     });
 
   dataSrc.request({
-    _cdapPathV2: '/data/datasets'
+    _cdapNsPath: '/datasets'
   })
     .then(function(res) {
       $scope.datasets = res;
@@ -55,7 +55,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
     });
 
   dataSrc.request({
-    _cdapPathV2: '/streams'
+    _cdapNsPath: '/streams'
   }, function(res) {
     if (angular.isArray(res) && res.length) {
       $scope.streams = res;

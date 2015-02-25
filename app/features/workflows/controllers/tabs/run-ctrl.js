@@ -3,7 +3,9 @@ angular.module(PKG.name + '.feature.workflows')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
 
-    $scope.runTabs = ['flow', 'data', 'configuration', 'log'];
+    // $scope.runTabs = ['flow', 'data', 'configuration', 'log'];
+    $scope.runTabs = ['flow', 'log'];
+
     $scope.runs = null;
     $scope.currentRun = null;
 

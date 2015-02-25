@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<div>
+<!-- <div>
   <h3>System Configuration</h3>
   <ul>
     <li>
@@ -29,7 +29,7 @@
       <a ui-sref="admin.system.services" href="">Services</a>
     </li>
   </ul>
-</div>
+</div> -->
 
 <div ng-show="isEnterprise">
   <h3>Systemwide Security</h3>
@@ -63,10 +63,10 @@
     <tbody>
       <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
         <td>
-          <a ng-bind="namespace.name"></a>
+          <span ng-bind="namespace.name"></span>
         </td>
         <td>
-          <a ng-bind="namespace.appsCount"></a>
+          <span ng-bind="namespace.appsCount"></span>
         </td>
       </tr>
     </tbody>

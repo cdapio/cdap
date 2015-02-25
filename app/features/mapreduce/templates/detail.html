@@ -11,8 +11,6 @@
       <ng-pluralize data-count="activeRuns"
           data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
     </h4>
-    <!-- <h4 ng-if="activeRuns < 2" ng-bind="activeRuns + ' Active run'"> </h4>
-    <h4 ng-if="activeRuns > 2" ng-bind="activeRuns + ' Active runs'"> </h4> -->
   </div>
   <div class="col-sm-6 text-right h4">
     <div ng-show="status == 'RUNNING'"
@@ -37,18 +35,18 @@
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
   </li>
-  <li role="presentation" ui-sref-active="active">
+<!--   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.schedules" role="tab">Schedules</a>
   </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.metadata" role="tab">Metadata</a>
-  </li>
+  </li> -->
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.history" role="tab">History</a>
   </li>
-  <li role="presentation" ui-sref-active="active">
+<!--   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.resources" role="tab">Resources</a>
-  </li>
+  </li> -->
 </ul>
 
 <br />
