@@ -25,17 +25,16 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
- * Explore ping handler - reachable outside of CDAP.
+ * Explore status handler - reachable outside of CDAP.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3)
 public class ExploreStatusHandler extends AbstractHttpHandler {
 
-  @Path("/explore/status")
+  @Path("explore/status")
   @GET
-  public void status(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void status(HttpRequest request, HttpResponder responder) {
     JsonObject json = new JsonObject();
     json.addProperty("status", "OK");
     responder.sendJson(HttpResponseStatus.OK, json);

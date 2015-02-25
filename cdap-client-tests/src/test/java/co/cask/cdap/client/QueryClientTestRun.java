@@ -23,6 +23,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.XSlowTests;
@@ -40,7 +41,6 @@ import java.util.concurrent.ExecutionException;
  */
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
-
   private ApplicationClient appClient;
   private QueryClient queryClient;
   private ProgramClient programClient;
@@ -55,7 +55,8 @@ public class QueryClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
-    exploreClient = new FixedAddressExploreClient(clientConfig.getHostname(), clientConfig.getPort(), accessToken);
+    exploreClient = new FixedAddressExploreClient(clientConfig.getHostname(), clientConfig.getPort(),
+                                                  accessToken);
   }
 
   @Test
@@ -68,8 +69,13 @@ public class QueryClientTestRun extends ClientTestBase {
 
     Thread.sleep(3000);
 
-    executeBasicQuery();
-    exploreClient.disableExploreDataset("cdap.default." + FakeApp.DS_NAME).get();
+    String namespace = getClientConfig().getNamespace();
+    String instanceName = String.format("cdap.%s.%s", namespace, FakeApp.DS_NAME);
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, instanceName);
+
+    executeBasicQuery(instanceName);
+
+    exploreClient.disableExploreDataset(datasetInstance).get();
     try {
       queryClient.execute("select * from cdap_default_" + FakeApp.DS_NAME).get();
       Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
@@ -77,12 +83,14 @@ public class QueryClientTestRun extends ClientTestBase {
 
     }
 
-    exploreClient.enableExploreDataset("cdap.default." + FakeApp.DS_NAME).get();
-    executeBasicQuery();
+    exploreClient.enableExploreDataset(datasetInstance).get();
+    executeBasicQuery(instanceName);
   }
 
-  private void executeBasicQuery() throws Exception {
-    ExploreExecutionResult executionResult = queryClient.execute("select * from cdap_default_" + FakeApp.DS_NAME).get();
+  private void executeBasicQuery(String instanceName) throws Exception {
+    // Hive replaces the periods with underscores
+    String query = "select * from " + instanceName.replace(".", "_");
+    ExploreExecutionResult executionResult = queryClient.execute(query).get();
     Assert.assertNotNull(executionResult.getResultSchema());
     List<QueryResult> results = Lists.newArrayList(executionResult);
     Assert.assertNotNull(results);

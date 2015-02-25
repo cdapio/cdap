@@ -229,8 +229,8 @@ public class FileStreamAdmin implements StreamAdmin {
               Schema currSchema = oldProperties.getFormat().getSchema();
               Schema newSchema = format.getSchema();
               if (!currSchema.equals(newSchema)) {
-                alterExploreStream(streamId.getName(), false);
-                alterExploreStream(streamId.getName(), true);
+                alterExploreStream(streamId, false);
+                alterExploreStream(streamId, true);
               }
             }
 
@@ -290,7 +290,7 @@ public class FileStreamAdmin implements StreamAdmin {
                                                null, threshold);
         writeConfig(config);
         createStreamFeeds(config);
-        alterExploreStream(streamId.getName(), true);
+        alterExploreStream(streamId, true);
         return config;
       }
     });
@@ -452,7 +452,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private void alterExploreStream(String stream, boolean enable) {
+  private void alterExploreStream(Id.Stream stream, boolean enable) {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       // It shouldn't happen.
       Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
