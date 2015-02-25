@@ -18,15 +18,28 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
     },
     link: function (scope, elem, attr) {
 
+      var first = false; // making sure that the svg element is created first
+
       scope.$watch('model', function(newVal, oldVal) {
+
         if (angular.isObject(newVal) && Object.keys(newVal).length) {
           scope.render();
+          first = true;
         }
+
+        scope.$watchCollection('model.metrics', function(a, b) {
+          if (first) {
+            scope.render();
+          }
+        });
       });
+
+
 
       scope.render = function (){
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
+
         var instanceMap = {};
 
         var renderer = new dagreD3.render();
@@ -85,10 +98,10 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
             .attr('r', 25)
             .attr('class', 'flow-shapes flowlet-events');
           parent.insert('text')
-            .attr('x', -62)
+            .attr('x', -73)
             .attr('y', 5)
-            .text('-1')
-            .attr('class', 'flow-shapes flowlet-event-count');
+            .text(formatNumber(scope.model.metrics[node.label]))
+            .attr('class', 'flow5shapes flowlet-event-count');
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, r, point);
@@ -120,9 +133,9 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
             .attr('class', 'flow-shapes stream-events');
 
           parent.insert('text')
-            .attr('x', -62)
+            .attr('x', -73)
             .attr('y', 5)
-            .text('-1')
+            .text(formatNumber(scope.model.metrics[node.label]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -131,6 +144,18 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
 
           return shapeSvg;
         };
+
+        function formatNumber (num) {
+          if (!num) {
+            return '0 K';
+          }
+          else if (num < 999999) {
+            return (parseFloat(num)/1000).toFixed(1) + ' K';
+          }
+          else {
+            return (parseFloat(num)/1000000).toFixed(1) + ' M';
+          }
+        }
 
         // Set up an SVG group so that we can translate the final graph and tooltip.
         var svg = d3.select('svg').attr('fill', 'white');
