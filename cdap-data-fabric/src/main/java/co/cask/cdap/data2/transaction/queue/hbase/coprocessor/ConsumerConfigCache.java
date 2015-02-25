@@ -20,8 +20,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -39,7 +41,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
 /**
- * Provides a RegionServer shared cache for all instances of {@link HBaseQueueRegionObserver} of the recent
+ * Provides a RegionServer shared cache for all instances of {@code HBaseQueueRegionObserver} of the recent
  * queue consumer configuration.
  */
 public class ConsumerConfigCache {
@@ -48,6 +50,7 @@ public class ConsumerConfigCache {
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
+  private static final int TABLE_NOT_FOUND_MAX_RETRY = 20;
 
   private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
@@ -76,6 +79,10 @@ public class ConsumerConfigCache {
 
   private void init() {
     startRefreshThread();
+  }
+
+  public boolean isAlive() {
+    return refreshThread.isAlive();
   }
 
   @Nullable
@@ -108,8 +115,11 @@ public class ConsumerConfigCache {
    *
    * This method is synchronized to protect from race conditions if called directly from a test. Otherwise this is
    * only called from the refresh thread, and there will not be concurrent invocations.
+   *
+   * @throws IOException if failed to update config cache
    */
-  public synchronized void updateCache() {
+  @VisibleForTesting
+  public synchronized void updateCache() throws IOException {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
     HTable table = null;
@@ -150,8 +160,6 @@ public class ConsumerConfigCache {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Updated consumer config cache with {} entries, took {} msec", configCnt, elapsed);
       }
-    } catch (IOException ioe) {
-      LOG.warn("Error updating queue consumer config cache: {}", ioe.getMessage());
     } finally {
       if (table != null) {
         try {
@@ -161,18 +169,27 @@ public class ConsumerConfigCache {
         }
       }
     }
-
   }
 
   private void startRefreshThread() {
-    this.refreshThread = new Thread("queue-cache-refresh") {
+    refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        int tableNotFoundCount = 0;
+        while (!isInterrupted() && tableNotFoundCount < TABLE_NOT_FOUND_MAX_RETRY) {
           updateConfig();
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + configCacheUpdateFrequency)) {
-            updateCache();
+            try {
+              updateCache();
+              tableNotFoundCount = 0;
+            } catch (TableNotFoundException e) {
+              tableNotFoundCount++;
+              LOG.error("Queue config table not found: {}. Retries remaining {}",
+                        Bytes.toString(configTableName), TABLE_NOT_FOUND_MAX_RETRY - tableNotFoundCount, e);
+            } catch (IOException e) {
+              LOG.warn("Error updating queue consumer config cache: {}", e.getMessage());
+            }
           }
           try {
             Thread.sleep(1000);
@@ -182,10 +199,12 @@ public class ConsumerConfigCache {
             break;
           }
         }
+        LOG.info("Config cache update for {} terminated.", Bytes.toString(configTableName));
+        instances.remove(configTableName, this);
       }
     };
-    this.refreshThread.setDaemon(true);
-    this.refreshThread.start();
+    refreshThread.setDaemon(true);
+    refreshThread.start();
   }
 
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName) {

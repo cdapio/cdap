@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -51,6 +52,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueRegionObserver.class);
 
+  private Configuration conf;
+  private byte[] configTableName;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -63,7 +66,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     if (env instanceof RegionCoprocessorEnvironment) {
       HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
       String tableName = tableDesc.getNameAsString();
-      String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
 
       String prefixBytes = tableDesc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES);
       try {
@@ -80,8 +82,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       appName = HBaseQueueAdmin.getApplicationName(tableName);
       flowName = HBaseQueueAdmin.getFlowName(tableName);
 
-      configCache = ConsumerConfigCache.getInstance(env.getConfiguration(),
-                                                    Bytes.toBytes(configTableName));
+      conf = env.getConfiguration();
+      configTableName = Bytes.toBytes(QueueUtils.determineQueueConfigTableName(tableName));
+      configCache = ConsumerConfigCache.getInstance(conf, configTableName);
     }
   }
 
@@ -109,6 +112,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
+    if (!configCache.isAlive()) {
+      configCache = ConsumerConfigCache.getInstance(conf, configTableName);
+    }
     return configCache;
   }
 
@@ -177,7 +183,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
                                                            kv.getBuffer(), kv.getRowOffset(), kv.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
-          consumerConfig = configCache.getConsumerConfig(currentQueue);
+          consumerConfig = getConfigCache().getConsumerConfig(currentQueue);
         }
 
         if (consumerConfig == null) {
