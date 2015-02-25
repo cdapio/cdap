@@ -16,7 +16,7 @@ Cask Data Application Platform Overview
    
     Anatomy of a Big Data Application <anatomy>
     Concepts and Components <concepts>
-    Virtualization <virtualization>
+    CDAP Abstractions <abstractions>
     Programming Interfaces <interfaces>
 
 
@@ -31,15 +31,16 @@ explain the concepts and architecture of CDAP.
 .. |concepts| replace:: **Concepts and Components:**
 .. _concepts: concepts.html
 
-.. |virtualization| replace:: **Virtualization:**
-.. _virtualization: virtualization.html
+.. |abstractions| replace:: **CDAP Abstractions:**
+.. _abstractions: abstractions.html
 
 .. |interfaces| replace:: **Programming Interfaces:**
 .. _interfaces: interfaces.html
 
 - |anatomy|_ Explains the **areas of concern in developing a Big Data application,** and how you use CDAP to address these.
 - |concepts|_ Covers the **components of CDAP and their interactions.**
-- |virtualization|_ Describes how CDAP lets you **virtualize your data and applications.**
+- |abstractions|_ Describes how CDAP abstractions provide **portability by decoupling your
+  data and applications** from the underlying infrastructure.
 - |interfaces|_ CDAP interfaces can be described as either **Developer or Clients interfaces.**
 
 

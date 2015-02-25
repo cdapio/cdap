@@ -26,7 +26,7 @@ CDAP consists chiefly of these components:
 - **System Services** provide vital platform features such datasets, transactions, service discovery logging,
   and metrics collection. System services run in application containers.
   
-- **Application containers** provide virtualization and isolation for execution of application code (and, as a
+- **Application containers** provide abstraction and isolation for execution of application code (and, as a
   special case, system services). Application containers scale linearly and elastically with the underlying
   infrastructure.
 
