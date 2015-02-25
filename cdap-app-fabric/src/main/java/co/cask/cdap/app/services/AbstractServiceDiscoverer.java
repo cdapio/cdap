@@ -31,7 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -132,6 +132,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
                                   Constants.Gateway.API_VERSION_3, namespaceId, stream);
       if (batch) {
         path = String.format("%s/batch", path);
+        headers.put("Content-Type", "text/bytes");
       }
 
       try {
@@ -153,7 +154,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
 
   @Override
   public StreamWriteStatus writeToStream(String stream, byte[] data) {
-    return writeToStream(stream, data, ImmutableMap.<String, String>of());
+    return writeToStream(stream, data, Maps.<String, String>newHashMap());
   }
 
   @Override
@@ -163,7 +164,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
 
   @Override
   public StreamWriteStatus writeToStream(String stream, List<byte[]> data) {
-    return writeToStream(stream, data, ImmutableMap.<String, String>of());
+    return writeToStream(stream, data, Maps.<String, String>newHashMap());
   }
 
   @Override
