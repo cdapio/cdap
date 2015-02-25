@@ -124,7 +124,8 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // discovery in v2 APIs returns only user metrics
-    MetricsCollector parentCollector = collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.SCOPE, "user"));
+    MetricsCollector parentCollector =
+      collectionService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.SCOPE, "user"));
 
     MetricsCollector collector =
       parentCollector.childCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WordCounter",
