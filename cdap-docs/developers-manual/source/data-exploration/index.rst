@@ -35,6 +35,10 @@ Queries can be run over Streams and certain types of Datasets.
 - |fileset-exploration|_ Describes how you can make a ``FileSet`` or 
   ``TimePartitionedFileSet`` that is **explorable.**
 
+.. |object-mapped-table-exploration| replace:: **ObjectMappedTable Exploration:**
+.. _object-mapped-table-exploration: object-mapped-tables.html
+
+- |object-mapped-table-exploration|_ Describes how you can make a ``ObjectMappedTable`` that is **explorable.**
 
 .. |custom-dataset-exploration| replace:: **Custom Dataset Exploration:**
 .. _custom-dataset-exploration: custom-datasets.html
