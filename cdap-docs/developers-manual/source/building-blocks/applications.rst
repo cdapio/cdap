@@ -13,19 +13,11 @@ Applications
 An **Application** is a collection of building blocks that read and write data through the data
 abstraction layer in CDAP. 
 
-<<<<<<< HEAD
-**Application virtualizations** include *Programs,* *Workers,* *Services,* and *Procedures.*
-
-Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
-:doc:`Workflows <workflows>`, :doc: `Workers <workers>`, :doc:`Spark Programs <spark-programs>`, and are used to process
-data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
-=======
 **Applications** are composed from *Programs,* *Services,* and *Schedules*.
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
-:doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
+:doc:`Workflows <workflows>`, :doc:`Spark Programs <spark-programs>`, and :doc:`Workers <workers>` are used to process
 data. :doc:`Services <services>` are used to serve data.
->>>>>>> origin/develop
 
 **Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
