@@ -17,6 +17,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
@@ -30,7 +31,6 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamLeaderListener;
 import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -124,8 +124,9 @@ public class DistributedStreamService extends AbstractStreamService {
                                   StreamWriterSizeCollector streamWriterSizeCollector,
                                   HeartbeatPublisher heartbeatPublisher,
                                   NotificationFeedManager feedManager,
-                                  NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector);
+                                  NotificationService notificationService,
+                                  MetricStore metricStore) {
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector, metricStore);
     this.zkClient = zkClient;
     this.streamAdmin = streamAdmin;
     this.notificationService = notificationService;
@@ -221,16 +222,25 @@ public class DistributedStreamService extends AbstractStreamService {
         continue;
       }
 
-      try {
-        StreamConfig config = streamAdmin.getConfig(streamId);
-        long filesSize = StreamUtils.fetchStreamFilesSize(config);
-        LOG.debug("Size of the files already present for stream {}: {}", streamId, filesSize);
-        createSizeAggregator(streamId, StreamUtils.getGeneration(config), filesSize,
-                             config.getNotificationThresholdMB());
-      } catch (IOException e) {
-        LOG.error("Could not compute sizes of files for stream {}", streamId);
-        Throwables.propagate(e);
+      StreamConfig config;
+      long eventsSize;
+      while (true) {
+        try {
+          config = streamAdmin.getConfig(streamId);
+          eventsSize = getStreamEventsSize(streamId);
+          LOG.debug("Size of the events ingested in stream {}: {}", streamId, eventsSize);
+          break;
+        } catch (IOException e) {
+          LOG.info("Could not compute sizes of files for stream {}. Retrying in 1 sec.", streamId);
+          try {
+            TimeUnit.SECONDS.sleep(1);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw Throwables.propagate(ie);
+          }
+        }
       }
+      createSizeAggregator(streamId, eventsSize, config.getNotificationThresholdMB());
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
@@ -253,14 +263,12 @@ public class DistributedStreamService extends AbstractStreamService {
    *
    * @param streamId stream Id to create a new aggregator for
    * @param baseCount stream size from which to start aggregating
-   * @param generation current generation of the stream
    * @param threshold notification threshold after which to publish a notification - in MB
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, final int generation, long baseCount,
-                                                    int threshold) {
-    LOG.debug("Creating size aggregator for stream {} with generation {}, baseCount {} and threshold {}",
-              streamId, generation, baseCount, threshold);
+  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, long baseCount, int threshold) {
+    LOG.debug("Creating size aggregator for stream {} with baseCount {} and threshold {}",
+              streamId, baseCount, threshold);
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
@@ -275,32 +283,8 @@ public class DistributedStreamService extends AbstractStreamService {
         }
       });
 
-    // Handle stream truncation, by creating a new empty aggregator for the stream
-    // and cancelling the existing one
-    final Cancellable truncationSubscription =
-      getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
-        @Override
-        public void generationChanged(Id.Stream streamId, int newGeneration) {
-          if (newGeneration <= generation) {
-            return;
-          }
-
-          StreamSizeAggregator aggregator = aggregators.get(streamId);
-          while (aggregator == null) {
-            Thread.yield();
-            aggregator = aggregators.get(streamId);
-          }
-          aggregator.resetCount();
-        }
-      });
-
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamId, baseCount, threshold, new Cancellable() {
-      @Override
-      public void cancel() {
-        thresholdSubscription.cancel();
-        truncationSubscription.cancel();
-      }
-    });
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamId, baseCount, threshold,
+                                                                  thresholdSubscription);
     aggregators.put(streamId, newAggregator);
     return newAggregator;
   }
@@ -317,7 +301,7 @@ public class DistributedStreamService extends AbstractStreamService {
    * @return a {@link Cancellable} to cancel the subscription
    * @throws NotificationFeedNotFoundException if the heartbeat feed does not exist
    */
-  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException, InterruptedException {
+  private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.SYSTEM_NAMESPACE)
@@ -346,9 +330,7 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }, heartbeatsSubscriptionExecutor);
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
     }
   }
@@ -379,7 +361,7 @@ public class DistributedStreamService extends AbstractStreamService {
   /**
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
-  private void createHeartbeatsFeed() throws NotificationFeedException, InterruptedException {
+  private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
       .setNamespaceId(Constants.SYSTEM_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
@@ -395,10 +377,19 @@ public class DistributedStreamService extends AbstractStreamService {
         feedManager.createFeed(streamHeartbeatsFeed);
         return;
       } catch (NotificationFeedException e) {
-        // Most probably, the dataset service is not up. We retry
-        LOG.warn("Could not perform operation on HeartbeatsFeed. Retrying.", e);
-        TimeUnit.MILLISECONDS.sleep(1000);
+        waitBeforeRetryHeartbeatsFeedOperation();
       }
+    }
+  }
+
+  private void waitBeforeRetryHeartbeatsFeedOperation() {
+    // Most probably, the dataset service is not up. We retry
+    LOG.info("Could not perform operation on HeartbeatsFeed. Retrying in one second.");
+    try {
+      TimeUnit.SECONDS.sleep(1);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
     }
   }
 
@@ -552,7 +543,7 @@ public class DistributedStreamService extends AbstractStreamService {
     private final Map<Integer, Long> streamWriterSizes;
     private final Id.NotificationFeed streamFeed;
     private final AtomicLong streamBaseCount;
-    private final AtomicLong countFromFiles;
+    private final long streamInitSize;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
     private final Id.Stream streamId;
@@ -561,7 +552,7 @@ public class DistributedStreamService extends AbstractStreamService {
     protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
       this.streamBaseCount = new AtomicLong(baseCount);
-      this.countFromFiles = new AtomicLong(baseCount);
+      this.streamInitSize = baseCount;
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
       this.isInit = true;
@@ -589,16 +580,6 @@ public class DistributedStreamService extends AbstractStreamService {
     }
 
     /**
-     * Reset the counts of this {@link StreamSizeAggregator} to zero.
-     */
-    public void resetCount() {
-      LOG.debug("Resetting size aggregator for stream {}", streamId);
-      streamBaseCount.set(0);
-      countFromFiles.set(0);
-      publishNotification(0);
-    }
-
-    /**
      * Notify this aggregator that a certain number of bytes have been received from the stream writer with instance
      * {@code instanceId}.
      *
@@ -615,7 +596,7 @@ public class DistributedStreamService extends AbstractStreamService {
      * Check if the current size of data is enough to trigger a notification.
      */
     private void checkSendNotification() {
-      long sum = countFromFiles.get();
+      long sum = streamInitSize;
       for (Long size : streamWriterSizes.values()) {
         sum += size;
       }

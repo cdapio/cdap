@@ -64,13 +64,4 @@ public abstract class WorkflowNode {
     result = 31 * result + nodeType.hashCode();
     return result;
   }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("WorkflowNode{");
-    sb.append("nodeId='").append(nodeId).append('\'');
-    sb.append(", nodeType=").append(nodeType);
-    sb.append('}');
-    return sb.toString();
-  }
 }

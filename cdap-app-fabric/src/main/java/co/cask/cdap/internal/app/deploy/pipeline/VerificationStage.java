@@ -24,7 +24,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -167,21 +166,10 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        WorkflowActionNode actionNode = (WorkflowActionNode) node;
-        verifyWorkflowAction(appSpec, actionNode.getProgram());
+        verifyWorkflowAction(appSpec, node);
         break;
       case FORK:
-        WorkflowForkNode forkNode = (WorkflowForkNode) node;
-        if (forkNode.getBranches().size() == 0) {
-          throw new RuntimeException(String.format("Fork is added in the Workflow '%s' without any branches",
-                                                   workflowSpec.getName()));
-        }
-
-        for (WorkflowForkBranch branch : forkNode.getBranches()) {
-          for (WorkflowNode n : branch.getNodes()) {
-            verifyWorkflowNode(appSpec, workflowSpec, n);
-          }
-        }
+        verifyWorkflowFork(appSpec, workflowSpec, node);
         break;
       case CONDITION:
         // no-op
@@ -191,19 +179,32 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     }
   }
 
-  private void verifyWorkflowAction(ApplicationSpecification appSpec, ScheduleProgramInfo program) {
+  private void verifyWorkflowFork(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                  WorkflowNode node) {
+    WorkflowForkNode forkNode = (WorkflowForkNode) node;
+    Preconditions.checkNotNull(forkNode.getBranches(), String.format("Fork is added in the Workflow '%s' without" +
+                                                                       " any branches", workflowSpec.getName()));
+
+    for (List<WorkflowNode> branch : forkNode.getBranches()) {
+      for (WorkflowNode n : branch) {
+        verifyWorkflowNode(appSpec, workflowSpec, n);
+      }
+    }
+  }
+
+  private void verifyWorkflowAction(ApplicationSpecification appSpec, WorkflowNode node) {
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    ScheduleProgramInfo program = actionNode.getProgram();
     switch (program.getProgramType()) {
       case MAPREDUCE:
-        if (!appSpec.getMapReduce().containsKey(program.getProgramName())) {
-          throw new RuntimeException(String.format("MapReduce program '%s' is not configured with the Application.",
-                                                   program.getProgramName()));
-        }
+        Preconditions.checkArgument(appSpec.getMapReduce().containsKey(program.getProgramName()),
+                                    String.format("MapReduce program '%s' is not configured with the Application.",
+                                                  program.getProgramName()));
         break;
       case SPARK:
-        if (!appSpec.getSpark().containsKey(program.getProgramName())) {
-          throw new RuntimeException(String.format("Spark program '%s' is not configured with the Application.",
-                                                   program.getProgramName()));
-        }
+        Preconditions.checkArgument(appSpec.getSpark().containsKey(program.getProgramName()),
+                                    String.format("Spark program '%s' is not configured with the Application.",
+                                                  program.getProgramName()));
         break;
       case CUSTOM_ACTION:
         // no-op

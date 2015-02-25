@@ -65,10 +65,10 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         break;
 
       case NAMESPACE:
-        if (programIdParts.length != 1) {
+        if (programIdParts.length != 0) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getNamespacePreferences(programIdParts[0], resolved)));
+        printStream.print(joinMapEntries(client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved)));
         break;
 
       case APP:

@@ -16,14 +16,14 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
-import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -35,7 +35,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- *
+ * Codec to serialize and deserialize {@link WorkflowNode}
  */
 final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
   @Override
@@ -46,21 +46,34 @@ final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
 
     switch (src.getType()) {
       case ACTION:
-        WorkflowActionNode actionNode = (WorkflowActionNode) src;
-        jsonObj.add("program", context.serialize(actionNode.getProgram(), ScheduleProgramInfo.class));
+        serializeActionNode(src, jsonObj, context);
         break;
       case FORK:
-        WorkflowForkNode forkNode = (WorkflowForkNode) src;
-        jsonObj.add("branches", serializeList(forkNode.getBranches(), context, WorkflowForkBranch.class));
+        serializeForkNode(src, jsonObj, context);
         break;
       case CONDITION:
         // no-op
         break;
       default:
-        // no-op
+        // no-ops
         break;
     }
     return jsonObj;
+  }
+
+  private void serializeActionNode(WorkflowNode node, JsonObject jsonObj, JsonSerializationContext context) {
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    jsonObj.add("program", context.serialize(actionNode.getProgram(), ScheduleProgramInfo.class));
+    if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+      jsonObj.add("actionSpecification", context.serialize(actionNode.getActionSpecification(),
+                                                           WorkflowActionSpecification.class));
+    }
+  }
+
+  private void serializeForkNode(WorkflowNode node, JsonObject jsonObj, JsonSerializationContext context) {
+    WorkflowForkNode forkNode = (WorkflowForkNode) node;
+    Type type = new TypeToken<List<List<WorkflowNode>>>() { }.getType();
+    jsonObj.add("branches", context.serialize(forkNode.getBranches(), type));
   }
 
   @Override
@@ -68,21 +81,16 @@ final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
-    List<WorkflowForkBranch> branches = null;
-    ScheduleProgramInfo program = null;
-    WorkflowNode node = null;
-
     String nodeId = context.deserialize(jsonObj.get("nodeId"), String.class);
     WorkflowNodeType type = context.deserialize(jsonObj.get("nodeType"), WorkflowNodeType.class);
 
+    WorkflowNode node = null;
     switch (type) {
       case ACTION:
-        program = context.deserialize(jsonObj.get("program"), ScheduleProgramInfo.class);
-        node = new WorkflowActionNode(nodeId, program);
+        node = createActionNode(nodeId, jsonObj, context);
         break;
       case FORK:
-        branches =  deserializeList(jsonObj.get("branches"), context, WorkflowForkBranch.class);
-        node = new WorkflowForkNode(nodeId, branches);
+        node = createForkNode(nodeId, jsonObj, context);
         break;
       case CONDITION:
         // no-op
@@ -91,5 +99,22 @@ final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
         break;
     }
     return node;
+  }
+
+  private WorkflowNode createActionNode(String nodeId, JsonObject jsonObj, JsonDeserializationContext context) {
+    ScheduleProgramInfo program = context.deserialize(jsonObj.get("program"), ScheduleProgramInfo.class);
+    if (program.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+      WorkflowActionSpecification actionSpecification = context.deserialize(jsonObj.get("actionSpecification"),
+                                                                            WorkflowActionSpecification.class);
+      return new WorkflowActionNode(nodeId, actionSpecification);
+    } else {
+      return new WorkflowActionNode(nodeId, program);
+    }
+  }
+
+  private WorkflowNode createForkNode(String nodeId, JsonObject jsonObj, JsonDeserializationContext context) {
+    Type type = new TypeToken<List<List<WorkflowNode>>>() { }.getType();
+    List<List<WorkflowNode>> branches =  context.deserialize(jsonObj.get("branches"), type);
+    return new WorkflowForkNode(nodeId, branches);
   }
 }

@@ -22,21 +22,22 @@ import java.util.List;
  * Represents the FORK node in the {@link Workflow}
  */
 public class WorkflowForkNode extends WorkflowNode {
-  private final List<WorkflowForkBranch> branches;
+  private final List<List<WorkflowNode>> branches;
 
-  public WorkflowForkNode(String nodeId, List<WorkflowForkBranch> branches) {
+  public WorkflowForkNode(String nodeId, List<List<WorkflowNode>> branches) {
     super(nodeId, WorkflowNodeType.FORK);
     this.branches = branches;
   }
 
-  public List<WorkflowForkBranch> getBranches() {
+  public List<List<WorkflowNode>> getBranches() {
     return branches;
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("WorkflowForkNode{");
-    sb.append("branches=").append(branches);
+    sb.append("nodeId=").append(nodeId);
+    sb.append(", branches=").append(branches);
     sb.append('}');
     return sb.toString();
   }

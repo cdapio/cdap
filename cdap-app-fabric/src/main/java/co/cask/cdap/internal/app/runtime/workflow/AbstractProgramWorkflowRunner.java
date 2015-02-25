@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -112,6 +113,17 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     // Execute the program.
     final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void init(ProgramController.State state) {
+        if (state == ProgramController.State.STOPPED) {
+          stopped();
+        }
+        if (state == ProgramController.State.ERROR) {
+          error(controller.getFailureCause());
+        }
+      }
+
       @Override
       public void stopped() {
         completion.set(context);
@@ -132,6 +144,9 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
         throw (Exception) cause;
       }
       throw Throwables.propagate(cause);
+    } catch (InterruptedException e) {
+      Futures.getUnchecked(controller.stop());
+      throw Throwables.propagate(e);
     }
   }
 }

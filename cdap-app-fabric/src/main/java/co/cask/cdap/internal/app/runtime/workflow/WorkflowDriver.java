@@ -22,7 +22,6 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -53,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -138,7 +138,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           spark, spark, SchedulableProgramType.SPARK));
         break;
       case CUSTOM_ACTION:
-        actionSpec = workflowSpec.getCustomActionMap().get(actionInfo.getProgramName());
+        actionSpec = node.getActionSpecification();
         break;
       default:
         LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
@@ -160,12 +160,48 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
       // this will always rethrow
-      Throwables.propagateIfPossible(t, Exception.class);
+      throw Throwables.propagate(t.getCause());
     } finally {
       // Destroy the action.
       destroy(actionSpec, action);
     }
     status.remove(node.getNodeId());
+  }
+
+  private void executeWorkflowFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
+                                   final InstantiatorFactory instantiator,
+                                   final ClassLoader classLoader) throws Exception {
+    ExecutorService executorService = Executors.newFixedThreadPool(fork.getBranches().size());
+    CompletionService<String> completionService = new ExecutorCompletionService<String>(executorService);
+    try {
+      for (final List<WorkflowNode> branch : fork.getBranches()) {
+        completionService.submit(new Callable<String>() {
+          @Override
+          public String call() throws Exception {
+            Iterator<WorkflowNode> iterator = branch.iterator();
+            while (!Thread.currentThread().isInterrupted() && iterator.hasNext() && running) {
+              executeNode(appSpec, iterator.next(), instantiator, classLoader);
+            }
+            return branch.toString();
+          }
+        });
+      }
+
+      for (int i = 0; i < fork.getBranches().size(); i++) {
+        Future<String> f = completionService.take();
+        try {
+          String branchInfo = f.get();
+          LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
+        } catch (ExecutionException ex) {
+          LOG.info("Exception occurred in the execution of the fork node {}", fork);
+          throw ex;
+        }
+      }
+
+    } finally {
+      executorService.shutdownNow();
+      executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+    }
   }
 
   private void executeNode(final ApplicationSpecification appSpec, WorkflowNode node,
@@ -176,40 +212,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         executeWorkflowAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader);
         break;
       case FORK:
-        WorkflowForkNode fork = (WorkflowForkNode) node;
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        CompletionService<String> completionService =
-          new ExecutorCompletionService<String>(executorService);
-
-        for (final WorkflowForkBranch branch : fork.getBranches()) {
-          completionService.submit(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-              Iterator<WorkflowNode> iterator = branch.getNodes().iterator();
-              while (!Thread.currentThread().isInterrupted() && iterator.hasNext() && running) {
-                executeNode(appSpec, iterator.next(), instantiator, classLoader);
-              }
-              return branch.toString();
-            }
-          });
-        }
-
-        try {
-          for (int i = 0; i < fork.getBranches().size(); i++) {
-            Future<String> f = completionService.take();
-            try {
-              LOG.info("Execution of branch {} for fork {} completed", f.get(), fork);
-            } catch (ExecutionException ex) {
-              LOG.info("Exception occurred in the execution of the fork node {}", fork);
-              throw ex;
-            }
-          }
-
-        } finally {
-          executorService.shutdown();
-          executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
-        }
-
+        executeWorkflowFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
+        break;
+      case CONDITION:
+        // no-op
         break;
       default:
         break;

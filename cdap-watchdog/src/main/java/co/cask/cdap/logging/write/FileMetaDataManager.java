@@ -17,9 +17,9 @@
 package co.cask.cdap.logging.write;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
@@ -53,7 +53,7 @@ public final class FileMetaDataManager {
 
   private final LocationFactory locationFactory;
 
-  private final Transactional<DatasetContext<OrderedTable>, OrderedTable> mds;
+  private final Transactional<DatasetContext<Table>, Table> mds;
 
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient,
                              LocationFactory locationFactory) {
@@ -64,9 +64,9 @@ public final class FileMetaDataManager {
           return new DefaultTransactionExecutor(txClient, txAwares);
         }
       },
-      new Supplier<DatasetContext<OrderedTable>>() {
+      new Supplier<DatasetContext<Table>>() {
         @Override
-        public DatasetContext<OrderedTable> get() {
+        public DatasetContext<Table> get() {
           try {
             return DatasetContext.of(tableUtil.getMetaTable());
           } catch (Exception e) {
@@ -90,9 +90,9 @@ public final class FileMetaDataManager {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               loggingContext.getLogPartition(), startTimeMs, location.toURI());
 
-    mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Void>() {
+    mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
-      public Void apply(DatasetContext<OrderedTable> ctx) throws Exception {
+      public Void apply(DatasetContext<Table> ctx) throws Exception {
         ctx.get().put(getRowKey(loggingContext),
                       Bytes.toBytes(startTimeMs),
                       Bytes.toBytes(location.toURI().toString()));
@@ -107,17 +107,17 @@ public final class FileMetaDataManager {
    * @return Sorted map containing key as start time, and value as log file.
    */
   public SortedMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, SortedMap<Long, Location>>() {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<Long, Location>>() {
       @Override
-      public SortedMap<Long, Location> apply(DatasetContext<OrderedTable> ctx) throws Exception {
-        Map<byte[], byte[]> cols = ctx.get().get(getRowKey(loggingContext));
+      public SortedMap<Long, Location> apply(DatasetContext<Table> ctx) throws Exception {
+        Row cols = ctx.get().get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           return ImmutableSortedMap.of();
         }
 
         SortedMap<Long, Location> files = Maps.newTreeMap();
-        for (Map.Entry<byte[], byte[]> entry : cols.entrySet()) {
+        for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
           files.put(Bytes.toLong(entry.getKey()), locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
         }
         return files;
@@ -132,9 +132,9 @@ public final class FileMetaDataManager {
    * @return total number of columns deleted.
    */
   public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Integer>() {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Integer>() {
       @Override
-      public Integer apply(DatasetContext<OrderedTable> ctx) throws Exception {
+      public Integer apply(DatasetContext<Table> ctx) throws Exception {
         byte [] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;

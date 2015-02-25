@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.workflow;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkBranch;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
@@ -35,73 +34,67 @@ import javax.annotation.Nullable;
  */
 public class DefaultWorkflowForkConfigurer<T> implements WorkflowForkConfigurer<T> {
 
-  private final WorkflowForkConfigurer<T> parentForkConfigurer;
+  private final T parentForkConfigurer;
   private final WorkflowConfigurer workflowConfigurer;
-  private final String forkNodeId;
 
-  private final List<WorkflowForkBranch> branches = Lists.newArrayList();
+  private final List<List<WorkflowNode>> branches = Lists.newArrayList();
   private List<WorkflowNode> currentBranch;
 
   public DefaultWorkflowForkConfigurer(WorkflowConfigurer workflowConfigurer,
-                                       @Nullable WorkflowForkConfigurer<T> parentForkConfigurer,
-                                       String forkNodeId) {
+                                       @Nullable T parentForkConfigurer) {
     this.parentForkConfigurer = parentForkConfigurer;
     this.workflowConfigurer = workflowConfigurer;
     currentBranch = Lists.newArrayList();
-    this.forkNodeId = forkNodeId;
   }
 
   @Override
   public WorkflowForkConfigurer<T> addMapReduce(String mapReduce) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowActionNode
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowActionNode
       (mapReduce, SchedulableProgramType.MAPREDUCE));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<T> addSpark(String spark) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowActionNode
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowActionNode
       (spark, SchedulableProgramType.CUSTOM_ACTION));
     return this;
   }
 
   @Override
   public WorkflowForkConfigurer<T> addAction(WorkflowAction action) {
-    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).getWorkflowCustomActionNode(action));
+    currentBranch.add(((DefaultWorkflowConfigurer) workflowConfigurer).createWorkflowCustomActionNode(action));
     return this;
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowForkConfigurer<WorkflowForkConfigurer<T>> fork() {
-    String forkNodeId = ((DefaultWorkflowConfigurer) workflowConfigurer).getNodeIdProvider().getUniqueNodeId();
     return new DefaultWorkflowForkConfigurer<WorkflowForkConfigurer<T>>
-        (workflowConfigurer, (WorkflowForkConfigurer<WorkflowForkConfigurer<T>>) this, forkNodeId);
+        (workflowConfigurer, (WorkflowForkConfigurer<T>) this);
   }
 
   @Override
   public WorkflowForkConfigurer<T> also() {
-    branches.add(new WorkflowForkBranch(currentBranch));
+    branches.add(currentBranch);
     currentBranch = Lists.newArrayList();
     return this;
   }
 
-  public void addWorkflowForkNode(String forkNodeId, List<WorkflowForkBranch> branch) {
-    currentBranch.add(new WorkflowForkNode(forkNodeId, branch));
+  public void addWorkflowForkNode(List<List<WorkflowNode>> branch) {
+    currentBranch.add(new WorkflowForkNode(null, branch));
   }
 
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
   public T join() {
-    branches.add(new WorkflowForkBranch(currentBranch));
+    branches.add(currentBranch);
     if (parentForkConfigurer == null) {
-      ((DefaultWorkflowConfigurer) workflowConfigurer).addWorkflowForkNode(forkNodeId, branches);
-      return null;
+      ((DefaultWorkflowConfigurer) workflowConfigurer).addWorkflowForkNode(branches);
     } else {
-      ((DefaultWorkflowForkConfigurer<WorkflowForkConfigurer<T>>) parentForkConfigurer)
-        .addWorkflowForkNode(forkNodeId, branches);
-      return (T) parentForkConfigurer;
+      ((DefaultWorkflowForkConfigurer<WorkflowForkConfigurer<T>>) parentForkConfigurer).addWorkflowForkNode(branches);
     }
+    return parentForkConfigurer;
   }
 }
