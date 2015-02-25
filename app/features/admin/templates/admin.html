@@ -69,7 +69,27 @@
               Create Namespace
             </a>
           </li>
-          <my-tree-view data-model="nsList"></my-tree-view>
+          <li ng-repeat="ns in nsList">
+            <a href=""
+               ng-click="submenu.perNs[ns.name]=!submenu.perNs[ns.name]">
+              <span ng-bind="ns.name"></span>
+            </a>
+            <ul class="list-unstyled" ng-show="submenu.perNs[ns.name]">
+<!--               <li>
+                <a ui-sref-active="current"
+                   ui-sref="admin.namespace.detail.metadata({nsadmin: ns.name})">
+                  Metadata
+                </a>
+              </li> -->
+              <li>
+                <a ui-sref-active="current"
+                   ui-sref="admin.namespace.detail.apps({nsadmin: ns.name})">
+                  Apps
+                </a>
+              </li>
+            </ul>
+          </li>
+
         </ul>
       </li>
     </ul>
