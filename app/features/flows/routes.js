@@ -89,8 +89,9 @@ angular.module(PKG.name + '.feature.flows')
                 }
               })
               .state('flows.detail.runs.detail.log', {
-                url: '/log',
-                templateUrl: '/assets/features/flows/templates/tabs/runs/log.html',
+                url: '/logs?filter',
+                reloadOnSearch: false,
+                template: '<my-log-viewer data-model="logs"></my-log-viewer>',
                 ncyBreadcrumb: {
                   skip: true
                 }
