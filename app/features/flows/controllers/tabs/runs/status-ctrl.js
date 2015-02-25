@@ -57,8 +57,6 @@ angular.module(PKG.name + '.feature.flows')
         });
       });
 
-
-
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
@@ -70,6 +68,5 @@ angular.module(PKG.name + '.feature.flows')
           }
         });
       });
-
 
   });
