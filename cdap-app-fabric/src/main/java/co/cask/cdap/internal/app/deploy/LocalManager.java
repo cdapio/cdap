@@ -30,6 +30,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
+import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployCleanupStage;
@@ -38,6 +39,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.VerificationStage;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
@@ -66,6 +68,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final StreamAdmin streamAdmin;
   private final DatasetFramework datasetFramework;
   private final ExploreFacade exploreFacade;
+  private final Scheduler scheduler;
   private final boolean exploreEnabled;
 
   private final AdapterService adapterService;
@@ -80,7 +83,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
                       StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                      AdapterService adapterService,
+                      Scheduler scheduler, AdapterService adapterService,
                       @Assisted ProgramTerminator programTerminator) {
 
     this.configuration = configuration;
@@ -95,6 +98,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
+    this.scheduler = scheduler;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
   }
@@ -107,6 +111,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
+    pipeline.addLast(new CreateSchedulesStage(store, scheduler));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));

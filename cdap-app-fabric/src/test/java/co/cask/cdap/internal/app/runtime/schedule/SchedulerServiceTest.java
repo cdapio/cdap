@@ -127,7 +127,7 @@ public class SchedulerServiceTest {
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
   }
 
-  private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) {
+  private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) throws Exception {
     Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
                                                                       "Schedule1"));
     Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,

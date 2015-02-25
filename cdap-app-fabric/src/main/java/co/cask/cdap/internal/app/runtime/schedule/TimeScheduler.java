@@ -21,12 +21,12 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.quartz.CronScheduleBuilder;
@@ -34,7 +34,6 @@ import org.quartz.Job;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
-import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
@@ -67,25 +66,27 @@ final class TimeScheduler implements Scheduler {
     this.preferencesStore = preferencesStore;
   }
 
-  void start() throws SchedulerException {
+  void start() throws org.quartz.SchedulerException {
     scheduler = schedulerSupplier.get();
     scheduler.setJobFactory(createJobFactory(storeFactory.create()));
     scheduler.start();
   }
 
-  void stop() throws SchedulerException {
+  void stop() throws org.quartz.SchedulerException {
     if (scheduler != null) {
       scheduler.shutdown();
     }
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
+    throws SchedulerException {
     schedule(programId, programType, ImmutableList.of(schedule));
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
     checkInitialized();
     Preconditions.checkNotNull(schedules);
 
@@ -96,8 +97,8 @@ final class TimeScheduler implements Scheduler {
       .build();
     try {
       scheduler.addJob(job, true);
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
     for (Schedule schedule : schedules) {
       Preconditions.checkArgument(schedule instanceof TimeSchedule);
@@ -115,14 +116,15 @@ final class TimeScheduler implements Scheduler {
         .build();
       try {
         scheduler.scheduleJob(trigger);
-      } catch (SchedulerException e) {
-        throw Throwables.propagate(e);
+      } catch (org.quartz.SchedulerException e) {
+        throw new SchedulerException(e);
       }
     }
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     checkInitialized();
 
     List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
@@ -132,14 +134,15 @@ final class TimeScheduler implements Scheduler {
                                                         trigger.getNextFireTime().getTime());
         scheduledRuntimes.add(runtime);
       }
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
     return scheduledRuntimes;
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     checkInitialized();
 
     List<String> scheduleIds = Lists.newArrayList();
@@ -147,35 +150,45 @@ final class TimeScheduler implements Scheduler {
       for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
         scheduleIds.add(trigger.getKey().getName());
       }
-    }   catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    }   catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
     return scheduleIds;
   }
 
 
   @Override
-  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
       scheduler.pauseTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
   @Override
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
       scheduler.resumeTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
   @Override
-  public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws NotFoundException, SchedulerException {
+    deleteSchedule(program, programType, schedule.getName());
+    schedule(program, programType, schedule);
+  }
+
+  @Override
+  public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
       Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
@@ -187,23 +200,25 @@ final class TimeScheduler implements Scheduler {
       if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
         scheduler.deleteJob(jobKey);
       }
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
   @Override
-  public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
+  public void deleteSchedules(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     checkInitialized();
     try {
       scheduler.deleteJob(getJobKey(program, programType));
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
   @Override
-  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws SchedulerException {
     checkInitialized();
     try {
       Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(getScheduleId(program, programType,
@@ -219,8 +234,8 @@ final class TimeScheduler implements Scheduler {
         default:
           return ScheduleState.SCHEDULED;
       }
-    } catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
@@ -262,7 +277,8 @@ final class TimeScheduler implements Scheduler {
   private JobFactory createJobFactory(final Store store) {
     return new JobFactory() {
       @Override
-      public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler) throws SchedulerException {
+      public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler)
+        throws org.quartz.SchedulerException {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
@@ -271,7 +287,7 @@ final class TimeScheduler implements Scheduler {
           try {
             return jobClass.newInstance();
           } catch (Exception e) {
-            throw new SchedulerException("Failed to create instance of " + jobClass, e);
+            throw new org.quartz.SchedulerException("Failed to create instance of " + jobClass, e);
           }
         }
       }

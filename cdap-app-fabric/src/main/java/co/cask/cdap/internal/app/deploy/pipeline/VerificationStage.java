@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
 import co.cask.cdap.internal.app.verification.StreamVerification;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -166,6 +167,19 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         default:
           throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
                                                    program.getProgramName(), program.getProgramType()));
+      }
+    }
+
+    // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      Schedule schedule = entry.getValue().getSchedule();
+      if (schedule instanceof StreamSizeSchedule) {
+        StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+        String streamName = streamSizeSchedule.getStreamName();
+        if (!specification.getStreams().containsKey(streamName)) {
+          throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
+                                                   streamSizeSchedule.getName(), streamName));
+        }
       }
     }
 
