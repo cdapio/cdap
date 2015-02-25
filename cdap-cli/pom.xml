@@ -116,6 +116,10 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <!-- Override to not package non-existent etc dir for cdap-cli -->
+      <properties>
+        <package.dirs>opt</package.dirs>
+      </properties>
       <build>
         <plugins>
           <plugin>
