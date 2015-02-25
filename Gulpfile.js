@@ -92,7 +92,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-strap/dist/modules/select.js',
       './bower_components/angular-strap/dist/modules/select.tpl.js',
       './bower_components/angular-breadcrumb/release/angular-breadcrumb.js',
-      './bower_components/angular-recursion/angular-recursion.js',
 
       './bower_components/ngstorage/ngStorage.js',
       './bower_components/angular-loading-bar/build/loading-bar.js',
