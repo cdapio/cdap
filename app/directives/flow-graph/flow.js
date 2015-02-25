@@ -9,7 +9,7 @@ module.factory('dagreD3', function ($window) {
 });
 
 
-module.directive('myFlowGraph', function (d3, dagreD3, $state) {
+module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
   return {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
@@ -35,6 +35,8 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
         var edges = scope.model.edges;
 
         var instanceMap = {};
+
+        var bytesFilter = $filter('bytes');
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
@@ -94,7 +96,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           parent.insert('text')
             .attr('x', -73)
             .attr('y', 5)
-            .text(formatNumber(scope.model.metrics[node.label]))
+            .text(bytesFilter(scope.model.metrics[node.label]))
             .attr('class', 'flow5shapes flowlet-event-count');
 
           node.intersect = function(point) {
@@ -129,7 +131,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           parent.insert('text')
             .attr('x', -73)
             .attr('y', 5)
-            .text(formatNumber(scope.model.metrics[node.label]))
+            .text(bytesFilter(scope.model.metrics[node.label]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -139,17 +141,6 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           return shapeSvg;
         };
 
-        function formatNumber (num) {
-          if (!num) {
-            return '0 K';
-          }
-          else if (num < 999999) {
-            return (parseFloat(num)/1000).toFixed(1) + ' K';
-          }
-          else {
-            return (parseFloat(num)/1000000).toFixed(1) + ' M';
-          }
-        }
 
         // Set up an SVG group so that we can translate the final graph and tooltip.
         var svg = d3.select('svg').attr('fill', 'white');
