@@ -49,11 +49,8 @@ angular.module(PKG.name + '.feature.flows')
             method: 'POST'
           })
             .then(function (data) {
-
               $scope.data.metrics[node.name] = data.series[0] ? data.series[0].data[0].value : 0;
-
             });
-
         });
       });
 
