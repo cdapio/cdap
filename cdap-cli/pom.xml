@@ -170,23 +170,6 @@
                   <goal>run</goal>
                 </goals>
               </execution>
-              <!-- Override parent to not generate init.d service script -->
-              <execution>
-                <id>rename-rpm-service</id>
-                <phase></phase>
-              </execution>
-              <execution>
-                <id>rpm-init-permission</id>
-                <phase></phase>
-              </execution>
-              <execution>
-                <id>renmae-deb-service</id>
-                <phase></phase>
-              </execution>
-              <execution>
-                <id>deb-init-permission</id>
-                <phase></phase>
-              </execution>
             </executions>
           </plugin>
         </plugins>
@@ -206,6 +189,17 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <!-- Override parent to not generate init.d service script -->
+              <execution>
+                <id>rename-rpm-service</id>
+                <phase></phase>
+              </execution>
+              <execution>
+                <id>rpm-init-permission</id>
+                <phase></phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -224,6 +218,17 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <!-- Override parent to not generate init.d service script -->
+              <execution>
+                <id>rename-deb-service</id>
+                <phase></phase>
+              </execution>
+              <execution>
+                <id>deb-init-permission</id>
+                <phase></phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
