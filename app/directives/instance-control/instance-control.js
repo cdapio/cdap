@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
           scope.myDataSrc.request({
             method: 'PUT',
             _cdapPathV2: scope.basePath + '/instances',
-            data: {'instances': scope.model.requested}
+            body: {'instances': scope.model.requested}
           }).then(function success (response) {
             scope.model.provisioned = scope.model.requested;
           }, function error (err) {
