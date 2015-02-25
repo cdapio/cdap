@@ -1,4 +1,3 @@
-<div class="cdap-subnav">
 <div ncy-breadcrumb></div>
 <h2>
   <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
@@ -27,6 +26,7 @@
   </div>
 </div>
 
+<div class="cdap-subnav-end"></div>
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.runs" ui-sref-opts="{reload: true}" role="tab" data-toggle="tab">Runs</a>
@@ -44,7 +44,6 @@
     <a ui-sref="flows.detail.resources" role="tab" data-toggle="tab">Resources</a>
   </li> -->
 </ul>
-</div>
 
 <br />
 <ui-view role="tabpanel"/>
