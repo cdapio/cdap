@@ -32,6 +32,7 @@ import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +63,15 @@ public abstract class AbstractTable implements Table, TransactionAware {
     return get.getColumns().isEmpty() ?
         get(get.getRow()) :
         get(get.getRow(), get.getColumns().toArray(new byte[get.getColumns().size()][]));
+  }
+
+  @Override
+  public List<Row> get(List<Get> gets) {
+    List<Row> results = Lists.newArrayListWithCapacity(gets.size());
+    for (Get get : gets) {
+      results.add(get(get));
+    }
+    return results;
   }
 
   @Override

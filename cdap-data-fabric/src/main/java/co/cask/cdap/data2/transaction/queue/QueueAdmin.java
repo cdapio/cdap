@@ -28,11 +28,6 @@ import javax.annotation.Nullable;
 public interface QueueAdmin {
 
   /**
-   * Deletes all entries for all queues.
-   */
-  void dropAll() throws Exception;
-
-  /**
    * Deletes all queues in a namespace
    * @param namespaceId the namespace to delete flows in
    */

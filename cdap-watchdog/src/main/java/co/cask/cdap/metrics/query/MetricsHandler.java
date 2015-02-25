@@ -236,13 +236,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
     Collection<String> result = Lists.newArrayList();
     for (TagValue tag : nextTags) {
-      // todo: return nulls in some form to, otherwise it is hard to explore when not all tags of aggregation
-      //       were present in emitted metric
-      if (tag.getValue() == null) {
-        continue;
-      }
+      // for now, if tag value is null, we use ANY_TAG_VALUE as returned for convenience: this allows to easy build UI
+      // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
+      String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
       String name = tagNameToHuman(tag);
-      String tagValue = name  + TAG_DELIM + tag.getValue();
+      String tagValue = name  + TAG_DELIM + value;
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
     }

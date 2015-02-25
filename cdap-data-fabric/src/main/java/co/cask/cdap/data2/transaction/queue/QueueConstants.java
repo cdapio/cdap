@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,9 +28,7 @@ public final class QueueConstants {
     public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
   }
 
-  public static final String QUEUE_TABLE_PREFIX = "queue";
-  public static final String STREAM_TABLE_PREFIX = "stream";
-  public static final String QUEUE_CONFIG_TABLE_NAME = QUEUE_TABLE_PREFIX + ".config";
+  public static final String QUEUE_CONFIG_TABLE_NAME = QueueType.QUEUE.toString() + ".config";
 
   public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
   public static final int DEFAULT_QUEUE_TABLE_PRESPLITS = 16;
@@ -45,7 +43,20 @@ public final class QueueConstants {
    * whether a queue is a queue or a stream.
    */
   public enum QueueType {
-    QUEUE, STREAM
+
+    QUEUE("queue"),
+    STREAM("stream");
+
+    private final String string;
+
+    QueueType(String string) {
+      this.string = string;
+    }
+
+    @Override
+    public String toString() {
+      return string;
+    }
   }
 
   private QueueConstants() {
