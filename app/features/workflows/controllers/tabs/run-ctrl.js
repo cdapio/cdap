@@ -3,9 +3,10 @@ angular.module(PKG.name + '.feature.workflows')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
 
+    // Workflows doesn't have a log yet.
+    // So instead of having one radio button always selected I have removed all.
     // $scope.runTabs = ['flow', 'data', 'configuration', 'log'];
-    $scope.runTabs = ['flow', 'log'];
-
+    $scope.runTabs = ['status'];
     $scope.runs = null;
     $scope.currentRun = null;
 
@@ -48,7 +49,7 @@ angular.module(PKG.name + '.feature.workflows')
           toState = $state.current;
         } else {
           // Else default to status state if navigating from parent.
-          toState = 'workflows.detail.runs.detail.flow';
+          toState = 'workflows.detail.runs.detail.status';
         }
         $timeout(function() {
           $state.go(toState, {
