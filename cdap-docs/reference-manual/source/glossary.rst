@@ -14,7 +14,7 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services and Workers that read and write through the data
+      A collection of Programs and Services that read and write through the data
       abstraction layer in CDAP.
 
    Stream
