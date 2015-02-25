@@ -84,7 +84,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a custom action to the {@link Workflow}
+   * Adds a custom action to the {@link Workflow}.
    * @param action the action to be added
    */
   protected final void addAction(WorkflowAction action) {
@@ -92,7 +92,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a MapReduce program to the {@link Workflow}
+   * Adds a MapReduce program to the {@link Workflow}.
    * @param mapReduce the name of MapReduce program to be added
    */
   protected final void addMapReduce(String mapReduce) {
@@ -100,7 +100,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a Spark program to the {@link Workflow}
+   * Adds a Spark program to the {@link Workflow}.
    * @param spark the name of the Spark program to be added
    */
   protected final void addSpark(String spark) {
@@ -108,8 +108,7 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
-   * Adds a fork to the {@link Workflow}
-   *
+   * Adds a fork to the {@link Workflow}.
    * @return the {@link WorkflowForkConfigurer} to configure actions in the fork
    */
   protected final WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
