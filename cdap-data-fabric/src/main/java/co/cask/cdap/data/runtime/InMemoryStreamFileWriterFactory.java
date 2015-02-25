@@ -32,7 +32,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.Iterator;
@@ -62,7 +61,7 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
 
   @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
-    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getName()));
+    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId()));
     final List<TransactionAware> txAwares = Lists.newArrayList();
     if (producer instanceof TransactionAware) {
       txAwares.add((TransactionAware) producer);
@@ -86,9 +85,7 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
 
       @Override
       public void close() throws IOException {
-        if (producer instanceof Closeable) {
-          ((Closeable) producer).close();
-        }
+        producer.close();
       }
 
       @Override

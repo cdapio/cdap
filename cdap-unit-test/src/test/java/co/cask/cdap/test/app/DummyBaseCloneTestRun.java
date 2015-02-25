@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ public class DummyBaseCloneTestRun extends TestFrameworkTestBase {
 
       // Since this test can runs in test suite that may contains other tests,
       // use intersect to verify to avoid seeing tables created by other tests
-      Set<String> expected = Sets.newHashSet("cdap_stream_who", "cdap_user_whom");
+      Set<String> expected = Sets.newHashSet("cdap_stream_default_who", "cdap_default_whom");
       Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();

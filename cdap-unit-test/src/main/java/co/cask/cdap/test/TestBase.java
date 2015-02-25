@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -32,7 +33,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -43,8 +43,11 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -67,6 +70,7 @@ import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -76,9 +80,7 @@ import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
-import co.cask.cdap.test.internal.ProcedureClientFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
-import co.cask.cdap.test.internal.TestMetricsCollectionService;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -155,7 +157,6 @@ public class TestBase {
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
-  @Deprecated
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     TestManager testManager = getTestManager();
@@ -170,7 +171,6 @@ public class TestBase {
    *
    * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
-  @Deprecated
   protected void clear() throws Exception {
     TestManager testManager = getTestManager();
     testManager.clear();
@@ -244,14 +244,18 @@ public class TestBase {
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(StreamHandlerV2.class).in(Scopes.SINGLETON);
+          bind(StreamFetchHandlerV2.class).in(Scopes.SINGLETON);
           bind(StreamHandler.class).in(Scopes.SINGLETON);
+          bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
         }
       },
-      new TestMetricsClientModule(),
+      // todo: do we need handler?
       new MetricsHandlerModule(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
@@ -259,13 +263,14 @@ public class TestBase {
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
+        @SuppressWarnings("deprecation")
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
           install(new FactoryModuleBuilder().implement(ProcedureClient.class, DefaultProcedureClient.class)
-                    .build(ProcedureClientFactory.class));
+                    .build(co.cask.cdap.test.internal.ProcedureClientFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -286,9 +291,7 @@ public class TestBase {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(cConf,  Namespace.USER));
+    datasetFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -299,6 +302,8 @@ public class TestBase {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
     testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
+    // we use MetricStore directly, until RuntimeStats API changes
+    RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -374,14 +379,6 @@ public class TestBase {
     }
   }
 
-  private static final class TestMetricsClientModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-      bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
-    }
-  }
-
   /**
    * Deploys {@link DatasetModule}.
    *
@@ -391,7 +388,6 @@ public class TestBase {
    * @param datasetModule module class
    * @throws Exception
    */
-  @Deprecated
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
     TestManager testManager = getTestManager();
@@ -409,7 +405,6 @@ public class TestBase {
    * @param props properties
    * @param <T> type of the dataset admin
    */
-  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
@@ -426,7 +421,6 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
-  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
@@ -439,7 +433,6 @@ public class TestBase {
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
-  @Deprecated
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getDataset(datasetInstanceName);
@@ -448,7 +441,6 @@ public class TestBase {
   /**
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
-  @Deprecated
   protected final Connection getQueryClient() throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getQueryClient();

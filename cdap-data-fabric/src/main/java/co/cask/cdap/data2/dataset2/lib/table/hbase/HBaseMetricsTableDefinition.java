@@ -20,8 +20,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -36,7 +37,6 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HBase based implementation for {@link MetricsTable}.
@@ -59,6 +59,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
+      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
+      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .properties(properties.getProperties())
       .build();
   }
@@ -72,32 +74,6 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
-  }
-
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
-    final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
-
-    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
-    hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    // to support read-less increments, we need to allow storing many versions: each increment is a put to the same cell
-    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
-    // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
-    // cleaned up. See IncrementHandler.CompactionBound.
-    columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
-
-    long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
-    if (ttlMillis > 0) {
-      // the IncrementHandler coprocessor reads this value and performs TTL
-      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, Long.toString(ttlMillis));
-    }
-
-    final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-    tableDescriptor.addFamily(columnDescriptor);
-    AbstractHBaseDataSetAdmin.CoprocessorJar cpJar =
-      HBaseOrderedTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
-    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName(),
-                                   new Path(cpJar.getJarLocation().toURI()), Coprocessor.PRIORITY_USER, null);
-    return tableDescriptor;
+    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.queue;
 
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -81,23 +82,38 @@ public final class QueueName {
     return String.format("queue:///%s/%s/%s/", namespace, app, flow);
   }
 
-  public static String prefixForNamespace(String namespace) {
+  // Note that like above the trailing '/' in the prefix for namespace is crucial,
+  // otherwise this could match namespaces of ns, ns1, nsx, etc.
+  public static String prefixForNamespacedQueue(String namespace) {
     // queue:///namespace/
-    // Note that like above the trailing / is crucial, otherwise this could match namespaces of ns, ns1, nsx, etc.
     return String.format("queue:///%s/", namespace);
+  }
+
+  public static String prefixForNamedspacedStream(String namespace) {
+    // stream:///namespace/
+    return String.format("stream:///%s/", namespace);
   }
 
   /**
    * Generates an QueueName for the stream.
    *
-   * @param stream  connected to flow
+   * @param namespace of the stream
+   * @param stream name of the stream
    * @return An {@link QueueName} with schema as stream
    */
-  public static QueueName fromStream(String stream) {
-    URI uri = URI.create(String.format("stream:///%s", stream));
+  public static QueueName fromStream(String namespace, String stream) {
+    // The old stream admin uses full URI of queue name as the name
+    URI uri = URI.create(String.format("stream:///%s/%s", namespace, stream));
     return new QueueName(uri);
   }
 
+  public static QueueName fromStream(Id.Stream streamId) {
+    return fromStream(streamId.getNamespaceId(), streamId.getName());
+  }
+
+  public Id.Stream toStreamId() {
+    return Id.Stream.from(getFirstComponent(), getSecondComponent());
+  }
 
   /**
    * Called from static method {@code QueueName#from(URI)} and {@code QueueName#from(bytes[])}.

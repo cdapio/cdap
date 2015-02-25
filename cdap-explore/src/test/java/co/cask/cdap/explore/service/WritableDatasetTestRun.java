@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.datasets.KeyExtendedStructValueTableDefiniti
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.KeyValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.WritableKeyStructValueTableDefinition;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
@@ -42,22 +43,31 @@ import java.net.URL;
  */
 @Category(XSlowTests.class)
 public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
+
+  private static final Id.DatasetModule keyExtendedStructValueTable =
+    Id.DatasetModule.from(NAMESPACE_ID, "keyExtendedStructValueTable");
+  private static final Id.DatasetModule kvTable = Id.DatasetModule.from(NAMESPACE_ID, "kvTable");
+  private static final Id.DatasetModule writableKeyStructValueTable =
+    Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
+  private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
+  private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
+
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    initialize();
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 
-  private static void initKeyValueTable(String tableName, boolean addData) throws Exception {
+  private static void initKeyValueTable(Id.DatasetInstance datasetInstanceId, boolean addData) throws Exception {
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", tableName, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", datasetInstanceId, DatasetProperties.EMPTY);
     if (!addData) {
       return;
     }
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset(tableName, DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx = transactionManager.startShort(100);
@@ -81,13 +91,13 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test
   public void writeIntoItselfTest() throws Exception {
     try {
-      initKeyValueTable("my_table", true);
+      initKeyValueTable(MY_TABLE, true);
       ListenableFuture<ExploreExecutionResult> future =
         exploreClient.submit("insert into table my_table select * from my_table");
       ExploreExecutionResult result = future.get();
@@ -95,7 +105,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       // Assert the values have been inserted into the dataset
       KeyStructValueTableDefinition.KeyStructValueTable table =
-        datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
       Transaction tx = transactionManager.startShort(100);
       table.startTx(tx);
@@ -120,21 +130,46 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertFalse(result.hasNext());
       result.close();
     } finally {
-      datasetFramework.deleteInstance("my_table");
+      datasetFramework.deleteInstance(MY_TABLE);
+    }
+  }
+
+  @Test
+  public void testTablesWithSpecialChars() throws Exception {
+    // '.' are replaced with "_" in hive, so create a dataset with . in name.
+    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+    // '_' are replaced with "_" in hive, so create a dataset with . in name.
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "hyphen-table");
+    try {
+      initKeyValueTable(myTable1, true);
+      initKeyValueTable(myTable2, true);
+
+      ExploreExecutionResult result = exploreClient.submit("select * from dot_table").get();
+
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+      result = exploreClient.submit("select * from hyphen_table").get();
+      Assert.assertEquals("1", result.next().getColumns().get(0).toString());
+      result.close();
+
+    } finally {
+      datasetFramework.deleteInstance(myTable1);
+      datasetFramework.deleteInstance(myTable2);
     }
   }
 
   @Test
   public void writeIntoOtherDatasetTest() throws Exception {
 
-    datasetFramework.addModule("keyExtendedStructValueTable",
+    datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
-    datasetFramework.addInstance("keyExtendedStructValueTable", "extended_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyExtendedStructValueTable", extendedTable, DatasetProperties.EMPTY);
     try {
-      initKeyValueTable("my_table", true);
+      initKeyValueTable(MY_TABLE, true);
       // Accessing dataset instance to perform data operations
       KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable table =
-        datasetFramework.getDataset("extended_table", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(extendedTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
 
       Transaction tx1 = transactionManager.startShort(100);
@@ -172,26 +207,26 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       result.hasNext();
 
     } finally {
-      datasetFramework.deleteInstance("my_table");
-      datasetFramework.deleteInstance("extended_table");
-      datasetFramework.deleteModule("keyExtendedStructValueTable");
+      datasetFramework.deleteInstance(MY_TABLE);
+      datasetFramework.deleteInstance(extendedTable);
+      datasetFramework.deleteModule(keyExtendedStructValueTable);
     }
   }
 
   @Test
   public void writeIntoNonScannableDataset() throws Exception {
-
-    datasetFramework.addModule("keyExtendedStructValueTable",
+    Id.DatasetInstance writableTable = Id.DatasetInstance.from(NAMESPACE_ID, "writable_table");
+    datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
-    datasetFramework.addInstance("keyExtendedStructValueTable", "extended_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyExtendedStructValueTable", extendedTable, DatasetProperties.EMPTY);
 
-    datasetFramework.addModule("writableKeyStructValueTable",
+    datasetFramework.addModule(writableKeyStructValueTable,
                                new WritableKeyStructValueTableDefinition.KeyStructValueTableModule());
-    datasetFramework.addInstance("writableKeyStructValueTable", "writable_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("writableKeyStructValueTable", writableTable, DatasetProperties.EMPTY);
     try {
       // Accessing dataset instance to perform data operations
       KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable table =
-        datasetFramework.getDataset("extended_table", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(extendedTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
 
       Transaction tx1 = transactionManager.startShort(100);
@@ -216,7 +251,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       result.close();
 
       KeyStructValueTableDefinition.KeyStructValueTable table2 =
-        datasetFramework.getDataset("writable_table", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(writableTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
       Transaction tx = transactionManager.startShort(100);
       table2.startTx(tx);
@@ -230,20 +265,23 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.postTxCommit();
 
     } finally {
-      datasetFramework.deleteInstance("writable_table");
-      datasetFramework.deleteInstance("extended_table");
-      datasetFramework.deleteModule("writableKeyStructValueTable");
-      datasetFramework.deleteModule("keyExtendedStructValueTable");
+      datasetFramework.deleteInstance(writableTable);
+      datasetFramework.deleteInstance(extendedTable);
+      datasetFramework.deleteModule(writableKeyStructValueTable);
+      datasetFramework.deleteModule(keyExtendedStructValueTable);
     }
   }
 
   @Test
   public void multipleInsertsTest() throws Exception {
+    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_1");
+    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_2");
+    Id.DatasetInstance myTable3 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_3");
     try {
-      initKeyValueTable("my_table", true);
-      initKeyValueTable("my_table_1", false);
-      initKeyValueTable("my_table_2", false);
-      initKeyValueTable("my_table_3", false);
+      initKeyValueTable(MY_TABLE, true);
+      initKeyValueTable(myTable1, false);
+      initKeyValueTable(myTable2, false);
+      initKeyValueTable(myTable3, false);
       ListenableFuture<ExploreExecutionResult> future =
         exploreClient.submit("from my_table insert into table my_table_1 select * where key='1'" +
                                "insert into table my_table_2 select * where key='2'" +
@@ -267,18 +305,18 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertFalse(result.hasNext());
       result.close();
     } finally {
-      datasetFramework.deleteInstance("my_table");
-      datasetFramework.deleteInstance("my_table_1");
-      datasetFramework.deleteInstance("my_table_2");
-      datasetFramework.deleteInstance("my_table_3");
+      datasetFramework.deleteInstance(MY_TABLE);
+      datasetFramework.deleteInstance(myTable1);
+      datasetFramework.deleteInstance(myTable2);
+      datasetFramework.deleteInstance(myTable3);
     }
   }
 
   @Test
   public void writeFromNativeTableIntoDatasetTest() throws Exception {
 
-    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
-    datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
+    datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", simpleTable, DatasetProperties.EMPTY);
     try {
       URL loadFileUrl = getClass().getResource("/test_table.dat");
       Assert.assertNotNull(loadFileUrl);
@@ -301,23 +339,23 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
     } finally {
       exploreClient.submit("drop table if exists test").get().close();
-      datasetFramework.deleteInstance("simple_table");
-      datasetFramework.deleteModule("kvTable");
+      datasetFramework.deleteInstance(simpleTable);
+      datasetFramework.deleteModule(kvTable);
     }
   }
 
   @Test
   public void writeFromDatasetIntoNativeTableTest() throws Exception {
 
-    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
-    datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
+    datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", simpleTable, DatasetProperties.EMPTY);
     try {
       exploreClient.submit("create table test (first INT, second STRING) ROW FORMAT " +
                              "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
 
       // Accessing dataset instance to perform data operations
       KeyValueTableDefinition.KeyValueTable table =
-        datasetFramework.getDataset("simple_table", DatasetDefinition.NO_ARGUMENTS, null);
+        datasetFramework.getDataset(simpleTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
 
       Transaction tx1 = transactionManager.startShort(100);
@@ -340,8 +378,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
     } finally {
       exploreClient.submit("drop table if exists test").get().close();
-      datasetFramework.deleteInstance("simple_table");
-      datasetFramework.deleteModule("kvTable");
+      datasetFramework.deleteInstance(simpleTable);
+      datasetFramework.deleteModule(kvTable);
     }
   }
 

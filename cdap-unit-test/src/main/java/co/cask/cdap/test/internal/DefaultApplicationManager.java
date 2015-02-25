@@ -20,11 +20,11 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
@@ -33,11 +33,11 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -104,7 +104,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.datasetInstantiator = new DatasetInstantiator(datasetFramework, configuration,
+      this.datasetInstantiator = new DatasetInstantiator(Id.Namespace.from(accountId), datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null);
@@ -324,14 +324,24 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new DefaultServiceManager(accountId, serviceId, appFabricClient,
-                                     discoveryServiceClient, this);
+    return new DefaultServiceManager(accountId, serviceId, appFabricClient, discoveryServiceClient, this);
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName) {
+    return startWorker(workerName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
+    final ProgramId workerId = startProgram(workerName, arguments, ProgramType.WORKER);
+    return new DefaultWorkerManager(accountId, workerId, appFabricClient, discoveryServiceClient, this);
   }
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(streamName);
-    return streamWriterFactory.create(queueName, accountId, applicationId);
+    Id.Stream streamId = Id.Stream.from(accountId, streamName);
+    return streamWriterFactory.create(streamId);
   }
 
   @Override
@@ -377,8 +387,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      RuntimeStats.clearStats(applicationId);
     }
   }
 

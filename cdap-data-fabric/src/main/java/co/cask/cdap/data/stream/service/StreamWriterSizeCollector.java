@@ -16,30 +16,39 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
- * Keep track of the sizes of the files written by one {@link StreamHandler}.
+ * Keep track of the sizes of the files written by one {@link StreamHandlerV2}.
  */
 public interface StreamWriterSizeCollector extends Service {
 
   // TODO have one implementation of this
 
   /**
-   * Get the total amount of bytes collected for the stream {@code streamName} so far.
-   *
-   * @param streamName stream name to get the total amount of data collected for
-   * @return the total amount of bytes collected for the stream {@code streamName} so far
+   * @return the streamSizes tracked by this StreamWriterSizeCollector.
    */
-  long getTotalCollected(String streamName);
+  Map<Id.Stream, AtomicLong> getStreamSizes();
+
+  /**
+   * Get the total amount of bytes collected for the stream {@code streamId} so far.
+   *
+   * @param streamId stream Id to get the total amount of data collected for
+   * @return the total amount of bytes collected for the stream {@code streamId} so far
+   */
+  long getTotalCollected(Id.Stream streamId);
 
   /**
    * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
-   * {@code streamName} using the stream handler from which this code is executed. The {@code dataSize}
+   * {@code streamId} using the stream handler from which this code is executed. The {@code dataSize}
    * is an incremental size.
    *
-   * @param streamName name of the stream that ingested data.
+   * @param streamId Id of the stream that ingested data.
    * @param dataSize amount of data ingested in bytes.
    */
-  void received(String streamName, long dataSize);
+  void received(Id.Stream streamId, long dataSize);
 }

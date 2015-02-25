@@ -17,6 +17,7 @@
 package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
@@ -25,17 +26,14 @@ import co.cask.cdap.data.format.StreamEventRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
-import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
-import co.cask.cdap.hive.serde.ObjectTranslator;
+import co.cask.cdap.hive.serde.ObjectDeserializer;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -43,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -51,13 +48,15 @@ import java.util.Properties;
  * SerDe to deserialize Stream Events. It MUST implement the deprecated SerDe interface instead of extending the
  * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
+@SuppressWarnings("deprecation")
 public class StreamSerDe implements SerDe {
   private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
+  // timestamp and headers are guaranteed to be the first columns in a stream table.
+  // the rest of the columns are for the stream body.
   private static final int BODY_OFFSET = 2;
-  private List<String> bodyColumnNames;
-  private List<TypeInfo> bodyColumnTypes;
   private ObjectInspector inspector;
   private StreamEventRecordFormat<?> streamFormat;
+  private ObjectDeserializer translator;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
   // the conf, but be very careful when doing so. If there are multiple hive tables involved in a query, initialize
@@ -70,35 +69,21 @@ public class StreamSerDe implements SerDe {
     // The columns property comes from the Hive metastore, which has it from the create table statement
     // It is then important that this schema be accurate and in the right order - the same order as
     // object inspectors will reflect them.
-    List<String> columnNames = Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(","));
-    List<TypeInfo> columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(
-      properties.getProperty(serdeConstants.LIST_COLUMN_TYPES));
-
-    // timestamp and headers are guaranteed to be the first columns in a stream table.
-    // the rest of the columns are for the stream body.
-    bodyColumnNames = columnNames.subList(BODY_OFFSET, columnNames.size());
-    bodyColumnTypes = columnTypes.subList(BODY_OFFSET, columnTypes.size());
-
-    int numCols = columnNames.size();
-
-    final List<ObjectInspector> columnOIs = new ArrayList<ObjectInspector>(numCols);
-
-    for (int i = 0; i < numCols; i++) {
-      columnOIs.add(TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(columnTypes.get(i)));
-    }
-
-    // this is the object inspector hive will use on the result of deserialize
-    this.inspector = ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, columnOIs);
 
     String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
+    String streamNamespace = properties.getProperty(Constants.Explore.STREAM_NAMESPACE);
+    Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try {
       // Get the stream format from the stream config.
       ContextManager.Context context = ContextManager.getContext(conf);
       // get the stream admin from the context, which will let us get stream information such as the path
       StreamAdmin streamAdmin = context.getStreamAdmin();
-      StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       FormatSpecification formatSpec = streamConfig.getFormat();
       this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
+      Schema schema = formatSpec.getSchema();
+      this.translator = new ObjectDeserializer(properties, schema, BODY_OFFSET);
+      this.inspector = translator.getInspector();
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
       // if we hit this something went wrong much earlier.
@@ -142,7 +127,7 @@ public class StreamSerDe implements SerDe {
 
     try {
       // The format should always format the stream event into a record.
-      event.addAll(ObjectTranslator.flattenRecord(streamFormat.read(streamEvent), bodyColumnNames, bodyColumnTypes));
+      event.addAll(translator.translateRecord(streamFormat.read(streamEvent)));
       return event;
     } catch (Throwable t) {
       LOG.info("Unable to format the stream body.", t);

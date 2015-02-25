@@ -18,6 +18,7 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -84,27 +85,9 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                       @QueryParam("stop") @DefaultValue("-1") long toTimeMsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
-    try {
-      Filter filter = FilterParser.parse(filterStr);
-      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
-      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
 
-      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
-          "greater than zero and stop should be greater than start.");
-        return;
-      }
-
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
-                                                                             serviceId);
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    logHandler.sysList(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request), responder, componentId,
+                       serviceId, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
   @GET
@@ -114,8 +97,8 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                    @PathParam("entity-id") String entityId, @QueryParam("start") long fromTimeMs,
                    @QueryParam("stop") long toTimeMs, @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
-    logHandler.list(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
-                    fromTimeMs, toTimeMs, escape, filterStr);
+    logHandler.list(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                    entityType, entityId, fromTimeMs, toTimeMs, escape, filterStr);
   }
 
   @GET
@@ -125,19 +108,8 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                       @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
-    try {
-      Filter filter = FilterParser.parse(filterStr);
-
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
-                                                                             serviceId);
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    logHandler.sysNext(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request), responder, componentId,
+                       serviceId, maxEvents, fromOffset, escape, filterStr);
   }
 
   @GET
@@ -148,8 +120,8 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
-    logHandler.next(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
-                    maxEvents, fromOffset, escape, filterStr);
+    logHandler.next(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                    entityType, entityId, maxEvents, fromOffset, escape, filterStr);
   }
 
   @GET
@@ -159,19 +131,10 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                       @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
-    try {
-      Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
-                                                                             serviceId);
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+
+    logHandler.sysPrev(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request), responder, componentId,
+                       serviceId, maxEvents, fromOffset, escape, filterStr);
   }
 
   @GET
@@ -182,22 +145,7 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
-    logHandler.prev(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId, entityType, entityId,
-                    maxEvents, fromOffset, escape, filterStr);
-  }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   * Note: This piece of code is duplicated from AbstractAppFabricHttpHandler, but is ok since it is temporary until we
-   * support v2 APIs.
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  public HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst(Constants.Gateway.API_VERSION_2, Constants.Gateway.API_VERSION_3 +
-      "/namespaces/" + Constants.DEFAULT_NAMESPACE));
-    return request;
+    logHandler.prev(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                    entityType, entityId, maxEvents, fromOffset, escape, filterStr);
   }
 }

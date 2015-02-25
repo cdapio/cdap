@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,17 @@
 package co.cask.cdap.internal.app.services.http;
 
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -63,6 +63,8 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -114,17 +116,22 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
-  private static StreamCoordinatorClient streamCoordinatorClient;
-  private static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static StreamService streamService;
+  private static ServiceStore serviceStore;
+
   private static final String adapterFolder = "adapter";
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    File adapterDir = TEMP_FOLDER.newFolder(adapterFolder);
+    File adapterDir = tmpFolder.newFolder(adapterFolder);
 
     CConfiguration conf = CConfiguration.create();
 
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
@@ -148,8 +155,10 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
-    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
-    streamCoordinatorClient.startAndWait();
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
+    serviceStore = injector.getInstance(ServiceStore.class);
+    serviceStore.startAndWait();
 
     createNamespaces();
   }
@@ -157,13 +166,12 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() throws Exception {
     deleteNamespaces();
-    streamCoordinatorClient.stopAndWait();
+    streamService.stopAndWait();
     appFabricServer.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-    TEMP_FOLDER.delete();
   }
 
   protected static Injector getInjector() {

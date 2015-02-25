@@ -17,12 +17,14 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.worker.Worker;
 
 /**
  * Workers for user services must implement this interface.
+ *
+ * @deprecated As of version 2.8.0, replaced by {@link Worker}
  */
-@Beta
+@Deprecated
 public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
 
   /**

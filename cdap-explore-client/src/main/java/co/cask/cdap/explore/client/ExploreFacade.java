@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
@@ -104,21 +105,21 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance);
   }
 
-  public void addPartition(String name, long time, String location) throws ExploreException, SQLException {
+  public void addPartition(String name, PartitionKey key, String location) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(name, time, location);
+    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(name, key, location);
     handleExploreFuture(futureSuccess, "add", "partition", name);
   }
 
-  public void dropPartition(String name, long time) throws ExploreException, SQLException {
+  public void dropPartition(String name, PartitionKey key) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(name, time);
+    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(name, key);
     handleExploreFuture(futureSuccess, "drop", "partition", name);
   }
 

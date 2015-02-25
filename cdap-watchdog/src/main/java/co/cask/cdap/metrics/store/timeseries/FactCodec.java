@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.store.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -32,6 +33,9 @@ import java.util.List;
  */
 public class FactCodec {
   private static final Logger LOG = LoggerFactory.getLogger(FactCodec.class);
+  // current version
+  private static final byte[] VERSION = new byte[] {0};
+
   // encoding types
   private static final String TYPE_MEASURE_NAME = "measureName";
   private static final String TYPE_TAGS_GROUP = "tagsGroup";
@@ -92,16 +96,17 @@ public class FactCodec {
 
   private byte[] createRowKey(List<TagValue> tagValues, String measureName, long ts, boolean stopKey,
                               boolean anyAggGroup) {
-    // Row key format: <encoded agg group><time base><encoded tag1 value>...<encoded tagN value><encoded measure name>.
-    // todo: reserve first byte for versioning and other things for future
+    // Row key format:
+    // <version><encoded agg group><time base><encoded tag1 value>...<encoded tagN value><encoded measure name>.
     // "+2" is for <encoded agg group> and <encoded measure name>
-    byte[] rowKey = new byte[(tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
-    int offset;
+    byte[] rowKey = new byte[VERSION.length + (tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
+
+    int offset = writeVersion(rowKey);
 
     if (anyAggGroup) {
-      offset = writeAnyEncoded(rowKey, 0, stopKey);
+      offset = writeAnyEncoded(rowKey, offset, stopKey);
     } else {
-      offset = writeEncodedAggGroup(tagValues, rowKey, 0);
+      offset = writeEncodedAggGroup(tagValues, rowKey, offset);
     }
 
     long timestamp = roundToResolution(ts);
@@ -129,12 +134,17 @@ public class FactCodec {
     return rowKey;
   }
 
+  private int writeVersion(byte[] rowKey) {
+    System.arraycopy(VERSION, 0, rowKey, 0, VERSION.length);
+    return VERSION.length;
+  }
+
   /**
    * For the given rowKey, return next rowKey that has different tagValue at given position.
    * returns null if no next row key exist
-   * @param rowKey
-   * @param indexOfTagValueToChange
-   * @return
+   * @param rowKey given row key
+   * @param indexOfTagValueToChange position of the tag in a given row key to change
+   * @return next row key
    */
   public byte[] getNextRowKey(byte[] rowKey, int indexOfTagValueToChange) {
     /*
@@ -146,9 +156,10 @@ public class FactCodec {
     * 4) if key part cannot be incremented, then we return null, indicating "no next row key exist
     */
     byte[] newRowKey = new byte[rowKey.length];
-    int offset = entityTable.getIdSize() + Bytes.SIZEOF_INT +  entityTable.getIdSize() * indexOfTagValueToChange;
+    int offset =
+      VERSION.length + entityTable.getIdSize() + Bytes.SIZEOF_INT + entityTable.getIdSize() * indexOfTagValueToChange;
     byte[] nextTagValueEncoded = Bytes.stopKeyForPrefix(Arrays.copyOfRange(rowKey,
-                                                               offset, offset + entityTable.getIdSize()));
+                                                                           offset, offset + entityTable.getIdSize()));
     if (nextTagValueEncoded == null) {
       return null;
     }
@@ -167,14 +178,14 @@ public class FactCodec {
 
   public byte[] createFuzzyRowMask(List<TagValue> tagValues, String measureName, boolean anyAggGroup) {
     // See createRowKey for row format info
-    byte[] mask = new byte[(tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
-    int offset;
+    byte[] mask = new byte[VERSION.length + (tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
+    int offset = writeVersion(mask);
 
     // agg group encoded is always provided for fuzzy row filter
     if (anyAggGroup) {
-      offset = writeEncodedFuzzyMask(mask, 0);
+      offset = writeEncodedFuzzyMask(mask, offset);
     } else {
-      offset = writeEncodedFixedMask(mask, 0);
+      offset = writeEncodedFixedMask(mask, offset);
     }
     // time is defined by start/stop keys when scanning - we never include it in fuzzy filter
     offset = writeFuzzyMask(mask, offset, Bytes.SIZEOF_INT);
@@ -211,7 +222,7 @@ public class FactCodec {
   public List<TagValue> getTagValues(byte[] rowKey) {
     // todo: in some cases, the client knows the agg group - so to optimize we can accept is as a parameter
     // first encoded is aggregation group
-    long encodedAggGroup = readEncoded(rowKey, 0);
+    long encodedAggGroup = readEncoded(rowKey, VERSION.length);
     String aggGroup = entityTable.getName(encodedAggGroup, TYPE_TAGS_GROUP);
     if (aggGroup == null) {
       // will never happen, unless data in entity table was corrupted or deleted
@@ -229,7 +240,8 @@ public class FactCodec {
     List<TagValue> tags = Lists.newArrayListWithCapacity(tagNames.length);
     for (int i = 0; i < tagNames.length; i++) {
       // tag values go right after encoded agg group and timebase (encoded as int)
-      long encodedTagValue = readEncoded(rowKey, entityTable.getIdSize() *  (i + 1) + Bytes.SIZEOF_INT);
+      long encodedTagValue =
+        readEncoded(rowKey, VERSION.length + entityTable.getIdSize() *  (i + 1) + Bytes.SIZEOF_INT);
       String tagValue = entityTable.getName(encodedTagValue, tagNames[i]);
       tags.add(new TagValue(tagNames[i], tagValue));
     }
@@ -239,7 +251,7 @@ public class FactCodec {
 
   public long getTimestamp(byte[] rowKey, byte[] column) {
     // timebase is encoded as int after the encoded agg group
-    int timebase = Bytes.toInt(rowKey, entityTable.getIdSize());
+    int timebase = Bytes.toInt(rowKey, VERSION.length + entityTable.getIdSize());
     // time leftover is encoded as 2 byte column name
     int leftover = Bytes.toShort(column) * resolution;
 

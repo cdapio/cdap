@@ -40,6 +40,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
@@ -53,6 +54,13 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String flowId = programIdParts[1];
         String flowletId = programIdParts[2];
         instances = programClient.getFlowletInstances(appId, flowId, flowletId);
+        break;
+      case WORKER:
+        if (programIdParts.length < 2)  {
+          throw new CommandInputError(this);
+        }
+        String workerId = programIdParts[1];
+        instances = programClient.getWorkerInstances(appId, workerId);
         break;
       case PROCEDURE:
         if (programIdParts.length < 2) {
@@ -84,6 +92,6 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the instances of a " + elementType.getPrettyName();
+    return String.format("Gets the instances of a %s.", elementType.getPrettyName());
   }
 }

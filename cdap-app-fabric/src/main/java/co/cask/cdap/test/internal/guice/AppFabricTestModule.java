@@ -41,6 +41,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -90,12 +91,13 @@ public final class AppFabricTestModule extends AbstractModule {
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-    install(new MetricsClientRuntimeModule().getNoopModules());
     install(new LocationRuntimeModule().getInMemoryModules());
     install(new LoggingModules().getInMemoryModules());
     install(new MetricsHandlerModule());
+    install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());
     install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
+    install(new NotificationServiceRuntimeModule().getInMemoryModules());
     install(new ConfigStoreModule().getInMemoryModule());
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());

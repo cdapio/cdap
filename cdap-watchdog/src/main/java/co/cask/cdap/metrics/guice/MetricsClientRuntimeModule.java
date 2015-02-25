@@ -15,14 +15,16 @@
  */
 package co.cask.cdap.metrics.guice;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
-import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.transport.MetricValue;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -41,8 +43,9 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new MetricsProcessorModule());
-        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricStore.class).to(DefaultMetricStore.class);
+        expose(MetricStore.class);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }
@@ -54,8 +57,9 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new MetricsProcessorModule());
-        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricStore.class).to(DefaultMetricStore.class);
+        expose(MetricStore.class);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }

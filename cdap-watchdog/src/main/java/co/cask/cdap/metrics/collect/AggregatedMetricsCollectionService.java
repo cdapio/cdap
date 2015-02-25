@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.transport.MetricValue;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -50,6 +50,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
 
+  private ScheduledExecutorService executorService;
+
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
@@ -72,7 +74,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param metrics collection of {@link co.cask.cdap.metrics.transport.MetricValue} to publish.
+   * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValue} to publish.
    * @throws Exception if there is error raised during publish.
    */
   protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
@@ -98,7 +100,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   @Override
   protected ScheduledExecutorService executor() {
-    return Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-collection"));
+    executorService = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("metrics-collection"));
+    return executorService;
   }
 
   @Override
@@ -114,7 +118,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   @Override
   protected void shutDown() throws Exception {
     // Flush the metrics when shutting down.
-    runOneIteration();
+    try {
+      runOneIteration();
+    } finally {
+      if (executorService != null) {
+        executorService.shutdownNow();
+      }
+    }
   }
 
   private Iterator<MetricValue> getMetrics(final long timestamp) {

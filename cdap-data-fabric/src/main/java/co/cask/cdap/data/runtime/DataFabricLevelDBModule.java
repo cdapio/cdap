@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -34,7 +34,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
   @Override
   public void configure() {
-    bind(LevelDBOrderedTableService.class).toInstance(LevelDBOrderedTableService.getInstance());
+    bind(LevelDBTableService.class).toInstance(LevelDBTableService.getInstance());
 
     bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);

@@ -15,29 +15,31 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricSearchQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServerException;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.data.AggregatesScanResult;
-import co.cask.cdap.metrics.data.AggregatesScanner;
-import co.cask.cdap.metrics.data.AggregatesTable;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.commons.lang.CharEncoding;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -50,12 +52,15 @@ import javax.ws.rs.QueryParam;
  * Class for handling requests for aggregate application metrics.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
-//todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
-public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
+// todo : clean up the /apps/ endpoints after deprecating old-UI (CDAP-1111)
+public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
+  private static final String PROGRAM = "program";
 
-  private final Supplier<AggregatesTable> aggregatesTable;
+  private final MetricStore metricStore;
+
+  private final Map<String, List<String>> oldFormatMapping;
 
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
@@ -121,15 +126,28 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   @Inject
-  public MetricsDiscoveryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+  public MetricsDiscoveryHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
+    this.metricStore = metricStore;
+    // This is needed to map to old v2 API format
+    // todo : remove hard-coded values and use TypeId (need to move TypeId out of app-fabric ?)
+    this.oldFormatMapping = ImmutableMap.<String, List<String>>of(
+      "f", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                            PROGRAM,
+                            Constants.Metrics.Tag.FLOWLET,
+                            Constants.Metrics.Tag.FLOWLET_QUEUE,
+                            Constants.Metrics.Tag.DATASET)
+      ,
+      "b", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                                    PROGRAM,
+                            Constants.Metrics.Tag.MR_TASK_TYPE,
+                            Constants.Metrics.Tag.DATASET),
+      "u", ImmutableList.<String>of(Constants.Metrics.Tag.APP,
+                                    PROGRAM,
+                                    Constants.Metrics.Tag.SERVICE_RUNNABLE,
+                                    Constants.Metrics.Tag.DATASET)
+    );
 
-    this.aggregatesTable = Suppliers.memoize(new Supplier<AggregatesTable>() {
-      @Override
-      public AggregatesTable get() {
-        return metricsTableFactory.createAggregates();
-      }
-    });
   }
 
   @Override
@@ -191,37 +209,45 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   private void getMetrics(HttpRequest request, HttpResponder responder, String metricPrefix) {
-    String contextPrefix = null;
+    Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
     try {
       String path = request.getUri();
       String base = Constants.Gateway.API_VERSION_2 + "/metrics/available/apps";
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
-        MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
-        builder.setNamespaceId(Constants.DEFAULT_NAMESPACE);
-        MetricsRequestParser.parseSubContext(pathParts, builder);
-        MetricsRequestContext metricsRequestContext = builder.build();
-        contextPrefix = metricsRequestContext.getContextPrefix();
-        validatePathElements(request, metricsRequestContext);
+        // using LinkedHashMap, so we can iterate and construct TagValue Pairs used for constructing CubeExploreQuery.
+        Map<String, String> tagValues = Maps.newLinkedHashMap();
+        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+        tagValues.put(Constants.Metrics.Tag.APP, URLDecoder.decode(pathParts.next(), CharEncoding.UTF_8));
+        MetricQueryParser.parseSubContext(pathParts, tagValues);
+
+        List<TagValue> tagsList = Lists.newArrayList();
+        for (Map.Entry<String, String> tag : tagValues.entrySet()) {
+          tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
+        }
+        // Hacks to support v2 api format that old UI expects
+        if (tagsList.size() > 2) {
+          // i.e. "any" dataset and run
+          tagsList.add(3, new TagValue(Constants.Metrics.Tag.DATASET, null));
+          tagsList.add(4, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
+        }
+        List<List<TagValue>> resultSet = Lists.newArrayList();
+        getAllPossibleTags(tagsList, resultSet);
+        for (List<TagValue> tagValueList : resultSet) {
+          MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE, 1, -1, tagValueList);
+          Collection<String> measureNames = metricStore.findMetricNames(query);
+          String context = getContext(tagValueList);
+          for (String measureName : measureNames) {
+            addContext(context, measureName, metricContextsMap);
+          }
+        }
       }
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
-    } catch (ServerException e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
       return;
-    }
-
-    Map<String, ContextNode> metricContextsMap = Maps.newHashMap();
-    AggregatesTable table = aggregatesTable.get();
-    AggregatesScanner scanner = table.scanRowsOnly(contextPrefix, metricPrefix);
-
-    // scanning through all metric rows in the aggregates table
-    // row has context plus metric info
-    // each metric can show up in multiple contexts
-    while (scanner.hasNext()) {
-      AggregatesScanResult result = scanner.next();
-      addContext(result.getContext(), result.getMetric(), metricContextsMap);
     }
 
     // return the metrics sorted by metric name so it can directly be displayed to the user.
@@ -238,6 +264,64 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     }
 
     responder.sendJson(HttpResponseStatus.OK, output);
+  }
+
+  private String getContext(List<TagValue> tagValueList) {
+    String contextPrefix = "default"; //default namespace
+    Map<String, String> tagValueMappings  = Maps.newHashMap();
+    for (TagValue tag : tagValueList) {
+      tagValueMappings.put(tag.getTagName(), tag.getValue());
+    }
+
+    String programType = null;
+    String programPart = null;
+    for (MetricQueryParser.ProgramType type : MetricQueryParser.ProgramType.values()) {
+      String val = tagValueMappings.get(type.getTagName());
+      if (val != null) {
+        // we need it in a form of f.myFlow
+        programPart = type.getCode() + "." + val;
+        programType = type.getCode();
+        break;
+      }
+    }
+
+    List<String> tagMappings;
+    if (programType != null) {
+      tagMappings = oldFormatMapping.get(programType);
+      if (tagMappings == null) {
+        tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, PROGRAM, Constants.Metrics.Tag.DATASET);
+      }
+    } else {
+      tagMappings = ImmutableList.of(Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET);
+    }
+
+    for (String tagKey : tagMappings) {
+      // we need to insert two parts in this case: type and program name
+      if (PROGRAM.equals(tagKey)) {
+        contextPrefix += programPart != null ? "." + programPart : "";
+        // we know programType != null
+        continue;
+      }
+      contextPrefix = tagValueMappings.get(tagKey) != null ? contextPrefix + "." +
+        tagValueMappings.get(tagKey) : contextPrefix;
+    }
+    return contextPrefix;
+  }
+
+  private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
+    //todo: which resolution table to use?
+    MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
+    Collection<TagValue> nextTags = metricStore.findNextAvailableTags(query);
+    if (nextTags.isEmpty()) {
+      resultSet.add(Lists.newArrayList(tagsList));
+    } else {
+      for (TagValue tagValue : nextTags) {
+        List<TagValue> nextLevelTags = Lists.newArrayList();
+        nextLevelTags.addAll(tagsList);
+        nextLevelTags.add(tagValue);
+        getAllPossibleTags(nextLevelTags, resultSet);
+      }
+    }
   }
 
   /**

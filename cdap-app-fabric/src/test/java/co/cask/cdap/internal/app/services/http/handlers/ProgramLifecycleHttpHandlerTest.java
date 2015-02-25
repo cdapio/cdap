@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.DummyAppWithTrackingTable;
@@ -38,6 +39,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
@@ -55,6 +57,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -77,7 +80,9 @@ import javax.annotation.Nullable;
  * Tests for {@link ProgramLifecycleHttpHandler}
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
-
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -516,7 +521,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, "random", ProgramType.FLOW.getCategoryName()));
 
     // verify invalid program type
-    Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
+  }
+
+  /**
+   * Worker Specification tests
+   */
+  @Test
+  public void testWorkerSpecification() throws Exception {
+    // deploy AppWithWorker in namespace1 and verify
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
   }
 
   /**
@@ -536,6 +557,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(AppWithWorkflow.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // deploy AppWithWorker in namespace1 and verify
+    response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     // verify program specification
     verifyProgramSpecification(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                                WORDCOUNT_FLOW_NAME);
@@ -545,6 +570,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                APP_WITH_SERVICES_SERVICE_NAME);
     verifyProgramSpecification(TEST_NAMESPACE2, APP_WITH_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
                                APP_WITH_WORKFLOW_WORKFLOW_NAME);
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
 
     // verify invalid namespace
     Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
@@ -557,6 +584,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // verify invalid runnable type
     Assert.assertEquals(405, getProgramSpecificationResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                                                  "random", APP_WITH_WORKFLOW_WORKFLOW_NAME));
+
+    // verify invalid runnable type
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
   }
 
   @Test
@@ -1044,7 +1076,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private int getRuns(String runsUrl) throws Exception {
     HttpResponse response = doGet(runsUrl);
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     return history.size();
   }
 
@@ -1059,7 +1091,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    return new Gson().fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
     }.getType());
   }
 
@@ -1168,7 +1200,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = requestProgramList(namespace, appName, programType);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> programs = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> programs = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(expected, programs.size());
   }
 

@@ -32,7 +32,7 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -349,8 +349,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
       super(metricsCollectionService.getCollector(
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                        Constants.Metrics.Tag.CLUSTER_METRICS, "true")));
+        ImmutableMap.<String, String>of()));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {
@@ -558,9 +557,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.APP, programId.getApplicationId(),
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(type),
-                           Constants.Metrics.Tag.PROGRAM, programId.getId());
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId(),
+                           Constants.Metrics.Tag.APP, programId.getApplicationId(),
+                           ProgramTypeMetricTag.getTagName(type), programId.getId());
   }
 
   @Override

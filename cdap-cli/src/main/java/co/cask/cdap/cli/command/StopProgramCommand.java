@@ -60,6 +60,6 @@ public class StopProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Stops a " + elementType.getPrettyName();
+    return String.format("Stops a %s.", elementType.getPrettyName());
   }
 }

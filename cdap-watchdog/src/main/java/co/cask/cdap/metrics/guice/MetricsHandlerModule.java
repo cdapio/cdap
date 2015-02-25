@@ -16,18 +16,20 @@
 
 package co.cask.cdap.metrics.guice;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.logging.gateway.handlers.LogHandlerV2;
-import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.query.BatchMetricsHandler;
 import co.cask.cdap.metrics.query.DeleteMetricsHandler;
 import co.cask.cdap.metrics.query.MetricsDiscoveryHandler;
 import co.cask.cdap.metrics.query.MetricsHandler;
 import co.cask.cdap.metrics.query.MetricsQueryHandler;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -40,8 +42,6 @@ import com.google.inject.name.Names;
 public class MetricsHandlerModule extends PrivateModule {
   @Override
   protected void configure() {
-    bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 

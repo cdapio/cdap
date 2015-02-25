@@ -32,10 +32,13 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -44,9 +47,11 @@ import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
+import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -68,6 +73,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
   private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
+  private final Map<String, WorkerSpecification> workers = Maps.newHashMap();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -195,6 +201,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
+  public void addWorker(Worker worker) {
+    Preconditions.checkArgument(worker != null, "Worker cannot be null.");
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    worker.configure(configurer);
+    WorkerSpecification spec = configurer.createSpecification();
+    workers.put(spec.getName(), spec);
+  }
+
+  @Override
   public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
                           Map<String, String> properties) {
     Preconditions.checkNotNull(schedule, "Schedule cannot be null.");
@@ -204,9 +219,18 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
+    Schedule realSchedule = schedule;
+    if (schedule.getClass().equals(Schedule.class)) {
+      realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
+                                                  schedule.getCronEntry());
+    }
+    if (realSchedule instanceof StreamSizeSchedule) {
+      Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
+                                  "Schedule data trigger must be greater than 0.");
+    }
 
-    ScheduleSpecification spec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName),
-                                                           properties);
+    ScheduleSpecification spec =
+      new ScheduleSpecification(realSchedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
   }
@@ -215,6 +239,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services,
-                                               schedules);
+                                               schedules, workers);
   }
 }

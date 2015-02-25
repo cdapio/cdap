@@ -15,8 +15,10 @@
  */
 package co.cask.cdap.metrics.store.timeseries;
 
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -30,14 +32,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Test base for {@link co.cask.cdap.metrics.data.TimeSeriesTable}.
+ * Test base for {@link co.cask.cdap.metrics.store.timeseries.FactTable}.
  */
 public class FactTableTest {
 
   @Test
   public void testBasics() throws Exception {
-    InMemoryOrderedTableService.create("EntityTable");
-    InMemoryOrderedTableService.create("DataTable");
+    InMemoryTableService.create("EntityTable");
+    InMemoryTableService.create("DataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 
@@ -142,12 +144,14 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // verify the next tags search
-    Collection<TagValue> nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
+    Collection<TagValue> nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
+                                                                ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2")), nextTags);
     //assertTagValues(ImmutableList.of(new TagValue("tag2", "value2")), nextTags);
 
-    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag2", "value2")),
-                                 ts, ts + 3);
+    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1"),
+                                                            new TagValue("tag2", "value2")),
+                                           ts, ts + 3);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag3", "value3")), nextTags);
 
     // add new tag values
@@ -159,8 +163,8 @@ public class FactTableTest {
     table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
                                         new TimeValue(ts, 10))));
 
-    nextTags = table.getNextTags(ImmutableList.of(new TagValue("tag1", "value1")),
-                                 ts, ts + 1);
+    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
+                                           ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2"),
                                         new TagValue("tag2", "value5"), new TagValue("tag4", "value5")), nextTags);
     // search for metric names given tags list and verify
@@ -172,14 +176,14 @@ public class FactTableTest {
     Assert.assertEquals(ImmutableSet.of("metric2", "metric3"), metricNames);
 
     metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
-    Assert.assertEquals(ImmutableSet.of("metric", "metric2"), metricNames);
+    Assert.assertEquals(ImmutableSet.of("metric", "metric2", "metric3"), metricNames);
 
   }
 
   @Test
   public void testQuery() throws Exception {
-    InMemoryOrderedTableService.create("QueryEntityTable");
-    InMemoryOrderedTableService.create("QueryDataTable");
+    InMemoryTableService.create("QueryEntityTable");
+    InMemoryTableService.create("QueryDataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 
@@ -375,8 +379,8 @@ public class FactTableTest {
   @Test
   public void testMaxResolution() throws Exception {
     // we use Integer.MAX_VALUE as resolution to compute all-time total values
-    InMemoryOrderedTableService.create("TotalsEntityTable");
-    InMemoryOrderedTableService.create("TotalsDataTable");
+    InMemoryTableService.create("TotalsEntityTable");
+    InMemoryTableService.create("TotalsDataTable");
     int resolution = Integer.MAX_VALUE;
     // should not matter when resolution is max
     int rollTimebaseInterval = 3600;

@@ -49,7 +49,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class ExecuteQueryCommand extends AbstractAuthCommand implements Categorized {
 
-  private static final long TIMEOUT_MINS = TimeUnit.HOURS.toMinutes(1);
+  private static final long DEFAULT_TIMEOUT_MIN = Long.MAX_VALUE;
   private final QueryClient queryClient;
 
   @Inject
@@ -61,7 +61,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
-    long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), TIMEOUT_MINS);
+    long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), DEFAULT_TIMEOUT_MIN);
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
     try {
@@ -116,7 +116,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return "Executes a " + ElementType.QUERY.getPrettyName() + " with optional timeout (default = 60) in minutes";
+    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).", 
+                         ElementType.QUERY.getPrettyName(), ArgumentName.TIMEOUT);
   }
 
   @Override

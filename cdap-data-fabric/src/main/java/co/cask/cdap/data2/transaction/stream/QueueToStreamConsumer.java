@@ -19,12 +19,12 @@ import co.cask.cdap.api.data.schema.SchemaHash;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.Decoder;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.proto.Id;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -32,7 +32,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -47,19 +46,19 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
-  private final QueueName streamName;
+  private final Id.Stream streamId;
   private final ConsumerConfig consumerConfig;
   private final QueueConsumer consumer;
 
-  public QueueToStreamConsumer(QueueName streamName, ConsumerConfig consumerConfig, QueueConsumer consumer) {
-    this.streamName = streamName;
+  public QueueToStreamConsumer(Id.Stream streamId, ConsumerConfig consumerConfig, QueueConsumer consumer) {
+    this.streamId = streamId;
     this.consumerConfig = consumerConfig;
     this.consumer = consumer;
   }
 
   @Override
-  public QueueName getStreamName() {
-    return streamName;
+  public Id.Stream getStreamId() {
+    return streamId;
   }
 
   @Override
@@ -116,9 +115,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   @Override
   public void close() throws IOException {
-    if (consumer instanceof Closeable) {
-      ((Closeable) consumer).close();
-    }
+    consumer.close();
   }
 
   @Override
@@ -162,7 +159,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   @Override
   public String getTransactionAwareName() {
     return Objects.toStringHelper(this)
-      .add("queue", streamName)
+      .add("queue", streamId)
       .add("config", consumerConfig)
       .toString();
   }

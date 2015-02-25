@@ -40,8 +40,10 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -113,6 +115,7 @@ public class DFSStreamHeartbeatsTest {
         new DataSetsModules().getLocalModule(),
         new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
+        new MetricsClientRuntimeModule().getInMemoryModules(),
         // We need the distributed modules here to get the distributed stream service, which is the only one
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),
@@ -165,7 +168,7 @@ public class DFSStreamHeartbeatsTest {
   public void streamPublishesHeartbeatTest() throws Exception {
     final int entries = 10;
     final String streamName = "test_stream";
-
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Create a new stream.
     HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName),
                                         HttpMethod.PUT);
@@ -186,7 +189,7 @@ public class DFSStreamHeartbeatsTest {
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
     Assert.assertNotNull(heartbeat);
     Assert.assertEquals(1, heartbeat.getStreamsSizes().size());
-    Long streamSize = heartbeat.getStreamsSizes().get(streamName);
+    Long streamSize = heartbeat.getStreamsSizes().get(streamId);
     Assert.assertNotNull(streamSize);
     Assert.assertEquals(entries * TWO_BYTES.length, (long) streamSize);
   }

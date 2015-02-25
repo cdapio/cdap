@@ -67,7 +67,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   @Override
   public void setRunnableInstances(String runnableName, int instances) {
-    Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
+    Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
       appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
     } catch (Exception e) {

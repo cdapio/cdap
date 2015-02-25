@@ -83,7 +83,7 @@ public class StreamClient {
    */
   public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s/info", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/info", streamId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -104,7 +104,7 @@ public class StreamClient {
    */
   public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
     UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {
-    URL url = config.resolveURL(String.format("streams/%s/config", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
 
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
@@ -126,7 +126,7 @@ public class StreamClient {
    * @throws BadRequestException if the provided stream ID was invalid
    */
   public void create(String newStreamId) throws IOException, BadRequestException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s", newStreamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s", newStreamId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -145,7 +145,7 @@ public class StreamClient {
   public void sendEvent(String streamId, String event) throws IOException,
                                                               StreamNotFoundException,
                                                               UnAuthorizedAccessTokenException {
-    writeEvent(config.resolveURL(String.format("streams/%s", streamId)), streamId, event);
+    writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s", streamId)), streamId, event);
   }
 
   /**
@@ -160,7 +160,7 @@ public class StreamClient {
   public void asyncSendEvent(String streamId, String event) throws IOException,
                                                                    StreamNotFoundException,
                                                                    UnAuthorizedAccessTokenException {
-    writeEvent(config.resolveURL(String.format("streams/%s/async", streamId)), streamId, event);
+    writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s/async", streamId)), streamId, event);
   }
 
   /**
@@ -190,7 +190,7 @@ public class StreamClient {
                         InputSupplier<? extends InputStream> inputSupplier) throws IOException,
                                                                                    StreamNotFoundException,
                                                                                    UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s/batch", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/batch", streamId));
     Map<String, String> headers = ImmutableMap.of("Content-type", contentType);
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(inputSupplier).build();
 
@@ -208,7 +208,7 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
   public void truncate(String streamId) throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s/truncate", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/truncate", streamId));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -226,7 +226,7 @@ public class StreamClient {
    */
   public void setTTL(String streamId, long ttlInSeconds) throws IOException, StreamNotFoundException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s/config", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -242,7 +242,7 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    */
   public List<StreamRecord> list() throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("streams");
+    URL url = config.resolveNamespacedURLV3("streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamRecord>>() { }).getResponseObject();
   }
@@ -288,8 +288,8 @@ public class StreamClient {
   public void getEvents(String streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
-                                              streamId, startTime, endTime, limit));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
+                                                          streamId, startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     AccessToken accessToken = config.getAccessToken();
     if (accessToken != null) {

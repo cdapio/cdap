@@ -15,10 +15,10 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -38,16 +38,19 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
 
+  private static final String TEST_NAMESPACE = "streamConsumerStateTestNamespace";
+
   @Test
   public void testStateExists() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStateExists";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
+    streamAdmin.create(streamId);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    StreamConfig config = streamAdmin.getConfig(streamId);
     StreamConsumerStateStore stateStore = createStateStore(config);
 
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 1);
+    streamAdmin.configureInstances(Id.Stream.from(TEST_NAMESPACE, streamName), 0L, 1);
 
     // Get a consumer state that is configured
     StreamConsumerState state = stateStore.get(0L, 0);
@@ -62,9 +65,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testStore";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
@@ -79,12 +84,50 @@ public abstract class StreamConsumerStateTestBase {
   }
 
   @Test
+  public void testNamespacedStore() throws Exception {
+    // Store different offsets for two streams using the same StateStoreFactory to show that
+    // StateStoreFactory is capable of storing distinct states for streams with same name but different namespace
+    StreamAdmin streamAdmin = getStreamAdmin();
+    String streamName = "testNamespacedStore";
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
+    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
+
+    streamAdmin.create(streamId);
+    streamAdmin.create(otherStreamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
+    StreamConfig otherConfig = streamAdmin.getConfig(otherStreamId);
+
+    // Creates a state with 4 offsets
+    StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
+    StreamConsumerStateStore stateStore = createStateStore(config);
+
+    // Create another state with more offsets for stream in different namespace
+    StreamConsumerState otherState = generateState(0L, 0, otherConfig, 0L, 8);
+    StreamConsumerStateStore otherStateStore = createStateStore(otherConfig);
+
+    // Save the states.
+    stateStore.save(state);
+    otherStateStore.save(otherState);
+
+    // Read the state back
+    StreamConsumerState readState = stateStore.get(0, 0);
+    StreamConsumerState otherReadState = otherStateStore.get(0, 0);
+    Assert.assertEquals(state, readState);
+    Assert.assertEquals(otherState, otherReadState);
+
+    Assert.assertNotEquals(state, otherState);
+  }
+
+  @Test
   public void testMultiStore() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testMultiStore";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -106,9 +149,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testRemove() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testRemove";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates 4 states of 2 groups, each with 4 offsets
     Set<StreamConsumerState> states = Sets.newHashSet();
@@ -150,9 +195,11 @@ public abstract class StreamConsumerStateTestBase {
   public void testChangeInstance() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testChangeInstance";
-    streamAdmin.create(streamName);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
 
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.create(streamId);
+
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Creates a state with 4 offsets
     StreamConsumerState state = generateState(0L, 0, config, 0L, 4);
@@ -162,7 +209,7 @@ public abstract class StreamConsumerStateTestBase {
     stateStore.save(state);
 
     // Increase the number of instances
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 2);
+    streamAdmin.configureInstances(streamId, 0L, 2);
 
     StreamConsumerState newState = stateStore.get(0L, 1);
     // Get the state of the new instance, should be the same as the existing one
@@ -182,7 +229,7 @@ public abstract class StreamConsumerStateTestBase {
     Assert.assertEquals(newOffset, Iterables.get(state.getState(), 0).getOffset());
 
     // Increase the number of instances again
-    streamAdmin.configureInstances(QueueName.fromStream(streamName), 0L, 3);
+    streamAdmin.configureInstances(streamId, 0L, 3);
 
     // Verify that instance 0 has offset getting resetted to lowest
     state = stateStore.get(0L, 0);

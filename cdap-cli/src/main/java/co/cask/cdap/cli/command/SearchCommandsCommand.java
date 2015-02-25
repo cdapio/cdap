@@ -17,7 +17,6 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -38,8 +37,8 @@ public class SearchCommandsCommand extends HelpCommand {
 
   private final Supplier<Iterable<CommandSet<Command>>> commands;
 
-  public SearchCommandsCommand(Supplier<Iterable<CommandSet<Command>>> commands, CLIConfig config) {
-    super(commands, config);
+  public SearchCommandsCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
+    super(commands);
     this.commands = commands;
   }
 
@@ -92,6 +91,6 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public String getDescription() {
-    return "Searches available commands using regex";
+    return "Searches available commands using regex.";
   }
 }

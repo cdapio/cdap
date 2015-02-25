@@ -16,12 +16,16 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
+  public static final String ARCHIVE_DIR = "archive";
 
   /**
    * Global Service names.
@@ -120,6 +124,7 @@ public final class Constants {
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
+
   }
 
   /**
@@ -164,6 +169,11 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
+
+    // Table dataset property that defines whether table is transactional or not.
+    // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
+    // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
+    public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
 
     /**
      * DatasetManager service configuration.
@@ -293,7 +303,7 @@ public final class Constants {
      */
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
-    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String STREAM_HANDLER_NAME = "stream_rest";
     public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
@@ -376,23 +386,40 @@ public final class Constants {
       // NOTES:
       //   * tag names must be unique (keeping all possible here helps to ensure that)
       //   * tag names better be short to reduce the serialized metric value size
+
+      public static final String NAMESPACE = "ns";
+
       public static final String RUN_ID = "run";
       public static final String INSTANCE_ID = "ins";
+
       public static final String COMPONENT = "cmp";
-      public static final String STREAM = "str";
-      public static final String DATASET = "ds";
-      public static final String SERVICE = "srv";
-      public static final String SERVICE_RUNNABLE = "srn";
       public static final String HANDLER = "hnd";
       public static final String METHOD = "mtd";
-      public static final String MR_TASK_TYPE = "mrt";
+
+      public static final String STREAM = "str";
+
+      public static final String DATASET = "ds";
+
       public static final String APP = "app";
-      public static final String PROGRAM = "prg";
-      public static final String PROGRAM_TYPE = "ptp";
+
+      public static final String SERVICE = "srv";
+      public static final String SERVICE_RUNNABLE = "srn";
+
+      public static final String WORKER = "wrk";
+
+      public static final String FLOW = "fl";
       public static final String FLOWLET = "flt";
       public static final String FLOWLET_QUEUE = "flq";
-      public static final String CLUSTER_METRICS = "cls";
-      public static final String NAMESPACE = "ns";
+
+      public static final String MAPREDUCE = "mr";
+      public static final String MR_TASK_TYPE = "mrt";
+
+      public static final String WORKFLOW = "wf";
+
+      public static final String SPARK = "sp";
+
+      public static final String PROCEDURE = "pr";
+
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
     }
@@ -553,6 +580,7 @@ public final class Constants {
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String STREAM_NAME = "explore.stream.name";
+    public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String STREAM_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.stream.StreamStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
@@ -605,12 +633,6 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "stream";
       public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
-
-      /** Default number of bytes received by a stream after which a notification is sent */
-      public static final long DEFAULT_DATA_THRESHOLD = 1024 * 1024 * 1024;
-
-      public static final int INIT_HEARTBEAT_AGGREGATION_DELAY = 2;
-      public static final int HEARTBEAT_AGGREGATION_INTERVAL = 5;
     }
   }
 
@@ -682,6 +704,7 @@ public final class Constants {
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
   /**
    * Constants related to external systems.

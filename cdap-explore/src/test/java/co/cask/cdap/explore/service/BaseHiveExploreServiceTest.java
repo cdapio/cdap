@@ -23,13 +23,17 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -47,6 +51,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -67,6 +72,7 @@ import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -92,6 +98,12 @@ public class BaseHiveExploreServiceTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+
+  // TODO: When datasets are namespaced, we should add tests for multiple, non-default namespaces.
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("default");
+  protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
+  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
   public static boolean runAfter = true;
@@ -103,23 +115,24 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
   protected static StreamHttpService streamHttpService;
-
+  protected static StreamService streamService;
   protected static ExploreClient exploreClient;
+  protected static LocationFactory locationFactory;
 
   protected static Injector injector;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  protected static void startServices() throws Exception {
-    startServices(CConfiguration.create());
+  protected static void initialize() throws Exception {
+    initialize(CConfiguration.create());
   }
 
-  protected static void startServices(CConfiguration cConf) throws Exception {
-    startServices(cConf, false);
+  protected static void initialize(CConfiguration cConf) throws Exception {
+    initialize(cConf, false);
   }
 
-  protected static void startServices(CConfiguration cConf, boolean useStandalone) throws Exception {
+  protected static void initialize(CConfiguration cConf, boolean useStandalone) throws Exception {
     if (!runBefore) {
       return;
     }
@@ -143,8 +156,14 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
+    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
   }
 
   @AfterClass
@@ -153,7 +172,9 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
+    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
     streamHttpService.stopAndWait();
+    streamService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
@@ -299,6 +320,8 @@ public class BaseHiveExploreServiceTest {
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandlerV2.class);
+          handlerBinder.addBinding().to(StreamFetchHandlerV2.class);
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
@@ -345,6 +368,8 @@ public class BaseHiveExploreServiceTest {
 
           Multibinder<HttpHandler> handlerBinder =
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
+          handlerBinder.addBinding().to(StreamHandlerV2.class);
+          handlerBinder.addBinding().to(StreamFetchHandlerV2.class);
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);

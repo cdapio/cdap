@@ -49,10 +49,10 @@ public class LevelDBMetricsTable implements MetricsTable {
     }
   };
 
-  private final LevelDBOrderedTableCore core;
+  private final LevelDBTableCore core;
 
-  public LevelDBMetricsTable(String tableName, LevelDBOrderedTableService service) throws IOException {
-    this.core = new LevelDBOrderedTableCore(tableName, service);
+  public LevelDBMetricsTable(String tableName, LevelDBTableService service) throws IOException {
+    this.core = new LevelDBTableCore(tableName, service);
   }
 
   @Override
@@ -99,6 +99,14 @@ public class LevelDBMetricsTable implements MetricsTable {
   @Override
   public void delete(Collection<byte[]> rows) throws Exception {
     core.deleteRows(rows);
+  }
+
+  @Override
+  public void delete(byte[] row, byte[][] columns) throws Exception {
+    for (byte[] column : columns) {
+      // Bytes.EMPTY_BYTE_ARRAY is a delete marker
+      core.put(row, column, Bytes.EMPTY_BYTE_ARRAY, System.currentTimeMillis());
+    }
   }
 
   @Override

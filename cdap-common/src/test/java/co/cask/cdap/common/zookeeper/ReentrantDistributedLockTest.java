@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.zookeeper;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -29,7 +30,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Unit test for {@link ReentrantDistributedLock}.
@@ -310,14 +313,14 @@ public class ReentrantDistributedLockTest {
     }
   }
 
-  @Test //(timeout = 20000)
+  @Test (timeout = 20000)
   public void testTryLockMultiClients() throws InterruptedException {
-    // Test tryLock on multiple threads
+    // Test tryLock on multiple clients
     ZKClientService zkClient1 = createZKClient();
     ZKClientService zkClient2 = createZKClient();
     try {
-      final ReentrantDistributedLock lock1 = new ReentrantDistributedLock(zkClient1, "/trylock");
-      final ReentrantDistributedLock lock2 = new ReentrantDistributedLock(zkClient2, "/trylock");
+      final ReentrantDistributedLock lock1 = new ReentrantDistributedLock(zkClient1, "/multiTrylock");
+      final ReentrantDistributedLock lock2 = new ReentrantDistributedLock(zkClient2, "/multiTrylock");
 
       // Create a new thread to acquire the same lock by using tryLock
       final CountDownLatch lockAcquired = new CountDownLatch(1);
@@ -363,6 +366,56 @@ public class ReentrantDistributedLockTest {
       // Try to lock again and it should success immediately.
       Assert.assertTrue(lock1.tryLock());
       lock1.unlock();
+    } finally {
+      zkClient1.stopAndWait();
+      zkClient2.stopAndWait();
+    }
+  }
+
+  @Test (timeout = 60000)
+  public void testLockRace() throws Exception {
+    // Test for multiple clients race on the lock
+    // This is for the case when a lock owner release the lock (node deleted)
+    // while the other client tries to watch on the node
+    ZKClientService zkClient1 = createZKClient();
+    ZKClientService zkClient2 = createZKClient();
+    try {
+      final Lock[] locks = new Lock[] {
+        new ReentrantDistributedLock(zkClient1, "/lockrace"),
+        new ReentrantDistributedLock(zkClient2, "/lockrace")
+      };
+
+      // Have two clients fight for the lock
+      final CyclicBarrier barrier = new CyclicBarrier(2);
+      final CountDownLatch lockLatch = new CountDownLatch(2);
+      for (int i = 0; i < 2; i++) {
+        final int threadId = i;
+        Thread t = new Thread() {
+          @Override
+          public void run() {
+            try {
+              barrier.await();
+              for (int i = 0; i < 100; i++) {
+                Lock lock = locks[threadId];
+                lock.lock();
+                try {
+                  // A short sleep to make the race possible to happen
+                  Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
+                } finally {
+                  lock.unlock();
+                }
+              }
+              lockLatch.countDown();
+            } catch (Exception e) {
+              LOG.error("Exception", e);
+            }
+          }
+        };
+        t.start();
+      }
+
+      Assert.assertTrue(lockLatch.await(30, TimeUnit.SECONDS));
+
     } finally {
       zkClient1.stopAndWait();
       zkClient2.stopAndWait();

@@ -32,14 +32,12 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.MockMetricsCollectionService;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
-import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -101,8 +99,6 @@ public abstract class MetricsSuiteTestBase {
   protected static MetricsCollectionService collectionService;
   protected static Store store;
   protected static LocationFactory locationFactory;
-  protected static List<String> validResources;
-  protected static List<String> malformedResources;
   protected static List<String> nonExistingResources;
   private static CConfiguration conf;
   private static TemporaryFolder tmpFolder;
@@ -167,6 +163,7 @@ public abstract class MetricsSuiteTestBase {
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getLocalModule(),
@@ -203,8 +200,6 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static Injector startMetricsService(CConfiguration conf) {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
       new AbstractModule() {
@@ -220,11 +215,6 @@ public abstract class MetricsSuiteTestBase {
                // these bindings out as it overlaps with
                // AppFabricServiceModule
                bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-               MockMetricsCollectionService metricsCollectionService =
-                 new MockMetricsCollectionService();
-               bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-               bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
              }
            }
     ));
@@ -261,32 +251,6 @@ public abstract class MetricsSuiteTestBase {
 
   // write WordCount app to metadata store
   public static void setupMeta() {
-    validResources = ImmutableList.of(
-      "/system/reads?aggregate=true",
-      "/system/apps/WordCount/reads?aggregate=true",
-      "/system/apps/WordCount/flows/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/system/datasets/wordStats/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/system/streams/wordStream/collect.events?aggregate=true",
-      "/system/cluster/resources.total.storage?aggregate=true"
-    );
-
-    malformedResources = ImmutableList.of(
-      "/syste/reads?aggregate=true",
-      "/system/app/WordCount/reads?aggregate=true",
-      "/system/apps/WordCount/flow/WordCounter/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      "/system/dataset/wordStats/reads?aggregate=true",
-      "/system/datasets/wordStats/app/WordCount/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
-    );
-
     nonExistingResources = ImmutableList.of(
       "/system/apps/WordCont/reads?aggregate=true",
       "/system/apps/WordCount/flows/WordCouner/reads?aggregate=true",
@@ -419,9 +383,18 @@ public abstract class MetricsSuiteTestBase {
                                                          String flowletName) {
     return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
                            Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-                           Constants.Metrics.Tag.PROGRAM, flowName,
+                           Constants.Metrics.Tag.FLOW, flowName,
                            Constants.Metrics.Tag.FLOWLET, flowletName);
+  }
+
+  protected static Map<String, String> getFlowletContext(String namespaceId, String appName, String flowName,
+                                                         String runId, String flowletName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.FLOW, flowName)
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.FLOWLET, flowletName).build();
   }
 
   protected static Map<String, String> getFlowletQueueContext(String namespaceId, String appName, String flowName,
@@ -429,15 +402,25 @@ public abstract class MetricsSuiteTestBase {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW))
-      .put(Constants.Metrics.Tag.PROGRAM, flowName)
+      .put(Constants.Metrics.Tag.FLOW, flowName)
       .put(Constants.Metrics.Tag.FLOWLET, flowletName)
       .put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName)
       .build();
   }
 
+  protected static Map<String, String> getFlowletDatasetContext(String namespaceId, String appName, String flowName,
+                                                                String flowletName, String datasetName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.FLOW, flowName)
+      .put(Constants.Metrics.Tag.FLOWLET, flowletName)
+      .put(Constants.Metrics.Tag.DATASET, datasetName)
+      .build();
+  }
+
   protected static Map<String, String> getStreamHandlerContext(String streamName, String instanceId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
                            Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, instanceId,
@@ -447,16 +430,14 @@ public abstract class MetricsSuiteTestBase {
   protected static Map<String, String> getProcedureContext(String namespaceId, String appName, String procedureName) {
     return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
                            Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
-                           Constants.Metrics.Tag.PROGRAM, procedureName);
+                           Constants.Metrics.Tag.PROCEDURE, procedureName);
   }
 
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName) {
     return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
                            Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
-                           Constants.Metrics.Tag.PROGRAM, serviceName,
+                           Constants.Metrics.Tag.SERVICE, serviceName,
                            Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
   }
 
@@ -465,8 +446,7 @@ public abstract class MetricsSuiteTestBase {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE))
-      .put(Constants.Metrics.Tag.PROGRAM, serviceName)
+      .put(Constants.Metrics.Tag.SERVICE, serviceName)
       .put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName)
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .build();
@@ -478,8 +458,7 @@ public abstract class MetricsSuiteTestBase {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.MAPREDUCE))
-      .put(Constants.Metrics.Tag.PROGRAM, jobName)
+      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
       .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)

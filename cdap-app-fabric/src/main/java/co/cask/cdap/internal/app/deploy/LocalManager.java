@@ -21,7 +21,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -93,8 +92,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
     this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
@@ -108,7 +106,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new VerificationStage(datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
-    pipeline.addLast(new CreateStreamsStage(streamAdmin, exploreFacade, exploreEnabled));
+    pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));

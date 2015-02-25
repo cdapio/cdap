@@ -17,11 +17,11 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -33,6 +33,7 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,7 +48,7 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
-  private final ConcurrentMap<String, StreamSizeAggregator> aggregators;
+  private final ConcurrentMap<Id.Stream, StreamSizeAggregator> aggregators;
   private boolean isInit;
 
   @Inject
@@ -56,8 +57,9 @@ public class LocalStreamService extends AbstractStreamService {
                             StreamMetaStore streamMetaStore,
                             StreamAdmin streamAdmin,
                             StreamWriterSizeCollector streamWriterSizeCollector,
-                            NotificationService notificationService) {
-    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector);
+                            NotificationService notificationService,
+                            MetricStore metricStore) {
+    super(streamCoordinatorClient, janitorService, streamWriterSizeCollector, metricStore);
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
     this.streamWriterSizeCollector = streamWriterSizeCollector;
@@ -68,10 +70,11 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
-      StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
-      long filesSize = StreamUtils.fetchStreamFilesSize(config);
-      createSizeAggregator(streamSpec.getName(), filesSize, config.getNotificationThresholdMB());
+    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
+      StreamConfig config = streamAdmin.getConfig(streamId);
+      long eventsSizes = getStreamEventsSize(streamId);
+      createSizeAggregator(streamId, eventsSizes, config.getNotificationThresholdMB());
     }
   }
 
@@ -85,12 +88,13 @@ public class LocalStreamService extends AbstractStreamService {
   @Override
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
-    for (StreamSpecification streamSpec : streamMetaStore.listStreams(Constants.DEFAULT_NAMESPACE)) {
-      StreamSizeAggregator streamSizeAggregator = aggregators.get(streamSpec.getName());
+    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
+      StreamSizeAggregator streamSizeAggregator = aggregators.get(streamId);
       if (streamSizeAggregator == null) {
         // First time that we see this Stream here
-        StreamConfig config = streamAdmin.getConfig(streamSpec.getName());
-        streamSizeAggregator = createSizeAggregator(streamSpec.getName(), 0, config.getNotificationThresholdMB());
+        StreamConfig config = streamAdmin.getConfig(streamId);
+        streamSizeAggregator = createSizeAggregator(streamId, 0, config.getNotificationThresholdMB());
       }
       streamSizeAggregator.checkAggregatedSize();
     }
@@ -98,53 +102,34 @@ public class LocalStreamService extends AbstractStreamService {
   }
 
   /**
-   * Create a new aggregator for the {@code streamName}, and add it to the existing map of {@link Cancellable}
+   * Create a new aggregator for the {@code streamId}, and add it to the existing map of {@link Cancellable}
    * {@code aggregators}. This method does not cancel previously existing aggregator associated to the
-   * {@code streamName}.
+   * {@code streamId}.
    *
-   * @param streamName stream name to create a new aggregator for
+   * @param streamId stream name to create a new aggregator for
    * @param baseCount stream size from which to start aggregating
+   * @param threshold notification threshold after which to publish a notification - in MB
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(String streamName, long baseCount, int threshold) {
+  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, long baseCount, int threshold) {
 
     // Handle threshold changes
     final Cancellable thresholdSubscription =
-      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
+      getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
         @Override
-        public void thresholdChanged(String streamName, int threshold) {
-          StreamSizeAggregator aggregator = aggregators.get(streamName);
+        public void thresholdChanged(Id.Stream streamId, int threshold) {
+          StreamSizeAggregator aggregator = aggregators.get(streamId);
           while (aggregator == null) {
             Thread.yield();
-            aggregator = aggregators.get(streamName);
+            aggregator = aggregators.get(streamId);
           }
           aggregator.setStreamThresholdMB(threshold);
         }
       });
 
-    // Handle stream truncation, by creating creating a new empty aggregator for the stream
-    // and cancelling the existing one
-    final Cancellable truncationSubscription =
-      getStreamCoordinatorClient().addListener(streamName, new StreamPropertyListener() {
-        @Override
-        public void generationChanged(String streamName, int generation) {
-          StreamSizeAggregator aggregator = aggregators.get(streamName);
-          while (aggregator == null) {
-            Thread.yield();
-            aggregator = aggregators.get(streamName);
-          }
-          aggregator.resetCount();
-        }
-      });
-
-    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamName, baseCount, threshold, new Cancellable() {
-      @Override
-      public void cancel() {
-        thresholdSubscription.cancel();
-        truncationSubscription.cancel();
-      }
-    });
-    aggregators.put(streamName, newAggregator);
+    StreamSizeAggregator newAggregator = new StreamSizeAggregator(streamId, baseCount, threshold,
+                                                                  thresholdSubscription);
+    aggregators.put(streamId, newAggregator);
     return newAggregator;
   }
 
@@ -153,22 +138,22 @@ public class LocalStreamService extends AbstractStreamService {
    * size is higher than a threshold.
    */
   private final class StreamSizeAggregator implements Cancellable {
-    private final AtomicLong streamInitSize;
+    private final long streamInitSize;
     private final Id.NotificationFeed streamFeed;
-    private final String streamName;
+    private final Id.Stream streamId;
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
 
-    protected StreamSizeAggregator(String streamName, long baseCount, int streamThresholdMB, Cancellable cancellable) {
-      this.streamName = streamName;
-      this.streamInitSize = new AtomicLong(baseCount);
+    protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
+      this.streamId = streamId;
+      this.streamInitSize = baseCount;
       this.streamBaseCount = new AtomicLong(baseCount);
       this.cancellable = cancellable;
       this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+        .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(streamName)
+        .setName(String.format("%sSize", streamId.getName()))
         .build();
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }
@@ -176,14 +161,6 @@ public class LocalStreamService extends AbstractStreamService {
     @Override
     public void cancel() {
       cancellable.cancel();
-    }
-
-    /**
-     * Reset the counts of this {@link StreamSizeAggregator} to zero.
-     */
-    public void resetCount() {
-      streamBaseCount.set(0);
-      streamInitSize.set(0);
     }
 
     /**
@@ -200,7 +177,7 @@ public class LocalStreamService extends AbstractStreamService {
      * If it is, we publish a notification.
      */
     public void checkAggregatedSize() {
-      long sum = streamInitSize.get() + streamWriterSizeCollector.getTotalCollected(streamName);
+      long sum = streamInitSize + streamWriterSizeCollector.getTotalCollected(streamId);
       if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);

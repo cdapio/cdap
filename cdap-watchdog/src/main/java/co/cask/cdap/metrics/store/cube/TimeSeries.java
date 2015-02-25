@@ -16,7 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

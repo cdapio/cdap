@@ -17,8 +17,6 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
@@ -29,12 +27,10 @@ import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.queue.ConsumerConfig;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -45,7 +41,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -63,21 +58,12 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final String tablePrefix;
 
-  // This is just for compatibility upgrade from pre 2.2.0 to 2.2.0.
-  // TODO: Remove usage of this when no longer needed
-  private final QueueClientFactory queueClientFactory;
-  private final StreamAdmin oldStreamAdmin;
-
   protected AbstractStreamFileConsumerFactory(CConfiguration cConf, StreamAdmin streamAdmin,
-                                              StreamConsumerStateStoreFactory stateStoreFactory,
-                                              QueueClientFactory queueClientFactory, StreamAdmin oldStreamAdmin) {
+                                              StreamConsumerStateStoreFactory stateStoreFactory) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix =
-      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM).namespace(QueueConstants.STREAM_TABLE_PREFIX);
-    this.queueClientFactory = queueClientFactory;
-    this.oldStreamAdmin = oldStreamAdmin;
+    this.tablePrefix = new DefaultDatasetNamespace(cConf).namespace(QueueConstants.QueueType.STREAM.toString()).getId();
   }
 
   /**
@@ -120,41 +106,24 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public final StreamConsumer create(QueueName streamName, String namespace,
+  public final StreamConsumer create(Id.Stream streamId, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
 
-    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamName.getSimpleName());
+    StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamId);
 
-    String tableName = getTableName(streamName, namespace);
+    String tableName = getTableName(streamId, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
-    StreamConsumer newConsumer = create(tableName, streamConfig, consumerConfig,
-                                        stateStore, consumerState, createReader(streamConfig, consumerState),
-                                        new TTLReadFilter(streamConfig.getTTL()));
-
-    try {
-      // The old stream admin uses full URI of queue name as the name for checking existence
-      if (!oldStreamAdmin.exists(streamName.toURI().toString())) {
-        return newConsumer;
-      }
-
-      // For old stream consumer, the group size doesn't matter in queue based stream.
-      StreamConsumer oldConsumer = new QueueToStreamConsumer(streamName, consumerConfig,
-                                                             queueClientFactory.createConsumer(streamName,
-                                                                                               consumerConfig, -1)
-      );
-      return new CombineStreamConsumer(oldConsumer, newConsumer);
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw new IOException(e);
-    }
+    return create(tableName, streamConfig, consumerConfig,
+                  stateStore, consumerState, createReader(streamConfig, consumerState),
+                  new TTLReadFilter(streamConfig.getTTL()));
   }
 
   @Override
-  public void dropAll(QueueName streamName, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // Delete the entry table
-    dropTable(getTableName(streamName, namespace));
+    dropTable(getTableName(streamId, namespace));
 
     // Cleanup state store
     Map<Long, Integer> groupInfo = Maps.newHashMap();
@@ -162,27 +131,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
       groupInfo.put(groupId, 0);
     }
     try {
-      streamAdmin.configureGroups(streamName, groupInfo);
-
-      if (oldStreamAdmin instanceof QueueAdmin && !oldStreamAdmin.exists(streamName.toURI().toString())) {
-        // A bit hacky to assume namespace is formed by namespaceId.appId.flowId. See AbstractDataFabricFacade
-        // String namespace = String.format("%s.%s.%s",
-        //                                  programId.getNamespaceId(),
-        //                                  programId.getApplicationId(),
-        //                                  programId.getId());
-
-        String invalidNamespaceError = String.format("Namespace string %s must be of the form <namespace>.<app>.<flow>",
-                                                     namespace);
-        Iterator<String> namespaceParts = Splitter.on('.').split(namespace).iterator();
-        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
-        String namespaceId = namespaceParts.next();
-        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
-        String appId = namespaceParts.next();
-        Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
-        String flowId = namespaceParts.next();
-
-        ((QueueAdmin) oldStreamAdmin).dropAllForFlow(namespaceId, appId, flowId);
-      }
+      streamAdmin.configureGroups(streamId, groupInfo);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);
@@ -190,14 +139,14 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
-  private String getTableName(QueueName streamName, String namespace) {
-    return String.format("%s.%s.%s", tablePrefix, streamName.getSimpleName(), namespace);
+  private String getTableName(Id.Stream streamId, String namespace) {
+    return String.format("%s.%s.%s", tablePrefix, streamId.getName(), namespace);
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,
                                                  StreamConsumerState consumerState) throws IOException {
     Location streamLocation = streamConfig.getLocation();
-    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getName());
+    Preconditions.checkNotNull(streamLocation, "Stream location is null for %s", streamConfig.getStreamId());
 
     // Look for the latest stream generation
     final int generation = StreamUtils.getGeneration(streamConfig);

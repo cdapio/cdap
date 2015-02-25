@@ -18,14 +18,19 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * admin for streams in leveldb.
@@ -34,15 +39,15 @@ import java.io.IOException;
 public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin {
 
   @Inject
-  public LevelDBStreamAdmin(CConfiguration conf, LevelDBOrderedTableService service) {
+  public LevelDBStreamAdmin(CConfiguration conf, LevelDBTableService service) {
     super(conf, service, QueueConstants.QueueType.STREAM);
   }
 
   @Override
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
-      // <cdap namespace>.system.stream.<account>.<stream name>
-      return getTableNamePrefix() + "." + queueName.getFirstComponent();
+      // <cdap namespace>.<namespace>.system.stream.<stream name>
+      return getTableNamePrefix(queueName.getFirstComponent()) + "." + queueName.getSecondComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -61,17 +66,62 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+    dropAllInNamespace(namespace.getId());
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+  }
+
+  @Override
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+    configureGroups(QueueName.fromStream(streamId), groupInfo);
+  }
+
+  @Override
+  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
+  }
+
+  @Override
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
   public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
     throw new UnsupportedOperationException("Not yet supported");
   }
+
+  private String fromStream(Id.Stream streamId) {
+    return QueueName.fromStream(streamId).toURI().toString();
+  }
+
+  @Override
+  public boolean exists(Id.Stream streamId) throws Exception {
+    return exists(fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId) throws Exception {
+    create(fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    create(fromStream(streamId), props);
+  }
+
+  @Override
+  public void truncate(Id.Stream streamId) throws Exception {
+    truncate(fromStream(streamId));
+  }
+
+  @Override
+  public void drop(Id.Stream streamId) throws Exception {
+    drop(fromStream(streamId));
+  }
+
 }

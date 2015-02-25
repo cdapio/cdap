@@ -15,9 +15,11 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -32,15 +34,14 @@ import javax.ws.rs.Path;
  * Class for handling requests for a single metric in a context.
  */
 @Path(Constants.Gateway.API_VERSION_2 + "/metrics")
-public class MetricsQueryHandler extends BaseMetricsHandler {
+public class MetricsQueryHandler extends AuthenticatedHttpHandler {
 
-  private final MetricsRequestExecutor requestExecutor;
+  private final MetricStoreRequestExecutor requestExecutor;
 
   @Inject
-
-  public MetricsQueryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+  public MetricsQueryHandler(Authenticator authenticator, MetricStore metricStore) {
     super(authenticator);
-    this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
+    this.requestExecutor = new MetricStoreRequestExecutor(metricStore);
   }
 
   @GET
@@ -133,15 +134,15 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
 
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException {
     try {
-      URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
-      MetricsRequest metricsRequest = parseAndValidate(request, uri);
-      responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(metricsRequest));
+      URI uri = new URI(MetricQueryParser.stripVersionAndMetricsFromPath(request.getUri()));
+      MetricDataQuery query = MetricQueryParser.parse(uri);
+      responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(query));
     } catch (URISyntaxException e) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (MetricsPathException e) {
-      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Exception e) {
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
     }
   }
 }

@@ -131,7 +131,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private Put getIncrementalPut(byte[] row) {
     Put put = new Put(row);
-    put.setAttribute(HBaseOrderedTable.DELTA_WRITE, Bytes.toBytes(true));
+    put.setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true));
     return put;
   }
 
@@ -208,6 +208,15 @@ public class HBaseMetricsTable implements MetricsTable {
     } finally {
       scanner.close();
     }
+  }
+
+  @Override
+  public void delete(byte[] row, byte[][] columns) throws Exception {
+    Delete delete = new Delete(row);
+    for (byte[] column : columns) {
+      delete.deleteColumn(DATA_COLUMN_FAMILY, column);
+    }
+    hTable.delete(delete);
   }
 
   @Override

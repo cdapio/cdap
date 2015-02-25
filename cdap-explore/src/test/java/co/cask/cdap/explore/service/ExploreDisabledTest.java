@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -42,6 +43,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -51,6 +53,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -63,11 +66,14 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
+  private static LocationFactory locationFactory;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -85,10 +91,15 @@ public class ExploreDisabledTest {
     Assert.assertFalse(exploreClient.isServiceAvailable());
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    // This happens when you create a namespace. However, simulating that scenario by creating a directory here instead.
+    Locations.mkdirsIfNotExists(locationFactory.create(namespaceId.getId()));
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    Locations.deleteQuietly(locationFactory.create(namespaceId.getId()));
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();
@@ -99,16 +110,18 @@ public class ExploreDisabledTest {
   public void testDeployRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
-    datasetFramework.addModule("module1", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    Id.DatasetModule module1 = Id.DatasetModule.from(namespaceId, "module1");
+    Id.DatasetInstance instance1 = Id.DatasetInstance.from(namespaceId, "table1");
+    datasetFramework.addModule(module1, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "table1", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", instance1, DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("table1", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(instance1, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -132,24 +145,26 @@ public class ExploreDisabledTest {
 
     Assert.assertEquals(value1, table.get("1"));
 
-    datasetFramework.deleteInstance("table1");
-    datasetFramework.deleteModule("module1");
+    datasetFramework.deleteInstance(instance1);
+    datasetFramework.deleteModule(module1);
   }
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exceptionbeing thrown
-    datasetFramework.addModule("module2", new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
+    Id.DatasetModule module2 = Id.DatasetModule.from(namespaceId, "module2");
+    Id.DatasetInstance instance2 = Id.DatasetInstance.from(namespaceId, "table1");
+    datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("NotRecordScannableTableDef", "table2", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("NotRecordScannableTableDef", instance2, DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
     // Accessing dataset instance to perform data operations
     NotRecordScannableTableDefinition.KeyValueTable table =
-      datasetFramework.getDataset("table2", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(instance2, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     table.startTx(tx1);
 
@@ -169,8 +184,8 @@ public class ExploreDisabledTest {
 
     Assert.assertEquals("value1", new String(table.read("key1")));
 
-    datasetFramework.deleteInstance("table2");
-    datasetFramework.deleteModule("module2");
+    datasetFramework.deleteInstance(instance2);
+    datasetFramework.deleteModule(module2);
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {

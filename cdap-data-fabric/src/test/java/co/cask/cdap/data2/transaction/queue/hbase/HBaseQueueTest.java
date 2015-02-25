@@ -49,7 +49,11 @@ import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.NoOpTransactionStateStorage;
 import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -78,8 +82,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * HBase queue tests.
@@ -93,7 +100,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
-  private static ConsumerConfigCache configCache;
+  private static LoadingCache<QueueName, Optional<ConsumerConfigCache>> consumerConfigCaches;
 
   private static HBaseTestBase testHBase;
   private static HBaseTableUtil tableUtil;
@@ -175,8 +182,19 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    configCache = ConsumerConfigCache.getInstance(
-      hConf, Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName()));
+    consumerConfigCaches = CacheBuilder.newBuilder().build(
+      new CacheLoader<QueueName, Optional<ConsumerConfigCache>>() {
+        @Override
+        public Optional<ConsumerConfigCache> load(QueueName key) throws Exception {
+          String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(key);
+          byte[] tableName = Bytes.toBytes(configTableName);
+          if (testHBase.getHBaseAdmin().tableExists(tableName)) {
+            return Optional.of(ConsumerConfigCache.getInstance(hConf, tableName));
+          }
+          return Optional.absent();
+        }
+      }
+    );
 
     tableUtil = new HBaseTableUtilFactory().get();
   }
@@ -187,14 +205,14 @@ public abstract class HBaseQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
@@ -282,24 +300,46 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     } finally {
       hTable.close();
-      queueAdmin.dropAll();
+      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
   }
 
   @Override
-  protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException {
-    configCache.updateCache();
+  protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException, ExecutionException {
+    updateConfigCaches(queueNames);
     for (QueueName queueName : queueNames) {
-      Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+      Optional<ConsumerConfigCache> cache = getConfigCache(queueName);
+      Assert.assertTrue(cache.isPresent());
+      Assert.assertNotNull("for " + queueName, cache.get().getConsumerConfig(queueName.toBytes()));
     }
   }
 
   @Override
-  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException {
-    configCache.updateCache();
+  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException,
+    ExecutionException {
+    updateConfigCaches(queueNames);
     for (QueueName queueName : queueNames) {
-      Assert.assertNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+      Optional<ConsumerConfigCache> cache = getConfigCache(queueName);
+      // either the config table has to be missing, or the queue entries in the config table are not present
+      if (!cache.isPresent()) {
+        continue;
+      }
+      Assert.assertTrue("for " + queueName, cache.get().getConsumerConfig(queueName.toBytes()) == null);
     }
+  }
+
+  private void updateConfigCaches(QueueName... queueNames) throws ExecutionException {
+    List<QueueName> queueNameList = Arrays.asList(queueNames);
+    consumerConfigCaches.invalidateAll(queueNameList);
+    for (Optional<ConsumerConfigCache> consumerConfigCache : consumerConfigCaches.getAll(queueNameList).values()) {
+      if (consumerConfigCache.isPresent()) {
+        consumerConfigCache.get().updateCache();
+      }
+    }
+  }
+
+  private Optional<ConsumerConfigCache> getConfigCache(QueueName queueName) throws ExecutionException {
+    return consumerConfigCaches.get(queueName);
   }
 
   @AfterClass
@@ -311,7 +351,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix();
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix(Constants.DEFAULT_NAMESPACE);
     Assert.assertTrue(queueTablename.startsWith("test."));
   }
 
@@ -350,7 +390,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (queueName.isQueue()) {
       queueAdmin.configureGroups(queueName, groupInfo);
     } else {
-      streamAdmin.configureGroups(queueName, groupInfo);
+      streamAdmin.configureGroups(queueName.toStreamId(), groupInfo);
     }
   }
 }

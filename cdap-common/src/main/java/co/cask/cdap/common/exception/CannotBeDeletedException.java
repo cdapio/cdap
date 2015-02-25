@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.exception;
 
+import javax.annotation.Nullable;
+
 /**
  * Thrown when an element cannot be deleted.
  */
@@ -23,9 +25,24 @@ public class CannotBeDeletedException extends Exception {
 
   private final String elementType;
   private final String elementId;
+  private String reason;
 
   public CannotBeDeletedException(String elementType, String elementId) {
-    super(String.format("Element '%s' of type '%s' cannot be deleted", elementId, elementType));
+    super(String.format("Element '%s' of type '%s' cannot be deleted.", elementId, elementType));
+    this.elementType = elementType;
+    this.elementId = elementId;
+  }
+
+  public CannotBeDeletedException(String elementType, String elementId, String reason) {
+    super(String.format("Element '%s' of type '%s' cannot be deleted. Reason: %s", elementId, elementType, reason));
+    this.elementType = elementType;
+    this.elementId = elementId;
+    this.reason = reason;
+  }
+
+  public CannotBeDeletedException(String elementType, String elementId, Throwable cause) {
+    super(String.format("Element '%s' of type '%s' cannot be deleted. Reason: %s",
+                        elementId, elementType, cause.getMessage()), cause);
     this.elementType = elementType;
     this.elementId = elementId;
   }
@@ -42,5 +59,13 @@ public class CannotBeDeletedException extends Exception {
    */
   public String getElementId() {
     return elementId;
+  }
+
+  /**
+   * @return the reason why the element cannot be deleted
+   */
+  @Nullable
+  public String getReason() {
+    return reason;
   }
 }

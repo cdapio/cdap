@@ -57,7 +57,8 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
         && input.getMapReduce().isEmpty()
         && input.getSpark().isEmpty()
         && input.getWorkflows().isEmpty()
-        && input.getServices().isEmpty()) {
+        && input.getServices().isEmpty()
+        && input.getWorkers().isEmpty()) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }
 

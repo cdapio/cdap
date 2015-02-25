@@ -23,13 +23,18 @@ import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -42,13 +47,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Store store;
   private final PreferencesStore preferencesStore;
   private final DashboardStore dashboardStore;
+  private final DatasetFramework dsFramework;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
-                               DashboardStore dashboardStore) {
+                               DashboardStore dashboardStore, DatasetFramework dsFramework) {
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
+    this.dsFramework = dsFramework;
   }
 
   /**
@@ -66,6 +73,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       LOG.info("Successfully created 'default' namespace.");
     } catch (AlreadyExistsException e) {
       LOG.info("'default' namespace already exists.");
+    } catch (NamespaceCannotBeCreatedException e) {
+      LOG.error("Error while creating default namespace", e);
+      Throwables.propagate(e);
     }
   }
 
@@ -120,31 +130,55 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws AlreadyExistsException if the specified namespace already exists
    */
-  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
-    NamespaceMeta existing = store.createNamespace(metadata);
+  public void createNamespace(NamespaceMeta metadata) throws NamespaceCannotBeCreatedException, AlreadyExistsException {
+    // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
+    Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
+    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getId()));
     if (existing != null) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
     }
+
+    try {
+      dsFramework.createNamespace(Id.Namespace.from(metadata.getId()));
+    } catch (DatasetManagementException e) {
+      throw new NamespaceCannotBeCreatedException(metadata.getId(), e);
+    }
+
+    store.createNamespace(metadata);
   }
 
   /**
    * Deletes the specified namespace
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException {
-    //TODO: CDAP-870. Delete should be in a single transaction.
+  public void deleteNamespace(Id.Namespace namespaceId) throws NamespaceCannotBeDeletedException, NotFoundException {
+    // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
+    if (store.getNamespace(namespaceId) == null) {
+      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+    }
+    // TODO: CDAP-870: Check if apps are running and abort if they are
     // Delete Preferences associated with this namespace
     preferencesStore.deleteProperties(namespaceId.getId());
 
     // Delete all dashboards associated with this namespace
     dashboardStore.delete(namespaceId.getId());
 
-    // Store#deleteNamespace already checks for existence
-    NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
-    if (deletedNamespace == null) {
-      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+    // move data directory and try to remove HBase namespace
+    try {
+      dsFramework.deleteAllInstances(namespaceId);
+      dsFramework.deleteAllModules(namespaceId);
+      dsFramework.deleteNamespace(namespaceId);
+    } catch (DatasetManagementException e) {
+      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
+    } catch (IOException e) {
+      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     }
+
+    // TODO: CDAP-870: Delete streams, queues, apps
+
+    store.deleteNamespace(namespaceId);
   }
 }

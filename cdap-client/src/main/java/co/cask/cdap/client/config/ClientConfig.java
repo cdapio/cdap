@@ -57,23 +57,29 @@ public class ClientConfig {
   private boolean sslEnabled;
   private String hostname;
   private int port;
+  private String namespace;
   private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, boolean sslEnabled, int unavailableRetryLimit,
+  private ClientConfig(String hostname, int port, String namespace, boolean sslEnabled, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
     this.apiVersion = apiVersion;
     this.port = port;
+    this.namespace = namespace;
     this.sslEnabled = sslEnabled;
     this.unavailableRetryLimit = unavailableRetryLimit;
     this.accessToken = accessToken;
     this.verifySSLCert = verifySSLCert;
     this.defaultHttpConfig = defaultHttpConfig;
     this.uploadHttpConfig = uploadHttpConfig;
+  }
+
+  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
   }
 
   /**
@@ -85,34 +91,35 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+    return resolveURL(apiVersion, path);
   }
 
   /**
-   * Resolves a path against the target CDAP server with the provided apiVersion and namespace
+   * Resolves a path against the target CDAP server
    *
-   * @param apiVersion the api version to use
-   * @param namespace the namespace to use
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveURL(String apiVersion, String namespace, String path) throws MalformedURLException {
+  public URL resolveURLV3(String path) throws MalformedURLException {
+    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
+  }
+
+  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
     return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
   }
 
   /**
-   * Resolves a path against the target CDAP server with the provided apiVersion
+   * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
-   * @param apiVersion the api version to use
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v2/apps".
+   *             in a URL like "http://example.com:10000/v3/<namespace>/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveURL(String apiVersion, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+  public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
   }
 
   /**
@@ -150,6 +157,13 @@ public class ClientConfig {
     return port;
   }
 
+  /**
+   * @return namespace currently active
+   */
+  public String getNamespace() {
+    return namespace;
+  }
+
   public boolean isVerifySSLCert() {
     return verifySSLCert;
   }
@@ -177,6 +191,10 @@ public class ClientConfig {
 
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public void setNamespace(String namespace) {
+    this.namespace = namespace;
   }
 
   public void setApiVersion(String apiVersion) {
@@ -220,6 +238,7 @@ public class ClientConfig {
 
     private String hostname = DEFAULT_HOST;
     private Optional<Integer> port = Optional.absent();
+    private String namespace = Constants.DEFAULT_NAMESPACE;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
@@ -237,6 +256,7 @@ public class ClientConfig {
     public Builder(ClientConfig clientConfig) {
       this.hostname = clientConfig.getHostname();
       this.port = Optional.of(clientConfig.getPort());
+      this.namespace = clientConfig.getNamespace();
       this.sslEnabled = clientConfig.isSSLEnabled();
       this.apiVersion = clientConfig.getApiVersion();
       this.accessToken = clientConfig.getAccessTokenSupplier();
@@ -288,6 +308,11 @@ public class ClientConfig {
       return this;
     }
 
+    public Builder setNamespace(String namespace) {
+      this.namespace = namespace;
+      return this;
+    }
+
     public Builder setAccessToken(Supplier<AccessToken> accessToken) {
       this.accessToken = accessToken;
       return this;
@@ -316,9 +341,9 @@ public class ClientConfig {
       }
       return this;
     }
-    
+
     public ClientConfig build() {
-      return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT),
+      return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT), namespace,
                               sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,
                               new HttpRequestConfig(defaultConnectTimeoutMs, defaultReadTimeoutMs, verifySSLCert),
                               new HttpRequestConfig(uploadConnectTimeoutMs, uploadReadTimeoutMs, verifySSLCert));

@@ -32,30 +32,19 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.queue.ConsumerConfig;
-import co.cask.cdap.data2.queue.DequeueStrategy;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.queue.QueueEntry;
-import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
+import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.snapshot.SnapshotCodec;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -68,7 +57,6 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -77,7 +65,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 
@@ -86,7 +73,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
 
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
@@ -159,7 +148,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
                                                        new TypeToken<List<Map<String, String>>>() { }.getType());
 
-      if (result.size() >= size) {
+      if (result != null && result.size() >= size) {
         // For each one, we have 4 fields.
         for (Map<String, String> m : result) {
           int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
@@ -170,24 +159,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 5);
-  }
-
-  private String getLatestRunId(String url) throws Exception {
-    int trials = 0;
-    String runId = null;
-    while (trials++ < 5) {
-      HttpResponse response = doGet(url);
-      List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                       new TypeToken<List<Map<String, String>>>() { }.getType());
-      if (result.size() > 0) {
-        Assert.assertNotNull(result.get(0).containsKey("runid"));
-        runId = result.get(0).get("runid");
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < 5);
-    return runId;
   }
 
   private void testRuntimeArgs(Class<?> app, String appId, String runnableType, String runnableId)
@@ -211,6 +182,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
 
+    Assert.assertNotNull(argsRead);
     Assert.assertEquals(args.size(), argsRead.size());
 
     for (Map.Entry<String, String> entry : args.entrySet()) {
@@ -226,7 +198,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
-    Assert.assertEquals(0, argsRead.size());
+    Assert.assertEquals(0, argsRead == null ? -1 : argsRead.size());
 
     //test null runtime args
     response = doPut("/v2/apps/" + appId + "/" + runnableType + "/"
@@ -238,6 +210,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
+    Assert.assertNotNull(argsRead);
     Assert.assertEquals(0, argsRead.size());
   }
 
@@ -860,7 +833,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
     Assert.assertEquals(400,
-      doPost("/v2/transactions/foobar/invalidate").getStatusLine().getStatusCode());
+                        doPost("/v2/transactions/foobar/invalidate").getStatusLine().getStatusCode());
   }
 
   @Test
@@ -997,6 +970,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // 5. Verify there are no runs after the suspend by looking at the history
     // 6. Resume the schedule
     // 7. Verify there are runs after the resume by looking at the history
+
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -1010,9 +984,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<ScheduleSpecification> schedules = new Gson().fromJson(json,
-                                                                new TypeToken<List<ScheduleSpecification>>()
-                                                                { }.getType());
+    List<ScheduleSpecification> schedules =
+      GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
@@ -1038,8 +1011,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
@@ -1047,8 +1019,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
-                                  LIST_MAP_STRING_STRING_TYPE);
+    history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
@@ -1079,113 +1050,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doDelete("/v2/apps/AppWithSchedule");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
-
-  // TODO: Fix this unit test
-  @Ignore
-  @Test
-  public void testClearQueuesStreams() throws Exception {
-    // setup accessor
-    String streamName = "doobdoobee2";
-    String queueName = "doobee2";
-
-    // create a stream, a queue, a table
-    createStream(streamName);
-    createQueue(queueName);
-
-    // verify they are all there
-    Assert.assertTrue(verifyStream(streamName));
-    Assert.assertTrue(verifyQueue(queueName));
-
-    // clear queues
-    Assert.assertEquals(200, doDelete("/v2/queues").getStatusLine().getStatusCode());
-
-    // verify tables and streams are still here
-    Assert.assertTrue(verifyStream(streamName));
-    // verify queue is gone
-    Assert.assertFalse(verifyQueue(queueName));
-
-    // recreate the queue
-    createQueue(queueName);
-    Assert.assertTrue(verifyQueue(queueName));
-
-    // clear streams
-    Assert.assertEquals(200, doDelete("/v2/streams").getStatusLine().getStatusCode());
-
-    // verify table and queue are still here
-    Assert.assertTrue(verifyQueue(queueName));
-    // verify stream is gone
-    Assert.assertFalse(verifyStream(streamName));
-  }
-
-
-  static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
-
-  void createStream(String name) throws Exception {
-    // create stream
-    Assert.assertEquals(200, doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
-
-    // write smth to a stream
-    QueueName queueName = QueueName.fromStream(name);
-    enqueue(queueName, STREAM_ENTRY);
-  }
-
-  void createQueue(String name) throws Exception {
-    // write smth to a queue
-    QueueName queueName = getQueueName(name);
-    enqueue(queueName, STREAM_ENTRY);
-  }
-
-  boolean dequeueOne(QueueName queueName) throws Exception {
-    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
-                                                                      new ConsumerConfig(1L, 0, 1,
-                                                                                         DequeueStrategy.ROUND_ROBIN,
-                                                                                         null),
-                                                                      1);
-    // doing inside tx
-    TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
-    return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) consumer))
-      .execute(new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return !consumer.dequeue(1).isEmpty();
-        }
-      });
-  }
-
-  boolean verifyStream(String name) throws Exception {
-    // for now, DELETE /streams only deletes the stream data, not meta data
-    // boolean streamExists = 200 ==
-    //   doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
-    return dequeueOne(QueueName.fromStream(name));
-  }
-
-  boolean verifyQueue(String name) throws Exception {
-    return dequeueOne(getQueueName(name));
-  }
-
-  private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
-    QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final QueueProducer producer = queueClientFactory.createProducer(queueName);
-    // doing inside tx
-    TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
-    txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          // write more than one so that we can dequeue multiple times for multiple checks
-          producer.enqueue(queueEntry);
-          producer.enqueue(queueEntry);
-        }
-      });
-  }
-
-  private  QueueName getQueueName(String name) {
-    // i.e. flow and flowlet are constants: should be good enough
-    return QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app1", "flow1", "flowlet1", name);
   }
 
   /**

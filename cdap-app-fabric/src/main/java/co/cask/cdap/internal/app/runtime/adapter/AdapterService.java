@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -31,11 +32,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -44,7 +43,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.Schedules;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -52,6 +50,7 @@ import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -62,10 +61,12 @@ import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -95,8 +96,6 @@ public class AdapterService extends AbstractIdleService {
   private final Store store;
   private final PreferencesStore preferencesStore;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
-  private final String archiveDir;
-
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
@@ -105,13 +104,12 @@ public class AdapterService extends AbstractIdleService {
                         PreferencesStore preferencesStore) {
     this.configuration = configuration;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(configuration, Namespace.USER));
+                                                           new DefaultDatasetNamespace(configuration));
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
-    archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR) + "/archive";
     this.adapterTypeInfos = Maps.newHashMap();
     this.preferencesStore = preferencesStore;
   }
@@ -229,22 +227,22 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
     Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
-
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     String adapterName = adapterSpec.getName();
-    AdapterSpecification existingAdapter = store.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+    AdapterSpecification existingAdapter = store.getAdapter(namespace, adapterName);
     if (existingAdapter != null) {
       throw new AdapterAlreadyExistsException(adapterName);
     }
 
     ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
 
-    validateSources(adapterName, adapterSpec.getSources());
-    createSinks(adapterSpec.getSinks(), adapterTypeInfo);
+    validateSources(namespaceId, adapterName, adapterSpec.getSources());
+    createSinks(Id.Namespace.from(namespaceId), adapterTypeInfo, adapterSpec.getSinks());
 
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
     schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-    store.addAdapter(Id.Namespace.from(namespaceId), adapterSpec);
+    store.addAdapter(namespace, adapterSpec);
   }
 
   /**
@@ -328,7 +326,17 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-      Location destination = locationFactory.create(archiveDir).append(namespaceId).append(adapterTypeInfo.getType());
+      Location namespaceHomeLocation = locationFactory.create(namespaceId);
+      if (!namespaceHomeLocation.exists()) {
+        String msg = String.format("Home directory %s for namespace %s not found",
+                                   namespaceHomeLocation.toURI().getPath(), namespaceId);
+        LOG.error(msg);
+        throw new FileNotFoundException(msg);
+      }
+
+      String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+      Location destination = namespaceHomeLocation.append(appFabricDir)
+        .append(Constants.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
                                                          ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
@@ -374,10 +382,10 @@ public class AdapterService extends AbstractIdleService {
     Preconditions.checkArgument(frequency != null,
                                 "Frequency of running the adapter is missing from adapter properties." +
                                   " Cannot schedule program.");
-    String cronExpr = Schedules.toCronExpr(frequency);
+    String cronExpr = toCronExpr(frequency);
     String adapterName = adapterSpec.getName();
-    Schedule schedule = new Schedule(constructScheduleName(programId, adapterName), getScheduleDescription(adapterName),
-                                     cronExpr);
+    Schedule schedule = Schedules.createTimeSchedule(constructScheduleName(programId, adapterName),
+                                                     getScheduleDescription(adapterName), cronExpr);
     ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
                                            new ScheduleProgramInfo(programType, programId.getId()),
                                            adapterSpec.getProperties());
@@ -395,27 +403,29 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Sources for all adapters should exists before creating the adapters.
-  private void validateSources(String adapterName, Set<Source> sources) throws IllegalArgumentException {
+  private void validateSources(String namespaceId, String adapterName,
+                               Set<Source> sources) throws IllegalArgumentException {
     // Ensure all sources exist
     for (Source source : sources) {
       Preconditions.checkArgument(Source.Type.STREAM.equals(source.getType()),
                                   String.format("Unknown Source type: %s", source.getType()));
-      Preconditions.checkArgument(streamExists(source.getName()),
+      Id.Stream streamId = Id.Stream.from(namespaceId, source.getName());
+      Preconditions.checkArgument(streamExists(streamId),
                                   String.format("Stream %s must exist during create of adapter: %s",
                                                 source.getName(), adapterName));
     }
   }
 
-  private boolean streamExists(String streamName) {
+  private boolean streamExists(Id.Stream streamId) {
     try {
-      return streamAdmin.exists(streamName);
+      return streamAdmin.exists(streamId);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   // create the required sinks for the adapters. Currently only DATASET sink type is supported.
-  private void createSinks(Set<Sink> sinks, AdapterTypeInfo adapterTypeInfo) {
+  private void createSinks(Id.Namespace namespaceId, AdapterTypeInfo adapterTypeInfo, Set<Sink> sinks) {
     // create sinks if it does not exist
     for (Sink sink : sinks) {
       Preconditions.checkArgument(Sink.Type.DATASET.equals(sink.getType()),
@@ -429,23 +439,24 @@ public class AdapterService extends AbstractIdleService {
 
       String datasetClass = properties.getProperties().get(DATASET_CLASS);
       Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null");
-      createDataset(sink.getName(), datasetClass, properties);
+      Id.DatasetInstance sinkInstanceId = Id.DatasetInstance.from(namespaceId, sink.getName());
+      createDataset(sinkInstanceId, datasetClass, properties);
     }
   }
 
-  private void createDataset(String datasetName, String datasetClass, DatasetProperties properties) {
+  private void createDataset(Id.DatasetInstance datasetInstanceId, String datasetClass, DatasetProperties properties) {
     try {
-      if (!datasetFramework.hasInstance(datasetName)) {
-        datasetFramework.addInstance(datasetClass, datasetName, properties);
-        LOG.debug("Dataset instance {} created with properties: {}.", datasetName, properties);
+      if (!datasetFramework.hasInstance(datasetInstanceId)) {
+        datasetFramework.addInstance(datasetClass, datasetInstanceId, properties);
+        LOG.debug("Dataset instance {} created with properties: {}.", datasetInstanceId, properties);
       } else {
-        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetName);
+        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetInstanceId);
       }
     } catch (DatasetManagementException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     } catch (IOException e) {
-      LOG.error("Error while creating dataset {}", datasetName, e);
+      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
       throw new RuntimeException(e);
     }
   }
@@ -528,5 +539,46 @@ public class AdapterService extends AbstractIdleService {
    */
   public String getScheduleDescription(String adapterName) {
     return String.format("Schedule for adapter: %s", adapterName);
+  }
+
+  /**
+   * Converts a frequency expression into cronExpression that is usable by quartz.
+   * Supports frequency expressions with the following resolutions: minutes, hours, days.
+   * Example conversions:
+   * '10m' -> '*{@literal /}10 * * * ?'
+   * '3d' -> '0 0 *{@literal /}3 * ?'
+   *
+   * @return a cron expression
+   */
+  private String toCronExpr(String frequency) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
+    // remove all whitespace
+    frequency = frequency.replaceAll("\\s+", "");
+    Preconditions.checkArgument(frequency.length() >= 0);
+
+    frequency = frequency.toLowerCase();
+
+    String value = frequency.substring(0, frequency.length() - 1);
+    try {
+      int parsedValue = Integer.parseInt(value);
+      Preconditions.checkArgument(parsedValue > 0);
+      // TODO: Check for regular frequency.
+      String everyN = String.format("*/%s", value);
+      char lastChar = frequency.charAt(frequency.length() - 1);
+      switch (lastChar) {
+        case 'm':
+          DateBuilder.validateMinute(parsedValue);
+          return String.format("%s * * * ?", everyN);
+        case 'h':
+          DateBuilder.validateHour(parsedValue);
+          return String.format("0 %s * * ?", everyN);
+        case 'd':
+          DateBuilder.validateDayOfMonth(parsedValue);
+          return String.format("0 0 %s * ?", everyN);
+      }
+      throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Could not parse the frequency");
+    }
   }
 }

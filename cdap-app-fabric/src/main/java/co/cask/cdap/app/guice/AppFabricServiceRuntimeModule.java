@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,20 +26,25 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
+import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
+import co.cask.cdap.gateway.handlers.MonitorHandlerV2;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -49,12 +54,12 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
-import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.store.DefaultStoreFactory;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
@@ -106,7 +111,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
+                                                      StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -151,7 +157,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
+                                                      StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -266,8 +273,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
+      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(MonitorHandlerV2.class);
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
@@ -276,6 +285,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
+      handlerBinder.addBinding().to(TransactionHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
@@ -294,7 +304,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore,
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
                                                                     final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;

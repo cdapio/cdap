@@ -20,8 +20,10 @@ import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.io.LocationStatus;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Processor;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -294,15 +296,15 @@ public final class StreamUtils {
     return new StreamFileOffset(eventLocation, offset, generation);
   }
 
-  public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
+  public static StreamConfig ensureExists(StreamAdmin admin, Id.Stream streamId) throws IOException {
     try {
-      return admin.getConfig(streamName);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       // Ignored
     }
     try {
-      admin.create(streamName);
-      return admin.getConfig(streamName);
+      admin.create(streamId);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
@@ -317,8 +319,17 @@ public final class StreamUtils {
    * @return the generation id
    */
   public static int getGeneration(StreamConfig config) throws IOException {
-    Location streamLocation = config.getLocation();
+    return getGeneration(config.getLocation());
+  }
 
+  /**
+   * Finds the current generation if of a stream. It scans the stream directory to look for largest generation
+   * number in directory name.
+   *
+   * @param streamLocation location to scan for generation id
+   * @return the generation id
+   */
+  public static int getGeneration(Location streamLocation) throws IOException {
     // Default generation is 0.
     int genId = 0;
     CharMatcher numMatcher = CharMatcher.inRange('0', '9');
@@ -411,6 +422,36 @@ public final class StreamUtils {
       Locations.processLocations(location, false, processor);
     }
     return processor.getResult();
+  }
+
+  /**
+   * Gets a table name for stream consumer state stores within a given namespace.
+   * @param namespace the namespace for which the table is for.
+   * @return constructed table name
+   */
+  public static String getStateStoreTableName(Id.Namespace namespace) {
+    return String.format("cdap.%s.%s.state.store", namespace.getId(), QueueConstants.QueueType.STREAM.toString());
+  }
+
+  /**
+   * Gets a {@link Id.Stream} given a stream's base directory.
+   * @param streamBaseLocation the location of the stream's directory
+   * @return Id of the stream associated with the location
+   */
+  public static Id.Stream getStreamIdFromLocation(Location streamBaseLocation) {
+    // streamBaseLocation = /.../<namespace>/streams/<streamName>,
+    // as constructed by FileStreamAdmin#getStreamConfigLocation
+    Location streamsDir = Locations.getParent(streamBaseLocation);
+    Preconditions.checkNotNull(streamsDir,
+                               "Streams directory of stream base location %s was null.", streamBaseLocation);
+
+    Location namespaceDir = Locations.getParent(streamsDir);
+    Preconditions.checkNotNull(namespaceDir,
+                               "Namespace directory of stream base location %s was null.", streamBaseLocation);
+
+    String namespace = namespaceDir.getName();
+    String streamName = streamBaseLocation.getName();
+    return Id.Stream.from(namespace, streamName);
   }
 
   private StreamUtils() {

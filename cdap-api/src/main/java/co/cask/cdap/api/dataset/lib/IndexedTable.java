@@ -152,6 +152,11 @@ public class IndexedTable extends AbstractDataset implements Table {
     return table.get(row, startColumn, stopColumn, limit);
   }
 
+  @Override
+  public List<Row> get(List<Get> gets) {
+    return table.get(gets);
+  }
+
   /**
    * Reads table rows by the given secondary index key.  If no rows are indexed by the given key, then a
    * {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
@@ -299,7 +304,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * pass-through to the underlying table.
    */
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) {
     // if the swap is on a column other than the column key, then
     // the index is not affected - just execute the swap.
     // also, if the swap is on the index column, but the old value

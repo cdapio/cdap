@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -31,23 +32,26 @@ import java.util.Collections;
  */
 public class DatasetWithArgumentsTest extends AbstractDatasetTest {
 
+  private static final Id.DatasetModule prefix = Id.DatasetModule.from(NAMESPACE_ID, "prefix");
+  private static final Id.DatasetInstance pret = Id.DatasetInstance.from(NAMESPACE_ID, "pret");
+
   @BeforeClass
   public static void beforeClass() throws Exception {
-    addModule("prefix", new PrefixedTableModule());
-    createInstance("prefixedTable", "pret", DatasetProperties.EMPTY);
+    addModule(prefix, new PrefixedTableModule());
+    createInstance("prefixedTable", pret, DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("pret");
-    deleteModule("prefix");
+    deleteInstance(pret);
+    deleteModule(prefix);
   }
 
   @Test
   public void testPrefixTable() throws Exception {
-    final PrefixedTable table = getInstance("pret", null);
-    final PrefixedTable aTable = getInstance("pret", Collections.singletonMap("prefix", "a"));
-    final PrefixedTable bTable = getInstance("pret", Collections.singletonMap("prefix", "b"));
+    final PrefixedTable table = getInstance(pret, null);
+    final PrefixedTable aTable = getInstance(pret, Collections.singletonMap("prefix", "a"));
+    final PrefixedTable bTable = getInstance(pret, Collections.singletonMap("prefix", "b"));
 
     TransactionExecutor txnl = newTransactionExecutor(aTable, bTable, table);
 

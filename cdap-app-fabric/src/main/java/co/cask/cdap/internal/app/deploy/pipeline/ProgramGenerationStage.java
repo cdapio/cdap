@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -70,13 +71,17 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
     final ArchiveBundler bundler = new ArchiveBundler(input.getLocation());
 
+    // Make sure the namespace directory exists
+    String namespace = input.getId().getNamespaceId();
+    Location namespaceDir = locationFactory.create(namespace);
+    // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
     // Make sure we have a directory to store the original artifact.
-    Location outputDir = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR));
-    final Location newOutputDir = outputDir.append(input.getId().getNamespaceId());
+    Location appFabricDir = namespaceDir.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    final Location newOutputDir = appFabricDir;
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {
-      throw new IOException("Failed to create directory");
+      throw new IOException(String.format("Failed to create directory %s", newOutputDir.toURI().getPath()));
     }
 
     // Now, we iterate through all ProgramSpecification and generate programs
@@ -86,7 +91,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       appSpec.getProcedures().values(),
       appSpec.getWorkflows().values(),
       appSpec.getServices().values(),
-      appSpec.getSpark().values()
+      appSpec.getSpark().values(),
+      appSpec.getWorkers().values()
     );
 
     // Generate webapp program if required
@@ -109,7 +115,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
           @Override
           public Location call() throws Exception {
             ProgramType type = ProgramTypes.fromSpecification(spec);
-            String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
+            String name = String.format(Locale.ENGLISH, "%s/%s", applicationName, type);
             Location programDir = newOutputDir.append(name);
             if (!programDir.exists()) {
               programDir.mkdirs();
@@ -129,8 +135,37 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       executorService.shutdown();
     }
 
+    // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
+    // Cannot do this before starting the deploy pipeline because appId could be null at that time.
+    // However, it is guaranteed to be non-null from VerificationsStage onwards
+    moveAppArchiveUnderAppDirectory(input.getLocation(), applicationName);
+
     // Emits the received specification with programs.
     emit(new ApplicationWithPrograms(input, programs.build()));
+  }
+
+  private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation, String appName) throws IOException {
+    // Move archive directory under application directory.
+    Location oldArchiveDir = Locations.getParent(origArchiveLocation);
+    Preconditions.checkState(oldArchiveDir != null, "Application archive is not expected to be in the root directory.");
+    String archiveParentDirName = oldArchiveDir.getName();
+    Location appFabricOutputLocation = Locations.getParent(oldArchiveDir);
+    Preconditions.checkState(appFabricOutputLocation != null,
+                             "App Fabric output directory is not expected to be filesystem root");
+    Location applicationArchiveDir = appFabricOutputLocation.append(appName);
+    // This directory should already be created by now.
+    // However, it may not be present during unit tests that do not go through the create namespace -> deploy app path
+    Locations.mkdirsIfNotExists(applicationArchiveDir);
+    Location newArchiveLocation = applicationArchiveDir.append(archiveParentDirName);
+    if (newArchiveLocation.exists()) {
+      // this is from an older deployment
+      newArchiveLocation.delete(true);
+    }
+    if (oldArchiveDir.renameTo(newArchiveLocation) == null) {
+      throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                          oldArchiveDir.toURI(), newArchiveLocation.toURI()));
+    }
+
   }
 
   private WebappSpecification createWebappSpec(final String name) {

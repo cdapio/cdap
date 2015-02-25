@@ -17,16 +17,13 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.queue.QueueEntry;
-import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -42,7 +39,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
@@ -78,24 +74,102 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
+  private static final String TEST_NAMESPACE = "streamConsumerTestNamespace";
+
+  @Test
+  public void testNamespacedStreamConsumers() throws Exception {
+    // Test two consumers for two streams with the same name, but in different namespaces. Their consumption should be
+    // independent of the other.
+    String stream = "testNamespacedStreamConsumers";
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", stream);
+
+    StreamAdmin streamAdmin = getStreamAdmin();
+    streamAdmin.create(streamId);
+    streamAdmin.create(otherStreamId);
+
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    StreamConfig otherStreamConfig = streamAdmin.getConfig(otherStreamId);
+
+    // Writes 5 events to both streams
+    writeEvents(streamConfig, "Testing ", 5);
+    writeEvents(otherStreamConfig, "Testing ", 5);
+
+    streamAdmin.configureInstances(streamId, 0L, 1);
+    streamAdmin.configureInstances(otherStreamId, 0L, 1);
+
+    StreamConsumerFactory consumerFactory = getConsumerFactory();
+    StreamConsumer consumer = consumerFactory.create(streamId, "fifo.rollback",
+                                                     new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+    StreamConsumer otherConsumer = consumerFactory.create(otherStreamId, "fifo.rollback",
+                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
+
+    // Try to dequeue using both consumers
+    TransactionContext context = createTxContext(consumer);
+    TransactionContext otherContext = createTxContext(otherConsumer);
+
+    context.start();
+    otherContext.start();
+
+    // Consume events from the stream in the default namespace
+    DequeueResult<StreamEvent> result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 0", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 1", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 2", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+
+    context.finish();
+    context.start();
+
+    // Even though a stream with the same name has already consumed 3 events, the otherConsumer is for a stream in a
+    // different namespace, so it will still be on the initial event.
+    DequeueResult<StreamEvent> result1 = otherConsumer.poll(1, 1, TimeUnit.SECONDS);
+    Assert.assertEquals("Testing 0", Charsets.UTF_8.decode(result1.iterator().next().getBody()).toString());
+
+    otherContext.finish();
+    otherContext.start();
+
+    result0 = consumer.poll(1, 1, TimeUnit.SECONDS);
+    result1 = otherConsumer.poll(1, 1, TimeUnit.SECONDS);
+
+    Assert.assertEquals("Testing 3", Charsets.UTF_8.decode(result0.iterator().next().getBody()).toString());
+    Assert.assertEquals("Testing 1", Charsets.UTF_8.decode(result1.iterator().next().getBody()).toString());
+
+    // Commit both
+    context.finish();
+    otherContext.finish();
+
+    consumer.close();
+    otherConsumer.close();
+  }
+
   @Test
   public void testFIFORollback() throws Exception {
     String stream = "testFIFORollback";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.create(streamId);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
 
     // Writes 5 events
     writeEvents(streamConfig, "Testing ", 5);
 
-    streamAdmin.configureInstances(streamName, 0L, 2);
+    streamAdmin.configureInstances(streamId, 0L, 2);
 
     StreamConsumerFactory consumerFactory = getConsumerFactory();
-    StreamConsumer consumer0 = consumerFactory.create(streamName, "fifo.rollback",
+    StreamConsumer consumer0 = consumerFactory.create(streamId, "fifo.rollback",
                                                       new ConsumerConfig(0L, 0, 2, DequeueStrategy.FIFO, null));
 
-    StreamConsumer consumer1 = consumerFactory.create(streamName, "fifo.rollback",
+    StreamConsumer consumer1 = consumerFactory.create(streamId, "fifo.rollback",
                                                       new ConsumerConfig(0L, 1, 2, DequeueStrategy.FIFO, null));
 
     // Try to dequeue using both consumers
@@ -135,54 +209,26 @@ public abstract class StreamConsumerTestBase {
     consumer1.close();
   }
 
-  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
-                                        int count, Clock clock) throws IOException {
-
-    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
-    try {
-      return writeEvents(writer, msgPrefix, count, clock);
-    } finally {
-      writer.close();
-    }
-  }
-
-  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
-                                        String msgPrefix, int count, Clock clock) throws IOException {
-    Map<String, String> headers = ImmutableMap.of();
-    List<StreamEvent> result = Lists.newLinkedList();
-    for (int i = 0; i < count; i++) {
-      String msg = msgPrefix + i;
-      StreamEvent event = new StreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
-      result.add(event);
-      streamWriter.append(event);
-    }
-    return result;
-  }
-
-  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
-    return writeEvents(streamConfig, msgPrefix, count, new Clock());
-  }
-
   @Test
   public void testFIFOReconfigure() throws Exception {
     String stream = "testReconfigure";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
+    streamAdmin.create(streamId);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
 
     // Writes 5 events
     writeEvents(streamConfig, "Testing ", 5);
 
     // Configure 3 consumers.
-    streamAdmin.configureInstances(streamName, 0L, 3);
+    streamAdmin.configureInstances(streamId, 0L, 3);
 
     StreamConsumerFactory consumerFactory = getConsumerFactory();
 
     // Starts three consumers
     List<StreamConsumer> consumers = Lists.newArrayList();
     for (int i = 0; i < 3; i++) {
-      consumers.add(consumerFactory.create(streamName, "fifo.reconfigure",
+      consumers.add(consumerFactory.create(streamId, "fifo.reconfigure",
                                            new ConsumerConfig(0L, i, 3, DequeueStrategy.FIFO, null)));
     }
 
@@ -212,11 +258,11 @@ public abstract class StreamConsumerTestBase {
     }
 
     // Reconfigure to have two consumers.
-    streamAdmin.configureInstances(streamName, 0L, 2);
+    streamAdmin.configureInstances(streamId, 0L, 2);
     consumers.clear();
 
     for (int i = 0; i < 2; i++) {
-      consumers.add(consumerFactory.create(streamName, "fifo.reconfigure",
+      consumers.add(consumerFactory.create(streamId, "fifo.reconfigure",
                                            new ConsumerConfig(0L, i, 2, DequeueStrategy.FIFO, null)));
     }
 
@@ -258,84 +304,9 @@ public abstract class StreamConsumerTestBase {
   }
 
   @Test
-  public void testCombineConsumer() throws Exception {
-    String stream = "testCombineConsumer";
-    QueueName streamName = QueueName.fromStream(stream);
-    StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(stream);
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-
-    // Writer 10 messages to new stream
-    writeEvents(streamConfig, "New event ", 10);
-
-    QueueClientFactory oldStreamFactory = getQueueClientFactory();
-
-    // Write 10 messages to old stream
-    StreamEventCodec streamEventCodec = new StreamEventCodec();
-    QueueProducer producer = oldStreamFactory.createProducer(streamName);
-    TransactionContext txContext = createTxContext((TransactionAware) producer);
-    for (int i = 0; i < 10; i++) {
-      txContext.start();
-      String msg = "Old event " + i;
-      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(msg));
-      producer.enqueue(new QueueEntry(streamEventCodec.encodePayload(event)));
-      txContext.finish();
-    }
-    if (producer instanceof Closeable) {
-      ((Closeable) producer).close();
-    }
-
-    streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
-
-    // Create a consumer, that should be able to see all old events before the new events
-    StreamConsumer consumer = getConsumerFactory().create(streamName, "combine.consumer",
-                                                          new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
-
-    txContext = createTxContext(consumer);
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("Old event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      // Would expect one empty result during the switch
-      DequeueResult<StreamEvent> result = consumer.poll(10, 0, TimeUnit.SECONDS);
-      Assert.assertTrue(result.isEmpty());
-    } finally {
-      txContext.finish();
-    }
-
-    txContext.start();
-    try {
-      DequeueResult<StreamEvent> result = consumer.poll(10, 1, TimeUnit.SECONDS);
-      Assert.assertEquals(10, result.size());
-      int count = 0;
-      for (StreamEvent event : result) {
-        String msg = Charsets.UTF_8.decode(event.getBody()).toString();
-        Assert.assertEquals("New event " + count, msg);
-        count++;
-      }
-    } finally {
-      txContext.finish();
-    }
-
-    consumer.close();
-  }
-
-  @Test
   public void testTTL() throws Exception {
     String stream = "testTTL";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -347,10 +318,10 @@ public abstract class StreamConsumerTestBase {
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
     streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
-    streamAdmin.create(stream, streamProperties);
+    streamAdmin.create(streamId, streamProperties);
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    streamAdmin.configureInstances(streamId, 0L, 1);
     StreamConsumerFactory consumerFactory = getConsumerFactory();
 
     Assert.assertEquals(ttl, streamConfig.getTTL());
@@ -370,7 +341,7 @@ public abstract class StreamConsumerTestBase {
     }
 
     // Dequeue from stream. Should only get the 5 unexpired events.
-    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+    StreamConsumer consumer = consumerFactory.create(streamId, stream,
                                                      new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     try {
       verifyEvents(consumer, expectedEvents);
@@ -392,7 +363,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
     String stream = "testTTLMultipleEventsWithSameTimestamp";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -404,10 +375,10 @@ public abstract class StreamConsumerTestBase {
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
     streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
-    streamAdmin.create(stream, streamProperties);
+    streamAdmin.create(streamId, streamProperties);
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    streamAdmin.configureInstances(streamName, 0L, 1);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    streamAdmin.configureInstances(streamId, 0L, 1);
     StreamConsumerFactory consumerFactory = getConsumerFactory();
 
     Assert.assertEquals(ttl, streamConfig.getTTL());
@@ -430,7 +401,7 @@ public abstract class StreamConsumerTestBase {
       writer.close();
     }
 
-    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+    StreamConsumer consumer = consumerFactory.create(streamId, stream,
                                                      new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     verifyEvents(consumer, expectedEvents);
 
@@ -451,7 +422,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLStartingFile() throws Exception {
     String stream = "testTTLStartingFile";
-    QueueName streamName = QueueName.fromStream(stream);
+    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 3 seconds and partition duration of 3 seconds
@@ -460,13 +431,13 @@ public abstract class StreamConsumerTestBase {
     Properties streamProperties = new Properties();
     streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
     streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
-    streamAdmin.create(stream, streamProperties);
+    streamAdmin.create(streamId, streamProperties);
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
     StreamConsumerFactory consumerFactory = getConsumerFactory();
 
-    StreamConsumer consumer = consumerFactory.create(streamName, stream,
+    StreamConsumer consumer = consumerFactory.create(streamId, stream,
                                                      new ConsumerConfig(0L, 0, 1, DequeueStrategy.FIFO, null));
     StreamConsumer newConsumer;
     Set<StreamEvent> expectedEvents = Sets.newTreeSet(STREAM_EVENT_COMPARATOR);
@@ -474,7 +445,7 @@ public abstract class StreamConsumerTestBase {
     try {
       // Create a new consumer for second consumer verification.
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
-      newConsumer = consumerFactory.create(streamName, stream,
+      newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
       // write 20 events in a partition that will be expired due to sleeping the TTL
@@ -491,9 +462,9 @@ public abstract class StreamConsumerTestBase {
 
       // Create a new consumer for second consumer verification (with clean state)
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
-      newConsumer = consumerFactory.create(streamName, stream,
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
       // write 20 events in a partition and read it back immediately. They shouldn't expired.
@@ -509,9 +480,9 @@ public abstract class StreamConsumerTestBase {
 
       // Create a new consumer for second consumer verification (with clean state)
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
-      newConsumer = consumerFactory.create(streamName, stream,
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
       // write 20 events in a partition that will be expired due to sleeping the TTL
@@ -532,9 +503,9 @@ public abstract class StreamConsumerTestBase {
 
       // Create a new consumer for second consumer verification (with clean state)
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1));
-      streamAdmin.configureGroups(streamName, ImmutableMap.of(0L, 1, 1L, 1));
-      newConsumer = consumerFactory.create(streamName, stream,
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
+      streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
       // write 20 events in a partition and read it back immediately. They shouldn't expire.
@@ -554,6 +525,34 @@ public abstract class StreamConsumerTestBase {
     } finally {
       consumer.close();
     }
+  }
+
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix,
+                                        int count, Clock clock) throws IOException {
+
+    FileWriter<StreamEvent> writer = getFileWriterFactory().create(streamConfig, 0);
+    try {
+      return writeEvents(writer, msgPrefix, count, clock);
+    } finally {
+      writer.close();
+    }
+  }
+
+  private List<StreamEvent> writeEvents(FileWriter<StreamEvent> streamWriter,
+                                        String msgPrefix, int count, Clock clock) throws IOException {
+    Map<String, String> headers = ImmutableMap.of();
+    List<StreamEvent> result = Lists.newLinkedList();
+    for (int i = 0; i < count; i++) {
+      String msg = msgPrefix + i;
+      StreamEvent event = new StreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
+      result.add(event);
+      streamWriter.append(event);
+    }
+    return result;
+  }
+
+  private List<StreamEvent> writeEvents(StreamConfig streamConfig, String msgPrefix, int count) throws IOException {
+    return writeEvents(streamConfig, msgPrefix, count, new Clock());
   }
 
   private void verifyEvents(StreamConsumer consumer, Collection<StreamEvent> expectedEvents) throws Exception {

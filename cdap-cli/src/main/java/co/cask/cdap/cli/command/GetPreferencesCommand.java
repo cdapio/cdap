@@ -38,6 +38,6 @@ public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the preferences of a " + type.getPrettyName();
+    return String.format("Gets the preferences of a %s.", type.getPrettyName());
   }
 }
