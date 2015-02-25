@@ -20,24 +20,26 @@ angular.module(PKG.name + '.feature.datasets')
           name: 'system.dataset.store.writes',
           scopeProperty: 'writes'
         }
-      ].forEach(fetchMetric);
+      ].forEach(pollMetric);
 
-      function fetchMetric(metric) {
+      function pollMetric(metric) {
+        // A temporary way to get the rate of a metric for a dataset.
+        // Ideally this would be batched for datasets/streams
         var path = '/metrics/query?metric=' +
                     metric.name +
-                    '&context=ns.' +
+                    '&context=namespace.' +
                     $state.params.namespace +
-                    '.ds.' +
-                    $state.params.datasetId;
+                    '.dataset.' +
+                    $state.params.datasetId +
+                    '&start=now-1s&end=now-1s&resolution=1s';
 
-        dataSrc.request({
+        dataSrc.poll({
           _cdapPath : path ,
           method: 'POST'
+        }, function(metricData) {
+          var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
+          $scope[metric.scopeProperty] = data;
         })
-          .then(function(metricData) {
-            var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
-            $scope[metric.scopeProperty] = data;
-          });
       }
 
       var query = myHelpers.objectQuery;
