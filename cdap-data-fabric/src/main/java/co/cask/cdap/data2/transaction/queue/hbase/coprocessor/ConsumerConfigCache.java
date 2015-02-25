@@ -50,7 +50,6 @@ public class ConsumerConfigCache {
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
-  private static final int TABLE_NOT_FOUND_MAX_RETRY = 20;
 
   private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
@@ -175,20 +174,20 @@ public class ConsumerConfigCache {
     refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
-        int tableNotFoundCount = 0;
-        while (!isInterrupted() && tableNotFoundCount < TABLE_NOT_FOUND_MAX_RETRY) {
+        while (!isInterrupted()) {
           updateConfig();
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + configCacheUpdateFrequency)) {
             try {
               updateCache();
-              tableNotFoundCount = 0;
             } catch (TableNotFoundException e) {
-              tableNotFoundCount++;
-              LOG.error("Queue config table not found: {}. Retries remaining {}",
-                        Bytes.toString(configTableName), TABLE_NOT_FOUND_MAX_RETRY - tableNotFoundCount, e);
+              // This is expected when the namespace goes away since there is one config table per namespace
+              // If the table is not found due to other situation, the region observer already
+              // has logic to get a new one through the getInstance method
+              LOG.warn("Queue config table not found: {}", Bytes.toString(configTableName), e);
+              break;
             } catch (IOException e) {
-              LOG.warn("Error updating queue consumer config cache: {}", e.getMessage());
+              LOG.warn("Error updating queue consumer config cache", e);
             }
           }
           try {
