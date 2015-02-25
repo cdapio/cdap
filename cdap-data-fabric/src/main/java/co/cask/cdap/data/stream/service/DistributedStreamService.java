@@ -547,7 +547,6 @@ public class DistributedStreamService extends AbstractStreamService {
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
     private final Id.Stream streamId;
-    private boolean isInit;
 
     protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamWriterSizes = Maps.newHashMap();
@@ -555,13 +554,15 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamInitSize = baseCount;
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
-      this.isInit = true;
       this.streamId = streamId;
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
         .setName(String.format("%sSize", streamId.getName()))
         .build();
+
+      // Publish an initialization notification
+      publishNotification(baseCount);
     }
 
     @Override
@@ -601,13 +602,8 @@ public class DistributedStreamService extends AbstractStreamService {
         sum += size;
       }
 
-      boolean init;
-      synchronized (this) {
-        init = isInit;
-        isInit = false;
-      }
       LOG.trace("Check notification publishing: sum is {}, baseCount is {}", sum, streamBaseCount);
-      if (init || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
+      if (sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
