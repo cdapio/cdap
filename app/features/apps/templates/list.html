@@ -1,5 +1,12 @@
-<div ncy-breadcrumb></div>
-<my-file-select class="pull-right" on-file-select="onFileSelected($files)"> </my-file-select>
+<div class="cdap-subnav clearfix">
+
+  <my-file-select class="pull-right" on-file-select="onFileSelected($files)"> </my-file-select>
+
+  <div ncy-breadcrumb></div>
+
+</div>
+
+<br />
 <table class="table table-striped table-responsive" cask-sortable>
   <thead>
     <tr ng-class="{'sort-enabled': apps.length>0}">
