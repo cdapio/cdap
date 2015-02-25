@@ -8,7 +8,7 @@
 ObjectMappedTable Exploration
 ============================================
 
-An ObjectMappedTable is a system Dataset that can write java objects to a Table
+An ``ObjectMappedTable`` is a system Dataset that can write Java objects to a Table
 by mapping object fields to Table columns. It can also be explored in an ad-hoc manner.
 
 Creating an ObjectMappedTable
@@ -29,12 +29,12 @@ that will be stored in your table::
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because Purchase is an actual classes.
+      // because Purchase is an actual class.
       throw new RuntimeException(e);
     }
   } 
 
-CDAP will derive the record schema from that type. For example, if the ``Purchase`` class is defined as::
+CDAP will derive the record schema from the specified type. For example, if the ``Purchase`` class is defined as::
 
   public class Purchase {
     private final String customer, product;
@@ -52,15 +52,16 @@ CDAP will derive the record schema from that type. For example, if the ``Purchas
     }
   }
 
-CDAP will map each object field to a table column and the schema will be::
+CDAP will map each object field to a Table column and the schema will be::
 
-  (key BINARY, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT))
+  (key BINARY, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT)
 
-Note that column names are all changed to be lowercase. This is because Hive column names are case insensitive.
-Also note that in addition to the object fields, the object key is inserted into the schema as a binary column.
-If you wish to name the key column differently, because your object contains a field named "key" for example, you 
-can do so by providing an additional property when creating your Dataset. You can also set the key type to
-a string if desired::
+Note that all column names have been changed to lowercase letters. This is because Hive column names are case-insensitive.
+In addition to the object fields, the object key has been inserted into the schema as a binary column ``key``.
+
+If you wish to name the key column differently, perhaps because your object already contains a field named "key", you 
+can do so by providing an additional property when creating your Dataset. You can also set the key type to ``STRING``
+instead of ``BINARY`` if desired::
   
   @Override
   public void configure() {
@@ -69,6 +70,7 @@ a string if desired::
                     ObjectMappedTableProperties.builder()
                       .setType(Purchase.class)
                       .setExploreKeyName("rowkey")
+                      // only STRING and BINARY are supported.
                       .setExploreKeyType(Schema.Type.STRING)
                       .build()
                    );
@@ -76,22 +78,22 @@ a string if desired::
       // This exception is thrown by ObjectMappedTable if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because Purchase is an actual classes.
+      // because Purchase is an actual class.
       throw new RuntimeException(e);
     }
   } 
 
 Creating the Dataset in this manner would result in a different column name and type for the object key:: 
 
-  (rowkey STRING, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT))
+  (rowkey STRING, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT)
 
 .. _sql-limitations:
 
 Limitations
 -----------
 * The record type must be a structured type, that is, a Java class with fields. This is because SQL tables require
-  a structure type at the top level. The fields must also be primitives. That is, they must be an int, Integer,
-  float, Float, double, Double, bool, Boolean, String, byte[], or ByteBuffer. In addition, UUID is supported and
+  a structure type at the top level. The fields must be primitives. That is, they must be an int, Integer,
+  float, Float, double, Double, bool, Boolean, String, byte[], or ByteBuffer. UUID is supported and
   will translate into a binary field.
 
 * The record type must be that of an actual Java class, not an interface. The reason is that interfaces only define
@@ -102,7 +104,7 @@ Limitations
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
   supported and will result in an exception when the Dataset is created.
 
-* You cannot insert data into an ObjectMappedTable using SQL.
+* You cannot insert data into an ``ObjectMappedTable`` using SQL.
 
 Formulating Queries
 -------------------

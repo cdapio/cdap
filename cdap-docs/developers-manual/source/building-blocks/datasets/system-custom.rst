@@ -23,7 +23,7 @@ Tables, but defines its own interface. Examples include:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-- The ``ObjectMappedTable`` uses a Table to store java Objects by mapping object fields to
+- The ``ObjectMappedTable`` uses a Table to store Java Objects by mapping object fields to
   table columns. It can be explored through the use of ad-hoc SQL-like queries as described
   in :ref:`ObjectMappedTable Exploration <object-mapped-table-exploration>`.
 
