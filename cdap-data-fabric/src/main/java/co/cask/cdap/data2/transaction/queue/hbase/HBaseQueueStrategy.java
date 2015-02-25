@@ -44,7 +44,7 @@ public interface HBaseQueueStrategy extends Closeable {
   /**
    * Creates the actual row key used for accessing the HBase table from the given queue entry row key.
    */
-  byte[] getActualRowKey(byte[] originalRowKey);
+  byte[] getActualRowKey(ConsumerConfig consumerConfig, byte[] originalRowKey);
 
   /**
    * Get all the row keys that the queue entries need to write to.

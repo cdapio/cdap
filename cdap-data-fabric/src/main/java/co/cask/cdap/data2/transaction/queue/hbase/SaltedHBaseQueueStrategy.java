@@ -69,7 +69,7 @@ final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
   }
 
   @Override
-  public byte[] getActualRowKey(byte[] originalRowKey) {
+  public byte[] getActualRowKey(ConsumerConfig consumerConfig, byte[] originalRowKey) {
     return HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(originalRowKey);
   }
 
