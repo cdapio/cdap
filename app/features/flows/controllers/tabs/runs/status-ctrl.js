@@ -1,7 +1,15 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailRunStatusController', function($state, $scope, MyDataSource) {
+  .controller('FlowsDetailRunStatusController', function($state, $scope, MyDataSource, myHelpers) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+
+    var metricsPath = '/metrics/query?metric=system.process.events.processed' +
+                          '&context=ns.' +
+                          $state.params.namespace +
+                          '.app.' + $state.params.appId +
+                          '.flow.' + $state.params.programId +
+                          '.run.' + $state.params.runId +
+                          '.flowlet.';
 
     $scope.data = {};
     $scope.status = null;
@@ -11,7 +19,8 @@ angular.module(PKG.name + '.feature.flows')
       _cdapNsPath: basePath
     })
       .then(function(res) {
-        var nodes = [];
+        var nodes = [],
+            metrics = {};
         angular.forEach(res.connections, function(conn) {
           if (conn.sourceType === 'STREAM') {
             nodes.push({
@@ -29,10 +38,22 @@ angular.module(PKG.name + '.feature.flows')
 
         $scope.data = {
           nodes: nodes,
-          edges: res.connections
+          edges: res.connections,
+          metrics: {}
         };
-      });
 
+        // Requesting Metrics data
+        angular.forEach(nodes, function (node) {
+          dataSrc.request({
+            _cdapPath: metricsPath + node.name,
+            method: 'POST'
+          })
+            .then(function (data) {
+              // $scope.data.metrics[node.name] = data.series[0] ? data.series[0].data[0].value : 0;
+              $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
+            });
+        });
+      });
 
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
