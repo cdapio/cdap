@@ -17,6 +17,32 @@ body.theme-cdap {
   main.container {
     margin-top: 80px;
 
+    @cdap-tabs-height: 20px;
+    @cdap-tabs-hpad: extract(@nav-link-padding, 1);
+    @cdap-subnav-height: 300px;
+
+    /* we need to be able to calc tab height
+        for .cdap-subnav-end to work */
+    .nav-tabs > li > a {
+      line-height: @cdap-tabs-height;
+    }
+
+    .cdap-subnav-end {
+      content: ' ';
+      background-color: white;
+      position: absolute;
+      z-index: -1;
+      right: 0;
+      width: 100%;
+      height: @cdap-subnav-height;
+      margin-top: -(@cdap-subnav-height - (@cdap-tabs-height + (@cdap-tabs-hpad*2) + 2));
+      border-bottom: 1px solid @nav-tabs-border-color;
+
+      &.immediate {
+        margin-top: -(@cdap-subnav-height);
+      }
+    }
+
     @media (max-width: @screen-sm-max) {
       > div { display: none; }
       &:before {
@@ -40,6 +66,7 @@ body.theme-cdap {
     h3, .h3 {
       margin: .4rem inherit;
     }
+
 
   } // end main.container
 
