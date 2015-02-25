@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
@@ -72,7 +73,7 @@ public final class CubeQuery {
     this.limit = limit;
     this.measureName = measureName;
     this.measureType = measureType;
-    this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
+    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
     this.interpolator = interpolator;
   }
