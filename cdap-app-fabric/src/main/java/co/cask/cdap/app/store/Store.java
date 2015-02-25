@@ -25,8 +25,9 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.internal.app.store.AdapterMeta;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -139,14 +140,14 @@ public interface Store {
    *
    * @param id application id
    * @return application specification
+   * @throws ApplicationNotFoundException if the application does not exist
    */
-  @Nullable
-  ApplicationSpecification getApplication(Id.Application id);
+  ApplicationSpecification getApplication(Id.Application id) throws ApplicationNotFoundException;
 
   /**
    * Returns a collection of all application specs.
    */
-  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
+  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id) throws NamespaceNotFoundException;
 
   /**
    * Returns location of the application archive.

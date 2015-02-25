@@ -872,8 +872,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId) {
-    appLifecycleHttpHandler.getAppInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                       Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.getApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                   Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**

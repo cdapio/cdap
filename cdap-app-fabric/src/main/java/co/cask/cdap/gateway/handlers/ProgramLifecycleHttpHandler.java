@@ -35,6 +35,7 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -1061,21 +1062,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
-    if (appSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
-      return;
-    }
-
-    List<ScheduleSpecification> specList = Lists.newArrayList();
-    for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
-      ScheduleSpecification spec = entry.getValue();
-      if (spec.getProgram().getProgramName().equals(workflowId) &&
-        spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
-        specList.add(entry.getValue());
+    try {
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
+        return;
       }
+
+      List<ScheduleSpecification> specList = Lists.newArrayList();
+      for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
+        ScheduleSpecification spec = entry.getValue();
+        if (spec.getProgram().getProgramName().equals(workflowId) &&
+          spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
+          specList.add(entry.getValue());
+        }
+      }
+      responder.sendJson(HttpResponseStatus.OK, specList);
+    } catch (ApplicationNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
-    responder.sendJson(HttpResponseStatus.OK, specList);
   }
 
   /**

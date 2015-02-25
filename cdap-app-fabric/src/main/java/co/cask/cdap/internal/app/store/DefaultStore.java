@@ -39,6 +39,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -576,31 +578,48 @@ public class DefaultStore implements Store {
     });
   }
 
-  @Nullable
   @Override
-  public ApplicationSpecification getApplication(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
+  public ApplicationSpecification getApplication(final Id.Application id) throws ApplicationNotFoundException {
+    ApplicationSpecification application = txnl.executeUnchecked(
+      new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
       @Override
       public ApplicationSpecification apply(AppMds mds) throws Exception {
         return getApplicationSpec(mds, id);
       }
     });
+
+    if (application == null) {
+      throw new ApplicationNotFoundException(id);
+    }
+
+    return application;
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
+  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id)
+    throws NamespaceNotFoundException {
+    Collection<ApplicationSpecification> applications = txnl.executeUnchecked(
+      new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
       @Override
       public Collection<ApplicationSpecification> apply(AppMds mds) throws Exception {
+        if (mds.apps.getNamespace(id) == null) {
+          return null;
+        }
         return Lists.transform(mds.apps.getAllApplications(id.getId()),
                                new Function<ApplicationMeta, ApplicationSpecification>() {
-                                 @Override
-                                 public ApplicationSpecification apply(ApplicationMeta input) {
-                                   return input.getSpec();
-                                 }
-                               });
+          @Override
+          public ApplicationSpecification apply(ApplicationMeta input) {
+            return input.getSpec();
+          }
+        });
       }
     });
+
+    if (applications == null) {
+      throw new NamespaceNotFoundException(id);
+    }
+
+    return applications;
   }
 
   @Nullable

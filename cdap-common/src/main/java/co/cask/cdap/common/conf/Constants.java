@@ -755,4 +755,12 @@ public final class Constants {
     */
     public static final String STATUS = "/status";
   }
+
+  /**
+   * HTTP headers
+   */
+  public static final class Headers {
+    /** Name of the header that should specify the application archive */
+    public static final String ARCHIVE_NAME = "X-Archive-Name";
+  }
 }

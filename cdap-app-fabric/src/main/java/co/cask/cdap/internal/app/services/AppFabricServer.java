@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.AppLifecycleService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -63,6 +64,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
   private final AdapterService adapterService;
+  private final AppLifecycleService appLifecycleService;
   private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
@@ -82,6 +84,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         AppLifecycleService appLifecycleService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames) {
     this.hostname = hostname;
@@ -91,6 +94,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.appLifecycleService = appLifecycleService;
     this.adapterService = adapterService;
     this.notificationService = notificationService;
     this.servicesNames = servicesNames;
@@ -114,6 +118,7 @@ public final class AppFabricServer extends AbstractIdleService {
     schedulerService.start();
     adapterService.start();
     programRuntimeService.start();
+    appLifecycleService.start();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
@@ -194,6 +199,7 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     adapterService.stopAndWait();
+    appLifecycleService.stopAndWait();
     notificationService.stopAndWait();
   }
 }

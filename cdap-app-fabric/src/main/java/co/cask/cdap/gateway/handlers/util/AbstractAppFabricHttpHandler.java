@@ -83,10 +83,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  /**
-   * Name of the header that should specify the application archive
-   */
-  public static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+  public static final String ARCHIVE_NAME_HEADER = Constants.Headers.ARCHIVE_NAME;
 
   /**
    * Class to represent status of programs.
