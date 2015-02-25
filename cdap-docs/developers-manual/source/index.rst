@@ -21,18 +21,18 @@ CDAP Developers’ Manual
 .. _overview: overview/index.html
 
 - |overview|_ Covers the **overall architecture and technology behind CDAP,** including
-  the virtualization of data and applications, CDAP concepts, components and their
+  the abstraction of data and applications, CDAP concepts, components and their
   interactions, and the anatomy of a Big Data application.
 
 
 .. |building-blocks| replace:: **Building Blocks:**
 .. _building-blocks: building-blocks/index.html
 
-- |building-blocks|_ This section covers **the two core virtualizations in the Cask Data
-  Application Platform: Data and Applications.** Data virtualizations are grouped into
-  Streams and Datasets. Application virtualizations are grouped into Flows, MapReduce,
-  Spark, Workflows, and Services. Details are provided on working with these abstractions
-  to build Big Data applications.
+- |building-blocks|_ This section covers **the two core abstractions in the Cask Data
+  Application Platform: Data and Applications.** Data abstractions include Streams and
+  Datasets. Application abstraction is accomplished using Flows, MapReduce, Spark,
+  Workflows, and Services. Details are provided on working with these abstractions to
+  build Big Data applications.
 
 
 .. |security| replace:: **Security:**

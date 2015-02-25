@@ -61,8 +61,8 @@ A CDAP application consists of combinations of these components:
 - :ref:`Streams <streams>` for real-time data collection;
 - Programs—:ref:`Flows, <flows-flowlets-index>` :ref:`MapReduce, <mapreduce>`
   :ref:`Spark <spark>`—for data processing in realtime or in batch;
-- :ref:`Datasets <datasets-index>` for virtualized data storage; and
-- :ref:`Procedures <procedures>` and :ref:`Services <user-services>`
+- :ref:`Datasets <datasets-index>` for data storage abstraction; and
+- :ref:`Procedures (deprecated) <procedures>` and :ref:`Services <user-services>`
   for data serving to external clients.
 
 This diagram illustrates a typical Big Data application:
@@ -71,7 +71,7 @@ This diagram illustrates a typical Big Data application:
    :width: 8in
    :align: center
 
-It illustrates the power of data virtualization in CDAP: a stream is not just a means to collect data; it can
+It illustrates the power of data abstraction in CDAP: a stream is not just a means to collect data; it can
 be consumed by realtime and batch processing at the same time. Similarly, datasets allow sharing of data between
 programs of different paradigms, realtime or batch, without compromising the consistency of the data,
 because all data access happens under ACID (Atomicity, Consistency, Isolation, and Durability) guarantees.
