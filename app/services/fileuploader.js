@@ -1,7 +1,12 @@
 angular.module(PKG.name + '.services')
-  .factory('myFileUploader', function($q, $window, cfpLoadingBar) {
+  .factory('myFileUploader', function($rootScope, $q, $window, cfpLoadingBar) {
     function upload(fileObj){
       var deferred = $q.defer();
+
+      if (!$rootScope.currentUser || !$rootScope.currentUser.token) {
+        deferred.reject(400);
+      }
+
       var xhr = new $window.XMLHttpRequest();
       xhr.upload.addEventListener('progress', function (e) {
         if (e.type === 'progress') {
@@ -12,6 +17,8 @@ angular.module(PKG.name + '.services')
       xhr.open('POST', path, true);
       xhr.setRequestHeader('Content-type', 'application/octet-stream');
       xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
+      xhr.setRequestHeader('X-ApiKey', '');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + $rootScope.currentUser.token);
       xhr.send(fileObj.file);
       cfpLoadingBar.start();
       xhr.onreadystatechange = function () {
