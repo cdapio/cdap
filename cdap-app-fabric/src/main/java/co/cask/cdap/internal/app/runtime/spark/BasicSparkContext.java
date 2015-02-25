@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
@@ -35,7 +33,6 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
@@ -90,7 +87,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
                            MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework, CConfiguration conf,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
-    super(program, runId, extractScope(program.getName(), runtimeArguments), datasets,
+    super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, runId.getId()),
           dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
@@ -102,10 +99,6 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     this.userMetrics = new SparkUserMetrics();
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
-  }
-
-  private static Arguments extractScope(String programName, Arguments argument) {
-    return new BasicArguments(RuntimeArguments.extractScope(Scope.SPARK, programName, argument.asMap()));
   }
 
   /**

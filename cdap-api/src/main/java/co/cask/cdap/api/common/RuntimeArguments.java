@@ -76,16 +76,15 @@ public final class RuntimeArguments {
   }
 
   /**
-   * Extracts the scope from the argument as identified by its prefix.
-   * After extracting the scope, argument is added back to the argument map.
+   * Identifies arguments with a given scope prefix and adds them back without the scope prefix.
    *
-   * 1. Argument can be prefixed by "&lt;scope>.&lt;name>.". e.g. mapreduce.myMapReduce.read.timeout=30. In this case
+   * 1. An argument can be prefixed by "&lt;scope>.&lt;name>.". e.g. mapreduce.myMapReduce.read.timeout=30. In this case
    * the MapReduce program named 'myMapReduce' will receive two arguments - mapreduce.myMapReduce.read.timeout=30 and
    * read.timeout=30. However MapReduce programs other than 'myMapReduce' will receive only one argument -
    * mapreduce.myMapReduce.read.timeout=30
-   * 2. Argument can be prefixed by "&lt;scope>.*.". e.g. mapreduce.*.read.timeout=30. In this case all the underlying
-   * MapReduce programs will receive the arguments mapreduce.*.read.timeout=30 and read.timeout=30.
-   * 3. Argument not prefixed with any scope is passed further without any changes. e.g. read.timeout=30
+   * 2. An argument can be prefixed by "&lt;scope>.*.". e.g. mapreduce.*.read.timeout=30. In this case all the
+   * underlying MapReduce programs will receive the arguments mapreduce.*.read.timeout=30 and read.timeout=30.
+   * 3. An argument not prefixed with any scope is passed further without any changes. e.g. read.timeout=30
    *
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
