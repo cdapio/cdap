@@ -162,11 +162,11 @@ public class Main {
     upgradeSystemDatasets(injector);
 
     // Upgrade all user hbase tables
-    upgradeUserTables(injector);
+    /*upgradeUserTables(injector);
 
     // Upgrade all queue and stream tables.
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-    queueAdmin.upgrade();
+    queueAdmin.upgrade();*/
   }
 
   private void upgradeSystemDatasets(Injector injector) throws Exception {
@@ -174,8 +174,8 @@ public class Main {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     // Setting up all system datasets to be upgraded, collecting them from respective components
     DatasetFramework framework = createRegisteredDatasetFramework(injector);
-    System.out.println("Setup datasets");
-    // dataset service
+
+    /*// dataset service
     DatasetMetaTableUtil.setupDatasets(framework);
     // app metadata
     DefaultStore.setupDatasets(framework);
@@ -184,19 +184,19 @@ public class Main {
     // logs metadata
     LogSaverTableUtil.setupDatasets(framework);
     // scheduler metadata
-    ScheduleStoreTableUtil.setupDatasets(framework);
+    ScheduleStoreTableUtil.setupDatasets(framework);*/
     // metrics data
     DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
 
     // Upgrade all datasets in system namespace
-    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
+    /*Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
     for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
       System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
       DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
       System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
-    }
+    }*/
   }
 
   public static void main(String[] args) throws Exception {

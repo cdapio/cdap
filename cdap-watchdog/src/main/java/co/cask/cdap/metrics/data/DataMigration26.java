@@ -42,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +55,7 @@ public class DataMigration26 {
   private static final Logger LOG = LoggerFactory.getLogger(DataMigration26.class);
   private static final String ENTITY_TABLE_NAME_SUFFIX = ".metrics.entity";
   private static final String AGGREGATES_TABLE_NAME_SUFFIX = ".metrics.table.agg";
+  private static final String TIMESERIES_SECOND_TABLE_NAME_SUFFIX = ".metrics.table.ts.1";
 
 
   private final DatasetFramework dsFramework;
@@ -103,8 +103,9 @@ public class DataMigration26 {
     );
 
 
-  private Map<String, MetricsTable> scopeToMetricsTable = Maps.newHashMap();
+  private Map<String, MetricsTable> scopeToAggregatesTable = Maps.newHashMap();
   private Map<String, EntityTable> scopeToEntityTable = Maps.newHashMap();
+  private Map<String, MetricsTable> scopeToTimeseriesTable = Maps.newHashMap();
   private Map<String, MetricsEntityCodec> scopeToCodec = Maps.newHashMap();
 
 
@@ -117,8 +118,11 @@ public class DataMigration26 {
     for (String scope : scopes) {
       scopeToEntityTable.put(scope, new EntityTable(getOrCreateMetricsTable(scope + ENTITY_TABLE_NAME_SUFFIX,
                                                                             DatasetProperties.EMPTY)));
-      scopeToMetricsTable.put(scope, getOrCreateMetricsTable(scope + AGGREGATES_TABLE_NAME_SUFFIX,
-                                                             DatasetProperties.EMPTY));
+      scopeToAggregatesTable.put(scope, getOrCreateMetricsTable(scope + AGGREGATES_TABLE_NAME_SUFFIX,
+                                                                DatasetProperties.EMPTY));
+
+      scopeToTimeseriesTable.put(scope, getOrCreateMetricsTable(scope + TIMESERIES_SECOND_TABLE_NAME_SUFFIX,
+                                                                DatasetProperties.EMPTY));
       scopeToCodec.put(scope, new MetricsEntityCodec(scopeToEntityTable.get(scope),
                                                      MetricsConstants.DEFAULT_CONTEXT_DEPTH,
                                                      MetricsConstants.DEFAULT_METRIC_DEPTH,
@@ -128,12 +132,108 @@ public class DataMigration26 {
     timeSeriesStore = new DefaultMetricStore(factory, new int[]{1, 60, 3600});
   }
 
+  public void decodeTimeSeriesTable26() {
+    try {
+      for (String scope : scopes) {
+        Scanner scanner = scopeToTimeseriesTable.get(scope).scan(null, null, null, null);
+        MetricsEntityCodec codec = scopeToCodec.get(scope);
+        System.out.println("Decoding for scope " + scope + "on table " + scopeToTimeseriesTable.get(scope) +
+                             " using codec " + codec.toString());
+        Row row;
+        while ((row = scanner.next()) != null) {
+          byte[] rowKey = row.getRow();
+          int offset = 0;
+          String context = codec.decode26(MetricsEntityType.CONTEXT, rowKey, offset);
+          offset += codec.getEncodedSize26(MetricsEntityType.CONTEXT);
+          String metricName = codec.decode26(MetricsEntityType.METRIC, rowKey, offset);
+          offset += codec.getEncodedSize26(MetricsEntityType.METRIC);
+          String tagName = codec.decode26(MetricsEntityType.TAG, rowKey, offset);
+          offset += codec.getEncodedSize26(MetricsEntityType.TAG);
+          int timeBase = Bytes.toInt(rowKey, offset, 4);
+          // Then it's the runId
+          offset += 4;
+          String runId = codec.decode26(MetricsEntityType.RUN, rowKey, offset);
+          constructMetricTimeValue(scope, context, metricName,  tagName, timeBase, runId,
+                                   row.getColumns().entrySet().iterator());
+        }
+      }
+    }  catch (Exception e) {
+      LOG.info("Exception during data-transfer in aggregates table", e);
+      // no-op
+    }
+  }
+
+  private void constructMetricTimeValue(String scope, String context, String metricName, String tagName,
+                                        int timeBase, String runId,
+                                        Iterator<Map.Entry<byte[], byte[]>> iterator) throws Exception {
+    List<String> contextParts =  Lists.newArrayList(Splitter.on(".").split(context));
+    Map<String, String> tagMap = Maps.newHashMap();
+    tagMap.put(Constants.Metrics.Tag.SCOPE, scope);
+    if (runId != null) {
+      tagMap.put(Constants.Metrics.Tag.RUN_ID, runId);
+    }
+
+    Map<String, String> systemMap = null;
+    if (contextParts.size() > 0) {
+      systemMap = mapOldSystemContextToNew.get(contextParts.get(0));
+    }
+
+    if (systemMap != null) {
+      tagMap.putAll(systemMap);
+      if (contextParts.size() > 1) {
+        if (contextParts.get(1).equals("dataset") && !tagName.equals(MetricsConstants.EMPTY_TAG)) {
+          tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+          tagMap.put(Constants.Metrics.Tag.DATASET, tagName);
+        } else if (contextParts.get(1).equals("stream")) {
+          if (tagName.equals(MetricsConstants.EMPTY_TAG)) {
+            tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+          } else {
+            tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+            tagMap.put(Constants.Metrics.Tag.STREAM, tagName);
+          }
+        }
+      }
+    } else {
+      if (contextParts.size() > 1) {
+        List<String> targetTagList = oldFormatMapping.get(contextParts.get(1));
+        if (targetTagList != null) {
+          tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+          for (int i = 0; i < contextParts.size(); i++) {
+            if (i == targetTagList.size()) {
+              System.out.println(" Context longer than targetTagList" + context);
+              break;
+            }
+            if (targetTagList.get(i).equals("type")) {
+              continue;
+            }
+            tagMap.put(targetTagList.get(i), contextParts.get(i));
+          }
+          if (!tagName.equals(MetricsConstants.EMPTY_TAG) && datasetMetrics.contains(metricName)) {
+            tagMap.put(Constants.Metrics.Tag.DATASET, tagName);
+          } else if (!tagName.equals(MetricsConstants.EMPTY_TAG) && contextParts.get(1).equals("f")) {
+            //queue
+            tagMap.put(Constants.Metrics.Tag.FLOWLET_QUEUE, tagName);
+          }
+        }
+      }  else {
+        System.out.println("unmatched" + context);
+        return;
+      }
+    }
+    System.out.println("Matched Context " + context + " with tagMappings" + tagMap);
+    /*while (iterator.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = iterator.next();
+      sendMetrics(timeSeriesStore, tagMap, metricName, timeBase + Bytes.toInt(entry.getKey()),
+                  Bytes.toLong(entry.getValue()), MetricType.GAUGE);
+    }*/
+  }
+
   public void decodeAggregatesTable26() {
     try {
       for (String scope : scopes) {
-        Scanner scanner = scopeToMetricsTable.get(scope).scan(null, null, null, null);
+        Scanner scanner = scopeToAggregatesTable.get(scope).scan(null, null, null, null);
         MetricsEntityCodec codec = scopeToCodec.get(scope);
-        System.out.println("Decoding for scope " + scope + "on table " + scopeToMetricsTable.get(scope).toString() +
+        System.out.println("Decoding for scope " + scope + "on table " + scopeToAggregatesTable.get(scope).toString() +
                              " using codec " + codec.toString());
         Row row;
         while ((row = scanner.next()) != null) {
@@ -148,7 +248,7 @@ public class DataMigration26 {
         }
       }
     }  catch (Exception e) {
-      LOG.info("Exception while scanning aggregates table", e);
+      LOG.info("Exception during data-transfer in aggregates table", e);
       // no-op
     }
   }
@@ -164,11 +264,9 @@ public class DataMigration26 {
   }
 
   private void constructMetricValue(String scope, String context, String metricName, String runId,
-                                    Iterator<Map.Entry<byte[], byte[]>> iterator) {
+                                    Iterator<Map.Entry<byte[], byte[]>> iterator) throws Exception {
     List<String> contextParts =  Lists.newArrayList(Splitter.on(".").split(context));
-    // application type is the second part
     Map<String, String> tagMap = Maps.newHashMap();
-    // if there is app tags, we should not use system scope
     tagMap.put(Constants.Metrics.Tag.SCOPE, scope);
     if (runId != null) {
       tagMap.put(Constants.Metrics.Tag.RUN_ID, runId);
@@ -181,15 +279,16 @@ public class DataMigration26 {
 
     if (systemMap != null) {
       tagMap.putAll(systemMap);
-      if (contextParts.size() > 1) {
-        // iterate the tags,for each tag name create map with the key "dataset" and name "tagName" and use the value.
-        while (iterator.hasNext()) {
-          Map.Entry<byte[], byte[]> entry = iterator.next();
+      // iterate the tags,for each tag name create map with the key "dataset" and name "tagName" and use the value.
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        if (contextParts.size() > 1) {
           if (contextParts.get(1).equals("dataset") &&
             !Bytes.toString(entry.getKey()).equals(MetricsConstants.EMPTY_TAG)) {
             Map<String, String> newMap = Maps.newHashMap(tagMap);
             newMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
             newMap.put(Constants.Metrics.Tag.DATASET, Bytes.toString(entry.getKey()));
+            sendMetrics(aggMetricStore, newMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
             //LOG.info("Dataset Tag Mappings : {}", newMap);
           } else if (contextParts.get(1).equals("stream")) {
             Map<String, String> newMap = Maps.newHashMap(tagMap);
@@ -202,13 +301,16 @@ public class DataMigration26 {
               newMap.put(Constants.Metrics.Tag.STREAM, Bytes.toString(entry.getKey()));
               //LOG.info("Stream Tag Mappings : complete context : {}", context);
             }
+            sendMetrics(aggMetricStore, newMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
           } else {
-            LOG.info("System metrics unmatched {}", context);
+            sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
           }
+        } else {
+          sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
         }
       }
-      return;
     } else  if (contextParts.size() > 1) {
+      // application data
       List<String> targetTagList = oldFormatMapping.get(contextParts.get(1));
       if (targetTagList != null) {
         tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
@@ -230,23 +332,32 @@ public class DataMigration26 {
           if (!tag.equals(MetricsConstants.EMPTY_TAG) && datasetMetrics.contains(metricName)) {
             Map<String, String> newMap = Maps.newHashMap(tagMap);
             newMap.put(Constants.Metrics.Tag.DATASET, tag);
+            sendMetrics(aggMetricStore, newMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
             //LOG.info("Dataset Tag Mappings : {}", newMap);
           } else if (!tag.equals(MetricsConstants.EMPTY_TAG) && contextParts.get(1).equals("f")) {
             //queue
             Map<String, String> newMap = Maps.newHashMap(tagMap);
             newMap.put(Constants.Metrics.Tag.FLOWLET_QUEUE, tag);
+            sendMetrics(aggMetricStore, newMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
             //LOG.info("Queue Tag Mappings : {}", newMap);
           } else {
             // emit the metric for empty tag
+            sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
           }
         }
       } else {
+        // service metrics , we are skipping them as they were not exposed for querying before
         LOG.info("Unmatched - context {} metric {}", context, metricName);
       }
-      long value = getAggregateValue(iterator);
     } else {
-      LOG.info("Unmatched - context {} metric {}", context, metricName);
+      // should not reach here
+      LOG.info("Shouldn't reach here - app - context {} metric {}", context, metricName);
     }
+  }
+
+  private void sendMetrics(MetricStore store, Map<String, String> tags, String metricName, int timeStamp,
+                           long value, MetricType gauge) throws Exception {
+    store.add(new MetricValue(tags, metricName, timeStamp, value, gauge));
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
