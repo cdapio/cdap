@@ -9,7 +9,7 @@
      ng-show="menu.children.length > 0"
      ng-class="{ current: menu.matchingState }"
      ng-click="isOpen[menu.label]=!isOpen[menu.label]">
-    <span ng-bind="menu.label" class="cdap-sidebar-length"></span>
+    <span ng-bind="menu.label"></span>
   </a>
   <ul class="list-unstyled" ng-show="isOpen[menu.label]">
     <my-tree-view data-model="menu.children"> </my-tree-view>
