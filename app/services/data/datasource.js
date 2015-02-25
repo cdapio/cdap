@@ -70,6 +70,13 @@ angular.module(PKG.name+'.services')
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.statusCode!==200 || data.warning) {
+          angular.forEach(self.bindings, function (b) {
+            if(angular.equals(b.resource, data.resource)) {
+              if(b.errorCallback) {
+                scope.$apply(b.errorCallback.bind(null, data.response));
+              }
+            }
+          });
           return; // errors are handled at $rootScope level
         }
         angular.forEach(self.bindings, function (b) {
@@ -139,6 +146,12 @@ angular.module(PKG.name+'.services')
             /*jshint -W030 */
             cb && cb.apply(this, arguments);
             deferred.resolve(result);
+          }
+        },
+        errorCallback: function (err) {
+          if(!once) {
+            once = true;
+            deferred.reject(err);
           }
         }
       });

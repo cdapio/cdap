@@ -51,8 +51,8 @@ angular.module(PKG.name + '.feature.workflows')
                 skip: true
               }
             })
-              .state('workflows.detail.runs.detail.flow', {
-                url: '/flow',
+              .state('workflows.detail.runs.detail.status', {
+                url: '/status',
                 templateUrl: '/assets/features/workflows/templates/tabs/runs/flow.html',
                 controller: 'WorkflowsDetailRunStatusController',
                 ncyBreadcrumb: {

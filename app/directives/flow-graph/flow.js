@@ -9,25 +9,34 @@ module.factory('dagreD3', function ($window) {
 });
 
 
-module.directive('myFlowGraph', function (d3, dagreD3, $state) {
+module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
   return {
     restrict: 'E',
     templateUrl: 'flow-graph/flow.html',
     scope: {
       model: '='
     },
-    link: function (scope, elem, attr) {
+    controller: function($scope) {
 
-      scope.$watch('model', function(newVal, oldVal) {
+      function update(newVal, oldVal) {
         if (angular.isObject(newVal) && Object.keys(newVal).length) {
-          scope.render();
+          $scope.render();
         }
-      });
+      }
+
+      $scope.$watch('model', update);
+      $scope.$watchCollection('model.metrics', update);
+
+    },
+    link: function (scope, elem, attr) {
 
       scope.render = function (){
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
+
         var instanceMap = {};
+
+        var bytesFilter = $filter('bytes');
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
@@ -85,10 +94,10 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
             .attr('r', 25)
             .attr('class', 'flow-shapes flowlet-events');
           parent.insert('text')
-            .attr('x', -62)
+            .attr('x', -73)
             .attr('y', 5)
-            .text('-1')
-            .attr('class', 'flow-shapes flowlet-event-count');
+            .text(bytesFilter(scope.model.metrics[node.label]))
+            .attr('class', 'flow5shapes flowlet-event-count');
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, r, point);
@@ -120,9 +129,9 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
             .attr('class', 'flow-shapes stream-events');
 
           parent.insert('text')
-            .attr('x', -62)
+            .attr('x', -73)
             .attr('y', 5)
-            .text('-1')
+            .text(bytesFilter(scope.model.metrics[node.label]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -131,6 +140,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
 
           return shapeSvg;
         };
+
 
         // Set up an SVG group so that we can translate the final graph and tooltip.
         var svg = d3.select('svg').attr('fill', 'white');
@@ -145,7 +155,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state) {
           svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
                                       'scale(' + d3.event.scale + ')');
         });
-        svg.call(zoom);
+        // svg.call(zoom);
 
         // Run the renderer. This is what draws the final graph.
         renderer(d3.select('svg g'), g);
