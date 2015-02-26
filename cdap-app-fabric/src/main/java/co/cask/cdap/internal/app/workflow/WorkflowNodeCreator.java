@@ -28,7 +28,9 @@ import com.google.common.base.Preconditions;
 /**
  * Helper to create {@link WorkflowNode}
  */
-class WorkflowNodeCreator {
+final class WorkflowNodeCreator {
+
+  private WorkflowNodeCreator() {}
 
   static WorkflowNode createWorkflowActionNode(String programName, SchedulableProgramType programType) {
     switch (programType) {
