@@ -1,0 +1,26 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content" >
+
+      <form name="createNotification" class="form-horizontal" novalidate>
+
+        <div class="modal-header">
+          <button type="button" class="close" ng-click="$hide()">&times;</button>
+          <h4 class="modal-title">Globally Revoke Access Tokens</h4>
+        </div>
+
+        <div class="modal-body">
+          <p>This action immediately revokes access tokens for all users in all namespaces on your CDAP cluster. Users in session will be signed out, new tokens will be triggered, and users will need to obtain new tokens to sign in and resume.<br /><br />
+          Use this action only in dire circumstances!</p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" ng-click="$hide()">Cancel</button>
+          <a class="btn btn-primary disabled">Globally revoke current tokens / trigger new tokens</a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+@import (less) "./fonts.less"; // must be first to support external @import (css)
+@import (less) "./variables.less";
+@import (less) "../../bower_components/bootstrap/less/mixins.less";
+
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  visibility: hidden; // themes start the show
+  margin-bottom: 80px;
+}
+
+header.navbar {
+  border-bottom-color: @body-bg;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 90px;
+
+  > .container {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+
+  div.text-muted {
+    margin: 20px 0;
+  }
+}
+
+main.container {
+  margin-top: 50px;
+  padding-top: 1em;
+}
+
+#alerts {
+  position: fixed;
+  z-index: 2001;
+  top: 15px;
+  left: 0;
+  right: 0;
+}
+
+.modal {
+
+  &.center {
+    .modal-dialog {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      min-width: 320px;
+      max-width: 630px;
+      width: 50%;
+      transform: translateX(-50%) translateY(-50%);
+    }
+  }
+
+  .modal-body {
+    max-height: 400px;
+    overflow: auto;
+  }
+}
+
+.modal-backdrop {
+  // see https://github.com/twbs/bootstrap/pull/14724
+  z-index: ( @zindex-modal - 1 );
+  height: 100%;
+}
+
+
+fieldset.row {
+  margin-bottom: 1px;
+}
+
+@media (max-width: @screen-xs-max) {
+  .form-control {
+    margin-bottom: 1px;
+  }
+}
+
+.form-control.ng-dirty.ng-invalid {
+  border-color: #a94442;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  &:focus {
+    border-color: #843534;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px #ce8483;
+  }
+}
+
+
+span.text-info[bs-tooltip] {
+  cursor: help;
+}
+
+hr {
+  border-color: lighten(@text-color, 50%);
+}
+
+.jumbotron {
+  margin-top: 1em;
+}
+
+.nav-tabs > li > a {
+  cursor: pointer;
+}
+
+fieldset.tab-pane {
+  padding-top: 1em;
+
+  &.am-fade.active-add {
+    // cf http://mgcrea.github.io/angular-strap/##tabs-usage
+    animation-name: fadeIn;
+  }
+}
+
+body div.progress {
+  margin: 1px; /* by default they have just margin-bottom: 20px */
+}
+
+body .dropdown-menu {
+  > li > a,
+  > li.dropdown-header {
+    padding-left: 14px;
+  }
+  > li > a > span.fa-fw {
+    margin-right: 5px;
+  }
+
+  &.typeahead {
+    cursor: default;
+  }
+}
