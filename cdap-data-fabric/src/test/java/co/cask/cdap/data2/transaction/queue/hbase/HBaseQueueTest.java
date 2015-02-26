@@ -49,11 +49,7 @@ import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.NoOpTransactionStateStorage;
 import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -63,6 +59,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -82,11 +79,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * HBase queue tests.
@@ -100,7 +94,6 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
-  private static LoadingCache<QueueName, Optional<ConsumerConfigCache>> consumerConfigCaches;
 
   private static HBaseTestBase testHBase;
   private static HBaseTableUtil tableUtil;
@@ -182,20 +175,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    consumerConfigCaches = CacheBuilder.newBuilder().build(
-      new CacheLoader<QueueName, Optional<ConsumerConfigCache>>() {
-        @Override
-        public Optional<ConsumerConfigCache> load(QueueName key) throws Exception {
-          String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(key);
-          byte[] tableName = Bytes.toBytes(configTableName);
-          if (testHBase.getHBaseAdmin().tableExists(tableName)) {
-            return Optional.of(ConsumerConfigCache.getInstance(hConf, tableName));
-          }
-          return Optional.absent();
-        }
-      }
-    );
-
     tableUtil = new HBaseTableUtilFactory().get();
   }
 
@@ -305,41 +284,28 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException, ExecutionException {
-    updateConfigCaches(queueNames);
+  protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      Optional<ConsumerConfigCache> cache = getConfigCache(queueName);
-      Assert.assertTrue(cache.isPresent());
-      Assert.assertNotNull("for " + queueName, cache.get().getConsumerConfig(queueName.toBytes()));
+      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      cache.updateCache();
+      Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
   }
 
   @Override
-  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException,
-    ExecutionException {
-    updateConfigCaches(queueNames);
+  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      Optional<ConsumerConfigCache> cache = getConfigCache(queueName);
-      // either the config table has to be missing, or the queue entries in the config table are not present
-      if (!cache.isPresent()) {
-        continue;
-      }
-      Assert.assertTrue("for " + queueName, cache.get().getConsumerConfig(queueName.toBytes()) == null);
-    }
-  }
-
-  private void updateConfigCaches(QueueName... queueNames) throws ExecutionException {
-    List<QueueName> queueNameList = Arrays.asList(queueNames);
-    consumerConfigCaches.invalidateAll(queueNameList);
-    for (Optional<ConsumerConfigCache> consumerConfigCache : consumerConfigCaches.getAll(queueNameList).values()) {
-      if (consumerConfigCache.isPresent()) {
-        consumerConfigCache.get().updateCache();
+      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      // Either the config table doesn't exists, or the consumer config is empty for the given queue
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      try {
+        cache.updateCache();
+        Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
+      } catch (TableNotFoundException e) {
+        // Expected.
       }
     }
-  }
-
-  private Optional<ConsumerConfigCache> getConfigCache(QueueName queueName) throws ExecutionException {
-    return consumerConfigCaches.get(queueName);
   }
 
   @AfterClass

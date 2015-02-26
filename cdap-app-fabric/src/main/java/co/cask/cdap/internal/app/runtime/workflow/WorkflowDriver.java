@@ -214,9 +214,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       case FORK:
         executeWorkflowFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
         break;
-      case CONDITION:
-        // no-op
-        break;
       default:
         break;
     }

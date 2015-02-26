@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -33,8 +32,8 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
 
   private final TwillController controller;
 
-  WorkerTwillProgramController(Program program, TwillController controller) {
-    super(program.getName(), controller);
+  WorkerTwillProgramController(String programId, TwillController controller) {
+    super(programId, controller);
     this.controller = controller;
   }
 
@@ -45,11 +44,11 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
       return;
     }
 
-    Map<String, Integer> command = (Map<String, Integer>) value;
+    Map<String, String> command = (Map<String, String>) value;
     try {
-      for (Map.Entry<String, Integer> entry : command.entrySet()) {
+      for (Map.Entry<String, String> entry : command.entrySet()) {
         LOG.info("Changing worker instance count: {} new count is: {}", entry.getKey(), entry.getValue());
-        changeInstances(entry.getKey(), entry.getValue());
+        changeInstances(entry.getKey(), Integer.valueOf(entry.getValue()));
         LOG.info("Worker instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
       }
     } catch (Throwable t) {

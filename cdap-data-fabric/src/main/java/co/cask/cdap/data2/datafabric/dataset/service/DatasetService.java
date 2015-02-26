@@ -88,7 +88,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, locationFactory, cConf);
     DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf);
+                                                                               opExecutorClient, exploreFacade);
     DatasetInstanceHandlerV2 datasetInstanceHandlerV2 = new DatasetInstanceHandlerV2(datasetInstanceHandler);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);

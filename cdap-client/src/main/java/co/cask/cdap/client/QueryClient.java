@@ -20,6 +20,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -30,10 +31,13 @@ import javax.inject.Inject;
  */
 public class QueryClient {
 
+  private final ClientConfig config;
   private final ExploreClient exploreClient;
 
   @Inject
   public QueryClient(final ClientConfig config) {
+    this.config = config;
+
     Supplier<String> hostname = new Supplier<String>() {
       @Override
       public String get() {
@@ -59,7 +63,7 @@ public class QueryClient {
       }
     };
 
-    this.exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken);
+    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken);
   }
 
   /**
@@ -71,6 +75,6 @@ public class QueryClient {
    *         network error occurs, if the query is malformed, or if the query is cancelled.
    */
   public ListenableFuture<ExploreExecutionResult> execute(String query) {
-    return exploreClient.submit(query);
+    return exploreClient.submit(Id.Namespace.from(config.getNamespace()), query);
   }
 }

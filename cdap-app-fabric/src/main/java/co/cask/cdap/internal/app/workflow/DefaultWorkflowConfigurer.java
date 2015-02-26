@@ -21,14 +21,11 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -38,7 +35,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link WorkflowConfigurer}.
  */
-public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
+public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowForkJoiner {
 
   private final String className;
   private String name;
@@ -69,54 +66,24 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
     this.properties = ImmutableMap.copyOf(properties);
   }
 
-  WorkflowNode createWorkflowActionNode(String programName, SchedulableProgramType programType) {
-    switch (programType) {
-      case MAPREDUCE:
-        Preconditions.checkNotNull(programName, "MapReduce name is null.");
-        Preconditions.checkArgument(!programName.isEmpty(), "MapReduce name is empty.");
-        break;
-      case SPARK:
-        Preconditions.checkNotNull(programName, "Spark name is null.");
-        Preconditions.checkArgument(!programName.isEmpty(), "Spark name is empty.");
-        break;
-      case CUSTOM_ACTION:
-        //no-op
-        break;
-      default:
-        break;
-    }
-
-    return new WorkflowActionNode(null, new ScheduleProgramInfo(programType, programName));
-  }
-
-  WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
-    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    return new WorkflowActionNode(null, spec);
-  }
-
-  void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
-    nodes.add(new WorkflowForkNode(null, branches));
-  }
-
   @Override
   public void addMapReduce(String mapReduce) {
-    nodes.add(createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
   }
 
   @Override
   public void addSpark(String spark) {
-    nodes.add(createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
   }
 
   @Override
   public void addAction(WorkflowAction action) {
-    nodes.add(createWorkflowCustomActionNode(action));
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
   }
 
   @Override
-  public WorkflowForkConfigurer<Void> fork() {
-    return new DefaultWorkflowForkConfigurer<Void>(this, null);
+  public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
+    return new DefaultWorkflowForkConfigurer<DefaultWorkflowConfigurer>(this);
   }
 
   public WorkflowSpecification createSpecification() {
@@ -140,9 +107,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
         break;
       case FORK:
         nodeWithId = createForkNodeWithId(node);
-        break;
-      case CONDITION:
-        // no-op
         break;
       default:
         break;
@@ -169,5 +133,10 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
       branches.add(createNodesWithId(branch));
     }
     return new WorkflowForkNode(forkNodeId, branches);
+  }
+
+  @Override
+  public void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
+    nodes.add(new WorkflowForkNode(null, branches));
   }
 }

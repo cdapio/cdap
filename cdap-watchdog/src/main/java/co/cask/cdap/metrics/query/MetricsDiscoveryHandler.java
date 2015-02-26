@@ -238,7 +238,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
           Collection<String> measureNames = metricStore.findMetricNames(query);
           String context = getContext(tagValueList);
           for (String measureName : measureNames) {
-            addContext(context, measureName, metricContextsMap);
+            // Hack: per v2 APIs we only return user metrics (and we need to strip "user." so that it can be used as is)
+            if (measureName.startsWith("user.")) {
+              addContext(context, measureName.substring("user.".length()), metricContextsMap);
+            }
           }
         }
       }

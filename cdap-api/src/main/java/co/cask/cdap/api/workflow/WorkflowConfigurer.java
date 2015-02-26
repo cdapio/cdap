@@ -74,7 +74,7 @@ public interface WorkflowConfigurer {
 
   /**
    * Forks the execution of the {@link Workflow} into multiple branches
-   * @return the configurer for the fork
+   * @return the configurer for the {@link Workflow}
    */
-  WorkflowForkConfigurer<Void> fork();
+  WorkflowForkConfigurer<? extends WorkflowConfigurer> fork();
 }

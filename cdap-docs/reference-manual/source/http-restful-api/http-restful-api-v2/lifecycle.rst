@@ -98,7 +98,7 @@ because they belong to your account, not the Application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce
 programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>

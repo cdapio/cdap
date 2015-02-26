@@ -1,0 +1,23 @@
+<div ncy-breadcrumb></div>
+<table class="table table-striped table-responsive" cask-sortable>
+  <thead>
+    <tr ng-class="{'sort-enabled': datasets.length>0}">
+      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+      <th> Type </th>
+      <th> Description </th>
+      <th> Storage </th>
+      <th> Programs Using </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="data in datasets | orderBy:sortable.predicate:sortable.reverse">
+      <td>
+        <a ui-sref="datasets.detail.overview({datasetId: data.name})" ng-bind="data.name | caskCapitalizeFilter">
+      </td>
+      <td ng-bind="data.type">  </td>
+      <td ng-bind="data.description">  </td>
+      <td ng-bind="data.storage">  </td>
+      <td ng-bind="data.programsUsing"></td>
+    </tr>
+  <tbody>
+</table>

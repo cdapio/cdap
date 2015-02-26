@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -29,6 +30,7 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -40,6 +42,7 @@ import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
 import co.cask.cdap.internal.app.verification.StreamVerification;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -61,9 +64,11 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final AdapterService adapterService;
+  private final Store store;
 
-  public VerificationStage(DatasetFramework dsFramework, AdapterService adapterService) {
+  public VerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
     super(TypeToken.of(ApplicationDeployable.class));
+    this.store = store;
     this.dsFramework = dsFramework;
     this.adapterService = adapterService;
   }
@@ -148,6 +153,18 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
           throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
                                                    program.getProgramName(), program.getProgramType()));
       }
+
+      // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]
+      Schedule schedule = entry.getValue().getSchedule();
+      if (schedule instanceof StreamSizeSchedule) {
+        StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+        String streamName = streamSizeSchedule.getStreamName();
+        if (!specification.getStreams().containsKey(streamName) &&
+          store.getStream(Id.Namespace.from(input.getId().getNamespaceId()), streamName) == null) {
+          throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
+                                                   streamSizeSchedule.getName(), streamName));
+        }
+      }
     }
 
     // Emit the input to next stage.
@@ -170,9 +187,6 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         break;
       case FORK:
         verifyWorkflowFork(appSpec, workflowSpec, node);
-        break;
-      case CONDITION:
-        // no-op
         break;
       default:
         break;

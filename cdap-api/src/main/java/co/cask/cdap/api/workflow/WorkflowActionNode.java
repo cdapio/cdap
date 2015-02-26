@@ -44,7 +44,7 @@ public class WorkflowActionNode extends WorkflowNode {
    * @return the program information associated with the {@link WorkflowNode}
    */
   public ScheduleProgramInfo getProgram() {
-    return this.program;
+    return program;
   }
 
   /**
@@ -58,7 +58,7 @@ public class WorkflowActionNode extends WorkflowNode {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("WorkflowActionNode{");
+    StringBuilder sb = new StringBuilder("WorkflowActionNode{");
     sb.append("nodeId=").append(nodeId);
     sb.append(", program=").append(program);
     sb.append(", actionSpecification=").append(actionSpecification);
