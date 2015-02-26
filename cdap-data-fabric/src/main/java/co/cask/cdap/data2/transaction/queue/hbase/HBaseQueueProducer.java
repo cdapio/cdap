@@ -16,12 +16,17 @@
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.tephra.Transaction;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -29,37 +34,34 @@ import org.apache.hadoop.hbase.client.Put;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A {@link co.cask.cdap.data2.queue.QueueProducer} that uses HBase as the storage for queue entries and consumers
- * states. The row key has the following format:
- *
- * <pre>
- * {@code
- *
- * row_key = <salt_prefix> <row_key_base>
- * salt_prefix = 1 byte hash of <row_key_base>
- * row_key_base = <queue_prefix> <write_point> <counter>
- * queue_prefix = <name_hash> <queue_name>
- * name_hash = First byte of MD5 of <queue_name>
- * queue_name = flowlet_name + "/" + output_name
- * write_pointer = 8 bytes long value of the write pointer of the transaction
- * counter = 4 bytes int value of a monotonic increasing number assigned for each entry written in the same transaction
- * }
- * </pre>
+ * states.
  */
 public class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
 
   private final HBaseQueueStrategy queueStrategy;
+  private final List<ConsumerGroupConfig> consumerGroupConfigs;
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
 
   public HBaseQueueProducer(HTable hTable, QueueName queueName,
-                            QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy) {
+                            QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
+                            Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) {
     super(queueMetrics, queueName);
     this.queueStrategy = queueStrategy;
-    // Base row key = queue_name + writePointer + counter
+    // Make sure only one config per consumer group
+    this.consumerGroupConfigs = ImmutableList.copyOf(Iterables.filter(consumerGroupConfigs,
+                                                                      new Predicate<ConsumerGroupConfig>() {
+      private final Set<Long> seenGroups = Sets.newHashSet();
+      @Override
+      public boolean apply(ConsumerGroupConfig config) {
+        return seenGroups.add(config.getGroupId());
+      }
+    }));
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
@@ -88,7 +90,7 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
     long writePointer = transaction.getWritePointer();
     for (QueueEntry entry : entries) {
       rowKeys.clear();
-      queueStrategy.getRowKeys(entry, queueRowPrefix, writePointer, count, rowKeys);
+      queueStrategy.getRowKeys(consumerGroupConfigs, entry, queueRowPrefix, writePointer, count, rowKeys);
       rollbackKeys.addAll(rowKeys);
 
       byte[] metaData = QueueEntry.serializeHashKeys(entry.getHashKeys());

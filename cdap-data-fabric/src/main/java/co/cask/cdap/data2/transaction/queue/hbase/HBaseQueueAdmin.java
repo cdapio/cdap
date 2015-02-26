@@ -26,13 +26,11 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
@@ -42,15 +40,11 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -59,13 +53,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Properties;
-import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEUE;
@@ -141,20 +131,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // yes, this will truncate all queues of the flow. But it rarely makes sense to clear a single queue.
     // todo: introduce a method truncateAllFor(flow) or similar, and set this to false
     return true;
-  }
-
-  /**
-   * Returns the column qualifier for the consumer state column. The qualifier is formed by
-   * {@code <groupId><instanceId>}.
-   * @param groupId Group ID of the consumer
-   * @param instanceId Instance ID of the consumer
-   * @return A new byte[] which is the column qualifier.
-   */
-  public static byte[] getConsumerStateColumn(long groupId, int instanceId) {
-    byte[] column = new byte[Longs.BYTES + Ints.BYTES];
-    Bytes.putLong(column, 0, groupId);
-    Bytes.putInt(column, Longs.BYTES, instanceId);
-    return column;
   }
 
   @Override
@@ -243,6 +219,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
+  protected HTable createConfigHTable(String configTableName) throws IOException {
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    hTable.setAutoFlush(false);
+    return hTable;
+  }
+
   private void drop(byte[] tableName) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(tableName)) {
@@ -268,21 +250,20 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   /**
-   * @param tableNamePrefix defines the entries to be removed
+   * @param rowPrefix defines the entries to be removed
    * @param configTableName the config table to remove the configurations from
    * @throws IOException
    */
-  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix, String configTableName)
+  private void deleteConsumerConfigurationsForPrefix(String rowPrefix, String configTableName)
     throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
       // we need to delete the row for this queue name from the config table
-      HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+      HTable hTable = createConfigHTable(configTableName);
       try {
-        byte[] prefix = Bytes.toBytes(tableNamePrefix);
-        byte[] stop = Arrays.copyOf(prefix, prefix.length);
-        stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
+        byte[] prefix = Bytes.toBytes(rowPrefix);
+        byte[] stop = Bytes.stopKeyForPrefix(prefix);
 
         Scan scan = new Scan();
         scan.setStartRow(prefix);
@@ -347,8 +328,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     HTableDescriptor htd = new HTableDescriptor(tableName);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-    htd.addFamily(hcd);
     hcd.setMaxVersions(1);
+    htd.addFamily(hcd);
 
     tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, null,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
@@ -377,29 +358,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
-
+    HBaseConsumerStateStore stateStore = createConsumerStateStore(queueName);
     try {
-      byte[] rowKey = queueName.toBytes();
-
-      // Get all latest entry row key of all existing instances
-      // Consumer state column is named as "<groupId><instanceId>"
-      Get get = new Get(rowKey);
-      get.addFamily(QueueEntryRow.COLUMN_FAMILY);
-      get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
-      List<HBaseConsumerState> consumerStates = HBaseConsumerState.create(hTable.get(get));
-
-      int oldInstances = consumerStates.size();
-
-      // Nothing to do if size doesn't change
-      if (oldInstances == instances) {
-        return;
-      }
-      // Compute and applies changes
-      hTable.batch(getConfigMutations(groupId, instances, rowKey, consumerStates, new ArrayList<Mutation>()));
-
+      stateStore.configureInstances(groupId, instances);
     } finally {
-      hTable.close();
+      stateStore.close();
     }
   }
 
@@ -411,70 +374,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
-
+    HBaseConsumerStateStore stateStore = createConsumerStateStore(queueName);
     try {
-      byte[] rowKey = queueName.toBytes();
-
-      // Get the whole row
-      Result result = hTable.get(new Get(rowKey));
-
-      // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
-      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-      if (columns == null) {
-        columns = ImmutableSortedMap.of();
-      }
-      Map<Long, Integer> oldGroupInfo = Maps.newHashMap();
-      byte[] smallest = decodeGroupInfo(groupInfo, columns, oldGroupInfo);
-
-      List<Mutation> mutations = Lists.newArrayList();
-
-      // For groups that are removed, simply delete the columns
-      Sets.SetView<Long> removedGroups = Sets.difference(oldGroupInfo.keySet(), groupInfo.keySet());
-      if (!removedGroups.isEmpty()) {
-        Delete delete = new Delete(rowKey);
-        for (long removeGroupId : removedGroups) {
-          for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
-            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
-                                 getConsumerStateColumn(removeGroupId, i));
-          }
-        }
-        if (!delete.isEmpty()) {
-          mutations.add(delete);
-        }
-      }
-
-      // For each group that changed (either a new group or number of instances change), update the startRow
-      Put put = new Put(rowKey);
-      for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
-        long groupId = entry.getKey();
-        int instances = entry.getValue();
-        if (!oldGroupInfo.containsKey(groupId)) {
-          // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
-          for (int i = 0; i < instances; i++) {
-            put.add(QueueEntryRow.COLUMN_FAMILY, getConsumerStateColumn(groupId, i),
-                    smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
-          }
-        } else if (oldGroupInfo.get(groupId) != instances) {
-          // compute the mutations needed using the change instances logic
-          SortedMap<byte[], byte[]> columnMap =
-            columns.subMap(getConsumerStateColumn(groupId, 0),
-                           getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
-
-          mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
-        }
-      }
-      if (!put.isEmpty()) {
-        mutations.add(put);
-      }
-
-      // Compute and applies changes
-      if (!mutations.isEmpty()) {
-        hTable.batch(mutations);
-      }
-
+      stateStore.configureGroups(groupInfo);
     } finally {
-      hTable.close();
+      stateStore.close();
     }
   }
 
@@ -495,6 +399,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
       }
     }
+  }
+
+  @VisibleForTesting
+  HBaseConsumerStateStore createConsumerStateStore(QueueName queueName) throws IOException {
+    HTable hTable = createConfigHTable(getConfigTableName(queueName));
+    return new HBaseConsumerStateStore(queueName, hTable);
   }
 
   /**
@@ -533,75 +443,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return tableName.startsWith(tableNamePrefix);
   }
 
-
-  /**
-   * Decodes group information from the given column values.
-   *
-   * @param groupInfo The current groupInfo
-   * @param columns Map from column name (groupId + instanceId) to column value (start row) to decode
-   * @param oldGroupInfo The map to store the decoded group info
-   * @return the smallest start row among all the decoded value if the groupId exists in the current groupInfo
-   */
-  private byte[] decodeGroupInfo(Map<Long, Integer> groupInfo,
-                                 Map<byte[], byte[]> columns, Map<Long, Integer> oldGroupInfo) {
-    byte[] smallest = null;
-
-    for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-      // Consumer state column is named as "<groupId><instanceId>"
-      long groupId = Bytes.toLong(entry.getKey());
-
-      // Map key is sorted by groupId then instanceId, hence keep putting the instance + 1 will gives the group size.
-      oldGroupInfo.put(groupId, Bytes.toInt(entry.getKey(), Longs.BYTES) + 1);
-
-      // Update smallest if the group still exists from the new groups.
-      if (groupInfo.containsKey(groupId)
-        && (smallest == null || Bytes.BYTES_COMPARATOR.compare(entry.getValue(), smallest) < 0)) {
-        smallest = entry.getValue();
-      }
+  protected void createQueueTable(HTableDescriptor htd, byte[][] splitKeys) throws IOException {
+    if (htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
+      htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(HBaseQueueAdmin.SALT_BYTES));
     }
-    return smallest;
-  }
-
-  private List<Mutation> getConfigMutations(long groupId, int instances, byte[] rowKey,
-                                            List<HBaseConsumerState> consumerStates, List<Mutation> mutations) {
-    // Find smallest startRow among existing instances
-    byte[] smallest = null;
-    for (HBaseConsumerState consumerState : consumerStates) {
-      if (smallest == null || Bytes.BYTES_COMPARATOR.compare(consumerState.getStartRow(), smallest) < 0) {
-        smallest = consumerState.getStartRow();
-      }
-    }
-    Preconditions.checkArgument(smallest != null, "No startRow found for consumer group %s", groupId);
-
-    int oldInstances = consumerStates.size();
-
-    // When group size changed, reset all instances startRow to smallest startRow
-    Put put = new Put(rowKey);
-    Delete delete = new Delete(rowKey);
-    for (HBaseConsumerState consumerState : consumerStates) {
-      HBaseConsumerState newState = new HBaseConsumerState(smallest,
-                                                           consumerState.getGroupId(),
-                                                           consumerState.getInstanceId());
-      if (consumerState.getInstanceId() < instances) {
-        // Updates to smallest rowKey
-        newState.updatePut(put);
-      } else {
-        // Delete old instances
-        newState.delete(delete);
-      }
-    }
-    // For all new instances, set startRow to smallest
-    for (int i = oldInstances; i < instances; i++) {
-      new HBaseConsumerState(smallest, groupId, i).updatePut(put);
-    }
-    if (!put.isEmpty()) {
-      mutations.add(put);
-    }
-    if (!delete.isEmpty()) {
-      mutations.add(delete);
-    }
-
-    return mutations;
+    LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
+    tableUtil.createTableIfNotExists(getHBaseAdmin(), htd.getName(), htd, splitKeys);
   }
 
   // only used for create & upgrade of data table
@@ -669,8 +516,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                                 QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
-
-      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, splitKeys);
+      createQueueTable(htd, splitKeys);
     }
   }
 }

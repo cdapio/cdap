@@ -18,16 +18,19 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Factory for creating HBase queue producer and consumer instances.
@@ -53,23 +56,12 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.queueUtil = new HBaseQueueUtilFactory().get();
   }
 
-  // for testing only
-  String getTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getActualTableName(queueName);
-  }
-
-  // for testing only
-  String getConfigTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableName(queueName);
-  }
-
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HTable configTable = createHTable(admin.getConfigTableName(queueName));
-    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
-    HBaseConsumerState consumerState = stateStore.getState();
+    HBaseConsumerStateStore stateStore = admin.createConsumerStateStore(queueName);
+    HBaseConsumerState consumerState = stateStore.getState(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
     return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getActualTableName(queueName)),
                                       queueName, consumerState, stateStore, getQueueStrategy());
   }
@@ -82,8 +74,11 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
+
+    // TODO: Gather consumer group configs
+    List<ConsumerGroupConfig> groupConfigs = ImmutableList.of();
     return new HBaseQueueProducer(createHTable(admin.getActualTableName(queueName)), queueName, queueMetrics,
-                                  getQueueStrategy());
+                                  getQueueStrategy(), groupConfigs);
   }
 
   protected HBaseQueueStrategy getQueueStrategy() {
