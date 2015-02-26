@@ -26,6 +26,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -59,9 +60,11 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final AdapterService adapterService;
+  private final Store store;
 
-  public VerificationStage(DatasetFramework dsFramework, AdapterService adapterService) {
+  public VerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
     super(TypeToken.of(ApplicationDeployable.class));
+    this.store = store;
     this.dsFramework = dsFramework;
     this.adapterService = adapterService;
   }
@@ -168,15 +171,14 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
           throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
                                                    program.getProgramName(), program.getProgramType()));
       }
-    }
 
-    // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]
       Schedule schedule = entry.getValue().getSchedule();
       if (schedule instanceof StreamSizeSchedule) {
         StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
         String streamName = streamSizeSchedule.getStreamName();
-        if (!specification.getStreams().containsKey(streamName)) {
+        if (!specification.getStreams().containsKey(streamName) &&
+          store.getStream(Id.Namespace.from(input.getId().getNamespaceId()), streamName) == null) {
           throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
                                                    streamSizeSchedule.getName(), streamName));
         }

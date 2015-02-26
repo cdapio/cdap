@@ -78,7 +78,6 @@ public class LocalManagerTest {
    */
   @Test
   public void testGoodPipeline() throws Exception {
-    // TODO modify
     Location deployedJar = lf.create(
       JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
     );

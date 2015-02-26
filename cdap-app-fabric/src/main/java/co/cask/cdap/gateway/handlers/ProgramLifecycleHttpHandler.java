@@ -363,7 +363,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Throwable e) {
-      LOG.error("Got exception:", e);
+      LOG.error("Got exception when performing action '{}' on schedule '{}' for app '{}'",
+                action, scheduleName, appId, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

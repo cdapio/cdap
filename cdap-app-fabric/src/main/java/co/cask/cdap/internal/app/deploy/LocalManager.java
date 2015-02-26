@@ -106,16 +106,16 @@ public class LocalManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
-    pipeline.addLast(new VerificationStage(datasetFramework, adapterService));
+    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, appId));
+    pipeline.addLast(new VerificationStage(store, datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
-    pipeline.addLast(new CreateSchedulesStage(store, scheduler));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
+    pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.setFinally(new DeployCleanupStage());
     return pipeline.execute(input);
   }

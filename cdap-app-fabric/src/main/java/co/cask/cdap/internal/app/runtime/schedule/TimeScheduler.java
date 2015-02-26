@@ -66,15 +66,23 @@ final class TimeScheduler implements Scheduler {
     this.preferencesStore = preferencesStore;
   }
 
-  void start() throws org.quartz.SchedulerException {
-    scheduler = schedulerSupplier.get();
-    scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-    scheduler.start();
+  void start() throws SchedulerException {
+    try {
+      scheduler = schedulerSupplier.get();
+      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      scheduler.start();
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
   }
 
-  void stop() throws org.quartz.SchedulerException {
-    if (scheduler != null) {
-      scheduler.shutdown();
+  void stop() throws SchedulerException {
+    try {
+      if (scheduler != null) {
+        scheduler.shutdown();
+      }
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
     }
   }
 
@@ -182,6 +190,7 @@ final class TimeScheduler implements Scheduler {
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
+    // TODO modify the update flow [CDAP-1618]
     deleteSchedule(program, programType, schedule.getName());
     schedule(program, programType, schedule);
   }
@@ -192,7 +201,9 @@ final class TimeScheduler implements Scheduler {
     checkInitialized();
     try {
       Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
-      Preconditions.checkNotNull(trigger);
+      if (trigger == null) {
+        throw new ScheduleNotFoundException(scheduleName);
+      }
 
       scheduler.unscheduleJob(trigger.getKey());
 

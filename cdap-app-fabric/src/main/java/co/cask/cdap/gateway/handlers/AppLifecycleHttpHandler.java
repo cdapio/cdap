@@ -345,7 +345,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (InvalidAdapterOperationException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (SchedulerException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterId, action, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -378,7 +383,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (SchedulerException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

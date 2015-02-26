@@ -68,13 +68,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   /**
    * Start the quartz scheduler service.
    */
-  protected final void startScheduler() {
+  protected final void startScheduler() throws SchedulerException {
     try {
       timeScheduler.start();
       LOG.info("Started time scheduler");
-    } catch (org.quartz.SchedulerException e) {
-      LOG.error("Error starting time scheduler", e);
-      throw Throwables.propagate(e);
+    } catch (Throwable t) {
+      LOG.error("Error starting time scheduler", t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     }
 
     try {
@@ -82,27 +83,30 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
       LOG.error("Error starting stream size scheduler", t);
-      throw Throwables.propagate(t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     }
   }
 
   /**
    * Stop the quartz scheduler service.
    */
-  protected final void stopScheduler() {
+  protected final void stopScheduler() throws SchedulerException {
     try {
       streamSizeScheduler.stop();
       LOG.info("Stopped stream size scheduler");
     } catch (Throwable t) {
       LOG.error("Error stopping stream size scheduler", t);
-      throw Throwables.propagate(t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     } finally {
       try {
         timeScheduler.stop();
         LOG.info("Stopped time scheduler");
-      } catch (org.quartz.SchedulerException e) {
-        LOG.error("Error stopping time scheduler", e);
-        throw Throwables.propagate(e);
+      } catch (Throwable t) {
+        LOG.error("Error stopping time scheduler", t);
+        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+        throw new SchedulerException(t);
       }
     }
   }
@@ -210,7 +214,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   private Scheduler getSchedulerForSchedule(Id.Program program, SchedulableProgramType programType,
-                                               String scheduleName) throws NotFoundException {
+                                            String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(program.getApplicationId());
