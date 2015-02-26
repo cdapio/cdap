@@ -64,7 +64,8 @@ public class ClientConfig {
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled, int unavailableRetryLimit,
+  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled,
+                       int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
@@ -107,7 +108,8 @@ public class ClientConfig {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
   }
 
-  private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace, String path) throws MalformedURLException {
+  private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace,
+                                   String path) throws MalformedURLException {
     return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace.getId() + "/" + path).toURL();
   }
 

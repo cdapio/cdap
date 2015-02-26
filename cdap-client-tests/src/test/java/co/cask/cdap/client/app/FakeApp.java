@@ -18,6 +18,8 @@ package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -29,6 +31,7 @@ import java.util.List;
 public class FakeApp extends AbstractApplication {
 
   public static final String NAME = "FakeApp";
+  public static final Id.Application ID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, NAME);
   public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
 
