@@ -646,12 +646,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected void deleteMetrics(String namespaceId, String applicationId)
     throws IOException, NamespaceNotFoundException, ApplicationNotFoundException {
 
+    Id.Namespace namespace = new Id.Namespace(namespaceId);
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
-      applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
+      applications = this.store.getAllApplications(namespace);
     } else {
-      ApplicationSpecification spec = this.store.getApplication
-        (new Id.Application(new Id.Namespace(namespaceId), applicationId));
+      ApplicationSpecification spec = this.store.getApplication(new Id.Application(namespace, applicationId));
       applications.add(spec);
     }
     ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);

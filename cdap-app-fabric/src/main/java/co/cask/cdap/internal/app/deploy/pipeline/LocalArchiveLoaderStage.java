@@ -20,6 +20,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
@@ -113,7 +114,14 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     }
 
     Id.Application application = Id.Application.from(id, specification.getName());
-    emit(new ApplicationDeployable(cConf, application, specification, store.getApplication(application),
+    ApplicationSpecification existingAppSpec;
+    try {
+      existingAppSpec = store.getApplication(application);
+    } catch (ApplicationNotFoundException e) {
+      existingAppSpec = null;
+    }
+
+    emit(new ApplicationDeployable(cConf, application, specification, existingAppSpec,
                                    deploymentInfo.getApplicationDeployScope(), outputLocation));
   }
 }
