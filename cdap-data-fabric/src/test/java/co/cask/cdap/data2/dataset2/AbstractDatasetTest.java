@@ -31,7 +31,7 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -83,7 +83,7 @@ public class AbstractDatasetTest {
         return registry;
       }
     });
-    framework.addModule(inMemory, new InMemoryOrderedTableModule());
+    framework.addModule(inMemory, new InMemoryTableModule());
     framework.addModule(core, new CoreDatasetsModule());
     framework.addModule(fileSet, new FileSetModule());
     framework.addModule(tpfs, new TimePartitionedFileSetModule());

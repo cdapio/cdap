@@ -20,11 +20,11 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -39,7 +39,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.SimpleKVTable;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -116,10 +116,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     InMemoryDatasetFramework mdsFramework =
       new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                   ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule(),
+                                   ImmutableMap.of("memoryTable", new InMemoryTableModule(),
                                                    "core", new CoreDatasetsModule()));
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
@@ -129,8 +130,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
-                                 new HashSet<DatasetMetricsReporter>());
+                                 exploreFacade,
+                                 new HashSet<DatasetMetricsReporter>(),
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);
@@ -145,9 +147,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(locationFactory.create(Constants.SYSTEM_NAMESPACE));
-    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
+    framework.createNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.createNamespace(NAMESPACE_ID);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -178,10 +179,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   }
 
   @After
-  public void after() {
+  public void after() throws DatasetManagementException {
     Services.chainStop(service, opExecutorService, txManager);
-    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()));
-    Locations.deleteQuietly(locationFactory.create(Constants.SYSTEM_NAMESPACE));
+    framework.deleteNamespace(NAMESPACE_ID);
+    framework.deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @Override

@@ -28,7 +28,7 @@ import javax.ws.rs.Path;
 
 
 /**
- * Explore ping handler - reachable outside of CDAP.
+ * Explore status handler - reachable outside of CDAP.
  */
 @Path(Constants.Gateway.API_VERSION_2)
 public class ExploreStatusHandlerV2 extends AbstractHttpHandler {
@@ -39,10 +39,9 @@ public class ExploreStatusHandlerV2 extends AbstractHttpHandler {
     this.exploreStatusHandler = exploreStatusHandler;
   }
 
-  @Path("/explore/status")
+  @Path("explore/status")
   @GET
   public void status(HttpRequest request, HttpResponder responder) {
-    exploreStatusHandler.status(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                Constants.DEFAULT_NAMESPACE);
+    exploreStatusHandler.status(RESTMigrationUtils.rewriteV2RequestToV3(request), responder);
   }
 }

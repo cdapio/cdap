@@ -110,7 +110,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutRunning() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("select key, value from my_table");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from my_table");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -137,7 +137,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutFetchAllResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("select key, value from my_table");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from my_table");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -182,7 +182,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutNoResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -221,7 +221,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCloseQuery() throws Exception {
-    QueryHandle handle = exploreService.execute("drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
     exploreService.close(handle);
     try {
       exploreService.getStatus(handle);

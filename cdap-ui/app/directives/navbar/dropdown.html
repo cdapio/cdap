@@ -1,0 +1,53 @@
+<ul class="dropdown-menu dropdown-menu-right" role="menu" style="left:auto">
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="http://cask.co" target="_blank">
+      <span class="fa fa-fw fa-book"></span>
+      Cask Home
+    </a>
+  </li>
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="https://groups.google.com/forum/#!forum/cdap-dev" target="_blank">
+      <span class="fa fa-fw fa-support"></span>
+      Support
+    </a>
+  </li>
+
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" class="dropdown-header">
+    themes
+  </li>
+
+  <li role="presentation" ng-repeat="it in theme.list()">
+    <a role="menuitem" href="" ng-click="theme.set(it)">
+      <span class="fa fa-fw" ng-class="it==theme.current ? 'fa-dot-circle-o' : 'fa-circle-o'"></span>
+      <span ng-bind="{cdap:'CDAP', default:'Bootstrap'}[it]"></span>
+    </a>
+  </li>
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" ng-hide="currentUser" ui-sref-active="disabled">
+    <a role="menuitem" tabindex="-1" ui-sref="login({next:$state.current.url})">
+      <span class="fa fa-fw fa-sign-in"></span>
+      Log in
+    </a>
+  </li>
+
+  <li role="presentation" ng-show="currentUser && securityEnabled" ur-sref-active="disabled">
+    <a role="menuitem" tabindex="-1" ui-sref="userprofile">
+      <span class="fa fa-fw fa-user"> </span>
+      Profile
+    </a>
+  </li>
+
+  <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
+    <a role="menuitem" tabindex="-1" href="" ng-click="securityEnabled && logout()">
+      <span class="fa fa-fw fa-sign-out"></span>
+      Log out
+    </a>
+  </li>
+</ul>

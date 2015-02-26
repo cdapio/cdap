@@ -85,7 +85,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @Test
   public void testSchema() throws Exception {
-    runCommand("describe my_table",
+    runCommand(NAMESPACE_ID, "describe my_table",
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -115,7 +115,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
       new ColumnDesc("my_table.longfield", "BIGINT", 6, null),
       new ColumnDesc("my_table.stringfield", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit("select * from my_table").get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from my_table").get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -143,7 +143,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @Test
   public void testSelect() throws Exception {
-    runCommand("select intfield, stringfield from my_table where row_key='123'",
+    runCommand(NAMESPACE_ID, "select intfield, stringfield from my_table where row_key='123'",
                true,
                Lists.newArrayList(new ColumnDesc("intfield", "INT", 1, null),
                                   new ColumnDesc("stringfield", "STRING", 2, null)),

@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -379,6 +380,9 @@ public final class Id  {
     private final String streamName;
     private transient int hashCode;
 
+    private transient String id;
+    private transient byte[] idBytes;
+
     private Stream(final String namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
@@ -411,10 +415,6 @@ public final class Id  {
       return new Stream(namespaceId, streamName);
     }
 
-    public String toId() {
-      return String.format("%s.%s", namespace, streamName);
-    }
-
     public static Stream fromId(String id) {
       Iterable<String> comps = Splitter.on('.').omitEmptyStrings().split(id);
       Preconditions.checkArgument(2 == Iterables.size(comps));
@@ -422,6 +422,20 @@ public final class Id  {
       String namespace = Iterables.get(comps, 0);
       String streamName = Iterables.get(comps, 1);
       return from(namespace, streamName);
+    }
+
+    public String toId() {
+      if (id == null) {
+        id = String.format("%s.%s", namespace, streamName);
+      }
+      return id;
+    }
+
+    public byte[] toBytes() {
+      if (idBytes == null) {
+        idBytes = toId().getBytes(Charsets.US_ASCII);
+      }
+      return idBytes;
     }
 
     @Override

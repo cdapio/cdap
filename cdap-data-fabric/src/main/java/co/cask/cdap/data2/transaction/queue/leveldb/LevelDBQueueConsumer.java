@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,11 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueConsumer;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
@@ -56,16 +57,16 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
   private static final byte[] DUMMY_STATE_CONTENT = { };
 
   private final QueueEvictor queueEvictor;
-  private final LevelDBOrderedTableCore core;
+  private final LevelDBTableCore core;
   private final Object lock;
   private final NavigableMap<byte[], NavigableMap<byte[], byte[]>>
     rowMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   private final NavigableMap<byte[], byte[]>
     colMapForClaim = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  LevelDBQueueConsumer(LevelDBOrderedTableCore tableCore, Object queueLock, ConsumerConfig consumerConfig,
-                       QueueName queueName, QueueEvictor queueEvictor) {
-    super(consumerConfig, queueName);
+  LevelDBQueueConsumer(CConfiguration cConf, LevelDBTableCore tableCore, Object queueLock,
+                       ConsumerConfig consumerConfig, QueueName queueName, QueueEvictor queueEvictor) {
+    super(cConf, consumerConfig, queueName);
     this.queueEvictor = queueEvictor;
     core = tableCore;
     lock = queueLock;

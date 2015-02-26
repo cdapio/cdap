@@ -134,7 +134,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
       LOG.debug("Running create statement for stream {}", streamName);
 
-      QueryHandle handle = exploreService.execute(createStatement);
+      QueryHandle handle = exploreService.execute(Id.Namespace.from(namespaceId), createStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -165,7 +165,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       String deleteStatement = generateDeleteStatement(getStreamTableName(streamId));
       LOG.debug("Running delete statement for stream {} - {}", streamName, deleteStatement);
 
-      QueryHandle handle = exploreService.execute(deleteStatement);
+      QueryHandle handle = exploreService.execute(Id.Namespace.from(namespaceId), deleteStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -179,12 +179,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
-  @Path("/datasets/{dataset}/enable")
+  @Path("datasets/{dataset}/enable")
   public void enableDataset(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
-      // Note: Namespacing will come later.
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
       DatasetSpecification datasetSpec = datasetFramework.getDatasetSpec(datasetInstanceId);
       if (datasetSpec == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
@@ -210,8 +209,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         try {
           Schema schema = Schema.parseJson(schemaStr);
           String hiveSchema = SchemaConverter.toHiveSchema(schema);
-          createStatement = generateCreateDatasetStatement(datasetName, hiveSchema);
-          executeCreate(datasetName, datasetType, createStatement, responder);
+          createStatement = generateCreateDatasetStatement(datasetInstanceId, hiveSchema);
+          executeCreate(datasetInstanceId, datasetType, createStatement, responder);
           return;
         } catch (IOException e) {
           // shouldn't happen because ObjectMappedTableDefinition is supposed to verify this,
@@ -238,7 +237,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       try {
         if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
-          createStatement = generateCreateDatasetStatement(datasetName, hiveSchemaFor(dataset));
+          createStatement = generateCreateDatasetStatement(datasetInstanceId, hiveSchemaFor(dataset));
 
         } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
           // this cannot fail because we were able to instantiate the dataset
@@ -247,7 +246,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
             Map<String, String> properties = spec.getProperties();
             if (FileSetProperties.isExploreEnabled(properties)) {
               LOG.debug("Enabling explore for dataset instance {}", datasetName);
-              createStatement = generateFileSetCreateStatement(datasetName, dataset, properties);
+              createStatement = generateFileSetCreateStatement(datasetInstanceId, dataset, properties);
             }
           }
         }
@@ -257,19 +256,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      executeCreate(datasetName, datasetType, createStatement, responder);
+      executeCreate(datasetInstanceId, datasetType, createStatement, responder);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
-  private void executeCreate(String datasetName, String datasetType, String createStatement,
+  private void executeCreate(Id.DatasetInstance datasetId, String datasetType, String createStatement,
                              HttpResponder responder) throws ExploreException, SQLException {
 
     if (createStatement == null) {
       // This is not an error: whether the dataset is explorable may not be known where this call originates from.
-      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", QueryHandle.NO_OP.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -277,9 +276,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     LOG.debug("Running create statement for dataset {} of type {} - {}",
-              datasetName, datasetType, createStatement);
+              datasetId, datasetType, createStatement);
 
-    QueryHandle handle = exploreService.execute(createStatement);
+    QueryHandle handle = exploreService.execute(datasetId.getNamespace(), createStatement);
     JsonObject json = new JsonObject();
     json.addProperty("handle", handle.getHandle());
     responder.sendJson(HttpResponseStatus.OK, json);
@@ -323,13 +322,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Disable ad-hoc exploration of a dataset instance.
    */
   @POST
-  @Path("/datasets/{dataset}/disable")
+  @Path("datasets/{dataset}/disable")
   public void disableDataset(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
-      // Note: namespacing will come later
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
 
       String deleteStatement = null;
       DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetInstanceId);
@@ -342,7 +340,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
         ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
         deleteStatement = generateDeleteStatement(datasetName);
-        executeDelete(datasetName, deleteStatement, responder);
+        executeDelete(datasetInstanceId, deleteStatement, responder);
         return;
       }
 
@@ -354,27 +352,24 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
         deleteStatement = generateDeleteStatement(datasetName);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-        // this cannot fail because we were able to instantiate the dataset
-        if (spec != null) {
-          Map<String, String> properties = spec.getProperties();
-          if (FileSetProperties.isExploreEnabled(properties)) {
-            deleteStatement = generateDeleteStatement(datasetName);
-          }
+        Map<String, String> properties = spec.getProperties();
+        if (FileSetProperties.isExploreEnabled(properties)) {
+          deleteStatement = generateDeleteStatement(datasetName);
         }
       }
 
-      executeDelete(datasetName, deleteStatement, responder);
+      executeDelete(datasetInstanceId, deleteStatement, responder);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
-  private void executeDelete(String datasetName, String deleteStatement,
+  private void executeDelete(Id.DatasetInstance datasetId, String deleteStatement,
                              HttpResponder responder) throws ExploreException, SQLException {
     if (deleteStatement == null) {
       // This is not an error: whether the dataset is explorable may not be known where this call originates from.
-      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetName);
+      LOG.debug("Dataset {} does not fulfill the criteria to enable explore.", datasetId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", QueryHandle.NO_OP.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -383,7 +378,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     // If table does not exist, nothing to be done
     try {
-      exploreService.getTableInfo(null, getHiveTableName(datasetName));
+      exploreService.getTableInfo(null, getHiveTableName(datasetId.getId()));
     } catch (TableNotFoundException e) {
       // Ignore exception, since this means table was not found.
       JsonObject json = new JsonObject();
@@ -392,21 +387,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return;
     }
 
-    LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
+    LOG.debug("Running delete statement for dataset {} - {}", datasetId, deleteStatement);
 
-    QueryHandle handle = exploreService.execute(deleteStatement);
+    QueryHandle handle = exploreService.execute(datasetId.getNamespace(), deleteStatement);
     JsonObject json = new JsonObject();
     json.addProperty("handle", handle.getHandle());
     responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   @POST
-  @Path("/datasets/{dataset}/partitions")
+  @Path("datasets/{dataset}/partitions")
   public void addPartition(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     try {
-      // Note: Namespacing will come later.
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
       Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
@@ -440,7 +434,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       String addPartitionStatement = generateAddPartitionStatement(datasetName, partitionKey, fsPath);
       LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetName, addPartitionStatement);
 
-      QueryHandle handle = exploreService.execute(addPartitionStatement);
+      QueryHandle handle = exploreService.execute(Id.Namespace.from(namespaceId), addPartitionStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -453,13 +447,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   // this should really be a DELETE request. However, the partition key must be passed in the body
   // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
   @POST
-  @Path("/datasets/{dataset}/deletePartition")
+  @Path("datasets/{dataset}/deletePartition")
   public void dropPartition(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("dataset") String datasetName) {
     try {
-      // Note: Namespacing will come later.
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
       Dataset dataset = instantiateDataset(datasetInstanceId, responder);
       if (dataset == null) {
         return; // response sent by instantiateDataset()
@@ -488,7 +481,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       String dropPartitionStatement = generateDropPartitionStatement(datasetName, partitionKey);
       LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetName, dropPartitionStatement);
 
-      QueryHandle handle = exploreService.execute(dropPartitionStatement);
+      QueryHandle handle = exploreService.execute(Id.Namespace.from(namespaceId), dropPartitionStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -505,8 +498,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private static String getHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
-    // For now replace . with _ since Hive tables cannot have . in them.
-    return name.replaceAll("\\.", "_").toLowerCase();
+    // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
+    return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
   }
 
   /**
@@ -542,9 +535,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                          Constants.Explore.CDAP_NAME, streamId);
   }
 
-  public static String generateCreateDatasetStatement(String name, String hiveSchema) throws UnsupportedTypeException {
+  public static String generateCreateDatasetStatement(Id.DatasetInstance datasetId,
+                                                      String hiveSchema) throws UnsupportedTypeException {
+    String name = datasetId.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(Constants.Explore.DATASET_NAME, name);
-    Map<String, String> tableProperties = ImmutableMap.of(Constants.Explore.CDAP_NAME, name);
+    Map<String, String> tableProperties = ImmutableMap.of(
+      Constants.Explore.CDAP_NAME, name,
+      Constants.Explore.DATASET_NAMESPACE, datasetId.getNamespaceId());
     return generateCreateStatement(name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                                    serdeProperties, tableProperties);
   }
@@ -572,8 +569,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         builder.append(serdeProperty.getKey());
         builder.append("\" = \"");
         builder.append(serdeProperty.getValue());
-        builder.append("\"");
+        builder.append("\", ");
       }
+      // delete trailing ', '
+      builder.deleteCharAt(builder.length() - 1);
+      builder.deleteCharAt(builder.length() - 1);
       builder.append(")");
     }
 
@@ -584,17 +584,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         builder.append(tableProperty.getKey());
         builder.append("'='");
         builder.append(tableProperty.getValue());
-        builder.append("'");
+        builder.append("', ");
       }
+      // delete trailing ', '
+      builder.deleteCharAt(builder.length() - 1);
+      builder.deleteCharAt(builder.length() - 1);
       builder.append(")");
     }
     return builder.toString();
   }
 
-  public static String generateFileSetCreateStatement(String name, Dataset dataset, Map<String, String> properties)
-    throws IllegalArgumentException {
+  public static String generateFileSetCreateStatement(Id.DatasetInstance datasetId, Dataset dataset,
+                                                      Map<String, String> properties) throws IllegalArgumentException {
 
-    String tableName = getHiveTableName(name);
+    String tableName = getHiveTableName(datasetId.getId());
     String serde = FileSetProperties.getSerDe(properties);
     String inputFormat = FileSetProperties.getExploreInputFormat(properties);
     String outputFormat = FileSetProperties.getExploreOutputFormat(properties);
@@ -614,7 +617,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     String tblProperties = "";
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
-    tableProperties.put(Constants.Explore.CDAP_NAME, name);
+    tableProperties.put(Constants.Explore.CDAP_NAME, datasetId.getId());
     if (!tableProperties.isEmpty()) {
       StringBuilder builder = new StringBuilder("TBLPROPERTIES (");
       Joiner.on(", ").appendTo(builder, Iterables.transform(

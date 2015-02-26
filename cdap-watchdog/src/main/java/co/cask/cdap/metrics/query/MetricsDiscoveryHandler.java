@@ -225,9 +225,11 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
         for (Map.Entry<String, String> tag : tagValues.entrySet()) {
           tagsList.add(new TagValue(tag.getKey(), tag.getValue()));
         }
+        // Hacks to support v2 api format that old UI expects
         if (tagsList.size() > 2) {
-          // todo : adding null for runId,should we support searching with runId ?
-          tagsList.add(3, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
+          // i.e. "any" dataset and run
+          tagsList.add(3, new TagValue(Constants.Metrics.Tag.DATASET, null));
+          tagsList.add(4, new TagValue(Constants.Metrics.Tag.RUN_ID, null));
         }
         List<List<TagValue>> resultSet = Lists.newArrayList();
         getAllPossibleTags(tagsList, resultSet);
@@ -236,7 +238,10 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
           Collection<String> measureNames = metricStore.findMetricNames(query);
           String context = getContext(tagValueList);
           for (String measureName : measureNames) {
-            addContext(context, measureName, metricContextsMap);
+            // Hack: per v2 APIs we only return user metrics (and we need to strip "user." so that it can be used as is)
+            if (measureName.startsWith("user.")) {
+              addContext(context, measureName.substring("user.".length()), metricContextsMap);
+            }
           }
         }
       }

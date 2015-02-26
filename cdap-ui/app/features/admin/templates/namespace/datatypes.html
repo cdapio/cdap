@@ -1,0 +1,20 @@
+<h2> {{$stateParams.nsadmin}}: Dataset Types </h2>
+
+<table class="table table-striped table-responsive">
+    <thead ng-class="{'sort-enabled': datatypes.length>0}">
+        <th></th>
+        <th>Class</th>
+        <th>Description</th>
+        <th>Instances</th>
+        <th>Apps Using</th>
+    </thead>
+    <tbody>
+        <tr ng-repeat="datatype in datatypes | orderBy:sortable.predicate:sortable.reverse">
+            <td ng-bind="datatype.name"></td>
+            <td ng-bind="datatype.className"></td>
+            <td ng-bind="datatype.description"></td>
+            <td ng-bind="datatype.instances"></td>
+            <td ng-bind="datatype.apps"></td>
+        </tr>
+    </tbody>
+</table>

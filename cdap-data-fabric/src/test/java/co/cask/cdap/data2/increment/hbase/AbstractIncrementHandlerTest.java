@@ -18,7 +18,7 @@ package co.cask.cdap.data2.increment.hbase;
 
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -476,7 +476,7 @@ public abstract class AbstractIncrementHandlerTest {
   public Put newIncrement(byte[] row, byte[] column, long timestamp, long value) {
     Put p = new Put(row);
     p.add(FAMILY, column, timestamp, Bytes.toBytes(value));
-    p.setAttribute(HBaseOrderedTable.DELTA_WRITE, EMPTY_BYTES);
+    p.setAttribute(HBaseTable.DELTA_WRITE, EMPTY_BYTES);
     return p;
   }
 

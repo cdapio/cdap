@@ -1,0 +1,107 @@
+my-flow-graph {
+  .flow-chart-container {
+
+  }
+
+  text {
+    font-weight: 300;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    fill: white;
+  }
+
+  .node rect {
+    stroke: #999;
+    fill: #fff;
+    stroke-width: 1.5px;
+  }
+
+  .edgePath path {
+    stroke-dasharray: 8px, 8px;
+    stroke: #5A5D6E;
+    stroke-width: 2px;
+  }
+
+
+  .flowlet-svg {
+    fill: #3C4355;
+    cursor: pointer;
+  }
+
+  .stream-svg {
+    fill: #3C4355;
+    cursor: pointer;
+  }
+
+  .flowlet-events {
+    fill: #FF6600;
+    stroke: #ebecf1;
+    stroke-width: 2px;
+    cursor: pointer;
+  }
+
+  .flowlet-event-count {
+    fill: white;
+    font-size: 11px;
+  }
+
+  .stream-events {
+    fill: #0AAE33;
+    stroke: white;
+    stroke-width: 2px;
+    cursor: pointer;
+  }
+
+  .stream-event-count {
+    fill: white;
+    font-size: 11px;
+  }
+
+  .flowlet-instances {
+    fill: #01ABED;
+    stroke: #3C4355;
+    stroke-width: 2px;
+  }
+
+  .flowlet-instance-count {
+    fill: white;
+    cursor: default;
+  }
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  content: "\25BC";
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+  text-align: center;
+}
+
+span.tip-node-name {
+  color: red;
+}

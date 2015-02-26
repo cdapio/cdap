@@ -20,6 +20,7 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -70,10 +71,12 @@ public class ExploreStatement implements Statement {
 
   private Connection connection;
   private ExploreClient exploreClient;
+  private final Id.Namespace namespace;
 
-  ExploreStatement(Connection connection, ExploreClient exploreClient) {
+  ExploreStatement(Connection connection, ExploreClient exploreClient, String namespace) {
     this.connection = connection;
     this.exploreClient = exploreClient;
+    this.namespace = Id.Namespace.from(namespace);
   }
 
   @Override
@@ -87,7 +90,7 @@ public class ExploreStatement implements Statement {
     return resultSet;
   }
 
-  /*
+  /**
    * Executes a query and wait until it is finished, but does not close the session.
    */
   @Override
@@ -102,7 +105,7 @@ public class ExploreStatement implements Statement {
       resultSet = null;
     }
 
-    futureResults = exploreClient.submit(sql);
+    futureResults = exploreClient.submit(namespace, sql);
     try {
       resultSet = new ExploreResultSet(futureResults.get(), this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"

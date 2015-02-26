@@ -20,18 +20,13 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.tephra.TxConstants;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -55,9 +50,21 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     super(name);
   }
 
+  // for unit-test purposes only
+  HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
+                                     LocationFactory locationFactory, CConfiguration conf) {
+    super(name);
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.locationFactory = locationFactory;
+    this.conf = conf;
+  }
+
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
+      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
+      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .properties(properties.getProperties())
       .build();
   }
@@ -71,33 +78,6 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
   @Override
   public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    // todo: CDAP-1458 HTableDatasetAdmin doesn't fit where there are coprocessors set for table, as it does no upgrade
-    return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
-  }
-
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) throws IOException {
-    final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
-
-    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
-    hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    // to support read-less increments, we need to allow storing many versions: each increment is a put to the same cell
-    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
-    // to make sure delta-increments get compacted on flush and major/minor compaction and redundant versions are
-    // cleaned up. See IncrementHandler.CompactionBound.
-    columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
-
-    long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
-    if (ttlMillis > 0) {
-      // the IncrementHandler coprocessor reads this value and performs TTL
-      columnDescriptor.setValue(TxConstants.PROPERTY_TTL, Long.toString(ttlMillis));
-    }
-
-    final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-    tableDescriptor.addFamily(columnDescriptor);
-    AbstractHBaseDataSetAdmin.CoprocessorJar cpJar =
-      HBaseOrderedTableAdmin.createCoprocessorJarInternal(conf, locationFactory, hBaseTableUtil, true);
-    tableDescriptor.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName(),
-                                   new Path(cpJar.getJarLocation().toURI()), Coprocessor.PRIORITY_USER, null);
-    return tableDescriptor;
+    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

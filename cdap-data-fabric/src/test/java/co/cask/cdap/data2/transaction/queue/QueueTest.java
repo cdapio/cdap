@@ -27,6 +27,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -116,7 +118,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     // verify that queue is gone and stream is still there
     final QueueConsumer qConsumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -153,7 +155,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    streamAdmin.dropAll();
+    streamAdmin.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
     // verify that queue is gone and stream is still there
     final QueueConsumer qConsumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -465,13 +467,13 @@ public abstract class QueueTest {
 
   @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
@@ -555,10 +557,10 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
-  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws InterruptedException {
+  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws Exception {
     // do nothing, HBase test will override this
   }
-  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws InterruptedException {
+  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws Exception {
     // do nothing, HBase test will override this
   }
 
@@ -587,7 +589,7 @@ public abstract class QueueTest {
     txContext.finish();
 
     // Reset queues
-    queueAdmin.dropAll();
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
 
     // we gonna need another one to check again to avoid caching side-affects
     QueueConsumer consumer2 = queueClientFactory.createConsumer(
