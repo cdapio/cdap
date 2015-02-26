@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.flows')
         toState = 0;
       }
       $timeout(function() {
-        $state.go('flows.detail.runs.detail.' + $scope.runTabs[toState]);
+        $state.go('flows.detail.runs.tabs.' + $scope.runTabs[toState]);
       });
     });
 
@@ -44,11 +44,11 @@ angular.module(PKG.name + '.feature.flows')
       if(newVal) {
         // If already in a runTab and you switched the runId then go to the corresponding state.
         // Instance: If already in flows.detail.runs.detail.data and you chose a different runId then go to that state with new runId
-        if ($state.includes('**.runs.detail.**')) {
+        if ($state.includes('**.runs.tabs.**')) {
           toState = $state.current;
         } else {
           // Else default to status state if navigating from parent.
-          toState = 'flows.detail.runs.detail.status';
+          toState = 'flows.detail.runs.tabs.status';
         }
         $timeout(function() {
           $state.go(toState, {
@@ -65,7 +65,7 @@ angular.module(PKG.name + '.feature.flows')
 
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
-      if ($state.includes('flows.detail.runs.detail.**')) {
+      if ($state.includes('flows.detail.runs.tabs.**')) {
         tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop());
         $scope.runTabs.activeTab = (tab > 0? tab: 0);
       }

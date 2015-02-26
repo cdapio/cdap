@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.flows')
           },
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
-            label: '{{$state.params.programId | caskCapitalizeFilter}}'
+            label: '{{$state.params.programId }}'
           }
         })
           .state('flows.detail.runs', {
@@ -46,27 +46,28 @@ angular.module(PKG.name + '.feature.flows')
             }
           })
 
-            .state('flows.detail.runs.detail', {
+            .state('flows.detail.runs.tabs', {
               url: '/runs/:runId',
               template: '<ui-view/>',
               abstract: true
             })
-              .state('flows.detail.runs.detail.status', {
+              .state('flows.detail.runs.tabs.status', {
                 url: '/status',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/status.html',
                 controller: 'FlowsDetailRunStatusController',
                 ncyBreadcrumb: {
-                  skip: true
+                  parent: "apps.detail.overview",
+                  label: "{{$state.params.programId}} / {{$state.params.runId}}"
                 }
               })
-              .state('flows.detail.runs.detail.flowlets', {
+              .state('flows.detail.runs.tabs.flowlets', {
                 url: '/flowlets',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
-                .state('flows.detail.runs.detail.flowlets.detail', {
+                .state('flows.detail.runs.tabs.flowlets.detail', {
                   url: '/:flowletId',
                   templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
                   controller: 'FlowsFlowletDetaiController',
@@ -74,21 +75,21 @@ angular.module(PKG.name + '.feature.flows')
                     skip: true
                   }
                 })
-              .state('flows.detail.runs.detail.data', {
+              .state('flows.detail.runs.tabs.data', {
                 url: '/data',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/data.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
-              .state('flows.detail.runs.detail.configuration', {
+              .state('flows.detail.runs.tabs.configuration', {
                 url: '/configuration',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/configuration.html',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
-              .state('flows.detail.runs.detail.log', {
+              .state('flows.detail.runs.tabs.log', {
                 url: '/logs?filter',
                 reloadOnSearch: false,
                 template: '<my-log-viewer data-model="logs"></my-log-viewer>',
@@ -114,7 +115,8 @@ angular.module(PKG.name + '.feature.flows')
             url: '/history',
             templateUrl: '/assets/features/flows/templates/tabs/history.html',
             ncyBreadcrumb: {
-              skip: true
+              parent: "apps.detail.overview",
+              label: "{{$state.params.programId}} / History"
             }
           })
           .state('flows.detail.resources', {
