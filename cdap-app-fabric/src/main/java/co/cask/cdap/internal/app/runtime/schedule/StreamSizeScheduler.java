@@ -129,17 +129,29 @@ public class StreamSizeScheduler implements Scheduler {
     schedule(program, programType, streamSizeSchedule, true, -1, -1, true);
   }
 
+  /**
+   * Handle a new {@link StreamSizeSchedule} object in this scheduler.
+   *
+   * @param program Program that needs to be run
+   * @param programType type of program
+   * @param streamSizeSchedule Schedule with which the program runs
+   * @param active {@code true} if this schedule is active, {@code false} otherwise
+   * @param baseRunSize size, in bytes, used as the base count for this schedule, or -1 to start counting from
+   *                    the current size of events ingested by the stream, as indicated by metrics. Another way
+   *                    to see it is: size of the stream during which the schedule last executed the program,
+   *                    or -1 if it never happened yet
+   * @param baseRunTs timestamp, in milliseconds, which matches the time at which {@code baseRunSize} was computed.
+   *                  -1 indicates to start counting from the current timestamp
+   * @param persist {@code true} if this schedule should be persisted in the persistent store containing the
+   *                stream size schedules, {@code false} otherwise
+   */
   private void schedule(Id.Program program, SchedulableProgramType programType, StreamSizeSchedule streamSizeSchedule,
                         boolean active, long baseRunSize, long baseRunTs, boolean persist) {
     // Create a new StreamSubscriber, if one doesn't exist for the stream passed in the schedule
     Id.Stream streamId = Id.Stream.from(program.getNamespaceId(), streamSizeSchedule.getStreamName());
-    StreamSubscriber streamSubscriber = new StreamSubscriber(streamId);
-    synchronized (this) {
-      // This block is synchronized so that we can't have the following situation:
-      // - creation of a schedule, using an existing StreamSubscriber which has one other schedule
-      // - deletion of the other schedule, leading to deletion of existing StreamSubscriber
-      // - add the first schedule to the StreamSubscriber, which has been removed from streamSubscribers
-
+    StreamSubscriber streamSubscriber = streamSubscribers.get(streamId);
+    if (streamSubscriber == null) {
+      streamSubscriber = new StreamSubscriber(streamId);
       StreamSubscriber previous = streamSubscribers.putIfAbsent(streamId, streamSubscriber);
       if (previous == null) {
         try {
@@ -156,12 +168,12 @@ public class StreamSizeScheduler implements Scheduler {
       } else {
         streamSubscriber = previous;
       }
+    }
 
-      // Add the scheduleTask to the StreamSubscriber
-      if (streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
-                                          active, baseRunSize, baseRunTs, persist)) {
-        scheduleSubscribers.put(getScheduleId(program, programType, streamSizeSchedule.getName()), streamSubscriber);
-      }
+    // Add the scheduleTask to the StreamSubscriber
+    if (streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
+                                            active, baseRunSize, baseRunTs, persist)) {
+      scheduleSubscribers.put(getScheduleId(program, programType, streamSizeSchedule.getName()), streamSubscriber);
     }
   }
 
@@ -224,13 +236,8 @@ public class StreamSizeScheduler implements Scheduler {
         throw new IllegalArgumentException("Schedule not found: " + scheduleId);
       }
       subscriber.deleteSchedule(programId, programType, scheduleName);
-      synchronized (this) {
-        if (subscriber.isEmpty()) {
-          subscriber.cancel();
-          Id.Stream streamId = subscriber.getStreamId();
-          streamSubscribers.remove(streamId);
-        }
-      }
+      // We don't delete a StreamSubscriber, even if it has zero task. We keep an empty subscriber so that we don't
+      // have to worry about race conditions between add/delete of schedules
     } catch (ScheduleNotFoundException e) {
       throw Throwables.propagate(e);
     }
@@ -420,6 +427,8 @@ public class StreamSizeScheduler implements Scheduler {
         synchronized (lastNotificationLock) {
           if (lastNotification == null ||
             (lastNotification.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
+            // Resume stream polling
+            cancelPollingAndScheduleNext();
             try {
               StreamSize streamSize = getStreamEventsSize();
               lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
@@ -481,7 +490,9 @@ public class StreamSizeScheduler implements Scheduler {
       // We only pass the stream size notification to the schedule tasks if the notification
       // came after the last seen notification
       boolean send = false;
-      cancelPollingAndScheduleNext();
+      if (activeTasks.get() > 0) {
+        cancelPollingAndScheduleNext();
+      }
       synchronized (lastNotificationLock) {
         if (lastNotification == null || notification == lastNotification ||
           notification.getTimestamp() > lastNotification.getTimestamp()) {
