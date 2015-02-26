@@ -27,7 +27,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.internal.UserErrors;
@@ -37,13 +36,11 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * Service that manages lifecycle of Applications.
@@ -59,22 +57,18 @@ import java.util.concurrent.ExecutionException;
 public class AppLifecycleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleService.class);
-  private final LocationFactory locationFactory;
+
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
-  private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final Store store;
   private final ProgramRuntimeService programService;
 
   @Inject
-  public AppLifecycleService(CConfiguration configuration, Scheduler scheduler, StoreFactory storeFactory,
-                             LocationFactory locationFactory,
+  public AppLifecycleService(Scheduler scheduler, StoreFactory storeFactory,
                              ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                              ProgramRuntimeService programService) {
-    this.configuration = configuration;
     this.scheduler = scheduler;
     this.store = storeFactory.create();
-    this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     this.programService = programService;
   }
@@ -83,28 +77,21 @@ public class AppLifecycleService {
     return store.getApplication(appId);
   }
 
-  public Iterable<ApplicationSpecification> getAllApps(Id.Namespace namespaceId) throws NamespaceNotFoundException {
+  public Collection<ApplicationSpecification> listApps(Id.Namespace namespaceId) throws NamespaceNotFoundException {
     return store.getAllApplications(namespaceId);
   }
 
-  public void deploy(final Id.Namespace namespace, final String appId, DeploymentInfo deploymentInfo) throws Exception {
-    try {
-      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
-          deleteHandler(programId, type);
-        }
-      });
-
-      manager.deploy(namespace, appId, deploymentInfo).get();
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception(e.getMessage());
-    }
+  public void deploy(Id.Namespace namespace, @Nullable String appId, DeploymentInfo deploymentInfo) throws Exception {
+    Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+      @Override
+      public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        deleteHandler(programId, type);
+      }
+    });
+    manager.deploy(namespace, appId, deploymentInfo).get();
   }
 
-  private void deleteHandler(Id.Program programId, ProgramType type)
-    throws ExecutionException {
+  private void deleteHandler(Id.Program programId, ProgramType type) throws ExecutionException {
     try {
       switch (type) {
         case FLOW:
@@ -193,9 +180,5 @@ public class AppLifecycleService {
       }
     }
     return null;
-  }
-
-  private ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
-    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
   }
 }

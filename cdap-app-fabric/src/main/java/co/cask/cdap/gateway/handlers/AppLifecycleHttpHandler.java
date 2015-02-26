@@ -202,9 +202,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return deployApplication(request, responder, namespace, appId, archiveName);
     } catch (Throwable t) {
       handle(t, request, responder);
+      return null;
     }
 
-    return null;
   }
 
   /**
@@ -220,9 +220,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return deployApplication(request, responder, namespace, null, archiveName);
     } catch (Throwable t) {
       handle(t, request, responder);
+      return null;
     }
-
-    return null;
   }
 
   /**
@@ -234,7 +233,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") String namespaceId) {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      responder.sendJson(HttpResponseStatus.OK, makeAppRecords(appLifecycleService.getAllApps(namespace)));
+      Collection<ApplicationSpecification> appSpecs = appLifecycleService.listApps(namespace);
+      responder.sendJson(HttpResponseStatus.OK, makeAppRecords(appSpecs));
     } catch (Throwable t) {
       handle(t, request, responder);
     }
@@ -250,7 +250,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                      @PathParam("app-id") final String appId) {
     try {
       Id.Application app = Id.Application.from(namespaceId, appId);
-      responder.sendJson(HttpResponseStatus.OK, makeAppRecord(appLifecycleService.getApp(app)));
+      ApplicationSpecification appSpec = appLifecycleService.getApp(app);
+      responder.sendJson(HttpResponseStatus.OK, makeAppRecord(appSpec));
     } catch (Throwable t) {
       handle(t, request, responder);
     }
@@ -498,15 +499,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
+  /**
+   *
+   * @param request
+   * @param responder
+   * @param namespace
+   * @param appId if null, use appId from application specification
+   * @param archiveName
+   * @return
+   * @throws IOException
+   * @throws NamespaceNotFoundException
+   */
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
                                          final Id.Namespace namespace, @Nullable final String appId,
-                                         final String archiveName) throws IOException {
+                                         final String archiveName) throws IOException, NamespaceNotFoundException {
     if (!namespaceAdmin.hasNamespace(namespace)) {
-      LOG.warn("Namespace '{}' not found.", namespace.getId());
-    responder.sendString(HttpResponseStatus.NOT_FOUND,
-                         String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
-    return null;
-  }
+      throw new NamespaceNotFoundException(namespace);
+    }
 
     Location namespaceHomeLocation = locationFactory.create(namespace.getId());
     if (!namespaceHomeLocation.exists()) {
@@ -536,17 +545,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     final Location archive =
       namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
 
-    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
-
+    File tempFile = File.createTempFile("app-", ".jar", tempDir);
+    LOG.debug("Creating temporary app jar for deploy at '{}'", tempFile.getAbsolutePath());
+    return new AbstractBodyConsumer(tempFile) {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
           DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
           appLifecycleService.deploy(namespace, appId, deploymentInfo);
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-        } catch (Exception e) {
-          LOG.error("Deploy failure", e);
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+          responder.sendStatus(HttpResponseStatus.OK);
+        } catch (Throwable t) {
+          handle(t, request, responder);
         }
       }
     };
