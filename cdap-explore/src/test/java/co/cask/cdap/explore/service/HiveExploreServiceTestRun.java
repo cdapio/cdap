@@ -136,32 +136,32 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void getUserTables() throws Exception {
-    exploreClient.submit("create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(null);
-    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"),
-                                         new TableNameInfo("default", "test")),
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_ID.getId(), "my_table"),
+                                         new TableNameInfo(NAMESPACE_ID.getId(), "test")),
                         tables);
 
-    tables = exploreService.getTables("default");
-    Assert.assertEquals(ImmutableList.of(new TableNameInfo("default", "my_table"),
-                                         new TableNameInfo("default", "test")),
+    tables = exploreService.getTables(NAMESPACE_ID.getId());
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_ID.getId(), "my_table"),
+                                         new TableNameInfo(NAMESPACE_ID.getId(), "test")),
                         tables);
 
     tables = exploreService.getTables("foobar");
     Assert.assertEquals(ImmutableList.of(), tables);
 
-    exploreClient.submit("drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
   }
 
   @Test
   public void testHiveIntegration() throws Exception {
-    runCommand("show tables",
+    runCommand(NAMESPACE_ID, "show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand("describe my_table",
+    runCommand(NAMESPACE_ID, "describe my_table",
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -175,7 +175,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                )
     );
 
-    runCommand("select key, value from my_table",
+    runCommand(NAMESPACE_ID, "select key, value from my_table",
                true,
                Lists.newArrayList(new ColumnDesc("key", "STRING", 1, null),
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
@@ -185,7 +185,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
     );
 
-    runCommand("select key, value from my_table where key = '1'",
+    runCommand(NAMESPACE_ID, "select key, value from my_table where key = '1'",
                true,
                Lists.newArrayList(
                  new ColumnDesc("key", "STRING", 1, null),
@@ -196,7 +196,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                )
     );
 
-    runCommand("select * from my_table",
+    runCommand(NAMESPACE_ID, "select * from my_table",
                true,
                Lists.newArrayList(
                  new ColumnDesc("my_table.key", "STRING", 1, null),
@@ -208,7 +208,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                )
     );
 
-    runCommand("select * from my_table where key = '2'",
+    runCommand(NAMESPACE_ID, "select * from my_table where key = '2'",
                true,
                Lists.newArrayList(
                  new ColumnDesc("my_table.key", "STRING", 1, null),
@@ -226,13 +226,13 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     ExploreExecutionResult results;
     List<QueryInfo> queries;
 
-    future = exploreClient.submit("show tables");
+    future = exploreClient.submit(NAMESPACE_ID, "show tables");
     future.get();
 
-    future = exploreClient.submit("select * from my_table");
+    future = exploreClient.submit(NAMESPACE_ID, "select * from my_table");
     results = future.get();
 
-    queries = exploreService.getQueries();
+    queries = exploreService.getQueries(NAMESPACE_ID);
     Assert.assertEquals(2, queries.size());
     Assert.assertEquals("select * from my_table", queries.get(0).getStatement());
     Assert.assertEquals("FINISHED", queries.get(0).getStatus().toString());
@@ -247,7 +247,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     while (results.hasNext()) {
       results.next();
     }
-    queries = exploreService.getQueries();
+
+    queries = exploreService.getQueries(NAMESPACE_ID);
     Assert.assertEquals(2, queries.size());
     Assert.assertEquals("select * from my_table", queries.get(0).getStatement());
     Assert.assertEquals("FINISHED", queries.get(0).getStatus().toString());
@@ -260,17 +261,17 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
     // Close last query
     results.close();
-    queries = exploreService.getQueries();
+    queries = exploreService.getQueries(NAMESPACE_ID);
     Assert.assertEquals(1, queries.size());
     Assert.assertEquals("show tables", queries.get(0).getStatement());
 
     // Make sure queries are reverse ordered by timestamp
-    exploreClient.submit("show tables").get();
-    exploreClient.submit("show tables").get();
-    exploreClient.submit("show tables").get();
-    exploreClient.submit("show tables").get();
+    exploreClient.submit(NAMESPACE_ID, "show tables").get();
+    exploreClient.submit(NAMESPACE_ID, "show tables").get();
+    exploreClient.submit(NAMESPACE_ID, "show tables").get();
+    exploreClient.submit(NAMESPACE_ID, "show tables").get();
 
-    queries = exploreService.getQueries();
+    queries = exploreService.getQueries(NAMESPACE_ID);
     List<Long> timestamps = Lists.newArrayList();
     Assert.assertEquals(5, queries.size());
     for (QueryInfo queryInfo : queries) {
@@ -300,7 +301,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", myTable6, DatasetProperties.EMPTY);
 
     try {
-      QueryHandle handle = exploreService.execute("show tables");
+      QueryHandle handle = exploreService.execute(NAMESPACE_ID, "show tables");
       QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
 
@@ -346,7 +347,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public void getDatasetSchemaTest() throws Exception {
     TableInfo tableInfo = exploreService.getTableInfo(null, "my_table");
     Assert.assertEquals(new TableInfo(
-                          "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          "my_table", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
@@ -362,9 +364,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         tableInfo);
     Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
-    tableInfo = exploreService.getTableInfo("default", "my_table");
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "my_table");
     Assert.assertEquals(new TableInfo(
-                          "my_table", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          "my_table", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
@@ -395,11 +398,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     }
 
     // Get info of a Hive table
-    exploreClient.submit("create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     tableInfo = exploreService.getTableInfo(null, "test");
     Assert.assertEquals(new TableInfo(
-                          "test", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          "test", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
                           "MANAGED_TABLE",
@@ -412,15 +416,17 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           false
                         ),
                         tableInfo);
-    exploreClient.submit("drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
 
     // Get info of a partitioned table
-    exploreClient.submit("CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
+    exploreClient.submit(NAMESPACE_ID,
+                         "CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
                            "ip STRING COMMENT \"IP Address of the User\") COMMENT \"This is the page view table\" " +
                            "PARTITIONED BY(dt STRING, country STRING) STORED AS SEQUENCEFILE").get();
     tableInfo = exploreService.getTableInfo(null, "page_view");
     Assert.assertEquals(new TableInfo(
-                          "page_view", "default", System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
+                          "page_view", NAMESPACE_ID.getId(),
+                          System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.of(
                             new TableInfo.ColumnInfo("dt", "string", null),
                             new TableInfo.ColumnInfo("country", "string", null)
@@ -445,7 +451,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         ),
                         tableInfo);
     Assert.assertEquals("This is the page view table", tableInfo.getParameters().get("comment"));
-    exploreClient.submit("drop table if exists page_view").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists page_view").get();
   }
 
   @Test
@@ -511,8 +517,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
       table.postTxCommit();
 
-
-      runCommand("select my_table.key, my_table.value from " +
+      runCommand(NAMESPACE_ID, "select my_table.key, my_table.value from " +
                    "my_table " +
                    "join my_table_1 on (my_table.key=my_table_1.key)",
                  true,
@@ -523,7 +528,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                    new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
       );
 
-      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+      runCommand(NAMESPACE_ID, "select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
                    "my_table " +
                    "right outer join my_table_1 on (my_table.key=my_table_1.key)",
                  true,
@@ -539,7 +544,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                                          "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
       );
 
-      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+      runCommand(NAMESPACE_ID, "select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
                    "my_table " +
                    "left outer join my_table_1 on (my_table.key=my_table_1.key)",
                  true,
@@ -555,7 +560,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                                          "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
       );
 
-      runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
+      runCommand(NAMESPACE_ID, "select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
                    "my_table " +
                    "full outer join my_table_1 on (my_table.key=my_table_1.key)",
                  true,
@@ -579,7 +584,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit("select key, value from my_table");
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID,
+                                                                           "select key, value from my_table");
     future.cancel(true);
     try {
       future.get();

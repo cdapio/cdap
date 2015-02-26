@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
@@ -525,6 +526,12 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
           for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
             if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
               result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
+            }
+          }
+        } else if (type == ProgramType.WORKER) {
+          for (WorkerSpecification workerSpec : appSpec.getWorkers().values()) {
+            if (data == Data.DATASET && workerSpec.getDatasets().contains(name)) {
+              result.add(makeProgramRecord(appSpec.getName(), workerSpec, ProgramType.WORKER));
             }
           }
         }

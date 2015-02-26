@@ -108,9 +108,8 @@ public class AppLifecycleService {
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
-                                        final String namespaceId, final String appId,
-                                        final String archiveName) throws IOException {
-
+                                         final String namespaceId, final String appId,
+                                         final String archiveName) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (store.getNamespace(namespace) == null) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
@@ -127,6 +126,7 @@ public class AppLifecycleService {
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
     }
+
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, Constants.Headers.ARCHIVE_NAME + " header not present",
@@ -163,7 +163,7 @@ public class AppLifecycleService {
   }
 
   // deploy helper
-  public void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
+  private void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
 
@@ -203,6 +203,9 @@ public class AppLifecycleService {
         case SERVICE:
           stopProgramIfRunning(programId, type);
           break;
+        case WORKER:
+          stopProgramIfRunning(programId, type);
+          break;
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
@@ -237,10 +240,18 @@ public class AppLifecycleService {
     throws InterruptedException, ExecutionException {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                        programId.getApplicationId(),
-                                                                       programId.getId(), type, programService);
+                                                                       programId.getId(),
+                                                                       type, programService);
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }
+  }
+
+  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+    throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+    ProgramController controller = runtimeInfo.getController();
+    controller.stop().get();
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
@@ -248,8 +259,7 @@ public class AppLifecycleService {
                                                               ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               namespaceId, flowId);
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), namespaceId, flowId);
 
     Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
 
@@ -259,13 +269,6 @@ public class AppLifecycleService {
       }
     }
     return null;
-  }
-
-  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
-    throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
-    ProgramController controller = runtimeInfo.getController();
-    controller.stop().get();
   }
 
   private ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {

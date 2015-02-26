@@ -18,7 +18,6 @@ package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
-import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -32,82 +31,80 @@ import javax.ws.rs.PathParam;
  * Handler that implements V2 explore metadata APIs
  */
 @Path(Constants.Gateway.API_VERSION_2)
-public class ExploreMetadataHttpHandlerV2 extends AbstractHttpHandler {
+public class ExploreMetadataHttpHandlerV2 extends AbstractExploreMetadataHttpHandler {
+  private final NamespacedExploreMetadataHttpHandler namespacedExploreMetadataHttpHandler;
   private final ExploreMetadataHttpHandler exploreMetadataHttpHandler;
 
   @Inject
-  public ExploreMetadataHttpHandlerV2(ExploreMetadataHttpHandler exploreMetadataHttpHandler) {
+  public ExploreMetadataHttpHandlerV2(NamespacedExploreMetadataHttpHandler namespacedExploreMetadataHttpHandler,
+                                      ExploreMetadataHttpHandler exploreMetadataHttpHandler) {
+    this.namespacedExploreMetadataHttpHandler = namespacedExploreMetadataHttpHandler;
     this.exploreMetadataHttpHandler = exploreMetadataHttpHandler;
   }
 
   @GET
   @Path("data/explore/tables")
   public void getTables(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getTables(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getTables(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                          Constants.DEFAULT_NAMESPACE);
   }
 
   @GET
   @Path("data/explore/tables/{table}/info")
   public void getTableSchema(HttpRequest request, HttpResponder responder, @PathParam("table") String table) {
-    exploreMetadataHttpHandler.getTableSchema(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getTableSchema(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                               Constants.DEFAULT_NAMESPACE, table);
   }
-
 
   @POST
   @Path("data/explore/jdbc/tables")
   public void getJDBCTables(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCTables(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getJDBCTables(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                              Constants.DEFAULT_NAMESPACE);
   }
 
   @POST
   @Path("data/explore/jdbc/columns")
   public void getJDBCColumns(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCColumns(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getJDBCColumns(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                               Constants.DEFAULT_NAMESPACE);
   }
 
   @POST
   @Path("data/explore/jdbc/catalogs")
   public void getJDBCCatalogs(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCCatalogs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE);
+    exploreMetadataHttpHandler.getJDBCCatalogs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder);
   }
 
   @POST
   @Path("data/explore/jdbc/schemas")
   public void getJDBCSchemas(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCSchemas(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getJDBCSchemas(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                               Constants.DEFAULT_NAMESPACE);
   }
 
   @POST
   @Path("data/explore/jdbc/functions")
   public void getJDBCFunctions(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCFunctions(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    namespacedExploreMetadataHttpHandler.getJDBCFunctions(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                 Constants.DEFAULT_NAMESPACE);
   }
 
   @POST
   @Path("data/explore/jdbc/tableTypes")
   public void getJDBCTableTypes(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCTableTypes(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE);
+    exploreMetadataHttpHandler.getJDBCTableTypes(RESTMigrationUtils.rewriteV2RequestToV3(request), responder);
   }
 
   @POST
   @Path("data/explore/jdbc/types")
   public void getJDBCTypes(HttpRequest request, HttpResponder responder) {
-    exploreMetadataHttpHandler.getJDBCTypes(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                            Constants.DEFAULT_NAMESPACE);
+    exploreMetadataHttpHandler.getJDBCTypes(RESTMigrationUtils.rewriteV2RequestToV3(request), responder);
   }
 
   @GET
   @Path("data/explore/jdbc/info/{type}")
   public void getJDBCInfo(HttpRequest request, HttpResponder responder, @PathParam("type") String type) {
-    exploreMetadataHttpHandler.getJDBCInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                           Constants.DEFAULT_NAMESPACE, type);
+    exploreMetadataHttpHandler.getJDBCInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, type);
   }
 }
