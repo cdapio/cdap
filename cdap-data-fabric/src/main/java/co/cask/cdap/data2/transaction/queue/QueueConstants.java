@@ -26,6 +26,7 @@ public final class QueueConstants {
   public static final class ConfigKeys {
     public static final String QUEUE_TABLE_COPROCESSOR_DIR = "data.queue.table.coprocessor.dir";
     public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
+    public static final String DEQUEUE_TX_PERCENT = "data.queue.dequeue.tx.percent";
   }
 
   public static final String QUEUE_CONFIG_TABLE_NAME = QueueType.QUEUE.toString() + ".config";

@@ -88,12 +88,12 @@ public enum ElementType {
           ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
-          Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+          Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
            ArgumentName.RUNNABLE,
-           Capability.SCALE, Capability.RUNS, Capability.LOGS),
+           Capability.SCALE, Capability.LOGS),
 
   MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,

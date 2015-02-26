@@ -63,4 +63,40 @@ public class AsciiTableTest {
       }
     ).print(System.out);
   }
+
+  @Test
+  public void testTwoLineCell() {
+    new AsciiTable<String>(
+      new String[] {"c1", "c2", "c3333"},
+      ImmutableList.of(
+        "123456789012345678901234567890,2,3",
+        "r2,r2222 z",
+        "r3333,r3,r3\n1"
+      ),
+      new RowMaker<String>() {
+        @Override
+        public Object[] makeRow(String object) {
+          return object.split(",");
+        }
+      }
+    ).print(System.out);
+  }
+
+  @Test
+  public void testTwoLineCell2() {
+    new AsciiTable<String>(
+      new String[] {"c1", "c2", "c3333"},
+      ImmutableList.of(
+        Strings.repeat("z", 27) + "a,2,3",
+        "r2,r2222 z",
+        "r3333,r3,r3\n1"
+      ),
+      new RowMaker<String>() {
+        @Override
+        public Object[] makeRow(String object) {
+          return object.split(",");
+        }
+      }
+    ).print(System.out);
+  }
 }

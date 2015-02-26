@@ -57,8 +57,8 @@ public class ExplorePreparedStatement extends ExploreStatement implements Prepar
   // Save the SQL parameters {paramLoc:paramValue}
   private final Map<Integer, String> parameters = Maps.newHashMap();
 
-  ExplorePreparedStatement(Connection connection, ExploreClient exploreClient, String sql) {
-    super(connection, exploreClient);
+  ExplorePreparedStatement(Connection connection, ExploreClient exploreClient, String sql, String namespace) {
+    super(connection, exploreClient, namespace);
 
     // Although a PreparedStatement is meant to precompile sql statement, our Explore client
     // interface does not allow it.

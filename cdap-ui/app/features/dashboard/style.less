@@ -1,0 +1,94 @@
+@import "../../styles/variables.less";
+
+body.state-dashboard {
+
+  main {
+
+    aside {
+      float: right;
+      margin: 8px 0 0 12px;
+    }
+
+    .nav-tabs {
+      margin-bottom: 10px;
+      display: flex;
+
+      > li {
+        // flex-grow: 1;
+
+        > a {
+
+          > em {
+            font-style: normal;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            display: block;
+            margin-right: 6px;
+          }
+
+          > .caret {
+            visibility: hidden;
+            position: absolute;
+            right: 9px;
+            top: 18px;
+          }
+
+        }
+
+        &.active > a {
+          cursor: pointer;
+          &:hover {
+            color: @cdap-orange;
+          }
+          > .caret {
+            visibility: visible;
+          }
+        }
+      }
+    }
+
+  }
+
+
+  [as-sortable],
+  .as-sortable-item,
+  .as-sortable-placeholder {
+    min-height: 100px;
+  }
+
+  .as-sortable-placeholder {
+    border: 1px dashed @gray-light;
+    background-color: @gray-lighter;
+
+    // mimic a bootstrap panel
+    margin-bottom: @line-height-computed;
+    border-radius: @panel-border-radius;
+  }
+
+  .as-sortable-drag {
+    opacity: .6;
+  }
+
+
+  .panel-heading {
+    user-select: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+    .btn-group {
+      float: right;
+      position: relative;
+      right: -12px;
+      top: -2px;
+    }
+  }
+
+
+
+  ul.dropdown-menu {
+    z-index: 1200; // above modal
+  }
+
+
+}

@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.store.cube;
 
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import co.cask.cdap.metrics.data.EntityTable;
+import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 
 import java.util.Collection;
