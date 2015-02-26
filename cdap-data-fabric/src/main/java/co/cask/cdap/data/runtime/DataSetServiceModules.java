@@ -48,6 +48,7 @@ import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
@@ -190,6 +191,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-hbase", new HBaseTableModule());
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("queueDataset", new HBaseQueueDatasetModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
         defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
