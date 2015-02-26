@@ -1083,6 +1083,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Return the number of instances of a service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void getServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId) {
+    getServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
+  }
+
+  /**
    * Return the number of instances for the given runnable of a service.
    */
   @GET
@@ -1129,6 +1141,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Set instances of a service.
+   */
+  @PUT
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void setServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId) {
+    setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
   }
 
   /**
@@ -1242,7 +1266,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, programId));
-
+    } else if (programType == ProgramType.WORKER) {
+      runnableId = programId;
+      if (!spec.getWorkers().containsKey(programId)) {
+        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                     "Worker: " + programId + " not found");
+        return;
+      }
+      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, programId));
     } else {
       // services and flows must have runnable id
       if (requestedObj.getRunnableId() == null) {
@@ -1946,11 +1977,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
+                      ProgramType.WORKER).contains(programType);
   }
 
   private boolean canHaveInstances(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
+                      ProgramType.WORKER).contains(programType);
   }
 
   @Nullable

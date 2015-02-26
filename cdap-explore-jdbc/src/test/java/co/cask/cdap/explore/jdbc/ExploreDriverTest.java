@@ -75,6 +75,7 @@ public class ExploreDriverTest {
 
     Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");
     exploreServiceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "localhost", httpService.getPort());
+    exploreServiceUrl += "?namespace=testNamespace";
   }
 
   @AfterClass
@@ -157,10 +158,10 @@ public class ExploreDriverTest {
     Assert.assertNotNull(driver.connect(exploreServiceUrl, null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token=bar", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "&auth.token=bar", null));
 
     // Correct host and extra parameter
-    Assert.assertNotNull(driver.connect(exploreServiceUrl + "?auth.token", null));
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "&auth.token", null));
   }
 
   @Test
@@ -236,23 +237,24 @@ public class ExploreDriverTest {
     Assert.assertNull(rs);
   }
 
+  @Path(Constants.Gateway.API_VERSION_3)
   public static class MockExploreExecutorHandler extends AbstractHttpHandler {
     static final String LONG_RUNNING_QUERY = "long_running_query";
 
-    private static Set<String> handleWithFetchedResutls = Sets.newHashSet();
-    private static Set<String> closedHandles = Sets.newHashSet();
-    private static Set<String> canceledHandles = Sets.newHashSet();
-    private static Set<String> longRunningQueries = Sets.newHashSet();
+    private static final Set<String> handleWithFetchedResutls = Sets.newHashSet();
+    private static final Set<String> closedHandles = Sets.newHashSet();
+    private static final Set<String> canceledHandles = Sets.newHashSet();
+    private static final Set<String> longRunningQueries = Sets.newHashSet();
 
     @GET
-    @Path("v2/explore/status")
+    @Path("explore/status")
     public void status(HttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "OK.\n");
     }
 
     @POST
-    @Path("v2/data/explore/queries")
-    public void query(HttpRequest request, HttpResponder responder) {
+    @Path("namespaces/{namespace-id}/data/explore/queries")
+    public void query(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
       try {
         QueryHandle handle = QueryHandle.generate();
         Map<String, String> args = decodeArguments(request);
@@ -266,9 +268,8 @@ public class ExploreDriverTest {
     }
 
     @DELETE
-    @Path("v2/data/explore/queries/{id}")
-    public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                           @PathParam("id") final String id) {
+    @Path("data/explore/queries/{id}")
+    public void closeQuery(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
       if (closedHandles.contains(id)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -278,10 +279,9 @@ public class ExploreDriverTest {
     }
 
     @GET
-    @Path("v2/data/explore/queries/{id}/status")
-    public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                               @PathParam("id") final String id) {
-      QueryStatus status = null;
+    @Path("data/explore/queries/{id}/status")
+    public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+      QueryStatus status;
       if (closedHandles.contains(id)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -296,9 +296,8 @@ public class ExploreDriverTest {
     }
 
     @GET
-    @Path("v2/data/explore/queries/{id}/schema")
-    public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request,
-                                      HttpResponder responder, @PathParam("id") final String id) {
+    @Path("data/explore/queries/{id}/schema")
+    public void getQueryResultsSchema(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
       if (closedHandles.contains(id)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -311,9 +310,8 @@ public class ExploreDriverTest {
     }
 
     @POST
-    @Path("v2/data/explore/queries/{id}/next")
-    public void getQueryNextResults(@SuppressWarnings("UnusedParameters") HttpRequest request,
-                                    HttpResponder responder, @PathParam("id") final String id) {
+    @Path("data/explore/queries/{id}/next")
+    public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
       if (closedHandles.contains(id)) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

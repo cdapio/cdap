@@ -110,7 +110,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public void testGetSchemas() throws Exception {
     ListenableFuture<ExploreExecutionResult> future;
 
-    future = getExploreClient().schemas(null, "");
+    future = getExploreClient().schemas(null, NAMESPACE_ID.getId());
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),

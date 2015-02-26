@@ -16,7 +16,7 @@ abstraction layer in CDAP.
 **Applications** are composed from *Programs,* *Services,* and *Schedules*.
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
-:doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
+:doc:`Workflows <workflows>`, :doc:`Spark Programs <spark-programs>`, and :doc:`Workers <workers>` are used to process
 data. :doc:`Services <services>` are used to serve data.
 
 **Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
@@ -59,6 +59,7 @@ A typical design of a CDAP Application consists of:
 - Flows, consisting of Flowlets linked together, to process the ingested data
   in realtime or batch;
 - MapReduce programs, Spark programs, and Workflows for batch processing tasks;
+- Workers for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
 - Datasets for storage of data, either raw or the processed results; and
 - Services for serving data and processed results.
 

@@ -16,7 +16,7 @@ Glossary
    Application
       A collection of Programs and Services that read and write through the data
       abstraction layer in CDAP.
-      
+
    Stream
       The primary means of bringing data from external systems into CDAP in realtime; an
       ordered, time-partitioned sequences of data, usable for realtime collection and
@@ -64,7 +64,13 @@ Glossary
       synchronous calls into CDAP from an external system and perform server-side
       processing on-demand. They are similar to a stored procedure in a traditional
       database system. Procedures are typically used to post-process data at query time.
-      
+
+   Worker
+      Workers are typically long-running background programs that can be used to execute tasks.
+      Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
+      a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
+      via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.
+
    Data Abstraction
       Abstraction of the actual representation of data in storage.
       

@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -54,77 +55,97 @@ public class ExploreFacade {
   /**
    * Enables ad-hoc exploration of the given stream.
    *
-   * @param streamName stream name.
+   * @param stream id of the stream.
    */
-  public void enableExploreStream(String streamName) throws ExploreException, SQLException {
+  public void enableExploreStream(Id.Stream stream) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(streamName);
-    handleExploreFuture(futureSuccess, "enable", "stream", streamName);
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream);
+    handleExploreFuture(futureSuccess, "enable", "stream", stream.getName());
   }
 
   /**
    * Disables ad-hoc exploration of the given stream.
    *
-   * @param streamName stream name.
+   * @param stream id of the stream.
    */
-  public void disableExploreStream(String streamName) throws ExploreException, SQLException {
+  public void disableExploreStream(Id.Stream stream) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(streamName);
-    handleExploreFuture(futureSuccess, "disable", "stream", streamName);
+    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream);
+    handleExploreFuture(futureSuccess, "disable", "stream", stream.getName());
   }
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
-   * @param datasetInstance dataset instance name.
+   * @param datasetInstance dataset instance id.
    */
-  public void enableExploreDataset(String datasetInstance) throws ExploreException, SQLException {
+  public void enableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance);
-    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance);
+    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getId());
   }
 
   /**
    * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
-   * @param datasetInstance dataset instance name.
+   * @param datasetInstance dataset instance id.
    */
-  public void disableExploreDataset(String datasetInstance) throws ExploreException, SQLException {
+  public void disableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.disableExploreDataset(datasetInstance);
-    handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance);
+    handleExploreFuture(futureSuccess, "disable", "dataset", datasetInstance.getId());
   }
 
-  public void addPartition(String name, PartitionKey key, String location) throws ExploreException, SQLException {
+  public void addPartition(Id.DatasetInstance datasetInstance,
+                           PartitionKey key, String location) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(name, key, location);
-    handleExploreFuture(futureSuccess, "add", "partition", name);
+    ListenableFuture<Void> futureSuccess = exploreClient.addPartition(datasetInstance, key, location);
+    handleExploreFuture(futureSuccess, "add", "partition", datasetInstance.getId());
   }
 
-  public void dropPartition(String name, PartitionKey key) throws ExploreException, SQLException {
+  public void dropPartition(Id.DatasetInstance datasetInstance,
+                            PartitionKey key) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(name, key);
-    handleExploreFuture(futureSuccess, "drop", "partition", name);
+    ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, key);
+    handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getId());
+  }
+
+  public void createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+    if (!exploreEnabled) {
+      return;
+    }
+
+    ListenableFuture<ExploreExecutionResult> futureSuccess = exploreClient.addNamespace(namespace);
+    handleExploreFuture(futureSuccess, "add", "namespace", namespace.getId());
+  }
+
+  public void removeNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+    if (!exploreEnabled) {
+      return;
+    }
+
+    ListenableFuture<ExploreExecutionResult> futureSuccess = exploreClient.removeNamespace(namespace);
+    handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getId());
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.
-  private void handleExploreFuture(ListenableFuture<Void> future, String operation, String type, String name)
+  private void handleExploreFuture(ListenableFuture future, String operation, String type, String name)
     throws ExploreException, SQLException {
     try {
       future.get(20, TimeUnit.SECONDS);

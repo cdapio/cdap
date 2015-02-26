@@ -557,11 +557,10 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
-  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws InterruptedException, ExecutionException {
+  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws Exception {
     // do nothing, HBase test will override this
   }
-  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames)
-    throws InterruptedException, ExecutionException {
+  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws Exception {
     // do nothing, HBase test will override this
   }
 

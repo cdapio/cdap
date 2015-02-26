@@ -549,6 +549,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         case SERVICE:
           stopProgramIfRunning(programId, type);
           break;
+        case WORKER:
+          stopProgramIfRunning(programId, type);
+          break;
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
