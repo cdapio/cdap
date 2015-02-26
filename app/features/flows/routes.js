@@ -92,6 +92,7 @@ angular.module(PKG.name + '.feature.flows')
               .state('flows.detail.runs.tabs.log', {
                 url: '/logs?filter',
                 reloadOnSearch: false,
+                controller: 'FlowsRunLogController',
                 template: '<my-log-viewer data-model="logs"></my-log-viewer>',
                 ncyBreadcrumb: {
                   skip: true
