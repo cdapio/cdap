@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.datasets')
           parent: 'datasets.detail',
           templateUrl: '/assets/features/datasets/templates/detail.html',
           ncyBreadcrumb: {
-            parent: 'datasets.list',
+            parent: 'data.list',
             label: '{{$state.params.datasetId | caskCapitalizeFilter}}'
           }
         })

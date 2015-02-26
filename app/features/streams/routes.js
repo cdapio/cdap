@@ -33,7 +33,7 @@ angular.module(PKG.name + '.feature.streams')
           templateUrl: '/assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
           ncyBreadcrumb: {
-            parent: 'streams.list',
+            parent: 'data.list',
             label: '{{$state.params.streamId | caskCapitalizeFilter}}'
           }
         })
