@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 
@@ -52,9 +53,14 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   }
 
   @Override
-  @Nullable
-  public Id.DatasetInstance fromNamespaced(String datasetInstanceName) {
-    return fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
+  public Id.DatasetInstance fromNamespaced(String namespaced) {
+    Preconditions.checkArgument(namespaced != null, "Dataset name should not be null");
+    // Dataset name is of the format cdap.<namespace>.<dataset-name>
+    String invalidFormatError = String.format("Invalid format for dataset name '%s'. " +
+                                                "Expected - cdap.<namespace>.<dataset-name>", namespaced);
+    String [] parts = namespaced.split("\\.", 3);
+    Preconditions.checkArgument(parts.length == 3, invalidFormatError);
+    return Id.DatasetInstance.from(Id.Namespace.from(parts[1]), parts[2]);
   }
 
   @Override
