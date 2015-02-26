@@ -21,6 +21,8 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
@@ -51,6 +53,18 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         scheduler.schedule(Id.Program.from(input.getId(), scheduleSpec.getProgram().getProgramName()),
                            scheduleSpec.getProgram().getProgramType(),
                            scheduleSpec.getSchedule());
+      }
+    }
+
+    if (existingAppSpec != null) {
+      // delete schedules that existed in the old app spec, but don't anymore
+      MapDifference<String, ScheduleSpecification> mapDiff =
+        Maps.difference(existingAppSpec.getSchedules(), input.getSpecification().getSchedules());
+      for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnLeft().entrySet()) {
+        ScheduleSpecification scheduleSpec = entry.getValue();
+        scheduler.deleteSchedule(Id.Program.from(input.getId(), scheduleSpec.getProgram().getProgramName()),
+                                 scheduleSpec.getProgram().getProgramType(),
+                                 scheduleSpec.getSchedule().getName());
       }
     }
 
