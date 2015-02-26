@@ -114,8 +114,10 @@ Building and Starting
 Running CDAP Applications
 ============================================
 
-.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
-   :start-line: 9
+.. |example| replace:: Purchase
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 11
 
 Running the Example
 ===================

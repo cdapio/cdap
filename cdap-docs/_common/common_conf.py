@@ -125,11 +125,16 @@ rst_epilog = """
 
 .. |short-version| replace:: %(short_version)s
 
+.. |literal-version| replace:: ``%(version)s``
+
+.. |literal-release| replace:: ``%(release)s``
+
 .. role:: gp
 .. |$| replace:: :gp:`$`
+
 .. |http:| replace:: http:
 
-""" % {'version': version, 'short_version': short_version}
+""" % {'version': version, 'short_version': short_version, 'release': release}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
