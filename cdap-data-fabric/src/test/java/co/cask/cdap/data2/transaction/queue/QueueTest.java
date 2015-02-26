@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -91,14 +90,7 @@ public abstract class QueueTest {
   @Test
   public void testCreateProducerWithMetricsEnsuresTableExists() throws Exception {
     QueueName queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "someStream");
-    final QueueProducer producer = queueClientFactory.createProducer(queueName, new QueueMetrics() {
-      @Override
-      public void emitEnqueue(int count) {}
-
-      @Override
-      public void emitEnqueueBytes(int bytes) {}
-    });
-
+    final QueueProducer producer = queueClientFactory.createProducer(queueName, Lists.<ConsumerConfig>newArrayList());
     Assert.assertNotNull(producer);
   }
 
@@ -107,8 +99,11 @@ public abstract class QueueTest {
     // create a queue and a stream and enqueue one entry each
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "myApp", "myFlow", "myFlowlet", "tDAQ");
     QueueName streamName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "tDAQStream");
-    final QueueProducer qProducer = queueClientFactory.createProducer(queueName);
-    final QueueProducer sProducer = queueClientFactory.createProducer(streamName);
+
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+
+    final QueueProducer qProducer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
+    final QueueProducer sProducer = queueClientFactory.createProducer(streamName, ImmutableList.of(consumerConfig));
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
                    .execute(new TransactionExecutor.Subroutine() {
                      @Override
@@ -120,10 +115,8 @@ public abstract class QueueTest {
     // drop all queues
     queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     // verify that queue is gone and stream is still there
-    final QueueConsumer qConsumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
-    final QueueConsumer sConsumer = queueClientFactory.createConsumer(
-      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final QueueConsumer qConsumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+    final QueueConsumer sConsumer = queueClientFactory.createConsumer(streamName, consumerConfig, 1);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
                    .execute(new TransactionExecutor.Subroutine() {
                      @Override
@@ -144,8 +137,11 @@ public abstract class QueueTest {
     // create a queue and a stream and enqueue one entry each
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "myApp", "myFlow", "myFlowlet", "tDAS");
     QueueName streamName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "tDASStream");
-    final QueueProducer qProducer = queueClientFactory.createProducer(queueName);
-    final QueueProducer sProducer = queueClientFactory.createProducer(streamName);
+
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+
+    final QueueProducer qProducer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
+    final QueueProducer sProducer = queueClientFactory.createProducer(streamName, ImmutableList.of(consumerConfig));
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
                    .execute(new TransactionExecutor.Subroutine() {
                      @Override
@@ -157,10 +153,8 @@ public abstract class QueueTest {
     // drop all queues
     streamAdmin.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
     // verify that queue is gone and stream is still there
-    final QueueConsumer qConsumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
-    final QueueConsumer sConsumer = queueClientFactory.createConsumer(
-      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final QueueConsumer qConsumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+    final QueueConsumer sConsumer = queueClientFactory.createConsumer(streamName, consumerConfig, 1);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
                    .execute(new TransactionExecutor.Subroutine() {
                      @Override
@@ -176,11 +170,12 @@ public abstract class QueueTest {
                    });
   }
 
-
   @Test
   public void testStreamQueue() throws Exception {
     QueueName queueName = QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "my_stream");
-    final QueueProducer producer = queueClientFactory.createProducer(queueName);
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+
+    final QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) producer))
       .execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -191,8 +186,7 @@ public abstract class QueueTest {
     });
 
     final QueueConsumer consumer =
-      queueClientFactory.createConsumer(queueName,
-                                        new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+      queueClientFactory.createConsumer(queueName, consumerConfig, 1);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) consumer))
       .execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -249,12 +243,15 @@ public abstract class QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queuefailure");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
 
-    createEnqueueRunnable(queueName, 5, 1, null).run();
+    // Two consumer groups, one FIFO, one HASH
+    List<ConsumerConfig> consumerConfigs = ImmutableList.of(
+      new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null),
+      new ConsumerConfig(1, 0, 1, DequeueStrategy.HASH, "key")
+    );
+    createEnqueueRunnable(queueName, consumerConfigs, 5, 1, null).run();
 
-    QueueConsumer fifoConsumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
-    QueueConsumer hashConsumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.HASH, "key"), 2);
+    QueueConsumer fifoConsumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(0), 2);
+    QueueConsumer hashConsumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(1), 2);
 
     TransactionContext txContext = createTxContext(fifoConsumer, hashConsumer);
     txContext.start();
@@ -315,13 +312,11 @@ public abstract class QueueTest {
   @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queuerollback");
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
-    QueueConsumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+    QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
 
-    TransactionContext txContext = createTxContext(producer, consumer,
-                                        new TransactionAware() {
-
+    TransactionContext txContext = createTxContext(producer, consumer, new TransactionAware() {
       boolean canCommit = false;
 
       @Override
@@ -477,6 +472,231 @@ public abstract class QueueTest {
     queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
   }
 
+  @Test
+  public void testReset() throws Exception {
+    // NOTE: using different name of the queue from other unit-tests because this test leaves entries
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queueReset");
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
+
+    List<ConsumerConfig> consumerConfigs = ImmutableList.of(
+      new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null),
+      new ConsumerConfig(1, 0, 1, DequeueStrategy.FIFO, null)
+    );
+
+    QueueProducer producer = queueClientFactory.createProducer(queueName, consumerConfigs);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(0)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(2)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(3)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(4)));
+    txContext.finish();
+
+    QueueConsumer consumer1 = queueClientFactory.createConsumer(queueName, consumerConfigs.get(0), 2);
+
+    // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txContext.finish();
+
+    // Reset queues
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
+
+    // we gonna need another one to check again to avoid caching side-affects
+    QueueConsumer consumer2 = queueClientFactory.createConsumer(queueName, consumerConfigs.get(1), 2);
+    txContext = createTxContext(consumer2);
+    // Check again: should be nothing in the queue
+    txContext.start();
+    Assert.assertTrue(consumer2.dequeue().isEmpty());
+    txContext.finish();
+
+    // add another entry
+    txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(5)));
+    txContext.finish();
+
+    txContext = createTxContext(consumer2);
+    // Check again: consumer should see new entry
+    txContext.start();
+    Assert.assertEquals(5, Bytes.toInt(consumer2.dequeue().iterator().next()));
+    txContext.finish();
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testConcurrentEnqueue() throws Exception {
+    // This test is for testing multiple producers that writes with a delay after a transaction started.
+    // This is for verifying consumer advances the startKey correctly.
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                      "concurrent");
+    configureGroups(queueName, ImmutableMap.of(0L, 1));
+
+    final CyclicBarrier barrier = new CyclicBarrier(4);
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+
+    // Starts three producers to enqueue concurrently. For each entry, starts a TX, sleep, enqueue, commit.
+    ExecutorService executor = Executors.newFixedThreadPool(3);
+    final int entryCount = 50;
+    for (int i = 0; i < 3; i++) {
+      final QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
+      final int producerId = i + 1;
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            barrier.await();
+            for (int i = 0; i < entryCount; i++) {
+              TransactionContext txContext = createTxContext(producer);
+              txContext.start();
+              // Sleeps at different rate to make the scan in consumer has higher change to see
+              // the transaction but not the entry (as not yet written)
+              TimeUnit.MILLISECONDS.sleep(producerId * 50);
+              producer.enqueue(new QueueEntry(Bytes.toBytes(i)));
+              txContext.finish();
+            }
+          } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+          } finally {
+            Closeables.closeQuietly(producer);
+          }
+        }
+      });
+    }
+
+    // sum(0..entryCount) * 3
+    int expectedSum = entryCount * (entryCount - 1) / 2 * 3;
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+
+    // Trigger starts of producer
+    barrier.await();
+
+    int dequeueSum = 0;
+    int noProgress = 0;
+    while (dequeueSum != expectedSum && noProgress < 200) {
+      TransactionContext txContext = createTxContext(consumer);
+      txContext.start();
+      DequeueResult<byte[]> result = consumer.dequeue();
+      if (!result.isEmpty()) {
+        noProgress = 0;
+        int value = Bytes.toInt(result.iterator().next());
+        dequeueSum += value;
+      } else {
+        noProgress++;
+        TimeUnit.MILLISECONDS.sleep(10);
+      }
+      txContext.finish();
+    }
+
+    Closeables.closeQuietly(consumer);
+
+    Assert.assertEquals(expectedSum, dequeueSum);
+  }
+
+  @Test
+  public void testMultiStageConsumer() throws Exception {
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                      "multistage");
+    configureGroups(queueName, ImmutableMap.of(0L, 2));
+    List<ConsumerConfig> consumerConfigs = ImmutableList.of(
+      new ConsumerConfig(0, 0, 2, DequeueStrategy.HASH, "key"),
+      new ConsumerConfig(0, 1, 2, DequeueStrategy.HASH, "key")
+    );
+
+    // Enqueue 10 items
+    final QueueProducer producer = queueClientFactory.createProducer(queueName, consumerConfigs);
+    for (int i = 0; i < 10; i++) {
+      TransactionContext txContext = createTxContext(producer);
+      txContext.start();
+      producer.enqueue(new QueueEntry("key", i, Bytes.toBytes(i)));
+      txContext.finish();
+    }
+
+    // Consumer all even entries
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(0), 1);
+
+    for (int i = 0; i < 5; i++) {
+      TransactionContext txContext = createTxContext(consumer);
+      txContext.start();
+      DequeueResult<byte[]> result = consumer.dequeue();
+      Assert.assertTrue(!result.isEmpty());
+      Assert.assertEquals(i * 2, Bytes.toInt(result.iterator().next()));
+      txContext.finish();
+    }
+
+    consumer.close();
+
+    // Consume 2 odd entries
+    consumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(1), 1);
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+    DequeueResult<byte[]> result = consumer.dequeue(2);
+    Assert.assertEquals(2, result.size());
+    Iterator<byte[]> iter = result.iterator();
+    for (int i = 0; i < 2; i++) {
+      Assert.assertEquals(i * 2 + 1, Bytes.toInt(iter.next()));
+    }
+    txContext.finish();
+
+    // Close the consumer and re-create with the same instance ID, it should keep consuming
+    consumer.close();
+
+    // Consume the rest odd entries
+    consumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(1), 1);
+    for (int i = 2; i < 5; i++) {
+      txContext = createTxContext(consumer);
+      txContext.start();
+      result = consumer.dequeue();
+      Assert.assertTrue(!result.isEmpty());
+      Assert.assertEquals(i * 2 + 1, Bytes.toInt(result.iterator().next()));
+      txContext.finish();
+    }
+  }
+
+  private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
+    // since this is used by more than one test method, ensure uniqueness of the queue name by adding strategy
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
+                                                "queue1" + strategy.toString());
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
+
+    List<ConsumerConfig> consumerConfigs = ImmutableList.of(
+      new ConsumerConfig(0, 0, 1, strategy, null),
+      new ConsumerConfig(1, 0, 1, strategy, null)
+    );
+    QueueProducer producer = queueClientFactory.createProducer(queueName, consumerConfigs);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(0), 2);
+
+    txContext = createTxContext(consumer);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
+    txContext.finish();
+
+    producer.close();
+    consumer.close();
+
+    forceEviction(queueName);
+
+    // verifying that consumer of the 2nd group can process items: they were not evicted
+    QueueConsumer consumer2 = queueClientFactory.createConsumer(queueName, consumerConfigs.get(1), 2);
+
+    txContext = createTxContext(consumer2);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer2.dequeue().iterator().next()));
+    txContext.finish();
+
+    consumer2.close();
+
+    // now all should be evicted
+    verifyQueueIsEmpty(queueName, 2, 1);
+  }
+
   private void testClearOrDropAllForFlow(boolean doDrop) throws Exception {
     // this test is the same for clear and drop, except fot two small places...
     // using a different app name for each case as this test leaves some entries
@@ -485,12 +705,14 @@ public abstract class QueueTest {
     QueueName queueName1 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow1", "flowlet1", "out1");
     QueueName queueName2 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow1", "flowlet2", "out2");
     QueueName queueName3 = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, app, "flow2", "flowlet1", "out");
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+
     configureGroups(queueName1, ImmutableMap.of(0L, 1, 1L, 1));
     configureGroups(queueName2, ImmutableMap.of(0L, 1, 1L, 1));
     configureGroups(queueName3, ImmutableMap.of(0L, 1, 1L, 1));
-    QueueProducer producer1 = queueClientFactory.createProducer(queueName1);
-    QueueProducer producer2 = queueClientFactory.createProducer(queueName2);
-    QueueProducer producer3 = queueClientFactory.createProducer(queueName3);
+    QueueProducer producer1 = queueClientFactory.createProducer(queueName1, ImmutableList.of(consumerConfig));
+    QueueProducer producer2 = queueClientFactory.createProducer(queueName2, ImmutableList.of(consumerConfig));
+    QueueProducer producer3 = queueClientFactory.createProducer(queueName3, ImmutableList.of(consumerConfig));
     TransactionContext txContext = createTxContext(producer1, producer2, producer3);
     txContext.start();
     for (int i = 0; i < 10; i++) {
@@ -501,7 +723,6 @@ public abstract class QueueTest {
     txContext.finish();
 
     // consume 1 element from each queue
-    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
     QueueConsumer consumer1 = queueClientFactory.createConsumer(queueName1, consumerConfig, 1);
     QueueConsumer consumer2 = queueClientFactory.createConsumer(queueName2, consumerConfig, 1);
     QueueConsumer consumer3 = queueClientFactory.createConsumer(queueName3, consumerConfig, 1);
@@ -557,233 +778,9 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
-  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws Exception {
-    // do nothing, HBase test will override this
-  }
-  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws Exception {
-    // do nothing, HBase test will override this
-  }
-
-  @Test
-  public void testReset() throws Exception {
-    // NOTE: using different name of the queue from other unit-tests because this test leaves entries
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "queueReset");
-    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
-    TransactionContext txContext = createTxContext(producer);
-    txContext.start();
-    producer.enqueue(new QueueEntry(Bytes.toBytes(0)));
-    producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
-    producer.enqueue(new QueueEntry(Bytes.toBytes(2)));
-    producer.enqueue(new QueueEntry(Bytes.toBytes(3)));
-    producer.enqueue(new QueueEntry(Bytes.toBytes(4)));
-    txContext.finish();
-
-    QueueConsumer consumer1 = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
-
-    // Check that there's smth in the queue, but do not consume: abort tx after check
-    txContext = createTxContext(consumer1);
-    txContext.start();
-    Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
-    txContext.finish();
-
-    // Reset queues
-    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
-
-    // we gonna need another one to check again to avoid caching side-affects
-    QueueConsumer consumer2 = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(1, 0, 1, DequeueStrategy.FIFO, null), 2);
-    txContext = createTxContext(consumer2);
-    // Check again: should be nothing in the queue
-    txContext.start();
-    Assert.assertTrue(consumer2.dequeue().isEmpty());
-    txContext.finish();
-
-    // add another entry
-    txContext = createTxContext(producer);
-    txContext.start();
-    producer.enqueue(new QueueEntry(Bytes.toBytes(5)));
-    txContext.finish();
-
-    txContext = createTxContext(consumer2);
-    // Check again: consumer should see new entry
-    txContext.start();
-    Assert.assertEquals(5, Bytes.toInt(consumer2.dequeue().iterator().next()));
-    txContext.finish();
-  }
-
-  @Category(SlowTests.class)
-  @Test
-  public void testConcurrentEnqueue() throws Exception {
-    // This test is for testing multiple producers that writes with a delay after a transaction started.
-    // This is for verifying consumer advances the startKey correctly.
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
-                                                      "concurrent");
-    configureGroups(queueName, ImmutableMap.of(0L, 1));
-
-    final CyclicBarrier barrier = new CyclicBarrier(4);
-
-    // Starts three producers to enqueue concurrently. For each entry, starts a TX, sleep, enqueue, commit.
-    ExecutorService executor = Executors.newFixedThreadPool(3);
-    final int entryCount = 50;
-    for (int i = 0; i < 3; i++) {
-      final QueueProducer producer = queueClientFactory.createProducer(queueName);
-      final int producerId = i + 1;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            barrier.await();
-            for (int i = 0; i < entryCount; i++) {
-              TransactionContext txContext = createTxContext(producer);
-              txContext.start();
-              // Sleeps at different rate to make the scan in consumer has higher change to see
-              // the transaction but not the entry (as not yet written)
-              TimeUnit.MILLISECONDS.sleep(producerId * 50);
-              producer.enqueue(new QueueEntry(Bytes.toBytes(i)));
-              txContext.finish();
-            }
-          } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-          } finally {
-            Closeables.closeQuietly(producer);
-          }
-        }
-      });
-    }
-
-    // sum(0..entryCount) * 3
-    int expectedSum = entryCount * (entryCount - 1) / 2 * 3;
-    QueueConsumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
-
-    // Trigger starts of producer
-    barrier.await();
-
-    int dequeueSum = 0;
-    int noProgress = 0;
-    while (dequeueSum != expectedSum && noProgress < 200) {
-      TransactionContext txContext = createTxContext(consumer);
-      txContext.start();
-      DequeueResult<byte[]> result = consumer.dequeue();
-      if (!result.isEmpty()) {
-        noProgress = 0;
-        int value = Bytes.toInt(result.iterator().next());
-        dequeueSum += value;
-      } else {
-        noProgress++;
-        TimeUnit.MILLISECONDS.sleep(10);
-      }
-      txContext.finish();
-    }
-
-    Closeables.closeQuietly(consumer);
-
-    Assert.assertEquals(expectedSum, dequeueSum);
-  }
-
-  @Test
-  public void testMultiStageConsumer() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
-                                                      "multistage");
-    configureGroups(queueName, ImmutableMap.of(0L, 2));
-
-    // Enqueue 10 items
-    final QueueProducer producer = queueClientFactory.createProducer(queueName);
-    for (int i = 0; i < 10; i++) {
-      TransactionContext txContext = createTxContext(producer);
-      txContext.start();
-      producer.enqueue(new QueueEntry("key", i, Bytes.toBytes(i)));
-      txContext.finish();
-    }
-
-    // Consumer all even entries
-    QueueConsumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 2, DequeueStrategy.HASH, "key"), 1);
-
-    for (int i = 0; i < 5; i++) {
-      TransactionContext txContext = createTxContext(consumer);
-      txContext.start();
-      DequeueResult<byte[]> result = consumer.dequeue();
-      Assert.assertTrue(!result.isEmpty());
-      Assert.assertEquals(i * 2, Bytes.toInt(result.iterator().next()));
-      txContext.finish();
-    }
-
-    consumer.close();
-
-    // Consume 2 odd entries
-    consumer = queueClientFactory.createConsumer(
-    queueName, new ConsumerConfig(0, 1, 2, DequeueStrategy.HASH, "key"), 1);
-    TransactionContext txContext = createTxContext(consumer);
-    txContext.start();
-    DequeueResult<byte[]> result = consumer.dequeue(2);
-    Assert.assertEquals(2, result.size());
-    Iterator<byte[]> iter = result.iterator();
-    for (int i = 0; i < 2; i++) {
-      Assert.assertEquals(i * 2 + 1, Bytes.toInt(iter.next()));
-    }
-    txContext.finish();
-
-    // Close the consumer and re-create with the same instance ID, it should keep consuming
-    consumer.close();
-
-    // Consume the rest odd entries
-    consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 1, 2, DequeueStrategy.HASH, "key"), 1);
-    for (int i = 2; i < 5; i++) {
-      txContext = createTxContext(consumer);
-      txContext.start();
-      result = consumer.dequeue();
-      Assert.assertTrue(!result.isEmpty());
-      Assert.assertEquals(i * 2 + 1, Bytes.toInt(result.iterator().next()));
-      txContext.finish();
-    }
-  }
-
-  private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
-    // since this is used by more than one test method, ensure uniqueness of the queue name by adding strategy
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet",
-                                                "queue1" + strategy.toString());
-    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
-    TransactionContext txContext = createTxContext(producer);
-    txContext.start();
-    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
-    txContext.finish();
-
-    QueueConsumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 2);
-
-    txContext = createTxContext(consumer);
-    txContext.start();
-    Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
-    txContext.finish();
-
-    producer.close();
-    consumer.close();
-
-    forceEviction(queueName);
-
-    // verifying that consumer of the 2nd group can process items: they were not evicted
-    QueueConsumer consumer2 = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(1, 0, 1, strategy, null), 2);
-
-    txContext = createTxContext(consumer2);
-    txContext.start();
-    Assert.assertEquals(55, Bytes.toInt(consumer2.dequeue().iterator().next()));
-    txContext.finish();
-
-    consumer2.close();
-
-    // now all should be evicted
-    verifyQueueIsEmpty(queueName, 2, 1);
-  }
-
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
-                              final int consumerSize, final DequeueStrategy dequeueStrategy,
+                              int consumerSize, DequeueStrategy dequeueStrategy,
                               final int dequeueBatchSize) throws Exception {
 
     configureGroups(queueName, ImmutableMap.of(0L, consumerSize));
@@ -791,13 +788,18 @@ public abstract class QueueTest {
     Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
     Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
 
-    createEnqueueRunnable(queueName, preEnqueueCount, enqueueBatchSize, null).run();
+    final List<ConsumerConfig> consumerConfigs = Lists.newArrayList();
+    for (int i = 0; i < consumerSize; i++) {
+      consumerConfigs.add(new ConsumerConfig(0, i, consumerSize, dequeueStrategy, "key"));
+    }
+
+    createEnqueueRunnable(queueName, consumerConfigs, preEnqueueCount, enqueueBatchSize, null).run();
 
     final CyclicBarrier startBarrier = new CyclicBarrier(consumerSize + 2);
     ExecutorService executor = Executors.newFixedThreadPool(consumerSize + 1);
 
     // Enqueue thread
-    executor.submit(createEnqueueRunnable(queueName, concurrentCount, enqueueBatchSize, startBarrier));
+    executor.submit(createEnqueueRunnable(queueName, consumerConfigs, concurrentCount, enqueueBatchSize, startBarrier));
 
     // Dequeue
     final long expectedSum = ((long) preEnqueueCount / 2 * ((long) preEnqueueCount - 1)) +
@@ -813,8 +815,7 @@ public abstract class QueueTest {
           try {
             startBarrier.await();
             LOG.info("Consumer {} starts consuming {}", instanceId, queueName.getSimpleName());
-            QueueConsumer consumer = queueClientFactory.createConsumer(
-              queueName, new ConsumerConfig(0, instanceId, consumerSize, dequeueStrategy, "key"), 1);
+            QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfigs.get(instanceId), 1);
             try {
               TransactionContext txContext = createTxContext(consumer);
 
@@ -876,16 +877,8 @@ public abstract class QueueTest {
     executor.shutdownNow();
   }
 
-  private TransactionContext createTxContext(Object... txAwares) {
-    TransactionAware[] casted = new TransactionAware[txAwares.length];
-    for (int i = 0; i < txAwares.length; i++) {
-      casted[i] = (TransactionAware) txAwares[i];
-    }
-    return new TransactionContext(txSystemClient, casted);
-  }
-  
-  private Runnable createEnqueueRunnable(final QueueName queueName, final int count,
-                                         final int batchSize, final CyclicBarrier barrier) {
+  private Runnable createEnqueueRunnable(final QueueName queueName, final Iterable<ConsumerConfig> consumerConfigs,
+                                           final int count, final int batchSize, final CyclicBarrier barrier) {
     return new Runnable() {
 
       @Override
@@ -894,7 +887,7 @@ public abstract class QueueTest {
           if (barrier != null) {
             barrier.await();
           }
-          QueueProducer producer = queueClientFactory.createProducer(queueName);
+          QueueProducer producer = queueClientFactory.createProducer(queueName, consumerConfigs);
           try {
             TransactionContext txContext = createTxContext(producer);
 
@@ -944,6 +937,22 @@ public abstract class QueueTest {
     };
   }
 
+  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws Exception {
+    // do nothing, HBase test will override this
+  }
+  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws Exception {
+    // do nothing, HBase test will override this
+  }
+
+  private TransactionContext createTxContext(Object... txAwares) {
+    TransactionAware[] casted = new TransactionAware[txAwares.length];
+    for (int i = 0; i < txAwares.length; i++) {
+      casted[i] = (TransactionAware) txAwares[i];
+    }
+    return new TransactionContext(txSystemClient, casted);
+  }
+
+
   protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     // Do NOTHING by default
   }
@@ -986,8 +995,7 @@ public abstract class QueueTest {
         }
         resultString.append(Bytes.toInt(aResult));
       }
-      LOG.info("Queue should be empty but returned result: " + result.toString() + ", value = " +
-               resultString.toString());
+      LOG.info("Queue should be empty but returned result: {}, value = ", result, resultString);
     }
     Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.", result.isEmpty());
     txContext.abort();

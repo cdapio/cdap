@@ -27,6 +27,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
+import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -44,6 +45,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -156,7 +158,8 @@ public class FlowTest {
 
     QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "text");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
+    // For in memory stream, consumer config doesn't matter
+    QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.<ConsumerConfig>of());
 
     // start tx to write in queue in tx
     Transaction tx = txSystemClient.startShort();

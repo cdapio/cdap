@@ -30,6 +30,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
@@ -42,6 +43,7 @@ import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -113,10 +115,13 @@ public class LocalQueueTest extends QueueTest {
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    QueueProducer producer = factory.createProducer(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "bigriver"));
+
+    // Local queue doesn't need ConsumerConfig, hence always pass in empty list
+    QueueProducer producer = factory.createProducer(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "bigriver"),
+                                                    ImmutableList.<ConsumerConfig>of());
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
-    producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
-                                                            "output"));
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet", "output");
+    producer = factory.createProducer(queueName, ImmutableList.<ConsumerConfig>of());
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

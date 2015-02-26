@@ -20,6 +20,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -28,6 +29,7 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -61,7 +63,9 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
 
   @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
-    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId()));
+    // Create a queue producer. The consumer config doesn't matter for in memory producer.
+    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId()),
+                                                                     ImmutableList.<ConsumerGroupConfig>of());
     final List<TransactionAware> txAwares = Lists.newArrayList();
     if (producer instanceof TransactionAware) {
       txAwares.add((TransactionAware) producer);

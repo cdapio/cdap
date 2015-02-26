@@ -691,7 +691,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void setAndTestRuntimeArgs(String namespace, String appId, String runnableType, String runnableId,
-                              Map<String, String> args) throws Exception {
+                                     Map<String, String> args) throws Exception {
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
@@ -857,14 +857,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     List<ScheduleSpecification> someSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                         APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+                                                             APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
     Assert.assertEquals(2, someSchedules.size());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(0).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(1).getProgram().getProgramName());
 
 
     List<ScheduleSpecification> anotherSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                         APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+                                                                APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
     Assert.assertEquals(3, anotherSchedules.size());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
                         anotherSchedules.get(0).getProgram().getProgramName());
@@ -878,7 +878,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    
+
     // start service in wrong namespace
     int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                     ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
@@ -894,6 +894,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                           APP_WITH_SERVICES_SERVICE_NAME);
       Assert.fail("Should not find service in " + TEST_NAMESPACE1);
     } catch (AssertionError e) {
+      // Expected for getServiceInstances to have assertion error due to service not found
     }
     ServiceInstances instances = getServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                                      APP_WITH_SERVICES_SERVICE_NAME);
@@ -908,18 +909,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // verify that additional instances were provisioned
     instances = getServiceInstances(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
-                                                     APP_WITH_SERVICES_SERVICE_NAME);
+                                    APP_WITH_SERVICES_SERVICE_NAME);
     Assert.assertEquals(3, instances.getRequested());
     Assert.assertEquals(3, instances.getProvisioned());
 
     // verify that endpoints are not available in the wrong namespace
     response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.POST,
-                       "multi");
+                           "multi");
     code = response.getStatusLine().getStatusCode();
     Assert.assertEquals(404, code);
 
     response = callService(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, APP_WITH_SERVICES_SERVICE_NAME, HttpMethod.GET,
-                       "multi/ping");
+                           "multi/ping");
     code = response.getStatusLine().getStatusCode();
     Assert.assertEquals(404, code);
 
@@ -937,23 +938,24 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeleteQueues() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
                                                 WORDCOUNT_FLOWLET_NAME, "out");
+    ConsumerConfig consumerConfig = new ConsumerConfig(1L, 0, 1, DequeueStrategy.ROUND_ROBIN, null);
 
     // enqueue some data
-    enqueue(queueName, new QueueEntry("x".getBytes(Charsets.UTF_8)));
+    enqueue(queueName, new QueueEntry("x".getBytes(Charsets.UTF_8)), consumerConfig);
 
     // verify it exists
-    Assert.assertTrue(dequeueOne(queueName));
+    Assert.assertTrue(dequeueOne(queueName, consumerConfig));
 
     // clear queue in wrong namespace
     Assert.assertEquals(200, doDelete("/v3/namespaces/" + TEST_NAMESPACE2 + "/queues").getStatusLine().getStatusCode());
     // verify queue is still here
-    Assert.assertTrue(dequeueOne(queueName));
+    Assert.assertTrue(dequeueOne(queueName, consumerConfig));
 
     // clear queue in the right namespace
     Assert.assertEquals(200, doDelete("/v3/namespaces/" + TEST_NAMESPACE1 + "/queues").getStatusLine().getStatusCode());
 
     // verify queue is gone
-    Assert.assertFalse(dequeueOne(queueName));
+    Assert.assertFalse(dequeueOne(queueName, consumerConfig));
   }
 
   @After
@@ -962,10 +964,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
   }
 
-  // TODO: Duplicate from AppFabricHttpHandlerTest, remove the AppFabricHttpHandlerTest method after deprecating v2 APIs
-  private  void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
+  private void enqueue(QueueName queueName, final QueueEntry queueEntry,
+                       ConsumerConfig consumerConfig) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final QueueProducer producer = queueClientFactory.createProducer(queueName);
+    final QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.of(consumerConfig));
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
@@ -983,13 +985,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       });
   }
 
-  private boolean dequeueOne(QueueName queueName) throws Exception {
+  private boolean dequeueOne(QueueName queueName, ConsumerConfig consumerConfig) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
-                                                                     new ConsumerConfig(1L, 0, 1,
-                                                                                        DequeueStrategy.ROUND_ROBIN,
-                                                                                        null),
-                                                                     1);
+    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
     // doing inside tx
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestBase.getInjector().getInstance(TransactionExecutorFactory.class);
@@ -1007,8 +1005,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    ServiceInstances instances = readResponse(response, ServiceInstances.class);
-    return instances;
+    return readResponse(response, ServiceInstances.class);
   }
 
   private int setServiceInstances(String namespace, String app, String service, int instances) throws Exception {
