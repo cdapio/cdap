@@ -53,10 +53,11 @@ Their instances may be updated via the :ref:`Command Line Interface <cli-availab
   }
 
 Workers can access and use ``Dataset``\s via a ``DatasetContext`` inside the ``run`` method of a ``TxRunnable``.
-A ``TxRunnable`` can be executed using the ``execute`` method of ``WorkerContext``. Note that ``WorkerContext``
-is thread-safe and each thread will receive its own instance of the ``Dataset`` being accessed. Even though it is
-necessary to use ``getDataset`` method of ``DatasetContext`` to get a ``Dataset`` instance inside a ``TxRunnable``,
-this operation is performance optimized with the help of a Caching logic underneath::
+A ``TxRunnable`` can be executed using the ``execute`` method of a ``WorkerContext``. Note that ``WorkerContext``
+is thread-safe and that each thread will receive its own instance of the ``Dataset`` being accessed. Though it is
+necessary to use the ``getDataset`` method of ``DatasetContext`` to access a ``Dataset`` instance inside a
+``TxRunnable``, this operation is performance-optimized with the help of internal caching logic. In this
+example, the Dataset *tableName* is accessed from within a ``TxRunnable``::
 
   @Override
   public void run() {
