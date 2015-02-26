@@ -44,7 +44,6 @@ public final class MetricsConstants {
 
   // v2 to avoid conflict with data of older metrics system
   public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
-  public static final String OLD_DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
   public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
   public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
   public static final long DEFAULT_RETENTION_HOURS = 2;
@@ -60,12 +59,6 @@ public final class MetricsConstants {
 
   // Number of seconds to subtract from current timestamp when query without "end" time.
   public static final long QUERY_SECOND_DELAY = 2;
-
-  // for migration purpose
-  public static final String EMPTY_TAG = "-";
-  public static final int DEFAULT_CONTEXT_DEPTH = 6;
-  public static final int DEFAULT_METRIC_DEPTH = 4;
-  public static final int DEFAULT_TAG_DEPTH = 3;
 
   private MetricsConstants() {
   }

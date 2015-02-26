@@ -357,7 +357,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         this.hdfs = null;
       }
 
-      ImmutableMap<String, String> map = ImmutableMap.<String, String>builder().build();
       this.namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
       this.namedspacedPath = new Path(namespace);
       this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));

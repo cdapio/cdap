@@ -26,7 +26,6 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.data.DataMigration26;
 import co.cask.cdap.metrics.store.cube.Aggregation;
 import co.cask.cdap.metrics.store.cube.Cube;
 import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
@@ -60,6 +59,7 @@ public class DefaultMetricStore implements MetricStore {
     this(dsFactory, new int[] {1, 60, 3600, Integer.MAX_VALUE});
   }
 
+  // NOTE: should never be used apart from data migration during cdap upgrade
   public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
