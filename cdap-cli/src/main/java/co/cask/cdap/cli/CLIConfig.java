@@ -20,6 +20,7 @@ import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -84,10 +85,10 @@ public class CLIConfig {
     }
   }
 
-  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
+  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean debug) throws Exception {
     this.connectionInfo = connectionInfo;
     try {
-      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, verbose);
+      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, debug);
       checkConnection(clientConfig, connectionInfo, accessToken);
       setHostname(connectionInfo.getHostname());
       setPort(connectionInfo.getPort());
@@ -95,10 +96,8 @@ public class CLIConfig {
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
 
-      if (verbose) {
-        output.printf("Successfully connected CDAP instance at %s:%d\n",
-                      connectionInfo.getHostname(), connectionInfo.getPort());
-      }
+      output.printf("Successfully connected CDAP instance at %s:%d\n",
+                    connectionInfo.getHostname(), connectionInfo.getPort());
     } catch (IOException e) {
       throw new IOException(String.format("Host %s on port %d could not be reached: %s",
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
@@ -129,8 +128,8 @@ public class CLIConfig {
     return getAuthenticationClient(connectionInfo).isAuthEnabled();
   }
 
-  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo, PrintStream output,
-                                         boolean verbose) throws IOException {
+  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo,
+                                         PrintStream output, boolean debug) throws IOException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
@@ -144,11 +143,11 @@ public class CLIConfig {
       // access token invalid - fall through to try acquiring token manually
     }
 
-    return getNewAccessToken(connectionInfo, output, verbose);
+    return getNewAccessToken(connectionInfo, output, debug);
   }
 
   private AccessToken getNewAccessToken(ConnectionInfo connectionInfo, PrintStream output,
-                                        boolean verbose) throws IOException {
+                                        boolean debug) throws IOException {
 
     AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
 
@@ -173,7 +172,7 @@ public class CLIConfig {
     AccessToken accessToken = authenticationClient.getAccessToken();
 
     if (accessToken != null) {
-      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && verbose) {
+      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && debug) {
         output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
       }
     }
@@ -309,6 +308,10 @@ public class CLIConfig {
       this.port = port;
       this.sslEnabled = sslEnabled;
       this.namespace = namespace;
+    }
+
+    public ConnectionInfo(String hostname, int port, boolean sslEnabled) {
+      this(hostname, port, sslEnabled, Constants.DEFAULT_NAMESPACE_ID);
     }
 
     public static ConnectionInfo of(ClientConfig clientConfig) {

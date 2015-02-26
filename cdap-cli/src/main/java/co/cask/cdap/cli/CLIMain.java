@@ -61,7 +61,7 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class CLIMain {
 
-  public static final String NAME_VERBOSE = "verbose";
+  public static final String NAME_DEBUG = "debug";
   public static final String NAME_URI = "uri";
   public static final String NAME_VERIFY_SSL = "verify_ssl";
   public static final String NAME_AUTOCONNECT = "autoconnect";
@@ -69,7 +69,7 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
-  private static final boolean DEFAULT_VERBOSE = false;
+  private static final boolean DEFAULT_DEBUG = false;
   private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
 
   private static final Option URI_OPTION = new Option(
@@ -91,9 +91,9 @@ public class CLIMain {
     " upon launch or try default connection if none provided." +
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
-  private static final Option VERBOSE_OPTION = new Option(
-    "v", "verbose", true, "If \"true\", print all exception stack traces." +
-    " Defaults to \"" + DEFAULT_VERBOSE + "\".");
+  private static final Option DEBUG_OPTION = new Option(
+    "d", "debug", true, "If \"true\", print all exception stack traces." +
+    " Defaults to \"" + DEFAULT_DEBUG + "\".");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -103,7 +103,7 @@ public class CLIMain {
    * @param namespace the CDAP namespace to use initially
    * @param uri provided URI of CDAP instance
    * @param autoconnect if true, try provided connection (or default from CConfiguration) before startup
-   * @param verbose if true, log all exception stack traces
+   * @param debug if true, log all exception stack traces
    * @throws URISyntaxException
    * @throws IOException
    */
@@ -112,7 +112,7 @@ public class CLIMain {
                  @Named(NAME_NAMESPACE) String namespace,
                  @Named(NAME_URI) String uri,
                  @Named(NAME_AUTOCONNECT) boolean autoconnect,
-                 @Named(NAME_VERBOSE) final boolean verbose,
+                 @Named(NAME_DEBUG) final boolean debug,
                  CLIConfig cliConfig,
                  DefaultCommands defaultCommands,
                  DefaultCompleters defaultCompleters,
@@ -125,9 +125,9 @@ public class CLIMain {
         }
         cliConfig.getClientConfig().setURI(URI.create(uri));
         CLIConfig.ConnectionInfo connectionInfo = CLIConfig.ConnectionInfo.of(cliConfig.getClientConfig());
-        cliConfig.tryConnect(connectionInfo, output, verbose);
+        cliConfig.tryConnect(connectionInfo, output, debug);
       } catch (Exception e) {
-        if (verbose) {
+        if (debug) {
           e.printStackTrace(output);
         }
       }
@@ -154,7 +154,7 @@ public class CLIMain {
           output.println("Error: " + e.getMessage());
         }
 
-        if (verbose) {
+        if (debug) {
           e.printStackTrace(output);
         }
 
@@ -213,7 +213,7 @@ public class CLIMain {
       final String uri = command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI());
       final String namespace = command.getOptionValue(NAMESPACE_OPTION.getOpt(), DEFAULT_NAMESPACE);
       final boolean verifySSL = parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL);
-      final boolean verbose = parseBooleanOption(command, VERBOSE_OPTION, DEFAULT_VERBOSE);
+      final boolean debug = parseBooleanOption(command, DEBUG_OPTION, DEFAULT_DEBUG);
       final boolean autoconnect = parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT);
       String[] commandArgs = command.getArgs();
 
@@ -228,7 +228,7 @@ public class CLIMain {
               bind(String.class).annotatedWith(Names.named(NAME_NAMESPACE)).toInstance(namespace);
               bind(String.class).annotatedWith(Names.named(NAME_URI)).toInstance(uri);
               bind(Boolean.class).annotatedWith(Names.named(NAME_VERIFY_SSL)).toInstance(verifySSL);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_VERBOSE)).toInstance(verbose);
+              bind(Boolean.class).annotatedWith(Names.named(NAME_DEBUG)).toInstance(debug);
               bind(Boolean.class).annotatedWith(Names.named(NAME_AUTOCONNECT)).toInstance(autoconnect);
               bind(CLIConfig.class).toInstance(cliConfig);
               bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
@@ -265,7 +265,7 @@ public class CLIMain {
     addOptionalOption(options, VERIFY_SSL_OPTION);
     addOptionalOption(options, NAMESPACE_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
-    addOptionalOption(options, VERBOSE_OPTION);
+    addOptionalOption(options, DEBUG_OPTION);
     return options;
   }
 

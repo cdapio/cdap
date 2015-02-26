@@ -122,7 +122,7 @@ public class CLIMainTest extends StandaloneTestBase {
         bind(String.class).annotatedWith(Names.named(CLIMain.NAME_NAMESPACE)).toInstance("default");
         bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
         bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERBOSE)).toInstance(true);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
         bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
         bind(CLIConfig.class).toInstance(cliConfig);
         bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
