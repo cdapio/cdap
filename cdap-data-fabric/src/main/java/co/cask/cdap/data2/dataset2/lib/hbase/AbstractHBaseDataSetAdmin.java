@@ -119,7 +119,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     boolean needUpgrade = upgradeTable(tableDescriptor);
 
     // Get the cdap version from the table
-    ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CDAP_VERSION));
+    ProjectInfo.Version version = getVersion(tableDescriptor);
 
     if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If the table has greater than or same version, no need to upgrade.
@@ -165,8 +165,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       return;
     }
 
-    // Add the current version as table properties only if the table needs upgrade
-    tableDescriptor.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
+    setVersion(tableDescriptor);
 
     LOG.info("Upgrading table '{}'...", tableNameStr);
     boolean enableTable = false;
@@ -183,6 +182,15 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     LOG.info("Table '{}' upgrade completed.", tableNameStr);
+  }
+
+  public static void setVersion(HTableDescriptor tableDescriptor) {
+    tableDescriptor.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
+  }
+
+  public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
+    String value = tableDescriptor.getValue(CDAP_VERSION);
+    return value == null ? null : new ProjectInfo.Version(value);
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
