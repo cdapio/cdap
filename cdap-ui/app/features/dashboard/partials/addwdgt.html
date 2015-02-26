@@ -1,0 +1,61 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content" ng-controller="DashboardAddWdgtCtrl">
+
+      <form name="addWdgtForm" class="form-horizontal"
+          ng-submit="doAddWidget()"
+          novalidate>
+
+        <div class="modal-header">
+          <button type="button" class="close" ng-click="$hide()">&times;</button>
+          <h4 class="modal-title">Add a Widget</h4>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="form-group">
+            <label for="addWdgtType" class="col-xs-3 control-label">Type</label>
+            <div class="col-xs-9">
+              <select id="addWdgtType" name="type" class="form-control"
+                cask-focus="addWdgtType"
+                ng-model="model.type"
+                ng-options="t.type as t.name for t in widgetTypes"></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-xs-3 control-label">Metric</label>
+            <div class="col-xs-9">
+
+              <my-metric-picker
+                ng-model="model.metric"
+                required
+              ></my-metric-picker>
+
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="addWdgtName" class="col-xs-3 control-label">Widget Name</label>
+            <div class="col-xs-9">
+              <input id="addWdgtName" type="text" name="name" class="form-control"
+                placeholder="Name"
+                cask-focus="addWdgtName"
+                ng-model="model.title" required/>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer text-right">
+          <button type="submit"
+            ng-disabled="addWdgtForm.$invalid"
+            class="btn btn-primary"
+          >Add</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
