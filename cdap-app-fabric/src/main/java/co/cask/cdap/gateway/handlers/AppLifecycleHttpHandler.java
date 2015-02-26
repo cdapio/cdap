@@ -32,10 +32,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.NotImplementedException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -195,12 +200,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       return deployApplication(request, responder, namespace, appId, archiveName);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
+    } catch (Throwable t) {
+      handle(t, request, responder);
     }
 
     return null;
@@ -217,12 +218,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       return deployApplication(request, responder, namespace, null, archiveName);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
+    } catch (Throwable t) {
+      handle(t, request, responder);
     }
 
     return null;
@@ -235,20 +232,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       responder.sendJson(HttpResponseStatus.OK, makeAppRecords(appLifecycleService.getAllApps(namespace)));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (NamespaceNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      handle(t, request, responder);
     }
   }
 
@@ -263,15 +251,30 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Application app = Id.Application.from(namespaceId, appId);
       responder.sendJson(HttpResponseStatus.OK, makeAppRecord(appLifecycleService.getApp(app)));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (ApplicationNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
+    } catch (Throwable t) {
+      handle(t, request, responder);
+    }
+  }
+
+  // TODO: move to separate class/filter
+  private void handle(Throwable t, HttpRequest request, HttpResponder responder) {
+    if (t instanceof BadRequestException) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
+    } else if (t instanceof AlreadyExistsException) {
+      responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
+    } else if (t instanceof NotImplementedException) {
+      LOG.info("Not implemented: request={} {} user={}:",
+               request.getMethod().getName(), request.getUri(),
+               SecurityRequestContext.getUserId().or("<null>"), t);
+      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    } else if (t instanceof NotFoundException) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
+    } else if (t instanceof UnauthorizedException) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
+    } else {
+      LOG.error("Unexpected error: request={} {} user={}:",
+                request.getMethod().getName(), request.getUri(),
+                SecurityRequestContext.getUserId().or("<null>"), t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -500,10 +503,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final String archiveName) throws IOException {
     if (!namespaceAdmin.hasNamespace(namespace)) {
       LOG.warn("Namespace '{}' not found.", namespace.getId());
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
-      return null;
-    }
+    responder.sendString(HttpResponseStatus.NOT_FOUND,
+                         String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
+    return null;
+  }
 
     Location namespaceHomeLocation = locationFactory.create(namespace.getId());
     if (!namespaceHomeLocation.exists()) {

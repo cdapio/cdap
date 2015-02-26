@@ -197,6 +197,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       } else {
         responder.sendJson(HttpResponseStatus.OK, programRecords);
       }
+    } catch (ApplicationNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

@@ -529,13 +529,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         Id.Program progId = Id.Program.from(namespaceId, requestedObj.getAppId(), requestedObj.getProgramId());
         ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         // get th statuses
-        StatusMap statusMap = getStatus(progId, programType);
-        if (statusMap.getStatus() != null) {
-          requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-          requestedObj.setStatus(statusMap.getStatus());
-        } else {
-          requestedObj.setStatusCode(statusMap.getStatusCode());
-          requestedObj.setError(statusMap.getError());
+        try {
+          StatusMap statusMap = getStatus(progId, programType);
+          if (statusMap.getStatus() != null) {
+            requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
+            requestedObj.setStatus(statusMap.getStatus());
+          } else {
+            requestedObj.setStatusCode(statusMap.getStatusCode());
+            requestedObj.setError(statusMap.getError());
+          }
+        } catch (ApplicationNotFoundException e) {
+          requestedObj.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
+          requestedObj.setError(e.getMessage());
         }
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.setProgramType(programType.getPrettyName());
@@ -611,6 +616,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         populateRunnableInstances(requestedObj, namespaceId, appId, spec, programType, requestedObj.getProgramId());
       }
       responder.sendJson(HttpResponseStatus.OK, args);
+    } catch (ApplicationNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (JsonSyntaxException e) {
@@ -1343,8 +1350,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param id The Program Id to get the status of
    * @param type The Type of the Program to get the status of
    * @throws RuntimeException if failed to determine the program status
+   * @throws ApplicationNotFoundException if the application was not found
    */
-  private StatusMap getStatus(final Id.Program id, final ProgramType type) {
+  private StatusMap getStatus(final Id.Program id, final ProgramType type) throws ApplicationNotFoundException {
     // invalid type does not exist
     if (type == null) {
       return new StatusMap(null, "Invalid program type provided", HttpResponseStatus.BAD_REQUEST.getCode());
@@ -1409,6 +1417,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // wait for status to come back in case we are polling mapreduce status in workflow
       // status map contains either a status or an error
       return Futures.getUnchecked(statusFuture);
+    } catch (ApplicationNotFoundException e) {
+      throw e;
     } catch (Exception e) {
       LOG.error("Exception raised when getting program status for {} {}", id, type, e);
       return new StatusMap(null, "Failed to get program status", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
@@ -1666,7 +1676,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private boolean isRunning(Id.Program id, ProgramType type) {
+  private boolean isRunning(Id.Program id, ProgramType type) throws ApplicationNotFoundException {
     String programStatus = getStatus(id, type).getStatus();
     return programStatus != null && !"STOPPED".equals(programStatus);
   }
