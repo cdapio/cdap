@@ -444,7 +444,6 @@ public class StandardObjectInspectorsTest {
 
     // Settable
     Object struct3 = soi1.create();
-    System.out.println(struct3);
     soi1.setStructFieldData(struct3, fields.get(0), 1);
     soi1.setStructFieldData(struct3, fields.get(1), "two");
     soi1.setStructFieldData(struct3, fields.get(2), true);

@@ -1003,7 +1003,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private ServiceInstances getServiceInstances(String namespace, String app, String service) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String instanceUrl = String.format("apps/%s/services/%s/instances", app, service);
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -1012,7 +1012,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private int setServiceInstances(String namespace, String app, String service, int instances) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String instanceUrl = String.format("apps/%s/services/%s/instances", app, service);
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     String instancesBody = GSON.toJson(new Instances(instances));
     return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();

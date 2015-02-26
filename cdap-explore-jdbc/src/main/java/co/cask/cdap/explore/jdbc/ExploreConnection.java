@@ -51,11 +51,13 @@ import java.util.concurrent.Executor;
 public class ExploreConnection implements Connection {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreConnection.class);
 
+  private final String namespace;
   private ExploreClient exploreClient;
   private boolean isClosed = false;
 
-  ExploreConnection(ExploreClient exploreClient) {
+  ExploreConnection(ExploreClient exploreClient, String namespace) {
     this.exploreClient = exploreClient;
+    this.namespace = namespace;
   }
 
   @Override
@@ -63,7 +65,7 @@ public class ExploreConnection implements Connection {
     if (isClosed) {
       throw new SQLException("Can't create Statement, connection is closed");
     }
-    return new ExploreStatement(this, exploreClient);
+    return new ExploreStatement(this, exploreClient, namespace);
   }
 
   @Override
@@ -71,7 +73,7 @@ public class ExploreConnection implements Connection {
     if (isClosed) {
       throw new SQLException("Can't create Statement, connection is closed");
     }
-    return new ExplorePreparedStatement(this, exploreClient, sql);
+    return new ExplorePreparedStatement(this, exploreClient, sql, namespace);
   }
 
   @Override

@@ -22,7 +22,6 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import co.cask.cdap.metrics.data.EntityTable;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
