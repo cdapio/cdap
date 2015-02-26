@@ -18,5 +18,5 @@ angular.module(PKG.name + '.commons')
             });
         });
       }
-    }
+    };
   });

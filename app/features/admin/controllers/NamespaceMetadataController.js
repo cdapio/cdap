@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceMetadataController',
-function ($scope, $state, $alert, MyDataSource) {
+function ($scope, $state, $alert, MyDataSource, myNamespace) {
 
+  $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
   var data = new MyDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin;
 

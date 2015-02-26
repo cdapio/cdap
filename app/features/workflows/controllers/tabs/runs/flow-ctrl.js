@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.workflows')
   .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, amMoment, $filter) {
     var dataSrc = new MyDataSource($scope),
-        filterFilter = $filter('filter');
+        filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
     $scope.moment = amMoment;
     $scope.moment.changeLocale('en');

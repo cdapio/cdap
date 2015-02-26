@@ -15,11 +15,7 @@
               ng-bind="data.name | caskCapitalizeFilter">
           </a>
         </td>
-        <td>
-          <a ng-click="goToList(data)"
-              href=""
-              ng-bind="data.type">
-          </a>
+        <td ng-bind="data.type">
         </td>
         <td ng-bind="data.description">  </td>
     </tr>

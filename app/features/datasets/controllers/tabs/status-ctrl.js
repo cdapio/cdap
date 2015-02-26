@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.datasets')
         }, function(metricData) {
           var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
           $scope[metric.scopeProperty] = data;
-        })
+        });
       }
 
       var query = myHelpers.objectQuery;

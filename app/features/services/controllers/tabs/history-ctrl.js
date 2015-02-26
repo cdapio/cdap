@@ -7,6 +7,6 @@ angular.module(PKG.name + '.feature.services')
     })
       .then(function(res) {
         $scope.runs = res;
-      })
+      });
 
   });

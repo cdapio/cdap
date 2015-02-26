@@ -38,12 +38,12 @@ angular.module(PKG.name + '.feature.workflows')
             templateUrl: '/assets/features/workflows/templates/tabs/runs.html',
             controller: 'WorkflowsDetailRunController',
             ncyBreadcrumb: {
-              parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              parent: 'apps.detail.overview',
+              label: '{{$state.params.programId}}'
             }
           })
 
-            .state('workflows.detail.runs.detail', {
+            .state('workflows.detail.runs.tabs', {
               url: '/runs/:runId',
               template: '<ui-view/>',
               abstract: true,
@@ -51,47 +51,47 @@ angular.module(PKG.name + '.feature.workflows')
                 skip: true
               }
             })
-              .state('workflows.detail.runs.detail.status', {
+              .state('workflows.detail.runs.tabs.status', {
                 url: '/status',
                 templateUrl: '/assets/features/workflows/templates/tabs/runs/flow.html',
                 controller: 'WorkflowsDetailRunStatusController',
                 ncyBreadcrumb: {
-                  parent: "apps.detail.overview",
-                  label: "{{$state.params.programId}} / {{$state.params.runId}}"
+                  parent: 'apps.detail.overview',
+                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
                 }
               })
 
-              .state('workflows.detail.runs.detail.data', {
+              .state('workflows.detail.runs.tabs.data', {
                 url: '/data',
                 template:
                 '<div class="well well-lg text-center">' +
                   '<div> Workflow: Data - Work In Progress</div> ' +
                 '</div>',
                 ncyBreadcrumb: {
-                  parent: "apps.detail.overview",
-                  label: "{{$state.params.programId}} / {{$state.params.runId}}"
+                  parent: 'apps.detail.overview',
+                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
                 }
               })
-              .state('workflows.detail.runs.detail.configuration', {
+              .state('workflows.detail.runs.tabs.configuration', {
                 url: '/configuration',
                 template:
                 '<div class="well well-lg text-center">' +
                   '<div> Workflow: Configuration - Work In Progress</div> ' +
                 '</div>',
                 ncyBreadcrumb: {
-                  parent: "apps.detail.overview",
-                  label: "{{$state.params.programId}} / {{$state.params.runId}}"
+                  parent: 'apps.detail.overview',
+                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
                 }
               })
-              .state('workflows.detail.runs.detail.log', {
+              .state('workflows.detail.runs.tabs.log', {
                 url: '/log',
                 template:
                 '<div class="well well-lg text-center">' +
                   '<div> Workflow: Log - Work In Progress</div> ' +
                 '</div>',
                 ncyBreadcrumb: {
-                  parent: "apps.detail.overview",
-                  label: "{{$state.params.programId}} / {{$state.params.runId}}"
+                  parent: 'apps.detail.overview',
+                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
                 }
               })
 
@@ -99,32 +99,32 @@ angular.module(PKG.name + '.feature.workflows')
             url: '/schedules',
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
             ncyBreadcrumb: {
-              parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              parent: 'apps.detail.overview',
+              label: '{{$state.params.programId}}'
             }
           })
           .state('workflows.detail.metadata', {
             url: '/metadata',
             templateUrl: '/assets/features/workflows/templates/tabs/metadata.html',
             ncyBreadcrumb: {
-              parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              parent: 'apps.detail.overview',
+              label: '{{$state.params.programId}}'
             }
           })
           .state('workflows.detail.history', {
             url: '/history',
             templateUrl: '/assets/features/workflows/templates/tabs/history.html',
             ncyBreadcrumb: {
-              parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              parent: 'apps.detail.overview',
+              label: '{{$state.params.programId}} / History'
             }
           })
           .state('workflows.detail.resources', {
             url: '/resources',
             templateUrl: '/assets/features/workflows/templates/tabs/resources.html',
             ncyBreadcrumb: {
-              parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              parent: 'apps.detail.overview',
+              label: '{{$state.params.programId}}'
             }
           });
   });
