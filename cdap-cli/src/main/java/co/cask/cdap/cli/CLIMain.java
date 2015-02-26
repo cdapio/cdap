@@ -73,8 +73,8 @@ public class CLIMain {
   private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
 
   private static final Option URI_OPTION = new Option(
-    "u", "uri", true, "URI of the CDAP instance to interact with in" +
-    " the format \"[<http[s]>://]<hostname>[:<port>[/<namespace>]]\"." +
+    "u", "uri", true, "CDAP instance URI to interact with in" +
+    " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
     " Defaults to \"" + getDefaultURI() + "\".");
 
   private static final Option NAMESPACE_OPTION = new Option(
@@ -82,17 +82,17 @@ public class CLIMain {
     " Defaults to \"" + DEFAULT_NAMESPACE + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
-    "s", "verify-ssl", true, "If true, verify SSL certificate when making requests." +
+    "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
   private static final Option AUTOCONNECT_OPTION = new Option(
-    "a", "autoconnect", true, "If true, try provided connection" +
+    "a", "autoconnect", true, "If \"true\", try provided connection" +
     " (from " + URI_OPTION.getLongOpt() + ")" +
     " upon launch or try default connection if none provided." +
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option VERBOSE_OPTION = new Option(
-    "v", "verbose", true, "If true, print all exception stack traces." +
+    "v", "verbose", true, "If \"true\", print all exception stack traces." +
     " Defaults to \"" + DEFAULT_VERBOSE + "\".");
 
   private final CLI cli;
