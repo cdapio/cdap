@@ -132,6 +132,11 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+
+      }
+
+      @Override
       public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
       }
 
