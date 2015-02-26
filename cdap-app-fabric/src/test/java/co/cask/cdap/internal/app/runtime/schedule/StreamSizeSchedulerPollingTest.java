@@ -21,10 +21,14 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
@@ -39,6 +43,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,11 +67,16 @@ public class StreamSizeSchedulerPollingTest {
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(NAMESPACE, "stream");
+  private static final Schedule UPDATE_SCHEDULE_2 =
+    Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
 
   @BeforeClass
   public static void set() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.setLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY, 1);
+    PreferencesStore preferencesStore = AppFabricTestHelper.getInjector(cConf).getInstance(PreferencesStore.class);
+    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
+    preferencesStore.setProperties(NAMESPACE.getId(), APP_ID.getId(), properties);
     notificationFeedManager = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationFeedManager.class);
     notificationService = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationService.class);
     streamSizeScheduler = AppFabricTestHelper.getInjector(cConf).getInstance(StreamSizeScheduler.class);
@@ -132,6 +142,15 @@ public class StreamSizeSchedulerPollingTest {
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
     waitForRuns(PROGRAM_ID, 3);
+
+    // Update the schedule2's data trigger
+    // Both schedules should now trigger execution after 1 MB of data received
+    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    3 * 1024 * 1024, MetricType.COUNTER));
+    waitForRuns(PROGRAM_ID, 5);
   }
 
   private void waitForRuns(Id.Program programId, int expectedRuns) throws Exception {

@@ -229,7 +229,29 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
-    // TODO fill
+    Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
+                                "Schedule should be of type StreamSizeSchedule");
+    StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+    StreamSubscriber subscriber = scheduleSubscribers.get(getScheduleId(program, programType, schedule.getName()));
+    if (subscriber == null) {
+      throw new ScheduleNotFoundException(schedule.getName());
+    }
+
+    if (!streamSizeSchedule.getStreamName().equals(subscriber.getStreamId().getName())) {
+      // For a change of stream, it's okay to delete the schedule and recreate it
+      try {
+        deleteSchedule(program, programType, schedule.getName());
+      } catch (NotFoundException e) {
+        // It can happen that the schedule was deleted while being updated. In which case, the update action
+        // came first and we still want to create it
+        // TODO is it really the behavior that we want here?
+        LOG.debug("Schedule {} deleted while being updated", schedule.getName(), e);
+      }
+      schedule(program, programType, schedule);
+    } else {
+      // The subscriber will take care of updating the data trigger
+      subscriber.updateScheduleTask(program, programType, streamSizeSchedule);
+    }
   }
 
   @Override
@@ -403,7 +425,7 @@ public class StreamSizeScheduler implements Scheduler {
       String scheduleId = getScheduleId(programId, programType, scheduleName);
       StreamSizeScheduleTask task = scheduleTasks.get(scheduleId);
       if (task == null) {
-        throw new ScheduleNotFoundException(scheduleId);
+        throw new ScheduleNotFoundException(scheduleName);
       }
       if (task.suspend()) {
         activeTasks.decrementAndGet();
@@ -421,7 +443,7 @@ public class StreamSizeScheduler implements Scheduler {
         String scheduleId = getScheduleId(programId, programType, scheduleName);
         task = scheduleTasks.get(scheduleId);
         if (task == null) {
-          throw new ScheduleNotFoundException(scheduleId);
+          throw new ScheduleNotFoundException(scheduleName);
         }
         if (!task.resume()) {
           return;
@@ -450,6 +472,21 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     /**
+     * Updates the task of this {@link StreamSubscriber} that has the same ID as the given {@code schedule}
+     * with the new schedule.
+     */
+    public synchronized void updateScheduleTask(Id.Program program, SchedulableProgramType programType,
+                                                StreamSizeSchedule schedule)
+      throws ScheduleNotFoundException {
+      String scheduleId = getScheduleId(program, programType, schedule.getName());
+      StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleId);
+      if (scheduleTask == null) {
+        throw new ScheduleNotFoundException(schedule.getName());
+      }
+      scheduleTask.updateSchedule(schedule);
+    }
+
+    /**
      * Delete a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public synchronized void deleteSchedule(Id.Program programId, SchedulableProgramType programType,
@@ -457,7 +494,7 @@ public class StreamSizeScheduler implements Scheduler {
       String scheduleId = getScheduleId(programId, programType, scheduleName);
       StreamSizeScheduleTask scheduleTask = scheduleTasks.remove(scheduleId);
       if (scheduleTask == null) {
-        throw new ScheduleNotFoundException(scheduleId);
+        throw new ScheduleNotFoundException(scheduleName);
       }
       if (scheduleTask.isActive()) {
         activeTasks.decrementAndGet();
@@ -618,7 +655,7 @@ public class StreamSizeScheduler implements Scheduler {
   private final class StreamSizeScheduleTask {
     private final Id.Program programId;
     private final SchedulableProgramType programType;
-    private final StreamSizeSchedule streamSizeSchedule;
+    private StreamSizeSchedule streamSizeSchedule;
 
     private long baseSize;
     private long baseTs;
@@ -709,6 +746,13 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public boolean resume() {
       return active.compareAndSet(false, true);
+    }
+
+    /**
+     * Replace the {@link StreamSizeSchedule} of this task.
+     */
+    public void updateSchedule(StreamSizeSchedule schedule) {
+      streamSizeSchedule = schedule;
     }
 
     private long toBytes(int mb) {

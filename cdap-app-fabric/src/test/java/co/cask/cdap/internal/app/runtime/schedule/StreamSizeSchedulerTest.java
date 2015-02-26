@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
@@ -29,7 +31,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -43,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(SlowTests.class)
+@Category(XSlowTests.class)
 public class StreamSizeSchedulerTest {
   public static StreamSizeScheduler streamSizeScheduler;
   public static NotificationFeedManager notificationFeedManager;
@@ -63,6 +65,8 @@ public class StreamSizeSchedulerTest {
     .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
     .setName(STREAM_ID.getName() + "Size")
     .build();
+  private static final Schedule UPDATE_SCHEDULE_2 =
+    Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
 
   @BeforeClass
   public static void set() throws Exception {
@@ -124,6 +128,12 @@ public class StreamSizeSchedulerTest {
     TimeUnit.SECONDS.sleep(5);
     runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(6, runs);
+
+    // Update the schedule2's data trigger
+    // Both schedules should now trigger execution after 1 MB of data received
+    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 5 * 1024 * 1025));
+    waitForRuns(PROGRAM_ID, 8);
   }
 
   private void waitForRuns(Id.Program programId, int expectedRuns) throws Exception {
