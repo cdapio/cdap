@@ -17,10 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Programs;
@@ -32,19 +28,13 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
-import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.NotImplementedException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.AppLifecycleService;
@@ -55,7 +45,6 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
@@ -69,16 +58,13 @@ import co.cask.cdap.proto.Source;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -97,7 +83,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -154,23 +139,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
-  private final StreamConsumerFactory streamConsumerFactory;
-  private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PreferencesStore preferencesStore;
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
   private final AppLifecycleService appLifecycleService;
+  private final HttpExceptionHandler exceptionHandler;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
-                                 StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
                                  AdapterService adapterService, AppLifecycleService appLifecycleService,
-                                 NamespaceAdmin namespaceAdmin) {
+                                 NamespaceAdmin namespaceAdmin, HttpExceptionHandler exceptionHandler) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -179,12 +162,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.store = storeFactory.create();
-    this.streamConsumerFactory = streamConsumerFactory;
-    this.queueAdmin = queueAdmin;
     this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
     this.appLifecycleService = appLifecycleService;
+    this.exceptionHandler = exceptionHandler;
   }
 
   /**
@@ -201,10 +183,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       return deployApplication(request, responder, namespace, appId, archiveName);
     } catch (Throwable t) {
-      handle(t, request, responder);
+      exceptionHandler.handle(t, request, responder, LOG);
       return null;
     }
-
   }
 
   /**
@@ -219,13 +200,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       return deployApplication(request, responder, namespace, null, archiveName);
     } catch (Throwable t) {
-      handle(t, request, responder);
+      exceptionHandler.handle(t, request, responder, LOG);
       return null;
     }
   }
 
   /**
-   * Returns a list of applications associated with a namespace.
+   * Gets the {@link ApplicationRecord}s describing the applications in the specified namespace.
    */
   @GET
   @Path("/apps")
@@ -236,12 +217,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Collection<ApplicationSpecification> appSpecs = appLifecycleService.listApps(namespace);
       responder.sendJson(HttpResponseStatus.OK, makeAppRecords(appSpecs));
     } catch (Throwable t) {
-      handle(t, request, responder);
+      exceptionHandler.handle(t, request, responder, LOG);
     }
   }
 
   /**
-   * Returns the info associated with the application.
+   * Gets the {@link ApplicationRecord} describing an application.
    */
   @GET
   @Path("/apps/{app-id}")
@@ -253,35 +234,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ApplicationSpecification appSpec = appLifecycleService.getApp(app);
       responder.sendJson(HttpResponseStatus.OK, makeAppRecord(appSpec));
     } catch (Throwable t) {
-      handle(t, request, responder);
-    }
-  }
-
-  // TODO: move to separate class/filter
-  private void handle(Throwable t, HttpRequest request, HttpResponder responder) {
-    if (t instanceof BadRequestException) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
-    } else if (t instanceof AlreadyExistsException) {
-      responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
-    } else if (t instanceof NotImplementedException) {
-      LOG.info("Not implemented: request={} {} user={}:",
-               request.getMethod().getName(), request.getUri(),
-               SecurityRequestContext.getUserId().or("<null>"), t);
-      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-    } else if (t instanceof NotFoundException) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
-    } else if (t instanceof UnauthorizedException) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } else {
-      LOG.error("Unexpected error: request={} {} user={}:",
-                request.getMethod().getName(), request.getUri(),
-                SecurityRequestContext.getUserId().or("<null>"), t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      exceptionHandler.handle(t, request, responder, LOG);
     }
   }
 
   /**
-   * Delete an application specified by appId.
+   * Deletes an application.
    */
   @DELETE
   @Path("/apps/{app-id}")
@@ -293,43 +251,35 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
       if (adapterService.getAdapterTypeInfo(appId) != null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Cannot delete Application %s." +
-                                             " An AdapterType exists with a conflicting name.", appId));
-
+        responder.sendString(HttpResponseStatus.CONFLICT,
+                             String.format("Cannot delete Application '%s' because it's an Adapter Type", appId));
         return;
       }
 
-      AppFabricServiceStatus appStatus = removeApplication(id);
+      AppFabricServiceStatus appStatus = appLifecycleService.deleteApp(id);
+      // TODO: this should be replaced by common trace for all HTTP requests
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
       responder.sendString(appStatus.getCode(), appStatus.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting app: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      exceptionHandler.handle(t, request, responder, LOG);
     }
   }
 
   /**
-   * Deletes all applications in CDAP.
+   * Deletes all applications in the specified namespace.
    */
   @DELETE
   @Path("/apps")
-  public void deleteAllApps(HttpRequest request, HttpResponder responder,
+  public void deleteApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
     try {
       Id.Namespace id = Id.Namespace.from(namespaceId);
-      AppFabricServiceStatus status = removeAll(id);
+      AppFabricServiceStatus status = appLifecycleService.deleteApps(id);
+      // TODO: this should be replaced by common trace for all HTTP requests
       LOG.trace("Delete all call at AppFabricHttpHandler");
       responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting all apps: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      exceptionHandler.handle(t, request, responder, LOG);
     }
   }
 
@@ -555,100 +505,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           appLifecycleService.deploy(namespace, appId, deploymentInfo);
           responder.sendStatus(HttpResponseStatus.OK);
         } catch (Throwable t) {
-          handle(t, request, responder);
+          exceptionHandler.handle(t, request, responder, LOG);
         }
       }
     };
-  }
-
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected AppFabricServiceStatus removeAll(Id.Namespace identifier) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
-      store.getAllApplications(identifier));
-
-    //Check if any App associated with this namespace is running
-    final Id.Namespace accId = Id.Namespace.from(identifier.getId());
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
-      @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().getNamespace().equals(accId);
-      }
-    }, ProgramType.values());
-
-    if (appRunning) {
-      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    }
-
-    //All Apps are STOPPED, delete them
-    for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
-      removeApplication(id);
-    }
-    return AppFabricServiceStatus.OK;
-  }
-
-  private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
-    //Check if all are stopped.
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
-      @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().equals(appId);
-      }
-    }, ProgramType.values());
-
-    if (appRunning) {
-      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    }
-
-    ApplicationSpecification spec;
-    try {
-      spec = store.getApplication(appId);
-    } catch (ApplicationNotFoundException e) {
-      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-    }
-
-    //Delete the schedules
-    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
-    }
-
-    deleteMetrics(appId.getNamespaceId(), appId.getId());
-
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId);
-
-    // Delete all streams and queues state of each flow
-    // TODO: This should be unified with the DeletedProgramHandlerStage
-    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
-
-      // Collects stream name to all group ids consuming that stream
-      Multimap<String, Long> streamGroups = HashMultimap.create();
-      for (FlowletConnection connection : flowSpecification.getConnections()) {
-        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
-          streamGroups.put(connection.getSourceName(), groupId);
-        }
-      }
-      // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
-      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
-                                      namespace, entry.getValue());
-      }
-
-      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
-    }
-    deleteProgramLocations(appId);
-
-    Location appArchive = store.getApplicationArchiveLocation(appId);
-    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
-    appArchive.delete();
-    store.removeApplication(appId);
-    return AppFabricServiceStatus.OK;
   }
 
   /**

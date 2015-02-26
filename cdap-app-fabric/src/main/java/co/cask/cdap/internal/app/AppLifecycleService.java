@@ -16,10 +16,13 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
@@ -29,22 +32,29 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
+import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +99,92 @@ public class AppLifecycleService {
       }
     });
     manager.deploy(namespace, appId, deploymentInfo).get();
+  }
+
+  public AbstractAppFabricHttpHandler.AppFabricServiceStatus deleteApps(Id.Namespace namespace) throws Exception {
+    Collection<ApplicationSpecification> allSpecs = store.getAllApplications(namespace);
+
+    //Check if any App associated with this namespace is running
+    final Id.Namespace accId = Id.Namespace.from(namespace.getId());
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().getNamespace().equals(accId);
+      }
+    }, ProgramType.values());
+
+    if (appRunning) {
+      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    //All Apps are STOPPED, delete them
+    for (ApplicationSpecification appSpec : allSpecs) {
+      Id.Application id = Id.Application.from(namespace.getId(), appSpec.getName());
+      deleteApp(id);
+    }
+    return AbstractAppFabricHttpHandler.AppFabricServiceStatus.OK;
+  }
+
+  public AbstractAppFabricHttpHandler.AppFabricServiceStatus deleteApp(final Id.Application appId) throws Exception {
+    //Check if all are stopped.
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().equals(appId);
+      }
+    }, ProgramType.values());
+
+    if (appRunning) {
+      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    ApplicationSpecification spec;
+    try {
+      spec = store.getApplication(appId);
+    } catch (ApplicationNotFoundException e) {
+      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    }
+
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
+    }
+
+    deleteMetrics(appId.getNamespaceId(), appId.getId());
+
+    //Delete all preferences of the application and of all its programs
+    deletePreferences(appId);
+
+    // Delete all streams and queues state of each flow
+    // TODO: This should be unified with the DeletedProgramHandlerStage
+    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
+
+      // Collects stream name to all group ids consuming that stream
+      Multimap<String, Long> streamGroups = HashMultimap.create();
+      for (FlowletConnection connection : flowSpecification.getConnections()) {
+        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
+          streamGroups.put(connection.getSourceName(), groupId);
+        }
+      }
+      // Remove all process states and group states for each stream
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
+                                      namespace, entry.getValue());
+      }
+
+      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
+    }
+    deleteProgramLocations(appId);
+
+    Location appArchive = store.getApplicationArchiveLocation(appId);
+    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
+    appArchive.delete();
+    store.removeApplication(appId);
+    return AbstractAppFabricHttpHandler.AppFabricServiceStatus.OK;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type) throws ExecutionException {
