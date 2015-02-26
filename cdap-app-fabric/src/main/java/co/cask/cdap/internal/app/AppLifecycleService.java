@@ -42,17 +42,12 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.http.BodyConsumer;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * Service that manages lifecycle of Applications.
@@ -97,75 +93,11 @@ public class AppLifecycleService {
     return store.getAllApplications(namespaceId);
   }
 
-  public BodyConsumer deployApplication(HttpRequest request, HttpResponder responder,
-                                        String archiveName, Id.Namespace namespace) throws IOException {
-    return deployApplication(request, responder, namespace.getId(), null, archiveName);
-  }
-
-  public BodyConsumer deployApplication(HttpRequest request, HttpResponder responder,
-                                        String archiveName, Id.Application application) throws IOException {
-    return deployApplication(request, responder, application.getNamespaceId(), application.getId(), archiveName);
-  }
-
-  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
-                                         final String namespaceId, final String appId,
-                                         final String archiveName) throws IOException {
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+  public void deploy(final Id.Namespace namespace, @Nullable final String appName,
+                     DeploymentInfo deploymentInfo) throws Exception {
     if (store.getNamespace(namespace) == null) {
-      LOG.warn("Namespace '{}' not found.", namespaceId);
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Deploy failed - namespace '%s' not found.", namespaceId));
-      return null;
+      throw new NamespaceNotFoundException(namespace);
     }
-
-    Location namespaceHomeLocation = locationFactory.create(namespaceId);
-    if (!namespaceHomeLocation.exists()) {
-      String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
-      LOG.error(msg);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
-      return null;
-    }
-
-
-    if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, Constants.Headers.ARCHIVE_NAME + " header not present",
-                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
-      return null;
-    }
-
-    // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
-    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    if (!DirUtils.mkdirs(tempDir)) {
-      throw new IOException("Could not create temporary directory at: " + tempDir);
-    }
-
-    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
-    final Location archive =
-      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
-
-    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
-
-      @Override
-      protected void onFinish(HttpResponder responder, File uploadedFile) {
-        try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
-          deploy(namespaceId, appId, deploymentInfo);
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-        } catch (Exception e) {
-          LOG.error("Deploy failure", e);
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        }
-      }
-    };
-  }
-
-  // deploy helper
-  private void deploy(final String namespaceId, final String appId, DeploymentInfo deploymentInfo) throws Exception {
-    try {
-      Id.Namespace id = Id.Namespace.from(namespaceId);
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
@@ -175,13 +107,9 @@ public class AppLifecycleService {
       });
 
       ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, deploymentInfo).get();
+        manager.deploy(namespace, appName, deploymentInfo).get();
       ApplicationSpecification specification = applicationWithPrograms.getSpecification();
-      setupSchedules(namespaceId, specification);
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception(e.getMessage());
-    }
+      setupSchedules(namespace.getId(), specification);
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)

@@ -118,7 +118,6 @@ public final class AppFabricServer extends AbstractIdleService {
     schedulerService.start();
     adapterService.start();
     programRuntimeService.start();
-    appLifecycleService.start();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
@@ -199,7 +198,6 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     adapterService.stopAndWait();
-    appLifecycleService.stopAndWait();
     notificationService.stopAndWait();
   }
 }

@@ -34,6 +34,8 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -64,6 +66,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -78,11 +81,13 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -186,12 +191,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
 
     try {
-      Id.Application app = Id.Application.from(namespaceId, appId);
-      return appLifecycleService.deployApplication(request, responder, archiveName, app);
+      Id.Namespace namespace = Id.Namespace.from(namespaceId);
+      return deployApplication(request, responder, namespace, appId, archiveName);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
     }
@@ -209,17 +214,76 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      return appLifecycleService.deployApplication(request, responder, archiveName, namespace);
+      return deployApplication(request, responder, namespace, null, archiveName);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
     }
 
     return null;
   }
+
+  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
+                                         final Id.Namespace namespace, @Nullable final String appId,
+                                         final String archiveName) throws IOException {
+    if (store.getNamespace(namespace) == null) {
+      LOG.warn("Namespace '{}' not found.", namespace.getId());
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
+      return null;
+    }
+
+    Location namespaceHomeLocation = locationFactory.create(namespace.getId());
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespace.getId());
+      LOG.error(msg);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
+      return null;
+    }
+
+
+    if (archiveName == null || archiveName.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, Constants.Headers.ARCHIVE_NAME + " header not present",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
+    }
+
+    // Store uploaded content to a local temp file
+    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespace.getId());
+    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
+    }
+
+    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
+    final Location archive =
+      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
+
+    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
+
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
+        try {
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          appLifecycleService.deploy(namespace, appId, deploymentInfo);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (NamespaceNotFoundException e) {
+          responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+        } catch (SecurityException e) {
+          responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        }
+      }
+    };
+  }
+
 
   /**
    * Returns a list of applications associated with a namespace.
