@@ -28,36 +28,30 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /**
  * Service that manages lifecycle of Applications.
@@ -93,12 +87,8 @@ public class AppLifecycleService {
     return store.getAllApplications(namespaceId);
   }
 
-  public void deploy(final Id.Namespace namespace, @Nullable final String appName,
-                     DeploymentInfo deploymentInfo) throws Exception {
-    if (store.getNamespace(namespace) == null) {
-      throw new NamespaceNotFoundException(namespace);
-    }
-
+  public void deploy(final Id.Namespace namespace, final String appId, DeploymentInfo deploymentInfo) throws Exception {
+    try {
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
@@ -106,10 +96,11 @@ public class AppLifecycleService {
         }
       });
 
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(namespace, appName, deploymentInfo).get();
-      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
-      setupSchedules(namespace.getId(), specification);
+      manager.deploy(namespace, appId, deploymentInfo).get();
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception(e.getMessage());
+    }
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)
@@ -137,30 +128,8 @@ public class AppLifecycleService {
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
-    }
-  }
-
-  private void deleteSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
-    // Delete the existing schedules.
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
-      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
-      scheduler.deleteSchedules(programId, programInfo.getProgramType());
-    }
-  }
-
-  private void setupSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
-
-    deleteSchedules(namespaceId, specification);
-
-    // Add new schedules.
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
-      Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
-                                             programInfo.getProgramName());
-      List<Schedule> scheduleList = Lists.newArrayList();
-      scheduleList.add(entry.getValue().getSchedule());
-      scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
+    } catch (SchedulerException e) {
+      throw new ExecutionException(e);
     }
   }
 
@@ -182,12 +151,39 @@ public class AppLifecycleService {
     controller.stop().get();
   }
 
+  private void deleteSchedules(String namespaceId, ApplicationSpecification specification)
+    throws IOException, SchedulerException {
+
+    // Delete the existing schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
+      scheduler.deleteSchedules(programId, programInfo.getProgramType());
+    }
+  }
+
+  private void setupSchedules(String namespaceId, ApplicationSpecification specification)
+    throws IOException, SchedulerException {
+
+    deleteSchedules(namespaceId, specification);
+    // Add new schedules.
+    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
+      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
+      Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
+                                             programInfo.getProgramName());
+      List<Schedule> scheduleList = Lists.newArrayList();
+      scheduleList.add(entry.getValue().getSchedule());
+      scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
+    }
+  }
+
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
                                                               String flowId, ProgramType typeId,
                                                               ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), namespaceId, flowId);
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               namespaceId, flowId);
 
     Id.Program programId = Id.Program.from(namespaceId, appId, flowId);
 

@@ -34,6 +34,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -51,6 +52,7 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -226,65 +228,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return null;
   }
 
-  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
-                                         final Id.Namespace namespace, @Nullable final String appId,
-                                         final String archiveName) throws IOException {
-    if (store.getNamespace(namespace) == null) {
-      LOG.warn("Namespace '{}' not found.", namespace.getId());
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
-      return null;
-    }
-
-    Location namespaceHomeLocation = locationFactory.create(namespace.getId());
-    if (!namespaceHomeLocation.exists()) {
-      String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespace.getId());
-      LOG.error(msg);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
-      return null;
-    }
-
-
-    if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, Constants.Headers.ARCHIVE_NAME + " header not present",
-                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
-      return null;
-    }
-
-    // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespace.getId());
-    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    if (!DirUtils.mkdirs(tempDir)) {
-      throw new IOException("Could not create temporary directory at: " + tempDir);
-    }
-
-    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
-    final Location archive =
-      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
-
-    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
-
-      @Override
-      protected void onFinish(HttpResponder responder, File uploadedFile) {
-        try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
-          appLifecycleService.deploy(namespace, appId, deploymentInfo);
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-        } catch (NamespaceNotFoundException e) {
-          responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-        } catch (SecurityException e) {
-          responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-        } catch (Exception e) {
-          LOG.error("Deploy failure", e);
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        }
-      }
-    };
-  }
-
-
   /**
    * Returns a list of applications associated with a namespace.
    */
@@ -437,10 +380,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (AdapterNotFoundException e) {
+    } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (InvalidAdapterOperationException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (SchedulerException e) {
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterId, action, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -470,8 +420,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (AdapterNotFoundException e) {
+    } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (SchedulerException e) {
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -535,6 +493,60 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       adapterProperties.putAll(config.properties);
     }
     return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
+  }
+
+  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
+                                         final Id.Namespace namespace, @Nullable final String appId,
+                                         final String archiveName) throws IOException {
+    if (!namespaceAdmin.hasNamespace(namespace)) {
+      LOG.warn("Namespace '{}' not found.", namespace.getId());
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Deploy failed - namespace '%s' not found.", namespace.getId()));
+      return null;
+    }
+
+    Location namespaceHomeLocation = locationFactory.create(namespace.getId());
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespace.getId());
+      LOG.error(msg);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
+      return null;
+    }
+
+
+    if (archiveName == null || archiveName.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
+    }
+
+    // Store uploaded content to a local temp file
+    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespace.getId());
+    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
+    }
+
+    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
+    final Location archive =
+      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
+
+    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
+
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
+        try {
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          appLifecycleService.deploy(namespace, appId, deploymentInfo);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (Exception e) {
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        }
+      }
+    };
   }
 
   /**
@@ -773,7 +785,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private static List<ApplicationRecord> makeAppRecords(Iterable<ApplicationSpecification> appSpecs) {
-    return Lists.newArrayList(Iterables.transform(appSpecs, new Function<ApplicationSpecification, ApplicationRecord>() {
+    return Lists.newArrayList(Iterables.transform(
+      appSpecs, new Function<ApplicationSpecification, ApplicationRecord>() {
       @Nullable
       @Override
       public ApplicationRecord apply(@Nullable ApplicationSpecification appSpec) {
