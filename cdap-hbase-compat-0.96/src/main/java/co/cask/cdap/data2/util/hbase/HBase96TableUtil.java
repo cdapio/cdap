@@ -143,7 +143,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
 
   @Override
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    TableName[] tableNames = admin.listTableNamesByNamespace(namespaceId.getId());
+    TableName[] tableNames = admin.listTableNamesByNamespace(toHBaseNamespace(namespaceId));
     for (TableName tableName : tableNames) {
       String name = fromTableName(tableName).getCdapTableName();
       if (name.startsWith(tablePrefix)) {

@@ -430,7 +430,7 @@ public final class StreamUtils {
    * @return constructed table name
    */
   public static String getStateStoreTableName(Id.Namespace namespace) {
-    return String.format("cdap.%s.%s.state.store", namespace.getId(), QueueConstants.QueueType.STREAM.toString());
+    return String.format("cdap.%s.system.%s.state.store", namespace.getId(), QueueConstants.QueueType.STREAM.toString());
   }
 
   /**

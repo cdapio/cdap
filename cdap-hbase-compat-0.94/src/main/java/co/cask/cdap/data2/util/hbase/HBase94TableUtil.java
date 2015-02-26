@@ -42,7 +42,6 @@ import org.apache.hadoop.hbase.regionserver.StoreFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  *
@@ -127,11 +126,22 @@ public class HBase94TableUtil extends HBaseTableUtil {
 
   @Override
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    String tableName = TableId.from(HBaseTableUtil.toHBaseNamespace(namespaceId), tablePrefix).getTableName();
-    String namespacedPrefix = String.format("%s", tableName);
-    Pattern tablePattern = Pattern.compile(namespacedPrefix + tablePrefix + ".*");
-    admin.disableTables(tablePattern);
-    admin.deleteTables(tablePattern);
+    // Note: the following method call is incorrect
+//    String tableName = toTableName(TableId.from(HBaseTableUtil.toHBaseNamespace(namespaceId), tablePrefix));
+//    String tableRegex = Pattern.quote(tableName);
+//    Pattern tablePattern = Pattern.compile("^" + tableRegex + ".*");
+//    admin.disableTables(tablePattern);
+//    admin.deleteTables(tablePattern);
+
+
+    HTableDescriptor[] hTableDescriptors = admin.listTables();
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      TableId tableId = fromTableName(hTableDescriptor.getNameAsString());
+      if (namespaceId.equals(tableId.getNamespace()) && tableId.getCdapTableName().startsWith(tablePrefix)) {
+        disableTable(admin, tableId);
+        deleteTable(admin, tableId);
+      }
+    }
   }
 
   @Override
@@ -247,6 +257,14 @@ public class HBase94TableUtil extends HBaseTableUtil {
       }
     }
     return datasetStat;
+  }
+
+  private TableId fromTableName(String tableName) {
+    Preconditions.checkArgument(tableName != null, "Table name should not be null.");
+    String[] parts = tableName.split("\\.");
+    String hBaseNamespace = parts[0];
+    String hBasequalifier = parts[1];
+    return TableId.from(hBaseNamespace, hBasequalifier);
   }
 
   private String toTableName(TableId tableId) {

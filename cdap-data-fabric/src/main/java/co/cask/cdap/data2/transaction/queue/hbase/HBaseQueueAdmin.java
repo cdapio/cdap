@@ -185,8 +185,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {
-      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
-      truncate(tableNameBytes);
+      truncate(getDataTableId(queueName));
     } else {
       LOG.warn("truncate({}) on HBase queue table has no effect.", name);
     }
@@ -211,8 +210,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(namespaceId, app, flow);
-    truncate(Bytes.toBytes(tableName));
+    truncate(getTableIdFromFlow(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -250,10 +248,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  private void drop(byte[] tableName) throws IOException {
-
-  }
-
   private void drop(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (tableUtil.tableExists(admin, tableId)) {
@@ -263,7 +257,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public TableId getConfigTableId(QueueName queueName) {
-    return TableId.from(getConfigTableName(queueName));
+    return getConfigTableId(queueName.getFirstComponent());
+  }
+
+  public TableId getConfigTableId(String namespace) {
+    return TableId.from(getConfigTableName(namespace));
   }
 
   public TableId getDataTableId(QueueName queueName) {
@@ -405,7 +403,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     String trueTableNamePrefix = unqualifiedTableNamePrefix;
     tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
 
-    drop(Bytes.toBytes(getConfigTableName(namespaceId)));
+    // TODO: make this a noop and see if any tests fail (They should!)
+    drop(getConfigTableId(namespaceId));
   }
 
   @Override
