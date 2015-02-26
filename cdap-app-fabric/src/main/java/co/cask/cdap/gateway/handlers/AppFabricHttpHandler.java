@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -41,23 +40,18 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.BodyConsumer;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.Closeables;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -110,7 +104,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
-  private final AppFabricStreamHttpHandler appFabricStreamHttpHandler;
+  private final AppFabricDataHttpHandler appFabricDataHttpHandler;
+  private final TransactionHttpHandler transactionHttpHandler;
 
 
   /**
@@ -123,8 +118,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
                               AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
-                              AppFabricStreamHttpHandler appFabricStreamHttpHandler,
-                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore) {
+                              AppFabricDataHttpHandler appFabricDataHttpHandler,
+                              PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
+                              TransactionHttpHandler transactionHttpHandler) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -133,11 +129,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
-    this.appFabricStreamHttpHandler = appFabricStreamHttpHandler;
+    this.appFabricDataHttpHandler = appFabricDataHttpHandler;
+    this.transactionHttpHandler = transactionHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
   }
@@ -157,32 +153,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/state")
   @GET
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
-    try {
-      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      InputStream in = txClient.getSnapshotInputStream();
-      LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-      try {
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.<String, String>of());
-        while (true) {
-          // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
-          byte[] readBytes = new byte[4096];
-          int res = in.read(readBytes, 0, 4096);
-          if (res == -1) {
-            break;
-          }
-          // If failed to send chunk, IOException will be raised.
-          // It'll just propagated to the netty-http library to handle it
-          chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
-        }
-        Closeables.closeQuietly(chunkResponder);
-      } finally {
-        in.close();
-      }
-    } catch (Exception e) {
-      LOG.error("Could not take transaction manager snapshot", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+
+    transactionHttpHandler.getTxManagerSnapshot(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                                responder);
   }
 
   /**
@@ -192,21 +165,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/{tx-id}/invalidate")
   @POST
   public void invalidateTx(HttpRequest request, HttpResponder responder,
-                           @PathParam("tx-id") final String txId) {
-    try {
-      long txIdLong = Long.parseLong(txId);
-      boolean success = txClient.invalidate(txIdLong);
-      if (success) {
-        LOG.info("Transaction {} successfully invalidated", txId);
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        LOG.info("Transaction {} could not be invalidated: not in progress.", txId);
-        responder.sendStatus(HttpResponseStatus.CONFLICT);
-      }
-    } catch (NumberFormatException e) {
-      LOG.info("Could not invalidate transaction: {} is not a valid tx id", txId);
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-    }
+                           @PathParam("tx-id") String txId) {
+
+    transactionHttpHandler.invalidateTx(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                        responder, txId);
   }
 
   /**
@@ -215,8 +177,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/state")
   @POST
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
-    txClient.resetState();
-    responder.sendStatus(HttpResponseStatus.OK);
+    transactionHttpHandler.resetTxManagerState(RESTMigrationUtils.rewriteV2RequestToV3WithoutNamespace(request),
+                                               responder);
   }
 
   /**
@@ -228,8 +190,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") final String appId,
                         @PathParam("type") final String type,
                         @PathParam("id") final String id) {
-    programLifecycleHttpHandler.getStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                          type, id);
+    programLifecycleHttpHandler.getStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE, appId, type, id);
   }
 
   /**
@@ -304,8 +266,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("type") final String type,
                            @PathParam("id") final String id) {
-    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                              appId, type, id, "start");
+    programLifecycleHttpHandler.performAction(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId, type, id, "start");
   }
 
   /**
@@ -317,8 +279,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("type") final String type,
                            @PathParam("id") final String id) {
-    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                              appId, type, id, "debug");
+    programLifecycleHttpHandler.performAction(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId, type, id, "debug");
   }
 
   /**
@@ -330,8 +292,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-id") final String appId,
                           @PathParam("type") final String type,
                           @PathParam("id") final String id) {
-    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                              appId, type, id, "stop");
+    programLifecycleHttpHandler.performAction(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId, type, id, "stop");
   }
 
   /**
@@ -348,8 +310,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("start") String startTs,
                               @QueryParam("end") String endTs,
                               @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
-    programLifecycleHttpHandler.runnableHistory(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                runnableType, runnableId, status, startTs, endTs, resultLimit);
+    programLifecycleHttpHandler.runnableHistory(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId,
+                                                status, startTs, endTs, resultLimit);
   }
 
   /**
@@ -361,8 +324,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.getRunnableRuntimeArgs(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                       appId, runnableType, runnableId);
+    programLifecycleHttpHandler.getRunnableRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                       Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
   }
 
   /**
@@ -374,8 +337,30 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.saveRunnableRuntimeArgs(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                        appId, runnableType, runnableId);
+    programLifecycleHttpHandler.saveRunnableRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                        Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
+  }
+
+  /**
+   * Gets number of instances for a worker.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void getWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
+    programLifecycleHttpHandler.getWorkerInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                   Constants.DEFAULT_NAMESPACE, appId, workerId);
+  }
+
+  /**
+   * Sets number of instances for a worker.
+   */
+  @PUT
+  @Path("/apps/{app-id}/workers/{worker-id}/instances")
+  public void setWorkerInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                 @PathParam("worker-id") final String workerId) {
+    programLifecycleHttpHandler.setWorkerInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                   Constants.DEFAULT_NAMESPACE, appId, workerId);
   }
 
   /**
@@ -395,7 +380,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int count = getProgramInstances(programId);
+      int count = getProcedureInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -404,7 +389,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
 
   /**
    * Sets number of instances for a procedure.
@@ -429,7 +413,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      setProgramInstances(programId, instances);
+      setProcedureInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -443,7 +427,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * TODO: This method should move to {@link ProgramLifecycleHttpHandler} when set and get instances v3 APIs are
    * implemented.
    */
-  private void setProgramInstances(Id.Program programId, int instances) throws Exception {
+  private void setProcedureInstances(Id.Program programId, int instances) throws Exception {
     try {
       store.setProcedureInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
@@ -453,13 +437,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                             ImmutableMap.of(programId.getId(), instances)).get();
       }
     } catch (Throwable throwable) {
-      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+      LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
       throw new Exception(throwable.getMessage());
     }
   }
 
-  private int getProgramInstances(Id.Program programId) throws Exception {
+  private int getProcedureInstances(Id.Program programId) throws Exception {
     try {
       return store.getProcedureInstances(programId);
     } catch (Throwable throwable) {
@@ -477,8 +461,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
-    programLifecycleHttpHandler.getFlowletInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                    appId, flowId, flowletId);
+    programLifecycleHttpHandler.getFlowletInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, flowId, flowletId);
   }
 
   /**
@@ -516,7 +500,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                             Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -547,7 +532,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getStatuses(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getStatuses(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                            Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -558,8 +544,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
-    programLifecycleHttpHandler.setFlowletInstances(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                    appId, flowId, flowletId);
+    programLifecycleHttpHandler.setFlowletInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, flowId, flowletId);
   }
 
   /**
@@ -572,9 +558,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
                                             @PathParam("stream-id") String streamId) throws IOException {
-    programLifecycleHttpHandler.changeFlowletStreamConnection(rewriteRequest(request), responder,
-                                                              Constants.DEFAULT_NAMESPACE, appId, flowId, flowletId,
-                                                              streamId);
+    programLifecycleHttpHandler.changeFlowletStreamConnection(RESTMigrationUtils.rewriteV2RequestToV3(request),
+                                                              responder, Constants.DEFAULT_NAMESPACE,
+                                                              appId, flowId, flowletId, streamId);
   }
 
   /**
@@ -584,14 +570,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
-    try {
-      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                            archiveName);
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
-      return null;
-    }
-
+    return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE, appId, archiveName);
   }
 
   /**
@@ -602,13 +582,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
-    try {
-      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, null,
-                                            archiveName);
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
-      return null;
-    }
+    return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE, null, archiveName);
   }
 
   /**
@@ -619,8 +594,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId,
                                   @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getScheduledRunTime(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                    appId, workflowId);
+    programLifecycleHttpHandler.getScheduledRunTime(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
   /**
@@ -631,8 +606,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getWorkflowSchedules(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                     appId, workflowId);
+    programLifecycleHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
   /**
@@ -643,8 +618,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void suspendSchedule(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("schedule-name") String scheduleName) {
-    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                              appId, "schedules", scheduleName, "suspend");
+    programLifecycleHttpHandler.performAction(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId, "schedules", scheduleName, "suspend");
   }
 
   /**
@@ -655,8 +630,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void resumeSchedule(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
                                      @PathParam("schedule-name") String scheduleName) {
-    programLifecycleHttpHandler.performAction(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                              appId, "schedules", scheduleName, "resume");
+    programLifecycleHttpHandler.performAction(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId, "schedules", scheduleName, "resume");
   }
 
   /**
@@ -678,8 +653,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void flowLiveInfo(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") String appId,
                            @PathParam("flow-id") String flowId) {
-    programLifecycleHttpHandler.liveInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                         ProgramType.FLOW.getCategoryName(), flowId);
+    programLifecycleHttpHandler.liveInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                         Constants.DEFAULT_NAMESPACE,
+                                         appId, ProgramType.FLOW.getCategoryName(), flowId);
   }
 
   /**
@@ -689,8 +665,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows/{flow-id}")
   public void flowSpecification(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
-                                @PathParam("flow-id")String flowId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                @PathParam("flow-id") String flowId) {
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.FLOW.getCategoryName(), flowId);
   }
 
@@ -702,7 +679,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
                                      @PathParam("procedure-id") String procId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.PROCEDURE.getCategoryName(), procId);
   }
 
@@ -714,7 +692,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id")final String mapreduceId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.MAPREDUCE.getCategoryName(), mapreduceId);
   }
 
@@ -726,7 +705,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void sparkSpecification(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId,
                                  @PathParam("spark-id")final String sparkId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.SPARK.getCategoryName(), sparkId);
   }
 
@@ -738,7 +718,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
   }
 
@@ -747,7 +728,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("service-id") String serviceId) {
-    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE,
                                                       appId, ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 
@@ -758,7 +740,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") final String appId) {
-    appLifecycleHttpHandler.deleteApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.deleteApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                      Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -767,7 +750,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
-    appLifecycleHttpHandler.deleteAllApps(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.deleteAllApps(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                          Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -778,21 +762,24 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") String appId,
                                @PathParam("flow-id") String flowId) {
-    programLifecycleHttpHandler.deleteFlowQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
-                                                 appId, flowId);
+    programLifecycleHttpHandler.deleteFlowQueues(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId, flowId);
   }
 
   @DELETE
   @Path("/queues")
   public void deleteQueues(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.deleteQueues(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.deleteQueues(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                             Constants.DEFAULT_NAMESPACE);
   }
 
   @DELETE
   @Path("/streams")
   public void deleteStreams(HttpRequest request, HttpResponder responder) {
     try {
-      streamAdmin.dropAll();
+      //TODO: move this to v3 namespaced-stream handler when delete is implemented for streams
+      String namespace = Constants.DEFAULT_NAMESPACE;
+      streamAdmin.dropAllInNamespace(Id.Namespace.from(namespace));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Error while deleting streams", e);
@@ -804,8 +791,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
-    programLifecycleHttpHandler.workflowStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                               workflowName);
+    programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, appId, workflowName);
   }
 
   /**
@@ -814,7 +801,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllFlows(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllFlows(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                            Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -823,7 +811,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllProcedures(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllProcedures(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -832,7 +821,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllMapReduce(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllMapReduce(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -841,7 +831,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllSpark(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllSpark(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                            Constants.DEFAULT_NAMESPACE);
+  }
+
+  /**
+   * Returns a list of worker jobs associated with an account.
+   */
+  @GET
+  @Path("/workers")
+  public void getAllWorkers(HttpRequest request, HttpResponder responder) {
+    programLifecycleHttpHandler.getAllWorkers(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -850,7 +851,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllWorkflows(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    programLifecycleHttpHandler.getAllWorkflows(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -859,7 +861,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
-    appLifecycleHttpHandler.getAllApps(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.getAllApps(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                       Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -869,18 +872,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId) {
-    appLifecycleHttpHandler.getAppInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.getAppInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                       Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of flows associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.FLOW.getCategoryName());
+    programLifecycleHttpHandler.getFlowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -890,19 +894,20 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.PROCEDURE.getCategoryName());
+    programLifecycleHttpHandler.getProgramsByApp(responder,
+                                                 Constants.DEFAULT_NAMESPACE,
+                                                 appId, ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of mapreduce associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.MAPREDUCE.getCategoryName());
+    programLifecycleHttpHandler.getMapreduceByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -912,19 +917,29 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.SPARK.getCategoryName());
+    programLifecycleHttpHandler.getSparkByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
+   * Returns a list of workflows associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/workflows")
-  public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.WORKFLOW.getCategoryName());
+  public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getWorkflowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId);
+  }
+
+  /**
+   * Returns a list of workers associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workers")
+  public void getWorkersByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getWorkersByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -933,8 +948,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder) {
-    appFabricStreamHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                          Constants.DEFAULT_NAMESPACE);
+    appFabricDataHttpHandler.getStreams(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                        Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -954,8 +969,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/streams")
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId) {
-    appFabricStreamHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId);
+    appFabricDataHttpHandler.getStreamsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                             Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -964,7 +979,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/datasets")
   public void getDatasets(HttpRequest request, HttpResponder responder) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, null);
+    appFabricDataHttpHandler.getDatasets(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                         Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -974,7 +990,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, datasetId, null);
+    appFabricDataHttpHandler.getDatasetSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
@@ -984,7 +1001,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/datasets")
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("app-id") final String appId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, Constants.DEFAULT_NAMESPACE, null, appId);
+    appFabricDataHttpHandler.getDatasetsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -994,8 +1012,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}/flows")
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("stream-id") final String streamId) {
-    appFabricStreamHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                Constants.DEFAULT_NAMESPACE, streamId);
+    appFabricDataHttpHandler.getFlowsByStream(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                              Constants.DEFAULT_NAMESPACE, streamId);
   }
 
   /**
@@ -1005,8 +1023,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("dataset-id") final String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
-                            Constants.DEFAULT_NAMESPACE, datasetId);
+    appFabricDataHttpHandler.getFlowsByDataset(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
@@ -1046,16 +1064,15 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       consoleSettingsStore.delete();
 
       dsFramework.deleteAllInstances(namespaceId);
-      dsFramework.deleteAllModules();
+      dsFramework.deleteAllModules(namespaceId);
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
       // delete all meta data
       store.removeAll(namespaceId);
-      // todo: delete only for specified account
       // delete queues and streams data
-      queueAdmin.dropAll();
-      streamAdmin.dropAll();
+      queueAdmin.dropAllInNamespace(namespaceId.getId());
+      streamAdmin.dropAllInNamespace(namespaceId);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

@@ -94,6 +94,10 @@ public final class InMemoryQueueService {
     resetAllQueuesOrStreams(true, null);
   }
 
+  public void resetStreamsWithPrefix(String prefix) {
+    resetAllQueuesOrStreams(true, prefix);
+  }
+
   public boolean exists(String queueName) {
     return queues.containsKey(queueName);
   }

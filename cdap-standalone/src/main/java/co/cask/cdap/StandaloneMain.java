@@ -113,7 +113,7 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
+    webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
@@ -123,7 +123,7 @@ public class StandaloneMain {
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
-      ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
+      ExploreServiceUtils.checkHiveSupportWithoutSecurity(getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 

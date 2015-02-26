@@ -25,13 +25,11 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -80,7 +78,7 @@ public class LevelDBQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBOrderedTableService.getInstance().clearTables();
+    LevelDBTableService.getInstance().clearTables();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
@@ -89,14 +87,14 @@ public class LevelDBQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE, LevelDBQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("testNamespace", LevelDBQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));

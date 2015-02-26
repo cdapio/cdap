@@ -15,9 +15,10 @@
  */
 package co.cask.cdap.metrics.store.timeseries;
 
+import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
-import co.cask.cdap.metrics.data.EntityTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -36,8 +37,8 @@ public class FactTableTest {
 
   @Test
   public void testBasics() throws Exception {
-    InMemoryOrderedTableService.create("EntityTable");
-    InMemoryOrderedTableService.create("DataTable");
+    InMemoryTableService.create("EntityTable");
+    InMemoryTableService.create("DataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 
@@ -180,8 +181,8 @@ public class FactTableTest {
 
   @Test
   public void testQuery() throws Exception {
-    InMemoryOrderedTableService.create("QueryEntityTable");
-    InMemoryOrderedTableService.create("QueryDataTable");
+    InMemoryTableService.create("QueryEntityTable");
+    InMemoryTableService.create("QueryDataTable");
     int resolution = 10;
     int rollTimebaseInterval = 2;
 
@@ -377,8 +378,8 @@ public class FactTableTest {
   @Test
   public void testMaxResolution() throws Exception {
     // we use Integer.MAX_VALUE as resolution to compute all-time total values
-    InMemoryOrderedTableService.create("TotalsEntityTable");
-    InMemoryOrderedTableService.create("TotalsDataTable");
+    InMemoryTableService.create("TotalsEntityTable");
+    InMemoryTableService.create("TotalsDataTable");
     int resolution = Integer.MAX_VALUE;
     // should not matter when resolution is max
     int rollTimebaseInterval = 3600;

@@ -39,6 +39,7 @@ import org.junit.Test;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -100,7 +101,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
       .increment("process.events.processed", 1);
 
     // Insert stream metrics
-    MetricsCollector streamCollector1 = collectionService.getCollector(getStreamHandlerContext("streamX", "0"));
+    MetricsCollector streamCollector1 =
+      collectionService.getCollector(getStreamHandlerContext("streamX", UUID.randomUUID().toString()));
     streamCollector1.increment("collect.events", 5);
 
     // Wait for collection to happen
@@ -355,12 +357,11 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
                                                               "counter", "wordStats"));
     collector.increment("my.reads", 10);
 
-    collector = collectionService.getCollector(getStreamHandlerContext("wordStream", "0"));
+    collector = collectionService.getCollector(getStreamHandlerContext("wordStream", UUID.randomUUID().toString()));
     collector.increment("collect.my.events", 10);
 
     collector = collectionService.getCollector(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                      Constants.Metrics.Tag.CLUSTER_METRICS, "true"));
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE));
     collector.increment("resources.total.my.storage", 10);
 
     // Wait for collection to happen

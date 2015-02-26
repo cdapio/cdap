@@ -60,6 +60,6 @@ public class DeployAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Deploys an " + ElementType.APP.getPrettyName();
+    return String.format("Deploys an %s.", ElementType.APP.getPrettyName());
   }
 }

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -53,14 +53,14 @@ public class MetricStoreRequestExecutor {
     this.metricStore = metricStore;
   }
 
-  public JsonElement executeQuery(CubeQuery query) throws Exception {
+  public JsonElement executeQuery(MetricDataQuery query) throws Exception {
     // Pretty ugly logic now. Need to refactor
     Object resultObj;
     if (query.getResolution() != Integer.MAX_VALUE) {
       TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(query.getStartTs(),
                                                                       query.getEndTs());
       // Special metrics handle that requires computation from multiple time series.
-      if ("system.process.busyness".equals(query.getMeasureName())) {
+      if ("system.process.busyness".equals(query.getMetricName())) {
         computeProcessBusyness(query, builder);
       } else {
         PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(queryTimeSeries(query));
@@ -81,7 +81,7 @@ public class MetricStoreRequestExecutor {
 
     } else {
       // Special metrics handle that requires computation from multiple aggregates results.
-      if ("system.process.events.pending".equals(query.getMeasureName())) {
+      if ("system.process.events.pending".equals(query.getMetricName())) {
         resultObj = computeFlowletPending(query);
       } else {
         resultObj = getAggregates(query);
@@ -91,12 +91,12 @@ public class MetricStoreRequestExecutor {
     return GSON.toJsonTree(resultObj);
   }
 
-  private void computeProcessBusyness(CubeQuery query, TimeSeriesResponse.Builder builder) throws Exception {
+  private void computeProcessBusyness(MetricDataQuery query, TimeSeriesResponse.Builder builder) throws Exception {
     PeekingIterator<TimeValue> tuplesReadItor =
-      Iterators.peekingIterator(queryTimeSeries(new CubeQuery(query, "system.process.tuples.read")));
+      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.tuples.read")));
 
     PeekingIterator<TimeValue> eventsProcessedItor =
-      Iterators.peekingIterator(queryTimeSeries(new CubeQuery(query, "system.process.events.processed")));
+      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.events.processed")));
 
     long resultTimeStamp = query.getStartTs();
 
@@ -120,12 +120,12 @@ public class MetricStoreRequestExecutor {
     }
   }
 
-  private Object computeFlowletPending(CubeQuery query) throws Exception {
+  private Object computeFlowletPending(MetricDataQuery query) throws Exception {
     // Pending is processed by flowlet minus emitted into the queues it was processing from.
 
     // trick: get all queues and streams it was processing from using group by
-    CubeQuery groupByQueueName =
-      new CubeQuery(new CubeQuery(query, "system.process.events.processed"),
+    MetricDataQuery groupByQueueName =
+      new MetricDataQuery(new MetricDataQuery(query, "system.process.events.processed"),
                     ImmutableList.of(Constants.Metrics.Tag.FLOWLET_QUEUE));
     Map<String, Long> processedPerQueue = getTotalsWithSingleGroupByTag(groupByQueueName);
 
@@ -143,7 +143,7 @@ public class MetricStoreRequestExecutor {
         sliceByTags.remove(Constants.Metrics.Tag.FLOWLET);
         // we want to narrow down to specific queue we know our flowlet was consuming from
         sliceByTags.put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName.getSimpleName());
-        written = getTotals(new CubeQuery(new CubeQuery(query, sliceByTags), "system.process.events.out"));
+        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags), "system.process.events.out"));
 
       } else if (queueName.isStream()) {
         Map<String, String> sliceByTags = Maps.newHashMap();
@@ -152,7 +152,7 @@ public class MetricStoreRequestExecutor {
         // note: namespace + stream uniquely define the stream
         // we know that flow can consume from stream of the same namespace only at this point
         sliceByTags.put(Constants.Metrics.Tag.NAMESPACE, query.getSliceByTags().get(Constants.Metrics.Tag.NAMESPACE));
-        written = getTotals(new CubeQuery(new CubeQuery(query, sliceByTags), "system.collect.events"));
+        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags), "system.collect.events"));
       } else {
         LOG.warn("Unknown queue type: " + name);
         continue;
@@ -166,38 +166,38 @@ public class MetricStoreRequestExecutor {
     return new AggregateResponse(pending > 0 ? pending : 0);
   }
 
-  private Iterator<TimeValue> queryTimeSeries(CubeQuery query) throws Exception {
+  private Iterator<TimeValue> queryTimeSeries(MetricDataQuery query) throws Exception {
 
-    Collection<TimeSeries> result = metricStore.query(query);
+    Collection<MetricTimeSeries> result = metricStore.query(query);
     if (result.size() == 0) {
       return new ArrayList<TimeValue>().iterator();
     }
 
     // since there's no group by condition, it'll return single time series always
-    TimeSeries timeSeries = result.iterator().next();
+    MetricTimeSeries timeSeries = result.iterator().next();
 
     return Iterables.transform(timeSeries.getTimeValues(),
-                        new Function<co.cask.cdap.metrics.store.timeseries.TimeValue, TimeValue>() {
+                        new Function<TimeValue, TimeValue>() {
       @Override
-      public TimeValue apply(co.cask.cdap.metrics.store.timeseries.TimeValue input) {
+      public TimeValue apply(TimeValue input) {
         return new TimeValue(input.getTimestamp(), input.getValue());
       }
     }).iterator();
   }
 
-  private AggregateResponse getAggregates(CubeQuery query) throws Exception {
+  private AggregateResponse getAggregates(MetricDataQuery query) throws Exception {
     return new AggregateResponse(getTotals(query));
   }
 
-  private long getTotals(CubeQuery query) throws Exception {
+  private long getTotals(MetricDataQuery query) throws Exception {
     // query must have resolution set to Integer.MAX_VALUE (i.e. "totals")
-    Collection<TimeSeries> result = metricStore.query(query);
+    Collection<MetricTimeSeries> result = metricStore.query(query);
     if (result.size() == 0) {
       return 0;
     }
 
     // since there's no group by condition, it'll return single time series always
-    TimeSeries timeSeries = result.iterator().next();
+    MetricTimeSeries timeSeries = result.iterator().next();
 
     if (timeSeries.getTimeValues().isEmpty()) {
       return 0;
@@ -207,11 +207,11 @@ public class MetricStoreRequestExecutor {
     return timeSeries.getTimeValues().get(0).getValue();
   }
 
-  private Map<String, Long> getTotalsWithSingleGroupByTag(CubeQuery query) throws Exception {
+  private Map<String, Long> getTotalsWithSingleGroupByTag(MetricDataQuery query) throws Exception {
     // query must have resolution set to Integer.MAX_VALUE (i.e. "totals")
-    Collection<TimeSeries> result = metricStore.query(query);
+    Collection<MetricTimeSeries> result = metricStore.query(query);
     Map<String, Long> map = Maps.newHashMap();
-    for (TimeSeries timeSeries : result) {
+    for (MetricTimeSeries timeSeries : result) {
       // we know there's only ony group by tag
       String groupByTagValue = timeSeries.getTagValues().values().iterator().next();
       // since it is totals, it will have only one TimeValue

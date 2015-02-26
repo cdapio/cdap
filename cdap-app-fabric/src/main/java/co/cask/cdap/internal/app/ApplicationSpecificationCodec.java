@@ -23,6 +23,7 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -57,6 +58,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
     jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
+    jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
 
     return jsonObj;
   }
@@ -92,9 +94,12 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, ScheduleSpecification> schedules = deserializeMap(jsonObj.get("schedules"),
                                                                 context, ScheduleSpecification.class);
 
+    Map<String, WorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
+                                                              WorkerSpecification.class);
+
     return new DefaultApplicationSpecification(name, description, streams,
                                                datasetModules, datasetInstances,
                                                flows, procedures, mapReduces, sparks,
-                                               workflows, services, schedules);
+                                               workflows, services, schedules, workers);
   }
 }

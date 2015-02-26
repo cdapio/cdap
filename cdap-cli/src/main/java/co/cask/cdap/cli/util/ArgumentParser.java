@@ -18,6 +18,7 @@ package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.common.cli.util.Parser;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -35,6 +36,19 @@ import static co.cask.common.cli.util.Parser.OPTIONAL_PART_ENDING;
  * Utility class for parsing arguments from user input based on command pattern.
  */
 public class ArgumentParser {
+
+  /**
+   * Parses a map in the format: "key1=a, key2=b, .."
+   *
+   * @param mapString {@link String} representation of the map
+   * @return the map
+   */
+  public static Map<String, String> parseMap(String mapString) {
+    if (mapString == null || mapString.isEmpty()) {
+      return ImmutableMap.of();
+    }
+    return Splitter.on(",").omitEmptyStrings().trimResults().withKeyValueSeparator("=").split(mapString);
+  }
 
   /**
    * Parses program id from user input.

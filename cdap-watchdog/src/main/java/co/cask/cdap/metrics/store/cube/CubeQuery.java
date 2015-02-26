@@ -16,12 +16,11 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.metrics.data.Interpolator;
+import co.cask.cdap.api.metrics.Interpolator;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.List;
@@ -73,40 +72,9 @@ public final class CubeQuery {
     this.limit = limit;
     this.measureName = measureName;
     this.measureType = measureType;
-    this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
+    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
     this.interpolator = interpolator;
-  }
-
-  public CubeQuery(CubeQuery query, String measureName) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         measureName, query.measureType,
-         query.sliceByTagValues, query.groupByTags, query.getInterpolator());
-  }
-
-  public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.measureName, query.measureType,
-         sliceByTagValues, groupByTags, query.getInterpolator());
-  }
-
-  public CubeQuery(CubeQuery query, Map<String, String> sliceByTagValues) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.measureName, query.measureType,
-         sliceByTagValues, query.groupByTags, query.getInterpolator());
-  }
-
-  public CubeQuery(CubeQuery query, List<String> groupByTags) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.measureName, query.measureType,
-         query.sliceByTagValues, groupByTags, query.getInterpolator());
-  }
-
-  public static CubeQuery addSliceByTag(CubeQuery query, String tagName, String tagValue) {
-    Map<String, String> sliceByTags = Maps.newHashMap();
-    sliceByTags.putAll(query.getSliceByTags());
-    sliceByTags.put(tagName, tagValue);
-    return new CubeQuery(query, sliceByTags);
   }
 
   public long getStartTs() {

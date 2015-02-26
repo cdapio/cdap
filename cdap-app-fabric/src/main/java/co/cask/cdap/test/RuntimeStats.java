@@ -16,14 +16,13 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.metrics.store.MetricStore;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import co.cask.cdap.metrics.store.timeseries.TimeValue;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -55,8 +54,7 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.FLOW),
-      Constants.Metrics.Tag.PROGRAM, flowId,
+      Constants.Metrics.Tag.FLOW, flowId,
       Constants.Metrics.Tag.FLOWLET, flowletId);
 
     return getMetrics(
@@ -67,8 +65,7 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.PROCEDURE),
-      Constants.Metrics.Tag.PROGRAM, procedureId);
+      Constants.Metrics.Tag.PROCEDURE, procedureId);
 
     return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
   }
@@ -77,11 +74,24 @@ public final class RuntimeStats {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
       Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROGRAM_TYPE, TypeId.getMetricContextId(ProgramType.SERVICE),
-      Constants.Metrics.Tag.PROGRAM, serviceId);
+      Constants.Metrics.Tag.SERVICE, serviceId);
 
     return getMetrics(
       context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
+  }
+
+  @Deprecated
+  public static void clearStats(final String applicationId) {
+    try {
+      // null for "all metric names"
+      metricStore.delete(
+        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                                              Constants.Metrics.Tag.APP, applicationId)));
+    } catch (Exception e) {
+      // Should never happen in unit test
+      throw Throwables.propagate(e);
+    }
   }
 
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
@@ -155,9 +165,9 @@ public final class RuntimeStats {
   }
 
   private static long getTotalCounter(Map<String, String> context, String metricName) {
-    CubeQuery query = getTotalCounterQuery(context, metricName);
+    MetricDataQuery query = getTotalCounterQuery(context, metricName);
     try {
-      Collection<TimeSeries> result = metricStore.query(query);
+      Collection<MetricTimeSeries> result = metricStore.query(query);
       if (result.isEmpty()) {
         return 0;
       }
@@ -174,12 +184,8 @@ public final class RuntimeStats {
     }
   }
 
-  private static CubeQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
-    return new CubeQuery(0, 0, Integer.MAX_VALUE, metricName, MeasureType.COUNTER,
+  private static MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
                          context, new ArrayList<String>());
-  }
-
-  public static void clearStats(final String applicationId) {
-    // todo: implement. Is it really needed though? seems like after adding namespaces it would not work at all
   }
 }

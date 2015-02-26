@@ -46,7 +46,7 @@ public class ExplorePreparedStatementTest {
 
 
     ExplorePreparedStatement statement = new ExplorePreparedStatement(null, exploreClient,
-                                                                      "SELECT * FROM table WHERE id=?, name=?");
+                                                                      "SELECT * FROM table WHERE id=?, name=?", "");
     statement.setInt(1, 100);
     try {
       statement.execute();
@@ -64,26 +64,27 @@ public class ExplorePreparedStatementTest {
     Assert.assertFalse(rs.isClosed());
     Assert.assertFalse(rs.next());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?'");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?'", "");
     Assert.assertEquals("SELECT * FROM table WHERE name='?'", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?', id=?");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name='?', id=?", "");
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name='?', id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"?\", id=?");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"?\", id=?", "");
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"?\", id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?'\", id=?");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?'\", id=?", "");
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"'?'\", id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?\", id=?");
+    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"'?\", id=?", "");
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"'?\", id=100", statement.updateSql());
 
-    statement = new ExplorePreparedStatement(null, exploreClient, "SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=?");
+    statement = new ExplorePreparedStatement(null, exploreClient,
+                                             "SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=?", "");
     statement.setInt(1, 100);
     Assert.assertEquals("SELECT * FROM table WHERE name=\"\\\"?\\\"\", id=100", statement.updateSql());
   }

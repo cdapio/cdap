@@ -53,6 +53,6 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Truncates a " + ElementType.DATASET.getPrettyName();
+    return String.format("Truncates a %s.", ElementType.DATASET.getPrettyName());
   }
 }

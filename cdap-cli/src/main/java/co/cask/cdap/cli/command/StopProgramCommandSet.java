@@ -39,7 +39,7 @@ public class StopProgramCommandSet extends CommandSet<Command> {
   private static List<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.canStartStop()) {
+      if (elementType.canStop()) {
         commands.add(new StopProgramCommand(elementType, programClient, cliConfig));
       }
     }

@@ -25,6 +25,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -32,6 +33,7 @@ import java.util.List;
 public class ApplicationWithPrograms implements Closeable {
   private final Id.Application id;
   private final ApplicationSpecification specification;
+  private final ApplicationSpecification existingAppSpecification;
   private final Location location;
   private final ApplicationDeployable applicationDeployable;
   private final List<Program> programs;
@@ -39,6 +41,7 @@ public class ApplicationWithPrograms implements Closeable {
   public ApplicationWithPrograms(ApplicationDeployable applicationDeployable, Iterable<? extends Program> programs) {
     this.id = applicationDeployable.getId();
     this.specification = applicationDeployable.getSpecification();
+    this.existingAppSpecification = applicationDeployable.getExistingAppSpec();
     this.location = applicationDeployable.getLocation();
     this.applicationDeployable = applicationDeployable;
     this.programs = ImmutableList.copyOf(programs);
@@ -47,6 +50,7 @@ public class ApplicationWithPrograms implements Closeable {
   public ApplicationWithPrograms(ApplicationWithPrograms other) {
     this.id = other.id;
     this.specification = other.specification;
+    this.existingAppSpecification = other.existingAppSpecification;
     this.location = other.location;
     this.applicationDeployable = other.applicationDeployable;
     this.programs = other.programs;
@@ -58,6 +62,11 @@ public class ApplicationWithPrograms implements Closeable {
 
   public ApplicationSpecification getSpecification() {
     return specification;
+  }
+
+  @Nullable
+  public ApplicationSpecification getExistingAppSpecification() {
+    return existingAppSpecification;
   }
 
   public Location getLocation() {

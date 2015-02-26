@@ -57,6 +57,15 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
                       flowId, flowletId, appId, numInstances);
         break;
+      case WORKER:
+        if (programIdParts.length < 2) {
+          throw new CommandInputError(this);
+        }
+        String workerId = programIdParts[1];
+        programClient.setWorkerInstances(appId, workerId, numInstances);
+        output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
+                      workerId, appId, numInstances);
+        break;
       case PROCEDURE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
@@ -65,6 +74,14 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         programClient.setProcedureInstances(appId, procedureId, numInstances);
         output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
                       procedureId, appId, numInstances);
+        break;
+      case SERVICE:
+        if (programIdParts.length < 2) {
+          throw new CommandInputError(this);
+        }
+        String service = programIdParts[1];
+        programClient.setServiceInstances(appId, service, numInstances);
+        output.printf("Successfully set service '%s' of app '%s' to %d instances\n", service, appId, numInstances);
         break;
       case RUNNABLE:
         if (programIdParts.length < 3) {
@@ -90,6 +107,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the instances of a " + elementType.getPrettyName();
+    return String.format("Sets the instances of a %s.", elementType.getPrettyName());
+
   }
 }

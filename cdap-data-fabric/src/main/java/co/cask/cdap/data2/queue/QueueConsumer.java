@@ -17,12 +17,13 @@ package co.cask.cdap.data2.queue;
 
 import co.cask.cdap.common.queue.QueueName;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Interface for queue consumer.
  */
-public interface QueueConsumer {
+public interface QueueConsumer extends Closeable {
 
   /**
    * Returns the queue name that this consumer is working on.

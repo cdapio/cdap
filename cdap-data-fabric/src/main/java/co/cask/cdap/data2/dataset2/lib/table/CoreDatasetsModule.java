@@ -32,24 +32,19 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.MemoryTable;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
 /**
  * DatasetModule containing default datasets.
  *
- * Depends on {@link OrderedTable}.
+ * Depends on {@link Table}.
  */
 public class CoreDatasetsModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<OrderedTable, DatasetAdmin> orderedTableDef = registry.get("orderedTable");
-
-    DatasetDefinition<Table, DatasetAdmin> tableDef = new TableDefinition("table", orderedTableDef);
-    registry.add(tableDef);
-    registry.add(new TableDefinition(Table.class.getName(), orderedTableDef));
+    DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
 
     DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition("keyValueTable", tableDef);
     registry.add(kvTableDef);
@@ -72,8 +67,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable");
-    registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
-    registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
+    registry.add(new InMemoryTableDefinition(MemoryTable.class.getName()));
+    registry.add(new InMemoryTableDefinition("memoryTable"));
   }
 }

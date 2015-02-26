@@ -33,7 +33,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
 
   @Test
-  public void testNamespaces() throws AlreadyExistsException, IOException {
+  public void testNamespaces() throws AlreadyExistsException, IOException, NamespaceCannotBeCreatedException,
+    NamespaceCannotBeDeletedException {
     String namespace = "namespace";
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
@@ -63,7 +64,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.createNamespace(null);
       Assert.fail("Namespace with null metadata should fail.");
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals("Namespace metadata cannot be null.", e.getMessage());
+      Assert.assertEquals("Namespace metadata should not be null.", e.getMessage());
     }
 
     Assert.assertEquals(initialCount, namespaceAdmin.listNamespaces().size());

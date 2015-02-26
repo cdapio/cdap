@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -70,12 +71,13 @@ public interface DatasetFramework {
   void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException;
 
   /**
-   * Deletes dataset modules and its types from the system.
+   * Deletes dataset modules and its types in the specified namespace.
    *
+   * @param namespaceId the {@link Id.Namespace} to delete all modules from.
    * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    */
-  void deleteAllModules() throws DatasetManagementException;
+  void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -136,10 +138,21 @@ public interface DatasetFramework {
   boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
 
   /**
-   * @return true if type exists, false otherwise
+   * Checks if the specified type exists in the 'system' namespace
+   *
+   * @return true if type exists in the 'system' namespace, false otherwise
    * @throws DatasetManagementException
    */
-  boolean hasType(String typeName) throws DatasetManagementException;
+  boolean hasSystemType(String typeName) throws DatasetManagementException;
+
+  /**
+   * Checks if the specified type exists in the specified namespace
+   *
+   * @return true if type exists in the specified namespace, false otherwise
+   * @throws DatasetManagementException
+   */
+  @VisibleForTesting
+  boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
 
   /**
    * Deletes dataset instance from the system.
@@ -187,4 +200,8 @@ public interface DatasetFramework {
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
+
+  void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException;
+
+  void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException;
 }

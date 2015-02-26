@@ -41,7 +41,9 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.CharMatcher;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
@@ -98,7 +100,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
   private final MetricsCollector streamHandlerMetricsCollector;
-  private final MetricsCollector streamMetricsCollector;
+
+  private final LoadingCache<Id.Namespace, MetricsCollector> streamMetricsCollectors;
   private final ConcurrentStreamWriter streamWriter;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
@@ -116,7 +119,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                        StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
-                       MetricsCollectionService metricsCollectionService,
+                       final MetricsCollectionService metricsCollectionService,
                        StreamWriterSizeCollector sizeCollector) {
     super(authenticator);
     this.cConf = cConf;
@@ -126,7 +129,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
     this.streamHandlerMetricsCollector = metricsCollectionService.getCollector(getStreamHandlerMetricsContext());
-    this.streamMetricsCollector = metricsCollectionService.getCollector(getStreamMetricsContext());
+    streamMetricsCollectors = CacheBuilder.newBuilder()
+      .build(new CacheLoader<Id.Namespace, MetricsCollector>() {
+        @Override
+        public MetricsCollector load(Id.Namespace namespaceId) {
+          return metricsCollectionService.getCollector(getStreamMetricsContext(namespaceId));
+        }
+      });
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
@@ -164,8 +173,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (streamMetaStore.streamExists(streamId)) {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -182,23 +190,20 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
+    try {
+      // Verify stream name
+      Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
-    String accountID = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountID, stream);
+      // TODO: Modify the REST API to support custom configurations.
+      streamAdmin.create(streamId);
+      streamMetaStore.addStream(streamId);
 
-    // Verify stream name
-    if (!isValidName(stream)) {
+      // TODO: For create successful, 201 Created should be returned instead of 200.
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Stream name can only contains alphanumeric, '-' and '_' characters only.");
-      return;
+                           e.getMessage());
     }
-
-    // TODO: Modify the REST API to support custom configurations.
-    streamAdmin.create(streamId);
-    streamMetaStore.addStream(streamId);
-
-    // TODO: For create successful, 201 Created should be returned instead of 200.
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
@@ -206,9 +211,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
@@ -226,8 +229,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
     streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
@@ -240,9 +242,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -262,8 +262,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
@@ -283,16 +282,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
-
-    String accountId = getAuthenticatedAccountId(request);
-    Id.Stream streamId = Id.Stream.from(accountId, stream);
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
     if (!streamMetaStore.streamExists(streamId)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
       return;
     }
 
-    StreamProperties properties = getAndValidateConfig(streamId, request, responder);
+    StreamProperties properties = getAndValidateConfig(request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
     // to the responder so we just need to return.
     if (properties == null) {
@@ -307,6 +304,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     return new StreamMetricsCollectorFactory() {
       @Override
       public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
+        MetricsCollector streamMetricsCollector = streamMetricsCollectors.getUnchecked(streamId.getNamespace());
         final MetricsCollector childCollector =
           streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getName());
         return new StreamMetricsCollector() {
@@ -332,11 +330,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
 
-  /**
-   * TODO: CDAP-1244:This should accept namespaceId. Refactor metricsCollectors here after streams are namespaced.
-   */
-  private Map<String, String> getStreamMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+  private Map<String, String> getStreamMetricsContext(Id.Namespace namespaceId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId(),
                            Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
@@ -346,7 +341,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
    * will be return.
    */
-  private StreamProperties getAndValidateConfig(Id.Stream streamId, HttpRequest request, HttpResponder responder) {
+  private StreamProperties getAndValidateConfig(HttpRequest request, HttpResponder responder) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {
@@ -411,15 +406,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         }
       }
     };
-  }
-
-  private boolean isValidName(String streamName) {
-    // TODO: This is copied from StreamVerification in app-fabric as this handler is in data-fabric module.
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(streamName);
   }
 
   /**

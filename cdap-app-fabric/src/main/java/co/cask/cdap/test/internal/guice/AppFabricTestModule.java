@@ -41,6 +41,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -96,6 +97,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());
     install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
+    install(new NotificationServiceRuntimeModule().getInMemoryModules());
     install(new ConfigStoreModule().getInMemoryModule());
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());
@@ -127,6 +129,11 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+
       }
 
       @Override

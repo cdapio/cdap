@@ -13,7 +13,7 @@ Building Blocks
 .. toctree::
    :maxdepth: 1
    
-    Core Virtualizations <core>
+    Core Abstractions <core>
     Applications <applications>
     Streams <streams>
     Datasets <datasets/index>
@@ -22,30 +22,37 @@ Building Blocks
     Workflows <workflows>
     Schedules <schedules>
     Spark Programs <spark-programs>
-    Procedures <procedures>
+    Procedures (Deprecated) <procedures>
+    Workers <workers>
     Services <services>
+    Namespaces <namespaces>
     Transaction System <transaction-system>
 
-This section covers the :doc:`core virtualizations <core>` in the Cask Data Application Platform
+This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
 (CDAP)—**Data** and **Applications.**
 
-An :doc:`Application <applications>` is a collection of application virtualizations that read from—and
-write to—the data virtualization layer in CDAP.
+An :doc:`Application <applications>` is a collection of application building blocks that read and
+write data through the data abstraction layer in CDAP.
 
-**Data virtualizations** include:
+**Data abstractions** include:
 
 - :doc:`Streams <streams>`
 - :doc:`Datasets <datasets/index>`
 
-**Application virtualizations** include:
+**Applications** are composed from these building blocks:
 
 - :doc:`Flows (and Flowlets) <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
+- :doc:`Workers <workers>`
 - :doc:`Spark Programs <spark-programs>`
-- :doc:`Procedures <procedures>`
+- :doc:`Procedures (Deprecated) <procedures>`
 - :doc:`Services <services>`
+
+A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
+Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
+All applications and data live in an explicit CDAP namespace.
 
 Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
 that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
