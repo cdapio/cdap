@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,11 @@ import java.io.IOException;
  */
 public interface QueueClientFactory {
 
-  QueueProducer createProducer(QueueName queueName) throws IOException;
+  QueueProducer createProducer(QueueName queueName,
+                               Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) throws IOException;
+
+  QueueProducer createProducer(QueueName queueName, Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                               QueueMetrics queueMetrics) throws IOException;
 
   QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups) throws IOException;
-
-  QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException;
 }

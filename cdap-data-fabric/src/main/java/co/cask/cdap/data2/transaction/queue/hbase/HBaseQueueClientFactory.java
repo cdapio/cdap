@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -26,13 +27,15 @@ import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 /**
  * Factory for creating HBase queue producer and consumer instances.
  */
-public final class HBaseQueueClientFactory implements QueueClientFactory {
+public class HBaseQueueClientFactory implements QueueClientFactory {
 
   // 4M write buffer for HTable
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -75,15 +78,17 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName) throws IOException {
-    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
+  public QueueProducer createProducer(QueueName queueName,
+                                      Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) throws IOException {
+    return createProducer(queueName, consumerGroupConfigs, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+  public QueueProducer createProducer(QueueName queueName, Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                                      QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    return new HBaseQueueProducer(createHTable(admin.getActualTableName(queueName)), queueName, queueMetrics,
-                                  getQueueStrategy());
+    HTable hTable = createHTable(admin.getActualTableName(queueName));
+    return new HBaseQueueProducer(hTable, queueName, queueMetrics, getQueueStrategy(), consumerGroupConfigs);
   }
 
   protected HBaseQueueStrategy getQueueStrategy() {

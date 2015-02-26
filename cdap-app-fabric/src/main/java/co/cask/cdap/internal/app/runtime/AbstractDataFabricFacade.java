@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -76,28 +77,30 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName) throws IOException {
-    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
+  public QueueProducer createProducer(QueueName queueName,
+                                      Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) throws IOException {
+    return createProducer(queueName, consumerGroupConfigs, QueueMetrics.NOOP_QUEUE_METRICS);
+  }
+
+  @Override
+  public QueueProducer createProducer(QueueName queueName, Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                                      QueueMetrics queueMetrics) throws IOException {
+    QueueProducer producer = queueClientFactory.createProducer(queueName, consumerGroupConfigs, queueMetrics);
+    if (producer instanceof TransactionAware) {
+      dataSetContext.addTransactionAware((TransactionAware) producer);
+    }
+    return producer;
   }
 
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
-                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
+                                      ConsumerConfig consumerConfig, int numGroups) throws IOException {
     QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, numGroups);
     if (consumer instanceof TransactionAware) {
       consumer = new CloseableQueueConsumer(dataSetContext, consumer);
       dataSetContext.addTransactionAware((TransactionAware) consumer);
     }
     return consumer;
-  }
-
-  @Override
-  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    QueueProducer producer = queueClientFactory.createProducer(queueName, queueMetrics);
-    if (producer instanceof TransactionAware) {
-      dataSetContext.addTransactionAware((TransactionAware) producer);
-    }
-    return producer;
   }
 
   @Override

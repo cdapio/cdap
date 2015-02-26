@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
+import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -41,6 +42,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -122,7 +124,8 @@ public class OpenCloseDataSetTest {
 
     QueueName queueName = QueueName.fromStream(app.getId().getNamespaceId(), "xx");
     QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
+    // For in memory stream, consumer config doesn't matter
+    QueueProducer producer = queueClientFactory.createProducer(queueName, ImmutableList.<ConsumerConfig>of());
 
     // start tx to write in queue in tx
     Transaction tx = txSystemClient.startShort();
@@ -132,7 +135,7 @@ public class OpenCloseDataSetTest {
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;
       StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(),
-                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
+                                          ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
       producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }
 

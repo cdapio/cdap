@@ -20,6 +20,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -63,12 +64,14 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName) throws IOException {
-    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
+  public QueueProducer createProducer(QueueName queueName,
+                                      Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) throws IOException {
+    return createProducer(queueName, consumerGroupConfigs, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+  public QueueProducer createProducer(QueueName queueName, Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                                      QueueMetrics queueMetrics) throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
     return new LevelDBQueueProducer(
       new LevelDBTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);

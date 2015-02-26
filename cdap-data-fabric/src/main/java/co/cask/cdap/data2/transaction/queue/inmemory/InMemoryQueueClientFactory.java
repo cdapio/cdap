@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -39,18 +40,20 @@ public class InMemoryQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public QueueProducer createProducer(QueueName queueName) throws IOException {
-    return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
+  public QueueProducer createProducer(QueueName queueName,
+                                      Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) throws IOException {
+    return createProducer(queueName, consumerGroupConfigs, QueueMetrics.NOOP_QUEUE_METRICS);
+  }
+
+  @Override
+  public QueueProducer createProducer(QueueName queueName, Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                                      QueueMetrics queueMetrics) throws IOException {
+    return new InMemoryQueueProducer(queueName, queueService, queueMetrics);
   }
 
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
-                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
+                                      ConsumerConfig consumerConfig, int numGroups) throws IOException {
     return new InMemoryQueueConsumer(queueName, consumerConfig, numGroups, queueService);
-  }
-
-  @Override
-  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    return new InMemoryQueueProducer(queueName, queueService, queueMetrics);
   }
 }
