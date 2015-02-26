@@ -14,8 +14,9 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs, Services, and Procedures that read from and write to the data virtualization layer in CDAP.
-      
+      A collection of Programs and Services that read and write through the data
+      abstraction layer in CDAP.
+
    Stream
       The primary means of bringing data from external systems into CDAP in realtime; an
       ordered, time-partitioned sequences of data, usable for realtime collection and
@@ -58,17 +59,24 @@ Glossary
       processing beyond the CDAP processing paradigms. Examples could include running an
       IP-to-Geo lookup and serving user-profiles.      
 
-   Procedure
+   Procedure (deprecated)
       Procedures are used to query CDAP and its Datasets and retrieve results, making
       synchronous calls into CDAP from an external system and perform server-side
-      processing on-demand. They are similar to a stored procedure in a traditional database
-      system. Procedures are typically used to post-process data at query time.
-      
-   Data Virtualization
+      processing on-demand. They are similar to a stored procedure in a traditional
+      database system. Procedures are typically used to post-process data at query time.
+
+   Worker
+      Workers are typically long-running background programs that can be used to execute tasks.
+      Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
+      a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
+      via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.
+
+   Data Abstraction
       Abstraction of the actual representation of data in storage.
       
-   Application Virtualization
-      Abstraction of an application to allow the same application to run in multiple implementations without modification.
+   Application Abstraction
+      Application abstraction allows the same application to run in multiple  environments
+      without modification.
       
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.

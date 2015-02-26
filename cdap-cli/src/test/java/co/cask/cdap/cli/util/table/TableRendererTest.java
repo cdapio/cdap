@@ -51,4 +51,28 @@ public abstract class TableRendererTest {
       .build();
     getRenderer().render(System.out, table);
   }
+
+  @Test
+  public void testTwoLineCell() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333")
+      .setRows(ImmutableList.of(
+        new String[]{"123456789012345678901234567890", "2", "3"},
+        new String[]{"r2", "r2222", "z"},
+        new String[]{"r3333", "r3", "r3\n1"}))
+      .build();
+    getRenderer().render(System.out, table);
+  }
+
+  @Test
+  public void testTwoLineCell2() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333")
+      .setRows(ImmutableList.of(
+        new String[]{Strings.repeat("z", 27) + "a", "2", "3"},
+        new String[]{"r2", "r2222", "z"},
+        new String[]{"r3333", "r3", "r3\n1"}))
+      .build();
+    getRenderer().render(System.out, table);
+  }
 }

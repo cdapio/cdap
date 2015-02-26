@@ -193,9 +193,14 @@ public class AltStyleTableRenderer implements TableRenderer {
           int endSplitIdx = width;
           while (endSplitIdx < splitFieldLine.length()) {
             cellLines.add(splitFieldLine.substring(startSplitIdx, endSplitIdx));
-            startSplitIdx += width - 1;
-            endSplitIdx += width - 1;
+            startSplitIdx = endSplitIdx;
+            endSplitIdx = startSplitIdx + width;
           }
+          // add any remaining part of the splitFieldLine string
+          if (startSplitIdx < splitFieldLine.length() - 1) {
+            cellLines.add(splitFieldLine.substring(startSplitIdx, splitFieldLine.length()));
+          }
+          multiLines = true;
         }
       }
 

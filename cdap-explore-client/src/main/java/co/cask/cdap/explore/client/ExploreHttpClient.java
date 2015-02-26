@@ -29,6 +29,7 @@ import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -89,70 +90,79 @@ abstract class ExploreHttpClient implements Explore {
     }
   }
 
-  protected QueryHandle doEnableExploreStream(String streamName) throws ExploreException {
-    HttpResponse response = doPost(String.format("data/explore/streams/%s/enable", streamName), null, null);
+  protected QueryHandle doEnableExploreStream(Id.Stream stream) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/enable",
+                                                 stream.getNamespaceId(), stream.getName()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot enable explore on stream " + streamName + ". Reason: " +
+    throw new ExploreException("Cannot enable explore on stream " + stream.getName() + ". Reason: " +
                                  getDetails(response));
   }
 
-  protected QueryHandle doDisableExploreStream(String streamName) throws ExploreException {
-    HttpResponse response = doPost(String.format("data/explore/streams/%s/disable", streamName), null, null);
+  protected QueryHandle doDisableExploreStream(Id.Stream stream) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/disable",
+                                                 stream.getNamespaceId(), stream.getName()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot disable explore on stream " + streamName + ". Reason: " +
+    throw new ExploreException("Cannot disable explore on stream " + stream.getName() + ". Reason: " +
                                  getDetails(response));
   }
 
-  protected QueryHandle doAddPartition(String datasetName, PartitionKey key, String path) throws ExploreException {
+  protected QueryHandle doAddPartition(Id.DatasetInstance datasetInstance,
+                                       PartitionKey key, String path) throws ExploreException {
     Map<String, String> args = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     args.put("path", path);
-    HttpResponse response = doPost(String.format("data/explore/datasets/%s/partitions", datasetName),
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/partitions",
+                                                 datasetInstance.getNamespaceId(), datasetInstance.getId()),
                                    GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot add partition with key " + key + "to dataset " + datasetName +
+    throw new ExploreException("Cannot add partition with key " + key + "to dataset " + datasetInstance.getId() +
                                  ". Reason: " + getDetails(response));
   }
 
-  protected QueryHandle doDropPartition(String datasetName, PartitionKey key) throws ExploreException {
+  protected QueryHandle doDropPartition(Id.DatasetInstance datasetInstance, PartitionKey key) throws ExploreException {
     Map<String, String> args = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
-    HttpResponse response = doPost(String.format("data/explore/datasets/%s/deletePartition", datasetName),
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
+                                                 datasetInstance.getNamespace(), datasetInstance.getId()),
                                      GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot drop partition with key " + key + "from dataset " + datasetName +
+    throw new ExploreException("Cannot drop partition with key " + key + "from dataset " + datasetInstance.getId() +
                                  ". Reason: " + getDetails(response));
   }
 
-  protected QueryHandle doEnableExploreDataset(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("data/explore/datasets/%s/enable", datasetInstance), null, null);
+  protected QueryHandle doEnableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/enable",
+                                                 datasetInstance.getNamespace(), datasetInstance.getId()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot enable explore on dataset " + datasetInstance + ". Reason: " +
+    throw new ExploreException("Cannot enable explore on dataset " + datasetInstance.getId() + ". Reason: " +
                                  getDetails(response));
   }
 
-  protected QueryHandle doDisableExploreDataset(String datasetInstance) throws ExploreException {
-    HttpResponse response = doPost(String.format("data/explore/datasets/%s/disable", datasetInstance), null, null);
+  protected QueryHandle doDisableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/disable",
+                                                 datasetInstance.getNamespaceId(), datasetInstance.getId()),
+                                   null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot disable explore on dataset " + datasetInstance + ". Reason: " +
+    throw new ExploreException("Cannot disable explore on dataset " + datasetInstance.getId() + ". Reason: " +
                                  getDetails(response));
   }
 
   @Override
-  public QueryHandle execute(String statement) throws ExploreException {
-    HttpResponse response = doPost("data/explore/queries", GSON.toJson(ImmutableMap.of("query", statement)), null);
+  public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/queries", namespace.getId()),
+                                   GSON.toJson(ImmutableMap.of("query", statement)), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -161,7 +171,8 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public QueryStatus getStatus(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "status"));
+    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s",
+                                                handle.getHandle(), "status"));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, QueryStatus.class);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -172,7 +183,8 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<ColumnDesc> getResultSchema(QueryHandle handle) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s", handle.getHandle(), "schema"));
+    HttpResponse response = doGet(String.format("data/explore/queries/%s/%s",
+                                                handle.getHandle(), "schema"));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, COL_DESC_LIST_TYPE);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -183,7 +195,8 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<QueryResult> nextResults(QueryHandle handle, int size) throws ExploreException, HandleNotFoundException {
-    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "next"),
+    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s",
+                                                 handle.getHandle(), "next"),
                                    GSON.toJson(ImmutableMap.of("size", size)), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, ROW_LIST_TYPE);
@@ -196,7 +209,8 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public List<QueryResult> previewResults(QueryHandle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
-    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s", handle.getHandle(), "preview"),
+    HttpResponse response = doPost(String.format("data/explore/queries/%s/%s",
+                                                 handle.getHandle(), "preview"),
                                    null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, ROW_LIST_TYPE);
@@ -218,20 +232,22 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public List<QueryInfo> getQueries() throws ExploreException, SQLException {
-
-    HttpResponse response = doGet("data/explore/queries/");
+  public List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException {
+    String resource = String.format("namespaces/%s/data/explore/queries/", namespace.getId());
+    HttpResponse response = doGet(resource);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, QUERY_INFO_LIST_TYPE);
     }
     throw new ExploreException("Cannot get list of queries. Reason: " + getDetails(response));
   }
 
+  @Override
   public QueryHandle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
     String body = GSON.toJson(new ColumnsArgs(catalog, schemaPattern,
                                                                 tableNamePattern, columnNamePattern));
-    HttpResponse response = doPost("data/explore/jdbc/columns", body, null);
+    String resource = String.format("namespaces/%s/data/explore/jdbc/columns", schemaPattern);
+    HttpResponse response = doPost(resource, body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -250,7 +266,8 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public QueryHandle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
     String body = GSON.toJson(new SchemasArgs(catalog, schemaPattern));
-    HttpResponse response = doPost("data/explore/jdbc/schemas", body, null);
+    String resource = String.format("namespaces/%s/data/explore/jdbc/schemas", schemaPattern);
+    HttpResponse response = doPost(resource, body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -261,7 +278,8 @@ abstract class ExploreHttpClient implements Explore {
   public QueryHandle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
     String body = GSON.toJson(new FunctionsArgs(catalog, schemaPattern, functionNamePattern));
-    HttpResponse response = doPost("data/explore/jdbc/functions", body, null);
+    String resource = String.format("namespaces/%s/data/explore/jdbc/functions", schemaPattern);
+    HttpResponse response = doPost(resource, body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -281,7 +299,8 @@ abstract class ExploreHttpClient implements Explore {
   public QueryHandle getTables(String catalog, String schemaPattern,
                                String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
     String body = GSON.toJson(new TablesArgs(catalog, schemaPattern, tableNamePattern, tableTypes));
-    HttpResponse response = doPost("data/explore/jdbc/tables", body, null);
+    String resource = String.format("namespaces/%s/data/explore/jdbc/tables", schemaPattern);
+    HttpResponse response = doPost(resource, body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -290,7 +309,7 @@ abstract class ExploreHttpClient implements Explore {
 
   @Override
   public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException {
-    HttpResponse response = doGet(String.format("data/explore/tables%s", (database != null) ? "?db=" + database : ""));
+    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables", database));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, TABLES_TYPE);
     }
@@ -300,14 +319,13 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException {
-    String tableNamePrefix = (database != null) ? database + "." : "";
-    HttpResponse response = doGet(String.format("data/explore/tables/%s/info", tableNamePrefix + table));
+    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables/%s/info", database, table));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, TableInfo.class);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TableNotFoundException("Table " + tableNamePrefix + table + " not found.");
+      throw new TableNotFoundException("Table " + database + table + " not found.");
     }
-    throw new ExploreException("Cannot get the schema of table " + tableNamePrefix + table +
+    throw new ExploreException("Cannot get the schema of table " + database + table +
                                ". Reason: " + getDetails(response));
   }
 
@@ -327,6 +345,24 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot get the tables. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+    HttpResponse response = doPut(String.format("data/explore/namespaces/%s", namespace.getId()), null, null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot add a namespace. Reason: " + getDetails(response));
+  }
+
+  @Override
+  public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+    HttpResponse response = doDelete(String.format("data/explore/namespaces/%s", namespace.getId()));
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot remove a namespace. Reason: " + getDetails(response));
   }
 
   private String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {
@@ -410,7 +446,7 @@ abstract class ExploreHttpClient implements Explore {
   private String resolve(String resource) {
     InetSocketAddress addr = getExploreServiceAddress();
     String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.API_VERSION_2, resource);
+                               Constants.Gateway.API_VERSION_3, resource);
     LOG.trace("Explore URL = {}", url);
     return url;
   }
