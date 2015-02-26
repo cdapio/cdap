@@ -54,8 +54,8 @@ final class FileContentWriter implements ContentWriter {
     this.streamEvent = new MutableStreamEvent();
 
     directory.mkdirs();
-    this.eventFile = directory.append(String.format("upload.%s.dat", streamConfig.getStreamId()));
-    this.indexFile = directory.append(String.format("upload.%s.idx", streamConfig.getStreamId()));
+    this.eventFile = directory.append("upload.dat");
+    this.indexFile = directory.append("upload.idx");
 
     Map<String, String> properties = createStreamFileProperties(headers);
     properties.put(StreamDataFileConstants.Property.Key.UNI_TIMESTAMP,
