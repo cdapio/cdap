@@ -16,14 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.common.exception.NotFoundException;
-
 /**
- * Thrown when a schedule is not found.
+ * Exception thrown by the {@link Scheduler} interface in case of unforeseen errors.
  */
-public class ScheduleNotFoundException extends NotFoundException {
+public class SchedulerException extends Exception {
 
-  public ScheduleNotFoundException(String elementId) {
-    super("schedule", elementId);
+  public SchedulerException(String s) {
+    super(s);
+  }
+
+  public SchedulerException(Throwable throwable) {
+    super(throwable);
+  }
+
+  public SchedulerException(String s, Throwable throwable) {
+    super(s, throwable);
   }
 }

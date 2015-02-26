@@ -34,7 +34,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,47 +68,52 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   /**
    * Start the quartz scheduler service.
    */
-  protected final void startScheduler() {
+  protected final void startScheduler() throws SchedulerException {
     try {
       timeScheduler.start();
       LOG.info("Started time scheduler");
-    } catch (SchedulerException e) {
-      LOG.error("Error starting time scheduler {}", e.getCause(), e);
-      throw Throwables.propagate(e);
+    } catch (Throwable t) {
+      LOG.error("Error starting time scheduler", t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     }
 
     try {
       streamSizeScheduler.start();
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
-      LOG.error("Error starting stream size scheduler {}", t.getCause(), t);
-      throw Throwables.propagate(t);
+      LOG.error("Error starting stream size scheduler", t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     }
   }
 
   /**
    * Stop the quartz scheduler service.
    */
-  protected final void stopScheduler() {
+  protected final void stopScheduler() throws SchedulerException {
     try {
       streamSizeScheduler.stop();
       LOG.info("Stopped stream size scheduler");
     } catch (Throwable t) {
-      LOG.error("Error stopping stream size scheduler {}", t.getCause(), t);
-      throw Throwables.propagate(t);
+      LOG.error("Error stopping stream size scheduler", t);
+      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      throw new SchedulerException(t);
     } finally {
       try {
         timeScheduler.stop();
         LOG.info("Stopped time scheduler");
-      } catch (SchedulerException e) {
-        LOG.error("Error stopping time scheduler {}", e.getCause(), e);
-        throw Throwables.propagate(e);
+      } catch (Throwable t) {
+        LOG.error("Error stopping time scheduler", t);
+        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+        throw new SchedulerException(t);
       }
     }
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule) {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
+    throws SchedulerException {
     if (schedule instanceof TimeSchedule) {
       timeScheduler.schedule(programId, programType, schedule);
     } else if (schedule instanceof StreamSizeSchedule) {
@@ -120,7 +124,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
     Set<Schedule> timeSchedules = Sets.newHashSet();
     Set<Schedule> streamSizeSchedules = Sets.newHashSet();
     for (Schedule schedule : schedules) {
@@ -141,12 +146,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-   return timeScheduler.nextScheduledRuntime(program, programType);
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
+    return timeScheduler.nextScheduledRuntime(program, programType);
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     return ImmutableList.<String>builder()
       .addAll(timeScheduler.getScheduleIds(program, programType))
       .addAll(streamSizeScheduler.getScheduleIds(program, programType))
@@ -154,46 +161,43 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    try {
-      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
-      scheduler.suspendSchedule(program, programType, scheduleName);
-    } catch (NotFoundException e) {
-      LOG.trace("Could not suspend schedule", e);
-      Throwables.propagate(e);
-    }
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
+    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    scheduler.suspendSchedule(program, programType, scheduleName);
   }
 
   @Override
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    try {
-      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
-      scheduler.resumeSchedule(program, programType, scheduleName);
-    } catch (NotFoundException e) {
-      LOG.trace("Could not resume schedule", e);
-      Throwables.propagate(e);
-    }
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
+    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    scheduler.resumeSchedule(program, programType, scheduleName);
   }
 
   @Override
-  public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    try {
-      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
-      scheduler.deleteSchedule(program, programType, scheduleName);
-    } catch (NotFoundException e) {
-      LOG.trace("Could not delete schedule", e);
-      Throwables.propagate(e);
-    }
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws NotFoundException, SchedulerException {
+    Scheduler scheduler = getSchedulerForSchedule(program, programType, schedule.getName());
+    scheduler.updateSchedule(program, programType, schedule);
   }
 
   @Override
-  public void deleteSchedules(Id.Program program, SchedulableProgramType programType) {
+  public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
+    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    scheduler.deleteSchedule(program, programType, scheduleName);
+  }
+
+  @Override
+  public void deleteSchedules(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     timeScheduler.deleteSchedules(program, programType);
     streamSizeScheduler.deleteSchedules(program, programType);
   }
 
   @Override
-  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws SchedulerException {
     try {
       Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
       return scheduler.scheduleState(program, programType, scheduleName);
@@ -210,7 +214,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   private Scheduler getSchedulerForSchedule(Id.Program program, SchedulableProgramType programType,
-                                               String scheduleName) throws NotFoundException {
+                                            String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(program.getApplicationId());

@@ -29,6 +29,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -122,7 +123,8 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
     StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
@@ -146,7 +148,7 @@ public class StreamSizeScheduler implements Scheduler {
    *                stream size schedules, {@code false} otherwise
    */
   private void schedule(Id.Program program, SchedulableProgramType programType, StreamSizeSchedule streamSizeSchedule,
-                        boolean active, long baseRunSize, long baseRunTs, boolean persist) {
+                        boolean active, long baseRunSize, long baseRunTs, boolean persist) throws SchedulerException  {
     // Create a new StreamSubscriber, if one doesn't exist for the stream passed in the schedule
     Id.Stream streamId = Id.Stream.from(program.getNamespaceId(), streamSizeSchedule.getStreamName());
     StreamSubscriber streamSubscriber = streamSubscribers.get(streamId);
@@ -159,11 +161,11 @@ public class StreamSizeScheduler implements Scheduler {
         } catch (NotificationFeedException e) {
           streamSubscribers.remove(streamId);
           LOG.error("Notification feed error for streamSizeSchedule {}", streamSizeSchedule);
-          throw Throwables.propagate(e);
+          throw new SchedulerException(e);
         } catch (NotificationFeedNotFoundException e) {
           streamSubscribers.remove(streamId);
           LOG.error("Notification feed does not exist for streamSizeSchedule {}", streamSizeSchedule);
-          throw Throwables.propagate(e);
+          throw new SchedulerException(e);
         }
       } else {
         streamSubscriber = previous;
@@ -178,19 +180,22 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
     for (Schedule s : schedules) {
       schedule(program, programType, s);
     }
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     return ImmutableList.of();
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
     String programScheduleId = getProgramScheduleId(program, programType);
@@ -200,51 +205,48 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    try {
-      String scheduleId = getScheduleId(program, programType, scheduleName);
-      StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
-      if (subscriber == null) {
-        throw new IllegalArgumentException("Schedule not found: " + scheduleId);
-      }
-      subscriber.suspendScheduleTask(program, programType, scheduleName);
-    } catch (ScheduleNotFoundException e) {
-      throw Throwables.propagate(e);
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws ScheduleNotFoundException, SchedulerException {
+    String scheduleId = getScheduleId(program, programType, scheduleName);
+    StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
+    if (subscriber == null) {
+      throw new ScheduleNotFoundException(scheduleName);
     }
+    subscriber.suspendScheduleTask(program, programType, scheduleName);
   }
 
   @Override
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    try {
-      String scheduleId = getScheduleId(program, programType, scheduleName);
-      StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
-      if (subscriber == null) {
-        throw new IllegalArgumentException("Schedule not found: " + scheduleId);
-      }
-      subscriber.resumeScheduleTask(program, programType, scheduleName);
-    } catch (ScheduleNotFoundException e) {
-      throw Throwables.propagate(e);
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws ScheduleNotFoundException, SchedulerException {
+    String scheduleId = getScheduleId(program, programType, scheduleName);
+    StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
+    if (subscriber == null) {
+      throw new ScheduleNotFoundException(scheduleName);
     }
+    subscriber.resumeScheduleTask(program, programType, scheduleName);
   }
 
   @Override
-  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
-    try {
-      String scheduleId = getScheduleId(programId, programType, scheduleName);
-      StreamSubscriber subscriber = scheduleSubscribers.remove(scheduleId);
-      if (subscriber == null) {
-        throw new IllegalArgumentException("Schedule not found: " + scheduleId);
-      }
-      subscriber.deleteSchedule(programId, programType, scheduleName);
-      // We don't delete a StreamSubscriber, even if it has zero task. We keep an empty subscriber so that we don't
-      // have to worry about race conditions between add/delete of schedules
-    } catch (ScheduleNotFoundException e) {
-      throw Throwables.propagate(e);
-    }
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws NotFoundException, SchedulerException {
+    // TODO fill
   }
 
   @Override
-  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws ScheduleNotFoundException, SchedulerException {
+    String scheduleId = getScheduleId(programId, programType, scheduleName);
+    StreamSubscriber subscriber = scheduleSubscribers.remove(scheduleId);
+    if (subscriber == null) {
+      throw new ScheduleNotFoundException(scheduleName);
+    }
+    subscriber.deleteSchedule(programId, programType, scheduleName);
+    // We don't delete a StreamSubscriber, even if it has zero task. We keep an empty subscriber so that we don't
+    // have to worry about race conditions between add/delete of schedules
+  }
+
+  @Override
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) throws SchedulerException {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
     String programScheduleId = getProgramScheduleId(programId, programType);
@@ -253,16 +255,22 @@ public class StreamSizeScheduler implements Scheduler {
       .keySet();
     int scheduleIdIdx = programScheduleId.length() + 1;
     for (String scheduleId : scheduleIds) {
-      if (scheduleId.length() < scheduleIdIdx) {
-        LOG.warn("Format of scheduleID incorrect: {}", scheduleId);
-        continue;
+      try {
+        if (scheduleId.length() < scheduleIdIdx) {
+          LOG.warn("Format of scheduleID incorrect: {}", scheduleId);
+          continue;
+        }
+        deleteSchedule(programId, programType, scheduleId.substring(scheduleIdIdx));
+      } catch (ScheduleNotFoundException e) {
+        // Could be a race, the schedule has just been deleted
+        LOG.debug("Could not delete schedule '{}'", scheduleId, e);
       }
-      deleteSchedule(programId, programType, scheduleId.substring(scheduleIdIdx));
     }
   }
 
   @Override
-  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws SchedulerException {
     StreamSubscriber subscriber = scheduleSubscribers.get(getScheduleId(program, programType, scheduleName));
     if (subscriber != null) {
       return subscriber.scheduleTaskState(program, programType, scheduleName);

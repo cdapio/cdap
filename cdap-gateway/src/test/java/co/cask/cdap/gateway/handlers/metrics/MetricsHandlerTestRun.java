@@ -194,6 +194,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "counter") +
         "&metric=system.reads&aggregate=true", 1);
 
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 4);
+
     // aggregate result, in the wrong namespace
     verifyEmptyQueryResult(
       "/v3/metrics/query?context=" + getContext("myspace", "WCount1", "WCounter", "splitter") +

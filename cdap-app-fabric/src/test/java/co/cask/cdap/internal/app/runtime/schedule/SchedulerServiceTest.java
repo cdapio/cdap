@@ -147,7 +147,7 @@ public class SchedulerServiceTest {
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
   }
 
-  private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) {
+  private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) throws Exception {
     for (String scheduleId : scheduleIds) {
       int i = scheduleId.lastIndexOf(':');
       Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
