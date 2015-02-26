@@ -54,7 +54,10 @@ angular.module(PKG.name + '.feature.mapreduce')
           })
             .state('mapreduce.detail.runs.tab.status', {
               url: '/status',
-              template: '<div> Status: {{$state.params.runId}} </div>',
+              template:
+              '<div class="well well-lg text-center">' +
+                '<div> Mapreduce: Status - Work In Progress</div> ' +
+              '</div>',
               ncyBreadcrumb: {
                 skip: true
               }
