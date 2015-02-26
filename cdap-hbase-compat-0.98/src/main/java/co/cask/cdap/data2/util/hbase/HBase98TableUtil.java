@@ -142,6 +142,17 @@ public class HBase98TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
+    TableName[] tableNames = admin.listTableNamesByNamespace(namespaceId.getId());
+    for (TableName tableName : tableNames) {
+      if (tableName.getQualifierAsString().startsWith(tablePrefix)) {
+        admin.disableTable(tableName);
+        admin.deleteTable(tableName);
+      }
+    }
+  }
+
+  @Override
   public void setCompression(HColumnDescriptor columnDescriptor, CompressionType type) {
     switch (type) {
       case LZO:
@@ -255,7 +266,11 @@ public class HBase98TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
+  private TableId fromTableName(TableName tableName) {
+    return TableId.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+  }
+
   private TableName toTableName(TableId tableId) {
-    return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+    return TableName.valueOf(tableId.getHBaseNamespace(), tableId.getTableName());
   }
 }

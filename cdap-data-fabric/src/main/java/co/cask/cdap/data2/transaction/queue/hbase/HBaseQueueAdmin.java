@@ -27,6 +27,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -165,7 +166,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   boolean exists(QueueName queueName) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
-    return admin.tableExists(getActualTableName(queueName)) && admin.tableExists(getConfigTableName(queueName));
+    return tableUtil.tableExists(admin, getDataTableId(queueName)) &&
+      tableUtil.tableExists(admin, getConfigTableId(queueName));
   }
 
   @Override
@@ -193,12 +195,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {
+
+  }
+
+  private void truncate(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
-    if (admin.tableExists(tableNameBytes)) {
-      HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
-      admin.disableTable(tableNameBytes);
-      admin.deleteTable(tableNameBytes);
-      admin.createTable(tableDescriptor);
+    if (tableUtil.tableExists(admin, tableId)) {
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+      tableUtil.disableTable(admin, tableId);
+      tableUtil.deleteTable(admin, tableId);
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
     }
   }
 
@@ -214,8 +220,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    String tableName = getTableNameForFlow(namespaceId, app, flow);
-    drop(Bytes.toBytes(tableName));
+    drop(getTableIdFromFlow(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -225,8 +230,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
-      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
-      drop(tableNameBytes);
+      drop(getDataTableId(queueName));
     } else {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
     }
@@ -236,7 +240,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   @Override
   public void upgrade(String tableName, Properties properties) throws Exception {
-    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableName, hConf, tableUtil, properties);
+    //TODO: check this
+    TableId tableId = TableId.from(tableName);
+    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
     try {
       dsAdmin.upgrade();
     } finally {
@@ -245,16 +251,32 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private void drop(byte[] tableName) throws IOException {
+
+  }
+
+  private void drop(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
-    if (admin.tableExists(tableName)) {
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+    if (tableUtil.tableExists(admin, tableId)) {
+      tableUtil.disableTable(admin, tableId);
+      tableUtil.deleteTable(admin, tableId);
     }
+  }
+
+  public TableId getConfigTableId(QueueName queueName) {
+    return TableId.from(getConfigTableName(queueName));
+  }
+
+  public TableId getDataTableId(QueueName queueName) {
+    return TableId.from(getActualTableName(queueName));
+  }
+
+  public TableId getTableIdFromFlow(String namespaceId, String app, String flow) {
+    return TableId.from(getTableNameForFlow(namespaceId, app, flow));
   }
 
   private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
+    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
     try {
       byte[] rowKey = queueName.toBytes();
       hTable.delete(new Delete(rowKey));
@@ -277,9 +299,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
-    if (admin.tableExists(configTableName)) {
+    TableId tableId = TableId.from(configTableName);
+    if (tableUtil.tableExists(admin, tableId)) {
       // we need to delete the row for this queue name from the config table
-      HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+      HTable hTable = tableUtil.getHTable(admin.getConfiguration(), tableId);
       try {
         byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
@@ -332,10 +355,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // not accessible by the queue region coprocessor for doing eviction.
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    createConfigTable(getConfigTableName(queueName));
+    createConfigTable(queueName);
 
-    String hBaseTableName = getActualTableName(queueName);
-    DatasetAdmin dsAdmin = new DatasetAdmin(hBaseTableName, hConf, tableUtil, properties);
+    TableId tableId = getDataTableId(queueName);
+    DatasetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
     try {
       dsAdmin.create();
     } finally {
@@ -343,16 +366,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  private void createConfigTable(String configTableName) throws IOException {
-    byte[] tableName = Bytes.toBytes(configTableName);
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+  private void createConfigTable(QueueName queueName) throws IOException {
+    TableId tableId = getConfigTableId(queueName);
+    HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     htd.addFamily(hcd);
     hcd.setMaxVersions(1);
 
     // the TableId below is ignored, since the HTableDescriptor is created without it.
-    tableUtil.createTableIfNotExists(getHBaseAdmin(), TableId.from(configTableName), htd, null,
+    tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd, null,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
 
@@ -366,8 +389,22 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
+//    tableUtil.deleteTablesInNamespace(namespaceId);
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    dropTablesWithPrefix(String.format("%s.", getTableNamePrefix(namespaceId)));
+    /*
+    String tableNamePrefix = String.format("%s.", getTableNamePrefix(namespaceId));
+
+    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !isConfigTable(tableName)) {
+        drop(desc.getName());
+      }
+    }
+*/
+    String trueTableNamePrefix = unqualifiedTableNamePrefix;
+    tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
+
     drop(Bytes.toBytes(getConfigTableName(namespaceId)));
   }
 
@@ -379,7 +416,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
+    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
+//    new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -413,7 +451,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
+
+    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -515,16 +554,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return tableName.startsWith(tableNamePrefix);
   }
 
-  private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
-    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
-      String tableName = Bytes.toString(desc.getName());
-      // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !isConfigTable(tableName)) {
-        drop(desc.getName());
-      }
-    }
-  }
-
   private boolean isConfigTable(String tableName) {
     String[] parts = tableName.split("\\.");
     if (parts.length != 5) {
@@ -609,13 +638,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   // only used for create & upgrade of data table
   private final class DatasetAdmin extends AbstractHBaseDataSetAdmin {
     private final Properties properties;
-    // TODO: Temporary Hack. Should be removed once queues use HBase namespaces
-    private final String tableName;
 
-    private DatasetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil, Properties properties) {
-      super(TableId.from(name), hConf, tableUtil);
+    private DatasetAdmin(TableId tableId, Configuration hConf, HBaseTableUtil tableUtil, Properties properties) {
+      super(tableId, hConf, tableUtil);
       this.properties = properties;
-      this.tableName = name;
     }
 
     @Override
@@ -653,8 +679,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     @Override
     public void create() throws IOException {
       // Create the queue table
-      byte[] tableName = Bytes.toBytes(this.tableName);
-      HTableDescriptor htd = new HTableDescriptor(tableName);
+      HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
       for (String key : properties.stringPropertyNames()) {
         htd.setValue(key, properties.getProperty(key));
       }

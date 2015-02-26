@@ -39,7 +39,7 @@ public class HBase96TableUtilTest extends AbstractHBaseTableUtilTest {
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
       return tableId.getTableName();
     }
-    return Joiner.on(':').join(getTableUtil().toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+    return Joiner.on(':').join(tableId.getHBaseNamespace(), tableId.getTableName());
   }
 
   @Override

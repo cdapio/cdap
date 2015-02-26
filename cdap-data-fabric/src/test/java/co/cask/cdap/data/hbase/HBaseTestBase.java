@@ -20,7 +20,6 @@ import com.google.common.base.Function;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 
 import java.io.IOException;
@@ -33,9 +32,7 @@ import java.util.regex.Pattern;
  *
  * To use, simply extend this class and create your tests like normal.  From
  * within your tests, you can access the underlying HBase cluster through
- * {@link #getConfiguration()}, {@link #getHBaseAdmin()}, and
- * {@link #getHTable(byte[])}.
- *
+ * {@link #getConfiguration()}, {@link #getHBaseAdmin()}
  * Alternatively, you can call the {@link #startHBase()} and {@link #stopHBase()}
  * methods directly from within your own BeforeClass/AfterClass methods.
  *
@@ -51,19 +48,12 @@ public abstract class HBaseTestBase {
     return new HBaseAdmin(getConfiguration());
   }
 
-  // TODO: This method should be removed in favor of HBaseTableUtil#getHTable. Currently only used in Queue Tests
-  public HTable getHTable(byte [] tableName) throws IOException {
-    return new HTable(getConfiguration(), tableName);
-  }
-
-  // TODO: This method should be removed in favor of HBaseTableUtil#deleteAllInNamespace
+  // TODO: This method should be removed in favor of HBaseTableUtil#deleteAllInNamespace - AGREED.
   public void deleteTables(String prefix) throws IOException {
     Pattern pattern = Pattern.compile(prefix + ".*");
     getHBaseAdmin().disableTables(pattern);
     getHBaseAdmin().deleteTables(pattern);
   }
-
-  // Temporary directories
 
   public String getZkConnectionString() {
     return "localhost:" + getZKClientPort();

@@ -27,7 +27,7 @@ import co.cask.cdap.proto.Id;
  * Common implementation of table-based QueueAdmin
  */
 public abstract class AbstractQueueAdmin implements QueueAdmin {
-  private final String unqualifiedTableNamePrefix;
+  protected final String unqualifiedTableNamePrefix;
   private final String unqualifiedConfigTableNameSuffix;
   protected final DefaultDatasetNamespace namespace;
 
@@ -50,6 +50,10 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     if (parts.length == 6) {
       // cdap.<namespace>.system.queue.<app>.<flow>
       namespaceId = parts[1];
+    } else if (parts.length == 5) {
+      // cdap.system.queue.<app>.<flow>
+      // the namespace in the tablename is missing if it is default namespace (for backwards compatibility)
+      return Constants.DEFAULT_NAMESPACE;
     } else {
       throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
                                                          "Expected 'cdap.<namespace>.system.queue.<app>.<flow>'" +

@@ -24,12 +24,19 @@ public final class QueueUtils {
     // the name of this table has the form: <cdap root namespace>.<queue namespace>.<system namespace>.(queue|stream).*
     // beware that the cdap name space may also contain ., but there must be at least two .
 
-    int firstDot = queueTableName.indexOf('.');
-    if (firstDot < 0) {
+    int dotPos = queueTableName.indexOf('.');
+    int colonPos = queueTableName.indexOf(':');
+
+    int nsDivider = dotPos;
+    if (colonPos >= 0) {
+      nsDivider = dotPos < colonPos ? dotPos : colonPos;
+    }
+
+    if (nsDivider < 0) {
       throw new IllegalArgumentException(
         "Unable to determine config table name from queue table name '" + queueTableName + "'");
     }
-    int secondDot = queueTableName.indexOf('.', firstDot + 1);
+    int secondDot = queueTableName.indexOf('.', nsDivider + 1);
     if (secondDot < 0) {
       throw new IllegalArgumentException(
         "Unable to determine config table name from queue table name '" + queueTableName + "'");

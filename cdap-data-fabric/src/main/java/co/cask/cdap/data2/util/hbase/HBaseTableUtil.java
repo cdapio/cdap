@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -391,8 +392,9 @@ public abstract class HBaseTableUtil {
     return info;
   }
 
+  //TODO: move to TableId?
   @VisibleForTesting
-  public String toHBaseNamespace(Id.Namespace namespace) {
+  public static String toHBaseNamespace(Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
@@ -508,6 +510,17 @@ public abstract class HBaseTableUtil {
    * @throws IOException
    */
   public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Deletes all tables in the specified namespace, that match a specified {@link Pattern}
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being requested
+   * @param tablePrefix pattern that is matched against a table name to check for deletion
+   * @throws IOException
+   */
+  public abstract void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId,
+                                            String tablePrefix) throws IOException;
 
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);

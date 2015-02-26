@@ -41,6 +41,7 @@ import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -96,8 +97,8 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static CConfiguration cConf;
   private static Configuration hConf;
 
-  private static HBaseTestBase testHBase;
-  private static HBaseTableUtil tableUtil;
+  protected static HBaseTestBase testHBase;
+  protected static HBaseTableUtil tableUtil;
   private static ZKClientService zkClientService;
 
   @BeforeClass
@@ -180,7 +181,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    tableUtil = new HBaseTableUtilFactory().get();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
@@ -219,7 +219,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = tableUtil.getHTable(testHBase.getConfiguration(), TableId.from(tableName));
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -233,7 +233,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = tableUtil.getHTable(testHBase.getConfiguration(), TableId.from(tableName));
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
@@ -319,6 +319,13 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
+    testHBase.deleteTables(tableUtil.toHBaseNamespace(NAMESPACE_ID));
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+
+
+    testHBase.deleteTables(tableUtil.toHBaseNamespace(NAMESPACE_ID1));
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+
     txService.stop();
     testHBase.stopHBase();
     zkClientService.stopAndWait();

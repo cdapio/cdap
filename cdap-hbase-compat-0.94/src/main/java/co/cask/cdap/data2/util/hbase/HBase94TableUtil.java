@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -122,6 +123,15 @@ public class HBase94TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     return admin.getTableRegions(Bytes.toBytes(toTableName(tableId)));
+  }
+
+  @Override
+  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
+    String tableName = TableId.from(HBaseTableUtil.toHBaseNamespace(namespaceId), tablePrefix).getTableName();
+    String namespacedPrefix = String.format("%s", tableName);
+    Pattern tablePattern = Pattern.compile(namespacedPrefix + tablePrefix + ".*");
+    admin.disableTables(tablePattern);
+    admin.deleteTables(tablePattern);
   }
 
   @Override

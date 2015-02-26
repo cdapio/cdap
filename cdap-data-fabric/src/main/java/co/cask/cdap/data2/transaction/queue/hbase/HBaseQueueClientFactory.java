@@ -23,6 +23,9 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -42,6 +45,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private final HBaseQueueAdmin queueAdmin;
   private final HBaseStreamAdmin streamAdmin;
   private final HBaseQueueUtil queueUtil;
+  private final HBaseTableUtil hBaseTableUtil;
 
   @Inject
   public HBaseQueueClientFactory(CConfiguration cConf, Configuration hConf,
@@ -51,6 +55,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
     this.streamAdmin = streamAdmin;
     this.queueUtil = new HBaseQueueUtilFactory().get();
+    this.hBaseTableUtil = new HBaseTableUtilFactory().get();
   }
 
   // for testing only
@@ -109,7 +114,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   private HTable createHTable(String name) throws IOException {
-    HTable consumerTable = new HTable(hConf, name);
+    HTable consumerTable = hBaseTableUtil.getHTable(hConf, TableId.from(name));
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);
