@@ -108,12 +108,15 @@ public class CLIMain {
    * @throws IOException
    */
   @Inject
-  public CLIMain(Injector injector, PrintStream output,
+  public CLIMain(PrintStream output,
                  @Named(NAME_NAMESPACE) String namespace,
                  @Named(NAME_URI) String uri,
                  @Named(NAME_AUTOCONNECT) boolean autoconnect,
                  @Named(NAME_VERBOSE) final boolean verbose,
-                 CLIConfig cliConfig) throws URISyntaxException, IOException {
+                 CLIConfig cliConfig,
+                 DefaultCommands defaultCommands,
+                 DefaultCompleters defaultCompleters,
+                 EndpointSupplier endpointSupplier) throws URISyntaxException, IOException {
 
     if (autoconnect) {
       try {
@@ -131,13 +134,13 @@ public class CLIMain {
     }
 
     this.commands = ImmutableList.of(
-      injector.getInstance(DefaultCommands.class),
+      defaultCommands,
       new CommandSet<Command>(ImmutableList.<Command>of(
         new HelpCommand(getCommandsSupplier()),
         new SearchCommandsCommand(getCommandsSupplier())
       )));
 
-    Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
+    Map<String, Completer> completers = defaultCompleters.get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
@@ -158,7 +161,7 @@ public class CLIMain {
         return false;
       }
     });
-    cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
+    cli.addCompleterSupplier(endpointSupplier);
 
     updateCLIPrompt(cliConfig.getClientConfig());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
