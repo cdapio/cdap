@@ -310,7 +310,7 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   private void getAllPossibleTags(List<TagValue> tagsList, List<List<TagValue>> resultSet) throws Exception {
     //todo: which resolution table to use?
-    MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagsList);
+    MetricSearchQuery query = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, Integer.MAX_VALUE, -1, tagsList);
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(query);
     if (nextTags.isEmpty()) {
       resultSet.add(Lists.newArrayList(tagsList));

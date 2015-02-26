@@ -231,7 +231,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
     contextPrefix = toCanonicalContext(tagValues);
 
-    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, humanToTagNames(tagValues));
+    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, Integer.MAX_VALUE, -1,
+                                                          humanToTagNames(tagValues));
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
     Collection<String> result = Lists.newArrayList();

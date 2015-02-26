@@ -175,6 +175,10 @@ public class DataMigration26 {
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.next();
       String tagValue = Bytes.toString(entry.getKey());
+      if (metricName.equals("dataset.store.bytes")) {
+        LOG.info("Dataset context : {} datasetName : {} value : {} run-id : {}", context, tagValue,
+                 Bytes.toLong(entry.getValue()), tagMap.get(Constants.Metrics.Tag.RUN_ID));
+      }
       if (nonEmptyTagKey != null) {
         if (tagValue.equals(UpgradeMetricsConstants.EMPTY_TAG)) {
           continue;
@@ -183,12 +187,12 @@ public class DataMigration26 {
           Map<String, String> newMap = Maps.newHashMap(tagMap);
           newMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
           newMap.put(nonEmptyTagKey, tagValue);
-          sendMetrics(aggMetricStore, newMap, metricName, 0, value, MetricType.GAUGE);
+          sendMetrics(aggMetricStore, newMap, metricName, 0, value, MetricType.COUNTER);
           LOG.info("Sending Metric for context {} with tagKey {} and tagValue {}", context, nonEmptyTagKey, tagValue);
         }
       } else {
         LOG.info("Context without tagKey {}", context);
-        sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.GAUGE);
+        sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.COUNTER);
       }
     }
   }
@@ -244,9 +248,9 @@ public class DataMigration26 {
   }
 
   private void sendMetrics(MetricStore store, Map<String, String> tags, String metricName, int timeStamp,
-                           long value, MetricType gauge) throws Exception {
+                           long value, MetricType counter) throws Exception {
     LOG.info("Storing Metric - Tags {} metricName {} value {}", tags, metricName, value);
-    store.add(new MetricValue(tags, metricName, timeStamp, value, gauge));
+    store.add(new MetricValue(tags, metricName, timeStamp, value, counter));
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
