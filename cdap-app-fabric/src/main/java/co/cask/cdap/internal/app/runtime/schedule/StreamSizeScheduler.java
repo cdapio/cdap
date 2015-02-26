@@ -686,6 +686,7 @@ public class StreamSizeScheduler implements Scheduler {
       }
       long pastRunSize;
       long pastRunTs;
+      StreamSizeSchedule currentSchedule;
       synchronized (this) {
         if (notification.getSize() < baseSize) {
           // This can happen if no notification is received for a stream for some time, and we poll the stream events
@@ -696,7 +697,8 @@ public class StreamSizeScheduler implements Scheduler {
           baseTs = notification.getTimestamp();
           return;
         }
-        if (notification.getSize() < baseSize + toBytes(streamSizeSchedule.getDataTriggerMB())) {
+        currentSchedule = streamSizeSchedule;
+        if (notification.getSize() < baseSize + toBytes(currentSchedule.getDataTriggerMB())) {
           return;
         }
 
@@ -706,11 +708,11 @@ public class StreamSizeScheduler implements Scheduler {
         baseSize = notification.getSize();
         baseTs = notification.getTimestamp();
         LOG.debug("Base size and ts updated to {}, {} for streamSizeSchedule {}",
-                  baseSize, baseTs, streamSizeSchedule);
+                  baseSize, baseTs, currentSchedule);
       }
 
       Arguments args = new BasicArguments(ImmutableMap.of(
-        ProgramOptionConstants.SCHEDULE_NAME, streamSizeSchedule.getName(),
+        ProgramOptionConstants.SCHEDULE_NAME, currentSchedule.getName(),
         ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(baseTs),
         ProgramOptionConstants.RUN_DATA_SIZE, Long.toString(baseSize),
         ProgramOptionConstants.PAST_RUN_LOGICAL_START_TIME, Long.toString(pastRunTs),
@@ -720,13 +722,13 @@ public class StreamSizeScheduler implements Scheduler {
       while (true) {
         ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(getStore(), programRuntimeService, preferencesStore);
         try {
-          LOG.info("About to start streamSizeSchedule {}", streamSizeSchedule);
+          LOG.info("About to start streamSizeSchedule {}", currentSchedule);
           taskRunner.run(programId, ProgramType.valueOf(programType.name()), args);
           break;
         } catch (TaskExecutionException e) {
-          LOG.error("Execution exception while running streamSizeSchedule {}", streamSizeSchedule.getName(), e);
+          LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
           if (e.isRefireImmediately()) {
-            LOG.info("Retrying execution for streamSizeSchedule {}", streamSizeSchedule.getName());
+            LOG.info("Retrying execution for streamSizeSchedule {}", currentSchedule.getName());
           } else {
             break;
           }
@@ -751,7 +753,7 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Replace the {@link StreamSizeSchedule} of this task.
      */
-    public void updateSchedule(StreamSizeSchedule schedule) {
+    public synchronized void updateSchedule(StreamSizeSchedule schedule) {
       streamSizeSchedule = schedule;
     }
 
