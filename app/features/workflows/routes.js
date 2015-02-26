@@ -43,7 +43,7 @@ angular.module(PKG.name + '.feature.workflows')
             }
           })
 
-            .state('workflows.detail.runs.detail', {
+            .state('workflows.detail.runs.tabs', {
               url: '/runs/:runId',
               template: '<ui-view/>',
               abstract: true,
@@ -51,7 +51,7 @@ angular.module(PKG.name + '.feature.workflows')
                 skip: true
               }
             })
-              .state('workflows.detail.runs.detail.status', {
+              .state('workflows.detail.runs.tabs.status', {
                 url: '/status',
                 templateUrl: '/assets/features/workflows/templates/tabs/runs/flow.html',
                 controller: 'WorkflowsDetailRunStatusController',
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.workflows')
                 }
               })
 
-              .state('workflows.detail.runs.detail.data', {
+              .state('workflows.detail.runs.tabs.data', {
                 url: '/data',
                 template:
                 '<div class="well well-lg text-center">' +
@@ -72,7 +72,7 @@ angular.module(PKG.name + '.feature.workflows')
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"
                 }
               })
-              .state('workflows.detail.runs.detail.configuration', {
+              .state('workflows.detail.runs.tabs.configuration', {
                 url: '/configuration',
                 template:
                 '<div class="well well-lg text-center">' +
@@ -83,7 +83,7 @@ angular.module(PKG.name + '.feature.workflows')
                   label: "{{$state.params.programId}} / {{$state.params.runId}}"
                 }
               })
-              .state('workflows.detail.runs.detail.log', {
+              .state('workflows.detail.runs.tabs.log', {
                 url: '/log',
                 template:
                 '<div class="well well-lg text-center">' +
@@ -116,7 +116,7 @@ angular.module(PKG.name + '.feature.workflows')
             templateUrl: '/assets/features/workflows/templates/tabs/history.html',
             ncyBreadcrumb: {
               parent: "apps.detail.overview",
-              label: "{{$state.params.programId}}"
+              label: "{{$state.params.programId}} / History"
             }
           })
           .state('workflows.detail.resources', {

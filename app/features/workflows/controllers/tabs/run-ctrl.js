@@ -36,7 +36,7 @@ angular.module(PKG.name + '.feature.workflows')
         toState = 0;
       }
       $timeout(function() {
-        $state.go('workflows.detail.runs.detail.' + $scope.runTabs[toState]);
+        $state.go('workflows.detail.runs.tabs.' + $scope.runTabs[toState]);
       });
     });
 
@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.workflows')
           toState = $state.current;
         } else {
           // Else default to status state if navigating from parent.
-          toState = 'workflows.detail.runs.detail.status';
+          toState = 'workflows.detail.runs.tabs.status';
         }
         $timeout(function() {
           $state.go(toState, {
@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.workflows')
 
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       var tab;
-      if ($state.includes('workflows.detail.runs.detail.*')) {
+      if ($state.includes('workflows.detail.runs.tabs.*')) {
         tab = $scope.runTabs.indexOf(toState.name.split('.').slice(-1).pop());
         $scope.runTabs.activeTab = (tab > 0? tab: 0);
       }
