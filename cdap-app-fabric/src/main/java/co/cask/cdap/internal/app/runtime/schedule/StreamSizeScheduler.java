@@ -69,6 +69,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 
 /**
  * {@link Scheduler} that triggers program executions based on data availability in streams.
@@ -175,7 +176,8 @@ public class StreamSizeScheduler implements Scheduler {
     // Add the scheduleTask to the StreamSubscriber
     if (streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
                                             active, baseRunSize, baseRunTs, persist)) {
-      scheduleSubscribers.put(getScheduleId(program, programType, streamSizeSchedule.getName()), streamSubscriber);
+      scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType, streamSizeSchedule.getName()),
+                              streamSubscriber);
     }
   }
 
@@ -198,7 +200,7 @@ public class StreamSizeScheduler implements Scheduler {
     throws SchedulerException {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
-    String programScheduleId = getProgramScheduleId(program, programType);
+    String programScheduleId = AbstractSchedulerService.programIdFor(program, programType);
     return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar),
                                                            String.format("%s%c", programScheduleId, endChar))
                                   .keySet());
@@ -207,7 +209,7 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
-    String scheduleId = getScheduleId(program, programType, scheduleName);
+    String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
     StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
     if (subscriber == null) {
       throw new ScheduleNotFoundException(scheduleName);
@@ -218,7 +220,7 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
-    String scheduleId = getScheduleId(program, programType, scheduleName);
+    String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
     StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
     if (subscriber == null) {
       throw new ScheduleNotFoundException(scheduleName);
@@ -232,7 +234,7 @@ public class StreamSizeScheduler implements Scheduler {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
     StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
-    StreamSubscriber subscriber = scheduleSubscribers.get(getScheduleId(program, programType, schedule.getName()));
+    StreamSubscriber subscriber = scheduleSubscribers.get(AbstractSchedulerService.scheduleIdFor(program, programType, schedule.getName()));
     if (subscriber == null) {
       throw new ScheduleNotFoundException(schedule.getName());
     }
@@ -244,8 +246,7 @@ public class StreamSizeScheduler implements Scheduler {
       } catch (NotFoundException e) {
         // It can happen that the schedule was deleted while being updated. In which case, the update action
         // came first and we still want to create it
-        // TODO is it really the behavior that we want here?
-        LOG.debug("Schedule {} deleted while being updated", schedule.getName(), e);
+        LOG.warn("Schedule {} deleted while being updated", schedule.getName(), e);
       }
       schedule(program, programType, schedule);
     } else {
@@ -257,7 +258,7 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
-    String scheduleId = getScheduleId(programId, programType, scheduleName);
+    String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
     StreamSubscriber subscriber = scheduleSubscribers.remove(scheduleId);
     if (subscriber == null) {
       throw new ScheduleNotFoundException(scheduleName);
@@ -271,7 +272,7 @@ public class StreamSizeScheduler implements Scheduler {
   public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) throws SchedulerException {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
-    String programScheduleId = getProgramScheduleId(programId, programType);
+    String programScheduleId = AbstractSchedulerService.programIdFor(programId, programType);
     NavigableSet<String> scheduleIds = scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar),
                                                                   String.format("%s%c", programScheduleId, endChar))
       .keySet();
@@ -285,7 +286,8 @@ public class StreamSizeScheduler implements Scheduler {
         deleteSchedule(programId, programType, scheduleId.substring(scheduleIdIdx));
       } catch (ScheduleNotFoundException e) {
         // Could be a race, the schedule has just been deleted
-        LOG.debug("Could not delete schedule '{}'", scheduleId, e);
+        LOG.debug("Could not delete schedule, it might have been deleted already by another thread '{}'",
+                  scheduleId, e);
       }
     }
   }
@@ -293,7 +295,7 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException {
-    StreamSubscriber subscriber = scheduleSubscribers.get(getScheduleId(program, programType, scheduleName));
+    StreamSubscriber subscriber = scheduleSubscribers.get(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName));
     if (subscriber != null) {
       return subscriber.scheduleTaskState(program, programType, scheduleName);
     } else {
@@ -306,15 +308,6 @@ public class StreamSizeScheduler implements Scheduler {
       store = storeFactory.create();
     }
     return store;
-  }
-
-  private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    return String.format("%s:%s", getProgramScheduleId(program, programType), scheduleName);
-  }
-
-  private String getProgramScheduleId(Id.Program program, SchedulableProgramType programType) {
-    return String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
-                         programType.name(), program.getId());
   }
 
   /**
@@ -369,7 +362,8 @@ public class StreamSizeScheduler implements Scheduler {
       StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
       synchronized (this) {
         StreamSizeScheduleTask previous =
-          scheduleTasks.putIfAbsent(getScheduleId(programId, programType, streamSizeSchedule.getName()), newTask);
+          scheduleTasks.putIfAbsent(AbstractSchedulerService.scheduleIdFor(programId, programType, streamSizeSchedule.getName()),
+                                    newTask);
         if (previous != null) {
           // We cannot replace an existing schedule - that functionality is not wanted - yet
           return false;
@@ -422,7 +416,7 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public synchronized void suspendScheduleTask(Id.Program programId, SchedulableProgramType programType,
                                                  String scheduleName) throws ScheduleNotFoundException {
-      String scheduleId = getScheduleId(programId, programType, scheduleName);
+      String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
       StreamSizeScheduleTask task = scheduleTasks.get(scheduleId);
       if (task == null) {
         throw new ScheduleNotFoundException(scheduleName);
@@ -435,12 +429,11 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Resume a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
-    public void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType, String scheduleName)
-      throws ScheduleNotFoundException {
-      int activeTasksNow;
+    public void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType,
+                                                String scheduleName) throws ScheduleNotFoundException {
       StreamSizeScheduleTask task;
       synchronized (this) {
-        String scheduleId = getScheduleId(programId, programType, scheduleName);
+        String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
         task = scheduleTasks.get(scheduleId);
         if (task == null) {
           throw new ScheduleNotFoundException(scheduleName);
@@ -448,22 +441,22 @@ public class StreamSizeScheduler implements Scheduler {
         if (!task.resume()) {
           return;
         }
-        activeTasksNow = activeTasks.incrementAndGet();
-      }
-      if (activeTasksNow == 1) {
-        // There were no active tasks until then, that means polling the stream was disabled.
-        // We need to check if it is necessary to poll the stream at this time, if the last
-        // notification received was too long ago, or if there is no last seen notification
-        synchronized (lastNotificationLock) {
-          if (lastNotification == null ||
-            (lastNotification.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
-            // Resume stream polling
-            cancelPollingAndScheduleNext();
-            try {
-              StreamSize streamSize = getStreamEventsSize();
-              lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
-            } catch (IOException e) {
-              LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error", scheduleName, e);
+        if (activeTasks.incrementAndGet() == 1) {
+          // There were no active tasks until then, that means polling the stream was disabled.
+          // We need to check if it is necessary to poll the stream at this time, if the last
+          // notification received was too long ago, or if there is no last seen notification
+          synchronized (lastNotificationLock) {
+            if (lastNotification == null ||
+              (lastNotification.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
+              // Resume stream polling
+              cancelPollingAndScheduleNext();
+              try {
+                StreamSize streamSize = getStreamEventsSize();
+                lastNotification = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
+              } catch (IOException e) {
+                LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error",
+                          scheduleName, e);
+              }
             }
           }
         }
@@ -478,7 +471,7 @@ public class StreamSizeScheduler implements Scheduler {
     public synchronized void updateScheduleTask(Id.Program program, SchedulableProgramType programType,
                                                 StreamSizeSchedule schedule)
       throws ScheduleNotFoundException {
-      String scheduleId = getScheduleId(program, programType, schedule.getName());
+      String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, schedule.getName());
       StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleId);
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(schedule.getName());
@@ -491,7 +484,7 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public synchronized void deleteSchedule(Id.Program programId, SchedulableProgramType programType,
                                             String scheduleName) throws ScheduleNotFoundException {
-      String scheduleId = getScheduleId(programId, programType, scheduleName);
+      String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
       StreamSizeScheduleTask scheduleTask = scheduleTasks.remove(scheduleId);
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(scheduleName);
@@ -507,7 +500,8 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public ScheduleState scheduleTaskState(Id.Program programId, SchedulableProgramType programType,
                                            String scheduleName) {
-      StreamSizeScheduleTask task = scheduleTasks.get(getScheduleId(programId, programType, scheduleName));
+      StreamSizeScheduleTask task = scheduleTasks.get(AbstractSchedulerService.scheduleIdFor(programId, programType,
+                                                                                             scheduleName));
       if (task == null) {
         return ScheduleState.NOT_FOUND;
       }
@@ -579,10 +573,11 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Cancel the currently scheduled stream size polling task, and reschedule one for later.
      */
-    private void cancelPollingAndScheduleNext() {
-      // This method might be called from the call to #received defined in the below Runnable - in which case
-      // this scheduledPolling would in fact be active. Hence we don't want to interrupt the active task
+    private synchronized void cancelPollingAndScheduleNext() {
       if (scheduledPolling != null) {
+        // This method might be called from the call to #received defined in the below Runnable - in which case
+        // this scheduledPolling would in fact be active. Hence we don't want to interrupt the active schedulePolling
+        // future by passing true to the cancel method
         scheduledPolling.cancel(false);
       }
 
@@ -680,7 +675,14 @@ public class StreamSizeScheduler implements Scheduler {
       return active.get();
     }
 
-    public void received(StreamSizeNotification notification) {
+    /**
+     * Notifies that a notification has been received. The notification is guaranteed to be the most up to date.
+     * This method will trigger job execution if {@code this} task received enough data.
+     *
+     * @param notification {@link StreamSizeNotification} received
+     */
+    public void received(@Nonnull StreamSizeNotification notification) {
+      Preconditions.checkNotNull(notification);
       if (!active.get()) {
         return;
       }
@@ -688,16 +690,18 @@ public class StreamSizeScheduler implements Scheduler {
       long pastRunTs;
       StreamSizeSchedule currentSchedule;
       synchronized (this) {
-        if (notification.getSize() < baseSize) {
+        currentSchedule = streamSizeSchedule;
+        if (notification.getTimestamp() > baseTs && notification.getSize() < baseSize) {
           // This can happen if no notification is received for a stream for some time, and we poll the stream events
           // size using metrics, and some metric events have hit their TTL. In that case it's impossible to know
           // how much data was ingested, and how much data has hit the TTL. Resetting the base attributes is the best
           // we can do.
           baseSize = notification.getSize();
           baseTs = notification.getTimestamp();
+          LOG.debug("Base size and ts updated to {}, {} for streamSizeSchedule {}",
+                    baseSize, baseTs, currentSchedule);
           return;
         }
-        currentSchedule = streamSizeSchedule;
         if (notification.getSize() < baseSize + toBytes(currentSchedule.getDataTriggerMB())) {
           return;
         }
@@ -719,20 +723,12 @@ public class StreamSizeScheduler implements Scheduler {
         ProgramOptionConstants.PAST_RUN_DATA_SIZE, Long.toString(pastRunSize)
       ));
 
-      while (true) {
-        ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(getStore(), programRuntimeService, preferencesStore);
-        try {
-          LOG.info("About to start streamSizeSchedule {}", currentSchedule);
-          taskRunner.run(programId, ProgramType.valueOf(programType.name()), args);
-          break;
-        } catch (TaskExecutionException e) {
-          LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
-          if (e.isRefireImmediately()) {
-            LOG.info("Retrying execution for streamSizeSchedule {}", currentSchedule.getName());
-          } else {
-            break;
-          }
-        }
+      ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(getStore(), programRuntimeService, preferencesStore);
+      try {
+        LOG.info("About to start streamSizeSchedule {}", currentSchedule);
+        taskRunner.run(programId, ProgramType.valueOf(programType.name()), args);
+      } catch (TaskExecutionException e) {
+        LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
       }
     }
 
