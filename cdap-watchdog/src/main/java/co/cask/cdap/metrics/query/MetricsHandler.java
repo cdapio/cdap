@@ -59,6 +59,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   public static final String ANY_TAG_VALUE = "*";
   public static final String TAG_DELIM = ".";
+  public static final String DOT_ESCAPE_CHAR = "~";
 
   private final MetricStore metricStore;
 
@@ -187,10 +188,23 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       if (ANY_TAG_VALUE.equals(val)) {
         val = null;
       }
-      result.put(name, val);
+      if (val != null) {
+        val = decodeTag(val);
+      }
+      result.put(decodeTag(name), val);
     }
 
     return result;
+  }
+
+  private String decodeTag(String val) {
+    // we use "." as separator between tags, so if tag name or value has dot in it, we encode it with "~"
+    return val.replaceAll(DOT_ESCAPE_CHAR, ".");
+  }
+
+  private String encodeTag(String val) {
+    // we use "." as separator between tags, so if tag name or value has dot in it, we encode it with "~"
+    return val.replaceAll("\\.", DOT_ESCAPE_CHAR);
   }
 
   private void searchMetricAndRespond(HttpResponder responder, String context) {
@@ -229,18 +243,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
-    contextPrefix = toCanonicalContext(tagValues);
 
     MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, humanToTagNames(tagValues));
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
+    contextPrefix = toCanonicalContext(tagValues);
     Collection<String> result = Lists.newArrayList();
     for (TagValue tag : nextTags) {
       // for now, if tag value is null, we use ANY_TAG_VALUE as returned for convenience: this allows to easy build UI
       // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
       String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
       String name = tagNameToHuman(tag);
-      String tagValue = name  + TAG_DELIM + value;
+      String tagValue = encodeTag(name)  + TAG_DELIM + encodeTag(value);
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
     }
@@ -282,7 +296,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
         sb.append(TAG_DELIM);
       }
       first = false;
-      sb.append(tv.getTagName()).append(TAG_DELIM).append(tv.getValue() == null ? ANY_TAG_VALUE : tv.getValue());
+      sb.append(encodeTag(tv.getTagName())).append(TAG_DELIM)
+        .append(tv.getValue() == null ? ANY_TAG_VALUE : encodeTag(tv.getValue()));
     }
     return sb.toString();
   }
