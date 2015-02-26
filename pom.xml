@@ -1290,6 +1290,8 @@
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
+                  <!-- Disable cdap-ui from rat-check temproarily until integrated completely into cdap-->
+                  <exclude>cdap-ui/**</exclude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
