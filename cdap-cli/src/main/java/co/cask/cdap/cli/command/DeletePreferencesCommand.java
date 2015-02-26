@@ -72,7 +72,7 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.deleteApplicationPreferences(cliConfig.getCurrentNamespace(), programIdParts[0]);
+        client.deleteApplicationPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]));
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 

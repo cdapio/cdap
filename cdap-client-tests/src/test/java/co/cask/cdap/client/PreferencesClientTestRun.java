@@ -217,7 +217,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
                                                               FakeApp.FLOWS.get(0), false));
 
     appClient.delete(FakeApp.ID.getId());
-    namespaceClient.delete(invalidNamespace.getId());
+    namespaceClient.delete(invalidNamespace);
   }
 
   @Test
@@ -232,12 +232,12 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, false));
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, true));
 
-    namespaceClient.delete("myspace");
+    namespaceClient.delete(myspace);
     namespaceClient.create(new NamespaceMeta.Builder().setId(myspace.getId()).build());
     Assert.assertTrue(client.getNamespacePreferences(myspace, false).isEmpty());
     Assert.assertTrue(client.getNamespacePreferences(myspace, true).isEmpty());
 
-    namespaceClient.delete("myspace");
+    namespaceClient.delete(myspace);
   }
 
   @Test(expected = NotFoundException.class)

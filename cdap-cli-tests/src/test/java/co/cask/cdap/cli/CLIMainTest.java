@@ -31,12 +31,14 @@ import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -52,6 +54,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -68,6 +74,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -86,12 +93,11 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final String PROTOCOL = "http";
-  private static final String HOSTNAME = "localhost";
-  private static final String PORT = "10000";
+  private static final URI CONNECTION = URI.create("http://localhost:10000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
+  private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
   private static CLI cli;
 
@@ -106,16 +112,31 @@ public class CLIMainTest extends StandaloneTestBase {
       StandaloneTestBase.setUpClass();
     }
 
-    cliConfig = new CLIConfig(HOSTNAME);
-    cliConfig.getClientConfig().setAllTimeouts(60000);
+    clientConfig = new ClientConfig.Builder().setUri(CONNECTION).build();
+    clientConfig.setAllTimeouts(60000);
+    cliConfig = new CLIConfig(clientConfig);
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PrintStream.class).toInstance(System.out);
+        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_NAMESPACE)).toInstance("default");
+        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERBOSE)).toInstance(true);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
+        bind(CLIConfig.class).toInstance(cliConfig);
+        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
+      }
+    });
 
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = new CLIMain(cliConfig);
+    CLIMain cliMain = injector.getInstance(CLIMain.class);
     cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -143,9 +164,7 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect " + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
   }
 
   @Test
@@ -217,8 +236,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
-    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
-    cliConfig.setCurrentNamespace("bar");
+    Id.Namespace barspace = Id.Namespace.from("bar");
+    namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
+    cliConfig.setCurrentNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 

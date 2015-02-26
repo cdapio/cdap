@@ -18,12 +18,12 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -79,13 +79,15 @@ public class NamespaceClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the specified namespace is not found
    */
-  public NamespaceMeta get(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+  public NamespaceMeta get(Id.Namespace namespaceId)
+    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveURLV3(String.format("namespaces/%s", namespaceId)),
                                                config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId.getId());
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<NamespaceMeta>() {
@@ -101,18 +103,20 @@ public class NamespaceClient {
    * @throws NotFoundException if the specified namespace is not found
    * @throws CannotBeDeletedException if the specified namespace is reserved and cannot be deleted
    */
-  public void delete(String namespaceId) throws IOException, UnAuthorizedAccessTokenException, NotFoundException,
-    CannotBeDeletedException {
+  public void delete(Id.Namespace namespaceId)
+    throws IOException, UnAuthorizedAccessTokenException, NotFoundException, CannotBeDeletedException {
+
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                               config.resolveURLV3(String.format("namespaces/%s", namespaceId)),
+                                               config.resolveURLV3(
+                                                 String.format("namespaces/%s", namespaceId.getId())),
                                                config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_FORBIDDEN);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId.getId());
     }
     if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId.getId());
     }
   }
 

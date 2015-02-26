@@ -66,7 +66,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        client.setApplicationPreferences(cliConfig.getCurrentNamespace(), programIdParts[0], args);
+        client.setApplicationPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                                         args);
         printSuccessMessage(printStream, type);
         break;
 
