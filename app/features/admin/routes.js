@@ -96,6 +96,13 @@ angular.module(PKG.name + '.feature.admin')
         .state('admin.namespace', {
           abstract: true,
           url: '/namespace',
+          resolve: {
+            nsList: function(myNamespace) {
+              // This is to make sure that namespace list is available to
+              // admin.namespace (sidebar)
+              return myNamespace.getList(true);
+            }
+          },
           template: '<ui-view/>'
         })
           .state('admin.namespace.create', {
@@ -149,6 +156,3 @@ angular.module(PKG.name + '.feature.admin')
                 controller: 'AdminNamespaceAppMetadataController'
               });
   });
-
-
-
