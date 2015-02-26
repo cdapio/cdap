@@ -59,8 +59,8 @@ angular.module(PKG.name + '.feature.mapreduce')
                 '<div> Mapreduce: Status - Work In Progress</div> ' +
               '</div>',
               ncyBreadcrumb: {
-                parent: "apps.detail.overview",
-                label: "{{$state.params.programId}} / {{$state.params.runId}}"
+                parent: 'apps.detail.overview',
+                label: '{{$state.params.programId}} / {{$state.params.runId}}'
               }
             })
             .state('mapreduce.detail.runs.tab.distribution', {
@@ -118,8 +118,8 @@ angular.module(PKG.name + '.feature.mapreduce')
           url: '/history',
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           ncyBreadcrumb: {
-            parent: "apps.detail.overview",
-            label: "{{$state.params.programId}} / History"
+            parent: 'apps.detail.overview',
+            label: '{{$state.params.programId}} / History'
           }
         })
         .state('mapreduce.detail.resources', {

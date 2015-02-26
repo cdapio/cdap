@@ -38,11 +38,10 @@ angular.module(PKG.name + '.commons')
             scope.processing = false;
           });
 
-        }
+        };
       }
     };
   })
   .controller('instanceControlController', function ($scope, MyDataSource) {
     $scope.myDataSrc = new MyDataSource($scope);
   });
-

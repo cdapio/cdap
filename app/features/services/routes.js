@@ -41,8 +41,8 @@ angular.module(PKG.name + '.feature.services')
           url: '/status',
           templateUrl: '/assets/features/services/templates/tabs/status.html',
           ncyBreadcrumb: {
-            parent: "apps.detail.overview",
-            label: "{{$state.params.programId}} / Status"
+            parent: 'apps.detail.overview',
+            label: '{{$state.params.programId}} / Status'
           }
         })
           .state('services.detail.status.makerequest', {
@@ -77,8 +77,8 @@ angular.module(PKG.name + '.feature.services')
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
           ncyBreadcrumb: {
-            parent: "apps.detail.overview",
-            label: "{{$state.params.programId}} / History"
+            parent: 'apps.detail.overview',
+            label: '{{$state.params.programId}} / History'
           }
         })
         .state('services.detail.logs', {
@@ -87,8 +87,8 @@ angular.module(PKG.name + '.feature.services')
           controller: 'ServicesLogsController',
           template: '<my-log-viewer data-model="logs"></my-log-viewer>',
           ncyBreadcrumb: {
-            parent: "apps.detail.overview",
-            label: "{{$state.params.programId}} / Logs"
+            parent: 'apps.detail.overview',
+            label: '{{$state.params.programId}} / Logs'
           }
         })
         .state('services.detail.resources', {

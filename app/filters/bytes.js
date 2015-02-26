@@ -11,5 +11,5 @@ angular.module(PKG.name+'.filters').filter('bytes', function() {
     var number = Math.floor(Math.log(bytes) / Math.log(1024));
     return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) +
       ' ' + ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'][number];
-  }
+  };
 });

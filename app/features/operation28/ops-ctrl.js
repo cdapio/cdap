@@ -49,8 +49,9 @@ angular.module(PKG.name+'.feature.operation28')
     angular.forEach($scope.panels, function (panel) {
       var c = panel.chart;
       dataSrc.poll({
-          _cdapPathV2: '/metrics/system/resources.used.'
-            + c.metric + '?start=now-60s&end=now',
+          _cdapPathV2: '/metrics/system/resources.used.' +
+                        c.metric +
+                        '?start=now-60s&end=now',
           method: 'GET'
         },
         op28helper.pollCb.bind(c)
@@ -88,25 +89,26 @@ angular.module(PKG.name+'.feature.operation28')
                 '&metric=system.resources.used.' +
                 m[i] + '&groupBy=app',
               method: 'POST'
-            },
-            function (r) {
-
-              angular.forEach($scope.apps, function (app) {
-                angular.forEach(r.series, function (s) {
-                  if(app.id === s.grouping.app) {
-                    myHelpers.deepSet(
-                      app,
-                      'metric.' + s.metricName.split('.').pop(),
-                      s.data[0].value
-                    );
-                  }
-                });
-              });
-
-            });
+            }, setMetric);
         }
 
       });
+
+    function setMetric(r) {
+
+      angular.forEach($scope.apps, function (app) {
+        angular.forEach(r.series, function (s) {
+          if(app.id === s.grouping.app) {
+            myHelpers.deepSet(
+              app,
+              'metric.' + s.metricName.split('.').pop(),
+              s.data[0].value
+            );
+          }
+        });
+      });
+
+    }
 
   })
 
