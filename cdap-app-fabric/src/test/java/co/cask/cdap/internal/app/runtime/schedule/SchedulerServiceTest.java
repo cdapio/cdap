@@ -141,6 +141,8 @@ public class SchedulerServiceTest {
 
     schedulerService.deleteSchedules(program, programType);
     Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
+    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
 
     // Check the state of the old scheduleIds
     // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
@@ -175,6 +177,24 @@ public class SchedulerServiceTest {
       spec.getWorkflows(),
       spec.getServices(),
       builder.build(),
+      spec.getWorkers()
+    );
+  }
+
+  private ApplicationSpecification deleteSchedulesFromSpec(ApplicationSpecification spec) {
+    return new DefaultApplicationSpecification(
+      spec.getName(),
+      spec.getDescription(),
+      spec.getStreams(),
+      spec.getDatasetModules(),
+      spec.getDatasets(),
+      spec.getFlows(),
+      spec.getProcedures(),
+      spec.getMapReduce(),
+      spec.getSpark(),
+      spec.getWorkflows(),
+      spec.getServices(),
+      ImmutableMap.<String, ScheduleSpecification>of(),
       spec.getWorkers()
     );
   }
