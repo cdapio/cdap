@@ -49,14 +49,16 @@ public class ObjectMappedTableProperties {
   public static final String OBJECT_SCHEMA = "object.schema";
 
   /**
-   * The name of the key to use when exploring the table. Defaults to "key".
+   * The name of the row key to use when exploring the table. Defaults to "key". This table column is the key used
+   * by the {@link ObjectMappedTable#read(byte[])}, {@link ObjectMappedTable#write(byte[], Object)}, and
+   * {@link ObjectMappedTable#delete(byte[])} methods.
    */
-  public static final String EXPLORE_KEY_NAME = "explore.key.name";
+  public static final String ROW_KEY_EXPLORE_NAME = "row.key.explore.name";
 
   /**
-   * The type of the key when exploring the table. Defaults to bytes.
+   * The type of the row key when exploring the table. Defaults to bytes.
    */
-  public static final String EXPLORE_KEY_TYPE = "explore.key.type";
+  public static final String ROW_KEY_EXPLORE_TYPE = "row.key.explore.type";
 
   public static Builder builder() {
     return new Builder();
@@ -79,15 +81,15 @@ public class ObjectMappedTableProperties {
   /**
    * @return The name of the key to use when exploring the table.
    */
-  public static String getExploreKeyName(Map<String, String> properties) {
-    return properties.get(EXPLORE_KEY_NAME);
+  public static String getRowKeyExploreName(Map<String, String> properties) {
+    return properties.get(ROW_KEY_EXPLORE_NAME);
   }
 
   /**
    * @return The type of the key when exploring the table.
    */
-  public static Schema.Type getExploreKeyType(Map<String, String> properties) {
-    return Schema.Type.valueOf(properties.get(EXPLORE_KEY_TYPE));
+  public static Schema.Type getRowKeyExploreType(Map<String, String> properties) {
+    return Schema.Type.valueOf(properties.get(ROW_KEY_EXPLORE_TYPE));
   }
 
   /**
@@ -99,8 +101,8 @@ public class ObjectMappedTableProperties {
      * Package visible default constructor, to allow sub-classing by other datasets in this package.
      */
     Builder() {
-      add(EXPLORE_KEY_NAME, "key");
-      add(EXPLORE_KEY_TYPE, Schema.Type.BYTES.name());
+      add(ROW_KEY_EXPLORE_NAME, "rowkey");
+      add(ROW_KEY_EXPLORE_TYPE, Schema.Type.BYTES.name());
     }
 
     /**
@@ -113,21 +115,25 @@ public class ObjectMappedTableProperties {
     }
 
     /**
-     * Sets the name for the key to use when exploring the table. If no name is set it defaults to "key".
+     * Sets the name for the key to use when exploring the table. If no name is set it defaults to "rowkey".
+     * This is will be the name of the Hive column that will be mapped to the row key of Objects stored in the Table.
+     * The key name must not also be a field name of the object stored in the Table.
+     * For example, if your object contains a field named "rowkey", you will need to set the row key's
+     * explore name to something other than "rowkey".
      */
-    public Builder setExploreKeyName(String name) {
-      add(EXPLORE_KEY_NAME, name);
+    public Builder setRowKeyExploreName(String name) {
+      add(ROW_KEY_EXPLORE_NAME, name);
       return this;
     }
 
     /**
-     * Sets the type of the key to use when exploring the table. Currently only {@link Schema.Type#BYTES} and
+     * Sets the type of the row key to use when exploring the table. Currently only {@link Schema.Type#BYTES} and
      * {@link Schema.Type#STRING} are allowed. If no type is set it defaults to bytes.
      */
-    public Builder setExploreKeyType(Schema.Type type) {
+    public Builder setRowKeyExploreType(Schema.Type type) {
       Preconditions.checkArgument(type == Schema.Type.BYTES || type == Schema.Type.STRING,
                                   "Key type must be bytes or string.");
-      add(EXPLORE_KEY_TYPE, type.name());
+      add(ROW_KEY_EXPLORE_TYPE, type.name());
       return this;
     }
 

@@ -46,33 +46,25 @@ public class ReflectionTableTest extends AbstractDatasetTest {
   private static final Id.DatasetInstance users = Id.DatasetInstance.from(NAMESPACE_ID, "users");
   private static final User SAMUEL = new User(
     "Samuel L.", "Jackson",
-    Gender.MALE,
     123,
     1234567890000L,
     50000000.02f,
     Double.MAX_VALUE,
     new byte[] { 0, 1, 2 });
 
-  public static enum Gender {
-    MALE,
-    FEMALE
-  }
-
   public static class User {
     private String firstName;
     private String lastName;
-    private Gender gender;
     private Integer id;
     private Long timestamp;
     private Float salary;
     private Double lastPurchase;
     private byte[] blob;
 
-    public User(String firstName, String lastName, Gender gender, Integer id, Long timestamp,
+    public User(String firstName, String lastName, Integer id, Long timestamp,
                 Float salary, Double lastPurchase, byte[] blob) {
       this.firstName = firstName;
       this.lastName = lastName;
-      this.gender = gender;
       this.id = id;
       this.timestamp = timestamp;
       this.salary = salary;
@@ -93,7 +85,6 @@ public class ReflectionTableTest extends AbstractDatasetTest {
 
       return Objects.equal(firstName, that.firstName) &&
         Objects.equal(lastName, that.lastName) &&
-        Objects.equal(gender, that.gender) &&
         Objects.equal(id, that.id) &&
         Objects.equal(timestamp, that.timestamp) &&
         Objects.equal(salary, that.salary) &&
@@ -103,7 +94,7 @@ public class ReflectionTableTest extends AbstractDatasetTest {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(firstName, lastName, gender, id, timestamp, salary, lastPurchase, blob);
+      return Objects.hashCode(firstName, lastName, id, timestamp, salary, lastPurchase, blob);
     }
   }
 
@@ -287,7 +278,6 @@ public class ReflectionTableTest extends AbstractDatasetTest {
   private void assertRecordEqualsUser(User expected, StructuredRecord actual) {
     Assert.assertEquals(expected.firstName, actual.get("firstName"));
     Assert.assertEquals(expected.lastName, actual.get("lastName"));
-    Assert.assertEquals(expected.gender.toString(), actual.get("gender"));
     Assert.assertEquals(expected.id, actual.get("id"));
     Assert.assertEquals(expected.timestamp, actual.get("timestamp"));
     Assert.assertEquals(expected.salary, actual.get("salary"));

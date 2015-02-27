@@ -203,7 +203,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         // ObjectMappedTable must contain a schema in its properties
         String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
         if (schemaStr == null) {
-          responder.sendString(HttpResponseStatus.NOT_FOUND, "Schema not found for dataset " + datasetInstanceId);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schema not found for dataset " + datasetInstanceId);
           return;
         }
         try {

@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Decodes an object from a {@link Row} object fetched from a {@link Table}. Assumes that objects
  * fetched are records. All fields are columns in the row, with simple types stored as their byte representation.
- * Complex types (arrays, maps, records) are not supported.
+ * Complex types (arrays, maps, records, enum) are not supported.
  *
  * @param <T> the type of object to read
  */
@@ -141,17 +141,7 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
   @Override
   protected Object readEnum(Row row, Schema sourceSchema, Schema targetSchema,
                             TypeToken<?> targetTypeToken) throws IOException {
-    String name = getCurrentField();
-    String enumValue = row.getString(name);
-    validateNotNull(enumValue, name);
-    check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.", enumValue);
-    try {
-      Object obj = targetTypeToken.getRawType().getMethod("valueOf", String.class).invoke(null, enumValue);
-      advanceField();
-      return obj;
-    } catch (Exception e) {
-      throw new IOException(e);
-    }
+    throw new UnsupportedOperationException("Enums are not supported.");
   }
 
   @Override

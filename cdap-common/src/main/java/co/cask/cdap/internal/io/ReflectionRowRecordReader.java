@@ -36,6 +36,7 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     Preconditions.checkArgument(schema.getType() == Schema.Type.RECORD, "Target schema must be a record.");
   }
 
+  @Override
   public StructuredRecord.Builder read(Row row, Schema sourceSchema) throws IOException {
     Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD, "Source schema must be a record.");
     initializeRead(sourceSchema);
@@ -54,15 +55,5 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     } catch (Exception e) {
       throw propagate(e);
     }
-  }
-
-  @Override
-  protected Object readEnum(Row row, Schema sourceSchema, Schema targetSchema,
-                            TypeToken<?> targetTypeToken) throws IOException {
-    String name = getCurrentField();
-    String enumValue = row.getString(name);
-    validateNotNull(enumValue, name);
-    advanceField();
-    return enumValue;
   }
 }

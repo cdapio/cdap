@@ -20,12 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.io.BinaryEncoder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -34,7 +32,7 @@ import java.util.Map;
 
 /**
  * Encodes an object as a {@link Put} for storing it into a {@link Table}. Assumes that objects to write are
- * records. Fields of simple types are encoded as columns in the table. Complex types (arrays, maps, records),
+ * records. Fields of simple types are encoded as columns in the table. Complex types (arrays, maps, records, enums),
  * are not supported.
  *
  * @param <T> the type of object to encode as a {@link Put}
@@ -116,7 +114,7 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
 
   @Override
   protected void writeEnum(Put put, String val, Schema schema) throws IOException {
-    put.add(nextField(), val);
+    throw new UnsupportedOperationException("Enums are not supported.");
   }
 
   @Override
@@ -150,32 +148,5 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
       seenRefs.remove(val);
       write(put, val, schema.getNonNullable());
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  private byte[] encodeArray(Object array, Schema componentSchema) throws IOException {
-    ReflectionDatumWriter datumWriter = new ReflectionDatumWriter(Schema.arrayOf(componentSchema));
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    BinaryEncoder encoder = new BinaryEncoder(bos);
-    datumWriter.encode(array, encoder);
-    return bos.toByteArray();
-  }
-
-  @SuppressWarnings("unchecked")
-  private byte[] encodeMap(Map<?, ?> map, Schema keySchema, Schema valSchema) throws IOException {
-    ReflectionDatumWriter datumWriter = new ReflectionDatumWriter(Schema.mapOf(keySchema, valSchema));
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    BinaryEncoder encoder = new BinaryEncoder(bos);
-    datumWriter.encode(map, encoder);
-    return bos.toByteArray();
-  }
-
-  @SuppressWarnings("unchecked")
-  private byte[] encodeRecord(Object record, Schema schema) throws IOException {
-    ReflectionDatumWriter datumWriter = new ReflectionDatumWriter(schema);
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    BinaryEncoder encoder = new BinaryEncoder(bos);
-    datumWriter.encode(record, encoder);
-    return bos.toByteArray();
   }
 }

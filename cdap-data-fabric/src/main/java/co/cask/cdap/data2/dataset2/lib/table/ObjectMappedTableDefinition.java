@@ -59,13 +59,13 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
     // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
     // we require schema here because we want to validate it to make sure it is supported.
     Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.EXPLORE_KEY_NAME));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.EXPLORE_KEY_TYPE));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_NAME));
+    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_TYPE));
     try {
       Schema objectSchema = ObjectMappedTableProperties.getObjectSchema(props);
       validateSchema(objectSchema);
-      String keyName = ObjectMappedTableProperties.getExploreKeyName(props);
-      Schema.Type keyType = ObjectMappedTableProperties.getExploreKeyType(props);
+      String keyName = ObjectMappedTableProperties.getRowKeyExploreName(props);
+      Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
       Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
       return DatasetSpecification.builder(instanceName, getName())
         .properties(properties.getProperties())
@@ -93,8 +93,8 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
 
     TypeRepresentation typeRep = GSON.fromJson(
       ObjectMappedTableProperties.getObjectTypeRepresentation(properties), TypeRepresentation.class);
-    String keyName = ObjectMappedTableProperties.getExploreKeyName(properties);
-    Schema.Type keyType = ObjectMappedTableProperties.getExploreKeyType(properties);
+    String keyName = ObjectMappedTableProperties.getRowKeyExploreName(properties);
+    Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(properties);
     Schema objSchema = ObjectMappedTableProperties.getObjectSchema(properties);
     return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, keyName, keyType, classLoader);
   }
@@ -120,7 +120,13 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
   private Schema addKeyToSchema(Schema schema, String keyName, Schema.Type keyType) {
     List<Schema.Field> fields = Lists.newArrayListWithCapacity(schema.getFields().size() + 1);
     fields.add(Schema.Field.of(keyName, Schema.of(keyType)));
-    fields.addAll(schema.getFields());
+    for (Schema.Field objectField : schema.getFields()) {
+      // have to lowercase since Hive will lowercase
+      if (keyName.toLowerCase().equals(objectField.getName().toLowerCase())) {
+        throw new IllegalArgumentException("Object field '" + keyName + "' cannot be named the same as the row key.");
+      }
+      fields.add(objectField);
+    }
     return Schema.recordOf("record", fields);
   }
 }

@@ -50,8 +50,8 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
     datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE, ObjectMappedTableProperties.builder()
       .setType(Record.class)
-      .setExploreKeyName("row_key")
-      .setExploreKeyType(Schema.Type.STRING)
+      .setRowKeyExploreName("row_key")
+      .setRowKeyExploreType(Schema.Type.STRING)
       .build());
 
     // Accessing dataset instance to perform data operations
