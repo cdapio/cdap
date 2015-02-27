@@ -19,11 +19,12 @@ package co.cask.cdap.api.worker;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.stream.StreamContext;
 
 /**
  * Context for {@link Worker}.
  */
-public interface WorkerContext extends RuntimeContext, ServiceDiscoverer {
+public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamContext {
 
   /**
    * Returns the specification used to configure {@link Worker} bounded to this context.

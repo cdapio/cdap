@@ -79,6 +79,7 @@ public class AppWithWorker extends AbstractApplication {
     }
 
     private void writeToTable(final String key, final String value) {
+      KeyValueTable table;
       getContext().execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {

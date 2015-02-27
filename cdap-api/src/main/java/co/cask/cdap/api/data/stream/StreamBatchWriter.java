@@ -16,11 +16,26 @@
 
 package co.cask.cdap.api.data.stream;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
- * Stream Write Status.
+ * Used to write to Stream in Batch mode.
  */
-public enum StreamWriteStatus {
-  SUCCESS,
-  FAILURE,
-  NOT_FOUND
+public interface StreamBatchWriter {
+
+  /**
+   * Each call to write will write data to the stream batch endpoint.
+   *
+   * @param data {@link ByteBuffer}
+   * @throws IOException
+   */
+  void write(ByteBuffer data) throws IOException;
+
+  /**
+   * Method is used to finish the current set of batch writes.
+   *
+   * @throws IOException
+   */
+  void close() throws Exception;
 }

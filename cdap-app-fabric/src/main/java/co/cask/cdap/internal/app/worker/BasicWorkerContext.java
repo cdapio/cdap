@@ -93,8 +93,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
-    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(cConf));
+    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf));
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();

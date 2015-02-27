@@ -21,16 +21,16 @@ import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,11 +76,12 @@ public class AppWritingtoStream extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);
 
     @ProcessInput
-    public void receive(String data) {
-      List<byte[]> bytesList = Lists.newArrayList();
-      bytesList.add(Bytes.toBytes(data));
-      bytesList.add(Bytes.toBytes(data));
-      getContext().writeToStream(STREAM, bytesList);
+    public void receive(String data) throws Exception {
+      StreamBatchWriter writer = getContext().writeInBatch(STREAM, "text/data");
+      writer.write(ByteBuffer.wrap(Bytes.toBytes(data + "\n")));
+      writer.write(ByteBuffer.wrap(Bytes.toBytes(data + "\n")));
+      writer.close();
+//      getContext().write(STREAM, data);
     }
   }
 
