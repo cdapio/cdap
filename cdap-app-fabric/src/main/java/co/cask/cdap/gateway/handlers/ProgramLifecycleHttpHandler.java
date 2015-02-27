@@ -1551,7 +1551,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
                                              String appId, ProgramType runnableType, String runnableId,
                                              String action) {
-    if (runnableType == null || (runnableType == ProgramType.WORKFLOW && "stop".equals(action))) {
+    if (runnableType == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
@@ -1692,7 +1692,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
       ProgramController controller = runtimeInfo.getController();
-      controller.stop().get();
+      if (type == ProgramType.WORKFLOW) {
+        try {
+          controller.stop().get();
+        } catch (IllegalArgumentException ex) {
+          // Stopping workflow throws IllegalArgumentException
+          // Muting this exception here is no harm
+        }
+      } else {
+        controller.stop().get();
+      }
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
