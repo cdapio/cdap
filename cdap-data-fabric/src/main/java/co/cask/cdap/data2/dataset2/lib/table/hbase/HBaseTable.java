@@ -190,7 +190,7 @@ public class HBaseTable extends BufferingTable {
           // TODO: hijacking timestamp... bad
           delete.deleteColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer());
         } else {
-          delete.deleteColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey());
+          delete.deleteColumns(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey());
         }
       }
       deletes.add(delete);

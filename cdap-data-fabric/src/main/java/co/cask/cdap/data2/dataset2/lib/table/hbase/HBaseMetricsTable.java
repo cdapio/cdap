@@ -214,7 +214,7 @@ public class HBaseMetricsTable implements MetricsTable {
   public void delete(byte[] row, byte[][] columns) throws Exception {
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumn(DATA_COLUMN_FAMILY, column);
+      delete.deleteColumns(DATA_COLUMN_FAMILY, column);
     }
     hTable.delete(delete);
   }
