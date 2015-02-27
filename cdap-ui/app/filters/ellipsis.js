@@ -6,7 +6,7 @@ angular.module(PKG.name+'.filters').filter('myEllipsis', function() {
     if (typeof input === 'string') {
       return input.length > limit ? input.substr(0, limit-1) + '\u2026 ' : input;
     } else {
-      return;
+      return input;
     }
   };
 });
