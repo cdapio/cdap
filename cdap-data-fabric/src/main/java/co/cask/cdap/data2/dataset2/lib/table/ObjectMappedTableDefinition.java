@@ -123,7 +123,8 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
     for (Schema.Field objectField : schema.getFields()) {
       // have to lowercase since Hive will lowercase
       if (keyName.toLowerCase().equals(objectField.getName().toLowerCase())) {
-        throw new IllegalArgumentException("Object field '" + keyName + "' cannot be named the same as the row key.");
+        throw new IllegalArgumentException(
+          "Row key " + keyName + " cannot use the same column name as an object field.");
       }
       fields.add(objectField);
     }

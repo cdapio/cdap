@@ -32,6 +32,13 @@ import javax.annotation.Nullable;
  * int, Long, long, Float, float, Double, double, String, byte[], ByteBuffer, or UUID.
  * The object itself cannot be a simple type.
  *
+ * This Dataset is {@link RecordScannable}, which means it can be explored through Hive. The Hive table
+ * for this Dataset will contain one column for each object field and one column for the row key.
+ * For example, if you are storing an Object of three fields - "id", "name", and "price", the corresponding
+ * Hive table will have four columns - "rowkey", "id", "name", and "price". If you wish to change the name of
+ * the "rowkey" column you can do so by setting a property on the Dataset. See {@link ObjectMappedTableProperties}
+ * for more information on properties for this Dataset.
+ *
  * @param <T> the type of objects in the table
  */
 @Beta
