@@ -23,7 +23,7 @@ UI work generally requires having a running CDAP-standalone instance. To build a
 * `mvn package -pl cdap-standalone -am -DskipTests -P dist,release`
 * `cd cdap-standalone/target && unzip cdap-sdk-2.8.0-SNAPSHOT.zip`
 
-If CDAP is located as expected (`cdap/` and `cdap-ui/` are siblings), compiled and unzipped in place, you can start the backend from the `cdap-ui/` directory with:
+You can start the standalone backend from the `cdap-ui/` directory with:
 
 * `npm run backend start`
 
