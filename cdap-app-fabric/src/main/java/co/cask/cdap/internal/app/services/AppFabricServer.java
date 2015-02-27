@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -130,6 +131,7 @@ public final class AppFabricServer extends AbstractIdleService {
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
+      .setExceptionHandler(new HttpExceptionHandler())
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
                                                  Constants.AppFabric.DEFAULT_BACKLOG))
       .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,

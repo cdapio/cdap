@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -191,11 +192,12 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Get all adapters in a given namespace.
    *
+   *
    * @param namespace namespace to look up the adapters
    * @return {@link Collection} of {@link AdapterSpecification}
    */
-  public Collection<AdapterSpecification> getAdapters(String namespace) {
-    return store.getAllAdapters(Id.Namespace.from(namespace));
+  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace) throws NamespaceNotFoundException {
+    return store.getAllAdapters(namespace);
   }
 
   /**

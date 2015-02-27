@@ -17,34 +17,39 @@
 package co.cask.cdap.common.exception;
 
 import co.cask.cdap.common.http.SecurityRequestContext;
+import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common logic to handle exceptions in handler methods.
  */
-public class HttpExceptionHandler {
+public class HttpExceptionHandler extends ExceptionHandler {
 
-  public void handle(Throwable t, HttpRequest request, HttpResponder responder, Logger logger) {
+  private static final Logger LOG = LoggerFactory.getLogger(HttpExceptionHandler.class);
+
+  @Override
+  public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
     if (t instanceof BadRequestException) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
     } else if (t instanceof AlreadyExistsException) {
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
     } else if (t instanceof NotImplementedException) {
-      logger.info("Not implemented: request={} {} user={}:",
-                  request.getMethod().getName(), request.getUri(),
-                  SecurityRequestContext.getUserId().or("<null>"), t);
+      LOG.info("Not implemented: request={} {} user={}:",
+               request.getMethod().getName(), request.getUri(),
+               SecurityRequestContext.getUserId().or("<null>"), t);
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
     } else if (t instanceof NotFoundException) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
     } else if (t instanceof UnauthorizedException) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } else {
-      logger.error("Unexpected error: request={} {} user={}:",
-                   request.getMethod().getName(), request.getUri(),
-                   SecurityRequestContext.getUserId().or("<null>"), t);
+      LOG.error("Unexpected error: request={} {} user={}:",
+                request.getMethod().getName(), request.getUri(),
+                SecurityRequestContext.getUserId().or("<null>"), t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

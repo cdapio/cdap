@@ -90,7 +90,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   /**
    * Class to represent status of programs.
    */
-  protected static final class AppFabricServiceStatus {
+  public static final class AppFabricServiceStatus {
 
     public static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
 
