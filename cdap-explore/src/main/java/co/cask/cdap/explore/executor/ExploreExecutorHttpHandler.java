@@ -538,10 +538,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public static String generateCreateDatasetStatement(Id.DatasetInstance datasetId,
                                                       String hiveSchema) throws UnsupportedTypeException {
     String name = datasetId.getId();
-    Map<String, String> serdeProperties = ImmutableMap.of(Constants.Explore.DATASET_NAME, name);
-    Map<String, String> tableProperties = ImmutableMap.of(
-      Constants.Explore.CDAP_NAME, name,
+    Map<String, String> serdeProperties = ImmutableMap.of(
+      Constants.Explore.DATASET_NAME, name,
       Constants.Explore.DATASET_NAMESPACE, datasetId.getNamespaceId());
+    // this is set so we know what dataset it is created from, and so we know it's from CDAP
+    Map<String, String> tableProperties = ImmutableMap.of(Constants.Explore.CDAP_NAME, name);
     return generateCreateStatement(name, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                                    serdeProperties, tableProperties);
   }
