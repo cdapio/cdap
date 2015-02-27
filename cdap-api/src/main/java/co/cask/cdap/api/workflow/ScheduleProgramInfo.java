@@ -66,4 +66,13 @@ public final class ScheduleProgramInfo {
     result = 31 * result + programType.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("ScheduleProgramInfo{");
+    sb.append("programName='").append(programName).append('\'');
+    sb.append(", programType=").append(programType);
+    sb.append('}');
+    return sb.toString();
+  }
 }

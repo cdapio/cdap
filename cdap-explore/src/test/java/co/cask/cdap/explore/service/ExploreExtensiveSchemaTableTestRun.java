@@ -95,12 +95,12 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
 
   @Test
   public void testExtensiveSchema() throws Exception {
-    runCommand("show tables",
+    runCommand(NAMESPACE_ID, "show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand("describe my_table",
+    runCommand(NAMESPACE_ID, "describe my_table",
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -152,7 +152,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                )
     );
 
-    runCommand("select * from my_table",
+    runCommand(NAMESPACE_ID, "select * from my_table",
                true,
                Lists.newArrayList(new ColumnDesc("my_table.s", "STRING", 1, null),
                                   new ColumnDesc("my_table.i", "INT", 2, null),
@@ -262,6 +262,6 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                                          new TableInfo.ColumnInfo("vlist", "array<struct<s:string,i:int>>", null),
                                          new TableInfo.ColumnInfo("stovmap", "map<string,struct<s:string,i:int>>", null)
                         ),
-                        exploreService.getTableInfo("default", "my_table").getSchema());
+                        exploreService.getTableInfo(NAMESPACE_ID.getId(), "my_table").getSchema());
   }
 }

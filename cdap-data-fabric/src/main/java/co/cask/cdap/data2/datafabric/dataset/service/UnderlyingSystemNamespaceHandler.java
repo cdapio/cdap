@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
@@ -26,6 +27,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -54,6 +56,14 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while creating namespace - " + e.getMessage());
       return;
+    } catch (ExploreException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error while creating namespace in Hive - " + e.getMessage());
+      return;
+    } catch (SQLException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error while creating namespace in Hive - " + e.getMessage());
+      return;
     }
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Created namespace %s successfully", namespaceId));
@@ -69,7 +79,15 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while deleting namespace - " + e.getMessage());
       return;
-    }
+    } catch (ExploreException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error while creating namespace in Hive - " + e.getMessage());
+      return;
+    } catch (SQLException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error while creating namespace in Hive - " + e.getMessage());
+      return;
+  }
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Deleted namespace %s successfully", namespaceId));
   }

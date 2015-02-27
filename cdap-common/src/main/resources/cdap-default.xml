@@ -394,12 +394,6 @@
     </property>
 
     <property>
-        <name>data.queue.table.name</name>
-        <value>queues</value>
-        <description>Specifies the name of the table for queues</description>
-    </property>
-
-    <property>
         <name>data.tx.snapshot.codecs</name>
         <value>
           co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
@@ -444,6 +438,15 @@
     </property>
 
     <property>
+        <name>data.tx.timeout</name>
+        <value>30</value>
+        <description>
+            The timeout for a transaction, in seconds.
+            If the transaction is not finished in that time, it is marked invalid.
+        </description>
+    </property>
+
+    <property>
         <name>data.tx.num.instances</name>
         <value>1</value>
     </property>
@@ -466,6 +469,21 @@
     <!--
         Queue-related Configuration
     -->
+    <property>
+        <name>data.queue.table.name</name>
+        <value>queues</value>
+        <description>Specifies the name of the table for queues</description>
+    </property>
+
+    <property>
+        <name>data.queue.dequeue.tx.percent</name>
+        <value>30</value>
+        <description>
+          Percentage of transaction time allowed to spend in dequeue. It should be an integer
+          between 1-100.
+        </description>
+    </property>
+
     <property>
         <name>data.queue.config.update.interval</name>
         <value>5</value>

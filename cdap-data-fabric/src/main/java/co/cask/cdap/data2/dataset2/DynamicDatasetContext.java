@@ -55,9 +55,11 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();
 
   /**
-   * Get the runtime arguments for a specific dataset. Arguments not in the scope of the dataset are filtered out.
-   * For example, when getting the runtime arguments for a dataset named 'myds', only runtime arguments that start
-   * with 'dataset.myds.' are returned, with the prefix stripped from the arguments.
+   * Get the runtime arguments for a specific dataset. All runtime arguments are retained. Additional arguments
+   * that are matching the current scope are included in runtime arguments with their scope extracted.
+   * For example, when getting the runtime arguments for a dataset named 'myds', additional arguments that start
+   * with 'dataset.myds.' and 'dataset.*.' are included in the runtime arguments with the prefix stripped from the
+   * arguments.
    *
    * @param name the name of the dataset
    * @return runtime arguments for the given dataset

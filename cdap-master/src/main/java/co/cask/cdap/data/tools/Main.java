@@ -243,12 +243,15 @@ public class Main {
 
         final boolean supportsIncrement =
           "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
+        final boolean transactional =
+          !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
             return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
                 injector.getInstance(LocationFactory.class),
                 hBaseTableUtil,
+                transactional,
                 supportsIncrement);
           }
 

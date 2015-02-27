@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 import java.util.List;
@@ -33,8 +34,10 @@ public interface Scheduler {
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedule Schedule with which the program runs.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule);
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws SchedulerException;
 
   /**
    * Schedule a program to be run in a defined schedule.
@@ -42,8 +45,10 @@ public interface Scheduler {
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedules Schedules with which the program runs.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules);
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException;
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
@@ -53,8 +58,10 @@ public interface Scheduler {
    * @param programType type of program.
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
+   * @throws SchedulerException on unforeseen error.
    */
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType);
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException;
 
   /**
    * Get Schedule ids for a given program and program type.
@@ -62,16 +69,22 @@ public interface Scheduler {
    * @param program program for which schedules needs to be determined.
    * @param programType type of program.
    * @return List of scheduleIds, empty List if there are no matching schedules.
+   * @throws SchedulerException on unforeseen error.
    */
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType);
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException;
 
   /**
    * Suspends a schedule. Sub-sequent schedules will not trigger for the job.
    * @param program the program for which schedule needs to be suspended
    * @param programType the type of the program
    * @param scheduleName the name of the schedule
+   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
+   *                           belongs to does not exist.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException;
 
   /**
    * Resume given schedule. The scheduled job will trigger from the next possible runtime.
@@ -80,16 +93,37 @@ public interface Scheduler {
    * @param program the program for which schedule needs to be resumed
    * @param programType the type of the program
    * @param scheduleName the name of the schedule
+   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
+   *                           belongs to does not exist.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException;
+
+  /**
+   * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
+   *
+   * @param program the program for which schedule needs to be updated
+   * @param programType the type of the program
+   * @param schedule the new schedule. The schedule with the same name will be replaced
+   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program} 
+   *                           belongs to does not exist.
+   * @throws SchedulerException on unforeseen error.
+   */
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws NotFoundException, SchedulerException;
 
   /**
    * Deletes the schedule.
    * Deletes the associated Job if no other schedules exist for that job.
    *
    * @param scheduleName the name of the schedule
+   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
+   *                           belongs to does not exist.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName);
+  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException;
 
   /**
    * Delete all schedules associated with the given Program.
@@ -97,8 +131,10 @@ public interface Scheduler {
    *
    * @param programId Id of program that needs to be run.
    * @param programType type of program that needs to be run.
+   * @throws SchedulerException on unforeseen error.
    */
-  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType);
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType)
+    throws SchedulerException;
 
   /**
    * Get state of a particular schedule.
@@ -107,8 +143,10 @@ public interface Scheduler {
    * @param programType the type of the program
    * @param scheduleName the name of the schedule
    * @return State of the schedule.
+   * @throws SchedulerException on unforeseen error.
    */
-  public ScheduleState scheduleState (Id.Program program, SchedulableProgramType programType, String scheduleName);
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws SchedulerException;
 
   /**
    * Schedule state.

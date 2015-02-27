@@ -60,10 +60,10 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         break;
 
       case NAMESPACE:
-        if (programIdParts.length != 1) {
+        if (programIdParts.length != 0) {
           throw new CommandInputError(this);
         }
-        client.deleteNamespacePreferences(programIdParts[0]);
+        client.deleteNamespacePreferences(cliConfig.getCurrentNamespace());
         printStream.printf(SUCCESS + "\n", type.getPrettyName());
         break;
 

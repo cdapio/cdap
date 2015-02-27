@@ -170,6 +170,11 @@ public final class Constants {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
 
+    // Table dataset property that defines whether table is transactional or not.
+    // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
+    // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
+    public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
+
     /**
      * DatasetManager service configuration.
      */
@@ -573,6 +578,7 @@ public final class Constants {
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 
     public static final String DATASET_NAME = "explore.dataset.name";
+    public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";

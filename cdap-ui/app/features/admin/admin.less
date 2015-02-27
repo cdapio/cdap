@@ -1,0 +1,27 @@
+@import "../../styles/variables.less";
+
+body.state-admin {
+  main.container {
+    .clickable {
+      cursor: pointer;
+    }
+    .sidebar {
+      a.current {
+        color: @cdap-orange;
+        cursor: default;
+        text-decoration: none;
+      }
+      ul > li > ul {
+        padding-left: 1em;
+      }
+
+      span {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+    }
+  }
+}

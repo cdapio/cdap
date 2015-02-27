@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -47,6 +48,7 @@ import javax.annotation.Nullable;
  * </p>
  */
 public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
+  private final Store store;
   private final CConfiguration cConf;
   private final ApplicationSpecificationAdapter adapter;
   private final Id.Namespace id;
@@ -54,11 +56,11 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
   private static final Logger LOG = LoggerFactory.getLogger(LocalArchiveLoaderStage.class);
 
   /**
-
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage(CConfiguration cConf, Id.Namespace id, @Nullable String appId) {
+  public LocalArchiveLoaderStage(Store store, CConfiguration cConf, Id.Namespace id, @Nullable String appId) {
     super(TypeToken.of(DeploymentInfo.class));
+    this.store = store;
     this.cConf = cConf;
     this.id = id;
     this.appId = appId;
@@ -110,7 +112,8 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
       };
     }
 
-    emit(new ApplicationDeployable(cConf, Id.Application.from(id, specification.getName()),
-                                   specification, deploymentInfo.getApplicationDeployScope(), outputLocation));
+    Id.Application application = Id.Application.from(id, specification.getName());
+    emit(new ApplicationDeployable(cConf, application, specification, store.getApplication(application),
+                                   deploymentInfo.getApplicationDeployScope(), outputLocation));
   }
 }
