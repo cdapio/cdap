@@ -23,6 +23,7 @@ import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -100,14 +101,14 @@ public class CLIMain {
     setCLIPrompt(cliConfig.getCurrentNamespace(), cliConfig.getURI());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(String newNamespace, URI newURI) {
+      public void onConnectionChanged(Id.Namespace newNamespace, URI newURI) {
         setCLIPrompt(newNamespace, newURI);
       }
     });
   }
 
-  private void setCLIPrompt(String namespace, URI uri) {
-    cli.getReader().setPrompt("cdap (" + uri + "//" + namespace + ")> ");
+  private void setCLIPrompt(Id.Namespace namespace, URI uri) {
+    cli.getReader().setPrompt("cdap (" + uri + "/" + namespace.getId() + ")> ");
   }
 
   public CLI getCLI() {

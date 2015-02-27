@@ -306,7 +306,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
         MetricsCollector streamMetricsCollector = streamMetricsCollectors.getUnchecked(streamId.getNamespace());
         final MetricsCollector childCollector =
-          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getName());
+          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getId());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -439,7 +439,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
-    Map<String, String> headers = getHeaders(request, streamId.getName(),
+    Map<String, String> headers = getHeaders(request, streamId.getId(),
                                              ImmutableMap.<String, String>builder().put("content.type", contentType));
 
     if (contentLength >= 0 && contentLength <= batchBufferThreshold) {

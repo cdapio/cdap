@@ -24,6 +24,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.ServiceNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -57,16 +59,19 @@ public class ServiceClient {
    * @return {@link ServiceSpecification} representing the service
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the app or service could not be found
+   * @throws ServiceNotFoundException if service could not be found
    */
   public ServiceSpecification get(String appId, String serviceId)
-    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+    throws IOException, UnAuthorizedAccessTokenException, ServiceNotFoundException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service ", appId + "/" + serviceId);
+      throw new ServiceNotFoundException(service);
     }
     return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
   }

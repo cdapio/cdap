@@ -28,5 +28,5 @@ public class DefaultId {
 
   public static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   public static final Id.Application APPLICATION = new Id.Application(NAMESPACE, DEFAULT_APPLICATION_ID);
-  public static final Id.Program PROGRAM = new Id.Program(APPLICATION, DEFAULT_PROGRAM_ID);
+  public static final Id.Program PROGRAM = new Id.Program(APPLICATION, type, DEFAULT_PROGRAM_ID);
 }

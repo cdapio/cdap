@@ -16,22 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an application is not found.
+ * Thrown when the user tries to create a schedule that already exists.
  */
-public class ApplicationNotFoundException extends NotFoundException {
+public class ScheduleAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Application id;
+  private final Id.Schedule schedule;
 
-  public ApplicationNotFoundException(Id.Application id) {
-    super(id);
-    this.id = id;
+  public ScheduleAlreadyExistsException(Id.Schedule schedule) {
+    super(schedule);
+    this.schedule = schedule;
   }
 
-  public Id.Application getId() {
-    return id;
+  public Id.Schedule getSchedule() {
+    return schedule;
   }
 }

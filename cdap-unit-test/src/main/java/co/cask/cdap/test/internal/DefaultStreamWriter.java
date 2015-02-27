@@ -57,11 +57,11 @@ public final class DefaultStreamWriter implements StreamWriter {
   public void createStream() throws IOException {
 
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                     "/v2/streams/" + streamId.getName());
+                                                     "/v2/streams/" + streamId.getId());
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandlerV2.create(httpRequest, responder, streamId.getName());
+      streamHandlerV2.create(httpRequest, responder, streamId.getId());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);
@@ -109,10 +109,10 @@ public final class DefaultStreamWriter implements StreamWriter {
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                     "/v2/streams/" + streamId.getName());
+                                                     "/v2/streams/" + streamId.getId());
 
     for (Map.Entry<String, String> entry : headers.entrySet()) {
-      httpRequest.setHeader(streamId.getName() + "." + entry.getKey(), entry.getValue());
+      httpRequest.setHeader(streamId.getId() + "." + entry.getKey(), entry.getValue());
     }
     ChannelBuffer content = ChannelBuffers.wrappedBuffer(buffer);
     httpRequest.setContent(content);
@@ -120,7 +120,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandlerV2.enqueue(httpRequest, responder, streamId.getName());
+      streamHandlerV2.enqueue(httpRequest, responder, streamId.getId());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

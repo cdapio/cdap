@@ -47,7 +47,7 @@ public class SchedulerServiceTest {
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, type, AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");

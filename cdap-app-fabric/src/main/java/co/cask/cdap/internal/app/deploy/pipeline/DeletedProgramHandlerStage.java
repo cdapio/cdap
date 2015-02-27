@@ -91,7 +91,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appSpec.getId(), spec.getName());
+      Id.Program programId = Id.Program.from(appSpec.getId(), type, spec.getName());
       programTerminator.stop(Id.Namespace.from(appSpec.getId().getNamespaceId()),
                              programId, type);
 

@@ -18,13 +18,14 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -58,7 +59,6 @@ public class AdapterClient {
     this.config = config;
     this.restClient = RESTClient.create(config);
   }
-
   /**
    * Lists all adapters.
    *
@@ -74,6 +74,25 @@ public class AdapterClient {
   }
 
   /**
+   * Gets an adapter in the current namespace.
+   *
+   * @return an {@link AdapterSpecification}.
+   * @throws java.io.IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public AdapterSpecification get(Id.Adapter adapter)
+    throws AdapterNotFoundException, IOException, UnAuthorizedAccessTokenException {
+
+    URL url = config.resolveNamespacedURLV3("adapters/%s", adapter.getId());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new AdapterNotFoundException(adapter);
+    }
+    return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterSpecification>() { }).getResponseObject();
+  }
+
+  /**
    * Gets an adapter.
    *
    * @return an {@link AdapterSpecification}.
@@ -82,13 +101,8 @@ public class AdapterClient {
    */
   public AdapterSpecification get(String adapterName)
     throws AdapterNotFoundException, IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3("adapters/" + adapterName);
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterNotFoundException(adapterName);
-    }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterSpecification>() { }).getResponseObject();
+
+    return get(Id.Adapter.from(config.getNamespace(), adapterName));
   }
 
   /**
@@ -104,13 +118,14 @@ public class AdapterClient {
   public void create(String adapterName, AdapterConfig adapterConfig)
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
+    Id.AdapterType adapterType = Id.AdapterType.from(config.getNamespace(), adapterConfig.getType());
+    URL url = config.resolveNamespacedURLV3("adapters/%s", adapterName);
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterTypeNotFoundException(adapterConfig.type);
+      throw new AdapterTypeNotFoundException(adapterType);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseMessage());
     }
@@ -124,13 +139,13 @@ public class AdapterClient {
    * @throws java.io.IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String adapterName) throws AdapterNotFoundException, IOException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
+  public void delete(String adapterName) throws AdapterNotFoundException, IOException, UnAuthorizedAccessTokenException {
+    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
+    URL url = config.resolveNamespacedURLV3("adapters/%s", adapterName);
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
   }
 

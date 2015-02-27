@@ -93,8 +93,7 @@ public class RESTClient {
                      .withBody(body).build(), allowedErrorCodes);
   }
 
-  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
-    UnAuthorizedAccessTokenException {
+  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException, UnAuthorizedAccessTokenException {
     int currentTry = 0;
     HttpResponse response;
     do {

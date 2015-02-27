@@ -20,18 +20,19 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an application is not found.
+ * Thrown when a stream is not found
  */
-public class ApplicationNotFoundException extends NotFoundException {
+public class ServiceNotFoundException extends NotFoundException {
 
-  private final Id.Application id;
+  private final Id.Service id;
 
-  public ApplicationNotFoundException(Id.Application id) {
+
+  public ServiceNotFoundException(Id.Service id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Application getId() {
+  public Id.Service getId() {
     return id;
   }
 }

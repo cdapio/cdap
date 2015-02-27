@@ -22,6 +22,7 @@ import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
@@ -85,11 +86,11 @@ public class CLIConfig {
     return clientConfigBuilder.build();
   }
 
-  public String getCurrentNamespace() {
+  public Id.Namespace getCurrentNamespace() {
     return clientConfig.getNamespace();
   }
 
-  public void setCurrentNamespace(String currentNamespace) {
+  public void setCurrentNamespace(Id.Namespace currentNamespace) {
     clientConfig.setNamespace(currentNamespace);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
       listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
@@ -108,7 +109,7 @@ public class CLIConfig {
       checkConnection(clientConfig, connectionInfo, accessToken);
       setHostname(connectionInfo.getHostname());
       setPort(connectionInfo.getPort());
-      setCurrentNamespace(Constants.DEFAULT_NAMESPACE);
+      setCurrentNamespace(Constants.DEFAULT_NAMESPACE_ID);
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
 
@@ -308,7 +309,7 @@ public class CLIConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(String currentNamespace, URI newURI);
+    void onConnectionChanged(Id.Namespace currentNamespace, URI newURI);
   }
 
   /**

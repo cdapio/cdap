@@ -18,6 +18,7 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Optional;
@@ -57,13 +58,13 @@ public class ClientConfig {
   private boolean sslEnabled;
   private String hostname;
   private int port;
-  private String namespace;
+  private Id.Namespace namespace;
   private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, String namespace, boolean sslEnabled, int unavailableRetryLimit,
+  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
@@ -78,10 +79,6 @@ public class ClientConfig {
     this.uploadHttpConfig = uploadHttpConfig;
   }
 
-  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
-  }
-
   /**
    * Resolves a path against the target CDAP server
    *
@@ -92,6 +89,10 @@ public class ClientConfig {
    */
   public URL resolveURL(String path) throws MalformedURLException {
     return resolveURL(apiVersion, path);
+  }
+
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
   }
 
   /**
@@ -106,8 +107,12 @@ public class ClientConfig {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
   }
 
-  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
+  public URL resolveURLV3(String format, Object... args) throws MalformedURLException {
+    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, String.format(format, args));
+  }
+
+  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
   }
 
   /**
@@ -119,7 +124,15 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
-    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), path);
+  }
+
+  public URL resolveNamespacedURLV3(String format, Object... args) throws MalformedURLException {
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), String.format(format, args));
+  }
+
+  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
   }
 
   /**
@@ -160,7 +173,7 @@ public class ClientConfig {
   /**
    * @return namespace currently active
    */
-  public String getNamespace() {
+  public Id.Namespace getNamespace() {
     return namespace;
   }
 
@@ -193,7 +206,7 @@ public class ClientConfig {
     this.port = port;
   }
 
-  public void setNamespace(String namespace) {
+  public void setNamespace(Id.Namespace namespace) {
     this.namespace = namespace;
   }
 
@@ -238,7 +251,7 @@ public class ClientConfig {
 
     private String hostname = DEFAULT_HOST;
     private Optional<Integer> port = Optional.absent();
-    private String namespace = Constants.DEFAULT_NAMESPACE;
+    private Id.Namespace namespace = Constants.DEFAULT_NAMESPACE_ID;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
@@ -308,7 +321,7 @@ public class ClientConfig {
       return this;
     }
 
-    public Builder setNamespace(String namespace) {
+    public Builder setNamespace(Id.Namespace namespace) {
       this.namespace = namespace;
       return this;
     }

@@ -159,11 +159,11 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
   private MDSKey getKey(Id.Stream streamId) {
     return new MDSKey.Builder()
-      .add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getName()).build();
+      .add(TYPE_STREAM, streamId.getNamespaceId(), streamId.getId()).build();
   }
 
   private StreamSpecification createStreamSpec(Id.Stream streamId) {
-    return new StreamSpecification.Builder().setName(streamId.getName()).create();
+    return new StreamSpecification.Builder().setName(streamId.getId()).create();
   }
 
   private static final class StreamMds implements Iterable<MetadataStoreDataset> {

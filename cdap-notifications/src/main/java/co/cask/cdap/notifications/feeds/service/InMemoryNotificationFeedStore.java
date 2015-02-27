@@ -37,11 +37,11 @@ public class InMemoryNotificationFeedStore implements NotificationFeedStore {
   @Nullable
   @Override
   public synchronized Id.NotificationFeed createNotificationFeed(Id.NotificationFeed feed) {
-    Id.NotificationFeed existingFeed = feeds.get(feed.getId());
+    Id.NotificationFeed existingFeed = feeds.get(feed.getFeedId());
     if (existingFeed != null) {
       return existingFeed;
     }
-    feeds.put(feed.getId(), feed);
+    feeds.put(feed.getFeedId(), feed);
     return null;
   }
 

@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -42,7 +43,8 @@ public class DescribeNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    NamespaceMeta namespaceMeta = namespaceClient.get(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
+    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
+    NamespaceMeta namespaceMeta = namespaceClient.get(namespace);
     new AsciiTable<NamespaceMeta>(
       new String[]{"id", "display_name", "description"},
       Lists.newArrayList(namespaceMeta),

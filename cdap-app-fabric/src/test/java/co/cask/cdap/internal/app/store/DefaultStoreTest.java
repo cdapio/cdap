@@ -397,7 +397,7 @@ public class DefaultStoreTest {
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
-    Id.Program programId = new Id.Program(appId, "WordCountFlow");
+    Id.Program programId = new Id.Program(appId, type, "WordCountFlow");
     store.setFlowletInstances(programId, "StreamSource",
                                                       initialInstances + 5);
     // checking that app spec in store was adjusted
@@ -419,7 +419,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
-    Id.Program programId = new Id.Program(appId, "NoOpProcedure");
+    Id.Program programId = new Id.Program(appId, type, "NoOpProcedure");
 
     int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
     Assert.assertEquals(1, instancesFromSpec);
@@ -494,10 +494,10 @@ public class DefaultStoreTest {
 
     Assert.assertNotNull(store.getApplication(appId));
 
-    Id.Program flowProgramId = new Id.Program(appId, "NoOpFlow");
-    Id.Program mapreduceProgramId = new Id.Program(appId, "NoOpMR");
-    Id.Program procedureProgramId = new Id.Program(appId, "NoOpProcedure");
-    Id.Program workflowProgramId = new Id.Program(appId, "NoOpWorkflow");
+    Id.Program flowProgramId = new Id.Program(appId, type, "NoOpFlow");
+    Id.Program mapreduceProgramId = new Id.Program(appId, type, "NoOpMR");
+    Id.Program procedureProgramId = new Id.Program(appId, type, "NoOpProcedure");
+    Id.Program workflowProgramId = new Id.Program(appId, type, "NoOpWorkflow");
 
     store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
     store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
@@ -553,12 +553,12 @@ public class DefaultStoreTest {
     Id.Application appId2 = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId2, spec, new LocalLocationFactory().create("/wordCount"));
 
-    Id.Program flowProgramId1 = new Id.Program(appId1, "NoOpFlow");
-    Id.Program mapreduceProgramId1 = new Id.Program(appId1, "NoOpMR");
-    Id.Program procedureProgramId1 = new Id.Program(appId1, "NoOpProcedure");
-    Id.Program workflowProgramId1 = new Id.Program(appId1, "NoOpWorkflow");
+    Id.Program flowProgramId1 = new Id.Program(appId1, type, "NoOpFlow");
+    Id.Program mapreduceProgramId1 = new Id.Program(appId1, type, "NoOpMR");
+    Id.Program procedureProgramId1 = new Id.Program(appId1, type, "NoOpProcedure");
+    Id.Program workflowProgramId1 = new Id.Program(appId1, type, "NoOpWorkflow");
 
-    Id.Program flowProgramId2 = new Id.Program(appId2, "WordCountFlow");
+    Id.Program flowProgramId2 = new Id.Program(appId2, type, "WordCountFlow");
 
     Assert.assertNotNull(store.getApplication(appId1));
     Assert.assertNotNull(store.getApplication(appId2));
@@ -680,7 +680,7 @@ public class DefaultStoreTest {
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, type, AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");

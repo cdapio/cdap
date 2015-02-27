@@ -18,10 +18,11 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -76,11 +77,13 @@ public class DatasetTypeClient {
    */
   public DatasetTypeMeta get(String typeName)
     throws DatasetTypeNotFoundException, IOException, UnAuthorizedAccessTokenException {
+
+    Id.DatasetType datasetType = Id.DatasetType.from(config.getNamespace(), typeName);
     URL url = config.resolveNamespacedURLV3(String.format("data/types/%s", typeName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(typeName);
+      throw new DatasetTypeNotFoundException(datasetType);
     }
 
     return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();

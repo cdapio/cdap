@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an application is not found.
+ * Thrown when a namespace already exists.
  */
-public class ApplicationNotFoundException extends NotFoundException {
+public class NamespaceAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Application id;
+  private final Id.Namespace id;
 
-  public ApplicationNotFoundException(Id.Application id) {
+  public NamespaceAlreadyExistsException(Id.Namespace id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Application getId() {
+  public Id.Namespace getId() {
     return id;
   }
 }

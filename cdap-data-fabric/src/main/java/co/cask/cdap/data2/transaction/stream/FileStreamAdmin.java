@@ -306,7 +306,7 @@ public class FileStreamAdmin implements StreamAdmin {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(config.getStreamId().getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getStreamId().getName()))
+        .setName(String.format("%sSize", config.getStreamId().getId()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
@@ -333,7 +333,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   // Constructs path: /.../<namespace>/streams/<streamName>, as expected by StreamUtils#getStreamIdFromLocation
   private Location getStreamBaseLocation(Id.Stream streamId) throws IOException {
-    return getStreamsHomeLocation(streamId.getNamespace()).append(streamId.getName());
+    return getStreamsHomeLocation(streamId.getNamespace()).append(streamId.getId());
   }
 
   private Location getStreamsHomeLocation(Id.Namespace namespace) throws IOException {
@@ -352,7 +352,7 @@ public class FileStreamAdmin implements StreamAdmin {
         }
       });
     } catch (Exception e) {
-      LOG.error("Failed to truncate stream {}", streamId.getName(), e);
+      LOG.error("Failed to truncate stream {}", streamId.getId(), e);
     }
   }
 

@@ -238,8 +238,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      Id.Program program = Id.Program.from(namespaceId, appId, id);
       ProgramType programType = ProgramType.valueOfCategoryName(type);
+      Id.Program program = Id.Program.from(namespaceId, appId, programType, id);
       StatusMap statusMap = getStatus(program, programType);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -271,10 +271,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       String programName = scheduleSpec.getProgram().getProgramName();
-      Id.Program programId = Id.Program.from(namespaceId, appId, programName);
+      SchedulableProgramType schedulableProgramType = scheduleSpec.getProgram().getProgramType();
+      Id.Program programId = Id.Program.from(namespaceId, appId, scheduleSpec.getProgram().getProgramType(), programName);
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                         scheduleName).toString());
+      json.addProperty("status", scheduler.scheduleState(programId, programId.getType(), scheduleName).toString());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);

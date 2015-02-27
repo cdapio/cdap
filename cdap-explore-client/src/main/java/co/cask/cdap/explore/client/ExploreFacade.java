@@ -63,7 +63,7 @@ public class ExploreFacade {
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream);
-    handleExploreFuture(futureSuccess, "enable", "stream", stream.getName());
+    handleExploreFuture(futureSuccess, "enable", "stream", stream.getId());
   }
 
   /**
@@ -77,7 +77,7 @@ public class ExploreFacade {
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream);
-    handleExploreFuture(futureSuccess, "disable", "stream", stream.getName());
+    handleExploreFuture(futureSuccess, "disable", "stream", stream.getId());
   }
 
   /**

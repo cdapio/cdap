@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,18 +20,11 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an application is not found.
+ * Thrown when a schedule is not found.
  */
-public class ApplicationNotFoundException extends NotFoundException {
+public class ScheduleNotFoundException extends NotFoundException {
 
-  private final Id.Application id;
-
-  public ApplicationNotFoundException(Id.Application id) {
-    super(id);
-    this.id = id;
-  }
-
-  public Id.Application getId() {
-    return id;
+  public ScheduleNotFoundException(Id.Schedule schedule) {
+    super(schedule);
   }
 }

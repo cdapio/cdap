@@ -21,10 +21,11 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -81,13 +82,14 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream was not found
    */
-  public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/info", streamId));
+  public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/info", stream.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
     return GSON.fromJson(response.getResponseBodyAsString(Charsets.UTF_8), StreamProperties.class);
   }
@@ -102,10 +104,10 @@ public class StreamClient {
    * @throws BadRequestException if the request is bad
    * @throws StreamNotFoundException if the stream was not found
    */
-  public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
-    UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
+  public void setStreamProperties(String streamId, StreamProperties properties) throws IOException, UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {
 
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", stream.getId()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
@@ -114,7 +116,7 @@ public class StreamClient {
       throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -126,7 +128,8 @@ public class StreamClient {
    * @throws BadRequestException if the provided stream ID was invalid
    */
   public void create(String newStreamId) throws IOException, BadRequestException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s", newStreamId));
+    Id.Stream newStream = Id.Stream.from(config.getNamespace(), newStreamId);
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s", newStream.getId()));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -143,8 +146,7 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendEvent(String streamId, String event) throws IOException,
-                                                              StreamNotFoundException,
-                                                              UnAuthorizedAccessTokenException {
+                                                              StreamNotFoundException, UnAuthorizedAccessTokenException {
     writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s", streamId)), streamId, event);
   }
 
@@ -158,8 +160,7 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void asyncSendEvent(String streamId, String event) throws IOException,
-                                                                   StreamNotFoundException,
-                                                                   UnAuthorizedAccessTokenException {
+                                                                   StreamNotFoundException, UnAuthorizedAccessTokenException {
     writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s/async", streamId)), streamId, event);
   }
 
@@ -187,16 +188,17 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendBatch(String streamId, String contentType,
-                        InputSupplier<? extends InputStream> inputSupplier) throws IOException,
-                                                                                   StreamNotFoundException,
-                                                                                   UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/batch", streamId));
+                        InputSupplier<? extends InputStream> inputSupplier)
+    throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/batch", stream.getId()));
     Map<String, String> headers = ImmutableMap.of("Content-type", contentType);
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(inputSupplier).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -208,11 +210,12 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
   public void truncate(String streamId) throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
     URL url = config.resolveNamespacedURLV3(String.format("streams/%s/truncate", streamId));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -224,14 +227,16 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
-  public void setTTL(String streamId, long ttlInSeconds) throws IOException, StreamNotFoundException,
-    UnAuthorizedAccessTokenException {
+  public void setTTL(String streamId, long ttlInSeconds)
+    throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
     URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
   }
 
@@ -288,8 +293,10 @@ public class StreamClient {
   public void getEvents(String streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
     URL url = config.resolveNamespacedURLV3(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
-                                                          streamId, startTime, endTime, limit));
+                                                          stream.getId(), startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     AccessToken accessToken = config.getAccessToken();
     if (accessToken != null) {
@@ -309,7 +316,7 @@ public class StreamClient {
         throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new StreamNotFoundException(streamId);
+        throw new StreamNotFoundException(stream);
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
         return;
@@ -333,13 +340,13 @@ public class StreamClient {
   /**
    * Writes stream event using the given URL. The write maybe sync or async, depending on the URL.
    */
-  private void writeEvent(URL url, String streamId, String event) throws IOException,
-                                                                         StreamNotFoundException,
-                                                                         UnAuthorizedAccessTokenException {
+  private void writeEvent(URL url, String streamId, String event)
+    throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
     HttpRequest request = HttpRequest.post(url).withBody(event).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(stream);
     }
   }
 }

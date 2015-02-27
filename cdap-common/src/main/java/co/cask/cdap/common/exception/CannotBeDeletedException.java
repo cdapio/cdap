@@ -16,56 +16,23 @@
 
 package co.cask.cdap.common.exception;
 
-import javax.annotation.Nullable;
+import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element cannot be deleted.
  */
 public class CannotBeDeletedException extends Exception {
 
-  private final String elementType;
-  private final String elementId;
-  private String reason;
+  private final Id objectId;
 
-  public CannotBeDeletedException(String elementType, String elementId) {
-    super(String.format("Element '%s' of type '%s' cannot be deleted.", elementId, elementType));
-    this.elementType = elementType;
-    this.elementId = elementId;
+  public CannotBeDeletedException(Id id) {
+    super(String.format("'%s' could not be deleted", id.getIdRep()));
+    this.objectId = id;
   }
 
-  public CannotBeDeletedException(String elementType, String elementId, String reason) {
-    super(String.format("Element '%s' of type '%s' cannot be deleted. Reason: %s", elementId, elementType, reason));
-    this.elementType = elementType;
-    this.elementId = elementId;
-    this.reason = reason;
+  public Id getObjectId() {
+    return objectId;
   }
 
-  public CannotBeDeletedException(String elementType, String elementId, Throwable cause) {
-    super(String.format("Element '%s' of type '%s' cannot be deleted. Reason: %s",
-                        elementId, elementType, cause.getMessage()), cause);
-    this.elementType = elementType;
-    this.elementId = elementId;
-  }
 
-  /**
-   * @return Type of element: flow, stream, dataset, etc
-   */
-  public String getElementType() {
-    return elementType;
-  }
-
-  /**
-   * @return ID of the element
-   */
-  public String getElementId() {
-    return elementId;
-  }
-
-  /**
-   * @return the reason why the element cannot be deleted
-   */
-  @Nullable
-  public String getReason() {
-    return reason;
-  }
 }

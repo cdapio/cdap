@@ -19,12 +19,13 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.exception.DatasetAlreadyExistsException;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -86,15 +87,18 @@ public class DatasetClient {
   public void create(String datasetName, DatasetInstanceConfiguration properties)
     throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
 
+    Id.DatasetType datasetType = Id.DatasetType.from(config.getNamespace(), properties.getTypeName());
+    Id.DatasetInstance newDatasetInstance = Id.DatasetInstance.from(config.getNamespace(), datasetName);
+
     URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(properties.getTypeName());
+      throw new DatasetTypeNotFoundException(datasetType);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetAlreadyExistsException(datasetName);
+      throw new DatasetAlreadyExistsException(newDatasetInstance);
     }
   }
 
@@ -121,13 +125,14 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String datasetName) throws DatasetNotFoundException, IOException,
-    UnAuthorizedAccessTokenException {
+  public void delete(String datasetName) throws DatasetNotFoundException, IOException, UnAuthorizedAccessTokenException {
+
+    Id.DatasetInstance dataset = Id.DatasetInstance.from(config.getNamespace(), datasetName);
     URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetNotFoundException(datasetName);
+      throw new DatasetNotFoundException(dataset);
     }
   }
 

@@ -16,22 +16,22 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when a dataset module could not be found.
  */
 public class DatasetModuleNotFoundException extends NotFoundException {
 
-  private final String moduleName;
+  private final Id.DatasetModule id;
 
-  public DatasetModuleNotFoundException(String moduleName) {
-    super("dataset module", moduleName);
-    this.moduleName = moduleName;
+  public DatasetModuleNotFoundException(Id.DatasetModule id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return Name of the dataset module that could not be found
-   */
-  public String getModuleName() {
-    return moduleName;
+  public Id.DatasetModule getId() {
+    return id;
   }
 }
