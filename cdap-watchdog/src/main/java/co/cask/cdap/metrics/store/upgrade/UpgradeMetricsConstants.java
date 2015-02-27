@@ -16,12 +16,11 @@
 package co.cask.cdap.metrics.store.upgrade;
 
 /**
- *
+ * Metric Constants that are used by {@link DataMigration}
  */
 public final class UpgradeMetricsConstants {
-  public static final String DEFAULT_ENTITY_TABLE_NAME_V1 = "metrics.entity";
-
-  // for migration purpose
+  public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
+  public static final String DEFAULT_METRICS_TABLE_PREFIX = "metrics.table";
   public static final String EMPTY_TAG = "-";
   public static final int DEFAULT_CONTEXT_DEPTH = 6;
   public static final int DEFAULT_METRIC_DEPTH = 4;

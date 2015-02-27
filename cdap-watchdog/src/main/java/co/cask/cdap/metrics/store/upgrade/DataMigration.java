@@ -28,10 +28,12 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.Version;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -45,16 +47,14 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Migration for metrics data from 2.6 to 2.8
  */
-public class DataMigration26 {
+public class DataMigration {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataMigration26.class);
-  private static final String ENTITY_TABLE_NAME_SUFFIX = ".metrics.entity";
-  private static final String AGGREGATES_TABLE_NAME_SUFFIX = ".metrics.table.agg";
+  private static final Logger LOG = LoggerFactory.getLogger(DataMigration.class);
+
   private static final String TYPE = "type";
 
   private final DatasetFramework dsFramework;
@@ -121,48 +121,66 @@ public class DataMigration26 {
                                  Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                                  Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME)
     );
+  private final String entityTableName;
+  private final String metricsTableName;
 
-  private Map<String, MetricsTable> scopeToAggregatesTable = Maps.newHashMap();
-  private Map<String, EntityTable> scopeToEntityTable = Maps.newHashMap();
-  private Map<String, MetricsEntityCodec> scopeToCodec = Maps.newHashMap();
+  public DataMigration(final CConfiguration cConf, final DatasetFramework dsFramework,
+                       DefaultMetricDatasetFactory factory) {
 
-  public DataMigration26(final CConfiguration cConf, final DatasetFramework dsFramework,
-                         DefaultMetricDatasetFactory factory) {
-
-    //todo - change hard-coded table name to read from configuration instead.
     LOG.info("Initializing Data Migration.");
     this.dsFramework = dsFramework;
-    for (String scope : scopes) {
-      scopeToEntityTable.put(scope, new EntityTable(getOrCreateMetricsTable(scope + ENTITY_TABLE_NAME_SUFFIX,
-                                                                            DatasetProperties.EMPTY)));
-      scopeToAggregatesTable.put(scope, getOrCreateMetricsTable(scope + AGGREGATES_TABLE_NAME_SUFFIX,
-                                                                DatasetProperties.EMPTY));
-      scopeToCodec.put(scope, new MetricsEntityCodec(scopeToEntityTable.get(scope),
-                                                     UpgradeMetricsConstants.DEFAULT_CONTEXT_DEPTH,
-                                                     UpgradeMetricsConstants.DEFAULT_METRIC_DEPTH,
-                                                     UpgradeMetricsConstants.DEFAULT_TAG_DEPTH));
-    }
+    this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                     UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    this.metricsTableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                      UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
   }
 
-  public void decodeAggregatesTable26() {
+  public void migrateMetricsTable(Version cdapVersion) {
+    if (cdapVersion.getVersion().equals("2.6")) {
+      migrateMetricsTableFromVersion26(cdapVersion);
+    } else if (cdapVersion.getVersion().equals("2.7")) {
+      migrateMetricsTableFromVersion27(cdapVersion);
+    } else {
+      LOG.info("Can Migrate only from CDAP versions 2.6 and 2.7 to CDAP-version 2.8");
+    }
+  }
+
+  private void migrateMetricsTableFromVersion26(Version version) {
+    for (String scope : scopes) {
+      EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(String.format("%s.%s", scope, entityTableName),
+                                                                        DatasetProperties.EMPTY));
+      MetricsTable metricsTable = getOrCreateMetricsTable(String.format("%s.%s", scope, metricsTableName),
+                                                          DatasetProperties.EMPTY);
+      migrateMetricsData(entityTable, metricsTable, scope, version);
+    }
+  }
+
+  private void migrateMetricsTableFromVersion27(Version version) {
+    EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(
+      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME, DatasetProperties.EMPTY));
+    MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
+    migrateMetricsData(entityTable, metricsTable, null, version);
+  }
+
+  private void migrateMetricsData(EntityTable entityTable, MetricsTable metricsTable, String scope, Version version) {
+    MetricsEntityCodec codec = getEntityCodec(entityTable);
+    int idSize = getIdSize(version);
+    Row row;
     try {
-      for (String scope : scopes) {
-        Scanner scanner = scopeToAggregatesTable.get(scope).scan(null, null, null, null);
-        MetricsEntityCodec codec = scopeToCodec.get(scope);
-        LOG.info("Decoding for scope " + scope + "on table " + scopeToAggregatesTable.get(scope).toString() +
-                   " using codec " + codec.toString());
-        Row row;
-        while ((row = scanner.next()) != null) {
-          byte[] rowKey = row.getRow();
-          int offset = 0;
-          String context = codec.decode26(MetricsEntityType.CONTEXT, rowKey, offset);
-          offset += codec.getEncodedSize26(MetricsEntityType.CONTEXT);
-          String metricName = codec.decode26(MetricsEntityType.METRIC, rowKey, offset);
-          offset += codec.getEncodedSize26(MetricsEntityType.METRIC);
-          String runId = codec.decode26(MetricsEntityType.RUN, rowKey, offset);
-          constructMetricValue(scope, context, metricName, runId, row.getColumns().entrySet().iterator());
-        }
+      Scanner scanner = metricsTable.scan(null, null, null, null);
+      while ((row = scanner.next()) != null) {
+        byte[] rowKey = row.getRow();
+        int offset = 0;
+        String context = codec.decode(MetricsEntityType.CONTEXT, rowKey, offset, idSize);
+        context = getContextBasedOnVersion(context, version);
+        offset += codec.getEncodedSize(MetricsEntityType.CONTEXT, idSize);
+        String metricName = codec.decode(MetricsEntityType.METRIC, rowKey, offset, idSize);
+        offset += codec.getEncodedSize(MetricsEntityType.METRIC, idSize);
+        scope = getScopeBasedOnVersion(scope, metricName, version);
+        metricName = getMetricNameBasedOnVersion(metricName, version);
+        String runId = codec.decode(MetricsEntityType.RUN, rowKey, offset, idSize);
+        parseAndAddNewMetricValue(scope, context, metricName, runId, row.getColumns().entrySet().iterator());
       }
     } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
@@ -170,35 +188,36 @@ public class DataMigration26 {
     }
   }
 
-  private void emitMetrics(Iterator<Map.Entry<byte[], byte[]>> iterator, String context, String metricName,
-                           Map<String, String> tagMap, String nonEmptyTagKey) throws Exception {
+  private MetricsEntityCodec getEntityCodec(EntityTable table) {
+    return new MetricsEntityCodec(table, UpgradeMetricsConstants.DEFAULT_CONTEXT_DEPTH,
+                                  UpgradeMetricsConstants.DEFAULT_METRIC_DEPTH,
+                                  UpgradeMetricsConstants.DEFAULT_TAG_DEPTH);
+  }
+
+  private void addMetrics(Iterator<Map.Entry<byte[], byte[]>> iterator, String metricName,
+                          Map<String, String> tagMap, String metricTagType) throws Exception {
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.next();
       String tagValue = Bytes.toString(entry.getKey());
-      if (metricName.equals("dataset.store.bytes")) {
-        LOG.info("Dataset context : {} datasetName : {} value : {} run-id : {}", context, tagValue,
-                 Bytes.toLong(entry.getValue()), tagMap.get(Constants.Metrics.Tag.RUN_ID));
-      }
-      if (nonEmptyTagKey != null) {
+      if (metricTagType != null) {
         if (tagValue.equals(UpgradeMetricsConstants.EMPTY_TAG)) {
           continue;
         } else {
           long value = Bytes.toLong(entry.getValue());
-          Map<String, String> newMap = Maps.newHashMap(tagMap);
-          newMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
-          newMap.put(nonEmptyTagKey, tagValue);
-          sendMetrics(aggMetricStore, newMap, metricName, 0, value, MetricType.COUNTER);
-          LOG.info("Sending Metric for context {} with tagKey {} and tagValue {}", context, nonEmptyTagKey, tagValue);
+          Map<String, String> tagValues = Maps.newHashMap(tagMap);
+          tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+          tagValues.put(metricTagType, tagValue);
+          addMetricValueToMetricStore(tagValues, metricName, 0, value, MetricType.COUNTER);
         }
       } else {
-        LOG.info("Context without tagKey {}", context);
-        sendMetrics(aggMetricStore, tagMap, metricName, 0, Bytes.toLong(entry.getValue()), MetricType.COUNTER);
+        addMetricValueToMetricStore(tagMap, metricName, 0, Bytes.toLong(entry.getValue()),
+                                    MetricType.COUNTER);
       }
     }
   }
 
-  private void constructMetricValue(String scope, String context, String metricName, String runId,
-                                    Iterator<Map.Entry<byte[], byte[]>> iterator) throws Exception {
+  private void parseAndAddNewMetricValue(String scope, String context, String metricName, String runId,
+                                         Iterator<Map.Entry<byte[], byte[]>> iterator) throws Exception {
 
     List<String> contextParts =  Lists.newArrayList(Splitter.on(".").split(context));
     Map<String, String> tagMap = Maps.newHashMap();
@@ -220,16 +239,15 @@ public class DataMigration26 {
         populateApplicationTags(tagMap, contextParts, targetTagList, context);
       } else {
         // service metrics , we are skipping them as they were not exposed for querying before
-        // todo : remove logging
-        LOG.info("Skipping context : {}", context);
+        LOG.trace("Skipping context : {}", context);
         return;
       }
     } else {
-      LOG.info("Should not reach here {}", context);
+      LOG.warn("Should not reach here {}", context);
     }
-    LOG.info("Calling Emit on the - tagMap : {} - context : {} - metricName : {} and tagKey : {}", tagMap, context,
-             metricName, tagKey);
-    emitMetrics(iterator, context, metricName, tagMap, tagKey);
+    LOG.trace("Adding metrics - tagMap : {} - context : {} - metricName : {} and tagKey : {}", tagMap, context,
+              metricName, tagKey);
+    addMetrics(iterator, metricName, tagMap, tagKey);
   }
 
   private void populateApplicationTags(Map<String, String> tagMap, List<String> contextParts,
@@ -247,10 +265,11 @@ public class DataMigration26 {
     }
   }
 
-  private void sendMetrics(MetricStore store, Map<String, String> tags, String metricName, int timeStamp,
-                           long value, MetricType counter) throws Exception {
+  // constructs MetricValue based on parameters passed and adds the MetricValue to MetricStore.
+  private void addMetricValueToMetricStore(Map<String, String> tags, String metricName,
+                                           int timeStamp, long value, MetricType counter) throws Exception {
     LOG.info("Storing Metric - Tags {} metricName {} value {}", tags, metricName, value);
-    store.add(new MetricValue(tags, metricName, timeStamp, value, counter));
+    aggMetricStore.add(new MetricValue(tags, metricName, timeStamp, value, counter));
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
@@ -258,25 +277,53 @@ public class DataMigration26 {
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
-    while (table == null) {
-      try {
-        table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                                MetricsTable.class.getName(), empty, null, null);
-      } catch (DatasetManagementException e) {
-        // dataset service may be not up yet
-        // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
-        LOG.warn("Cannot access or create table {}, will retry in 1 sec.", tableName);
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      } catch (IOException e) {
-        LOG.error("Exception while creating table {}.", tableName, e);
-        throw Throwables.propagate(e);
-      }
+    try {
+      table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
+                                              MetricsTable.class.getName(), empty, null, null);
+    } catch (DatasetManagementException e) {
+      LOG.error("Cannot access or create table {}.", tableName);
+    } catch (IOException e) {
+      LOG.error("Exception while creating table {}.", tableName, e);
+      throw Throwables.propagate(e);
     }
     return table;
   }
+
+  private String getMetricNameBasedOnVersion(String metricName, Version version) {
+    if (version.getVersion().equals("2.6")) {
+      return metricName;
+    } else {
+      // metric name has scope prefix, lets remove the scope prefix and return
+      return metricName.substring(metricName.indexOf(".") + 1);
+    }
+  }
+
+  private int getIdSize(Version version) {
+    if (version.getVersion().equals("2.6")) {
+      // we use 2 bytes in 2.6
+      return 2;
+    } else {
+      // we increased the size to 3 bytes from 2.7
+      return 3;
+    }
+  }
+  private String getContextBasedOnVersion(String context, Version version) {
+    if (version.getVersion().equals("2.6")) {
+      return context;
+    } else {
+      // skip namespace - some metrics are emitted in system namespace though they have app-name, dataset name, etc
+      // so lets skip and figure out manually
+      return context.substring(context.indexOf(".") + 1);
+    }
+  }
+
+  private String getScopeBasedOnVersion(String scope, String metricName, Version version) {
+    if (version.getVersion().equals("2.6")) {
+      return scope;
+    } else {
+      // metric name has scope prefix, lets split that
+      return metricName.substring(0, metricName.indexOf("."));
+    }
+  }
+
 }

@@ -231,7 +231,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
     contextPrefix = toCanonicalContext(tagValues);
 
-    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, Integer.MAX_VALUE, -1,
+    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1,
                                                           humanToTagNames(tagValues));
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
@@ -291,7 +291,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private Collection<String> searchMetric(String contextPrefix) throws Exception {
     List<TagValue> tagValues = humanToTagNames(parseTagValues(contextPrefix));
     MetricSearchQuery searchQuery =
-      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
+      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1, tagValues);
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
