@@ -51,16 +51,12 @@ import java.util.Map;
 /**
  * Migration for metrics data from 2.6 to 2.8
  */
-public class DataMigration {
+public class MetricsDataMigrator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataMigration.class);
-
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsDataMigrator.class);
   private static final String TYPE = "type";
-
-  private final DatasetFramework dsFramework;
-  private final MetricStore aggMetricStore;
-  private final List<String> scopes = ImmutableList.of("system", "user");
-  private final Map<String, List<String>> typeToTagNameMapping =
+  private static final List<String> scopes = ImmutableList.of("system", "user");
+  private static final Map<String, List<String>> typeToTagNameMapping =
     ImmutableMap.<String, List<String>>builder()
       .put("f", ImmutableList.of(Constants.Metrics.Tag.APP,
                                  TYPE,
@@ -92,7 +88,7 @@ public class DataMigration {
                                  Constants.Metrics.Tag.INSTANCE_ID))
       .build();
 
-  private final Map<String, String> metricNameToTagNameMapping =
+  private static final Map<String, String> metricNameToTagNameMapping =
     ImmutableMap.<String, String>builder()
       .put("store.reads", Constants.Metrics.Tag.DATASET)
       .put("store.writes", Constants.Metrics.Tag.DATASET)
@@ -111,7 +107,7 @@ public class DataMigration {
       .put("process.events.processed", Constants.Metrics.Tag.FLOWLET_QUEUE)
       .build();
 
-  private final Map<String, Map<String, String>> mapOldSystemContextToNew =
+  private static final Map<String, Map<String, String>> mapOldSystemContextToNew =
     ImmutableMap.<String, Map<String, String>>of(
       "transactions", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
                                       Constants.Metrics.Tag.COMPONENT, "transactions"),
@@ -121,13 +117,16 @@ public class DataMigration {
                                  Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                                  Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME)
     );
+
+  private final DatasetFramework dsFramework;
+  private final MetricStore aggMetricStore;
   private final String entityTableName;
   private final String metricsTableName;
 
-  public DataMigration(final CConfiguration cConf, final DatasetFramework dsFramework,
-                       DefaultMetricDatasetFactory factory) {
+  public MetricsDataMigrator(final CConfiguration cConf, final DatasetFramework dsFramework,
+                             DefaultMetricDatasetFactory factory) {
 
-    LOG.info("Initializing Data Migration.");
+    System.out.println("Initializing Data Migration...");
     this.dsFramework = dsFramework;
     this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
@@ -136,13 +135,16 @@ public class DataMigration {
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
   }
 
-  public void migrateMetricsTable(Version cdapVersion) {
+  public void migrateMetricsTables(Version cdapVersion) {
     if (cdapVersion.getVersion().equals("2.6")) {
       migrateMetricsTableFromVersion26(cdapVersion);
+      System.out.println("Migrating metrics data from CDAP-2.6 to CDAP-2.8");
     } else if (cdapVersion.getVersion().equals("2.7")) {
       migrateMetricsTableFromVersion27(cdapVersion);
+      System.out.println("Migrating metrics data from CDAP-2.7 to CDAP-2.8");
     } else {
-      LOG.info("Can Migrate only from CDAP versions 2.6 and 2.7 to CDAP-version 2.8");
+      System.out.println("Metrics data migration supports migrating data of 2.7.x " +
+                           "and earlier version to 2.8.x version");
     }
   }
 
@@ -167,6 +169,7 @@ public class DataMigration {
     MetricsEntityCodec codec = getEntityCodec(entityTable);
     int idSize = getIdSize(version);
     Row row;
+    long rowCount = 0;
     try {
       Scanner scanner = metricsTable.scan(null, null, null, null);
       while ((row = scanner.next()) != null) {
@@ -180,11 +183,19 @@ public class DataMigration {
         scope = getScopeBasedOnVersion(scope, metricName, version);
         metricName = getMetricNameBasedOnVersion(metricName, version);
         String runId = codec.decode(MetricsEntityType.RUN, rowKey, offset, idSize);
-        parseAndAddNewMetricValue(scope, context, metricName, runId, row.getColumns().entrySet().iterator());
+        parseAndAddNewMetricValue(scope, context, metricName, runId, row.getColumns());
+        rowCount++;
+        printStatus(rowCount);
       }
     } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
       // no-op
+    }
+  }
+
+  private void printStatus(long rowCount) {
+    if (rowCount % 10000 == 0) {
+      System.out.println("Migrated " + rowCount + " records...");
     }
   }
 
@@ -194,10 +205,9 @@ public class DataMigration {
                                   UpgradeMetricsConstants.DEFAULT_TAG_DEPTH);
   }
 
-  private void addMetrics(Iterator<Map.Entry<byte[], byte[]>> iterator, String metricName,
+  private void addMetrics(Map<byte[], byte[]> columns, String metricName,
                           Map<String, String> tagMap, String metricTagType) throws Exception {
-    while (iterator.hasNext()) {
-      Map.Entry<byte[], byte[]> entry = iterator.next();
+    for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
       String tagValue = Bytes.toString(entry.getKey());
       if (metricTagType != null) {
         if (tagValue.equals(UpgradeMetricsConstants.EMPTY_TAG)) {
@@ -217,7 +227,7 @@ public class DataMigration {
   }
 
   private void parseAndAddNewMetricValue(String scope, String context, String metricName, String runId,
-                                         Iterator<Map.Entry<byte[], byte[]>> iterator) throws Exception {
+                                         Map<byte[], byte[]> columns) throws Exception {
 
     List<String> contextParts =  Lists.newArrayList(Splitter.on(".").split(context));
     Map<String, String> tagMap = Maps.newHashMap();
@@ -243,11 +253,11 @@ public class DataMigration {
         return;
       }
     } else {
-      LOG.warn("Should not reach here {}", context);
+      System.out.println(String.format("Unexpected metric context %s...", context));
     }
     LOG.trace("Adding metrics - tagMap : {} - context : {} - metricName : {} and tagKey : {}", tagMap, context,
               metricName, tagKey);
-    addMetrics(iterator, metricName, tagMap, tagKey);
+    addMetrics(columns, metricName, tagMap, tagKey);
   }
 
   private void populateApplicationTags(Map<String, String> tagMap, List<String> contextParts,
@@ -255,7 +265,7 @@ public class DataMigration {
     tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
     for (int i = 0; i < contextParts.size(); i++) {
       if (i == targetTagList.size()) {
-        LOG.info(" Context longer than targetTagList" + context);
+        LOG.trace(" Context longer than targetTagList" + context);
         break;
       }
       if (targetTagList.get(i).equals(TYPE)) {
@@ -268,12 +278,11 @@ public class DataMigration {
   // constructs MetricValue based on parameters passed and adds the MetricValue to MetricStore.
   private void addMetricValueToMetricStore(Map<String, String> tags, String metricName,
                                            int timeStamp, long value, MetricType counter) throws Exception {
-    LOG.info("Storing Metric - Tags {} metricName {} value {}", tags, metricName, value);
     aggMetricStore.add(new MetricValue(tags, metricName, timeStamp, value, counter));
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
-    LOG.info("Get Metrics Table" + tableName);
+    System.out.println("Migrating Metrics data from table" + tableName);
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
@@ -289,6 +298,7 @@ public class DataMigration {
     return table;
   }
 
+  // todo : use Enum instead of string comparison for the below methods
   private String getMetricNameBasedOnVersion(String metricName, Version version) {
     if (version.getVersion().equals("2.6")) {
       return metricName;

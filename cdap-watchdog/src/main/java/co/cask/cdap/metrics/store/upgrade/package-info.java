@@ -13,16 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.store.upgrade;
 
 /**
- * Metric Constants that are used by {@link MetricsDataMigrator}
+ * Used for migrating metrics data from CDAP versions earlier than 2.8 to CDAP-2.8.
+ * The Metrics system and the the data-format has changed in CDAP-2.8, In order to port the existing metrics,
+ * this package contains classes that reads existing metrics data, parses them and
+ * finally adds the metrics data to {@link co.cask.cdap.api.metrics.MetricStore}.
  */
-public final class UpgradeMetricsConstants {
-  public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
-  public static final String DEFAULT_METRICS_TABLE_PREFIX = "metrics.table";
-  public static final String EMPTY_TAG = "-";
-  public static final int DEFAULT_CONTEXT_DEPTH = 6;
-  public static final int DEFAULT_METRIC_DEPTH = 4;
-  public static final int DEFAULT_TAG_DEPTH = 3;
-}
+package co.cask.cdap.metrics.store.upgrade;
