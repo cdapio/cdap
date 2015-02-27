@@ -1,0 +1,15 @@
+<div ncy-breadcrumb></div>
+<h2>
+  <span ng-bind="$state.params.appId | caskCapitalizeFilter"></span>
+  <small> <em>Type: App </em></small>
+</h2>
+<div class="cdap-subnav-end"></div>
+<my-tabs
+  data-tabs-list="['Status']"
+  data-tabs-partial-path="/assets/features/apps/templates/tabs/"></my-tabs>
+
+<!--
+<my-tabs ng-if="false"
+  data-tabs-list="['Status','Data','Metadata','Schedules','History','Resource','Manage']"
+  data-tabs-partial-path="/assets/features/apps/templates/tabs/"></my-tabs>
+ -->

@@ -1,0 +1,40 @@
+<div class="page-header">
+  <h1>Sign in</h1>
+</div>
+
+<form name="loginForm" class="form-horizontal" role="form" ng-submit="doLogin(credentials)" novalidate>
+  <div class="form-group">
+    <label for="loginUsername" class="col-sm-2 control-label">Identifier</label>
+    <div class="col-sm-5">
+      <input id="loginUsername" type="text" name="username" class="form-control" placeholder="Username"
+        cask-focus="username"
+        ng-readonly="readonlyUsername"
+        ng-model="credentials.username" required/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="loginPassword" class="col-sm-2 control-label">Password</label>
+    <div class="col-sm-5">
+      <input id="loginPassword" type="password" name="password" class="form-control" placeholder="Password"
+        cask-focus="password"
+        ng-model="credentials.password" required/>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" ng-model="credentials.remember"/>
+          Remember me
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button type="submit" class="btn btn-primary" ng-disabled="submitting || loginForm.$invalid">
+        Submit
+      </button>
+    </div>
+  </div>
+</form>

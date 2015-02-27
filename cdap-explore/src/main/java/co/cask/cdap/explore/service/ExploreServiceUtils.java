@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.twill.internal.utils.Dependencies;
@@ -119,21 +118,32 @@ public class ExploreServiceUtils {
       return exploreClassLoader;
     }
 
-    // EXPLORE_CLASSPATH will be defined in startup scripts if Hive is installed.
+    // EXPLORE_CLASSPATH and EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
     String exploreClassPathStr = System.getProperty(Constants.Explore.EXPLORE_CLASSPATH);
     LOG.debug("Explore classpath = {}", exploreClassPathStr);
     if (exploreClassPathStr == null) {
       throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CLASSPATH + " is not set.");
     }
 
+    String exploreConfPathStr = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
+    LOG.debug("Explore confPath = {}", exploreConfPathStr);
+    if (exploreConfPathStr == null) {
+      throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set.");
+    }
+
     Iterable<File> hiveClassPath = getClassPathJarsFiles(exploreClassPathStr);
+    Iterable<File> hiveConfFiles = getClassPathJarsFiles(exploreConfPathStr);
     ImmutableList.Builder<URL> builder = ImmutableList.builder();
-    for (File jar : hiveClassPath) {
+    for (File file : Iterables.concat(hiveClassPath, hiveConfFiles)) {
       try {
-        builder.add(jar.toURI().toURL());
+        if (file.getName().matches(".*\\.xml")) {
+          builder.add(file.getParentFile().toURI().toURL());
+        } else {
+          builder.add(file.toURI().toURL());
+        }
       } catch (MalformedURLException e) {
         LOG.error("Jar URL is malformed", e);
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
     exploreClassLoader = new URLClassLoader(Iterables.toArray(builder.build(), URL.class),
@@ -141,19 +151,13 @@ public class ExploreServiceUtils {
     return exploreClassLoader;
   }
 
-  public static Class<? extends ExploreService> getHiveService(Configuration hConf) {
-    HiveSupport hiveVersion = checkHiveSupportWithSecurity(hConf, null);
-    Class<? extends ExploreService> hiveServiceCl = hiveVersion.getHiveExploreServiceClass();
-    return hiveServiceCl;
+  public static Class<? extends ExploreService> getHiveService() {
+    HiveSupport hiveVersion = checkHiveSupport(null);
+    return hiveVersion.getHiveExploreServiceClass();
   }
 
-  /**
-   * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
-   * built using the explore classpath passed as a system property to master.
-   */
-  public static HiveSupport checkHiveSupportWithoutSecurity() {
-    ClassLoader classLoader = getExploreClassLoader();
-    return checkHiveSupportWithoutSecurity(classLoader);
+  public static HiveSupport checkHiveSupport() {
+    return checkHiveSupport(getExploreClassLoader());
   }
 
   /**
@@ -162,7 +166,7 @@ public class ExploreServiceUtils {
    * @param hiveClassLoader class loader to use to load hive classes.
    *                        If null, the class loader of this class is used.
    */
-  public static HiveSupport checkHiveSupportWithoutSecurity(ClassLoader hiveClassLoader) {
+  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
     try {
       ClassLoader usingCL = hiveClassLoader;
       if (usingCL == null) {
@@ -183,6 +187,7 @@ public class ExploreServiceUtils {
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
       Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
+      @SuppressWarnings("unchecked")
       Method getStatusMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
 
       // Rowset is an interface in Hive 13, but a class in Hive 12
@@ -205,35 +210,6 @@ public class ExploreServiceUtils {
                                  Constants.Explore.EXPLORE_ENABLED +
                                  "' to false to start up without Explore.", e);
     }
-  }
-
-  /**
-   * Check that Hive is in the class path - with a right version. Use a separate class loader to load Hive classes,
-   * built using the explore classpath passed as a system property to master. Also check that Hadoop cluster is
-   * not secure, as it is not supported by Explore yet.
-   *
-   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
-   */
-  public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf) {
-    ClassLoader classLoader = getExploreClassLoader();
-    return checkHiveSupportWithSecurity(hConf, classLoader);
-  }
-
-  /**
-   * Check that Hive is in the class path - with a right version. Also check that Hadoop
-   * cluster is not secure, as it is not supported by Explore yet.
-   *
-   * @param hConf HBase configuration used to check if Hadoop cluster is secure.
-   * @param hiveClassLoader class loader to use to load hive classes.
-   *                        If null, the class loader of this class is used.
-   */
-  public static HiveSupport checkHiveSupportWithSecurity(Configuration hConf, ClassLoader hiveClassLoader) {
-    if (User.isHBaseSecurityEnabled(hConf)) {
-      throw new RuntimeException("Explore is not supported on secure Hadoop clusters. Set the configuration '" +
-                                 Constants.Explore.EXPLORE_ENABLED +
-                                 "' to false to start without Explore.");
-    }
-    return checkHiveSupportWithoutSecurity(hiveClassLoader);
   }
 
   /**

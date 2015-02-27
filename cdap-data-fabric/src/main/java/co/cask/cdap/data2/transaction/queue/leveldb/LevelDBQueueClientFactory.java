@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
@@ -42,6 +43,7 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private static final int MAX_EVICTION_THREAD_POOL_SIZE = 10;
   private static final int EVICTION_THREAD_POOL_KEEP_ALIVE_SECONDS = 60;
 
+  private final CConfiguration cConf;
   private final LevelDBTableService service;
   private final ExecutorService evictionExecutor;
   private final LevelDBQueueAdmin queueAdmin;
@@ -50,9 +52,10 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBQueueClientFactory(LevelDBTableService service,
+  public LevelDBQueueClientFactory(CConfiguration cConf, LevelDBTableService service,
                                    LevelDBQueueAdmin queueAdmin,
                                    LevelDBStreamAdmin streamAdmin) throws Exception {
+    this.cConf = cConf;
     this.service = service;
     this.evictionExecutor = createEvictionExecutor();
     this.queueAdmin = queueAdmin;
@@ -65,6 +68,13 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
+  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    LevelDBQueueAdmin admin = ensureTableExists(queueName);
+    return new LevelDBQueueProducer(
+      new LevelDBTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
+  }
+
+  @Override
   public QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
@@ -72,14 +82,8 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
-    return new LevelDBQueueConsumer(core, getQueueLock(queueName.toString()), consumerConfig, queueName, evictor);
-  }
-
-  @Override
-  public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
-    LevelDBQueueAdmin admin = ensureTableExists(queueName);
-    return new LevelDBQueueProducer(
-      new LevelDBTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
+    return new LevelDBQueueConsumer(cConf, core, getQueueLock(queueName.toString()),
+                                    consumerConfig, queueName, evictor);
   }
 
   /**

@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.AppWithDataset;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.conf.Constants;
@@ -150,5 +151,27 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
                                                                 "description", "Flow for counting words");
     Assert.assertEquals(1, responseList.size());
     Assert.assertEquals(expectedFlow, responseList.get(0));
+  }
+
+  @Test
+  public void testGetWorkersByDataset() throws Exception {
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath(String.format("datasets/%s/workers", AppWithWorker.DATASET),
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    response = doGet(getVersionedAPIPath(String.format("datasets/%s/workers", AppWithWorker.DATASET),
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String responseString = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    ImmutableMap<String, String> expectedWorker = ImmutableMap.of("type", "Worker",
+                                                                  "app", AppWithWorker.NAME,
+                                                                  "id", AppWithWorker.WORKER,
+                                                                  "name", AppWithWorker.WORKER,
+                                                                  "description", AppWithWorker.DESCRIPTION);
+    Assert.assertEquals(1, responseList.size());
+    Assert.assertEquals(expectedWorker, responseList.get(0));
   }
 }

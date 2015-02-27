@@ -1,0 +1,32 @@
+<div ng-hide="welcomeIsHidden">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcome()">
+        <span class="fa fa-close"></span>
+        <span class="sr-only"> Hide Welcome Message </span>
+      </button>
+      <h3>
+        Welcome!
+        <small> Your Cask Data Application Platform is designed to meet your needs, whether you are a developer, operator, or admin. </small>
+      </h3>
+    </div>
+  </div>
+</div>
+
+<div ng-show="isEnterprise">
+  <hr />
+  <h3> CDAP Health </h3>
+  <p>This is a section for Enterprise users.</p>
+  <hr />
+</div>
+
+<section class="data-apps">
+  <div class="row">
+    <div class="col-xs-6">
+      <div ng-include="appsTemplate"> </div>
+    </div>
+    <div class="col-xs-6">
+      <div ng-include="dataTemplate"> </div>
+    </div>
+  </div>
+</section>
