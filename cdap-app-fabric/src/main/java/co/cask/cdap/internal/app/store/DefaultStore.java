@@ -39,6 +39,11 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
+import co.cask.cdap.common.exception.ScheduleAlreadyExistsException;
+import co.cask.cdap.common.exception.ScheduleNotFoundException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,6 +65,7 @@ import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -576,48 +582,86 @@ public class DefaultStore implements Store {
     });
   }
 
-  @Nullable
   @Override
-  public ApplicationSpecification getApplication(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
+  public ApplicationSpecification getApplication(final Id.Application id) throws ApplicationNotFoundException {
+    ApplicationSpecification application = txnl.executeUnchecked(
+      new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
       @Override
       public ApplicationSpecification apply(AppMds mds) throws Exception {
         return getApplicationSpec(mds, id);
       }
     });
+
+    if (application == null) {
+      throw new ApplicationNotFoundException(id);
+    }
+
+    return application;
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
-      @Override
-      public Collection<ApplicationSpecification> apply(AppMds mds) throws Exception {
-        return Lists.transform(mds.apps.getAllApplications(id.getId()),
-                               new Function<ApplicationMeta, ApplicationSpecification>() {
-                                 @Override
-                                 public ApplicationSpecification apply(ApplicationMeta input) {
-                                   return input.getSpec();
-                                 }
-                               });
+  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id)
+    throws NamespaceNotFoundException {
+
+    try {
+      return txnl.execute(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
+        @Override
+        public Collection<ApplicationSpecification> apply(AppMds mds) throws Exception {
+          if (mds.apps.getNamespace(id) == null) {
+            throw new NamespaceNotFoundException(id);
+          }
+          return Lists.transform(mds.apps.getAllApplications(id.getId()),
+                                 new Function<ApplicationMeta, ApplicationSpecification>() {
+            @Override
+            public ApplicationSpecification apply(ApplicationMeta input) {
+              return input.getSpec();
+            }
+          });
+        }
+      });
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof NamespaceNotFoundException) {
+        throw (NamespaceNotFoundException) rootCause;
       }
-    });
+      throw Throwables.propagate(e);
+    }
   }
 
   @Nullable
   @Override
-  public Location getApplicationArchiveLocation(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Location>() {
-      @Override
-      public Location apply(AppMds mds) throws Exception {
-        ApplicationMeta meta = mds.apps.getApplication(id.getNamespaceId(), id.getId());
-        return meta == null ? null : locationFactory.create(URI.create(meta.getArchiveLocation()));
+  public Location getApplicationArchiveLocation(final Id.Application id) throws ApplicationNotFoundException {
+    try {
+      return txnl.execute(new TransactionExecutor.Function<AppMds, Location>() {
+        @Override
+        public Location apply(AppMds mds) throws Exception {
+          ApplicationMeta meta = mds.apps.getApplication(id.getNamespaceId(), id.getId());
+          if (meta == null) {
+            throw new ApplicationNotFoundException(id);
+          }
+          return locationFactory.create(URI.create(meta.getArchiveLocation()));
+        }
+      });
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof ApplicationNotFoundException) {
+        throw (ApplicationNotFoundException) rootCause;
       }
-    });
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public void changeFlowletSteamConnection(final Id.Program flow, final String flowletId,
-                                           final String oldValue, final String newValue) {
+                                           final String oldValue, final String newValue) throws BadRequestException {
 
     Preconditions.checkArgument(flow != null, "flow cannot be null");
     Preconditions.checkArgument(flowletId != null, "flowletId cannot be null");
@@ -628,98 +672,139 @@ public class DefaultStore implements Store {
                 " old coonnected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, flow);
+    try {
+      txnl.execute(new TransactionExecutor.Function<AppMds, Void>() {
+        @Override
+        public Void apply(AppMds mds) throws Exception {
+          ApplicationSpecification appSpec = getAppSpecOrFail(mds, flow);
 
-        FlowSpecification flowSpec = getFlowSpecOrFail(flow, appSpec);
+          FlowSpecification flowSpec = getFlowSpecOrFail(flow, appSpec);
 
-        boolean adjusted = false;
-        List<FlowletConnection> conns = Lists.newArrayList();
-        for (FlowletConnection con : flowSpec.getConnections()) {
-          if (FlowletConnection.Type.STREAM == con.getSourceType() &&
-            flowletId.equals(con.getTargetName()) &&
-            oldValue.equals(con.getSourceName())) {
+          boolean adjusted = false;
+          List<FlowletConnection> conns = Lists.newArrayList();
+          for (FlowletConnection con : flowSpec.getConnections()) {
+            if (FlowletConnection.Type.STREAM == con.getSourceType() &&
+              flowletId.equals(con.getTargetName()) &&
+              oldValue.equals(con.getSourceName())) {
 
-            conns.add(new FlowletConnection(con.getSourceType(), newValue, con.getTargetName()));
-            adjusted = true;
-          } else {
-            conns.add(con);
+              conns.add(new FlowletConnection(con.getSourceType(), newValue, con.getTargetName()));
+              adjusted = true;
+            } else {
+              conns.add(con);
+            }
           }
+
+          if (!adjusted) {
+            throw new BadRequestException(
+              String.format("Cannot change stream connection to %s, the connection to be changed is not found," +
+                              " namespace: %s, application: %s, flow: %s, flowlet: %s, source stream: %s",
+                            newValue, flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue));
+          }
+
+          FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, flow);
+          FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
+          ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
+
+          replaceAppSpecInProgramJar(flow, newAppSpec, ProgramType.FLOW);
+
+          Id.Application app = flow.getApplication();
+          mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
+          return null;
         }
-
-        if (!adjusted) {
-          throw new IllegalArgumentException(
-            String.format("Cannot change stream connection to %s, the connection to be changed is not found," +
-                            " namespace: %s, application: %s, flow: %s, flowlet: %s, source stream: %s",
-                          newValue, flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue));
-        }
-
-        FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, flow);
-        FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
-        ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
-
-        replaceAppSpecInProgramJar(flow, newAppSpec, ProgramType.FLOW);
-
-        Id.Application app = flow.getApplication();
-        mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
-        return null;
+      });
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof BadRequestException) {
+        throw (BadRequestException) rootCause;
       }
-    });
-
+      throw Throwables.propagate(e);
+    }
 
     LOG.trace("Changed flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
-                " old coonnected stream: {}, new connected stream: {}",
+                " old connected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
     // todo: change stream "used by" flow mapping in metadata?
   }
 
   @Override
-  public void addSchedule(final Id.Program program, final ScheduleSpecification scheduleSpecification) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
-        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
-        String scheduleName = scheduleSpecification.getSchedule().getName();
-        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
-          scheduleName  + "' already exists.");
-        schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
-        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec,
-                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
-        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
-        return null;
+  public void addSchedule(final Id.Program program, final ScheduleSpecification spec)
+    throws ScheduleAlreadyExistsException {
+
+    try {
+      txnl.execute(new TransactionExecutor.Function<AppMds, Void>() {
+        @Override
+        public Void apply(AppMds mds) throws Exception {
+          ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+          Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+          String scheduleName = spec.getSchedule().getName();
+          SchedulableProgramType programType = spec.getProgram().getProgramType();
+          Id.Schedule schedule = Id.Schedule.from(program, programType, scheduleName);
+
+          if (schedules.containsKey(scheduleName)) {
+            throw new ScheduleAlreadyExistsException(schedule);
+          }
+
+          schedules.put(spec.getSchedule().getName(), spec);
+          ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+          // TODO: double check this ProgramType.valueOf()
+          replaceAppSpecInProgramJar(program, newAppSpec,
+                                     ProgramType.valueOf(spec.getProgram().getProgramType().name()));
+          mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+          return null;
+        }
+      });
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof ScheduleAlreadyExistsException) {
+        throw (ScheduleAlreadyExistsException) rootCause;
       }
-    });
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
-                             final String scheduleName) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
-        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
-        ScheduleSpecification removed = schedules.remove(scheduleName);
-        if (removed == null) {
-          throw new NoSuchElementException("no such schedule @ account id: " + program.getNamespaceId() +
-                                             ", app id: " + program.getApplication() +
-                                             ", program id: " + program.getId() +
-                                             ", schedule name: " + scheduleName);
-        }
+  public void deleteSchedule(final Id.Schedule schedule) throws ScheduleNotFoundException {
+    try {
+      txnl.execute(new TransactionExecutor.Function<AppMds, Void>() {
+        @Override
+        public Void apply(AppMds mds) throws Exception {
+          Id.Program program = schedule.getProgram();
+          SchedulableProgramType programType = schedule.getSchedulableProgramType();
 
-        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
-        mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
-        return null;
+          ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+          Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
+          ScheduleSpecification removed = schedules.remove(schedule.getId());
+          if (removed == null) {
+            throw new ScheduleNotFoundException(schedule);
+          }
+
+          ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+          // TODO: double check this ProgramType.valueOf()
+          replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
+          mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
+          return null;
+          }
+      });
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (TransactionFailureException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof ScheduleNotFoundException) {
+        throw (ScheduleNotFoundException) rootCause;
       }
-    });
+      throw Throwables.propagate(e);
+    }
   }
 
   private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
@@ -882,7 +967,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) throws NamespaceNotFoundException {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
       @Override
       public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {

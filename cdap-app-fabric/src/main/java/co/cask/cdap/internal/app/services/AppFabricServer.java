@@ -19,11 +19,13 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.AppLifecycleService;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -63,6 +65,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
   private final AdapterService adapterService;
+  private final AppLifecycleService appLifecycleService;
   private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
@@ -82,6 +85,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         AppLifecycleService appLifecycleService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames) {
     this.hostname = hostname;
@@ -91,6 +95,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.appLifecycleService = appLifecycleService;
     this.adapterService = adapterService;
     this.notificationService = notificationService;
     this.servicesNames = servicesNames;
@@ -126,6 +131,7 @@ public final class AppFabricServer extends AbstractIdleService {
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(builder.build())
       .addHttpHandlers(handlers)
+      .setExceptionHandler(new HttpExceptionHandler())
       .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
                                                  Constants.AppFabric.DEFAULT_BACKLOG))
       .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,

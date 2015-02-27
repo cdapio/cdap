@@ -31,6 +31,8 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -190,11 +192,12 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Get all adapters in a given namespace.
    *
+   *
    * @param namespace namespace to look up the adapters
    * @return {@link Collection} of {@link AdapterSpecification}
    */
-  public Collection<AdapterSpecification> getAdapters(String namespace) {
-    return store.getAllAdapters(Id.Namespace.from(namespace));
+  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace) throws NamespaceNotFoundException {
+    return store.getAllAdapters(namespace);
   }
 
   /**
@@ -259,9 +262,14 @@ public class AdapterService extends AbstractIdleService {
   public void removeAdapter(String namespace, String adapterName) throws NotFoundException, SchedulerException {
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
-    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
-    store.removeAdapter(namespaceId, adapterName);
+
+    try {
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
+      unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
+      store.removeAdapter(namespaceId, adapterName);
+    } catch (ApplicationNotFoundException e) {
+      throw new AdapterNotFoundException(adapterName);
+    }
 
     // TODO: Delete the application if this is the last adapter
   }
@@ -274,20 +282,24 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    try {
+      AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
-      scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
-                                constructScheduleName(programId, adapterName));
+      ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
+      Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                  String.format("Unsupported program type %s for adapter", programType.toString()));
+      Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
+      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+        Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+        scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
+                                  constructScheduleName(programId, adapterName));
+      }
+
+      setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
+    } catch (ApplicationNotFoundException e) {
+      throw new AdapterNotFoundException(adapterName);
     }
-
-    setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
   }
 
   // Resumes all schedules for this adapter
@@ -298,20 +310,24 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already started.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
+    try {
+      AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
-      scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
-                               constructScheduleName(programId, adapterName));
+      ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
+      Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
+                                  String.format("Unsupported program type %s for adapter", programType.toString()));
+      Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
+      for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
+        Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+        scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
+                                 constructScheduleName(programId, adapterName));
+      }
+
+      setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
+    } catch (ApplicationNotFoundException e) {
+      throw new AdapterNotFoundException(adapterName);
     }
-
-    setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
   // Deploys adapter application if it is not already deployed.

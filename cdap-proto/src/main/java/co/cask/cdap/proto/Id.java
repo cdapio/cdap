@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -50,7 +51,7 @@ public final class Id  {
   }
 
   /**
-   * Represents ID of a namespace.
+   * Uniquely identifies a Namespace.
    */
   public static final class Namespace {
     private final String id;
@@ -93,8 +94,7 @@ public final class Id  {
   }
 
   /**
-   * Application Id identifies a given application.
-   * Application is global unique if used within context of namespace.
+   * Uniquely identifies an Application.
    */
   public static final class Application {
     private final Namespace namespace;
@@ -147,8 +147,7 @@ public final class Id  {
   }
 
   /**
-   * Program Id identifies a given program.
-   * Program is global unique if used within context of namespace and application.
+   * Uniquely identifies a Program.
    */
   public static class Program {
     private final Application application;
@@ -229,6 +228,49 @@ public final class Id  {
       }
       sb.append(")");
       return sb.toString();
+    }
+  }
+
+  /**
+   * Represents ID of a Schedule.
+   */
+  public static class Schedule {
+
+    private final Program program;
+    private final SchedulableProgramType schedulableProgramType;
+    private final String id;
+
+    private Schedule(Program program, SchedulableProgramType schedulableProgramType, String id) {
+      Preconditions.checkArgument(program != null, "program cannot be null.");
+      Preconditions.checkArgument(schedulableProgramType != null, "schedulableProgramType cannot be null.");
+      Preconditions.checkArgument(id != null && !id.isEmpty(), "id cannot be null or empty.");
+      this.program = program;
+      this.schedulableProgramType = schedulableProgramType;
+      this.id = id;
+    }
+
+    public Program getProgram() {
+      return program;
+    }
+
+    public SchedulableProgramType getSchedulableProgramType() {
+      return schedulableProgramType;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("program", program)
+        .add("schedulableProgramType", schedulableProgramType)
+        .add("id", id).toString();
+    }
+
+    public static Schedule from(Program program, SchedulableProgramType schedulableProgramType, String id) {
+      return new Schedule(program, schedulableProgramType, id);
     }
   }
 

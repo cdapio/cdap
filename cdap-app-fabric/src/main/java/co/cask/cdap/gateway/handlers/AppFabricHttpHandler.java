@@ -37,6 +37,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.BodyConsumer;
@@ -872,8 +873,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId) {
-    appLifecycleHttpHandler.getAppInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                       Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.getApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                   Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1041,13 +1042,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String account = getAuthenticatedAccountId(request);
-      final Id.Namespace namespaceId = Id.Namespace.from(account);
+      final Id.Namespace namespace = Id.Namespace.from(account);
+      if (store.getNamespace(namespace) == null) {
+        responder.sendStatus(HttpResponseStatus.OK);
+        LOG.info("Skipping delete because namespace '" + namespace.getId() + "' doesn't exist.");
+        return;
+      }
 
       // Check if any program is still running
       boolean appRunning = appLifecycleHttpHandler.checkAnyRunning(new Predicate<Id.Program>() {
         @Override
         public boolean apply(Id.Program programId) {
-          return programId.getNamespaceId().equals(namespaceId.getId());
+          return programId.getNamespaceId().equals(namespace.getId());
         }
       }, ProgramType.values());
 
@@ -1063,16 +1069,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in consolesettings
       consoleSettingsStore.delete();
 
-      dsFramework.deleteAllInstances(namespaceId);
-      dsFramework.deleteAllModules(namespaceId);
+      dsFramework.deleteAllInstances(namespace);
+      dsFramework.deleteAllModules(namespace);
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
       appLifecycleHttpHandler.deleteMetrics(account, null);
       // delete all meta data
-      store.removeAll(namespaceId);
+      store.removeAll(namespace);
       // delete queues and streams data
-      queueAdmin.dropAllInNamespace(namespaceId.getId());
-      streamAdmin.dropAllInNamespace(namespaceId);
+      queueAdmin.dropAllInNamespace(namespace.getId());
+      streamAdmin.dropAllInNamespace(namespace);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);

@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -84,15 +85,12 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  /**
-   * Name of the header that should specify the application archive
-   */
-  public static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+  public static final String ARCHIVE_NAME_HEADER = Constants.Headers.ARCHIVE_NAME;
 
   /**
    * Class to represent status of programs.
    */
-  protected static final class AppFabricServiceStatus {
+  public static final class AppFabricServiceStatus {
 
     public static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
 
@@ -199,6 +197,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       } else {
         responder.sendJson(HttpResponseStatus.OK, programRecords);
       }
+    } catch (ApplicationNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -350,6 +350,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
         responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                                 ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
       }
+    } catch (ApplicationNotFoundException e) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

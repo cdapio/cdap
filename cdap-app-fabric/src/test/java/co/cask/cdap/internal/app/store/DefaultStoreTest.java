@@ -53,6 +53,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
@@ -741,7 +742,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(null, schedules.get("Schedule2"));
   }
 
-  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {
+  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) throws ApplicationNotFoundException {
     ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();
