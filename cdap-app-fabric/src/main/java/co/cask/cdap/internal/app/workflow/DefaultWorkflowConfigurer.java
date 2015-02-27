@@ -20,14 +20,14 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
+import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
@@ -35,15 +35,15 @@ import java.util.Map;
 /**
  * Default implementation of {@link WorkflowConfigurer}.
  */
-public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
+public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowForkJoiner {
 
   private final String className;
   private String name;
   private String description;
   private Map<String, String> properties;
+  private int nodeIdentifier = 0;
 
-  private final List<ScheduleProgramInfo> actions = Lists.newArrayList();
-  private final Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
+  private final List<WorkflowNode> nodes = Lists.newArrayList();
 
   public DefaultWorkflowConfigurer(Workflow workflow) {
     this.className = workflow.getClass().getName();
@@ -68,26 +68,75 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer {
 
   @Override
   public void addMapReduce(String mapReduce) {
-    actions.add(new ScheduleProgramInfo
-                  (SchedulableProgramType.MAPREDUCE, mapReduce));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
   }
 
   @Override
   public void addSpark(String spark) {
-    actions.add(new ScheduleProgramInfo
-                  (SchedulableProgramType.SPARK, spark));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
   }
 
   @Override
   public void addAction(WorkflowAction action) {
-    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    customActionMap.put(spec.getName(), spec);
-    actions.add(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, spec.getName()));
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+  }
+
+  @Override
+  public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
+    return new DefaultWorkflowForkConfigurer<DefaultWorkflowConfigurer>(this);
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties,
-                                            actions, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes));
+  }
+
+  private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {
+    List<WorkflowNode> nodesWithId = Lists.newArrayList();
+    for (WorkflowNode node : nodes) {
+      nodesWithId.add(createNodeWithId(node));
+    }
+
+    return nodesWithId;
+  }
+
+  private WorkflowNode createNodeWithId(WorkflowNode node) {
+    WorkflowNode nodeWithId = null;
+    switch (node.getType()) {
+      case ACTION:
+        nodeWithId = createActionNodeWithId(node);
+        break;
+      case FORK:
+        nodeWithId = createForkNodeWithId(node);
+        break;
+      default:
+        break;
+    }
+    return nodeWithId;
+  }
+
+  private WorkflowNode createActionNodeWithId(WorkflowNode node) {
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    ScheduleProgramInfo program = actionNode.getProgram();
+    if (program.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), actionNode.getActionSpecification());
+    } else {
+      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), program);
+    }
+  }
+
+  private WorkflowNode createForkNodeWithId(WorkflowNode node) {
+    String forkNodeId = Integer.toString(nodeIdentifier++);
+    List<List<WorkflowNode>> branches = Lists.newArrayList();
+    WorkflowForkNode forkNode = (WorkflowForkNode) node;
+
+    for (List<WorkflowNode> branch : forkNode.getBranches()) {
+      branches.add(createNodesWithId(branch));
+    }
+    return new WorkflowForkNode(forkNodeId, branches);
+  }
+
+  @Override
+  public void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
+    nodes.add(new WorkflowForkNode(null, branches));
   }
 }

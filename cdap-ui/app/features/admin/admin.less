@@ -1,0 +1,19 @@
+@import "../../styles/variables.less";
+
+body.state-admin {
+  main.container {
+    .clickable {
+      cursor: pointer;
+    }
+    .sidebar {
+      a.current {
+        color: @cdap-orange;
+        cursor: default;
+        text-decoration: none;
+      }
+      ul > li > ul {
+        padding-left: 1em;
+      }
+    }
+  }
+}

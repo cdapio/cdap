@@ -160,7 +160,7 @@ public class IncrementHandler extends BaseRegionObserver {
   @Override
   public void preDelete(ObserverContext<RegionCoprocessorEnvironment> e, Delete delete, WALEdit edit,
                         Durability durability) throws IOException {
-    boolean transactional = state.containsTransactionalFamily(delete.getFamilyMap().keySet());
+    boolean transactional = state.containsTransactionalFamily(delete.getFamilyCellMap().keySet());
     if (!transactional) {
       long tsToAssign = state.getUniqueTimestamp();
       delete.setTimestamp(tsToAssign);

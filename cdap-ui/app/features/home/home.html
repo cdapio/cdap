@@ -1,0 +1,21 @@
+<div class="jumbotron text-center">
+  <h1>
+    <span class="text-primary">CDAP</span>
+    <small>3.0</small>
+  </h1>
+</div>
+
+<div class="text-center">
+
+  <p ng-show="currentUser">
+    You are logged-in as <code>{{currentUser | json}}</code>
+  </p>
+  <p ng-hide="currentUser">
+    <a ui-sref="login" class="btn btn-success">
+      <span class="fa fa-user"></span>
+      Log in
+    </a>
+  </p>
+</div>
+
+

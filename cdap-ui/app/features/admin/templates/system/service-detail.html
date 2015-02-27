@@ -1,0 +1,25 @@
+<h2> Services </h2>
+
+<div class="row">
+    <div class="col-xs-6">
+        <h3>{{$state.params.serviceName | caskCapitalizeFilter}}</h3>
+    </div>
+    <div class="col-xs-6 text-right h3">
+        <div class="btn-group" ng-model="tabs.activeTab" bs-radio-group>
+            <label class="btn btn-default" role="tab">
+                <input type="radio" class="btn btn-default" value="0" />
+                Metadata
+            </label>
+            <label class="btn btn-default" role="tab">
+                <input type="radio" class="btn btn-default" value="1" />
+                Logs
+            </label>
+        </div>
+    </div>
+</div>
+
+<br />
+
+<ui-view role="tabpanel"></ui-view>
+
+

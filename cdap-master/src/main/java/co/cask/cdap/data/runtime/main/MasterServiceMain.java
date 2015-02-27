@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,6 @@ import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.security.HBaseSecureStoreUpdater;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
@@ -64,6 +63,7 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -126,14 +126,14 @@ public class MasterServiceMain extends DaemonMain {
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
   private ServiceStore serviceStore;
-  private HBaseSecureStoreUpdater secureStoreUpdater;
+  private TokenSecureStoreUpdater secureStoreUpdater;
   private ExploreClient exploreClient;
 
   private String serviceName;
   private TwillApplication twillApplication;
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
-  private boolean isExploreEnabled;
+  private boolean exploreEnabled;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting {}", MasterServiceMain.class.getSimpleName());
@@ -142,7 +142,7 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isExploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     serviceName = Constants.Service.MASTER_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
@@ -181,9 +181,9 @@ public class MasterServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
-    exploreClient = baseInjector.getInstance(ExploreClient.class);
-    secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
+    exploreClient = baseInjector.getInstance(ExploreClient.class);
+    secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -206,12 +206,12 @@ public class MasterServiceMain extends DaemonMain {
    * and that the distribution of Hive is supported.
    */
   private void checkExploreRequirements() {
-    if (!isExploreEnabled) {
+    if (!exploreEnabled) {
       return;
     }
 
-    // This checking will throw an exception if Hive is not present or if its distribution is unsupported
-    ExploreServiceUtils.checkHiveSupportWithSecurity(hConf);
+    // This check will throw an exception if Hive is not present or if it's distribution is unsupported
+    ExploreServiceUtils.checkHiveSupport();
   }
 
   @Override
@@ -360,23 +360,23 @@ public class MasterServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new MasterTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
+      return new MasterTwillApplication(cConf, getSavedCConf(), getSavedHConf(), exploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
   }
 
   private void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
-    if (User.isHBaseSecurityEnabled(hConf)) {
+    if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
       twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
                                             TimeUnit.MILLISECONDS);
     }
   }
 
-
   private TwillPreparer prepare(TwillPreparer preparer) {
     return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
+      // TokenSecureStoreUpdater.update() ignores parameters
+      .addSecureStore(secureStoreUpdater.update(null, null));
   }
 
   private void runTwillApps() {
@@ -482,7 +482,7 @@ public class MasterServiceMain extends DaemonMain {
    * runnable.
    */
   private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
-    if (!isExploreEnabled) {
+    if (!exploreEnabled) {
       return preparer;
     }
 

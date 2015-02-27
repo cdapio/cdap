@@ -720,8 +720,12 @@ public class StreamSizeScheduler implements Scheduler {
   private final class StreamSizeScheduleTask {
     private final Id.Program programId;
     private final SchedulableProgramType programType;
+    private final AtomicBoolean active;
     private StreamSizeSchedule streamSizeSchedule;
-    private AtomicBoolean active;
+
+    // Indicates that a notification has been received, that required
+    // a polling to recalibrate the notification base counter
+    private final AtomicBoolean recalibrationNeeded;
 
     // Size, in bytes, given by the notification which serves as a base when comparing notifications
     private long baseNotificationSize;
@@ -743,6 +747,8 @@ public class StreamSizeScheduler implements Scheduler {
       this.programId = programId;
       this.programType = programType;
       this.streamSizeSchedule = streamSizeSchedule;
+      this.active = new AtomicBoolean(false);
+      this.recalibrationNeeded = new AtomicBoolean(false);
     }
 
     /**
@@ -762,7 +768,7 @@ public class StreamSizeScheduler implements Scheduler {
       this.lastNotificationSize = -1;
       this.lastRunSize = -1;
       this.lastRunTs = -1;
-      this.active = new AtomicBoolean(active);
+      this.active.set(active);
     }
 
     public boolean isActive() {
@@ -786,12 +792,12 @@ public class StreamSizeScheduler implements Scheduler {
       synchronized (this) {
         long tmpLastNotificationSize = lastNotificationSize;
         lastNotificationSize = notification.getSize();
-        if (tmpLastNotificationSize == -1) {
+        if (tmpLastNotificationSize == -1 ||
+          baseNotificationSize != -1 &&
+            notification.getSize() >= baseNotificationSize + toBytes(streamSizeSchedule.getDataTriggerMB())) {
           // Trigger polling of stream, so that we can recalibrate the base notification size in the
           // receivedPollingInformation method
-          return true;
-        } else if (baseNotificationSize != -1 &&
-          notification.getSize() >= baseNotificationSize + toBytes(streamSizeSchedule.getDataTriggerMB())) {
+          recalibrationNeeded.set(true);
           return true;
         }
       }
@@ -824,12 +830,19 @@ public class StreamSizeScheduler implements Scheduler {
           LOG.warn("Size metric has decreased for stream {}. Scheduling logic for schedule '{}' will " +
                      "restart from size {}",
                    streamSizeSchedule.getStreamName(), streamSizeSchedule.getName(), basePollSize);
+
+          // Reset the notification logic now
+          lastNotificationSize = -1;
+          baseNotificationSize = -1;
+          recalibrationNeeded.set(false);
           return;
         }
 
         long dataTriggerBytes = toBytes(streamSizeSchedule.getDataTriggerMB());
         long delta = pollingInfo.getSize() - basePollSize;
-        if (lastNotificationSize != -1) {
+        if (recalibrationNeeded.compareAndSet(true, false)) {
+          Preconditions.checkArgument(lastNotificationSize != -1,
+                                      "Recalibration required, last notification should exist");
           // We recalibrate the base notification to be:
           // last notification minus the delta observed between the current polling info and the base polling info
           baseNotificationSize = Math.max(0L, lastNotificationSize - (delta % dataTriggerBytes));

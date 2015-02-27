@@ -33,7 +33,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Category(SlowTests.class)
+@Category(XSlowTests.class)
 public class StreamSizeSchedulerPollingTest {
   public static StreamSizeScheduler streamSizeScheduler;
   public static NotificationFeedManager notificationFeedManager;

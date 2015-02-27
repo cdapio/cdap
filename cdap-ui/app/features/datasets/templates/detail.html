@@ -1,0 +1,17 @@
+<div ncy-breadcrumb></div>
+<h2>
+  <span ng-bind="$state.params.datasetId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Dataset </em></small>
+</h2>
+
+<div class="cdap-subnav-end"></div>
+
+<!-- <my-tabs ng-if="false"
+  data-tabs-list="['Status','Explore','Programs','Inner','Metadata','Lineage','Resources']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+</my-tabs> -->
+
+<my-tabs
+  data-tabs-list="['Status']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+</my-tabs>

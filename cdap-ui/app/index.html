@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="cdap-ui" ng-strict-di>
+<head>
+    <title ng-bind="$state.current | myTitleFilter">CDAP</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Cask Data Application Platform">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="/">
+
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
+</head>
+<body ng-controller="BodyCtrl" ng-class="bodyClass">
+
+    <header class="navbar navbar-inverse navbar-fixed-top">
+      <div role="navigation" class="container" my-navbar></div>
+    </header>
+
+    <main class="container">
+      <div ui-view></div>
+    </main>
+
+    <div id="alerts">
+      <div class="container"></div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <div class="text-muted text-center text-uppercase" ng-cloak>
+          <p>&copy; 2015 Cask Data, Inc. All Rights Reserved.</p>
+          <ul class="list-inline">
+            <li>
+              <a href="http://cask.co/terms" target="_blank">Terms</a>
+            </li>
+            <li>
+              <a href="http://cask.co/privacy" target="_blank">Privacy</a>
+            </li>
+            <li>
+              <a href="http://cask.co/company/#company-contact" target="_blank">Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+    <script type="text/javascript" src="/assets/bundle/lib.js"></script>
+    <script type="text/javascript" src="/config.js"></script>
+    <script type="text/javascript" src="/assets/bundle/app.js"></script>
+    <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
+
+    <script type="text/javascript">
+      if(location.host==='localhost:8080') {
+        document.write('<script src="http://localhost'
+          + ':35729/livereload.js"></' + 'script>');
+      }
+    </script>
+</body>
+</html>
