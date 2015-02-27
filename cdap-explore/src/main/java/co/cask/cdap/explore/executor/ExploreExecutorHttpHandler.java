@@ -470,9 +470,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(datasetInstance.getId());
-    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT \"CDAP Dataset\" " +
-                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")" +
-                           "TBLPROPERTIES ('%s'='%s', '%s'='%s')",
+    return String.format("CREATE EXTERNAL TABLE IF NOT EXISTS %s %s COMMENT 'CDAP Dataset' " +
+                           "STORED BY '%s' WITH SERDEPROPERTIES('%s'='%s', '%s'='%s')" +
+                           "TBLPROPERTIES ('%s'='%s')",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                          Constants.Explore.DATASET_NAME, datasetInstance.getId(),
                          Constants.Explore.DATASET_NAMESPACE, datasetInstance.getNamespaceId(),
