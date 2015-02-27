@@ -23,6 +23,7 @@ Building Blocks
     Schedules <schedules>
     Spark Programs <spark-programs>
     Procedures (Deprecated) <procedures>
+    Workers <workers>
     Services <services>
     Namespaces <namespaces>
     Transaction System <transaction-system>
@@ -44,6 +45,7 @@ write data through the data abstraction layer in CDAP.
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
+- :doc:`Workers <workers>`
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Procedures (Deprecated) <procedures>`
 - :doc:`Services <services>`

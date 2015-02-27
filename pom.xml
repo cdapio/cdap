@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -1218,6 +1218,11 @@
         <artifactId>common-io</artifactId>
         <version>${cask.common.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+        <version>${hadoop.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1290,6 +1295,8 @@
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
+                  <!-- Disable cdap-ui from rat-check temproarily until integrated completely into cdap-->
+                  <exclude>cdap-ui/**</exclude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->

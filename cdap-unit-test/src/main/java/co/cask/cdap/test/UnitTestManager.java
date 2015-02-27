@@ -205,7 +205,8 @@ public class UnitTestManager implements TestManager {
     String host = address.getHostName();
     int port = address.getPort();
 
-    String connectString = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, host, port);
+    String connectString = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
+                                         Constants.DEFAULT_NAMESPACE);
 
     return DriverManager.getConnection(connectString);
   }

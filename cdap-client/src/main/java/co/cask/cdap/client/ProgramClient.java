@@ -16,6 +16,8 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.client.util.VersionMigrationUtils;
@@ -372,7 +374,7 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or procedure could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
+   * @deprecated As of version 2.6.0, replaced by {@link Service}
    */
   @Deprecated
   public void setProcedureInstances(String appId, String procedureId, int instances)
@@ -389,6 +391,27 @@ public class ProgramClient {
   }
 
   /**
+   * Gets the number of instances of a service.
+   *
+   * @param appId ID of the application that the service belongs to
+   * @param serviceId Id of the service
+   * @return number of instances of the service handler
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or service could not found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public int getServiceInstances(String appId, String serviceId) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or service", appId + "/" + serviceId);
+    }
+    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
+  }
+
+  /**
    * Gets the number of instances that a service runnable is running on.
    *
    * @param appId ID of the application that the service runnable belongs to
@@ -398,7 +421,9 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @deprecated As of version 2.8.0, separated into {@link Service} and {@link Worker}
    */
+  @Deprecated
   public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
@@ -414,6 +439,26 @@ public class ProgramClient {
   }
 
   /**
+   * Sets the number of instances of a service.
+   *
+   * @param appId ID of the application that the service belongs to
+   * @param serviceId ID of the service
+   * @param instances number of instances for the service
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or service could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void setServiceInstances(String appId, String serviceId, int instances)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or service", appId + "/" + serviceId);
+    }
+  }
+
+  /**
    * Sets the number of instances that a service runnable is running on.
    *
    * @param appId ID of the application that the service runnable belongs to
@@ -423,7 +468,9 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @deprecated As of version 2.8.0, separated into {@link Service} and {@link Worker}
    */
+  @Deprecated
   public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 

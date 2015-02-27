@@ -135,6 +135,7 @@ public abstract class DatasetServiceTestBase {
                               new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
                                                            DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
 
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
@@ -146,9 +147,9 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
 
     // Start dataset service, wait for it to be discoverable
     service.start();

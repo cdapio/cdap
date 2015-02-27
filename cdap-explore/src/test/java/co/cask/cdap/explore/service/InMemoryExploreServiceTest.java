@@ -35,6 +35,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -191,7 +192,7 @@ public class InMemoryExploreServiceTest {
   private static void runCommand(String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs,
                                  List<QueryResult> expectedResults) throws Exception {
-    QueryHandle handle = exploreService.execute(command);
+    QueryHandle handle = exploreService.execute(Id.Namespace.from(Constants.DEFAULT_NAMESPACE), command);
 
     QueryStatus status = waitForCompletionStatus(handle);
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
