@@ -358,7 +358,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
-                          ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
+                          ImmutableMap.of("serialization.format", "1",
+                                          Constants.Explore.DATASET_NAME, "my_table",
+                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getId()),
                           true
                         ),
                         tableInfo);
@@ -377,7 +379,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
-                          ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
+                          ImmutableMap.of("serialization.format", "1",
+                                          Constants.Explore.DATASET_NAME, "my_table",
+                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getId()),
                           true
                         ),
                         tableInfo);
