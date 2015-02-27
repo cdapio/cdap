@@ -17,6 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithStreamSizeSchedule;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
@@ -52,6 +55,7 @@ public class StreamSizeSchedulerTest {
   public static NotificationService notificationService;
   public static StreamAdmin streamAdmin;
   public static Store store;
+  public static MetricStore metricStore;
 
   private static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application APP_ID = new Id.Application(NAMESPACE, "AppWithStreamSizeSchedule");
@@ -79,6 +83,7 @@ public class StreamSizeSchedulerTest {
     StoreFactory storeFactory = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class);
     store = storeFactory.create();
     streamAdmin = AppFabricTestHelper.getInjector().getInstance(StreamAdmin.class);
+    metricStore = AppFabricTestHelper.getInjector().getInstance(MetricStore.class);
   }
 
   @Test
@@ -94,6 +99,10 @@ public class StreamSizeSchedulerTest {
     Assert.assertEquals(0, runs);
 
     // Publish a notification on behalf of the stream with enough data to trigger the execution of the job
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
     notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 1024 * 1025));
 
     waitForRuns(PROGRAM_ID, 1);
@@ -104,6 +113,10 @@ public class StreamSizeSchedulerTest {
     Assert.assertEquals(1, runs);
 
     // Both schedule should now be triggered
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
     notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 2 * 1024 * 1025));
     waitForRuns(PROGRAM_ID, 3);
 
@@ -114,6 +127,10 @@ public class StreamSizeSchedulerTest {
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
 
     // The first schedule should trigger execution
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
     notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 3 * 1024 * 1025));
     waitForRuns(PROGRAM_ID, 4);
 
@@ -124,6 +141,10 @@ public class StreamSizeSchedulerTest {
 
     // Both schedules should be trigger. In particular, the schedule that has just been resumed twice should
     // only trigger once
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
     notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 4 * 1024 * 1025));
     TimeUnit.SECONDS.sleep(5);
     runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
@@ -132,6 +153,10 @@ public class StreamSizeSchedulerTest {
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
     streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
+                                                    Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
+                                    "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                    1024 * 1024, MetricType.COUNTER));
     notificationService.publish(FEED, new StreamSizeNotification(System.currentTimeMillis(), 5 * 1024 * 1025));
     waitForRuns(PROGRAM_ID, 8);
   }
@@ -139,7 +164,7 @@ public class StreamSizeSchedulerTest {
   private void waitForRuns(Id.Program programId, int expectedRuns) throws Exception {
     int runs;
     long initTime = System.currentTimeMillis();
-    while (System.currentTimeMillis() < initTime + TimeUnit.SECONDS.toMillis(50)) {
+    while (System.currentTimeMillis() < initTime + TimeUnit.SECONDS.toMillis(5)) {
       runs = store.getRuns(programId, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
       try {
         Assert.assertEquals(expectedRuns, runs);

@@ -124,7 +124,7 @@ public class StreamSizeSchedulerPollingTest {
     metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
                                                     Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
                                     "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                    2 * 1024 * 1024, MetricType.COUNTER));
+                                    1024 * 1024, MetricType.COUNTER));
 
     // Should not have any run when the schedule is suspended
     TimeUnit.SECONDS.sleep(5);
@@ -149,7 +149,7 @@ public class StreamSizeSchedulerPollingTest {
     metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
                                                     Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
                                     "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                    3 * 1024 * 1024, MetricType.COUNTER));
+                                    1024 * 1024, MetricType.COUNTER));
     waitForRuns(PROGRAM_ID, 5);
   }
 
