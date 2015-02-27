@@ -47,7 +47,9 @@ import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.upgrade.UpgradeMetricsConstants;
 import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -71,6 +73,7 @@ public class Main {
    */
   private enum Action {
     UPGRADE("Upgrade all tables."),
+    MIGRATE_METRICS_DATA("Migrate metrics data to CDAP-2.8"),
     HELP("Show this help.");
 
     private final String description;
@@ -122,6 +125,9 @@ public class Main {
         case UPGRADE:
           performUpgrade(injector);
         break;
+        case MIGRATE_METRICS_DATA:
+          migrateMetricsData(injector);
+          break;
         case HELP:
           printHelp();
         break;
@@ -195,6 +201,54 @@ public class Main {
       admin.upgrade();
       System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
     }
+  }
+
+  private void migrateMetricsData(Injector injector) throws Exception {
+    // find version to migrate
+    ProjectInfo.Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
+                                                  injector.getInstance(Configuration.class));
+    if (version != null) {
+      DatasetFramework framework = createRegisteredDatasetFramework(injector);
+      // migrate metrics data
+      DefaultMetricDatasetFactory.migrateMetricsData(injector.getInstance(CConfiguration.class), framework, version);
+    }
+  }
+
+  private ProjectInfo.Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf) {
+    // Upgrade all datasets in system namespace
+    boolean metricsTable27Found = false;
+    boolean metricsTable26Found = false;
+    // versions older than 2.7, has two metrics table, identified by system and user prefix
+    String tableName26 = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                   "system." + UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                   UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+
+    String metricsEntityTable26 = defaultDatasetNamespace.namespace(
+      new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName26);
+    String metricsEntityTable27 = defaultDatasetNamespace.namespace(
+      new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName27);
+
+    HBaseAdmin hAdmin = null;
+    try {
+      hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(metricsEntityTable26)) {
+          metricsTable26Found = true;
+        } else if (desc.getNameAsString().equals(metricsEntityTable27)) {
+          metricsTable27Found = true;
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    if (metricsTable27Found) {
+      return new ProjectInfo.Version(2, 7, 0, false, 0);
+    } else if (metricsTable26Found) {
+      return new ProjectInfo.Version(2, 6, 0, false, 0);
+    }
+    return null;
   }
 
   public static void main(String[] args) throws Exception {

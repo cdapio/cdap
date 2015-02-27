@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -30,6 +31,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -135,7 +137,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    *
    * @param datasetFramework framework to add types and datasets to
    */
-  public static void setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+  public static MetricDatasetFactory setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
     throws IOException, DatasetManagementException {
 
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(datasetFramework, conf);
@@ -148,6 +150,23 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
+    return factory;
+  }
+
+  /**
+   * Migrates metrics data from version older than 2.7 to 2.8
+   * @param conf
+   * @param datasetFramework
+   * @param version - version we migrate the data from
+   * @throws IOException
+   * @throws DatasetManagementException
+   */
+  public static void migrateMetricsData(CConfiguration conf, DatasetFramework datasetFramework,
+                                        ProjectInfo.Version version)
+    throws IOException, DatasetManagementException {
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework,
+                                                           setupDatasets(conf, datasetFramework));
+    migrator.migrateMetricsTables(version);
   }
 
   private int getRollTime(int resolution) {

@@ -24,16 +24,16 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.EntityTable;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.Version;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -118,13 +117,19 @@ public class MetricsDataMigrator {
                                  Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME)
     );
 
+
+  private enum Version {
+    VERSION_26_OR_OLDER,
+    VERSION_27
+  }
+
   private final DatasetFramework dsFramework;
   private final MetricStore aggMetricStore;
   private final String entityTableName;
   private final String metricsTableName;
 
   public MetricsDataMigrator(final CConfiguration cConf, final DatasetFramework dsFramework,
-                             DefaultMetricDatasetFactory factory) {
+                             MetricDatasetFactory factory) {
 
     System.out.println("Initializing Data Migration...");
     this.dsFramework = dsFramework;
@@ -135,13 +140,15 @@ public class MetricsDataMigrator {
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
   }
 
-  public void migrateMetricsTables(Version cdapVersion) {
-    if (cdapVersion.getVersion().equals("2.6")) {
-      migrateMetricsTableFromVersion26(cdapVersion);
+  public void migrateMetricsTables(ProjectInfo.Version cdapVersion) {
+    if (cdapVersion.getMajor() == 2 && cdapVersion.getMinor() <= 6) {
       System.out.println("Migrating metrics data from CDAP-2.6 to CDAP-2.8");
-    } else if (cdapVersion.getVersion().equals("2.7")) {
-      migrateMetricsTableFromVersion27(cdapVersion);
+      migrateMetricsTableFromVersion26(Version.VERSION_26_OR_OLDER);
+      System.out.println("Successfully migrated metrics data from CDAP-2.6 to CDAP-2.8");
+    } else if (cdapVersion.getMajor() == 2 && cdapVersion.getMinor() == 7) {
       System.out.println("Migrating metrics data from CDAP-2.7 to CDAP-2.8");
+      migrateMetricsTableFromVersion27(Version.VERSION_27);
+      System.out.println("Successfully migrated metrics data from CDAP-2.7 to CDAP-2.8");
     } else {
       System.out.println("Metrics data migration supports migrating data of 2.7.x " +
                            "and earlier version to 2.8.x version");
@@ -187,6 +194,7 @@ public class MetricsDataMigrator {
         rowCount++;
         printStatus(rowCount);
       }
+      System.out.println("Migrated " + rowCount + " records...");
     } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
       // no-op
@@ -282,7 +290,7 @@ public class MetricsDataMigrator {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
-    System.out.println("Migrating Metrics data from table" + tableName);
+    System.out.println("Migrating Metrics data from table : " + tableName);
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
@@ -300,7 +308,7 @@ public class MetricsDataMigrator {
 
   // todo : use Enum instead of string comparison for the below methods
   private String getMetricNameBasedOnVersion(String metricName, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_26_OR_OLDER) {
       return metricName;
     } else {
       // metric name has scope prefix, lets remove the scope prefix and return
@@ -309,7 +317,7 @@ public class MetricsDataMigrator {
   }
 
   private int getIdSize(Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_26_OR_OLDER) {
       // we use 2 bytes in 2.6
       return 2;
     } else {
@@ -318,7 +326,7 @@ public class MetricsDataMigrator {
     }
   }
   private String getContextBasedOnVersion(String context, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_26_OR_OLDER) {
       return context;
     } else {
       // skip namespace - some metrics are emitted in system namespace though they have app-name, dataset name, etc
@@ -328,7 +336,7 @@ public class MetricsDataMigrator {
   }
 
   private String getScopeBasedOnVersion(String scope, String metricName, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_26_OR_OLDER) {
       return scope;
     } else {
       // metric name has scope prefix, lets split that
