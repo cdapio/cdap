@@ -48,11 +48,12 @@ public class TableId {
 
   @VisibleForTesting
   public String getHBaseNamespace() {
+    // TODO: pass in prefix as first param?
     return HBaseTableUtil.toHBaseNamespace(namespace);
   }
 
   /**
-   *@return Backward compatible, ASCII encoded table name
+   * @return Backward compatible, ASCII encoded table name
    */
   public String getTableName() {
     return HBaseTableUtil.getHBaseTableName(getBackwardCompatibleTableName());
@@ -91,9 +92,9 @@ public class TableId {
     return new TableId(tablePrefix, Id.Namespace.from(namespace), tableName);
   }
 
-  public static TableId from(String hBaseNamespace, String tableName) {
+  public static TableId from(String hBaseNamespace, String hTableName) {
     Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
-    Preconditions.checkArgument(tableName != null, "Table name should not be null.");
+    Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
 
     String namespace;
     String prefix;
@@ -101,21 +102,24 @@ public class TableId {
     // Handle backward compatibility to not add the prefix for default namespace
     if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
       namespace = hBaseNamespace;
-      // in Default namespace, tableName is something like 'cdap.foo.table'
-      String[] parts = tableName.split("\\.", 2);
-      Preconditions.checkArgument(parts.length == 2, String.format("expected table name to have a '.': %s", tableName));
+      // in Default namespace, hTableName is something like 'cdap.foo.table'
+      String[] parts = hTableName.split("\\.", 2);
+      Preconditions.checkArgument(parts.length == 2,
+                                  String.format("expected table name to contain '.': %s", hTableName));
       prefix = parts[0];
-      tableName = parts[1];
-      return TableId.from(prefix, namespace, tableName);
+      hTableName = parts[1];
+      return TableId.from(prefix, namespace, hTableName);
     }
 
 
     String[] parts = hBaseNamespace.split("_");
+    Preconditions.checkArgument(parts.length == 2,
+                                String.format("expected hbase namespace to have a '_': %s", hBaseNamespace));
     prefix = parts[0];
     namespace = parts[1];
 
     // Id.Namespace already checks for non-null namespace
-    return new TableId(prefix, Id.Namespace.from(namespace), tableName);
+    return new TableId(prefix, Id.Namespace.from(namespace), hTableName);
   }
 
 

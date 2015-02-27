@@ -395,10 +395,14 @@ public abstract class HBaseTableUtil {
   //TODO: move to TableId?
   @VisibleForTesting
   public static String toHBaseNamespace(Id.Namespace namespace) {
+    return toHBaseNamespace(HBASE_NAMESPACE_PREFIX, namespace);
+  }
+
+  public static String toHBaseNamespace(String prefix, Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-      HBASE_NAMESPACE_PREFIX + namespace.getId();
+      prefix + namespace.getId();
   }
 
   /**

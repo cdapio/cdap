@@ -259,12 +259,23 @@ public class HBase94TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
-  private TableId fromTableName(String tableName) {
-    Preconditions.checkArgument(tableName != null, "Table name should not be null.");
-    String[] parts = tableName.split("\\.");
-    String hBaseNamespace = parts[0];
-    String hBasequalifier = parts[1];
-    return TableId.from(hBaseNamespace, hBasequalifier);
+  // Assumptions made:
+  // 1) root prefix can not have '.' or '_'.
+  // 2) namespace can not have '.'
+  public static TableId fromTableName(String hTableName) {
+    Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
+    String[] parts = hTableName.split("\\.", 2);
+    String hBaseNamespace;
+    String hBaseQualifier;
+
+    if (!parts[0].contains("_")) {
+      hBaseNamespace = Constants.DEFAULT_NAMESPACE;
+      hBaseQualifier = hTableName;
+    } else {
+      hBaseNamespace = parts[0];
+      hBaseQualifier = parts[1];
+    }
+    return TableId.from(hBaseNamespace, hBaseQualifier);
   }
 
   private String toTableName(TableId tableId) {
@@ -273,6 +284,6 @@ public class HBase94TableUtil extends HBaseTableUtil {
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
       return tableId.getTableName();
     }
-    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+    return Joiner.on(".").join(tableId.getHBaseNamespace(), tableId.getTableName());
   }
 }

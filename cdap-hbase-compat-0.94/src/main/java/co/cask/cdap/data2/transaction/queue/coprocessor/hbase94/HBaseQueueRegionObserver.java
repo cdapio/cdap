@@ -23,8 +23,8 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
+import co.cask.cdap.data2.util.hbase.HBase94TableUtil;
 import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
-import co.cask.cdap.data2.util.hbase.TableId;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -80,7 +80,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
       }
 
-      namespaceId = TableId.fromHBaseNamespace(getNamespaceFromTableName(tableDesc.getNameAsString()));
+      namespaceId = HBase94TableUtil.fromTableName(tableDesc.getNameAsString()).getNamespace().getId();
 
       appName = HBaseQueueAdmin.getApplicationName(tableName);
       flowName = HBaseQueueAdmin.getFlowName(tableName);
@@ -90,11 +90,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       configTableNameBytes = Bytes.toBytes(configTableName);
       configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable94NameConverter());
     }
-  }
-
-  //TODO: move?
-  private String getNamespaceFromTableName(String tableName) {
-    return tableName.split("\\.")[0];
   }
 
   @Override

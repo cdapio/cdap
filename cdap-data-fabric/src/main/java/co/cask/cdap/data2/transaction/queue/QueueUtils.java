@@ -27,9 +27,12 @@ public final class QueueUtils {
     int dotPos = queueTableName.indexOf('.');
     int colonPos = queueTableName.indexOf(':');
 
-    int nsDivider = dotPos;
+    int nsDivider;
+    // In hbase 0.96, 0.98, a ':' is used as the namespace divider. In 0.94, a '.' is used.
     if (colonPos >= 0) {
-      nsDivider = dotPos < colonPos ? dotPos : colonPos;
+      nsDivider = colonPos;
+    } else {
+      nsDivider = dotPos;
     }
 
     if (nsDivider < 0) {

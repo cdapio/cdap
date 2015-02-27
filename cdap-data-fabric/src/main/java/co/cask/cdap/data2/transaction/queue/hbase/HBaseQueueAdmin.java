@@ -193,10 +193,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     deleteConsumerConfigurations(queueName);
   }
 
-  private void truncate(byte[] tableNameBytes) throws IOException {
-
-  }
-
   private void truncate(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (tableUtil.tableExists(admin, tableId)) {
@@ -387,23 +383,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-//    tableUtil.deleteTablesInNamespace(namespaceId);
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    /*
-    String tableNamePrefix = String.format("%s.", getTableNamePrefix(namespaceId));
-
-    for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
-      String tableName = Bytes.toString(desc.getName());
-      // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !isConfigTable(tableName)) {
-        drop(desc.getName());
-      }
-    }
-*/
-    String trueTableNamePrefix = unqualifiedTableNamePrefix;
+    String trueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
     tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
 
-    // TODO: make this a noop and see if any tests fail (They should!)
+    // TODO: make this a no-op and see if test cases fail - they should!
     drop(getConfigTableId(namespaceId));
   }
 
@@ -449,7 +433,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!exists(queueName)) {
       create(queueName);
     }
-
 
     HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
 

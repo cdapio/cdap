@@ -267,7 +267,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
-  private TableId fromTableName(TableName tableName) {
+  public static TableId fromTableName(TableName tableName) {
     return TableId.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 
