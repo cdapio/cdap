@@ -23,8 +23,11 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
@@ -34,13 +37,18 @@ import co.cask.cdap.notifications.feeds.service.MDSNotificationFeedStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
-import com.google.inject.Injector;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
@@ -48,15 +56,23 @@ import java.util.Iterator;
 /**
  * Upgraded the Meta Data for applications
  */
-public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
+public class MDSUpgrader extends AbstractUpgrader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrade.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrader.class);
   private static final String[] OTHERS = {AppMetadataStore.TYPE_STREAM, AppMetadataStore.TYPE_NAMESPACE,
     MDSNotificationFeedStore.TYPE_NOTIFICATION_FEED};
 
   private final Transactional<UpgradeTable, Table> appMDS;
+  private final CConfiguration cConf;
+  private final Store store;
 
-  public MDSUpgrade() {
+  @Inject
+  public MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
+                     @Named("namespacedDSFramework") final DatasetFramework namespacedFramework, CConfiguration cConf,
+                     @Named("nonNamespacedStore") final Store store) {
+    super(locationFactory);
+    this.cConf = cConf;
+    this.store = store;
     this.appMDS = Transactional.of(executorFactory, new Supplier<UpgradeTable>() {
       @Override
       public UpgradeTable get() {
@@ -75,7 +91,7 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
   }
 
   @Override
-  public void upgrade(Injector injector) throws Exception {
+  public void upgrade() throws Exception {
     appMDS.executeUnchecked(new TransactionExecutor.
       Function<UpgradeTable, Void>() {
       @Override
@@ -84,15 +100,17 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
         Row row;
         while ((row = rows.next()) != null) {
           String key = Bytes.toString(row.getRow()).trim();
-          if (key.contains(AppMetadataStore.TYPE_APP_META)) {
+          MDSKey.Splitter keyParts = new MDSKey(row.getRow()).split();
+          String metaType = keyParts.getString();
+          if (metaType.equalsIgnoreCase(AppMetadataStore.TYPE_APP_META)) {
             // Application metadata
             applicationMetadataHandler(row);
-          } else if (key.contains(AppMetadataStore.TYPE_RUN_RECORD_STARTED)) {
-            runRecordStartedHandler(row);
-          } else if (key.contains(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED)) {
+          } else if (metaType.equalsIgnoreCase(AppMetadataStore.TYPE_RUN_RECORD_STARTED)) {
+            runRecordStartedHandler(row, keyParts);
+          } else if (metaType.equalsIgnoreCase(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED)) {
             // run record metadata
-            runRecordCompletedHandler(row);
-          } else if (!checkKeyValidality(key, OTHERS)) {
+            runRecordCompletedHandler(row, keyParts);
+          } else if (!isKeyValid(key, OTHERS)) {
             LOG.warn("Invalid Metadata with key {} found in {}", key, DefaultStore.APP_META_TABLE);
             throw new RuntimeException("Invalid metadata with key " + key);
           }
@@ -105,33 +123,29 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
   /**
    * Handled the {@link AppMetadataStore#TYPE_RUN_RECORD_STARTED} meta data and writes it back with namespace
    *
-   * @param row the {@link Row} containing the {@link AppMetadataStore#TYPE_RUN_RECORD_STARTED} metadata
+   * @param row      the {@link Row} containing the {@link AppMetadataStore#TYPE_RUN_RECORD_STARTED} metadata
+   * @param keyParts the {@link MDSKey.Splitter} for the key
    */
-  private void runRecordStartedHandler(Row row) {
+  private void runRecordStartedHandler(Row row, MDSKey.Splitter keyParts) {
     RunRecord runRecord = GSON.fromJson(Bytes.toString(row.get(COLUMN)), RunRecord.class);
-    MDSKey.Splitter keyParts = new MDSKey(row.getRow()).split();
-    // skip runRecordStarted String
-    keyParts.skipString();
+
     // skip default
     keyParts.skipString();
     String appId = keyParts.getString();
     String programId = keyParts.getString();
     String pId = keyParts.getString();
 
-    defaultStore.setStart(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId, runRecord.getStartTs());
+    store.setStart(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId, runRecord.getStartTs());
   }
 
   /**
    * Handled the {@link AppMetadataStore#TYPE_RUN_RECORD_COMPLETED} meta data and writes it back with namespace
    *
-   * @param row the {@link Row} containing the {@link AppMetadataStore#TYPE_RUN_RECORD_COMPLETED} metadata
+   * @param row      the {@link Row} containing the {@link AppMetadataStore#TYPE_RUN_RECORD_COMPLETED} metadata
+   * @param keyParts the {@link MDSKey.Splitter} for the key
    */
-  private void runRecordCompletedHandler(Row row) {
+  private void runRecordCompletedHandler(Row row, MDSKey.Splitter keyParts) {
     RunRecord runRecord = GSON.fromJson(Bytes.toString(row.get(COLUMN)), RunRecord.class);
-    MDSKey.Splitter keyParts = new MDSKey(row.getRow()).split();
-
-    // skip runRecordStopped String
-    keyParts.skipString();
     // skip default
     keyParts.skipString();
     String appId = keyParts.getString();
@@ -140,8 +154,8 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
     String pId = keyParts.getString();
 
     writeTempRunRecordStart(appId, programId, pId, startTs);
-    defaultStore.setStop(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId, runRecord.getStopTs(),
-                         ProgramController.State.getControllerStateByStatus(runRecord.getStatus()));
+    store.setStop(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId, runRecord.getStopTs(),
+                  ProgramController.State.getControllerStateByStatus(runRecord.getStatus()));
   }
 
   /**
@@ -149,8 +163,8 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
    * {@link AppMetadataStore#TYPE_RUN_RECORD_COMPLETED} can be written which deleted the started record.
    */
   private void writeTempRunRecordStart(String appId, String programId, String pId, long startTs) {
-    defaultStore.setStart(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId,
-                          Long.MAX_VALUE - startTs);
+    store.setStart(Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, programId), pId,
+                   Long.MAX_VALUE - startTs);
   }
 
   /**
@@ -159,11 +173,10 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
    * @param row the {@link Row} containing the application metadata
    * @throws URISyntaxException if failed to create {@link URI} from the archive location in metadata
    */
-  private void applicationMetadataHandler(Row row) throws URISyntaxException {
+  private void applicationMetadataHandler(Row row) throws URISyntaxException, IOException {
     ApplicationMeta appMeta = GSON.fromJson(Bytes.toString(row.get(COLUMN)), ApplicationMeta.class);
-    defaultStore.addApplication(Id.Application.from(Constants.DEFAULT_NAMESPACE, appMeta.getId()), appMeta.getSpec(),
-                                locationFactory.create(
-                                  new URI(updateAppArchiveLocation(appMeta.getId(), appMeta.getArchiveLocation()))));
+    store.addApplication(Id.Application.from(Constants.DEFAULT_NAMESPACE, appMeta.getId()), appMeta.getSpec(),
+                         updateAppArchiveLocation(appMeta.getId(), new URI(appMeta.getArchiveLocation())));
   }
 
   /**
@@ -171,16 +184,16 @@ public class MDSUpgrade extends AbstractUpgrade implements Upgrade {
    *
    * @param appId           : the application id
    * @param archiveLocation : the application archive location
-   * @return the new archive location with namespace
+   * @return {@link Location} for the new archive location with namespace
    */
-  private String updateAppArchiveLocation(String appId, String archiveLocation) {
-    return archiveLocation.replace("programs/archive" + FORWARD_SLASH + DEVELOPER_STRING,
-                                   (Constants.DEFAULT_NAMESPACE + FORWARD_SLASH +
-                                     cConf.get(Constants.AppFabric.OUTPUT_DIR) + FORWARD_SLASH + appId +
-                                     FORWARD_SLASH + "archive"));
+  private Location updateAppArchiveLocation(String appId, URI archiveLocation) throws IOException {
+    String archiveFilename = locationFactory.create(archiveLocation).getName();
+
+    return locationFactory.create(Constants.DEFAULT_NAMESPACE).append(
+      cConf.get(Constants.AppFabric.OUTPUT_DIR)).append(appId).append(Constants.ARCHIVE_DIR).append(archiveFilename);
   }
 
-  static final class UpgradeTable implements Iterable<Table> {
+  private static final class UpgradeTable implements Iterable<Table> {
     final Table table;
 
     private UpgradeTable(Table table) {

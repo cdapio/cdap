@@ -18,17 +18,19 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableAdmin;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.proto.Id;
-import com.google.inject.Injector;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -41,44 +43,60 @@ import java.io.IOException;
 /**
  * Handles upgrade for System and User Datasets
  */
-public class DatasetUpgrade extends AbstractUpgrade implements Upgrade {
+public class DatasetUpgrader extends AbstractUpgrader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrade.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrader.class);
+
+  private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final LocationFactory locationFactory;
+  private final QueueAdmin queueAdmin;
+  private final HBaseTableUtil hBaseTableUtil;
+  private final DatasetFramework namespacedFramework;
+
+  @Inject
+  public DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
+                         QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
+                         @Named("namespacedDSFramework") DatasetFramework namespacedFramework) {
+
+    super(locationFactory);
+    this.cConf = cConf;
+    this.hConf = hConf;
+    this.locationFactory = locationFactory;
+    this.queueAdmin = queueAdmin;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.namespacedFramework = namespacedFramework;
+  }
 
   @Override
-  public void upgrade(Injector injector) throws Exception {
+  public void upgrade() throws Exception {
     // Upgrade system dataset
-    upgradeSystemDatasets(injector, namespacedFramework);
+    upgradeSystemDatasets(namespacedFramework);
 
     // Upgrade all user hbase tables
-    upgradeUserTables(injector);
+    upgradeUserTables();
 
     // Upgrade all queue and stream tables.
-    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
   }
 
-  private void upgradeSystemDatasets(Injector injector, DatasetFramework framework) throws Exception {
+  private void upgradeSystemDatasets(DatasetFramework framework) throws Exception {
 
     // Upgrade all datasets in system namespace
     Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
     for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
-      System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
+      LOG.info("Upgrading dataset: {}, spec: {}", spec.getName(), spec.toString());
       DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
-      System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
+      LOG.info("Upgraded dataset: {}", spec.getName());
     }
   }
 
-  private static void upgradeUserTables(final Injector injector) throws Exception {
-    // We assume that all tables in USER namespace belong to OrderedTable type datasets. So we loop thru them
-    // and upgrading with the help of HBaseOrderedTableAdmin
+  private void upgradeUserTables() throws Exception {
     DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
-
-    Configuration hConf = injector.getInstance(Configuration.class);
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-    final HBaseTableUtil hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
+
 
     for (HTableDescriptor desc : hAdmin.listTables()) {
       String tableName = desc.getNameAsString();
@@ -86,17 +104,20 @@ public class DatasetUpgrade extends AbstractUpgrade implements Upgrade {
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
       // todo: it works now, but we will want to change it if namespacing of datasets in HBase is more than +prefix
       if (namespace.fromNamespaced(datasetInstanceId) != null) {
-        System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
+        LOG.info("Upgrading hbase table: {}, desc: {}", tableName, desc.toString());
 
         final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT));
+          "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
+        final boolean transactional =
+          !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
-            return HBaseOrderedTableAdmin.createCoprocessorJarInternal(cConf,
-                                                                       injector.getInstance(LocationFactory.class),
-                                                                       hBaseTableUtil,
-                                                                       supportsIncrement);
+            return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
+                                                                locationFactory,
+                                                                hBaseTableUtil,
+                                                                transactional,
+                                                                supportsIncrement);
           }
 
           @Override
@@ -112,7 +133,7 @@ public class DatasetUpgrade extends AbstractUpgrade implements Upgrade {
           }
         };
         admin.upgrade();
-        System.out.println(String.format("Upgraded hbase table: %s", tableName));
+        LOG.info("Upgraded hbase table: {}", tableName);
       }
     }
   }

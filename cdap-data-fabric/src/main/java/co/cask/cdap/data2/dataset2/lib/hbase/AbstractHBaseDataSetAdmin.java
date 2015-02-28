@@ -190,7 +190,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
     String value = tableDescriptor.getValue(CDAP_VERSION);
-    return value == null ? null : new ProjectInfo.Version(value);
+    return new ProjectInfo.Version(value);
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
