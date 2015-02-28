@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.datasets')
           _cdapNsPath: '/data/explore/tables'
         })
         .then(function (result) {
-          console.log(result);
+          $scope.tables = result;
         });
 
     }
