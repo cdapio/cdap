@@ -53,6 +53,6 @@ public final class LengthBasedContentWriterFactory implements ContentWriterFacto
   public ContentWriter create(Map<String, String> headers) throws IOException {
     Map<String, String> allHeaders = Maps.newHashMap(this.headers);
     allHeaders.putAll(headers);
-    return new LengthBasedContentWriter(streamConfig, streamWriter, headers, bufferThreshold);
+    return new LengthBasedContentWriter(streamConfig, streamWriter, allHeaders, bufferThreshold);
   }
 }
