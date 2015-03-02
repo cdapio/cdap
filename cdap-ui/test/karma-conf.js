@@ -11,7 +11,8 @@ module.exports = function(config){
       'bower_components/jquery/dist/jquery.js',
       'bower_components/angular-mocks/angular-mocks.js',
       'app/**/*-unit-test.js',
-      'test/unit/**/*.js'
+      'test/unit/**/*.js',
+      'test/unit/**/**/*.js'
     ],
 
     autoWatch : true,
