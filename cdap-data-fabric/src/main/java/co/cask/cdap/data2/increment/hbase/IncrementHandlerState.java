@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.increment.hbase;
 
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableNames;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.persist.TransactionSnapshot;
@@ -55,7 +55,7 @@ public class IncrementHandlerState {
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
   private final String tableName;
-  private final HBaseTableUtil tableUtil;
+  private final HBaseTableNames hBaseTableNames;
 
   private TransactionStateCache cache;
   private TimestampOracle timeOracle = new TimestampOracle();
@@ -63,10 +63,10 @@ public class IncrementHandlerState {
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  public IncrementHandlerState(Configuration conf, String tableName, HBaseTableUtil tableUtil) {
+  public IncrementHandlerState(Configuration conf, String tableName, HBaseTableNames tableNames) {
     this.conf = conf;
     this.tableName = tableName;
-    this.tableUtil = tableUtil;
+    this.hBaseTableNames = tableNames;
   }
 
   @VisibleForTesting
@@ -76,7 +76,7 @@ public class IncrementHandlerState {
 
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tableName,
                                                                              Configuration conf) {
-    String sysConfigTablePrefix = tableUtil.getSysConfigTablePrefix(tableName);
+    String sysConfigTablePrefix = hBaseTableNames.getSysConfigTablePrefix(tableName);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 

@@ -23,7 +23,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
-import co.cask.cdap.data2.util.hbase.HBase94TableUtil;
+import co.cask.cdap.data2.util.hbase.HBase94TableNames;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -87,7 +87,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       conf = env.getConfiguration();
       String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
       configTableNameBytes = Bytes.toBytes(configTableName);
-      this.sysconfigTableNamePrefix = new HBase94TableUtil().getSysConfigTablePrefix(configTableName);
+      sysconfigTableNamePrefix = new HBase94TableNames().getSysConfigTablePrefix(configTableName);
       configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, sysconfigTableNamePrefix);
     }
   }

@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
@@ -258,7 +257,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
 
   @Override
   public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+    return new HBase96TableNames().getSysConfigTablePrefix(tableName);
   }
 
   private TableName toTableName(TableId tableId) {

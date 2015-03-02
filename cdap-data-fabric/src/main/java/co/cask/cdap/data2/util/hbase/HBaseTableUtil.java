@@ -536,6 +536,7 @@ public abstract class HBaseTableUtil {
    * Gets the system configuration table prefix
    * @param tableName Full table name.
    * @return System configuration table prefix (full table name minus the table qualifier).
+   * Example: Given input: 'cdap_ns.table.name', the output is: 'cdap_system.'
    */
   public abstract String getSysConfigTablePrefix(String tableName);
 
