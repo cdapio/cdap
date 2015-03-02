@@ -1,0 +1,46 @@
+[my-navbar] {
+
+  ul.navbar-right .dropdown-menu.bottom-right {
+    left: auto !important;
+  }
+
+  .navbar-collapse.in {
+    @media (max-width: 767px) {
+      span.fa {
+        min-width: 2em;
+        text-align: center;
+      }
+    }
+  }
+
+  #navbar-search,
+  #navbar-namespace {
+    visibility: hidden;
+  }
+
+}
+
+body.state-overview,
+body.state-apps, {
+  #navbar-search {
+    visibility: visible;
+  }
+}
+
+
+body.state-overview,
+body.state-operations-apps,
+body.state-dashboard,
+body.state-apps,
+body.state-programs,
+body.state-data,
+body.state-datasets,
+body.state-workflows,
+body.state-flows,
+body.state-mapreduce,
+body.state-services,
+body.state-streams {
+  #navbar-namespace {
+    visibility: visible;
+  }
+}

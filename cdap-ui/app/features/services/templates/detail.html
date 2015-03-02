@@ -1,0 +1,31 @@
+<div ncy-breadcrumb></div>
+
+<h2>
+  <span ng-bind="$state.params.programId | caskCapitalizeFilter"> </span>
+  <small> Type: Service </small>
+</h2>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
+<!--   <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.data" role="tab">Data</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.metadata" role="tab">Metadata</a>
+  </li> -->
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.history" role="tab">History</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.logs" ui-sref-opts="{reload: true}" role="tab">Logs</a>
+  </li>
+<!--   <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.resources" role="tab">Resources</a>
+  </li> -->
+</ul>
+
+<br/>
+<ui-view role="tabpanel"/>

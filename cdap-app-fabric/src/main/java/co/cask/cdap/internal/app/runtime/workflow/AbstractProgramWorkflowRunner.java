@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -88,7 +90,8 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
         ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime),
         ProgramOptionConstants.WORKFLOW_BATCH, name
       )),
-      userArguments
+      new BasicArguments(RuntimeArguments.extractScope(Scope.scopeFor(program.getType().getCategoryName()), name,
+                                                       userArguments.asMap()))
     );
 
     return new Callable<RuntimeContext>() {
@@ -98,6 +101,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
     };
   }
+
 
   /**
    * Adds a listener to the {@link ProgramController} and blocks for completion.

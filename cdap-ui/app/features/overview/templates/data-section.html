@@ -1,0 +1,34 @@
+<div class="row">
+  <div class="col-xs-6">
+    <h3>
+      <span> Data </span>
+    </h3>
+  </div>
+  <div class="col-xs-6 text-right">
+    <div class="h3">
+
+      <a ui-sref="data.list" class="btn btn-default">
+        <span class="fa fa-bars"></span>
+        All Data
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<div class="pre-scrollable">
+<div class="list-group">
+  <a class="list-group-item"
+     ng-repeat="stream in streams track by $index"
+     ui-sref="streams.detail.overview({streamId: stream.name})">
+    <strong ng-bind="stream.name | caskCapitalizeFilter">  </strong>
+    <div> <em ng-bind="'Type: ' + (stream.type)"></em> </div>
+  </a>
+  <a class="list-group-item"
+     ng-repeat="dataset in datasets track by $index"
+     ui-sref="datasets.detail.overview({datasetId: dataset.name})">
+    <strong ng-bind="dataset.name | caskCapitalizeFilter">  </strong>
+    <div> <em ng-bind="'Type: ' + (dataset.type)"></em> </div>
+  </a>
+</div>
+</div>

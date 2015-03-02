@@ -1,0 +1,60 @@
+<div class="navbar-header">
+  <button type="button" class="navbar-toggle" ng-click="navbarCollapsed = !navbarCollapsed">
+    <span class="sr-only">Toggle navigation</span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+  </button>
+  <a class="navbar-brand" ui-sref="overview({namespace: $stateParams.namespace})">
+     <strong>CDAP</strong>
+  </a>
+</div>
+<div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
+
+  <ul class="nav navbar-nav hidden-sm" id="navbar-namespace">
+    <li class="dropdown">
+      <a href="" class="dropdown-toggle">
+        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 15"></span>
+        <span class="caret"></span>
+      </a>
+    </li>
+  </ul>
+
+  <nav ng-click="navbarCollapsed = false">
+    <ul class="nav navbar-nav" ng-show="currentUser">
+      <li ng-class="{active: highlightTab == 'development'}">
+        <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'operations'}">
+        <a ui-sref="operations({namespace: $stateParams.namespace})"> Operations </a>
+      </li>
+      <li ng-class="{active: highlightTab == 'management'}">
+        <a ui-sref="admin.overview"> Management </a>
+      </li>
+    </ul>
+  </nav>
+
+  <ul class="nav navbar-nav navbar-right">
+
+    <li class="hidden" id="navbar-search">
+      <form class="navbar-form" ng-submit="doSearch()">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" placeholder="Search" disabled>
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default">
+              <span class="fa fa-search"></span>
+              <span class="sr-only">Submit</span>
+            </button>
+          </span>
+        </div>
+      </form>
+    </li>
+    <li class="dropdown">
+      <a href="" class="dropdown-toggle">
+        <span class="fa fa-cog"></span>
+        <span class="caret"></span>
+      </a>
+    </li>
+
+  </ul>
+</div>

@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -69,48 +70,63 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
 
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     return ImmutableList.of();
   }
 
   @Override
-  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
     return ImmutableList.of();
   }
 
   @Override
-  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
 
   }
 
   @Override
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
 
   }
 
   @Override
-  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+    throws NotFoundException, SchedulerException {
 
   }
 
   @Override
-  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+  public void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
 
   }
 
   @Override
-  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public void deleteSchedules(Id.Program programId, SchedulableProgramType programType)
+    throws SchedulerException {
+
+  }
+
+  @Override
+  public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws SchedulerException {
     return ScheduleState.NOT_FOUND;
   }
 
