@@ -21,7 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 
@@ -66,7 +66,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
   }
 
   private Map<String, String> parsePreferences(String[] programIdParts)
-    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+    throws IOException, UnauthorizedException, NotFoundException {
 
     switch(type) {
       case INSTANCE:

@@ -19,17 +19,17 @@ package co.cask.cdap.common.exception;
 /**
  * Thrown when a user is not authorized to perform an operation.
  */
-public class UnAuthorizedAccessTokenException extends Exception {
+public class UnauthorizedException extends Exception {
 
-  public UnAuthorizedAccessTokenException() {
+  public UnauthorizedException() {
     super();
   }
 
-  public UnAuthorizedAccessTokenException(String msg) {
+  public UnauthorizedException(String msg) {
     super(msg);
   }
 
-  public UnAuthorizedAccessTokenException(String msg, Throwable throwable) {
+  public UnauthorizedException(String msg, Throwable throwable) {
     super(msg, throwable);
   }
 

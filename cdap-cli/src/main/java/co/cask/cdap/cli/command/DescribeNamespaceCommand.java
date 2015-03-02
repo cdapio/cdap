@@ -44,7 +44,7 @@ public class DescribeNamespaceCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
-    NamespaceMeta namespaceMeta = namespaceClient.get(namespace);
+    NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
     new AsciiTable<NamespaceMeta>(
       new String[]{"id", "display_name", "description"},
       Lists.newArrayList(namespaceMeta),

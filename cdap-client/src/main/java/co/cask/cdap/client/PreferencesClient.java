@@ -19,7 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.Id;
@@ -57,9 +57,9 @@ public class PreferencesClient {
    *
    * @return map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public Map<String, String> getInstancePreferences() throws IOException, UnAuthorizedAccessTokenException {
+  public Map<String, String> getInstancePreferences() throws IOException, UnauthorizedException {
     URL url = config.resolveURLV3("configuration/preferences");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
@@ -70,9 +70,9 @@ public class PreferencesClient {
    *
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void setInstancePreferences(Map<String, String> preferences) throws IOException, UnAuthorizedAccessTokenException {
+  public void setInstancePreferences(Map<String, String> preferences) throws IOException, UnauthorizedException {
     URL url = config.resolveURLV3("configuration/preferences");
     restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null, config.getAccessToken());
   }
@@ -81,9 +81,9 @@ public class PreferencesClient {
    * Deletes Preferences at the Instance Level.
    *
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void deleteInstancePreferences() throws IOException, UnAuthorizedAccessTokenException {
+  public void deleteInstancePreferences() throws IOException, UnauthorizedException {
     URL url = config.resolveURLV3("configuration/preferences");
     restClient.execute(HttpMethod.DELETE, url, config.getAccessToken());
   }
@@ -95,10 +95,10 @@ public class PreferencesClient {
    * @param resolved Set to True if collapsed/resolved properties are desired
    * @return map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public Map<String, String> getNamespacePreferences(String namespaceId, boolean resolved) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+  public Map<String, String> getNamespacePreferences(String namespaceId, boolean resolved) throws IOException, UnauthorizedException, NotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     String res = Boolean.toString(resolved);
@@ -117,10 +117,10 @@ public class PreferencesClient {
    * @param namespaceId Namespace Id
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public void setNamespacePreferences(String namespaceId, Map<String, String> preferences) throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+  public void setNamespacePreferences(String namespaceId, Map<String, String> preferences) throws IOException, UnauthorizedException, NotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     URL url = config.resolveURLV3("configuration/preferences/namespaces/%s", namespace.getId());
@@ -136,10 +136,10 @@ public class PreferencesClient {
    *
    * @param namespaceId Namespace Id
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public void deleteNamespacePreferences(String namespaceId) throws IOException, UnAuthorizedAccessTokenException,
+  public void deleteNamespacePreferences(String namespaceId) throws IOException, UnauthorizedException,
     NotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
@@ -159,11 +159,11 @@ public class PreferencesClient {
    * @param resolved Set to True if collapsed/resolved properties are desired
    * @return map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ApplicationNotFoundException if the requested application is not found
    */
   public Map<String, String> getApplicationPreferences(String namespaceId, String applicationId, boolean resolved)
-    throws IOException, UnAuthorizedAccessTokenException, ApplicationNotFoundException {
+    throws IOException, UnauthorizedException, ApplicationNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);
@@ -185,11 +185,11 @@ public class PreferencesClient {
    * @param applicationId Application Id
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ApplicationNotFoundException if the requested application is not found
    */
   public void setApplicationPreferences(String namespaceId, String applicationId, Map<String, String> preferences)
-    throws IOException, UnAuthorizedAccessTokenException, ApplicationNotFoundException {
+    throws IOException, UnauthorizedException, ApplicationNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);
@@ -208,11 +208,11 @@ public class PreferencesClient {
    * @param namespaceId Namespace Id
    * @param applicationId Application Id
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ApplicationNotFoundException if the request application or namespace is not found
    */
   public void deleteApplicationPreferences(String namespaceId, String applicationId)
-    throws IOException, UnAuthorizedAccessTokenException, ApplicationNotFoundException {
+    throws IOException, UnauthorizedException, ApplicationNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);
@@ -235,12 +235,12 @@ public class PreferencesClient {
    * @param resolved Set to True if collapsed/resolved properties are desired
    * @return map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
   public Map<String, String> getProgramPreferences(String namespaceId, String applicationId, ProgramType programType,
                                                    String programId, boolean resolved)
-    throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
+    throws IOException, UnauthorizedException, ProgramNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);
@@ -266,12 +266,12 @@ public class PreferencesClient {
    * @param programId Program Id
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
   public void setProgramPreferences(String namespaceId, String applicationId, ProgramType programType, String programId,
                                     Map<String, String> preferences)
-    throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
+    throws IOException, UnauthorizedException, ProgramNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);
@@ -293,12 +293,12 @@ public class PreferencesClient {
    * @param programType Program Type
    * @param programId Program Id
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
   public void deleteProgramPreferences(String namespaceId, String applicationId, ProgramType programType,
                                        String programId)
-    throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
+    throws IOException, UnauthorizedException, ProgramNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     Id.Application app = Id.Application.from(namespace, applicationId);

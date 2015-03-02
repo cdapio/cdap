@@ -22,7 +22,6 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -129,8 +128,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   @Test
   public void testPreferences() throws Exception {
-    Id.Namespace invalidNamespace = Id.Namespace.from("invalid");
-    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace.getId()).build());
+    String invalidNamespace = "invalid";
+    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace).build());
 
     Map<String, String> propMap = client.getInstancePreferences();
     Assert.assertEquals(ImmutableMap.<String, String>of(), propMap);
@@ -145,8 +144,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false));
-    Assert.assertTrue(client.getNamespacePreferences(invalidNamespace.getId(), false).isEmpty());
-    Assert.assertEquals("instance", client.getNamespacePreferences(invalidNamespace.getId(), true).get("k1"));
+    Assert.assertTrue(client.getNamespacePreferences(invalidNamespace, false).isEmpty());
+    Assert.assertEquals("instance", client.getNamespacePreferences(invalidNamespace, true).get("k1"));
 
     client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
     propMap.put("k1", "instance");
@@ -236,13 +235,13 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   @Test
   public void testDeletingNamespace() throws Exception {
-    Id.Namespace myspace = Id.Namespace.from("myspace");
+    String myspace = "myspace";
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("k1", "namespace");
     namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
 
-    client.setNamespacePreferences(myspace.getId(), propMap);
+    client.setNamespacePreferences(myspace, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", false));
     Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", true));
 

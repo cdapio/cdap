@@ -75,6 +75,6 @@ public class QueryClient {
    *         network error occurs, if the query is malformed, or if the query is cancelled.
    */
   public ListenableFuture<ExploreExecutionResult> execute(String query) {
-    return exploreClient.submit(Id.Namespace.from(config.getNamespace()), query);
+    return exploreClient.submit(config.getNamespace(), query);
   }
 }

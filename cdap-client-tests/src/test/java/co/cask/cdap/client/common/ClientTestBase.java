@@ -19,7 +19,7 @@ package co.cask.cdap.client.common;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -77,7 +77,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
                                           int numInstances)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, NotFoundException, UnauthorizedException {
 
     int actualInstances;
     int numTries = 0;
@@ -91,7 +91,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
                                         int numInstances)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, NotFoundException, UnauthorizedException {
 
     int actualInstances;
     int numTries = 0;
@@ -105,21 +105,21 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
       programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);

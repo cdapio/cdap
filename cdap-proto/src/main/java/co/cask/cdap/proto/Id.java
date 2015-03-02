@@ -574,6 +574,10 @@ public abstract class Id {
         return new Flowlet(flow, id);
       }
 
+      public static Flowlet from(Application app, String flowId, String id) {
+        return new Flowlet(new Flow(app, flowId), id);
+      }
+
       @Override
       public Namespace getNamespace() {
         return flow.getNamespace();
