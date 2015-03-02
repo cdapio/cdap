@@ -20,13 +20,13 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
@@ -154,15 +154,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   /**
-   * Migrates metrics data from version older than 2.7 to 2.8
-   * @param conf
-   * @param datasetFramework
-   * @param version - version we migrate the data from
+   * Migrates metrics data from version 2.7 and older to 2.8
+   * @param conf configuration
+   * @param datasetFramework framework to add types and datasets to
+   * @param version - version we are migrating the data from
    * @throws IOException
    * @throws DatasetManagementException
    */
-  public static void migrateMetricsData(CConfiguration conf, DatasetFramework datasetFramework,
-                                        ProjectInfo.Version version)
+  public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
+                                 MetricHBaseTableUtil.Version version)
     throws IOException, DatasetManagementException {
     MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework,
                                                            setupDatasets(conf, datasetFramework));

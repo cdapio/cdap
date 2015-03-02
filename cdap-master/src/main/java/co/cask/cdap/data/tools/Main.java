@@ -37,6 +37,8 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -63,6 +65,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Command line tool.
@@ -73,7 +76,9 @@ public class Main {
    */
   private enum Action {
     UPGRADE("Upgrade all tables."),
-    MIGRATE_METRICS_DATA("Migrate metrics data to CDAP-2.8"),
+    // NOTE : Metrics migration is not required for CDAP to work after upgrade,
+    // some may opt not to migrate data as it may take a while.
+    MIGRATE_METRICS_DATA("Migrate metrics data"),
     HELP("Show this help.");
 
     private final String description;
@@ -204,51 +209,73 @@ public class Main {
   }
 
   private void migrateMetricsData(Injector injector) throws Exception {
+    System.out.println("Starting metrics data migration");
     // find version to migrate
-    ProjectInfo.Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
-                                                  injector.getInstance(Configuration.class));
+    MetricHBaseTableUtil metricHBaseTableUtil = new MetricHBaseTableUtil(injector.getInstance(HBaseTableUtil.class));
+    Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
+                                                  injector.getInstance(Configuration.class), metricHBaseTableUtil);
     if (version != null) {
       DatasetFramework framework = createRegisteredDatasetFramework(injector);
       // migrate metrics data
-      DefaultMetricDatasetFactory.migrateMetricsData(injector.getInstance(CConfiguration.class), framework, version);
+      DefaultMetricDatasetFactory.migrateData(injector.getInstance(CConfiguration.class), framework, version);
     }
   }
 
-  private ProjectInfo.Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf) {
-    // Upgrade all datasets in system namespace
-    boolean metricsTable27Found = false;
-    boolean metricsTable26Found = false;
+  @Nullable
+  private Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf,
+                                                      MetricHBaseTableUtil metricHBaseTableUtil) {
+
+
+    // Figure out what is the latest working version of CDAP
+    // 1) if latest is 2.8.x - nothing to do, if "pre-2.8", proceed to next step.
+    // 2) find a most recent metrics table: start by looking for 2.7, then 2.6
+    // 3) if we find 2.7 - we will migrate data from 2.7 table, if not - migrate data from 2.6 metrics table
+    // todo - use UpgradeTool to figure out if version is 2.8.x, return if it is 2.8.x
+
+    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
+
     // versions older than 2.7, has two metrics table, identified by system and user prefix
-    String tableName26 = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                   "system." + UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                   UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    String tableName26 = "system." + tableName27;
     DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-
-    String metricsEntityTable26 = defaultDatasetNamespace.namespace(
-      new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName26);
-    String metricsEntityTable27 = defaultDatasetNamespace.namespace(
-      new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName27);
-
+    String metricsEntityTable26 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName26);
+    String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName27);
     HBaseAdmin hAdmin = null;
+    Version version = null;
     try {
       hAdmin = new HBaseAdmin(hConf);
       for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(metricsEntityTable27)) {
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_7, version);
+          if (version == null) {
+            return null;
+          }
+          break;
+        }
         if (desc.getNameAsString().equals(metricsEntityTable26)) {
-          metricsTable26Found = true;
-        } else if (desc.getNameAsString().equals(metricsEntityTable27)) {
-          metricsTable27Found = true;
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_6_OR_LOWER, version);
+          if (version == null) {
+            return null;
+          }
         }
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-    if (metricsTable27Found) {
-      return new ProjectInfo.Version(2, 7, 0, false, 0);
-    } else if (metricsTable26Found) {
-      return new ProjectInfo.Version(2, 6, 0, false, 0);
+    return version;
+  }
+
+  private Version verifyVersion(Version expected, Version actual) {
+    if (expected != actual) {
+      System.out.println("Unable to migrate, Version mismatch, Expected Version " + expected +
+                           "Actual Version " + actual);
+      return null;
     }
-    return null;
+    return actual;
   }
 
   public static void main(String[] args) throws Exception {
