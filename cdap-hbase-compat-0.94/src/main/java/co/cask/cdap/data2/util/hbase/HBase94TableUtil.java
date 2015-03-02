@@ -241,7 +241,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
 
   @Override
   public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableNames.getSysConfigTablePrefix(tableName);
+    return new HBase94TableNames().getSysConfigTablePrefix(tableName);
   }
 
   private String toTableName(TableId tableId) {

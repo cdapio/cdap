@@ -55,7 +55,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private Configuration conf;
   private byte[] configTableNameBytes;
-  private String sysconfigTableNamePrefix;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -87,8 +86,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       conf = env.getConfiguration();
       String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
       configTableNameBytes = Bytes.toBytes(configTableName);
-      sysconfigTableNamePrefix = new HBase94TableNames().getSysConfigTablePrefix(configTableName);
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, sysconfigTableNamePrefix);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94TableNames());
     }
   }
 
@@ -117,7 +115,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, sysconfigTableNamePrefix);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94TableNames());
     }
     return configCache;
   }
