@@ -43,7 +43,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Program Preferences HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration")
+@Path(Constants.Gateway.API_VERSION_3)
 public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreferencesHttpHandler.class);
 

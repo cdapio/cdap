@@ -170,12 +170,12 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void setProperty(String uri, Map<String, String> props, int expectedStatus) throws Exception {
-    HttpResponse response = doPut(String.format("/v3/configuration/%s/preferences", uri), GSON.toJson(props));
+    HttpResponse response = doPut(String.format("/v3/%s/preferences", uri), GSON.toJson(props));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private Map<String, String> getProperty(String uri, boolean resolved, int expectedStatus) throws Exception {
-    String request = String.format("/v3/configuration/%s/preferences", uri);
+    String request = String.format("/v3/%s/preferences", uri);
     if (resolved) {
       request += "?resolved=true";
     }
@@ -189,7 +189,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void deleteProperty(String uri, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/configuration/%s/preferences", uri));
+    HttpResponse response = doDelete(String.format("/v3/%s/preferences", uri));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 }
