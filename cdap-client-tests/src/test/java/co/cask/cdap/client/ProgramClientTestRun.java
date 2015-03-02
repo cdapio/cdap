@@ -23,6 +23,10 @@ import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,8 +35,12 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test for {@link ProgramClient}.
@@ -45,6 +53,7 @@ public class ProgramClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private ProcedureClient procedureClient;
   private ProgramClient programClient;
+  private ServiceClient serviceClient;
 
   @Before
   public void setUp() throws Throwable {
@@ -52,6 +61,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
   }
 
   @Test
@@ -122,11 +132,21 @@ public class ProgramClientTestRun extends ClientTestBase {
   @Test
   public void testStreamWrite() throws Exception {
     appClient.deploy(createAppJarFile(AppWritingtoStream.class));
-    programClient.start(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW1);
-    programClient.start(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW2);
-    TimeUnit.SECONDS.sleep(10);
-    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW1);
-    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW2);
+    programClient.start(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW);
+    programClient.start(AppWritingtoStream.APPNAME, ProgramType.WORKER, AppWritingtoStream.WORKER);
+    programClient.start(AppWritingtoStream.APPNAME, ProgramType.SERVICE, AppWritingtoStream.SERVICE);
+    TimeUnit.SECONDS.sleep(1);
+
+    URL serviceURL = new URL(serviceClient.getServiceURL(AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE),
+                             AppWritingtoStream.ENDPOINT);
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
+    HttpResponse response = HttpRequests.execute(request);
+    assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    assertEquals(String.valueOf(AppWritingtoStream.VALUE), response.getResponseBodyAsString());
+
+    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.FLOW, AppWritingtoStream.FLOW);
+    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.WORKER, AppWritingtoStream.WORKER);
+    programClient.stop(AppWritingtoStream.APPNAME, ProgramType.SERVICE, AppWritingtoStream.SERVICE);
     appClient.delete(AppWritingtoStream.APPNAME);
   }
 

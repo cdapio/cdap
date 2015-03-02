@@ -17,7 +17,7 @@
 package co.cask.cdap.app.services;
 
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
-import co.cask.cdap.common.exception.StreamNotFoundException;
+import co.cask.cdap.api.data.stream.StreamWriteException;
 import co.cask.cdap.common.io.ByteBuffers;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -26,7 +26,7 @@ import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * Implementation of {@link StreamBatchWriter}.
  */
 public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
@@ -44,13 +44,13 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
   }
 
   @Override
-  public void close() throws IOException, StreamNotFoundException, Exception {
+  public void close() throws IOException, StreamWriteException {
     connection.getOutputStream().close();
     int responseCode = connection.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new StreamNotFoundException(String.format("Stream %s not found", stream));
+      throw new StreamWriteException(String.format("Stream %s not found", stream));
     } else if (responseCode < 200 && responseCode >= 300) {
-      throw new Exception("Something bad happened");
+      throw new StreamWriteException(String.format("Writing to Stream %s did not succeed", stream));
     }
   }
 }

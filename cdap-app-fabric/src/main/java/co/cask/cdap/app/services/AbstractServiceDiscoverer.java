@@ -19,11 +19,11 @@ package co.cask.cdap.app.services;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamContext;
+import co.cask.cdap.api.data.stream.StreamWriteException;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -102,11 +102,11 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
     }
   }
 
-  private URL getStreamURL(String stream) throws Exception {
+  private URL getStreamURL(String stream) throws StreamWriteException {
     return getStreamURL(stream, false);
   }
 
-  private URL getStreamURL(String stream, boolean batch) throws Exception {
+  private URL getStreamURL(String stream, boolean batch) throws StreamWriteException {
     ServiceDiscovered discovered = getDiscoveryServiceClient().discover(Constants.Service.STREAMS);
     Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
     if (discoverable != null) {
@@ -122,47 +122,55 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
         LOG.error("Got exception while creating StreamURL", e);
       }
     }
-    throw new Exception("Stream Endpoint not found");
+    throw new StreamWriteException("Stream Service Endpoint not found");
   }
 
-  private void writeToStream(HttpRequest request) throws IOException, StreamNotFoundException {
+  private void writeToStream(String stream, HttpRequest request) throws IOException, StreamWriteException {
     HttpResponse response = HttpRequests.execute(request);
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new StreamNotFoundException(String.format("%s not found", request.getURL()));
+      throw new StreamWriteException(String.format("Stream %s not found", stream));
     }
   }
 
-  public void write(String stream, String data) throws Exception {
+  @Override
+  public void write(String stream, String data) throws IOException, StreamWriteException {
     write(stream, data, Maps.<String, String>newHashMap());
   }
 
-  public void write(String stream, String data, Map<String, String> headers) throws Exception {
+  @Override
+  public void write(String stream, String data, Map<String, String> headers) throws IOException, StreamWriteException {
     URL streamURL = getStreamURL(stream);
     HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(request);
+    writeToStream(stream, request);
   }
 
-  public void write(String stream, ByteBuffer data) throws Exception {
+  @Override
+  public void write(String stream, ByteBuffer data) throws IOException, StreamWriteException {
     write(stream, data, Maps.<String, String>newHashMap());
   }
 
-  public void write(String stream, ByteBuffer data, Map<String, String> headers) throws Exception {
+  @Override
+  public void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException,
+    StreamWriteException {
     URL streamURL = getStreamURL(stream);
     HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(request);
+    writeToStream(stream, request);
   }
 
-  public void write(String stream, StreamEventData data) throws Exception {
+  @Override
+  public void write(String stream, StreamEventData data) throws IOException, StreamWriteException {
     write(stream, data.getBody(), data.getHeaders());
   }
 
-  public void writeInBatch(String stream, File file, String contentType) throws Exception {
+  @Override
+  public void writeInBatch(String stream, File file, String contentType) throws IOException, StreamWriteException {
     URL url = getStreamURL(stream, true);
     HttpRequest request = HttpRequest.post(url).withBody(file).addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
-    writeToStream(request);
+    writeToStream(stream, request);
   }
 
-  public StreamBatchWriter writeInBatch(String stream, String contentType) throws Exception {
+  @Override
+  public StreamBatchWriter writeInBatch(String stream, String contentType) throws IOException, StreamWriteException {
     URL url = getStreamURL(stream, true);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod(HttpMethod.POST.name());

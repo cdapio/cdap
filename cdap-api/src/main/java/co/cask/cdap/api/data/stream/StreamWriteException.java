@@ -16,27 +16,20 @@
 
 package co.cask.cdap.api.data.stream;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 /**
- * Used to write to Stream in Batch mode.
+ * Exception to indicate that stream was not found.
  */
-public interface StreamBatchWriter {
+public class StreamWriteException extends Exception {
 
-  /**
-   * Each call to write will write data to the stream batch endpoint.
-   *
-   * @param data {@link ByteBuffer}
-   * @throws IOException
-   */
-  void write(ByteBuffer data) throws IOException;
+  public StreamWriteException(String message) {
+    super(message);
+  }
 
-  /**
-   * Method is used to finish the current set of batch writes.
-   *
-   * @throws IOException
-   * @throws StreamWriteException
-   */
-  void close() throws IOException, StreamWriteException;
+  public StreamWriteException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public StreamWriteException(Throwable cause) {
+    super(cause);
+  }
 }
