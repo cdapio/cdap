@@ -62,6 +62,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -119,7 +120,6 @@ public class CLIMainTest extends StandaloneTestBase {
       @Override
       protected void configure() {
         bind(PrintStream.class).toInstance(System.out);
-        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_NAMESPACE)).toInstance("default");
         bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
         bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
         bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
@@ -159,6 +159,11 @@ public class CLIMainTest extends StandaloneTestBase {
   @Override
   public void tearDownStandalone() throws Exception {
     // NO-OP
+  }
+
+  @Before
+  public void setUp() {
+    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
   }
 
   @Test
