@@ -2,32 +2,34 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-============================================
-Preferences
-============================================
+.. _preferences:
+
+=================================
+Preferences and Runtime Arguments
+=================================
 
 .. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
 
-Preferences provide the ability to save configuration at various levels of the system including CDAP Instance,
-Namespace, Application and Program. Configuration is represented by a map of string-string pairs. Preferences
-can be retrieved/saved/deleted through REST API and/or through CLI. When programs are started, the Preferences
-at different levels are collapsed into one map and it is accessible through ways described later. Preferences
-are persisted across restart of Programs.
+Preferences provide the ability to save configuration information at various levels of the system, including the
+CDAP Instance, Namespace, Application, and Program levels. A configuration is represented by a map of string-string
+pairs. Preferences can be retrieved, saved, and deleted through a RESTful API and through the Command Line Interface.
+When programs are started, all the Preferences at the different levels are collapsed into a single map. Preferences
+are persisted across a restart of Programs and CDAP.
 
 The overriding order of Preferences is:
 
 CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the Program)
 
-For example, if a configuration say, ``SAMPLE_KEY`` is set to 10 at Namespace level and at the Program level,
-it is set to 5, then when the Program is started, the value set at Program level will override the value set at
-Namespace level and thus will get 5 as the value for the key ``SAMPLE_KEY``.
+Example: A configuration preference ``SAMPLE_KEY`` is set to 20 at the Namespace level and is set to 10 at the
+Program level. When the Program is started, the value set at the Program level overrides the value set at
+the Namespace level and thus the value for the preference ``SAMPLE_KEY`` will be 10.
 
-Programs such as Flows, Procedures, MapReduce programs, Services, Workflows etc will receive the resolved preferences
+Programs such as Flows, MapReduce programs, Services, Workflows and Workers will receive the resolved preferences
 and can be accessed through the ``getRuntimeArguments`` method of the context:
 
-- For Flows and Procedures, preferences are available to the ``initialize`` method in the context.
+- For Flows, Services, Workers preferences are available to the ``initialize`` method in the context.
 
-- For MapReduce, preferences are available to the ``beforeSubmit`` and ``onFinish`` methods in the context.
+- For MapReduce, Spark preferences are available to the ``beforeSubmit`` and ``onFinish`` methods in the context.
   The ``beforeSubmit`` method can pass them to the Mappers and Reducers through the job configuration.
 
 - When a Workflow receives preferences, it passes them to each MapReduce in the Workflow.
