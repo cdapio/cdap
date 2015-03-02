@@ -30,6 +30,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -51,6 +52,8 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.UpgradeMetricsConstants;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,11 +66,14 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Command line tool.
  */
 public class Main {
+  private static final String KEEP_OLD_METRICS_TABLES = "--keep-old-metrics-tables";
   /**
    * Set of Action available in this tool.
    */
@@ -126,7 +132,11 @@ public class Main {
           performUpgrade(injector);
         break;
         case MIGRATE_METRICS_DATA:
-          migrateMetricsData(injector);
+          boolean keepOldTable = false;
+          if (args.length == 2) {
+            keepOldTable = parseArgument(args[1]);
+          }
+          migrateMetricsData(injector, keepOldTable);
           break;
         case HELP:
           printHelp();
@@ -137,6 +147,13 @@ public class Main {
       e.printStackTrace(System.out);
       throw e;
     }
+  }
+
+  private boolean parseArgument(String arg) {
+    if (arg != null && arg.equals(KEEP_OLD_METRICS_TABLES)) {
+      return true;
+    }
+    return false;
   }
 
   private void printHelp() {
@@ -203,15 +220,115 @@ public class Main {
     }
   }
 
-  private void migrateMetricsData(Injector injector) throws Exception {
+  private void migrateMetricsData(Injector injector, boolean keepOldTables) throws Exception {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    Configuration hConf = injector.getInstance(Configuration.class);
     // find version to migrate
-    ProjectInfo.Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
-                                                  injector.getInstance(Configuration.class));
+    ProjectInfo.Version version = findMetricsTableVersion(cConf, hConf);
     if (version != null) {
       DatasetFramework framework = createRegisteredDatasetFramework(injector);
+      // perform sanity check - truncate 2.8 tables data
+      truncateV2Tables(cConf, hConf);
       // migrate metrics data
       DefaultMetricDatasetFactory.migrateMetricsData(injector.getInstance(CConfiguration.class), framework, version);
+      System.out.println ("Keep Old Table Flag is" + keepOldTables);
+      // delete old-metrics table identified by version, unless keepOldTables flag is true
+      if (!keepOldTables) {
+        cleanUpOldTables(cConf, hConf, version);
+      }
     }
+  }
+
+  private void truncateV2Tables(CConfiguration cConf, Configuration hConf) {
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    String v2EntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                          MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    v2EntityTableName = addNamespace(defaultDatasetNamespace, v2EntityTableName);
+    String v2MetricsTablePrefix =  cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                             MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
+    v2MetricsTablePrefix = addNamespace(defaultDatasetNamespace, v2MetricsTablePrefix);
+    HBaseAdmin hAdmin = null;
+    try {
+      hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(v2EntityTableName) ||
+          desc.getNameAsString().startsWith(v2MetricsTablePrefix)) {
+          System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
+          // disable the table
+          //hAdmin.disableTable(desc.getName());
+          // delete the table
+          //hAdmin.deleteTable(desc.getName());
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void cleanUpOldTables(CConfiguration cConf, Configuration hConf, ProjectInfo.Version version) {
+    Set<String> tablesToDelete = Sets.newHashSet();
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+
+    // add kafka meta table to deleteList
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                                                       MetricsConstants.DEFAULT_KAFKA_META_TABLE)));
+
+    if (version.getMajor() == 2 && version.getMinor() <= 6) {
+      List<String> scopes = ImmutableList.of("system", "user");
+      // add user and system - entity tables , aggregates table and time series table to the list
+      for (String scope : scopes) {
+        addTableNamesToDelete(tablesToDelete, cConf, scope, ImmutableList.of(1));
+      }
+    }
+
+    if (version.getMajor() == 2 && version.getMinor() == 7) {
+      addTableNamesToDelete(tablesToDelete, cConf, null, ImmutableList.of(1, 60, 3600));
+    }
+
+    System.out.println("Deleting Tables : " + tablesToDelete);
+    //deleteTables(hConf, tablesToDelete);
+
+  }
+
+  private void deleteTables(Configuration hConf, Set<String> tablesToDelete) {
+    HBaseAdmin hAdmin = null;
+    try {
+      hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (tablesToDelete.contains(desc.getNameAsString())) {
+          // disable the table
+          hAdmin.disableTable(desc.getName());
+          // delete the table
+          hAdmin.deleteTable(desc.getName());
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void addTableNamesToDelete(Set<String> tablesToDelete, CConfiguration cConf,
+                                     String scope, List<Integer> resolutions) {
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, cConf.get(
+      MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME, UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME)));
+    String tableNamePrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                       UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
+    // add aggregates table
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, tableNamePrefix + ".agg"));
+
+    // add timeseries tables
+    for (int resolution : resolutions) {
+      tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, tableNamePrefix + ".ts." + resolution));
+    }
+  }
+
+  private String addNamespace(DatasetNamespace dsNamespace, String tableName) {
+    return addNamespace(dsNamespace, null , tableName);
+  }
+  private String addNamespace(DatasetNamespace dsNamespace, String scope, String tableName) {
+    tableName = scope == null ? tableName : scope + "." + tableName;
+    return dsNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName);
   }
 
   private ProjectInfo.Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf) {
@@ -244,9 +361,11 @@ public class Main {
       e.printStackTrace();
     }
     if (metricsTable27Found) {
-      return new ProjectInfo.Version("2.7");
+      System.out.println(" FOUND CDAP VERSION 2.7");
+      return new ProjectInfo.Version("2.7.0");
     } else if (metricsTable26Found) {
-      return new ProjectInfo.Version("2.6");
+      System.out.println(" FOUND CDAP VERSION 2.6");
+      return new ProjectInfo.Version("2.6.0");
     }
     return null;
   }
