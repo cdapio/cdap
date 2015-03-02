@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -45,5 +47,13 @@ public class HBase98TableUtilTest extends AbstractHBaseTableUtilTest {
   @Override
   protected boolean namespacesSupported() {
     return true;
+  }
+
+  @Test
+  public void testSysConfigTablePrefix() {
+    Assert.assertEquals("cdap_system:", getTableUtil().getSysConfigTablePrefix("cdap_user:some_table"));
+    Assert.assertEquals("cdap_system:", getTableUtil().getSysConfigTablePrefix("cdap.table_in_default_ns"));
+    Assert.assertEquals("someprefix_system:", getTableUtil().getSysConfigTablePrefix("someprefix_namespace:tablename"));
+    Assert.assertEquals("someprefix_system:", getTableUtil().getSysConfigTablePrefix("someprefix.table_in_default_ns"));
   }
 }

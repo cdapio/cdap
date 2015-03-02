@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -54,17 +53,17 @@ public class IncrementHandlerState {
   public static final int BATCH_UNLIMITED = -1;
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
+  private final String sysConfigTablePrefix;
 
   private TransactionStateCache cache;
   private TimestampOracle timeOracle = new TimestampOracle();
-  private final String tableName;
   private final Configuration conf;
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  public IncrementHandlerState(Configuration conf, String tableName) {
+  public IncrementHandlerState(Configuration conf, String sysConfigTablePrefix) {
     this.conf = conf;
-    this.tableName = tableName;
+    this.sysConfigTablePrefix = sysConfigTablePrefix;
   }
 
   @VisibleForTesting
@@ -72,15 +71,9 @@ public class IncrementHandlerState {
     this.timeOracle = timeOracle;
   }
 
-  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tableName, Configuration conf) {
-    // Table name is in the format "prefix.(system|user).tablename"
-    // We need the prefix in order to find the ConfigurationTable to read CDAP configuration
-    String[] parts = tableName.split("\\.", 2);
-    String tableNamespace = "";
-    if (parts.length > 0) {
-      tableNamespace = parts[0];
-    }
-    return new DefaultTransactionStateCacheSupplier(tableNamespace, conf);
+  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String sysConfigTablePrefix,
+                                                                             Configuration conf) {
+    return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 
   public void initFamily(byte[] familyName, Map<byte[], byte[]> familyValues) {
@@ -109,7 +102,7 @@ public class IncrementHandlerState {
 
     // get the transaction state cache as soon as we have a transactional family
     if (!txnlFamilies.isEmpty() && cache == null) {
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(tableName, conf);
+      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
       this.cache = cacheSupplier.get();
     }
   }

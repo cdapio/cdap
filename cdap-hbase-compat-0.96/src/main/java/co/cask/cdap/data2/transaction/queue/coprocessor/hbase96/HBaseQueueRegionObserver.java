@@ -23,6 +23,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
+import co.cask.cdap.data2.util.hbase.HBase96TableUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -56,7 +57,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private static final Log LOG = LogFactory.getLog(HBaseQueueRegionObserver.class);
 
   private Configuration conf;
-  private byte[] configTableName;
+  private byte[] configTableNameBytes;
+  private String sysConfigTableName;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -86,8 +88,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       flowName = HBaseQueueAdmin.getFlowName(tableName);
 
       conf = env.getConfiguration();
-      configTableName = Bytes.toBytes(QueueUtils.determineQueueConfigTableName(tableName));
-      configCache = ConsumerConfigCache.getInstance(conf, configTableName);
+      String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
+      configTableNameBytes = Bytes.toBytes(configTableName);
+      this.sysConfigTableName = new HBase96TableUtil().getSysConfigTablePrefix(configTableName);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, sysConfigTableName);
     }
   }
 
@@ -117,7 +121,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableName);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, sysConfigTableName);
     }
     return configCache;
   }

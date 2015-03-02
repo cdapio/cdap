@@ -533,6 +533,13 @@ public abstract class HBaseTableUtil {
   public abstract Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
 
   /**
+   * Gets the system configuration table prefix
+   * @param tableName Full table name.
+   * @return System configuration table prefix (full table name minus the table qualifier).
+   */
+  public abstract String getSysConfigTablePrefix(String tableName);
+
+  /**
    * Carries information about table stats
    */
   public static final class TableStats {

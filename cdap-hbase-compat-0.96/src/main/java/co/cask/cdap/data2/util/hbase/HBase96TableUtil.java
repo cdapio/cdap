@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
@@ -253,6 +254,26 @@ public class HBase96TableUtil extends HBaseTableUtil {
       }
     }
     return datasetStat;
+  }
+
+  @Override
+  public String getSysConfigTablePrefix(String tableName) {
+    TableName hTableName = TableName.valueOf(tableName);
+    String rootPrefix;
+    if (Constants.DEFAULT_NAMESPACE.equals(hTableName.getNamespaceAsString())) {
+      // Input: cdap.table (in default namespace)
+      // Output: cdap_system:
+      int rootPrefixSeparator = tableName.indexOf(".");
+      Preconditions.checkArgument(rootPrefixSeparator >= 0, "Expected");
+      rootPrefix = tableName.substring(0, rootPrefixSeparator);
+    } else {
+      // Input: cdap_ns1:table
+      // Output: cdap_system:
+      String hBaseNamespace = hTableName.getNamespaceAsString();
+      int rootPrefixSeparator = hBaseNamespace.indexOf("_");
+      rootPrefix = hBaseNamespace.substring(0, rootPrefixSeparator);
+    }
+    return rootPrefix + "_" + Constants.SYSTEM_NAMESPACE + ":";
   }
 
   private TableName toTableName(TableId tableId) {

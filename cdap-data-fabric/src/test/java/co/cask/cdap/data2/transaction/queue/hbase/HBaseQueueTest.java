@@ -290,8 +290,10 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  tableUtil.getSysConfigTablePrefix(configTableName));
       cache.updateCache();
       Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
@@ -300,9 +302,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       // Either the config table doesn't exists, or the consumer config is empty for the given queue
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  tableUtil.getSysConfigTablePrefix(configTableName));
       try {
         cache.updateCache();
         Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));

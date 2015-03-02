@@ -60,7 +60,13 @@ public class ConfigurationTableTest {
     ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cconf);
 
-    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, expectedNamespace);
+    String configTableQualifier = "configuration";
+    TableId configTableId = TableId.from(String.format("%s.system.%s", expectedNamespace, configTableQualifier));
+    String configTableName = tableUtil.getHTableDescriptor(configTableId).getNameAsString();
+    // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
+    String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());
+
+    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, configTablePrefix);
     assertNotNull(cconf2);
 
     for (Map.Entry<String, String> e : cconf) {
