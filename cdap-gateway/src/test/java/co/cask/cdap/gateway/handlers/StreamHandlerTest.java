@@ -60,6 +60,11 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
 
   protected abstract URL createURL(String path) throws URISyntaxException, MalformedURLException;
 
+  protected abstract URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException;
+
+  protected abstract URL createPropertiesURL(String streamName) throws URISyntaxException, MalformedURLException;
+
+
   protected HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
@@ -85,7 +90,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
   @Test
   public void testStreamCreate() throws Exception {
     // Try to get info on a non-existent stream
-    HttpURLConnection urlConn = openURL(createURL("streams/test_stream1/info"),
+    HttpURLConnection urlConn = openURL(createStreamInfoURL("test_stream1"),
                                         HttpMethod.GET);
 
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
@@ -102,7 +107,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // getInfo should now return 200
-    urlConn = openURL(createURL("streams/test_stream1/info"), HttpMethod.GET);
+    urlConn = openURL(createStreamInfoURL("test_stream1"), HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
@@ -148,7 +153,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a new config
-    urlConn = openURL(createURL("streams/stream_info/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_info"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
     FormatSpecification formatSpecification;
@@ -161,7 +166,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // test the config ttl by calling info
-    urlConn = openURL(createURL("streams/stream_info/info"),
+    urlConn = openURL(createStreamInfoURL("stream_info"),
                       HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
@@ -178,7 +183,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a new config
-    urlConn = openURL(createURL("streams/stream_defaults/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_defaults"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     // don't give the schema to make sure a default gets used
     FormatSpecification formatSpecification = new FormatSpecification(Formats.TEXT, null, null);
@@ -188,7 +193,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // test the config ttl by calling info
-    urlConn = openURL(createURL("streams/stream_defaults/info"),
+    urlConn = openURL(createStreamInfoURL("stream_defaults"),
                       HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
@@ -207,14 +212,14 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a config with invalid json
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write("ttl:2".getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with an invalid TTL
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     StreamProperties streamProperties = new StreamProperties(-1L, null, 20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
@@ -222,7 +227,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a config with a format without a format class
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     FormatSpecification formatSpec = new FormatSpecification(null, null, null);
     streamProperties = new StreamProperties(2L, formatSpec, 20);
@@ -231,7 +236,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a config with a format with a bad format class
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     formatSpec = new FormatSpecification("gibberish", null, null);
     streamProperties = new StreamProperties(2L, formatSpec, 20);
@@ -240,7 +245,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a config with an incompatible format and schema
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("col", Schema.of(Schema.Type.DOUBLE)));
     formatSpec = new FormatSpecification(TextRecordFormat.class.getCanonicalName(), schema, null);
@@ -250,7 +255,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // put a config with a bad threshold
-    urlConn = openURL(createURL("streams/stream_badconf/config"), HttpMethod.PUT);
+    urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     streamProperties = new StreamProperties(2L, null, -20);
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
