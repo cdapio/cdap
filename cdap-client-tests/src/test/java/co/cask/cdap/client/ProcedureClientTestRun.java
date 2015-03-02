@@ -20,6 +20,7 @@ import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -72,8 +73,9 @@ public class ProcedureClientTestRun extends ClientTestBase {
     Assert.assertEquals(GSON.toJson(ImmutableMap.of("customer", "realjoe")), result);
 
     // Validate that procedure calls can not be made to non-default namespaces
-    String testNamespace = clientConfig.getNamespace();
-    clientConfig.setNamespace("fooNamespace");
+    Id.Namespace testNamespace = clientConfig.getNamespace();
+    Id.Namespace fooNamespace = Id.Namespace.from("fooNamespace");
+    clientConfig.setNamespace(fooNamespace);
     try {
       procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
                            ImmutableMap.of("customer", "joe"));

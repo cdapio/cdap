@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
@@ -31,7 +30,7 @@ public class NamespaceNotFoundException extends NotFoundException {
     this.namespace = id;
   }
 
-  public Id.Namespace getNamespace() {
+  public Id.Namespace getId() {
     return namespace;
   }
 }

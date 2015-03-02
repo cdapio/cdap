@@ -434,12 +434,12 @@ public abstract class Id {
       return new Program(appId, type, pgmId);
     }
 
-    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
-      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
-    }
-
     public static Program from(Id.Namespace namespaceId, String appId, ProgramType type, String pgmId) {
       return new Program(new Application(namespaceId, appId), type, pgmId);
+    }
+
+    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
     @Override

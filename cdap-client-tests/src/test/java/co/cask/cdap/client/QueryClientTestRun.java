@@ -69,8 +69,8 @@ public class QueryClientTestRun extends ClientTestBase {
 
     Thread.sleep(3000);
 
-    String namespace = getClientConfig().getNamespace();
-    String instanceName = String.format("cdap.%s.%s", namespace, FakeApp.DS_NAME);
+    Id.Namespace namespace = getClientConfig().getNamespace();
+    String instanceName = String.format("cdap.%s.%s", namespace.getId(), FakeApp.DS_NAME);
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, instanceName);
 
     executeBasicQuery(instanceName);

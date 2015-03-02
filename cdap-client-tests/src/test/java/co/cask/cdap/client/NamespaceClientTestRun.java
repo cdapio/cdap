@@ -24,6 +24,7 @@ import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,13 +38,13 @@ import java.util.List;
  */
 public class NamespaceClientTestRun extends ClientTestBase {
   private NamespaceClient namespaceClient;
-  private static final String DOES_NOT_EXIST = "doesnotexist";
-  private static final String DEFAULT = "default";
-  private static final String SYSTEM = "system";
-  private static final String TEST_NAMESPACE_ID = "testnamespace";
+  private static final Id.Namespace DOES_NOT_EXIST = Id.Namespace.from("doesnotexist");
+  private static final Id.Namespace DEFAULT = Id.Namespace.from("default");
+  private static final Id.Namespace SYSTEM = Id.Namespace.from("system");
+  private static final Id.Namespace TEST_NAMESPACE_ID = Id.Namespace.from("testnamespace");
   private static final String TEST_NAME = "testname";
   private static final String TEST_DESCRIPTION = "testdescription";
-  private static final String TEST_DEFAULT_FIELDS = "testdefaultfields";
+  private static final Id.Namespace TEST_DEFAULT_FIELDS = Id.Namespace.from("testdefaultfields");
 
   @Before
   public void setup() {
@@ -71,7 +72,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
     // create a valid namespace
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_NAMESPACE_ID).setName(TEST_NAME).setDescription(TEST_DESCRIPTION);
+    builder.setId(TEST_NAMESPACE_ID.getId()).setName(TEST_NAME).setDescription(TEST_DESCRIPTION);
     namespaceClient.create(builder.build());
 
     // verify that the namespace got created correctly
@@ -97,7 +98,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
     // create and verify namespace without name and description
     builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_DEFAULT_FIELDS);
+    builder.setId(TEST_DEFAULT_FIELDS.getId());
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
@@ -113,7 +114,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
   }
 
-  private void verifyDoesNotExist(String namespaceId)
+  private void verifyDoesNotExist(Id.Namespace namespaceId)
     throws IOException, UnAuthorizedAccessTokenException, CannotBeDeletedException {
     try {
       namespaceClient.get(namespaceId);
@@ -130,13 +131,13 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(DEFAULT);
+    builder.setId(DEFAULT.getId());
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", DEFAULT));
     } catch (BadRequestException e) {
     }
-    builder.setId(SYSTEM);
+    builder.setId(SYSTEM.getId());
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", SYSTEM));

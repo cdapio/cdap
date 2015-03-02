@@ -331,8 +331,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return false;
   }
 
-  protected final void dataList(HttpRequest request, HttpResponder responder, Store store,
-                                DatasetFramework dsFramework,
+  // TODO: refactor
+  protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
                                 Data type, String namespaceId, String name, String appId) {
     try {
       if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
@@ -341,10 +341,17 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       }
 
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      Id.Application application = Id.Application.from(namespace, appId);
-      String json = name != null ? getDataEntity(store, dsFramework, namespace, type, name) :
-        appId != null ? listDataEntitiesByApp(store, dsFramework, application, type)
-          : listDataEntities(store, dsFramework, namespace, type);
+
+      String json;
+      if (name != null) {
+        json = getDataEntity(store, dsFramework, namespace, type, name);
+      } else if (appId != null) {
+        Id.Application app = Id.Application.from(namespace, appId);
+        json = listDataEntitiesByApp(store, dsFramework, app, type);
+      } else {
+        json = listDataEntities(store, dsFramework, namespace, type);
+      }
+
       if (json.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -393,9 +400,8 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   private String listDataEntitiesByApp(Store store, DatasetFramework dsFramework,
-                                       Id.Application application, Data type) throws Exception {
-    Id.Namespace namespace = application.getNamespace();
-    ApplicationSpecification appSpec = store.getApplication(application);
+                                       Id.Application app, Data type) throws Exception {
+    ApplicationSpecification appSpec = store.getApplication(app);
     if (appSpec == null) {
       return "";
     }
@@ -404,7 +410,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
       for (String dsName : dataSetsUsed) {
         String typeName = null;
-        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, dsName);
+        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, app.getNamespace(), dsName);
         if (dsSpec != null) {
           typeName = dsSpec.getType();
         }

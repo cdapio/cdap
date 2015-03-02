@@ -88,6 +88,13 @@ public enum ProgramType {
     .setCategoryName("workers")
     .setPrettyName("Worker")
     .setListable(true)
+    .build()),
+
+  CUSTOM_ACTION(9, Parameters.builder()
+    .setCategoryName("custom")
+    .setPrettyName("Custom")
+    .setListable(false)
+    .setSchedulableType(SchedulableProgramType.CUSTOM_ACTION)
     .build());
 
   private static final Map<String, ProgramType> CATEGORY_MAP;
@@ -125,6 +132,15 @@ public enum ProgramType {
 
   public int getIndex() {
     return index;
+  }
+
+  public static ProgramType valueOfSchedulableType(SchedulableProgramType schedulableType) {
+    for (ProgramType type : ProgramType.values()) {
+      if (schedulableType.equals(type.getSchedulableType())) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("No ProgramType found for SchedulableProgramType " + schedulableType);
   }
 
   public static ProgramType valueOfPrettyName(String pretty) {

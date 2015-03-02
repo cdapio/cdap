@@ -165,7 +165,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       LOG.warn("Unrecognized program type {}", appName);
       return null;
     }
-    Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
+    Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
 
     if (runtimeInfo != null) {
       runtimeInfo = createRuntimeInfo(type, programId, controller);
@@ -200,7 +200,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           continue;
         }
 
-        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
+        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), appType, matcher.group(4));
         RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
         if (runtimeInfo != null) {
           result.put(runId, runtimeInfo);
@@ -554,7 +554,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return null;
       }
 
-      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
+      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
       return getMetricsContext(type, programId);
     }
   }

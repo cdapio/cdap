@@ -19,30 +19,30 @@ package co.cask.cdap.common.exception;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an element cannot be deleted.
+ * Thrown when an element cannot be created.
  */
-public class CannotBeDeletedException extends Exception {
+public class CannotBeCreatedException extends Exception {
 
   private final Id objectId;
+  private final String reason;
 
-  public CannotBeDeletedException(Id id) {
-    super(String.format("'%s' could not be deleted", id.getIdRep()));
-    this.objectId = id;
+  public CannotBeCreatedException(Id objectId, String reason) {
+    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), reason));
+    this.objectId = objectId;
+    this.reason = reason;
   }
 
-  public CannotBeDeletedException(Id id, String reason) {
-    super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), reason));
-    this.objectId = id;
-  }
-
-  public CannotBeDeletedException(Id id, Throwable cause) {
-    super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), cause.getMessage()), cause);
-    this.objectId = id;
+  public CannotBeCreatedException(Id objectId, Throwable cause) {
+    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), cause.getMessage()), cause);
+    this.objectId = objectId;
+    this.reason = cause.getMessage();
   }
 
   public Id getObjectId() {
     return objectId;
   }
 
-
+  public String getReason() {
+    return reason;
+  }
 }

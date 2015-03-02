@@ -37,6 +37,7 @@ import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -217,8 +218,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
-    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
-    cliConfig.setCurrentNamespace("bar");
+    Id.Namespace barspace = Id.Namespace.from("bar");
+    namespaceClient.create(new NamespaceMeta.Builder().setId(barspace.getId()).build());
+    cliConfig.setCurrentNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
