@@ -48,7 +48,7 @@ import java.util.SortedMap;
 public final class FileMetaDataManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
 
-  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
+  public static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte [] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
   private final LocationFactory locationFactory;
@@ -87,13 +87,25 @@ public final class FileMetaDataManager {
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
                             final Location location) throws Exception {
+    writeMetaData(loggingContext.getLogPartition(), startTimeMs, location);
+  }
+
+  /**
+   * Persists meta data associated with a log file.
+   * @param logPartition partition name that is used to group log messages
+   * @param startTimeMs start log time associated with the file.
+   * @param location log file.
+   */
+  public void writeMetaData(final String logPartition,
+                            final long startTimeMs,
+                            final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
-              loggingContext.getLogPartition(), startTimeMs, location.toURI());
+              logPartition, startTimeMs, location.toURI());
 
     mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> ctx) throws Exception {
-        ctx.get().put(getRowKey(loggingContext),
+        ctx.get().put(getRowKey(logPartition),
                       Bytes.toBytes(startTimeMs),
                       Bytes.toBytes(location.toURI().toString()));
         return null;
@@ -169,7 +181,11 @@ public final class FileMetaDataManager {
   }
 
   private byte[] getRowKey(LoggingContext loggingContext) {
-    return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(loggingContext.getLogPartition()));
+    return getRowKey(loggingContext.getLogPartition());
+  }
+
+  private byte[] getRowKey(String logPartition) {
+    return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(logPartition));
   }
 
   private byte [] getMaxKey(Map<byte[], byte[]> map) {

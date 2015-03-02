@@ -68,7 +68,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * Provides implementation of {@link ThriftClientProvider} based on configuration.
    */
   @Singleton
-  private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
+  public static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
 
     private final CConfiguration cConf;
     private final Configuration hConf;

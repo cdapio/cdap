@@ -15,18 +15,25 @@
  */
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
+import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -34,31 +41,41 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.app.store.DefaultStoreFactory;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.distributed.ThriftClientProvider;
+import co.cask.tephra.distributed.TransactionService;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -66,6 +83,17 @@ import java.io.IOException;
  * Command line tool.
  */
 public class Main {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
+  private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final TransactionService txService;
+  private final ZKClientService zkClientService;
+  private Store store;
+
+  private final Injector injector;
+
   /**
    * Set of Action available in this tool.
    */
@@ -84,7 +112,105 @@ public class Main {
     }
   }
 
-  public void doMain(String[] args) throws Exception {
+  public Main() {
+    cConf = CConfiguration.create();
+    hConf = HBaseConfiguration.create();
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new LocationRuntimeModule().getDistributedModules(),
+      new ZKClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
+          bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
+          install(new TransactionModules().getDistributedModules());
+          bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+          new DataSetServiceModules().getDistributedModule();
+          bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
+          bind(ThriftClientProvider.class).toProvider(DataFabricDistributedModule.ThriftClientProviderSupplier.class);
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
+          bind(StoreFactory.class).to(DefaultStoreFactory.class);
+          bind(ConfigStore.class).to(DefaultConfigStore.class);
+        }
+
+        @Provides
+        @Singleton
+        @Named("namespacedDSFramework")
+        public DatasetFramework getNamespacedDSFramework(CConfiguration cConf,
+                                                         DatasetDefinitionRegistryFactory registryFactory)
+          throws IOException, DatasetManagementException {
+          return createRegisteredDatasetFramework(cConf, registryFactory);
+        }
+
+        @Provides
+        @Singleton
+        @Named("nonNamespacedDSFramework")
+        public DatasetFramework getNonNamespacedDSFramework(DatasetDefinitionRegistryFactory registryFactory)
+          throws DatasetManagementException {
+          return createNonNamespaceDSFramework(registryFactory);
+        }
+
+        @Provides
+        @Singleton
+        @Named("nonNamespacedStore")
+        public Store getNonNamespacedStore(@Named("nonNamespacedDSFramework") DatasetFramework nonNamespacedFramework,
+                                           CConfiguration cConf, LocationFactory locationFactory,
+                                           TransactionSystemClient txClient) {
+          return new DefaultStore(cConf, locationFactory, txClient, nonNamespacedFramework);
+        }
+      });
+    txService = injector.getInstance(TransactionService.class);
+    zkClientService = injector.getInstance(ZKClientService.class);
+//    locationFactory = injector.getInstance(LocationFactory.class);
+//    txClient = injector.getInstance(TransactionSystemClient.class);
+//    executorFactory = injector.getInstance(TransactionExecutorFactory.class);
+
+    this.injector = injector;
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          Main.this.stop();
+        } catch (Throwable e) {
+          LOG.error("Failed to upgrade", e);
+        }
+      }
+    });
+  }
+
+  /**
+   * Do the start up work
+   */
+  private void startUp() {
+    // Start all the services.
+    zkClientService.startAndWait();
+    txService.startAndWait();
+
+    createDefaultNamespace();
+  }
+
+  /**
+   * Stop services and
+   */
+  private void stop() {
+    LOG.info("Stopping Upgrade ...");
+    try {
+      txService.stopAndWait();
+      zkClientService.stopAndWait();
+    } catch (Throwable e) {
+      LOG.error("Exception while trying to stop upgrade process", e);
+      Runtime.getRuntime().halt(1);
+    }
+  }
+
+  private void doMain(String[] args) throws Exception {
     System.out.println(String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
     System.out.println();
 
@@ -101,30 +227,13 @@ public class Main {
     }
 
     try {
-      CConfiguration cConf = CConfiguration.create();
-      Configuration hConf = HBaseConfiguration.create();
-
-      Injector injector = Guice.createInjector(
-        new ConfigModule(cConf, hConf),
-        new LocationRuntimeModule().getDistributedModules(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-            bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
-          }
-        });
-
       switch (action) {
         case UPGRADE:
-          performUpgrade(injector);
-        break;
+          performUpgrade();
+          break;
         case HELP:
           printHelp();
-        break;
+          break;
       }
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
@@ -157,119 +266,107 @@ public class Main {
     }
   }
 
-  private void performUpgrade(Injector injector) throws Exception {
-    // Upgrade system datasets
-    upgradeSystemDatasets(injector);
+  private void performUpgrade() throws Exception {
+    LOG.debug("Upgrading System and User Datasets ...");
+    DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
+    dsUpgrade.upgrade();
 
-    // Upgrade all user hbase tables
-    upgradeUserTables(injector);
+    LOG.debug("Upgrading app meta data ...");
+    MDSUpgrader mdsUpgrad = injector.getInstance(MDSUpgrader.class);
+    mdsUpgrad.upgrade();
 
-    // Upgrade all queue and stream tables.
-    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-    queueAdmin.upgrade();
-  }
+    LOG.debug("Upgrading logs ...");
+    LogUpgrader logUpgrade = injector.getInstance(LogUpgrader.class);
+    logUpgrade.upgrade();
 
-  private void upgradeSystemDatasets(Injector injector) throws Exception {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    // Setting up all system datasets to be upgraded, collecting them from respective components
-    DatasetFramework framework = createRegisteredDatasetFramework(injector);
-    // dataset service
-    DatasetMetaTableUtil.setupDatasets(framework);
-    // app metadata
-    DefaultStore.setupDatasets(framework);
-    // config store
-    DefaultConfigStore.setupDatasets(framework);
-    // logs metadata
-    LogSaverTableUtil.setupDatasets(framework);
-    // scheduler metadata
-    ScheduleStoreTableUtil.setupDatasets(framework);
-    // metrics data
-    DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
-
-    // Upgrade all datasets in system namespace
-    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
-    for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
-      System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
-      DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
-      // we know admin is not null, since we are looping over existing datasets
-      admin.upgrade();
-      System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
-    }
+    LOG.debug("Upgrading archives ...");
+    ArchiveUpgrader archiveUpgrade = injector.getInstance(ArchiveUpgrader.class);
+    archiveUpgrade.upgrade();
   }
 
   public static void main(String[] args) throws Exception {
-    new Main().doMain(args);
+    Main thisMain = new Main();
+    thisMain.startUp();
+    try {
+      thisMain.doMain(args);
+    } catch (Throwable t) {
+      LOG.info("Failed to upgrade ...");
+    } finally {
+      thisMain.stop();
+    }
   }
 
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
-  public static DatasetFramework createRegisteredDatasetFramework(Injector injector)
+  private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
+                                                            DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-
-    DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
                                      new DefaultDatasetNamespace(cConf));
-    // TODO: this doesn't sound right. find out why its needed.
+    addModules(datasetFramework);
+    // dataset service
+    DatasetMetaTableUtil.setupDatasets(datasetFramework);
+    // app metadata
+    DefaultStore.setupDatasets(datasetFramework);
+    // config store
+    DefaultConfigStore.setupDatasets(datasetFramework);
+    // logs metadata
+    LogSaverTableUtil.setupDatasets(datasetFramework);
+    // scheduler metadata
+    ScheduleStoreTableUtil.setupDatasets(datasetFramework);
+
+    // metrics data
+    DefaultMetricDatasetFactory.setupDatasets(cConf, datasetFramework);
+
+    return datasetFramework;
+  }
+
+  /**
+   * Creates a non-namespaced {@link DatasetFramework} to access existing datasets which are not namespaced
+   */
+  private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
+    throws DatasetManagementException {
+    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory);
+    addModules(nonNamespacedFramework);
+    return nonNamespacedFramework;
+  }
+
+  /**
+   * add module to the dataset framework
+   *
+   * @param datasetFramework the dataset framework to which the modules need to be added
+   * @throws DatasetManagementException
+   */
+  private void addModules(DatasetFramework datasetFramework) throws DatasetManagementException {
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
                                new HBaseTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
                                new HBaseMetricsTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
-
-    return datasetFramework;
   }
 
-  private static void upgradeUserTables(final Injector injector) throws Exception  {
-    // We assume that all tables in USER namespace belong to Table type datasets. So we loop thru them
-    // and upgrading with the help of HBaseTableAdmin
-    final CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
+  /**
+   * Creates the {@link Constants#DEFAULT_NAMESPACE} namespace
+   */
+  private void createDefaultNamespace() {
+    getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
+                                 .setName(Constants.DEFAULT_NAMESPACE)
+                                 .setDescription(Constants.DEFAULT_NAMESPACE)
+                                 .build());
+  }
 
-    Configuration hConf = injector.getInstance(Configuration.class);
-    HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-    final HBaseTableUtil hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
-
-    for (HTableDescriptor desc : hAdmin.listTables()) {
-      String tableName = desc.getNameAsString();
-      TableId tableId = TableId.from(tableName);
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
-      // todo: it works now, but we will want to change it if namespacing of datasets in HBase is more than +prefix
-      if (namespace.fromNamespaced(datasetInstanceId) != null) {
-        System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
-
-        final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
-        final boolean transactional =
-          !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
-        DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
-          @Override
-          protected CoprocessorJar createCoprocessorJar() throws IOException {
-            return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
-                injector.getInstance(LocationFactory.class),
-                hBaseTableUtil,
-                transactional,
-                supportsIncrement);
-          }
-
-          @Override
-          protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-            // we don't do any other changes apart from coprocessors upgrade
-            return false;
-          }
-
-          @Override
-          public void create() throws IOException {
-            // no-op
-            throw new UnsupportedOperationException("This DatasetAdmin is only used for upgrade() operation");
-          }
-        };
-        admin.upgrade();
-        System.out.println(String.format("Upgraded hbase table: %s", tableName));
-      }
+  /**
+   * gets the Store to access the app meta table
+   *
+   * @return {@link Store}
+   */
+  private Store getStore() {
+    if (store == null) {
+      store = injector.getInstance(Key.get(Store.class, Names.named("nonNamespacedStore")));
     }
+    return store;
   }
 }
