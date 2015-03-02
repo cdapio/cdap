@@ -244,9 +244,9 @@ public class Main {
       e.printStackTrace();
     }
     if (metricsTable27Found) {
-      return new ProjectInfo.Version(2, 7, 0, false, 0);
+      return new ProjectInfo.Version("2.7");
     } else if (metricsTable26Found) {
-      return new ProjectInfo.Version(2, 6, 0, false, 0);
+      return new ProjectInfo.Version("2.6");
     }
     return null;
   }

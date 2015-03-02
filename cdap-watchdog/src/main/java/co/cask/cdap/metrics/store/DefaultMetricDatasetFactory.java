@@ -154,7 +154,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   /**
-   * Migrates metrics data from version older than 2.7 to 2.8
+   * Migrates metrics data from version 2.7 and older to 2.8
    * @param conf
    * @param datasetFramework
    * @param version - version we migrate the data from
