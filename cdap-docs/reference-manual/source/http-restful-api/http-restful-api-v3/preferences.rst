@@ -25,18 +25,18 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
 
   PUT http://<host>:<port>/v3/configuration/preferences/
 
-  PUT http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>
+  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
 
-  PUT http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>
+  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  PUT http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
+  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
 :widths: 20 80
    :header-rows: 1
 
      * - Parameter
-       - Description
+     - Description
      * - ``<namespace-id>``
      - Namespace ID
      * - ``<app-id>``
@@ -58,7 +58,7 @@ that does not exist or an application that has not yet been deployed.
    :header-rows: 1
 
      * - Status Codes
-       - Description
+     - Description
      * - ``200 OK``
      - The event successfully called the method, and the preferences were set
      * - ``400 BAD REQUEST``
@@ -74,11 +74,11 @@ To retrieve the current preferences, issue an HTTP GET request::
 
   GET http://<host>:<port>/v3/configuration/preferences/
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 This will return a JSON String map of the preferences::
 
@@ -89,51 +89,11 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
 
   GET http://<host>:<port>/v3/configuration/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>?resolved=true
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>?resolved=true
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>?resolved=true
-
-.. list-table::
-:widths: 20 80
-   :header-rows: 1
-
-       * - Parameter
-         - Description
-       * - ``<namespace-id>``
-     - Namespace ID
-     * - ``<app-id>``
-     - Application ID
-     * - ``<program-type>``
-     - Program Type (flows, services, etc)
-     * - ``<program-id>``
-     - Program ID
-
-.. rubric:: HTTP Responses
-
-.. list-table::
-:widths: 20 80
-   :header-rows: 1
-
-       * - Status Codes
-         - Description
-       * - ``200 OK``
-     - The event successfully called the method, and the preferences was retrieved
-     * - ``404 NOT FOUND``
-     - The entity, for which Preferences is being retrieved, is not present
-
-Delete Preferences
-------------------
-To delete preferences, issue an HTTP DELETE::
-
-  DELETE http://<host>:<port>/v3/configuration/preferences/
-
-  DELETE http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>
-
-  DELETE http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>
-
-  DELETE http://<host>:<port>/v3/configuration/preferences/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
+  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
 :widths: 20 80
@@ -159,6 +119,46 @@ To delete preferences, issue an HTTP DELETE::
      * - Status Codes
      - Description
      * - ``200 OK``
-     - The event successfully called the method, and the preferences was retrieved
+     - The event successfully called the method, and the preferences were retrieved
      * - ``404 NOT FOUND``
-     - The entity, for which Preferences is being retrieved, is not present
+     - The entity for which Preferences are being set was not found
+
+Delete Preferences
+------------------
+To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at one level with each request::
+
+  DELETE http://<host>:<port>/v3/configuration/preferences/
+
+  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
+
+  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
+
+  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+
+.. list-table::
+:widths: 20 80
+   :header-rows: 1
+
+     * - Parameter
+     - Description
+     * - ``<namespace-id>``
+     - Namespace ID
+     * - ``<app-id>``
+     - Application ID
+     * - ``<program-type>``
+     - Program Type (flows, services, etc)
+     * - ``<program-id>``
+     - Program ID
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+:widths: 20 80
+   :header-rows: 1
+
+     * - Status Codes
+     - Description
+     * - ``200 OK``
+     - The event successfully called the method, and the preferences were retrieved
+     * - ``404 NOT FOUND``
+     - The entity for which Preferences are being set was not found
