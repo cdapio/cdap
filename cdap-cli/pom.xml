@@ -155,39 +155,12 @@
               <!-- Copy CLI scripts -->
               <execution>
                 <id>copy-cli-scripts</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
                   <outputDirectory>${stage.opt.dir}</outputDirectory>
-                  <useDefaultDelimiters>false</useDefaultDelimiters>
-                  <delimiters>
-                    <delimiter>@@</delimiter>
-                  </delimiters>
-                  <resources>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cdap-cli.sh</include>
-                        <include>cdap-cli.bat</include>
-                      </includes>
-                      <filtering>true</filtering>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <!-- Copy CLI scripts for .deb -->
-              <execution>
-                <id>copy-cli-scripts-deb</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}</outputDirectory>
-                  <outputDirectory>${stage.dir}-deb/opt/cdap/${package.name}</outputDirectory>
                   <useDefaultDelimiters>false</useDefaultDelimiters>
                   <delimiters>
                     <delimiter>@@</delimiter>
