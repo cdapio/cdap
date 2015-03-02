@@ -92,7 +92,7 @@ public abstract class HBaseTableUtil {
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
-  private static final String HBASE_NAMESPACE_PREFIX = "cdap_";
+  public static final String HBASE_NAMESPACE_PREFIX = "cdap_";
 
   public static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);

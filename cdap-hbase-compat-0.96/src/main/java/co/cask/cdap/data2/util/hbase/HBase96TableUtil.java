@@ -273,7 +273,9 @@ public class HBase96TableUtil extends HBaseTableUtil {
       int rootPrefixSeparator = hBaseNamespace.indexOf("_");
       rootPrefix = hBaseNamespace.substring(0, rootPrefixSeparator);
     }
-    return rootPrefix + "_" + Constants.SYSTEM_NAMESPACE + ":";
+    // Undo this change once hbase namespace prefixes are not hardcoded (HBaseTableUtil#toHBaseNamespace)
+    rootPrefix = HBaseTableUtil.HBASE_NAMESPACE_PREFIX;
+    return rootPrefix + Constants.SYSTEM_NAMESPACE + ":";
   }
 
   private TableName toTableName(TableId tableId) {

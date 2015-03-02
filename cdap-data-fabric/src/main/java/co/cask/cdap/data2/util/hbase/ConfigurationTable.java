@@ -116,8 +116,8 @@ public class ConfigurationTable {
    * Reads the given configuration type from the HBase table, looking for the HBase table name under the
    * given "sysConfigTablePrefix".
    * @param type Type of configuration to read in
-   * @param sysConfigTablePrefix table prefix of the configuration table. (The full table name of the configuration table minus
-   *                    the table qualifier). Example: 'cdap.system:'
+   * @param sysConfigTablePrefix table prefix of the configuration table. (The full table name of the configuration
+   *                             table minus the table qualifier). Example: 'cdap.system:'
    * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
