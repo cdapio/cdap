@@ -22,7 +22,6 @@ import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -66,19 +65,14 @@ public class ProcedureClient {
    * @param parameters parameters to pass with the procedure call
    * @return result of the procedure call
    * @throws BadRequestException if the input was bad
-   * @throws NotFoundException if the method could not be found
+   * @throws NotFoundException if the application, procedure, or method could not be found
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public String call(String appId, String procedureId, String methodId, Map<String, String> parameters)
     throws BadRequestException, NotFoundException, IOException, UnAuthorizedAccessTokenException {
-
-
-    Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    Id.Procedure.Method method = Id.Procedure.Method.from(Id.Procedure.from(app, procedureId), methodId);
-
     VersionMigrationUtils.assertProcedureSupported(config);
-    URL url = config.resolveURL("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId);
+    URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
@@ -88,7 +82,7 @@ public class ProcedureClient {
       throw new BadRequestException("The Application, Procedure and method exist, " +
                                       "but the arguments are not as expected: " + GSON.toJson(parameters));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(method);
+      throw new NotFoundException("application or procedure or method", appId + "/" + procedureId + "/" + methodId);
     }
     return new String(response.getResponseBody(), Charsets.UTF_8);
   }

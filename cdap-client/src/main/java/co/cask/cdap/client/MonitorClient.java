@@ -20,9 +20,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.exception.ServiceNotEnabledException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.common.http.HttpMethod;
@@ -78,16 +77,15 @@ public class MonitorClient {
    * @throws BadRequestException if the operation was not valid for the system service
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public String getSystemServiceStatus(String serviceName) throws IOException, NotFoundException, BadRequestException, UnAuthorizedAccessTokenException {
-
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
+  public String getSystemServiceStatus(String serviceName) throws IOException, NotFoundException, BadRequestException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("system/services/%s/status", serviceName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     String responseBody = new String(response.getResponseBody());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException("system service", serviceName);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(responseBody);
     }
@@ -120,14 +118,13 @@ public class MonitorClient {
   public void setSystemServiceInstances(String serviceName, int instances)
     throws IOException, NotFoundException, BadRequestException, UnAuthorizedAccessTokenException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException("system service", serviceName);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(new String(response.getResponseBody()));
     }
@@ -146,13 +143,12 @@ public class MonitorClient {
   public int getSystemServiceInstances(String serviceName)
     throws IOException, NotFoundException, ServiceNotEnabledException, UnAuthorizedAccessTokenException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_FORBIDDEN);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException("system service", serviceName);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
       throw new ServiceNotEnabledException(serviceName);
     }

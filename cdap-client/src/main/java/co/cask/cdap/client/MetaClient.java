@@ -21,6 +21,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.ResetFailureException;
 import co.cask.cdap.common.exception.ResetNotEnabledException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -55,7 +56,8 @@ public class MetaClient {
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public void resetUnrecoverably() throws ResetFailureException, UnAuthorizedAccessTokenException, IOException, UnAuthorizedAccessTokenException, ResetNotEnabledException {
+  public void resetUnrecoverably() throws ResetFailureException, UnauthorizedException, IOException,
+    UnAuthorizedAccessTokenException, ResetNotEnabledException {
 
     URL url = config.resolveURL(String.format("unrecoverable/reset"));
     HttpRequest request = HttpRequest.post(url).build();
@@ -64,7 +66,7 @@ public class MetaClient {
                                                HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_BAD_REQUEST,
                                                HttpURLConnection.HTTP_FORBIDDEN);
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new UnAuthorizedAccessTokenException();
+      throw new UnauthorizedException();
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new ResetFailureException(response.getResponseMessage());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
