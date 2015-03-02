@@ -90,8 +90,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
         .setHeader(header)
         .setRows(rows, new RowMaker<QueryResult>() {
           @Override
-          public Object[] makeRow(QueryResult object) {
-            return object.getColumns().toArray();
+          public List<?> makeRow(QueryResult object) {
+            return object.getColumns();
           }
         }).build();
       tableRenderer.render(output, table);

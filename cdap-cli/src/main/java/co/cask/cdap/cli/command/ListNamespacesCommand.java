@@ -24,9 +24,11 @@ import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * {@link Command} to list namespaces.
@@ -48,8 +50,8 @@ public class ListNamespacesCommand implements Command {
       .setHeader("id", "display_name", "description")
       .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

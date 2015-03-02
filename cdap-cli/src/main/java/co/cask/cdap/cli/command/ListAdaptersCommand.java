@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
@@ -56,9 +57,10 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
       .setHeader("name", "type", "sources", "sinks", "properties")
       .setRows(list, new RowMaker<AdapterSpecification>() {
         @Override
-        public Object[] makeRow(AdapterSpecification object) {
-          return new Object[] { object.getName(), object.getType(), GSON.toJson(object.getSources()),
-            GSON.toJson(object.getSinks()), GSON.toJson(object.getProperties())};
+        public List<?> makeRow(AdapterSpecification object) {
+          return ImmutableList.of(object.getName(), object.getType(),
+                                  GSON.toJson(object.getSources()), GSON.toJson(object.getSinks()),
+                                  GSON.toJson(object.getProperties()));
         }
       }).build();
     tableRenderer.render(output, table);

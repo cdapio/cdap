@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Shows detailed information about a stream.
@@ -56,9 +57,9 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
       .setHeader("ttl", "format", "schema")
       .setRows(ImmutableList.of(config), new RowMaker<StreamProperties>() {
         @Override
-        public Object[] makeRow(StreamProperties object) {
+        public List<?> makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
-          return new Object[] { object.getTTL(), format.getName(), format.getSchema().toString() };
+          return ImmutableList.of(object.getTTL(), format.getName(), format.getSchema().toString());
         }
       }).build();
     tableRenderer.render(output, table);

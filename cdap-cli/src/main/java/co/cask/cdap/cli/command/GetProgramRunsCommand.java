@@ -27,6 +27,7 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -81,8 +82,8 @@ public class GetProgramRunsCommand extends AbstractCommand {
       .setHeader("pid", "end status", "start", "stop")
       .setRows(records, new RowMaker<RunRecord>() {
         @Override
-        public Object[] makeRow(RunRecord object) {
-          return new Object[] { object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs() };
+        public List<?> makeRow(RunRecord object) {
+          return ImmutableList.of(object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs());
         }
       }).build();
     tableRenderer.render(output, table);

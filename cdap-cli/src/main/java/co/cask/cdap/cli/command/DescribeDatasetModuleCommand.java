@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Shows information about a dataset module.
@@ -57,12 +58,11 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
       .setHeader("name", "className", "jarLocation", "types", "usesModules", "usedByModules")
       .setRows(ImmutableList.of(datasetModuleMeta), new RowMaker<DatasetModuleMeta>() {
         @Override
-        public Object[] makeRow(DatasetModuleMeta object) {
-          return new Object[] { object.getName(), object.getClassName(), object.getJarLocation(),
-            Joiner.on(", ").join(object.getTypes()),
-            Joiner.on(", ").join(object.getUsesModules()),
-            Joiner.on(", ").join(object.getUsedByModules())
-          };
+        public List<?> makeRow(DatasetModuleMeta object) {
+          return ImmutableList.of(object.getName(), object.getClassName(), object.getJarLocation(),
+                                  Joiner.on(", ").join(object.getTypes()),
+                                  Joiner.on(", ").join(object.getUsesModules()),
+                                  Joiner.on(", ").join(object.getUsedByModules()));
         }
       }).build();
     tableRenderer.render(output, table);

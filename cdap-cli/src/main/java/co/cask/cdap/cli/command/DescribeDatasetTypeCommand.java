@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Shows information about a dataset type.
@@ -57,8 +58,8 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
       .setHeader("name", "modules")
       .setRows(ImmutableList.of(datasetTypeMeta), new RowMaker<DatasetTypeMeta>() {
         @Override
-        public Object[] makeRow(DatasetTypeMeta object) {
-          return new Object[] { object.getName(), Joiner.on(", ").join(object.getModules()) };
+        public List<?> makeRow(DatasetTypeMeta object) {
+          return ImmutableList.of(object.getName(), Joiner.on(", ").join(object.getModules()));
         }
       }).build();
     tableRenderer.render(output, table);

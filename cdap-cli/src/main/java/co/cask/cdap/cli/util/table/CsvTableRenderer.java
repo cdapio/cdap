@@ -18,6 +18,7 @@ package co.cask.cdap.cli.util.table;
 import com.google.common.base.Joiner;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * {@link TableRenderer} implementation to print a table in CSV format. E.g.
@@ -42,7 +43,7 @@ public class CsvTableRenderer implements TableRenderer {
       output.println(CSV_JOINER.join(table.getHeader()));
     }
 
-    for (String[] row : table.getRows()) {
+    for (List<String> row : table.getRows()) {
       output.println(CSV_JOINER.join(row));
     }
   }

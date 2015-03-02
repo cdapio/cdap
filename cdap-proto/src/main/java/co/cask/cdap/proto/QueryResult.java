@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -29,7 +30,7 @@ public class QueryResult {
   private final List<Object> columns;
 
   public QueryResult(List<Object> columns) {
-    this.columns = columns;
+    this.columns = ImmutableList.copyOf(columns);
   }
 
   public List<Object> getColumns() {

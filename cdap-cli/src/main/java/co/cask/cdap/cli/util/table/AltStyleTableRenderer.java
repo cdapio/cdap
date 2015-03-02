@@ -97,7 +97,7 @@ public class AltStyleTableRenderer implements TableRenderer {
     // If any record has multiple lines output, a row divider is printed between each row.
     int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
     boolean useRowDivider = false;
-    for (String[] row : table.getRows()) {
+    for (List<String> row : table.getRows()) {
       useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;
     }
 
@@ -168,17 +168,17 @@ public class AltStyleTableRenderer implements TableRenderer {
   /**
    * Generates a record row. A record row can span across multiple lines on the screen.
    *
-   * @param columns The set of columns to output.
+   * @param row The row containing the set of columns to output.
    * @param columnWidths The widths of each column.
    * @param collection Collection for collecting the generated {@link Row} object.
    * @return Returns true if the row spans multiple lines.
    */
-  private boolean generateRow(Object[] columns, int[] columnWidths, Collection<? super Row> collection) {
+  private boolean generateRow(List<String> row, int[] columnWidths, Collection<? super Row> collection) {
     ImmutableList.Builder<Cell> builder = ImmutableList.builder();
 
     boolean multiLines = false;
-    for (int column = 0; column < columns.length; column++) {
-      Object field = columns[column];
+    for (int column = 0; column < row.size(); column++) {
+      Object field = row.get(column);
       int width = columnWidths[column];
 
       String fieldString = field == null ? "" : field.toString();
@@ -221,12 +221,12 @@ public class AltStyleTableRenderer implements TableRenderer {
    * @param maxTableWidth Maximum width of the table.
    * @return An array of integers, with contains maximum width for each column.
    */
-  private int[] calculateColumnWidths(List<String> header, Iterable<String[]> rows, int maxTableWidth) {
+  private int[] calculateColumnWidths(List<String> header, Iterable<List<String>> rows, int maxTableWidth) {
     int[] widths;
     if (!header.isEmpty()) {
       widths = new int[header.size()];
     } else if (rows.iterator().hasNext()) {
-      widths = new int[rows.iterator().next().length];
+      widths = new int[rows.iterator().next().size()];
     } else {
       return new int[0];
     }

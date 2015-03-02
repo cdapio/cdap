@@ -48,6 +48,7 @@ import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -583,8 +584,8 @@ public class CLIMainTest extends StandaloneTestBase {
       .setHeader("id", "display_name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
         }
       }).build();
     cliMain.getTableRenderer().render(printStream, table);

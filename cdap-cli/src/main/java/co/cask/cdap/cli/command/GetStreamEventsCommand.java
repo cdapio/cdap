@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -63,14 +64,11 @@ public class GetStreamEventsCommand extends AbstractCommand {
       .setHeader("timestamp", "headers", "body size", "body")
       .setRows(events, new RowMaker<StreamEvent>() {
         @Override
-        public Object[] makeRow(StreamEvent event) {
+        public List<?> makeRow(StreamEvent event) {
           long bodySize = event.getBody().remaining();
-          return new Object[] {
-            event.getTimestamp(),
-            event.getHeaders().isEmpty() ? "" : formatHeader(event.getHeaders()),
-            bodySize,
-            getBody(event.getBody())
-          };
+          return ImmutableList.of(event.getTimestamp(),
+                                  event.getHeaders().isEmpty() ? "" : formatHeader(event.getHeaders()),
+                                  bodySize, getBody(event.getBody()));
         }
       }).build();
     tableRenderer.render(output, table);

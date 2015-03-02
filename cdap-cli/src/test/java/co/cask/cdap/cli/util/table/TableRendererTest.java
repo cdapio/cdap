@@ -16,7 +16,6 @@
 package co.cask.cdap.cli.util.table;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -32,10 +31,11 @@ public abstract class TableRendererTest {
   public void testFormat() {
     Table table = Table.builder()
       .setHeader("c1", "c2", "c3333")
-      .setRows(ImmutableList.of(
-        new String[]{"r1\n456", "r11", "r1"},
-        new String[]{"r2", "r2222\n123", "r"},
-        new String[]{"r3333", "r3", "r3\n1"}))
+      .setRows(Table.rows()
+                 .add("r1\n456", "r11", "r1")
+                 .add("r2", "r2222\n123", "r")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
       .build();
     getRenderer().render(System.out, table);
   }
@@ -44,10 +44,11 @@ public abstract class TableRendererTest {
   public void testBigCell() {
     Table table = Table.builder()
       .setHeader("c1", "c2", "c3333")
-      .setRows(ImmutableList.of(
-        new String[]{"r1zz" + Strings.repeat("z", 300) + "456", "r11", "r1"},
-        new String[]{"r2", "r2222 zzzzzzz z z z zzzzzz z zzzzzzzzz zzzzzzz zzzzzzz zzzzzzz zzzzz zzz123", "r"},
-        new String[]{"r3333", "r3", "r3\n1"}))
+      .setRows(Table.rows()
+                 .add("r1zz" + Strings.repeat("z", 300) + "456", "r11", "r1")
+                 .add("r2", "r2222 zzzzzzz z z z zzzzzz z zzzzzzzzz zzzzzzz zzzzzzz zzzzzzz zzzzz zzz123", "r")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
       .build();
     getRenderer().render(System.out, table);
   }
@@ -56,10 +57,11 @@ public abstract class TableRendererTest {
   public void testTwoLineCell() {
     Table table = Table.builder()
       .setHeader("c1", "c2", "c3333")
-      .setRows(ImmutableList.of(
-        new String[]{"123456789012345678901234567890", "2", "3"},
-        new String[]{"r2", "r2222", "z"},
-        new String[]{"r3333", "r3", "r3\n1"}))
+      .setRows(Table.rows()
+                 .add("123456789012345678901234567890", "2", "3")
+                 .add("r2", "r2222", "z")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
       .build();
     getRenderer().render(System.out, table);
   }
@@ -68,10 +70,11 @@ public abstract class TableRendererTest {
   public void testTwoLineCell2() {
     Table table = Table.builder()
       .setHeader("c1", "c2", "c3333")
-      .setRows(ImmutableList.of(
-        new String[]{Strings.repeat("z", 27) + "a", "2", "3"},
-        new String[]{"r2", "r2222", "z"},
-        new String[]{"r3333", "r3", "r3\n1"}))
+      .setRows(Table.rows()
+                 .add(Strings.repeat("z", 27) + "a", "2", "3")
+                 .add("r2", "r2222", "z")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
       .build();
     getRenderer().render(System.out, table);
   }

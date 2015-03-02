@@ -27,6 +27,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -62,9 +63,9 @@ public class DescribeAppCommand extends AbstractAuthCommand {
       .setHeader("app", "type", "id", "description")
       .setRows(programsList, new RowMaker<ProgramRecord>() {
         @Override
-        public Object[] makeRow(ProgramRecord object) {
-          return new Object[] { object.getApp(), object.getType().getCategoryName(),
-            object.getId(), object.getDescription() };
+        public List<?> makeRow(ProgramRecord object) {
+          return ImmutableList.of(object.getApp(), object.getType().getCategoryName(),
+                                  object.getId(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

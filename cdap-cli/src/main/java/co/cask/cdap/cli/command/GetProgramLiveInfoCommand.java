@@ -30,6 +30,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Gets the live info of a program.
@@ -63,9 +64,9 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
       .setHeader("app", "type", "id", "runtime", "yarn app id")
       .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
         @Override
-        public Object[] makeRow(DistributedProgramLiveInfo object) {
-          return new Object[] { object.getApp(), object.getType(), object.getId(), object.getRuntime(),
-            object.getYarnAppId() };
+        public List<?> makeRow(DistributedProgramLiveInfo object) {
+          return ImmutableList.of(object.getApp(), object.getType(), object.getId(),
+                                  object.getRuntime(), object.getYarnAppId());
         }
       }).build();
     tableRenderer.render(output, table);
@@ -75,9 +76,9 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
         .setHeader("containers", "instance", "host", "container", "memory", "virtual cores", "debug port")
         .setRows(liveInfo.getContainers(), new RowMaker<Containers.ContainerInfo>() {
           @Override
-          public Object[] makeRow(Containers.ContainerInfo object) {
-            return new Object[] { "", object.getInstance(), object.getHost(), object.getContainer(),
-              object.getMemory(), object.getVirtualCores(), object.getDebugPort() };
+          public List<?> makeRow(Containers.ContainerInfo object) {
+            return ImmutableList.of("", object.getInstance(), object.getHost(), object.getContainer(),
+              object.getMemory(), object.getVirtualCores(), object.getDebugPort());
           }
         }).build();
       tableRenderer.render(output, containersTable);

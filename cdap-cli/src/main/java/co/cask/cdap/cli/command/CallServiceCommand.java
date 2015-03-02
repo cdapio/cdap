@@ -46,6 +46,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -99,11 +100,11 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
       .setHeader("status", "headers", "body size", "body")
       .setRows(ImmutableList.of(response), new RowMaker<HttpResponse>() {
         @Override
-        public Object[] makeRow(HttpResponse httpResponse) {
+        public List<?> makeRow(HttpResponse httpResponse) {
           ByteBuffer byteBuffer = ByteBuffer.wrap(httpResponse.getResponseBody());
           long bodySize = byteBuffer.remaining();
-          return new Object[]{httpResponse.getResponseCode(), formatHeaders(httpResponse),
-            bodySize, getBody(byteBuffer)};
+          return ImmutableList.of(httpResponse.getResponseCode(), formatHeaders(httpResponse),
+                                  bodySize, getBody(byteBuffer));
         }
       }).build();
     tableRenderer.render(output, table);

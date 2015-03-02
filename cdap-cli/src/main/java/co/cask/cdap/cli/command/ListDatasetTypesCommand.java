@@ -27,6 +27,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -57,12 +58,12 @@ public class ListDatasetTypesCommand extends AbstractAuthCommand {
       .setHeader("name", "modules")
       .setRows(datasetTypeMetas, new RowMaker<DatasetTypeMeta>() {
         @Override
-        public Object[] makeRow(DatasetTypeMeta object) {
+        public List<?> makeRow(DatasetTypeMeta object) {
           List<String> modulesStrings = Lists.newArrayList();
           for (DatasetModuleMeta module : object.getModules()) {
             modulesStrings.add(module.getName());
           }
-          return new Object[] { object.getName(), Joiner.on(", ").join(modulesStrings) };
+          return ImmutableList.of(object.getName(), Joiner.on(", ").join(modulesStrings));
         }
       }).build();
     tableRenderer.render(output, table);

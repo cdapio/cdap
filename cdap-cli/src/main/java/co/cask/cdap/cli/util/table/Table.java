@@ -16,6 +16,7 @@
 package co.cask.cdap.cli.util.table;
 
 import co.cask.cdap.cli.util.RowMaker;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -29,27 +30,32 @@ import javax.annotation.Nullable;
 public class Table {
 
   private final List<String> header;
-  private final List<String[]> rows;
+  private final Iterable<List<String>> rows;
 
   /**
    * @param header strings representing the header of the table
    * @param rows list of objects that represent the rows
    */
-  private Table(@Nullable String[] header, List<String[]> rows) {
+  private Table(@Nullable List<String> header, Iterable<List<String>> rows) {
     Preconditions.checkNotNull(rows);
     this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
-    this.rows = ImmutableList.copyOf(rows);
+    this.rows = rows;
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
+  public static Builder.Rows rows() {
+    return new Builder.Rows();
+  }
+
+
   public List<String> getHeader() {
     return header;
   }
 
-  public List<String[]> getRows() {
+  public Iterable<List<String>> getRows() {
     return rows;
   }
 
@@ -58,16 +64,15 @@ public class Table {
    */
   public static final class Builder {
 
-    private String[] header = null;
-    private List<String[]> rows = Lists.newArrayList();
+    private List<String> header = null;
+    private Iterable<List<String>> rows = null;
 
     public Builder setHeader(String... header) {
-      this.header = header;
+      this.header = ImmutableList.copyOf(header);
       return this;
     }
 
-    public Builder setRows(List<String[]> rows) {
-      Preconditions.checkNotNull(rows);
+    public Builder setRows(Iterable<List<String>> rows) {
       this.rows = rows;
       return this;
     }
@@ -83,20 +88,44 @@ public class Table {
       return new Table(header, rows);
     }
 
-    private static <T> List<String[]> buildRows(List<T> records, RowMaker<T> rowMaker) {
-      List<String[]> rows = Lists.newArrayList();
-      for (T record : records) {
-        rows.add(objectArray2StringArray(rowMaker.makeRow(record)));
-      }
-      return null;
+    private static <T> List<List<String>> buildRows(List<T> records, final RowMaker<T> rowMaker) {
+      return Lists.transform(records, new Function<T, List<String>>() {
+        @Nullable
+        @Override
+        public List<String> apply(@Nullable T input) {
+          return objectArray2StringArray(rowMaker.makeRow(input));
+        }
+      });
     }
 
-    private static String[] objectArray2StringArray(Object[] array) {
-      String[] result = new String[array.length];
-      for (int i = 0; i < array.length; i++) {
-        result[i] = array[i].toString();
-      }
-      return result;
+    private static List<String> objectArray2StringArray(List<?> array) {
+      return Lists.transform(array, new Function<Object, String>() {
+        @Nullable
+        @Override
+        public String apply(@Nullable Object input) {
+          if (input == null) {
+            return null;
+          }
+          return input.toString();
+        }
+      });
     }
+
+    /**
+     * Builder for {@link Table#rows}.
+     */
+    public static final class Rows {
+      private List<List<String>> rows = Lists.newArrayList();
+
+      public Rows add(String... row) {
+        rows.add(ImmutableList.copyOf(row));
+        return this;
+      }
+
+      public Iterable<List<String>> build() {
+        return rows;
+      }
+    }
+
   }
 }

@@ -25,9 +25,11 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Lists all applications.
@@ -50,8 +52,8 @@ public class ListAppsCommand extends AbstractAuthCommand {
       .setHeader("id", "description")
       .setRows(appClient.list(), new RowMaker<ApplicationRecord>() {
         @Override
-        public Object[] makeRow(ApplicationRecord object) {
-          return new Object[] { object.getId(), object.getDescription() };
+        public List<?> makeRow(ApplicationRecord object) {
+          return ImmutableList.of(object.getId(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);
