@@ -41,6 +41,12 @@ public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer 
   void execute(TxRunnable runnable);
 
   /**
+   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
+   * @param runnable The runnable to be executed in the transaction
+   */
+  void execute(co.cask.cdap.api.service.TxRunnable runnable);
+
+  /**
    * @return Number of instances of this worker.
    */
   int getInstanceCount();

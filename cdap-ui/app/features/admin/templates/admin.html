@@ -72,7 +72,7 @@
           <li ng-repeat="ns in nsList">
             <a href=""
                ng-click="submenu.perNs[ns.name]=!submenu.perNs[ns.name]">
-              <span ng-bind="ns.name"></span>
+              <span ng-bind="ns.name | myEllipsis: 15"></span>
             </a>
             <ul class="list-unstyled" ng-show="submenu.perNs[ns.name]">
 <!--               <li>

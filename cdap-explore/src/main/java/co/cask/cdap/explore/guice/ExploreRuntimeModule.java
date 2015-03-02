@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -176,6 +176,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
       @Override
       public ExploreService get() {
         File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
+
+        // The properties set using setProperty will be included to any new HiveConf object created,
+        // at the condition that the configuration is known by Hive, and so is one of the HiveConf.ConfVars
+        // variables.
+
         System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
                            new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
@@ -239,12 +244,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
-
-        // We don't support security in Hive Server.
-        System.setProperty("hive.server2.authentication", "NONE");
-        System.setProperty("hive.server2.enable.doAs", "false");
-        System.setProperty("hive.server2.enable.impersonation", "false");
-
         File previewDir = Files.createTempDir();
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
@@ -256,9 +255,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Provides
     @Singleton
     @Exposed
-    public final ExploreService providesExploreService(Injector injector, Configuration hConf) {
+    public ExploreService providesExploreService(Injector injector) {
       // Figure out which HiveExploreService class to load
-      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService(hConf);
+      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
       LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
       return injector.getInstance(hiveExploreServiceCl);
     }
