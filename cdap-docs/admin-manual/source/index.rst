@@ -69,10 +69,10 @@ introduces the CDAP Console.**
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
-.. |preferences| replace:: **Preferences:**
+.. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, and Workflows can receive **runtime arguments:**
+- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html
