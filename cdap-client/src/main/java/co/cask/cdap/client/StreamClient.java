@@ -83,7 +83,7 @@ public class StreamClient {
    */
   public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/info", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s", streamId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -104,7 +104,7 @@ public class StreamClient {
    */
   public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
     UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/properties", streamId));
 
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
@@ -226,7 +226,7 @@ public class StreamClient {
    */
   public void setTTL(String streamId, long ttlInSeconds) throws IOException, StreamNotFoundException,
     UnAuthorizedAccessTokenException {
-    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/config", streamId));
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s/properties", streamId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);

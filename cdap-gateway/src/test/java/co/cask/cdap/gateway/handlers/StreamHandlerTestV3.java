@@ -45,6 +45,17 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
     return createURL(Constants.DEFAULT_NAMESPACE, path);
   }
 
+  @Override
+  protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
+    return createURL(String.format("streams/%s", streamName));
+  }
+
+  @Override
+  protected URL createPropertiesURL(String streamName) throws URISyntaxException, MalformedURLException {
+    return createURL(String.format("streams/%s/properties", streamName));
+  }
+
+
   private URL createURL(String namespace, String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v3/namespaces/%s/%s", namespace, path)).toURL();
   }
@@ -52,7 +63,7 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   @Test
   public void testNamespacedStreamEvents() throws Exception {
     // Create two streams with the same name, in different namespaces.
-    String streamName = "testNamespacedMetrics";
+    String streamName = "testNamespacedEvents";
     Id.Stream streamId1 = Id.Stream.from("namespace1", streamName);
     Id.Stream streamId2 = Id.Stream.from("namespace2", streamName);
 
