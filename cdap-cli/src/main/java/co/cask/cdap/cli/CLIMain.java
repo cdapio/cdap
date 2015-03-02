@@ -20,10 +20,10 @@ import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.cdap.cli.command.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -65,21 +65,18 @@ public class CLIMain {
   public static final String NAME_URI = "uri";
   public static final String NAME_VERIFY_SSL = "verify_ssl";
   public static final String NAME_AUTOCONNECT = "autoconnect";
-  public static final String NAME_NAMESPACE = "namespace";
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
   private static final boolean DEFAULT_DEBUG = false;
-  private static final String DEFAULT_NAMESPACE = Constants.DEFAULT_NAMESPACE;
+
+  private static final Option HELP_OPTION = new Option(
+    "h", "help", false, "Prints the usage message");
 
   private static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
     " Defaults to \"" + getDefaultURI() + "\".");
-
-  private static final Option NAMESPACE_OPTION = new Option(
-    "n", "namespace", true, "The CDAP namespace to use." +
-    " Defaults to \"" + DEFAULT_NAMESPACE + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
     "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
@@ -92,7 +89,7 @@ public class CLIMain {
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option DEBUG_OPTION = new Option(
-    "d", "debug", true, "If \"true\", print all exception stack traces." +
+    "d", "debug", false, "If \"true\", print all exception stack traces." +
     " Defaults to \"" + DEFAULT_DEBUG + "\".");
 
   private final CLI cli;
@@ -100,7 +97,6 @@ public class CLIMain {
 
   /**
    * @param output output to print to
-   * @param namespace the CDAP namespace to use initially
    * @param uri provided URI of CDAP instance
    * @param autoconnect if true, try provided connection (or default from CConfiguration) before startup
    * @param debug if true, log all exception stack traces
@@ -109,10 +105,10 @@ public class CLIMain {
    */
   @Inject
   public CLIMain(PrintStream output,
-                 @Named(NAME_NAMESPACE) String namespace,
                  @Named(NAME_URI) String uri,
                  @Named(NAME_AUTOCONNECT) boolean autoconnect,
                  @Named(NAME_DEBUG) final boolean debug,
+                 InstanceURIParser instanceURIParser,
                  CLIConfig cliConfig,
                  DefaultCommands defaultCommands,
                  DefaultCompleters defaultCompleters,
@@ -120,12 +116,12 @@ public class CLIMain {
 
     if (autoconnect) {
       try {
-        if (namespace != null) {
-          cliConfig.getClientConfig().setNamespace(Id.Namespace.from(namespace));
-        }
-        cliConfig.getClientConfig().setURI(URI.create(uri));
-        CLIConfig.ConnectionInfo connectionInfo = CLIConfig.ConnectionInfo.of(cliConfig.getClientConfig());
+        CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(uri);
         cliConfig.tryConnect(connectionInfo, output, debug);
+        cliConfig.getClientConfig().setHostname(connectionInfo.getHostname());
+        cliConfig.getClientConfig().setPort(connectionInfo.getPort());
+        cliConfig.getClientConfig().setSSLEnabled(connectionInfo.isSSLEnabled());
+        cliConfig.getClientConfig().setNamespace(connectionInfo.getNamespace());
       } catch (Exception e) {
         if (debug) {
           e.printStackTrace(output);
@@ -210,8 +206,11 @@ public class CLIMain {
     CommandLineParser parser = new BasicParser();
     try {
       CommandLine command = parser.parse(options, args);
+      if (command.hasOption(HELP_OPTION.getOpt())) {
+        usage();
+        System.exit(0);
+      }
       final String uri = command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI());
-      final String namespace = command.getOptionValue(NAMESPACE_OPTION.getOpt(), DEFAULT_NAMESPACE);
       final boolean verifySSL = parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL);
       final boolean debug = parseBooleanOption(command, DEBUG_OPTION, DEFAULT_DEBUG);
       final boolean autoconnect = parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT);
@@ -225,7 +224,6 @@ public class CLIMain {
             @Override
             protected void configure() {
               bind(PrintStream.class).toInstance(output);
-              bind(String.class).annotatedWith(Names.named(NAME_NAMESPACE)).toInstance(namespace);
               bind(String.class).annotatedWith(Names.named(NAME_URI)).toInstance(uri);
               bind(Boolean.class).annotatedWith(Names.named(NAME_VERIFY_SSL)).toInstance(verifySSL);
               bind(Boolean.class).annotatedWith(Names.named(NAME_DEBUG)).toInstance(debug);
@@ -261,9 +259,9 @@ public class CLIMain {
 
   private static Options getOptions() {
     Options options = new Options();
+    addOptionalOption(options, HELP_OPTION);
     addOptionalOption(options, URI_OPTION);
     addOptionalOption(options, VERIFY_SSL_OPTION);
-    addOptionalOption(options, NAMESPACE_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
     return options;

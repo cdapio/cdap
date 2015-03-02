@@ -223,6 +223,9 @@ public class ClientConfig {
     if (uri.getPort() != -1) {
       this.port = uri.getPort();
     }
+    if (uri.getPath() != null && !uri.getPath().isEmpty()) {
+      this.namespace = Id.Namespace.from(uri.getPath().substring(1));
+    }
   }
 
   @Nullable

@@ -101,7 +101,8 @@ public class PreferencesClient {
   public Map<String, String> getNamespacePreferences(Id.Namespace namespace, boolean resolved) throws IOException,
     UnAuthorizedAccessTokenException, NotFoundException {
     String res = Boolean.toString(resolved);
-    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s?resolved=%s", namespace, res));
+    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s?resolved=%s",
+                                                namespace.getId(), res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -121,7 +122,7 @@ public class PreferencesClient {
    */
   public void setNamespacePreferences(Id.Namespace namespace, Map<String, String> preferences) throws IOException,
     UnAuthorizedAccessTokenException, NotFoundException {
-    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace));
+    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace.getId()));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -139,7 +140,7 @@ public class PreferencesClient {
    */
   public void deleteNamespacePreferences(Id.Namespace namespace) throws IOException, UnAuthorizedAccessTokenException,
     NotFoundException {
-    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace));
+    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -161,7 +162,7 @@ public class PreferencesClient {
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
     String res = Boolean.toString(resolved);
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s?resolved=%s",
-                                                application.getNamespaceId(), application, res));
+                                                application.getNamespaceId(), application.getId(), res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -182,7 +183,7 @@ public class PreferencesClient {
   public void setApplicationPreferences(Id.Application application, Map<String, String> preferences)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s",
-                                                application.getNamespaceId(), application));
+                                                application.getNamespaceId(), application.getId()));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -201,7 +202,7 @@ public class PreferencesClient {
   public void deleteApplicationPreferences(Id.Application application)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s",
-                                                application.getNamespaceId(), application));
+                                                application.getNamespaceId(), application.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -226,7 +227,7 @@ public class PreferencesClient {
     throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
     String res = Boolean.toString(resolved);
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s?resolved=%s",
-                                                application.getNamespaceId(), application,
+                                                application.getNamespaceId(), application.getId(),
                                                 programType, programId, res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -251,7 +252,8 @@ public class PreferencesClient {
                                     Map<String, String> preferences)
     throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                                application.getNamespaceId(), application, programType, programId));
+                                                application.getNamespaceId(), application.getId(),
+                                                programType, programId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -272,7 +274,8 @@ public class PreferencesClient {
   public void deleteProgramPreferences(Id.Application application, String programType, String programId)
     throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                                application.getNamespaceId(), application, programType, programId));
+                                                application.getNamespaceId(), application.getId(),
+                                                programType, programId));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
