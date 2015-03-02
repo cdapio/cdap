@@ -258,25 +258,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
 
   @Override
   public String getSysConfigTablePrefix(String tableName) {
-    TableName hTableName = TableName.valueOf(tableName);
-    String rootPrefix;
-    if (Constants.DEFAULT_NAMESPACE.equals(hTableName.getNamespaceAsString())) {
-      // Input: cdap.table (in default namespace)
-      // Output: cdap_system:
-      int rootPrefixSeparator = tableName.indexOf(".");
-      Preconditions.checkArgument(rootPrefixSeparator >= 0, "Expected");
-      rootPrefix = tableName.substring(0, rootPrefixSeparator);
-    } else {
-      // Input: cdap_ns1:table
-      // Output: cdap_system:
-      String hBaseNamespace = hTableName.getNamespaceAsString();
-      int rootPrefixSeparator = hBaseNamespace.indexOf("_");
-      rootPrefix = hBaseNamespace.substring(0, rootPrefixSeparator);
-
-    }
-    // Undo this change once hbase namespace prefixes are not hardcoded (HBaseTableUtil#toHBaseNamespace)
-    rootPrefix = HBaseTableUtil.HBASE_NAMESPACE_PREFIX;
-    return rootPrefix + Constants.SYSTEM_NAMESPACE + ":";
+    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
   }
 
   private TableName toTableName(TableId tableId) {

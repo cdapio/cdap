@@ -241,22 +241,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
 
   @Override
   public String getSysConfigTablePrefix(String tableName) {
-    int nsDividerPos = tableName.indexOf('.');
-    Preconditions.checkArgument(nsDividerPos >= 0, String.format("Expected '.' to be in table name: %s", tableName));
-    String hBaseNamespace = tableName.substring(0, nsDividerPos);
-
-    String rootPrefix;
-    // '_' is used as the separator between rootPrefix and namespace.
-    int rootPrefixSeparator = hBaseNamespace.indexOf("_");
-    if (rootPrefixSeparator < 0) {
-      // This is for the default namespace (no underscore in hbase namespace)
-      rootPrefix = hBaseNamespace;
-    } else {
-      rootPrefix = hBaseNamespace.substring(0, rootPrefixSeparator);
-    }
-    // Undo this change once hbase namespace prefixes are not hardcoded (HBaseTableUtil#toHBaseNamespace)
-    rootPrefix = HBaseTableUtil.HBASE_NAMESPACE_PREFIX;
-    return rootPrefix + Constants.SYSTEM_NAMESPACE + ".";
+    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
   }
 
   private String toTableName(TableId tableId) {
