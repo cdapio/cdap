@@ -11,8 +11,6 @@ describe('myEllipsis', function() {
 
   }));
 
-  beforeEach(function() {
-  });
 
   it('should truncate string longer that limit to limit plus ellipsis', function() {
 
