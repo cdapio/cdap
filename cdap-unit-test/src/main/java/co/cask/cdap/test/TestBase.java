@@ -157,6 +157,7 @@ public class TestBase {
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
+  @Deprecated
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     TestManager testManager = getTestManager();
@@ -171,9 +172,15 @@ public class TestBase {
    *
    * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
-  protected void clear() throws Exception {
-    TestManager testManager = getTestManager();
-    testManager.clear();
+  @Deprecated
+  protected void clear() {
+    try {
+      TestManager testManager = getTestManager();
+      testManager.clear();
+    } catch (Exception e) {
+      // Unchecked exception to maintain compatibility until we remove this method
+      throw Throwables.propagate(e);
+    }
   }
 
   @Before
@@ -388,6 +395,7 @@ public class TestBase {
    * @param datasetModule module class
    * @throws Exception
    */
+  @Deprecated
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
     TestManager testManager = getTestManager();
@@ -405,6 +413,7 @@ public class TestBase {
    * @param props properties
    * @param <T> type of the dataset admin
    */
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
@@ -421,6 +430,7 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
@@ -429,10 +439,12 @@ public class TestBase {
 
   /**
    * Gets Dataset manager of Dataset instance of type <T>
+   * @deprecated Use {@link TestManager#getDataset(String)} ()} from {@link #getTestManager()}.
    * @param datasetInstanceName - instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
+  @Deprecated
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getDataset(datasetInstanceName);

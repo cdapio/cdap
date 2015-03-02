@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class AppWithWorker extends AbstractApplication {
 
   public static final String NAME = "AppWithWorker";
+  public static final String DESCRIPTION = "Application with Worker for Tests";
   public static final String WORKER = "TableWriter";
   public static final String DATASET = "MyKVTable";
   public static final String INITIALIZE = "initialize";
@@ -40,6 +41,7 @@ public class AppWithWorker extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
+    setDescription(DESCRIPTION);
     addWorker(new TableWriter());
     createDataset(DATASET, KeyValueTable.class);
   }
@@ -51,6 +53,7 @@ public class AppWithWorker extends AbstractApplication {
     @Override
     public void configure() {
       useDatasets(DATASET);
+      setDescription(DESCRIPTION);
     }
 
     @Override

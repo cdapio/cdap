@@ -27,8 +27,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
@@ -54,9 +54,12 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
+    this(new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf)), cConf);
+  }
+
+  private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
     this.cConf = cConf;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf));
+    this.dsFramework = namespacedDsFramework;
 
     this.entityTable = Suppliers.memoize(new Supplier<EntityTable>() {
 
@@ -135,7 +138,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public static void setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
     throws IOException, DatasetManagementException {
 
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(datasetFramework, conf);
 
     // adding all fact tables
     factory.get(1);

@@ -18,7 +18,9 @@ package co.cask.cdap.api.data.stream;
 
 import co.cask.cdap.api.stream.StreamEventData;
 
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
@@ -27,43 +29,82 @@ import java.util.Map;
 public interface StreamContext {
 
   /**
-   * Write to Stream
+   * Write a string to a stream
+   *
    * @param stream stream id
-   * @param data stream data
-   * @return status of write to stream
+   * @param data data to write
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
    */
-  public StreamWriteStatus writeToStream(String stream, StreamEventData data);
+  public void write(String stream, String data) throws IOException, StreamWriteException;
 
   /**
-   * Write to Stream
+   * Write a string to a stream with headers
+   *
    * @param stream stream id
-   * @param data data
-   * @return status of write to stream
+   * @param data data to write
+   * @param headers headers for the data
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
    */
-  public StreamWriteStatus writeToStream(String stream, byte[] data);
+  public void write(String stream, String data, Map<String, String> headers) throws IOException, StreamWriteException;
 
   /**
-   * Write to Stream with Headers
+   * Write a {@link ByteBuffer} to a stream
+   *
    * @param stream stream id
-   * @param data data
-   * @param headers map of headers
-   * @return status of write to stream
+   * @param data {@link ByteBuffer}
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
    */
-  public StreamWriteStatus writeToStream(String stream, byte[] data, Map<String, String> headers);
+  public void write(String stream, ByteBuffer data) throws IOException, StreamWriteException;
 
   /**
-   * Write to Stream
+   * Write a {@link ByteBuffer} to a stream
+   *
    * @param stream stream id
-   * @param data data
-   * @return status of write to stream
+   * @param data {@link ByteBuffer}
+   * @param headers headers for the data
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
    */
-  public StreamWriteStatus writeToStream(String stream, List<byte[]> data);
+  public void write(String stream, ByteBuffer data, Map<String, String> headers)
+    throws IOException, StreamWriteException;
 
   /**
-   * Write to Stream
+   * Write a {@link StreamEventData} to a stream
+   *
    * @param stream stream id
-   * @param data data
-   * @return status of write to stream
+   * @param data {@link StreamEventData}
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
    */
-  public StreamWriteStatus writeToStream(String stream, List<byte[]> data, Map<String, String> headers);
+  public void write(String stream, StreamEventData data) throws IOException, StreamWriteException;
+
+  /**
+   * Write a File to a stream in batch
+   * @param stream stream id
+   * @param file File
+   * @param contentType content type
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
+   */
+  public void writeInBatch(String stream, File file, String contentType) throws IOException, StreamWriteException;
+
+  /**
+   * Write in batch using {@link StreamBatchWriter} to a stream
+   * @param stream stream id
+   * @param contentType content type
+   * @return {@link StreamBatchWriter}
+   *
+   * @throws IOException if a network error occurred
+   * @throws StreamWriteException exception caused during writing to stream
+   */
+  public StreamBatchWriter writeInBatch(String stream, String contentType) throws IOException, StreamWriteException;
 }

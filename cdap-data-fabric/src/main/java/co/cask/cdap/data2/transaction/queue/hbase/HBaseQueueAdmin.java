@@ -18,11 +18,9 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -76,7 +74,7 @@ import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEU
  * admin for queues in hbase.
  */
 @Singleton
-public class HBaseQueueAdmin implements QueueAdmin {
+public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
 
@@ -95,8 +93,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
-  private final String tableNamePrefix;
-  private final String configTableName;
   private final QueueConstants.QueueType type;
 
   private HBaseAdmin admin;
@@ -114,17 +110,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
                             LocationFactory locationFactory,
                             HBaseTableUtil tableUtil,
                             QueueConstants.QueueType type) throws IOException {
+    super(cConf, type);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;
-    // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    String unqualifiedTableNamePrefix = type.toString();
     this.type = type;
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
-    this.tableNamePrefix =
-      HBaseTableUtil.getHBaseTableName(namespace.namespace(unqualifiedTableNamePrefix).getId());
-    this.configTableName =
-      HBaseTableUtil.getHBaseTableName(namespace.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME).getId());
     this.locationFactory = locationFactory;
   }
 
@@ -133,30 +123,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
       admin = new HBaseAdmin(hConf);
     }
     return admin;
-  }
-
-  /**
-   * This determines the actual table name from the table name prefix and the name of the queue.
-   * @param queueName The name of the queue.
-   * @return the full name of the table that holds this queue.
-   */
-  public String getActualTableName(QueueName queueName) {
-    if (queueName.isQueue()) {
-      // <cdap namespace>.system.queue.<namespace>.<app>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(),
-                                 queueName.getSecondComponent(),
-                                 queueName.getThirdComponent());
-    } else {
-      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
-    }
-  }
-
-  private String getTableNameForFlow(String namespaceId, String app, String flow) {
-    StringBuilder tableName = new StringBuilder(tableNamePrefix).append(".");
-    if (!Constants.DEFAULT_NAMESPACE.equals(namespaceId)) {
-      tableName.append(namespaceId).append(".");
-    }
-    return tableName.append(app).append(".").append(flow).toString();
   }
 
   /**
@@ -191,51 +157,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return column;
   }
 
-  // TODO: CDAP-1177 Move these functions to an abstract base class to share with LevelDBQueueAdmin
-  /**
-   * @param queueTableName actual queue table name
-   * @return namespace id that this queue belongs to
-   */
-  public static String getNamespaceId(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
-    String[] parts = queueTableName.split("\\.");
-    String namespaceId;
-    if (parts.length == 5) {
-      // cdap.system.queue.<app>.<flow>
-      namespaceId = Constants.DEFAULT_NAMESPACE;
-    } else if (parts.length == 6) {
-      // cdap.system.queue.<namespace>.<app>.<flow>
-      namespaceId = parts[parts.length - 3];
-    } else {
-      throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
-                                                         "Expected 'cdap.system.queue.<app>.<flow>' or " +
-                                                         "'cdap.system.queue.<namespace>.<app>.<flow>'. " +
-                                                         "Received '%s'",
-                                                       queueTableName));
-    }
-    return namespaceId;
-  }
-
-  /**
-   * @param queueTableName actual queue table name
-   * @return app name this queue belongs to
-   */
-  public static String getApplicationName(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
-    String[] parts = queueTableName.split("\\.");
-    return parts[parts.length - 2];
-  }
-
-  /**
-   * @param queueTableName actual queue table name
-   * @return flow name this queue belongs to
-   */
-  public static String getFlowName(String queueTableName) {
-    // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
-    String[] parts = queueTableName.split("\\.");
-    return parts[parts.length - 1];
-  }
-
   @Override
   public boolean exists(String name) throws Exception {
     return exists(QueueName.from(URI.create(name)));
@@ -243,7 +164,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   boolean exists(QueueName queueName) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
-    return admin.tableExists(getActualTableName(queueName)) && admin.tableExists(configTableName);
+    return admin.tableExists(getActualTableName(queueName)) && admin.tableExists(getConfigTableName(queueName));
   }
 
   @Override
@@ -332,7 +253,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), configTableName);
+    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
     try {
       byte[] rowKey = queueName.toBytes();
       hTable.delete(new Delete(rowKey));
@@ -341,15 +262,18 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConsumerConfigurations(String namespaceId) throws IOException {
-    deleteConsumerConfigurationsForPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
-  }
-
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
-    deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+    deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow),
+                                          getConfigTableName(namespaceId));
   }
 
-  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix) throws IOException {
+  /**
+   * @param tableNamePrefix defines the entries to be removed
+   * @param configTableName the config table to remove the configurations from
+   * @throws IOException
+   */
+  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix, String configTableName)
+    throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
     if (admin.tableExists(configTableName)) {
@@ -407,7 +331,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     // not accessible by the queue region coprocessor for doing eviction.
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    createConfigTable();
+    createConfigTable(getConfigTableName(queueName));
 
     String hBaseTableName = getActualTableName(queueName);
     DatasetAdmin dsAdmin = new DatasetAdmin(hBaseTableName, hConf, tableUtil, properties);
@@ -418,7 +342,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void createConfigTable() throws IOException {
+  private void createConfigTable(String configTableName) throws IOException {
     byte[] tableName = Bytes.toBytes(configTableName);
     HTableDescriptor htd = new HTableDescriptor(tableName);
 
@@ -439,17 +363,10 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAll() throws Exception {
-    dropTablesWithPrefix(tableNamePrefix);
-    // drop config table last
-    drop(Bytes.toBytes(configTableName));
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    dropTablesWithPrefix(String.format("%s.%s.", tableNamePrefix, namespaceId));
-    deleteConsumerConfigurations(namespaceId);
+    dropTablesWithPrefix(String.format("%s.", getTableNamePrefix(namespaceId)));
+    drop(Bytes.toBytes(getConfigTableName(namespaceId)));
   }
 
   @Override
@@ -460,7 +377,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), configTableName);
+    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -494,7 +411,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), configTableName);
+    HTable hTable = new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -567,7 +484,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
       String tableName = Bytes.toString(desc.getName());
       // It's important to skip config table enabled.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+      if (isDataTable(tableName)) {
         LOG.info(String.format("Upgrading queue hbase table: %s", tableName));
         Properties properties = new Properties();
         if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
@@ -580,15 +497,42 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
+  /**
+   * @param tableName being checked
+   * @return true if the given table is the actual table for the queue (opposed to the config table for the queue
+   * or tables for things other than queues).
+   */
+  private boolean isDataTable(String tableName) {
+    // checks if table is constructed by getActualTableName(String)
+    String[] parts = tableName.split("\\.");
+    if (parts.length != 6) {
+      return false;
+    }
+    String namespace = parts[1];
+    String tableNamePrefix = getTableNamePrefix(namespace);
+    return tableName.startsWith(tableNamePrefix);
+  }
+
   private void dropTablesWithPrefix(String tableNamePrefix) throws IOException {
     for (HTableDescriptor desc : getHBaseAdmin().listTables()) {
       String tableName = Bytes.toString(desc.getName());
       // It's important to keep config table enabled while disabling queue tables.
-      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+      if (tableName.startsWith(tableNamePrefix) && !isConfigTable(tableName)) {
         drop(desc.getName());
       }
     }
   }
+
+  private boolean isConfigTable(String tableName) {
+    String[] parts = tableName.split("\\.");
+    if (parts.length != 5) {
+      return false;
+    }
+    String namespace = parts[1];
+    String tableNamePrefix = getConfigTableName(namespace);
+    return tableName.startsWith(tableNamePrefix);
+  }
+
 
   /**
    * Decodes group information from the given column values.
@@ -658,14 +602,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
 
     return mutations;
-  }
-
-  protected String getTableNamePrefix() {
-    return tableNamePrefix;
-  }
-
-  public String getConfigTableName() {
-    return configTableName;
   }
 
   // only used for create & upgrade of data table

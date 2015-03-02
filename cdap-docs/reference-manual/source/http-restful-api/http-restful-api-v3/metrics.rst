@@ -138,7 +138,7 @@ The general form of a metrics request is::
 
 The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
+System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce, Workflows and Workers) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
@@ -262,8 +262,12 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/flows``
    * - One Procedure
      - ``/apps/<app-id>/procedures/<procedure-id>``
+   * - One Worker
+     - ``/apps/<app-id>/workers/<worker-id>``
    * - All Procedures of an Application
      - ``/apps/<app-id>/procedures``
+   * - All Workers of an Application
+     - ``/apps/<app-id>/workers``
    * - All Mappers of a MapReduce
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>/mappers``
    * - All Reducers of a MapReduce
@@ -295,7 +299,7 @@ Stream metrics are only available at the Stream level and the only available con
      - ``/streams/<stream-id>``
 
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
-Flowlet, Procedure, Mapper, or Reducer level:
+Flowlet, Worker, Procedure, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
@@ -318,7 +322,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 Querying by Run-ID
 ------------------
 
-Each execution of an program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that program's run.
+Each execution of an program (Flow, MapReduce, Spark, Services, Worker, Procedure) has an associated run-ID that uniquely identifies that program's run.
 We can query metrics for an program by its run-ID to see the metrics for a particular run.
 Please see the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical program runs.
 

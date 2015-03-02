@@ -69,6 +69,13 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String procedureId = programIdParts[1];
         instances = programClient.getProcedureInstances(appId, procedureId);
         break;
+      case SERVICE:
+        if (programIdParts.length < 2) {
+          throw new CommandInputError(this);
+        }
+        String service = programIdParts[1];
+        instances = programClient.getServiceInstances(appId, service);
+        break;
       case RUNNABLE:
         if (programIdParts.length < 3) {
           throw new CommandInputError(this);

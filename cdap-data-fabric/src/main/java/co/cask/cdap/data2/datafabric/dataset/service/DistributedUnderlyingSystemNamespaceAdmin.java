@@ -19,6 +19,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -27,6 +29,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * Manages namespaces on underlying systems - HDFS, HBase, Hive, etc.
@@ -38,14 +41,15 @@ public final class DistributedUnderlyingSystemNamespaceAdmin extends UnderlyingS
   private HBaseAdmin hBaseAdmin;
 
   @Inject
-  public DistributedUnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory) {
-    super(cConf, locationFactory);
+  public DistributedUnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory,
+                                                   ExploreFacade exploreFacade) {
+    super(cConf, locationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = new HBaseTableUtilFactory().get();
   }
 
   @Override
-  public void create(Id.Namespace namespaceId) throws IOException {
+  public void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     // create filesystem directory
     super.create(namespaceId);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
@@ -54,7 +58,7 @@ public final class DistributedUnderlyingSystemNamespaceAdmin extends UnderlyingS
   }
 
   @Override
-  public void delete(Id.Namespace namespaceId) throws IOException {
+  public void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     // soft delete namespace directory from filesystem
     super.delete(namespaceId);
     // delete HBase namespace

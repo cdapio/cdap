@@ -96,7 +96,10 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
     } catch (IOException e) {
       LOG.error("Failed to read Notification feed request body.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable t) {
+      LOG.debug("Error in creating notification feed.", t);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
 
@@ -125,6 +128,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
     } catch (NotificationFeedException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not delete Notification Feed. %s", e.getMessage()));
+    } catch (Throwable t) {
+      LOG.debug("Error in deleting notification feed.", t);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
 
@@ -153,6 +159,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
+    } catch (Throwable t) {
+      LOG.debug("Error in getting notification feed.", t);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
 
@@ -167,6 +176,9 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
+    } catch (Throwable t) {
+      LOG.debug("Error in listing notification feeds.", t);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
 

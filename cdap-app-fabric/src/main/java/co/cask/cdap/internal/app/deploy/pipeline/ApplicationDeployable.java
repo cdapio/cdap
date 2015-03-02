@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Represents information of an application that is undergoing deployment.
@@ -42,17 +43,20 @@ public final class ApplicationDeployable implements Closeable {
   private final CConfiguration cConf;
   private final Id.Application id;
   private final ApplicationSpecification specification;
+  private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
   private final Location location;
   private File unpackDir;
   private ClassLoader classLoader;
 
-  public ApplicationDeployable(CConfiguration cConf, Id.Application id,
-                               ApplicationSpecification specification, ApplicationDeployScope applicationDeployScope,
+  public ApplicationDeployable(CConfiguration cConf, Id.Application id, ApplicationSpecification specification,
+                               @Nullable ApplicationSpecification existingAppSpec,
+                               ApplicationDeployScope applicationDeployScope,
                                Location location) {
     this.cConf = cConf;
     this.id = id;
     this.specification = specification;
+    this.existingAppSpec = existingAppSpec;
     this.applicationDeployScope = applicationDeployScope;
     this.location = location;
   }
@@ -63,6 +67,11 @@ public final class ApplicationDeployable implements Closeable {
 
   public ApplicationSpecification getSpecification() {
     return specification;
+  }
+
+  @Nullable
+  public ApplicationSpecification getExistingAppSpec() {
+    return existingAppSpec;
   }
 
   public ApplicationDeployScope getApplicationDeployScope() {

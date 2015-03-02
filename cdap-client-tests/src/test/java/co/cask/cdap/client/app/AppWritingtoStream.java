@@ -17,70 +17,91 @@
 package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Tick;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamWriteException;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import com.google.common.collect.Lists;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- *
+ * Application writing to Stream.
  */
 public class AppWritingtoStream extends AbstractApplication {
 
   public static final String APPNAME = "appName";
   public static final String STREAM = "myStream";
-  public static final String FLOW1 = "flow1";
-  public static final String FLOW2 = "flow2";
+  public static final String FLOW = "flow";
+  public static final String WORKER = "worker";
+  public static final String DATASET = "kvTable";
+  public static final String SERVICE = "srv";
+  public static final String KEY = "key";
+  public static final String ENDPOINT = "count";
+  public static final int VALUE = 10;
 
   @Override
   public void configure() {
     setName(APPNAME);
     addStream(new Stream(STREAM));
-    addFlow(new MyFlow());
+    addWorker(new WritingWorker());
     addFlow(new SimpleFlow());
+    addService(PingService.NAME, new PingService());
+    addService(SERVICE, new MyServiceHandler());
+    createDataset(DATASET, KeyValueTable.class);
   }
 
-  private static final class MyFlow implements Flow {
+  public static final class MyServiceHandler extends AbstractHttpServiceHandler {
+
+    @UseDataSet(DATASET)
+    private KeyValueTable table;
+
+    @GET
+    @Path(ENDPOINT)
+    public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendString(String.valueOf(Bytes.toLong(table.read(Bytes.toBytes(KEY)))));
+    }
+  }
+
+  private static final class WritingWorker extends AbstractWorker {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with().setName(FLOW1).setDescription("Blah Blah").withFlowlets()
-        .add("source", new SourceFlowlet())
-        .add("sink", new SinkFlowlet()).connect().from("source").to("sink").build();
+    public void configure() {
+      setName(WORKER);
     }
-  }
 
-  private static final class SourceFlowlet extends AbstractFlowlet {
+    @Override
+    public void run() {
+      for (int i = 0; i < VALUE; i++) {
+        try {
+          getContext().write(STREAM, String.format("Event %d", i));
+        } catch (IOException e) {
+          e.printStackTrace();
+        } catch (StreamWriteException e) {
+          e.printStackTrace();
+        }
+      }
 
-    private static OutputEmitter<String> data;
-
-    @Tick(delay = 1, unit = TimeUnit.SECONDS)
-    public void generate() {
-      data.emit("hello");
-    }
-  }
-
-  private static final class SinkFlowlet extends AbstractFlowlet {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SinkFlowlet.class);
-
-    @ProcessInput
-    public void receive(String data) {
-      List<byte[]> bytesList = Lists.newArrayList();
-      bytesList.add(Bytes.toBytes(data));
-      bytesList.add(Bytes.toBytes(data));
-      getContext().writeToStream(STREAM, bytesList);
+      try {
+        getContext().write("invalidStream", "Hello");
+      } catch (StreamWriteException e) {
+        // no-op - the comparison of event count will fail if writing to invalidStream succeeded
+      } catch (IOException e) {
+        // no-op
+      }
     }
   }
 
@@ -88,7 +109,7 @@ public class AppWritingtoStream extends AbstractApplication {
 
     @Override
     public FlowSpecification configure() {
-      return FlowSpecification.Builder.with().setName(FLOW2).setDescription("Blah ").withFlowlets()
+      return FlowSpecification.Builder.with().setName(FLOW).setDescription("").withFlowlets()
         .add("flowlet", new StreamFlowlet())
         .connect()
         .fromStream(STREAM)
@@ -100,9 +121,12 @@ public class AppWritingtoStream extends AbstractApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamFlowlet.class);
 
+    @UseDataSet(DATASET)
+    private KeyValueTable table;
+
     @ProcessInput
     public void receive(StreamEvent data) {
-      LOG.error("Received from Stream : {}", Bytes.toString(data.getBody()));
+      table.increment(Bytes.toBytes(KEY), 1L);
     }
   }
 }

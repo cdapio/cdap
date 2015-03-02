@@ -22,6 +22,7 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -55,37 +56,37 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreDataset(String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(Id.DatasetInstance datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreStream(String streamName) {
+  public ListenableFuture<Void> enableExploreStream(Id.Stream stream) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreStream(String streamName) {
+  public ListenableFuture<Void> disableExploreStream(Id.Stream stream) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> addPartition(String datasetName, PartitionKey key, String path) {
+  public ListenableFuture<Void> addPartition(Id.DatasetInstance datasetInstance, PartitionKey key, String path) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> dropPartition(String datasetName, PartitionKey key) {
+  public ListenableFuture<Void> dropPartition(Id.DatasetInstance datasetInstance, PartitionKey key) {
     return null;
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
+  public ListenableFuture<ExploreExecutionResult> submit(Id.Namespace namespace, final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
                                                       statementsToMetadata.get(statement)));
@@ -159,6 +160,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
                                                       statementsToMetadata.get("dataTypes_stmt")));
     return new MockStatementExecutionFuture(futureDelegate, "dataTypes_stmt",
                                             statementsToMetadata, statementsToResults);
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> addNamespace(Id.Namespace namespace) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> removeNamespace(Id.Namespace namespace) {
+    return null;
   }
 
   @Override
