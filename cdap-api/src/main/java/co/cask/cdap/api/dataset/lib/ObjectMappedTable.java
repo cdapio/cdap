@@ -34,8 +34,8 @@ import javax.annotation.Nullable;
  *
  * This Dataset is {@link RecordScannable}, which means it can be explored through Hive. The Hive table
  * for this Dataset will contain one column for each object field and one column for the row key.
- * For example, if you are storing an Object of three fields - "id", "name", and "price", the corresponding
- * Hive table will have four columns - "rowkey", "id", "name", and "price". If you wish to change the name of
+ * For example, if you are storing an Object of three fields ("id", "name", and "price"), the corresponding
+ * Hive table will have four columns: "rowkey", "id", "name", and "price". If you wish to change the name of
  * the "rowkey" column you can do so by setting a property on the Dataset. See {@link ObjectMappedTableProperties}
  * for more information on properties for this Dataset.
  *
