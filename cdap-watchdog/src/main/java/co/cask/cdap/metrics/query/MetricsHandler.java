@@ -231,18 +231,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
     contextPrefix = toCanonicalContext(tagValues);
 
-    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, humanToTagNames(tagValues));
+    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1,
+                                                          humanToTagNames(tagValues));
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
     Collection<String> result = Lists.newArrayList();
     for (TagValue tag : nextTags) {
-      // todo: return nulls in some form to, otherwise it is hard to explore when not all tags of aggregation
-      //       were present in emitted metric
-      if (tag.getValue() == null) {
-        continue;
-      }
+      // for now, if tag value is null, we use ANY_TAG_VALUE as returned for convenience: this allows to easy build UI
+      // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
+      String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
       String name = tagNameToHuman(tag);
-      String tagValue = name  + TAG_DELIM + tag.getValue();
+      String tagValue = name  + TAG_DELIM + value;
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
     }
@@ -292,7 +291,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private Collection<String> searchMetric(String contextPrefix) throws Exception {
     List<TagValue> tagValues = humanToTagNames(parseTagValues(contextPrefix));
     MetricSearchQuery searchQuery =
-      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, 1, -1, tagValues);
+      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1, tagValues);
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }

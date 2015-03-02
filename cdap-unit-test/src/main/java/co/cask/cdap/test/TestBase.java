@@ -33,7 +33,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -158,6 +157,7 @@ public class TestBase {
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
+  @Deprecated
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File... bundleEmbeddedJars) {
     TestManager testManager = getTestManager();
@@ -172,9 +172,15 @@ public class TestBase {
    *
    * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
    */
-  protected void clear() throws Exception {
-    TestManager testManager = getTestManager();
-    testManager.clear();
+  @Deprecated
+  protected void clear() {
+    try {
+      TestManager testManager = getTestManager();
+      testManager.clear();
+    } catch (Exception e) {
+      // Unchecked exception to maintain compatibility until we remove this method
+      throw Throwables.propagate(e);
+    }
   }
 
   @Before
@@ -292,9 +298,7 @@ public class TestBase {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(cConf,  Namespace.USER));
+    datasetFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf));
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -391,6 +395,7 @@ public class TestBase {
    * @param datasetModule module class
    * @throws Exception
    */
+  @Deprecated
   protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
     TestManager testManager = getTestManager();
@@ -408,6 +413,7 @@ public class TestBase {
    * @param props properties
    * @param <T> type of the dataset admin
    */
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                        String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
@@ -424,6 +430,7 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
@@ -432,10 +439,12 @@ public class TestBase {
 
   /**
    * Gets Dataset manager of Dataset instance of type <T>
+   * @deprecated Use {@link TestManager#getDataset(String)} ()} from {@link #getTestManager()}.
    * @param datasetInstanceName - instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
+  @Deprecated
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     TestManager testManager = getTestManager();
     return testManager.getDataset(datasetInstanceName);

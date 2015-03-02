@@ -59,6 +59,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -93,7 +94,6 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
-  private static ConsumerConfigCache configCache;
 
   private static HBaseTestBase testHBase;
   private static HBaseTableUtil tableUtil;
@@ -175,9 +175,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    configCache = ConsumerConfigCache.getInstance(
-      hConf, Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName()));
-
     tableUtil = new HBaseTableUtilFactory().get();
   }
 
@@ -187,14 +184,14 @@ public abstract class HBaseQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.system.queue.testNamespace.application1.flow1", tableName);
+    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
@@ -282,23 +279,32 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     } finally {
       hTable.close();
-      queueAdmin.dropAll();
+      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
   }
 
   @Override
-  protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException {
-    configCache.updateCache();
+  protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      cache.updateCache();
+      Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
   }
 
   @Override
-  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException {
-    configCache.updateCache();
+  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      Assert.assertNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      // Either the config table doesn't exists, or the consumer config is empty for the given queue
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      try {
+        cache.updateCache();
+        Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
+      } catch (TableNotFoundException e) {
+        // Expected.
+      }
     }
   }
 
@@ -311,7 +317,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix();
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix(Constants.DEFAULT_NAMESPACE);
     Assert.assertTrue(queueTablename.startsWith("test."));
   }
 

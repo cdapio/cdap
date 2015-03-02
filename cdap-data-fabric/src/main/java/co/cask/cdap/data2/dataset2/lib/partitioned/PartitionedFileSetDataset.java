@@ -32,7 +32,9 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -118,7 +120,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          exploreFacade.addPartition(getName(), key, files.getLocation(path).toURI().getPath());
+          TableId tableId = TableId.from(getName());
+          Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(tableId.getNamespace(), getName());
+          exploreFacade.addPartition(datasetInstance, key, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to add partition for key %s with path %s to explore table.", key.toString(), path), e);
@@ -140,7 +144,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          exploreFacade.dropPartition(getName(), key);
+          TableId tableId = TableId.from(getName());
+          Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(tableId.getNamespace(), getName());
+          exploreFacade.dropPartition(datasetInstance, key);
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to drop partition for key %s from explore table.", key.toString()), e);

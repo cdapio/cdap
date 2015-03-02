@@ -27,7 +27,9 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -83,10 +85,12 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
       .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
       .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
+      .registerTypeAdapter(WorkflowNode.class, new WorkflowNodeCodec())
       .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
       .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec())
+      .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

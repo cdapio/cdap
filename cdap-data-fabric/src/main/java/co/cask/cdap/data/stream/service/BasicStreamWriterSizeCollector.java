@@ -16,18 +16,17 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,13 +36,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BasicStreamWriterSizeCollector extends AbstractIdleService implements StreamWriterSizeCollector {
   private static final Logger LOG = LoggerFactory.getLogger(BasicStreamWriterSizeCollector.class);
 
-  private final StreamCoordinatorClient streamCoordinatorClient;
   private final ConcurrentMap<Id.Stream, AtomicLong> streamSizes;
   private final List<Cancellable> truncationSubscriptions;
 
-  @Inject
-  public BasicStreamWriterSizeCollector(StreamCoordinatorClient streamCoordinatorClient) {
-    this.streamCoordinatorClient = streamCoordinatorClient;
+  public BasicStreamWriterSizeCollector() {
     this.streamSizes = Maps.newConcurrentMap();
     this.truncationSubscriptions = Lists.newArrayList();
   }
@@ -60,6 +56,10 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     }
   }
 
+  public Map<Id.Stream, AtomicLong> getStreamSizes() {
+    return ImmutableMap.copyOf(streamSizes);
+  }
+
   @Override
   public long getTotalCollected(Id.Stream streamId) {
     AtomicLong collected = streamSizes.get(streamId);
@@ -71,16 +71,6 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     AtomicLong value = streamSizes.get(streamId);
     if (value == null) {
       value = streamSizes.putIfAbsent(streamId, new AtomicLong(dataSize));
-      if (value == null) {
-        // This is the first time that we've seen this stream, we subscribe to generation changes to track truncation
-        truncationSubscriptions.add(streamCoordinatorClient.addListener(streamId, new StreamPropertyListener() {
-          @Override
-          public void generationChanged(Id.Stream streamId, int generation) {
-            // Handle stream truncation by resetting the size aggregated so far
-            streamSizes.put(streamId, new AtomicLong(0));
-          }
-        }));
-      }
     }
     if (value != null) {
       value.addAndGet(dataSize);

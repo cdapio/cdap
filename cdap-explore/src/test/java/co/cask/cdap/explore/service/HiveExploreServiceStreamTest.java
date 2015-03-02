@@ -21,10 +21,8 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.SlowTests;
@@ -70,7 +68,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     // use leveldb implementations, since stream input format examines the filesystem
     // to determine input splits.
-    startServices(CConfiguration.create(), true);
+    initialize(CConfiguration.create(), true);
 
     createStream(streamName);
     sendStreamEvent(streamName, headers, Bytes.toBytes(body1));
@@ -80,7 +78,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testStreamDefaultSchema() throws Exception {
-    runCommand("describe " + streamTableName,
+    runCommand(NAMESPACE_ID, "describe " + streamTableName,
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -98,7 +96,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testSelectStarOnStream() throws Exception {
-    ExploreExecutionResult results = exploreClient.submit("select * from " + streamTableName).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + streamTableName).get();
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
       new ColumnDesc(streamTableName + ".ts", "BIGINT", 1, null),
@@ -126,7 +124,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testSelectFieldOnStream() throws Exception {
-    runCommand("select body from " + streamTableName,
+    runCommand(NAMESPACE_ID, "select body from " + streamTableName,
                true,
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.newArrayList(
@@ -135,7 +133,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                  new QueryResult(Lists.<Object>newArrayList(body3)))
     );
 
-    runCommand("select headers[\"header1\"] as h1, headers[\"header2\"] as h2 from " + streamTableName,
+    runCommand(NAMESPACE_ID,
+               "select headers[\"header1\"] as h1, headers[\"header2\"] as h2 from " + streamTableName,
                true,
                Lists.newArrayList(new ColumnDesc("h1", "STRING", 1, null),
                                   new ColumnDesc("h2", "STRING", 2, null)),
@@ -148,11 +147,25 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testSelectAndFilterQueryOnStream() throws Exception {
-    runCommand("select body from " + streamTableName + " where ts > " + Long.MAX_VALUE,
+    runCommand(NAMESPACE_ID, "select body from " + streamTableName + " where ts > " + Long.MAX_VALUE,
                false,
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.<QueryResult>newArrayList());
   }
+
+  @Test
+  public void testStreamNameWithHyphen() throws Exception {
+    createStream("stream-test");
+    sendStreamEvent("stream-test", Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+
+    // Streams with '-' are replaced with '_'
+    String cleanStreamName = "stream_test";
+
+    runCommand(NAMESPACE_ID, "select body from " + getTableName(cleanStreamName), true,
+               Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
+  }
+
 
   @Test
   public void testJoinOnStreams() throws Exception {
@@ -163,7 +176,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
     sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
-    runCommand("select " + getTableName("jointest1") + ".body, " + getTableName("jointest2") + ".body" +
+    runCommand(NAMESPACE_ID,
+               "select " + getTableName("jointest1") + ".body, " + getTableName("jointest2") + ".body" +
                  " from " + getTableName("jointest1") + " join " + getTableName("jointest2") +
                  " on (" + getTableName("jointest1") + ".body = " + getTableName("jointest2") + ".body)",
                true,
@@ -175,7 +189,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test(expected = ExecutionException.class)
   public void testWriteToStreamFails() throws Exception {
-    exploreClient.submit("insert into table " + streamTableName + " select * from " + streamTableName).get();
+    exploreClient.submit(NAMESPACE_ID,
+                         "insert into table " + streamTableName + " select * from " + streamTableName).get();
   }
 
   @Test
@@ -206,6 +221,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
 
     ExploreExecutionResult result = exploreClient.submit(
+      NAMESPACE_ID,
       "SELECT user, sum(num) as total_num, sum(price * num) as total_price " +
         "FROM " + getTableName("avroStream") + " GROUP BY user ORDER BY total_price DESC").get();
 
@@ -241,7 +257,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   private static String getTableName(String streamName) {
-    return String.format("cdap_stream_%s_%s", Constants.DEFAULT_NAMESPACE, streamName);
+    return String.format("cdap_stream_%s_%s", NAMESPACE_ID, streamName);
   }
 
   private byte[] createAvroEvent(org.apache.avro.Schema schema, Object... values) throws IOException {

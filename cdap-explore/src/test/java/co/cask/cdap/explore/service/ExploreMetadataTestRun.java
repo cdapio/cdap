@@ -17,8 +17,6 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
@@ -43,7 +41,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
 
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
@@ -112,7 +110,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public void testGetSchemas() throws Exception {
     ListenableFuture<ExploreExecutionResult> future;
 
-    future = getExploreClient().schemas(null, "");
+    future = getExploreClient().schemas(null, NAMESPACE_ID.getId());
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),

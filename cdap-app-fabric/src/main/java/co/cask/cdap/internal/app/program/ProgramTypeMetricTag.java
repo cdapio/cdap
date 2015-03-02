@@ -43,6 +43,8 @@ public final class ProgramTypeMetricTag {
         return Constants.Metrics.Tag.SPARK;
       case SERVICE:
         return Constants.Metrics.Tag.SERVICE;
+      case WORKER:
+        return Constants.Metrics.Tag.WORKER;
       default:
         return "program";
     }

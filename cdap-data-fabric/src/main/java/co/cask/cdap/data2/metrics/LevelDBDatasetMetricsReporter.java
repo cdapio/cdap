@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -44,19 +44,19 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
-  private final LevelDBOrderedTableService ldbService;
+  private final LevelDBTableService ldbService;
   private final DatasetNamespace userDsNamespace;
 
   private ScheduledExecutorService executor;
 
   @Inject
   public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
-                                       LevelDBOrderedTableService ldbService,
+                                       LevelDBTableService ldbService,
                                        CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf, Namespace.USER);
+    this.userDsNamespace = new DefaultDatasetNamespace(conf);
   }
 
   @Override
@@ -84,21 +84,21 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void reportStats() throws Exception {
-    Map<String, LevelDBOrderedTableService.TableStats> tableStats = ldbService.getTableStats();
+    Map<String, LevelDBTableService.TableStats> tableStats = ldbService.getTableStats();
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
-    for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
-      String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetName == null) {
+  private void report(Map<String, LevelDBTableService.TableStats> datasetStat) {
+    for (Map.Entry<String, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
+      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
+      if (datasetInstance == null) {
         // not a user dataset
         continue;
       }
       MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetName));
+        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
       collector.increment("dataset.size.mb", sizeInMb);

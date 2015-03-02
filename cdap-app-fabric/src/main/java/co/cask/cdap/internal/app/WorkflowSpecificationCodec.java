@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -37,14 +37,11 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
   @Override
   public JsonElement serialize(WorkflowSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
-
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-    jsonObj.add("actions", serializeList(src.getActions(), context, ScheduleProgramInfo.class));
-    jsonObj.add("customActionMap", serializeMap(src.getCustomActionMap(), context, WorkflowActionSpecification.class));
-
+    jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
 
     return jsonObj;
   }
@@ -58,12 +55,8 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
-    List<ScheduleProgramInfo> actions = deserializeList(jsonObj.get("actions"), context,
-                                                                ScheduleProgramInfo.class);
-    Map<String, WorkflowActionSpecification> customActionMap = deserializeMap(jsonObj.get("customActionMap"), context,
-                                                                    WorkflowActionSpecification.class);
+    List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
 
-
-    return new WorkflowSpecification(className, name, description, properties, actions, customActionMap);
+    return new WorkflowSpecification(className, name, description, properties, nodes);
   }
 }

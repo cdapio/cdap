@@ -27,6 +27,7 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -105,6 +106,12 @@ public interface ApplicationSpecification {
    *         for services configured for the Application.
    */
   Map<String, ServiceSpecification> getServices();
+
+  /**
+   * @return An immutable {@link Map} from worker name to {@link WorkerSpecification}
+   *         for workers configured for the Application.
+   */
+  Map<String, WorkerSpecification> getWorkers();
 
   /**
    * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}

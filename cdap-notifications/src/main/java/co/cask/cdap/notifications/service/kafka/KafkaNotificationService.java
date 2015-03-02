@@ -104,7 +104,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
                                          final Type notificationType)
     throws NotificationException {
-    LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
+    LOG.trace("Publishing on notification feed [{}]: {}", feed, notification);
     return publishingExecutor.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {

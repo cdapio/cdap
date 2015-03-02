@@ -1,0 +1,15 @@
+<div class="clearfix">
+  <h3>
+    <span> Apps </span>
+    <small> You don't have any apps. Add one! </small>
+  </h3>
+</div>
+<hr />
+<div class="text-center" ng-controller="AppsSectionCtrl">
+  <my-file-select
+      data-button-label="Add App"
+      data-button-icon="fa-plus"
+      data-button-class="btn-lg"
+      on-file-select="onFileSelected($files)">
+  </my-file-select>
+</div>

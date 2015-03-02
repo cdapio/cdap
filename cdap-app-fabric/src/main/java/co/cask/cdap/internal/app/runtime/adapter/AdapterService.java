@@ -31,8 +31,8 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -105,7 +106,7 @@ public class AdapterService extends AbstractIdleService {
                         PreferencesStore preferencesStore) {
     this.configuration = configuration;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(configuration, Namespace.USER));
+                                                           new DefaultDatasetNamespace(configuration));
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -222,9 +223,10 @@ public class AdapterService extends AbstractIdleService {
    * @param adapterSpec specification of the adapter to create
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
    * @throws IllegalArgumentException on other input errors.
+   * @throws SchedulerException on errors related to scheduling.
    */
   public void createAdapter(String namespaceId, AdapterSpecification adapterSpec)
-    throws IllegalArgumentException, AdapterAlreadyExistsException {
+    throws IllegalArgumentException, AdapterAlreadyExistsException, SchedulerException {
 
     AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
     Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
@@ -252,8 +254,9 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace namespace id
    * @param adapterName adapter name
    * @throws AdapterNotFoundException if the adapter to be removed is not found.
+   * @throws SchedulerException on errors related to scheduling.
    */
-  public void removeAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
+  public void removeAdapter(String namespace, String adapterName) throws NotFoundException, SchedulerException {
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
@@ -265,7 +268,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Suspends all schedules for this adapter
   public void stopAdapter(String namespace, String adapterName)
-    throws AdapterNotFoundException, InvalidAdapterOperationException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
@@ -289,7 +292,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Resumes all schedules for this adapter
   public void startAdapter(String namespace, String adapterName)
-    throws AdapterNotFoundException, InvalidAdapterOperationException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already started.");
@@ -337,7 +340,7 @@ public class AdapterService extends AbstractIdleService {
 
       String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
       Location destination = namespaceHomeLocation.append(appFabricDir)
-        .append(Constants.AppFabric.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
+        .append(Constants.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
                                                          ApplicationDeployScope.SYSTEM);
       ApplicationWithPrograms applicationWithPrograms =
@@ -350,7 +353,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
   private void schedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                        AdapterSpecification adapterSpec) {
+                        AdapterSpecification adapterSpec) throws SchedulerException {
     ProgramType programType = adapterTypeInfo.getProgramType();
     // Only Workflows are supported to be scheduled in the current implementation
     Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
@@ -364,7 +367,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
   private void unschedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                          AdapterSpecification adapterSpec) {
+                          AdapterSpecification adapterSpec) throws NotFoundException, SchedulerException {
     // Only Workflows are supported to be scheduled in the current implementation
     ProgramType programType = adapterTypeInfo.getProgramType();
     Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
@@ -378,7 +381,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Adds a schedule to the scheduler as well as to the appspec
-  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterSpecification adapterSpec) {
+  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterSpecification adapterSpec)
+    throws SchedulerException {
     String frequency = adapterSpec.getProperties().get("frequency");
     Preconditions.checkArgument(frequency != null,
                                 "Frequency of running the adapter is missing from adapter properties." +
@@ -397,7 +401,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Deletes schedule from the scheduler as well as from the app spec
-  private void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
+  private void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws NotFoundException, SchedulerException {
     scheduler.deleteSchedule(programId, programType, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
     store.deleteSchedule(programId, programType, scheduleName);

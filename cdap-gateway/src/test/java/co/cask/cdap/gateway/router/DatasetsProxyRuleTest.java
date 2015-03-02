@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,11 +34,11 @@ public class DatasetsProxyRuleTest {
 
   @Test
   public void testApplyingProxyRulesV2() {
-    assertChange("/v2/data/explore/datasets/cdap.user.myTable/schema",
+    assertChange("/v2/data/explore/datasets/cdap.default.myTable/schema",
                  "/v2/data/explore/datasets/myTable/schema");
-    assertChange("/v2/data/datasets/cdap.user.myTable", "/v2/data/datasets/myTable");
-    assertChange("/v2/data/datasets/cdap.user.myTable/admin", "/v2/data/datasets/myTable/admin");
-    assertChange("/v2/data/datasets/cdap.user.myTable/admin/truncate",
+    assertChange("/v2/data/datasets/cdap.default.myTable", "/v2/data/datasets/myTable");
+    assertChange("/v2/data/datasets/cdap.default.myTable/admin", "/v2/data/datasets/myTable/admin");
+    assertChange("/v2/data/datasets/cdap.default.myTable/admin/truncate",
                  "/v2/data/datasets/myTable/admin/truncate");
     assertSame("/v2/data/types/myType");
     assertSame("/v2/metrics");
@@ -47,13 +47,13 @@ public class DatasetsProxyRuleTest {
 
   @Test
   public void testApplyingProxyRulesV3() {
-    assertChange("/v3/namespaces/myspace/data/explore/datasets/cdap.user.myTable/schema",
+    assertChange("/v3/namespaces/myspace/data/explore/datasets/cdap.myspace.myTable/schema",
                  "/v3/namespaces/myspace/data/explore/datasets/myTable/schema");
-    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable",
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.myspace.myTable",
                  "/v3/namespaces/myspace/data/datasets/myTable");
-    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable/admin",
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.myspace.myTable/admin",
                  "/v3/namespaces/myspace/data/datasets/myTable/admin");
-    assertChange("/v3/namespaces/myspace/data/datasets/cdap.user.myTable/admin/truncate",
+    assertChange("/v3/namespaces/myspace/data/datasets/cdap.myspace.myTable/admin/truncate",
                  "/v3/namespaces/myspace/data/datasets/myTable/admin/truncate");
     assertSame("/v3/namespaces/myspace/data/types/myType");
     assertSame("/v3/namespaces/myspace/metrics");

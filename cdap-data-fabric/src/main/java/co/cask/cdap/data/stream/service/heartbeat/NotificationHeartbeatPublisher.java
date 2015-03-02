@@ -37,7 +37,7 @@ public class NotificationHeartbeatPublisher extends AbstractIdleService implemen
   public NotificationHeartbeatPublisher(NotificationService notificationService) {
     this.notificationService = notificationService;
     this.heartbeatFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.DEFAULT_NAMESPACE)
+      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();

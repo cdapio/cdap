@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
-import co.cask.cdap.hive.context.ContextManager;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
@@ -81,8 +80,10 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
     // NOTE: the jobProperties map will be put in the jobConf passed to the DatasetOutputFormat/DatasetInputFormat.
     // Hive ensures that the properties of the right table will be passed at the right time to those classes.
     String datasetName = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAME);
+    String namespce = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAMESPACE);
     jobProperties.put(Constants.Explore.DATASET_NAME, datasetName);
-    LOG.debug("Got dataset {} for external table {}", datasetName, tableDesc.getTableName());
+    jobProperties.put(Constants.Explore.DATASET_NAMESPACE, namespce);
+    LOG.debug("Got dataset {} in namespace {} for external table {}", datasetName, namespce, tableDesc.getTableName());
   }
 
   private boolean writesEnabled() {

@@ -92,6 +92,24 @@ the corresponding methods accept a default value to be returned when the column 
   // Get column value as a primitive type or 0 if column is absent
   long valueAsLong = row.getLong("column1", 0);
 
+Multiple rows can be requested together using a variation of the ``get`` operation that takes a
+list of ``Get`` objects to be retrieved::
+
+  Table t;
+
+  // Define the rows to retrieve
+  List<Get> gets = Lists.newArrayList();
+  gets.add(new Get("row1"));
+  // Separate columns can be requested for each row
+  gets.add(new Get("row2").add("column1").add("column2"));
+  gets.add(new Get("row3"));
+
+  List<Row> rows = t.get(gets);
+
+Each ``Row`` object in the returned list will contain the results for one of the requested row
+keys.  When multiple rows must be retrieved together, this version of the ``get`` operation
+allows the storage provider to perform more efficient batching of the operations, if supported.
+
 Scan
 ====
 A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
