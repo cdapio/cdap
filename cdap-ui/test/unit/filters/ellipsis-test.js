@@ -5,14 +5,13 @@ describe('myEllipsis', function() {
   beforeEach(module('cdap-ui.filters'));
 
   var ellipsis;
-  var $filter;
 
   beforeEach(inject(function(_$filter_) {
-    $filter = _$filter_;
+    ellipsis = _$filter_('myEllipsis');
+
   }));
 
   beforeEach(function() {
-    ellipsis = $filter('myEllipsis');
   });
 
   it('should truncate string longer that limit to limit plus ellipsis', function() {
@@ -20,8 +19,10 @@ describe('myEllipsis', function() {
     var input = 'string longer than ten characters';
     var limit = 10;
 
-    expect(ellipsis(input, limit).length).toBe(limit + 1);
-    expect(ellipsis(input, limit)).toBe(input.substr(0, limit-1) + '\u2026 ');
+    var result = ellipsis(input, limit);
+
+    expect(result.length).toBe(limit + 1);
+    expect(result).toBe(input.substr(0, limit-1) + '\u2026 ');
 
   });
 
@@ -30,8 +31,10 @@ describe('myEllipsis', function() {
     var input = 'short';
     var limit = 10;
 
-    expect(ellipsis(input, limit).length).toBe(input.length);
-    expect(ellipsis(input, limit)).toEqual(input);
+    var result = ellipsis(input, limit);
+
+    expect(result.length).toBe(input.length);
+    expect(result).toEqual(input);
 
   });
 

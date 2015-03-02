@@ -4,16 +4,12 @@ describe('bytes', function() {
 
   beforeEach(module('cdap-ui.filters'));
 
-  var bytes,
-      $filter;
+  var bytes;
 
   beforeEach(inject(function(_$filter_) {
-    $filter = _$filter_;
+    bytes = _$filter_('bytes');
   }));
 
-  beforeEach(function() {
-    bytes = $filter('bytes');
-  });
 
   it('should convert bytes to kB', function() {
     var b = 1024;

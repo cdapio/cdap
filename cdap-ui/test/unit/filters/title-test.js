@@ -2,16 +2,11 @@ describe('myTitleFilter', function() {
 
   beforeEach(module('cdap-ui.filters'));
 
-  var title,
-      $filter;
+  var title;
 
   beforeEach(inject(function(_$filter_) {
-    $filter = _$filter_;
+    title = _$filter_('myTitleFilter');
   }));
-
-  beforeEach(function() {
-    title = $filter('myTitleFilter');
-  });
 
   it('should append CDAP to title', function() {
     var input = {
