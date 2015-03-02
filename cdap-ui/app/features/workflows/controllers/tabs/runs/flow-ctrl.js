@@ -12,7 +12,11 @@ angular.module(PKG.name + '.feature.workflows')
       _cdapNsPath: basePath
     })
       .then(function(res) {
-        $scope.actions = res.actions;
+        var programs = [];
+        angular.forEach(res.nodes, function(value, key) {
+          programs.push(value.program);
+        });
+        $scope.actions = programs;
       });
 
 
