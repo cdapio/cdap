@@ -127,6 +127,8 @@ public class ConfigurationTable {
     HTable table = null;
     CConfiguration conf = null;
     try {
+      // tableUtil is not used to create the HTable because this code is used from coprocessors which are already HBase
+      // version specific. Because of that, the sysConfigTablePrefix parameter passed in is already version-specific.
       table = new HTable(hbaseConf, tableName);
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);

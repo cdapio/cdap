@@ -71,7 +71,6 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
-
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
   private HRegion region;
@@ -82,9 +81,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      String sysConfigTablePrefix
-        = new HBase96TableUtil().getSysConfigTablePrefix(env.getRegion().getTableDesc().getNameAsString());
-      this.state = new IncrementHandlerState(env.getConfiguration(), sysConfigTablePrefix);
+      this.state = new IncrementHandlerState(env.getConfiguration(), env.getRegion().getTableDesc().getNameAsString(),
+                                             new HBase96TableUtil());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {

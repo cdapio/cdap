@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.increment.hbase;
 
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.persist.TransactionSnapshot;
@@ -53,7 +54,8 @@ public class IncrementHandlerState {
   public static final int BATCH_UNLIMITED = -1;
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
-  private final String sysConfigTablePrefix;
+  private final String tableName;
+  private final HBaseTableUtil tableUtil;
 
   private TransactionStateCache cache;
   private TimestampOracle timeOracle = new TimestampOracle();
@@ -61,9 +63,10 @@ public class IncrementHandlerState {
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-  public IncrementHandlerState(Configuration conf, String sysConfigTablePrefix) {
+  public IncrementHandlerState(Configuration conf, String tableName, HBaseTableUtil tableUtil) {
     this.conf = conf;
-    this.sysConfigTablePrefix = sysConfigTablePrefix;
+    this.tableName = tableName;
+    this.tableUtil = tableUtil;
   }
 
   @VisibleForTesting
@@ -71,8 +74,9 @@ public class IncrementHandlerState {
     this.timeOracle = timeOracle;
   }
 
-  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String sysConfigTablePrefix,
+  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tableName,
                                                                              Configuration conf) {
+    String sysConfigTablePrefix = tableUtil.getSysConfigTablePrefix(tableName);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
 
@@ -102,7 +106,7 @@ public class IncrementHandlerState {
 
     // get the transaction state cache as soon as we have a transactional family
     if (!txnlFamilies.isEmpty() && cache == null) {
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
+      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(tableName, conf);
       this.cache = cacheSupplier.get();
     }
   }

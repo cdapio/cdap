@@ -82,9 +82,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      String sysConfigTablePrefix
-        = new HBase98TableUtil().getSysConfigTablePrefix(env.getRegion().getTableDesc().getNameAsString());
-      this.state = new IncrementHandlerState(env.getConfiguration(), sysConfigTablePrefix);
+      this.state = new IncrementHandlerState(env.getConfiguration(), env.getRegion().getTableDesc().getNameAsString(),
+                                             new HBase98TableUtil());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
