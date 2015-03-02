@@ -92,6 +92,9 @@ public class StreamSizeScheduler implements Scheduler {
   private Store store;
   private Executor sendPollingInfoExecutor;
 
+  // Used to schedule polling of a stream only after a certain time - the time after which the metrics are updated
+  private ScheduledExecutorService pollingBookingExecutor;
+
   // Scheduled executor used to poll stream at regular intervals, by querying the metric system
   private ScheduledExecutorService streamPollingExecutor;
 
@@ -116,9 +119,12 @@ public class StreamSizeScheduler implements Scheduler {
       Threads.createDaemonThreadFactory("stream-size-scheduler-%d"));
     streamPollingExecutor = Executors.newScheduledThreadPool(STREAM_POLLING_THREAD_POOL_SIZE,
                                                              Threads.createDaemonThreadFactory("stream-polling-%d"));
+    pollingBookingExecutor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("polling-booking-executor"));
   }
 
   public void stop() {
+    pollingBookingExecutor.shutdownNow();
     streamPollingExecutor.shutdownNow();
     for (StreamSubscriber subscriber : streamSubscribers.values()) {
       subscriber.cancel();
@@ -593,13 +599,7 @@ public class StreamSizeScheduler implements Scheduler {
      */
     private void sendNotificationToTask(StreamSizeNotification notification, StreamSizeScheduleTask task) {
       if (task.receivedNotification(notification)) {
-        try {
-          StreamSize streamSize = queryStreamEventsSize();
-          cancelPollingAndScheduleNext();
-          sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
-        } catch (IOException e) {
-          LOG.warn("Could not poll stream {} size using metrics", streamId, e);
-        }
+        schedulePolling();
       }
     }
 
@@ -617,14 +617,29 @@ public class StreamSizeScheduler implements Scheduler {
         triggerPolling = triggerPolling | task.receivedNotification(notification);
       }
       if (triggerPolling) {
-        try {
-          StreamSize streamSize = queryStreamEventsSize();
-          cancelPollingAndScheduleNext();
-          sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
-        } catch (IOException e) {
-          LOG.warn("Could not poll stream {} size using metrics", streamId, e);
-        }
+        schedulePolling();
       }
+    }
+
+    /**
+     * This method is called after a notification is received, and shows that a polling should be triggered to confirm
+     * the execution of a program.
+     * The polling task is run only after the metric system has collected the stream metrics and shows a more
+     * accurate number, in accordance with the notification received.
+     */
+    private void schedulePolling() {
+      pollingBookingExecutor.schedule(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            StreamSize streamSize = queryStreamEventsSize();
+            cancelPollingAndScheduleNext();
+            sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
+          } catch (IOException e) {
+            LOG.warn("Could not poll stream {} size using metrics", streamId, e);
+          }
+        }
+      }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
     }
 
     private Id.NotificationFeed getFeed() {

@@ -441,6 +441,13 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics collector.
+   */
+  public static final class MetricsCollector {
+    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
+  }
+
+  /**
    * Configurations for log saver.
    */
   public static final class LogSaver {
