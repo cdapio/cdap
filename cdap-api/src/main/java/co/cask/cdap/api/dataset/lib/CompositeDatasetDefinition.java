@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -59,19 +60,19 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @return dataset to perform data operations
    * @throws IOException
    */
-  protected final <T extends Dataset> T getDataset(String name, Class<T> type, DatasetSpecification spec,
-                                                   Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name, Class<T> type,
+                                                   DatasetSpecification spec, Map<String, String> arguments,
+                                                   ClassLoader classLoader) throws IOException {
 
-    return (T) delegates.get(name).getDataset(spec.getSpecification(name), arguments, classLoader);
+    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
   }
 
-  protected final <T extends Dataset> T getDataset(String name, DatasetSpecification spec,
-                                                   Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
+                                                   DatasetSpecification spec, Map<String, String> arguments,
+                                                   ClassLoader classLoader) throws IOException {
 
     // NOTE: by default we propagate properties to the embedded datasets
-    return (T) delegates.get(name).getDataset(spec.getSpecification(name), arguments, classLoader);
+    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
   }
 
   @Override
@@ -88,10 +89,11 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   }
 
   @Override
-  public final DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public final DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                                     DatasetSpecification spec) throws IOException {
     List<DatasetAdmin> admins = Lists.newArrayList();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
-      admins.add(impl.getValue().getAdmin(spec.getSpecification(impl.getKey()), classLoader));
+      admins.add(impl.getValue().getAdmin(datasetContext, classLoader, spec.getSpecification(impl.getKey())));
     }
 
     return new CompositeDatasetAdmin(admins);

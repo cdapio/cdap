@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
@@ -47,15 +48,16 @@ public class LevelDBTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                        Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                          DatasetSpecification spec) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new LevelDBTable(spec.getName(), conflictDetection, service);
   }
 
   @Override
-  public LevelDBTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public LevelDBTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                                    DatasetSpecification spec) throws IOException {
     return new LevelDBTableAdmin(spec, service);
   }
 }

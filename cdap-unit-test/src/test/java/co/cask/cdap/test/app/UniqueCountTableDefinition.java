@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -40,11 +41,13 @@ public class UniqueCountTableDefinition
   }
 
   @Override
-  public UniqueCountTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public UniqueCountTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                     ClassLoader classLoader, DatasetSpecification spec) throws IOException {
     return new UniqueCountTable(spec.getName(),
-                                getDataset("entryCountTable", Table.class, spec, arguments, classLoader),
-                                getDataset("uniqueCountTable", Table.class, spec, arguments, classLoader));
+                                getDataset(datasetContext, "entryCountTable", Table.class, spec, arguments,
+                                           classLoader),
+                                getDataset(datasetContext, "uniqueCountTable", Table.class, spec, arguments,
+                                           classLoader));
   }
 
   public static class UniqueCountTable extends AbstractDataset {

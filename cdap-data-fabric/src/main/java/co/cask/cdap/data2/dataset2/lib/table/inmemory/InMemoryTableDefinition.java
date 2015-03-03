@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
@@ -43,15 +44,16 @@ public class InMemoryTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) {
+  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                          DatasetSpecification spec) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryTable(spec.getName(), conflictDetection);
   }
 
   @Override
-  public InMemoryTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                                     DatasetSpecification spec) throws IOException {
     // todo: or pass the full spec?
     return new InMemoryTableAdmin(spec.getName());
   }

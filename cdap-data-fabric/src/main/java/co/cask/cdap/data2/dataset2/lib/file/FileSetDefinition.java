@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.file;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -65,13 +66,14 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> 
   }
 
   @Override
-  public FileAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public FileAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                            DatasetSpecification spec) throws IOException {
     return new FileAdmin(locationFactory, spec);
   }
 
   @Override
-  public FileSet getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public FileSet getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                            DatasetSpecification spec) throws IOException {
     return new FileSetDataset(spec.getName(), locationFactory, spec.getProperties(),
                            arguments == null ? Collections.<String, String>emptyMap() : arguments,
                            classLoader);

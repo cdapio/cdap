@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.kv;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -39,6 +40,7 @@ public abstract class NoTxKeyValueTableTest {
   private static final byte[] VALUE2 = Bytes.toBytes("value2");
 
   private static final Map<String, String> NO_ARGS = DatasetDefinition.NO_ARGUMENTS;
+  private static final String namespaceId = "testNamespace";
 
   protected abstract DatasetDefinition<? extends NoTxKeyValueTable, ? extends DatasetAdmin> getDefinition()
     throws IOException;
@@ -49,15 +51,15 @@ public abstract class NoTxKeyValueTableTest {
     DatasetSpecification spec = def.configure("table", DatasetProperties.EMPTY);
 
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
-
+    DatasetContext datasetContext = new DatasetContext.Builder().setNamespaceId(namespaceId).build();
     // create & exists
-    DatasetAdmin admin = def.getAdmin(spec, cl);
+    DatasetAdmin admin = def.getAdmin(datasetContext, cl, spec);
     Assert.assertFalse(admin.exists());
     admin.create();
     Assert.assertTrue(admin.exists());
 
     // put/get
-    NoTxKeyValueTable table = def.getDataset(spec, NO_ARGS, cl);
+    NoTxKeyValueTable table = def.getDataset(datasetContext, NO_ARGS, cl, spec);
     Assert.assertNull(table.get(KEY1));
     table.put(KEY1, VALUE1);
     Assert.assertArrayEquals(VALUE1, table.get(KEY1));

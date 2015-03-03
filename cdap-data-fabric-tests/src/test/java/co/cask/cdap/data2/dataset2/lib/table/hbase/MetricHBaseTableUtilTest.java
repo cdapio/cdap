@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -26,7 +27,6 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -67,7 +67,8 @@ public class MetricHBaseTableUtilTest {
                                       new LocalLocationFactory(tmpFolder.newFolder()), CConfiguration.create());
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
-    DatasetAdmin admin = definition.getAdmin(spec, null);
+    DatasetAdmin admin = definition.getAdmin(
+      new DatasetContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build(), null, spec);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
