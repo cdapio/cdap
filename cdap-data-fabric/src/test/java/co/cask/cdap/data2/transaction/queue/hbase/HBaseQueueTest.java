@@ -30,10 +30,10 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
-import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -60,10 +60,7 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
@@ -80,7 +77,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * HBase queue tests.
@@ -222,63 +218,63 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
+    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "configure");
 
     // Set a group info
-    queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
+    Map<Long, Integer> groupInfo = ImmutableMap.of(1L, 1, 2L, 2, 3L, 3);
+    queueAdmin.configureGroups(queueName, groupInfo);
 
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).createConsumerStateStore(queueName);
     try {
-      byte[] rowKey = queueName.toBytes();
-      Result result = hTable.get(new Get(rowKey));
-
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-
-      Assert.assertEquals(1 + 2 + 3, familyMap.size());
+      for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
+        long groupId = entry.getKey();
+        for (int instanceId = 0; instanceId < entry.getValue(); instanceId++) {
+          // All consumers should have empty start rows
+          Assert.assertTrue(Bytes.compareTo(Bytes.EMPTY_BYTE_ARRAY,
+                                            stateStore.getState(groupId, instanceId).getStartRow()) == 0);
+        }
+      }
 
       // Update the startRow of group 2.
-      Put put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
-      hTable.put(put);
+      stateStore.updateState(2L, 0, Bytes.toBytes(4));
+      stateStore.updateState(2L, 1, Bytes.toBytes(5));
 
       // Add instance to group 2
       queueAdmin.configureInstances(queueName, 2L, 3);
 
       // All instances should have startRow == smallest of old instances
-      result = hTable.get(new Get(rowKey));
-      for (int i = 0; i < 3; i++) {
-        int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                          HBaseQueueAdmin.getConsumerStateColumn(2L, i)).getValue());
+      for (int instanceId = 0; instanceId < 3; instanceId++) {
+        int startRow = Bytes.toInt(stateStore.getState(2L, instanceId).getStartRow());
         Assert.assertEquals(4, startRow);
       }
 
-      // Advance startRow of group 2.
-      put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
-      hTable.put(put);
+      // Advance startRow of group 2 instance 0.
+      stateStore.updateState(2L, 0, Bytes.toBytes(7));
 
-      // Reduce instances of group 2 through group reconfiguration and also add a new group
+      // Reduce instances of group 2 through group reconfiguration, remove group 1 and 3, add group 4.
       queueAdmin.configureGroups(queueName, ImmutableMap.of(2L, 1, 4L, 1));
 
       // The remaining instance should have startRow == smallest of all before reduction.
-      result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
+      int startRow = Bytes.toInt(stateStore.getState(2L, 0).getStartRow());
       Assert.assertEquals(4, startRow);
 
-      result = hTable.get(new Get(rowKey));
-      familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
+      // All instances of group 1 and 3 should be gone
+      for (long groupId : new long[] {1L, 3L}) {
+        for (int instanceId = 0; instanceId < groupInfo.get(groupId); instanceId++) {
+          try {
+            stateStore.getState(groupId, instanceId);
+            Assert.fail("Not expect to get state for group " + groupId + ", instance " + instanceId);
+          } catch (IOException e) {
+            // expected
+          }
+        }
+      }
 
-      Assert.assertEquals(2, familyMap.size());
-
-      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                    HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
+      startRow = Bytes.toInt(stateStore.getState(4L, 0).getStartRow());
       Assert.assertEquals(4, startRow);
 
     } finally {
-      hTable.close();
+      stateStore.close();
       queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
   }
@@ -323,7 +319,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void forceEviction(QueueName queueName) throws Exception {
-    byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
+    byte[] tableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName));
     // make sure consumer config cache is updated
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
     testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {
@@ -357,6 +353,16 @@ public abstract class HBaseQueueTest extends QueueTest {
       queueAdmin.configureGroups(queueName, groupInfo);
     } else {
       streamAdmin.configureGroups(queueName.toStreamId(), groupInfo);
+    }
+  }
+
+  @Override
+  protected void resetConsumerState(QueueName queueName, ConsumerConfig consumerConfig) throws Exception {
+    HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).createConsumerStateStore(queueName);
+    try {
+      stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), Bytes.EMPTY_BYTE_ARRAY);
+    } finally {
+      stateStore.close();
     }
   }
 }

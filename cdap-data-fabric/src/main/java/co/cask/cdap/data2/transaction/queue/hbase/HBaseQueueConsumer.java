@@ -134,9 +134,10 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
       return;
     }
     try {
-      stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
+      stateStore.updateState(getConfig().getGroupId(), getConfig().getInstanceId(), startRow);
     } finally {
       Closeables.closeQuietly(queueStrategy);
+      Closeables.closeQuietly(stateStore);
       hTable.close();
       closed = true;
     }
@@ -147,7 +148,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     super.postTxCommit();
     if (commitCount >= PERSIST_START_ROW_LIMIT) {
       try {
-        stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
+        stateStore.updateState(getConfig().getGroupId(), getConfig().getInstanceId(), startRow);
         commitCount = 0;
       } catch (IOException e) {
         LOG.error("Failed to persist start row to HBase.", e);
