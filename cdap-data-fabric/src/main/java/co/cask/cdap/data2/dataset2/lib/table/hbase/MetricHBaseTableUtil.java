@@ -49,7 +49,8 @@ public class MetricHBaseTableUtil {
     // 2b) If table has increment handler coprocessor, it is 2.7
     
     ProjectInfo.Version version = AbstractHBaseDataSetAdmin.getVersion(tableDescriptor);
-    if (version != null) {
+    // note: major version is 0 if table doesn't have the cdap version property
+    if (version.getMajor() > 0) {
       if (version.getMajor() < 2) {
         return Version.VERSION_2_6_OR_LOWER;
       }

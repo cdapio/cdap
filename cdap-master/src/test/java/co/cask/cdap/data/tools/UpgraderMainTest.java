@@ -21,10 +21,10 @@ import org.junit.Test;
 /**
  *
  */
-public class MainTest {
+public class UpgraderMainTest {
   @Test
   public void testInjector() throws Exception {
-    Main.main(new String[] {"help"});
+    UpgraderMain.main(new String[]{"help"});
     // should not throw exception
   }
 }
