@@ -46,11 +46,11 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
   }
 
   public A getAdmin(DatasetContext datasetContext, DatasetSpecification spec) throws IOException {
-    return delegate.getAdmin(datasetContext, classLoader, spec);
+    return delegate.getAdmin(datasetContext, spec, classLoader);
   }
 
   public D getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                       Map<String, String> arguments) throws IOException {
-    return delegate.getDataset(datasetContext, arguments, classLoader, spec);
+    return delegate.getDataset(datasetContext, spec, classLoader, arguments);
   }
 }

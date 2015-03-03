@@ -63,16 +63,16 @@ public class ObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("objects"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("objects"), classLoader);
   }
 
   @Override
-  public ObjectStoreDataset<?> getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                          ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(datasetContext, arguments, classLoader, kvTableSpec);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);

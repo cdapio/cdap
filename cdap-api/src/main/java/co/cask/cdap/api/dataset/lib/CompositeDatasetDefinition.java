@@ -64,7 +64,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
                                                    DatasetSpecification spec, Map<String, String> arguments,
                                                    ClassLoader classLoader) throws IOException {
 
-    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
+    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), classLoader, arguments);
   }
 
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
@@ -72,7 +72,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
                                                    ClassLoader classLoader) throws IOException {
 
     // NOTE: by default we propagate properties to the embedded datasets
-    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
+    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), classLoader, arguments);
   }
 
   @Override
@@ -89,11 +89,11 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   }
 
   @Override
-  public final DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                                     DatasetSpecification spec) throws IOException {
+  public final DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                     ClassLoader classLoader) throws IOException {
     List<DatasetAdmin> admins = Lists.newArrayList();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
-      admins.add(impl.getValue().getAdmin(datasetContext, classLoader, spec.getSpecification(impl.getKey())));
+      admins.add(impl.getValue().getAdmin(datasetContext, spec.getSpecification(impl.getKey()), classLoader));
     }
 
     return new CompositeDatasetAdmin(admins);

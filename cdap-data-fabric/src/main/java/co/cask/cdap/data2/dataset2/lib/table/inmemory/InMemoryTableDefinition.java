@@ -44,16 +44,16 @@ public class InMemoryTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                          DatasetSpecification spec) {
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          ClassLoader classLoader, Map<String, String> arguments) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryTable(spec.getName(), conflictDetection);
   }
 
   @Override
-  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                                     DatasetSpecification spec) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                     ClassLoader classLoader) throws IOException {
     // todo: or pass the full spec?
     return new InMemoryTableAdmin(spec.getName());
   }

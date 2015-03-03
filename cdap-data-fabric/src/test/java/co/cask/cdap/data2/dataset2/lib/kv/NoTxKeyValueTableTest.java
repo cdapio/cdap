@@ -53,13 +53,13 @@ public abstract class NoTxKeyValueTableTest {
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
     DatasetContext datasetContext = new DatasetContext.Builder().setNamespaceId(namespaceId).build();
     // create & exists
-    DatasetAdmin admin = def.getAdmin(datasetContext, cl, spec);
+    DatasetAdmin admin = def.getAdmin(datasetContext, spec, cl);
     Assert.assertFalse(admin.exists());
     admin.create();
     Assert.assertTrue(admin.exists());
 
     // put/get
-    NoTxKeyValueTable table = def.getDataset(datasetContext, NO_ARGS, cl, spec);
+    NoTxKeyValueTable table = def.getDataset(datasetContext, spec, cl, NO_ARGS);
     Assert.assertNull(table.get(KEY1));
     table.put(KEY1, VALUE1);
     Assert.assertArrayEquals(VALUE1, table.get(KEY1));

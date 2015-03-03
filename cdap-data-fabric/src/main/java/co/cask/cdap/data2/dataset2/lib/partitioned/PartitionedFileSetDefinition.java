@@ -81,29 +81,28 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(
-      filesetDef.getAdmin(datasetContext, classLoader, spec.getSpecification(FILESET_NAME)),
-      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification(PARTITION_TABLE_NAME)));
+      filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
+      tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
   }
 
   @Override
-  public PartitionedFileSet getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                       ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                       ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     // properties must contain the partitioning
     Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(spec.getProperties());
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments, partitioning);
 
-    FileSet fileset = filesetDef.getDataset(datasetContext, arguments, classLoader,
-                                            spec.getSpecification(FILESET_NAME));
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader,
-                                      spec.getSpecification(PARTITION_TABLE_NAME));
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), classLoader,
+                                            arguments);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader,
+                                      arguments);
 
-    return new PartitionedFileSetDataset(spec.getName(), partitioning,
-                                         fileset, table, spec, arguments,
+    return new PartitionedFileSetDataset(spec.getName(), partitioning, fileset, table, spec, arguments,
                                          getExploreProvider());
   }
 

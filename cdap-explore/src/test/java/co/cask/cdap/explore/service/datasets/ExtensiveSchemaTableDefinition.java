@@ -62,16 +62,16 @@ public class ExtensiveSchemaTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("ext-schema-table"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("ext-schema-table"), classLoader);
   }
 
   @Override
-  public ExtensiveSchemaTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                         ClassLoader classLoader, DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader,
-                                      spec.getSpecification("ext-schema-table"));
+  public ExtensiveSchemaTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                         ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("ext-schema-table"), classLoader,
+                                      arguments);
     return new ExtensiveSchemaTable(spec.getName(), table);
   }
 

@@ -49,16 +49,17 @@ public class IntegerStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("table"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("table"), classLoader);
   }
 
   @Override
-  public ObjectStoreDataset<Integer> getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                                ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public ObjectStoreDataset<Integer> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                                ClassLoader classLoader,
+                                                Map<String, String> arguments) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(datasetContext, arguments, classLoader, kvTableSpec);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
 
     try {
       return new IntegerStore(spec.getName(), table);

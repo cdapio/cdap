@@ -59,8 +59,8 @@ public class HBaseTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                          DatasetSpecification spec) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // NOTE: ttl property is applied on server-side in CPs
@@ -70,8 +70,8 @@ public class HBaseTableDefinition
   }
 
   @Override
-  public HBaseTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                                  DatasetSpecification spec) throws IOException {
+  public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                  ClassLoader classLoader) throws IOException {
     return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

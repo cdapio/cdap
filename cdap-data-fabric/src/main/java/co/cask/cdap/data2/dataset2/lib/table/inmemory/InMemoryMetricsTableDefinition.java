@@ -44,14 +44,14 @@ public class InMemoryMetricsTableDefinition
   }
 
   @Override
-  public MetricsTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                                 DatasetSpecification spec) {
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 ClassLoader classLoader, Map<String, String> arguments) {
     return new InMemoryMetricsTable(spec.getName());
   }
 
   @Override
-  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                                     DatasetSpecification spec) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                     ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
     return new InMemoryTableAdmin(spec.getName());
   }
