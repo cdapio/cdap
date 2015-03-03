@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -44,8 +45,8 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
     return delegate.configure(instanceName, properties);
   }
 
-  public A getAdmin(DatasetSpecification spec) throws IOException {
-    return delegate.getAdmin(spec, classLoader);
+  public A getAdmin(DatasetContext datasetContext, DatasetSpecification spec) throws IOException {
+    return delegate.getAdmin(datasetContext, classLoader, spec);
   }
 
   public D getDataset(DatasetSpecification spec, Map<String, String> arguments) throws IOException {

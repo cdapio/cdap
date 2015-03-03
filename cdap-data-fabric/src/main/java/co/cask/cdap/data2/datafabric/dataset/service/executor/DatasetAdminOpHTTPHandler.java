@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
@@ -104,7 +105,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     }
 
     DatasetSpecification spec = type.configure(name, props);
-    DatasetAdmin admin = type.getAdmin(spec);
+    DatasetAdmin admin = type.getAdmin(new DatasetContext(namespaceId), spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
@@ -133,7 +134,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    DatasetAdmin admin = type.getAdmin(spec);
+    DatasetAdmin admin = type.getAdmin(new DatasetContext(namespaceId), spec);
     admin.drop();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }

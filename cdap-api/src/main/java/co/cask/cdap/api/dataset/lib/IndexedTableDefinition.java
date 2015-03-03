@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -60,10 +61,11 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                               DatasetSpecification spec) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("d"), classLoader),
-      tableDef.getAdmin(spec.getSpecification("i"), classLoader)
+      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("d")),
+      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("i"))
     ));
   }
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -80,9 +81,11 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(filesetDef.getAdmin(spec.getSpecification(FILESET_NAME), classLoader),
-                                     tableDef.getAdmin(spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
+                               DatasetSpecification spec) throws IOException {
+    return new CompositeDatasetAdmin(
+      filesetDef.getAdmin(datasetContext, classLoader, spec.getSpecification(FILESET_NAME)),
+      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification(PARTITION_TABLE_NAME)));
   }
 
   @Override
