@@ -23,7 +23,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
-import co.cask.cdap.data2.util.hbase.HBase94TableNames;
+import co.cask.cdap.data2.util.hbase.HBase94NameConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -86,7 +86,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       conf = env.getConfiguration();
       String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
       configTableNameBytes = Bytes.toBytes(configTableName);
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94TableNames());
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94NameConverter());
     }
   }
 
@@ -115,7 +115,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94TableNames());
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HBase94NameConverter());
     }
     return configCache;
   }

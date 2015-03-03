@@ -16,13 +16,14 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.Constants;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- *
- */
-public class HBase96TableNames extends HBaseTableNames {
-  public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+public class HBase96NameConverterTest {
+  @Test
+  public void testGetSysConfigTablePrefix() throws Exception {
+    HBase96NameConverter hBaseNameConversionUtil = new HBase96NameConverter();
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user:some_table"));
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
   }
 }

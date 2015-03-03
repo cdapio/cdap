@@ -17,8 +17,9 @@
 package co.cask.cdap.data2.util.hbase;
 
 /**
- * Common utilities for dealing with HBase table names.
+ * Common utility methods for dealing with HBase table name conversions.
  */
-public abstract class HBaseTableNames {
+public abstract class HBaseNameConverter {
   public abstract String getSysConfigTablePrefix(String tableName);
+
 }

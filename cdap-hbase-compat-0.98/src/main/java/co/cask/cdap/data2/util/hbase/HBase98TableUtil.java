@@ -255,11 +255,6 @@ public class HBase98TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
-  @Override
-  public String getSysConfigTablePrefix(String tableName) {
-    return new HBase98TableNames().getSysConfigTablePrefix(tableName);
-  }
-
   private TableName toTableName(TableId tableId) {
     return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
   }

@@ -16,22 +16,13 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.Constants;
+
 /**
- * Factory for HBase version-specific {@link HBaseTableUtil} instances.
+ * Utility methods for dealing with HBase table name conversions in HBase 0.94.
  */
-public class HBaseTableNamesFactory extends HBaseVersionSpecificFactory<HBaseNameConverter> {
-  @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
-  }
-
-  @Override
-  protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+public class HBase94NameConverter extends HBaseNameConverter {
+  public String getSysConfigTablePrefix(String tableName) {
+    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
   }
 }

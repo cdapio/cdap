@@ -239,11 +239,6 @@ public class HBase94TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
-  @Override
-  public String getSysConfigTablePrefix(String tableName) {
-    return new HBase94TableNames().getSysConfigTablePrefix(tableName);
-  }
-
   private String toTableName(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility

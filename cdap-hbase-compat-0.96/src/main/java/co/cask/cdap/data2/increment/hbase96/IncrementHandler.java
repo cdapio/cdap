@@ -19,7 +19,7 @@ package co.cask.cdap.data2.increment.hbase96;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
-import co.cask.cdap.data2.util.hbase.HBase96TableNames;
+import co.cask.cdap.data2.util.hbase.HBase96NameConverter;
 import co.cask.tephra.hbase96.Filters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -82,7 +82,7 @@ public class IncrementHandler extends BaseRegionObserver {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
       this.state = new IncrementHandlerState(env.getConfiguration(), env.getRegion().getTableDesc().getNameAsString(),
-                                             new HBase96TableNames());
+                                             new HBase96NameConverter());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {

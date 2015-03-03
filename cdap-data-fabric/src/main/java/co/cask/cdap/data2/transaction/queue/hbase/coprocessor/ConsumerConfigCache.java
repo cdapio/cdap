@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableNames;
+import co.cask.cdap.data2.util.hbase.HBaseNameConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -69,10 +69,10 @@ public class ConsumerConfigCache {
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, HBaseTableNames tableNames) {
+  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, HBaseNameConverter hBaseNameConverter) {
     this.hConf = hConf;
     this.queueConfigTableName = queueConfigTableName;
-    this.tablePrefix = tableNames.getSysConfigTablePrefix(Bytes.toString(queueConfigTableName));
+    this.tablePrefix = hBaseNameConverter.getSysConfigTablePrefix(Bytes.toString(queueConfigTableName));
     this.configTable = new ConfigurationTable(hConf);
   }
 
@@ -206,10 +206,11 @@ public class ConsumerConfigCache {
     refreshThread.start();
   }
 
-  public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName, HBaseTableNames tableNames) {
+  public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
+                                                HBaseNameConverter hBaseNameConverter) {
     ConsumerConfigCache cache = instances.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, tableNames);
+      cache = new ConsumerConfigCache(hConf, tableName, hBaseNameConverter);
       if (instances.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();
