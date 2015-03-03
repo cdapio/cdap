@@ -30,7 +30,6 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -41,7 +40,7 @@ public abstract class AbstractNamespaceClient implements NamespaceClient {
   private static final String NAMESPACE_ENTITY_TYPE = "namespace";
 
   protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnAuthorizedAccessTokenException;
-  protected abstract URL resolve(String resource) throws MalformedURLException;
+  protected abstract URL resolve(String resource) throws IOException;
 
   @Override
   public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {

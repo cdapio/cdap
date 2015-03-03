@@ -31,7 +31,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -57,18 +56,18 @@ public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  protected URL resolve(String resource) throws MalformedURLException {
+  protected URL resolve(String resource) throws IOException {
     InetSocketAddress addr = getNamespaceServiceAddress();
     String url = String.format("http://%s:%d%s/%s", addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3, resource);
     return new URL(url);
   }
 
-  private InetSocketAddress getNamespaceServiceAddress() {
+  private InetSocketAddress getNamespaceServiceAddress() throws IOException {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new RuntimeException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+    throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
   }
 }
