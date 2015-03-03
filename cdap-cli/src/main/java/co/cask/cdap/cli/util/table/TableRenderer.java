@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.cli.util.table;
 
-package co.cask.cdap.cli.util;
-
-import java.util.List;
+import java.io.PrintStream;
 
 /**
- * Makes an {@link Object} row from some object.
- *
- * @param <T> the type of object to make rows from
+ * Renders a {@link Table}.
  */
-public interface RowMaker<T> {
-  List<?> makeRow(T object);
+public interface TableRenderer {
+  /**
+   * Renders the table to the output.
+   *
+   * @param output the output to render to
+   * @param table the table to render
+   */
+  void render(PrintStream output, Table table);
 }
