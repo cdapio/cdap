@@ -63,7 +63,8 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
       .setRows(allProgramsList, new RowMaker<ProgramRecord>() {
         @Override
         public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(object.getType().getCategoryName(), object.getApp(), object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getType().getCategoryName(), object.getApp(),
+                                    object.getId(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);
