@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -63,7 +62,6 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
-      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
       .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .properties(properties.getProperties())
       .build();

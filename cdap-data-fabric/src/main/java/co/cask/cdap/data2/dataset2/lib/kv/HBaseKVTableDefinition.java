@@ -93,9 +93,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     @Override
     public void create() throws IOException {
       HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
-      // todo: make stuff configurable
-      // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
-      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+      columnDescriptor.setMaxVersions(1);
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);

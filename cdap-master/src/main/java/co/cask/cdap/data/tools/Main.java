@@ -18,7 +18,6 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -233,7 +232,7 @@ public class Main {
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
     final HBaseTableUtil hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
 
-    for (HTableDescriptor desc : hAdmin.listTables()) {
+    for (final HTableDescriptor desc : hAdmin.listTables()) {
       String tableName = desc.getNameAsString();
       TableId tableId = TableId.from(tableName);
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
@@ -241,18 +240,14 @@ public class Main {
       if (namespace.fromNamespaced(datasetInstanceId) != null) {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
-        final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
-        final boolean transactional =
-          !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
             return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
                 injector.getInstance(LocationFactory.class),
                 hBaseTableUtil,
-                transactional,
-                supportsIncrement);
+                HBaseTableAdmin.isTransactional(desc),
+                HBaseTableAdmin.supportsReadlessIncrements(desc));
           }
 
           @Override

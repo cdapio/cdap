@@ -127,7 +127,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.3.4</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.4.0-incubating</twill.version>
+    <twill.version>0.5.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <xstream.version>1.4.5</xstream.version>
     <zookeeper.version>3.4.5</zookeeper.version>

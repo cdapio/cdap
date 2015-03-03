@@ -17,8 +17,8 @@ Overview
 This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets,
 Datasets, Queries, MapReduce programs, Workflows, and Services—all in a single Application.
 
-The application uses a scheduled MapReduce and Workflow to read from one ObjectStore Dataset
-and write to another.
+The application uses a scheduled MapReduce and Workflow to read from an ObjectMappedTable Dataset
+and write to an ObjectStore Dataset.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
@@ -64,7 +64,7 @@ of the Application are tied together by the class ``PurchaseApp``:
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 ------------------------------------------------------------------------
 
-The raw purchase data is stored in an ObjectStore Dataset, *purchases*,
+The raw purchase data is stored in an ObjectMappedTable Dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
@@ -242,7 +242,7 @@ SDK in ``libexec\bin\curl.exe``
 Exploring the Results Using SQL
 -------------------------------
 
-You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of
+You can use SQL to formulate ad-hoc queries over the *history* and *purchases* Datasets. This is done by a series of
 ``curl`` calls, as described in the :ref:`RESTful API <http-restful-api-query>` section of the 
 :ref:`CDAP Reference Manual. <reference-index>`
 For your convenience, the SDK includes a script, ``bin/cdap-cli.sh``, that can execute the series of calls.

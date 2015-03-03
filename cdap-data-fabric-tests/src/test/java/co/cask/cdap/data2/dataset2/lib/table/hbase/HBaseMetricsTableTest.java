@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -138,7 +139,8 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, name);
-    return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
-                                           DatasetProperties.EMPTY, null, null);
+    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
+    return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
+                                           MetricsTable.class.getName(), props, null, null);
   }
 }

@@ -316,11 +316,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
-        OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog, schemaPattern,
+        String database = getHiveDatabase(schemaPattern);
+        OperationHandle operationHandle = cliService.getColumns(sessionHandle, catalog, database,
                                                                 tableNamePattern, columnNamePattern);
-        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", schemaPattern);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
-                  catalog, schemaPattern, tableNamePattern, columnNamePattern);
+                  catalog, database, tableNamePattern, columnNamePattern);
         return handle;
       } catch (Throwable e) {
         closeSession(sessionHandle);
@@ -364,9 +365,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
-        OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalog, schemaPattern);
-        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", schemaPattern);
-        LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, schemaPattern);
+        String database = getHiveDatabase(schemaPattern);
+        OperationHandle operationHandle = cliService.getSchemas(sessionHandle, catalog, database);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", database);
+        LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, database);
         return handle;
       } catch (Throwable e) {
         closeSession(sessionHandle);
@@ -388,11 +390,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
+        String database = getHiveDatabase(schemaPattern);
         OperationHandle operationHandle = cliService.getFunctions(sessionHandle, catalog,
-                                                                  schemaPattern, functionNamePattern);
-        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", schemaPattern);
+                                                                  database, functionNamePattern);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving functions: catalog {}, schema {}, function {}",
-                  catalog, schemaPattern, functionNamePattern);
+                  catalog, database, functionNamePattern);
         return handle;
       } catch (Throwable e) {
         closeSession(sessionHandle);
@@ -453,11 +456,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
-        OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog, schemaPattern,
+        String database = getHiveDatabase(schemaPattern);
+        OperationHandle operationHandle = cliService.getTables(sessionHandle, catalog, database,
                                                                tableNamePattern, tableTypes);
-        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", schemaPattern);
+        QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
-                  catalog, schemaPattern, tableNamePattern, tableTypes);
+                  catalog, database, tableNamePattern, tableTypes);
         return handle;
       } catch (Throwable e) {
         closeSession(sessionHandle);
@@ -474,15 +478,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public List<TableNameInfo> getTables(@Nullable final String database) throws ExploreException {
     startAndWait();
 
-    // TODO check if the database user is allowed to access if security is enabled and
-    // namespacing is in place.
-
+    // TODO check if the database user is allowed to access if security is enabled
     try {
       List<String> databases;
       if (database == null) {
         databases = getMetaStoreClient().getAllDatabases();
       } else {
-        databases = ImmutableList.of(database);
+        databases = ImmutableList.of(getHiveDatabase(database));
       }
       ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
       for (String db : databases) {
@@ -502,11 +504,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws ExploreException, TableNotFoundException {
     startAndWait();
 
-    // TODO check if the database user is allowed to access if security is enabled and
-    // namespacing is in place.
-
+    // TODO check if the database user is allowed to access if security is enabled
     try {
-      String db = database == null ? "default" : database;
+      String db = database == null ? "default" : getHiveDatabase(database);
 
       Table tableInfo = getMetaStoreClient().getTable(db, table);
       List<FieldSchema> tableFields = tableInfo.getSd().getCols();
@@ -616,11 +616,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       String namespaceId = namespace.getId();
+
+      // Even with the "IF NOT EXISTS" in the create command, Hive still logs a non-fatal warning internally
+      // when attempting to create the "default" namsepace (since it already exists in Hive).
+      // This check prevents the extra warn log.
+      if (namespaceId.equals(Constants.DEFAULT_NAMESPACE)) {
+        return QueryHandle.NO_OP;
+      }
+
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
 
       // "IF NOT EXISTS" so that this operation is idempotent.
-      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", namespaceId);
+      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", getHiveDatabase(namespace.getId()));
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, namespaceId);
       LOG.trace("Creating database {} with handle {}", namespaceId, handle);
@@ -637,15 +645,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
 
     try {
-      String namespaceId = namespace.getId();
       Map<String, String> sessionConf = startSession();
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
 
-      String statement = String.format("DROP DATABASE %s", namespaceId);
+      String database = getHiveDatabase(namespace.getId());
+      String statement = String.format("DROP DATABASE %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
-      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, namespaceId);
-      LOG.trace("Creating database {} with handle {}", namespaceId, handle);
+      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
+      LOG.trace("Creating database {} with handle {}", database, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -663,12 +671,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
+        String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
-        SessionState.get().setCurrentDatabase(namespace.getId());
+        SessionState.get().setCurrentDatabase(database);
 
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf,
-                                               statement, namespace.getId());
+                                               statement, database);
         LOG.trace("Executing statement: {} with handle {}", statement, handle);
         return handle;
       } catch (Throwable e) {
@@ -972,6 +981,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     } catch (Throwable e) {
       LOG.error("Got error closing session", e);
     }
+  }
+
+  private String getHiveDatabase(String namespace) {
+    // null namespace implies that the operation happens across all databases
+    if (namespace == null) {
+      return null;
+    }
+    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("cdap_%s", namespace);
   }
 
   /**
