@@ -70,7 +70,7 @@ public class CLIMain {
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
   private static final Option HELP_OPTION = new Option(
-    "h", "help", false, "Prints the usage message.");
+    "h", "help", false, "Print the usage message.");
 
   private static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
@@ -88,7 +88,7 @@ public class CLIMain {
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option DEBUG_OPTION = new Option(
-    "d", "debug", false, "Print all exception stack traces.");
+    "d", "debug", false, "Print exception stack traces.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
