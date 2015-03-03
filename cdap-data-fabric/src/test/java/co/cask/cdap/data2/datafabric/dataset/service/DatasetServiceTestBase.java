@@ -133,7 +133,7 @@ public abstract class DatasetServiceTestBase {
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
                               new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
+                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
