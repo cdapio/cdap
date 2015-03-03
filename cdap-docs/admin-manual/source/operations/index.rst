@@ -91,7 +91,7 @@ On success, the calls return a valid HTTP response with a 200 code.
 - To retrieve the **health check of all the services running in YARN**, make a GET request
   to the URI::
   
-    http://<host>:10000/v3/namespaces/system/services
+    http://<host>:10000/v3/system/services
 
   On success, the call returns a JSON string with component names and their corresponding 
   statuses (reformatted to fit)::
