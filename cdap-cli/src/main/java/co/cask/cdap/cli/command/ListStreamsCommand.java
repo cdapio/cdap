@@ -25,7 +25,7 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -53,7 +53,7 @@ public class ListStreamsCommand extends AbstractAuthCommand {
       .setRows(streamClient.list(), new RowMaker<StreamRecord>() {
         @Override
         public List<?> makeRow(StreamRecord object) {
-          return ImmutableList.of(object.getId());
+          return Lists.newArrayList(object.getId());
         }
       }).build();
     tableRenderer.render(output, table);

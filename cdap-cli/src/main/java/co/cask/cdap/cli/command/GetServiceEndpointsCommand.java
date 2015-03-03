@@ -30,7 +30,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -67,7 +67,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
       .setRows(endpoints, new RowMaker<ServiceHttpEndpoint>() {
         @Override
         public List<?> makeRow(ServiceHttpEndpoint endpoint) {
-          return ImmutableList.of(endpoint.getMethod(), endpoint.getPath());
+          return Lists.newArrayList(endpoint.getMethod(), endpoint.getPath());
         }
       }).build();
     tableRenderer.render(output, table);

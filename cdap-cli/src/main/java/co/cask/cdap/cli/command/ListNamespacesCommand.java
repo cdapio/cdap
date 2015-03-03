@@ -24,7 +24,7 @@ import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -51,7 +51,7 @@ public class ListNamespacesCommand implements Command {
       .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

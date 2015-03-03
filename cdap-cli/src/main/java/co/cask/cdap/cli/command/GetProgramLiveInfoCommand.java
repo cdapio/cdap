@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -60,13 +61,18 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
     DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(appId, elementType.getProgramType(), programId);
 
+    if (liveInfo == null) {
+      output.println("No live info found");
+      return;
+    }
+
     Table table = Table.builder()
       .setHeader("app", "type", "id", "runtime", "yarn app id")
       .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
         @Override
         public List<?> makeRow(DistributedProgramLiveInfo object) {
-          return ImmutableList.of(object.getApp(), object.getType(), object.getId(),
-                                  object.getRuntime(), object.getYarnAppId());
+          return Lists.newArrayList(object.getApp(), object.getType(), object.getId(),
+                                    object.getRuntime(), object.getYarnAppId());
         }
       }).build();
     tableRenderer.render(output, table);
@@ -77,7 +83,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
         .setRows(liveInfo.getContainers(), new RowMaker<Containers.ContainerInfo>() {
           @Override
           public List<?> makeRow(Containers.ContainerInfo object) {
-            return ImmutableList.of("", object.getInstance(), object.getHost(), object.getContainer(),
+            return Lists.newArrayList("", object.getInstance(), object.getHost(), object.getContainer(),
               object.getMemory(), object.getVirtualCores(), object.getDebugPort());
           }
         }).build();

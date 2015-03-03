@@ -26,7 +26,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -57,7 +57,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
       .setRows(programs, new RowMaker<ProgramRecord>() {
         @Override
         public List<?> makeRow(ProgramRecord object) {
-          return ImmutableList.of(object.getApp(), object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getApp(), object.getId(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

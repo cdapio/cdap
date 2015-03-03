@@ -37,6 +37,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -103,8 +104,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
         public List<?> makeRow(HttpResponse httpResponse) {
           ByteBuffer byteBuffer = ByteBuffer.wrap(httpResponse.getResponseBody());
           long bodySize = byteBuffer.remaining();
-          return ImmutableList.of(httpResponse.getResponseCode(), formatHeaders(httpResponse),
-                                  bodySize, getBody(byteBuffer));
+          return Lists.newArrayList(httpResponse.getResponseCode(), formatHeaders(httpResponse),
+                                    bodySize, getBody(byteBuffer));
         }
       }).build();
     tableRenderer.render(output, table);

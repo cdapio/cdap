@@ -25,7 +25,7 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -53,7 +53,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
       .setRows(appClient.list(), new RowMaker<ApplicationRecord>() {
         @Override
         public List<?> makeRow(ApplicationRecord object) {
-          return ImmutableList.of(object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getId(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

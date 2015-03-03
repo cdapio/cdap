@@ -40,11 +40,12 @@ public class CsvTableRenderer implements TableRenderer {
   @Override
   public void render(PrintStream output, Table table) {
     if (table.getHeader() != null) {
-      output.println(CSV_JOINER.join(table.getHeader()));
+      output.println(CSV_JOINER.useForNull("").join(table.getHeader()));
     }
 
     for (List<String> row : table.getRows()) {
-      output.println(CSV_JOINER.join(row));
+      String string = CSV_JOINER.useForNull("").join(row);
+      output.println(string);
     }
   }
 }

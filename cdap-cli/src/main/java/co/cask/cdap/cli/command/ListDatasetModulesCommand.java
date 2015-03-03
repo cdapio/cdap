@@ -25,7 +25,7 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -54,7 +54,7 @@ public class ListDatasetModulesCommand extends AbstractAuthCommand {
       .setRows(modules, new RowMaker<DatasetModuleMeta>() {
         @Override
         public List<?> makeRow(DatasetModuleMeta object) {
-          return ImmutableList.of(object.getName(), object.getClassName());
+          return Lists.newArrayList(object.getName(), object.getClassName());
         }
       }).build();
     tableRenderer.render(output, table);

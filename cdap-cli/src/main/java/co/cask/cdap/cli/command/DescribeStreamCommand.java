@@ -28,6 +28,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -59,7 +60,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
         @Override
         public List<?> makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
-          return ImmutableList.of(object.getTTL(), format.getName(), format.getSchema().toString());
+          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString());
         }
       }).build();
     tableRenderer.render(output, table);
