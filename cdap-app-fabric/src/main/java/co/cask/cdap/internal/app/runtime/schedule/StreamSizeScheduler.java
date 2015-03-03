@@ -31,12 +31,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.notifications.feeds.NotificationFeedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -47,6 +44,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Cancellable;
@@ -64,7 +62,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,7 +90,7 @@ public class StreamSizeScheduler implements Scheduler {
   private Executor sendPollingInfoExecutor;
 
   // Used to schedule polling of a stream only after a certain time - the time after which the metrics are updated
-  private ScheduledExecutorService pollingBookingExecutor;
+  private ScheduledExecutorService pollBookingExecutor;
 
   // Scheduled executor used to poll stream at regular intervals, by querying the metric system
   private ScheduledExecutorService streamPollingExecutor;
@@ -119,16 +116,16 @@ public class StreamSizeScheduler implements Scheduler {
       Threads.createDaemonThreadFactory("stream-size-scheduler-%d"));
     streamPollingExecutor = Executors.newScheduledThreadPool(STREAM_POLLING_THREAD_POOL_SIZE,
                                                              Threads.createDaemonThreadFactory("stream-polling-%d"));
-    pollingBookingExecutor = Executors.newSingleThreadScheduledExecutor(
+    pollBookingExecutor = Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("polling-booking-executor"));
   }
 
   public void stop() {
-    pollingBookingExecutor.shutdownNow();
-    streamPollingExecutor.shutdownNow();
     for (StreamSubscriber subscriber : streamSubscribers.values()) {
-      subscriber.cancel();
+      subscriber.stopAndWait();
     }
+    pollBookingExecutor.shutdownNow();
+    streamPollingExecutor.shutdownNow();
   }
 
   @Override
@@ -165,17 +162,7 @@ public class StreamSizeScheduler implements Scheduler {
       streamSubscriber = new StreamSubscriber(streamId);
       StreamSubscriber previous = streamSubscribers.putIfAbsent(streamId, streamSubscriber);
       if (previous == null) {
-        try {
-          streamSubscriber.start();
-        } catch (NotificationFeedException e) {
-          streamSubscribers.remove(streamId);
-          LOG.error("Notification feed error for streamSizeSchedule {}", streamSizeSchedule);
-          throw new SchedulerException(e);
-        } catch (NotificationFeedNotFoundException e) {
-          streamSubscribers.remove(streamId);
-          LOG.error("Notification feed does not exist for streamSizeSchedule {}", streamSizeSchedule);
-          throw new SchedulerException(e);
-        }
+        streamSubscriber.startAndWait();
       } else {
         streamSubscriber = previous;
       }
@@ -210,8 +197,7 @@ public class StreamSizeScheduler implements Scheduler {
     char endChar = (char) (startChar + 1);
     String programScheduleId = AbstractSchedulerService.programIdFor(program, programType);
     return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar),
-                                                           String.format("%s%c", programScheduleId, endChar))
-                                  .keySet());
+                                                           String.format("%s%c", programScheduleId, endChar)).keySet());
   }
 
   @Override
@@ -327,40 +313,110 @@ public class StreamSizeScheduler implements Scheduler {
    * The {@link StreamSizeScheduler} communicates with this class, which in turn communicates to the schedules
    * it contains to perform operations on the schedules - suspend, resume, etc.
    */
-  private final class StreamSubscriber implements NotificationHandler<StreamSizeNotification>, Cancellable {
+  private final class StreamSubscriber extends AbstractScheduledService
+    implements NotificationHandler<StreamSizeNotification> {
     // Key is the schedule ID
     private final ConcurrentMap<String, StreamSizeScheduleTask> scheduleTasks;
     private final Id.Stream streamId;
     private final AtomicInteger activeTasks;
 
     private Cancellable notificationSubscription;
-    private ScheduledFuture<?> scheduledPolling;
     private StreamSizeNotification lastNotification;
-    private StreamSizeNotification lastPollingInfo;
+    private StreamSize lastPollingInfo;
+    private Long delta;
 
     private StreamSubscriber(Id.Stream streamId) {
       this.streamId = streamId;
       this.scheduleTasks = Maps.newConcurrentMap();
       this.activeTasks = new AtomicInteger(0);
+      this.delta = null;
     }
 
-    public void start() throws NotificationFeedException, NotificationFeedNotFoundException {
+    @Override
+    protected void startUp() throws Exception {
       notificationSubscription = notificationService.subscribe(getFeed(), this, sendPollingInfoExecutor);
     }
 
     @Override
-    public void cancel() {
-      if (scheduledPolling != null) {
-        scheduledPolling.cancel(true);
-      }
+    protected void shutDown() throws Exception {
       if (notificationSubscription != null) {
         notificationSubscription.cancel();
       }
     }
 
+    @Override
+    protected void runOneIteration() throws Exception {
+      if (activeTasks.get() == 0) {
+        return;
+      }
+
+      try {
+        StreamSize streamSize = pollOnce();
+        sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
+      } catch (Throwable t) {
+        LOG.error("Could not poll stream {}", streamId.getName(), t);
+      }
+    }
+
+    @Override
+    protected Scheduler scheduler() {
+      return Scheduler.newFixedRateSchedule(pollingDelay, pollingDelay, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    protected ScheduledExecutorService executor() {
+      return streamPollingExecutor;
+    }
+
+    @Override
+    public Type getNotificationFeedType() {
+      return StreamSizeNotification.class;
+    }
+
+    @Override
+    public void received(final StreamSizeNotification notification, NotificationContext notificationContext) {
+      // We only use the stream size notification to the schedule tasks if it came after the last seen notification
+      boolean send = false;
+      if (lastNotification == null || notification.getTimestamp() > lastNotification.getTimestamp()) {
+        send = true;
+        lastNotification = notification;
+      }
+      if (send) {
+        if (activeTasks.get() > 0) {
+
+          boolean poll = false;
+          if (delta == null) {
+            poll = true;
+          } else {
+            for (StreamSizeScheduleTask streamSizeScheduleTask : scheduleTasks.values()) {
+              if (streamSizeScheduleTask.shouldTriggerProgram(notification.getSize() - delta)) {
+                poll = true;
+                break;
+              }
+            }
+          }
+
+          if (poll) {
+            pollBookingExecutor.schedule(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  StreamSize streamSize = pollOnce();
+                  delta = notification.getSize() - streamSize.getSize();
+                  sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(),
+                                                                          streamSize.getSize()));
+                } catch (Throwable t) {
+                  LOG.error("Could not poll stream {}", streamId.getName(), t);
+                }
+              }
+            }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
+          }
+        }
+      }
+    }
+
     /**
      * Add a new scheduling task based on the data received by the stream referenced by {@code this} object.
-     * @return {@code true} if the task was created successfully, {@code false} if it already exists
      */
     public void createScheduleTask(Id.Program programId, SchedulableProgramType programType,
                                    StreamSizeSchedule streamSizeSchedule, boolean active,
@@ -381,43 +437,23 @@ public class StreamSizeScheduler implements Scheduler {
         }
       }
 
+      StreamSize streamSize;
+      try {
+        streamSize = pollOnce();
+      } catch (IOException e) {
+        // Polling should not fail - the whole logic of stream size schedules relies on it
+        throw new SchedulerException("Polling could not be performed on stream " + streamSizeSchedule.getStreamName(),
+                                     e);
+      }
+
       // Initialize the schedule task
       if (baseRunSize == -1 && baseRunTs == -1) {
-        // This is the first time that we schedule this task - ie it was not in the schedule store
-        // before. Hence we set the base info properly by polling the stream
-        try {
-          StreamSize streamSize = queryStreamEventsSize();
-          cancelPollingAndScheduleNext();
-          newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(), active, persist);
-          if (lastPollingInfo == null || lastPollingInfo.getTimestamp() < streamSize.getTimestamp()) {
-            lastPollingInfo = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
-          }
-          sendPollingInfoToActiveTasks(lastPollingInfo);
-        } catch (IOException e) {
-          // Polling should not fail - the whole logic of stream size schedules relies on it
-          throw new SchedulerException("Polling could not be performed on stream " + streamSizeSchedule.getStreamName(),
-                                       e);
-        }
+        newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(), active, persist);
       } else {
         newTask.startSchedule(baseRunSize, baseRunTs, active, persist);
-        if (active) {
-          // We send the last up to date information to the schedule task
-          if (lastNotification == null && lastPollingInfo != null ||
-            lastNotification != null && lastPollingInfo != null &&
-              lastPollingInfo.getTimestamp() >= lastNotification.getTimestamp()) {
-            // We notify the task of a polling info in the executor so that its execution
-            // is not part of the synchronize block
-            sendPollingInfoExecutor.execute(new Runnable() {
-              @Override
-              public void run() {
-                newTask.receivedPollingInformation(lastPollingInfo);
-              }
-            });
-          } else if (lastNotification != null) {
-            sendNotificationToTask(lastNotification, newTask);
-          }
-        }
       }
+
+      sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
     }
 
     /**
@@ -438,48 +474,24 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Resume a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
-    public void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType,
+    public synchronized void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType,
                                                 String scheduleName) throws ScheduleNotFoundException {
       final StreamSizeScheduleTask task;
-      synchronized (this) {
-        String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
-        task = scheduleTasks.get(scheduleId);
-        if (task == null) {
-          throw new ScheduleNotFoundException(scheduleName);
-        }
-        if (!task.resume()) {
-          return;
-        }
-        if (activeTasks.incrementAndGet() == 1) {
-          // There were no active tasks until then, that means polling the stream was disabled.
-          // We need to check if it is necessary to poll the stream at this time, if the last
-          // notification received was too long ago, or if there is no last seen notification
-          if (lastPollingInfo == null ||
-            (lastPollingInfo.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
-            try {
-              // Resume stream polling
-              StreamSize streamSize = queryStreamEventsSize();
-              cancelPollingAndScheduleNext();
-              lastPollingInfo = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
-            } catch (IOException e) {
-              LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error",
-                        scheduleName, e);
-            }
-          }
-        }
+      String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
+      task = scheduleTasks.get(scheduleId);
+      if (task == null) {
+        throw new ScheduleNotFoundException(scheduleName);
+      }
+      if (!task.resume()) {
+        return;
       }
 
-      // We need to send the last up to date information to the schedule task
-      // We know at least here that lastPollingInfo is not null, since we updated it in the synchronized block
-      if (lastNotification == null || lastPollingInfo.getTimestamp() >= lastNotification.getTimestamp()) {
-        sendPollingInfoExecutor.execute(new Runnable() {
-          @Override
-          public void run() {
-            task.receivedPollingInformation(lastPollingInfo);
-          }
-        });
-      } else {
-        sendNotificationToTask(lastNotification, task);
+      try {
+        StreamSize streamSize = pollOnce();
+        sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
+      } catch (IOException e) {
+        LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error",
+                  scheduleName, e);
       }
     }
 
@@ -497,20 +509,12 @@ public class StreamSizeScheduler implements Scheduler {
       }
       scheduleTask.updateSchedule(schedule);
 
-      // We need to send the last up to date information to the schedule task
-      if (lastNotification == null && lastPollingInfo != null ||
-        lastNotification != null && lastPollingInfo != null &&
-          lastPollingInfo.getTimestamp() >= lastNotification.getTimestamp()) {
-        // We notify the task of a polling info in the executor so that its execution
-        // is not part of the synchronize block
-        sendPollingInfoExecutor.execute(new Runnable() {
-          @Override
-          public void run() {
-            scheduleTask.receivedPollingInformation(lastPollingInfo);
-          }
-        });
-      } else if (lastNotification != null) {
-        sendNotificationToTask(lastNotification, scheduleTask);
+      try {
+        StreamSize streamSize = pollOnce();
+        sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
+      } catch (IOException e) {
+        LOG.debug("Ignoring stream events size polling after resuming schedule {} due to error",
+                  schedule.getName(), e);
       }
     }
 
@@ -547,26 +551,18 @@ public class StreamSizeScheduler implements Scheduler {
       return streamId;
     }
 
-    @Override
-    public Type getNotificationFeedType() {
-      return StreamSizeNotification.class;
-    }
-
-    @Override
-    public void received(StreamSizeNotification notification, NotificationContext notificationContext) {
-      // We only pass the stream size notification to the schedule tasks if the notification
-      // came after the last seen notification
-      boolean send = false;
-      if (lastNotification == null || notification.getTimestamp() > lastNotification.getTimestamp()) {
-        send = true;
-        lastNotification = notification;
-      }
-      if (send) {
-        if (activeTasks.get() > 0) {
-          cancelPollingAndScheduleNext();
+    /**
+     * Poll the stream size using metrics.
+     */
+    private synchronized StreamSize pollOnce() throws IOException {
+      StreamSize streamSize = queryStreamEventsSize();
+      if (lastPollingInfo != null && streamSize.getSize() < lastPollingInfo.getSize()) {
+        for (StreamSizeScheduleTask streamSizeScheduleTask : scheduleTasks.values()) {
+          streamSizeScheduleTask.reset();
         }
-        sendNotificationToActiveTasks(notification);
       }
+      lastPollingInfo = streamSize;
+      return streamSize;
     }
 
     /**
@@ -574,7 +570,6 @@ public class StreamSizeScheduler implements Scheduler {
      * {@link StreamSizeSchedule} referenced by this object.
      */
     private void sendPollingInfoToActiveTasks(final StreamSizeNotification pollingInfo) {
-      lastPollingInfo = pollingInfo;
       for (final StreamSizeScheduleTask task : scheduleTasks.values()) {
         if (!task.isActive()) {
           continue;
@@ -582,61 +577,10 @@ public class StreamSizeScheduler implements Scheduler {
         sendPollingInfoExecutor.execute(new Runnable() {
           @Override
           public void run() {
-            // Here we send the lastPollingInfo - it may have been updated since and not be equal to pollingInfo anymore
-            // We want to send the task the last updated info. pollingInfo is not out of date.
-            task.receivedPollingInformation(lastPollingInfo);
+            task.receivedPollingInformation(pollingInfo);
           }
         });
       }
-    }
-
-    /**
-     * Send a notification to one {@link StreamSizeScheduleTask}. It the task requests a polling after seeing the
-     * {@code notification}, this method performs it and sends the result to all active tasks.
-     */
-    private void sendNotificationToTask(StreamSizeNotification notification, StreamSizeScheduleTask task) {
-      if (task.receivedNotification(notification)) {
-        schedulePolling();
-      }
-    }
-
-    /**
-     * Send a {@link StreamSizeNotification} coming from the notification service to all the active
-     * {@link StreamSizeSchedule} referenced by this object. If one of the active tasks requests a polling
-     * after seeing that notification, that method performs it and sends the result to all active tasks.
-     */
-    private void sendNotificationToActiveTasks(StreamSizeNotification notification) {
-      boolean triggerPolling = false;
-      for (final StreamSizeScheduleTask task : scheduleTasks.values()) {
-        if (!task.isActive()) {
-          continue;
-        }
-        triggerPolling = triggerPolling | task.receivedNotification(notification);
-      }
-      if (triggerPolling) {
-        schedulePolling();
-      }
-    }
-
-    /**
-     * This method is called after a notification is received, and shows that a polling should be triggered to confirm
-     * the execution of a program.
-     * The polling task is run only after the metric system has collected the stream metrics and shows a more
-     * accurate number, in accordance with the notification received.
-     */
-    private void schedulePolling() {
-      pollingBookingExecutor.schedule(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            StreamSize streamSize = queryStreamEventsSize();
-            cancelPollingAndScheduleNext();
-            sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
-          } catch (IOException e) {
-            LOG.warn("Could not poll stream {} size using metrics", streamId, e);
-          }
-        }
-      }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
     }
 
     private Id.NotificationFeed getFeed() {
@@ -648,48 +592,7 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     /**
-     * Cancel the currently scheduled stream size polling task, and reschedule one for later. Polling the stream
-     * should only be performed when no information about the stream is received in a certain delay. When receiving
-     * a notification or polling the stream arbitrarily, this method should be called to reschedule the polling
-     * task only for a later time.
-     */
-    private synchronized void cancelPollingAndScheduleNext() {
-      if (scheduledPolling != null) {
-        // This method might be called from the run method defined in the below Runnable - in which case
-        // this scheduledPolling would in fact be active. Hence we don't want to interrupt the active schedulePolling
-        // future by passing true to the cancel method
-        scheduledPolling.cancel(false);
-      }
-
-      // Regardless of whether cancelling was successful, we still want to schedule the next polling
-      scheduledPolling = streamPollingExecutor.schedule(createPollingRunnable(), pollingDelay, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * @return a runnable that uses the {@link StreamAdmin} to poll the stream size, and creates a fake notification
-     *         with that size, so that this information can be treated as if it came from a real notification.
-     */
-    private Runnable createPollingRunnable() {
-      return new Runnable() {
-        @Override
-        public void run() {
-          // We only perform polling if at least one scheduleTask is active
-          if (activeTasks.get() > 0) {
-            try {
-              StreamSize streamSize = queryStreamEventsSize();
-              cancelPollingAndScheduleNext();
-              sendPollingInfoToActiveTasks(new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize()));
-            } catch (IOException e) {
-              LOG.debug("Ignoring stream events size polling after error", e);
-            }
-          }
-        }
-      };
-    }
-
-    /**
      * Query the metrics system to get the size of events ingested by a stream.
-     * All calls to this method should be followed by a call to {@link #cancelPollingAndScheduleNext}.
      *
      * @return size of events ingested by the stream so far, queried using the metric system
      */
@@ -735,15 +638,6 @@ public class StreamSizeScheduler implements Scheduler {
     private final AtomicBoolean active;
     private StreamSizeSchedule streamSizeSchedule;
 
-    // Indicates that a notification has been received, that required
-    // a polling to recalibrate the notification base counter
-    private final AtomicBoolean recalibrationNeeded;
-
-    // Size, in bytes, given by the notification which serves as a base when comparing notifications
-    private long baseNotificationSize;
-    // Size, in bytes, given by the last received notification
-    private long lastNotificationSize;
-
     // Size, in bytes, given by the polling info which serves as a base when comparing polling info
     private long basePollSize;
     // Time, in milliseconds, when the previous attribute was computed
@@ -760,7 +654,6 @@ public class StreamSizeScheduler implements Scheduler {
       this.programType = programType;
       this.streamSizeSchedule = streamSizeSchedule;
       this.active = new AtomicBoolean(false);
-      this.recalibrationNeeded = new AtomicBoolean(false);
     }
 
     /**
@@ -776,8 +669,6 @@ public class StreamSizeScheduler implements Scheduler {
                 streamSizeSchedule.getName(), basePollSize, basePollTs, active, persist);
       this.basePollSize = basePollSize;
       this.basePollTs = basePollTs;
-      this.baseNotificationSize = -1;
-      this.lastNotificationSize = -1;
       this.lastRunSize = -1;
       this.lastRunTs = -1;
       this.active.set(active);
@@ -785,39 +676,6 @@ public class StreamSizeScheduler implements Scheduler {
 
     public boolean isActive() {
       return active.get();
-    }
-
-    /**
-     * Received stream size information coming from the notification service. We are guaranteed to receive
-     * notifications in chronological order.
-     *
-     * @param notification {@link StreamSizeNotification} info that came from the notification service
-     * @return {@code true} if the stream should be polled to get more accurate info on it. {@code false} if we
-     *         don't need to
-     */
-    public boolean receivedNotification(@Nonnull StreamSizeNotification notification) {
-      Preconditions.checkNotNull(notification);
-      if (!active.get()) {
-        return false;
-      }
-
-      synchronized (this) {
-        long tmpLastNotificationSize = lastNotificationSize;
-        lastNotificationSize = notification.getSize();
-        if (tmpLastNotificationSize == -1 ||
-          baseNotificationSize != -1 &&
-            notification.getSize() >= baseNotificationSize + toBytes(streamSizeSchedule.getDataTriggerMB())) {
-          // Trigger polling of stream, so that we can recalibrate the base notification size in the
-          // receivedPollingInformation method
-          recalibrationNeeded.set(true);
-          return true;
-        }
-      }
-      // In the case where lastNotificationSize != -1 but baseNotificationSize == -1,
-      // there is nothing to do, because the previous condition lastNotificationSize == -1
-      // has already been met at an earlier time, and we are waiting for a polling now to
-      // recalibrate the base notification size
-      return false;
     }
 
     /**
@@ -834,33 +692,7 @@ public class StreamSizeScheduler implements Scheduler {
       StreamSizeSchedule currentSchedule;
       ImmutableMap.Builder<String, String> argsBuilder = ImmutableMap.builder();
       synchronized (this) {
-        if (pollingInfo.getSize() < basePollSize) {
-          // Polling the stream showed less data, that means something bad happened to metrics:
-          // either it has TTLed, or has been deleted. In any case, we can't do much but to reset
-          // the base poll size to the last know info
-          basePollSize = pollingInfo.getSize();
-          LOG.warn("Size metric has decreased for stream {}. Scheduling logic for schedule '{}' will " +
-                     "restart from size {}",
-                   streamSizeSchedule.getStreamName(), streamSizeSchedule.getName(), basePollSize);
-
-          // Reset the notification logic now
-          lastNotificationSize = -1;
-          baseNotificationSize = -1;
-          recalibrationNeeded.set(false);
-          return;
-        }
-
-        long dataTriggerBytes = toBytes(streamSizeSchedule.getDataTriggerMB());
-        long delta = pollingInfo.getSize() - basePollSize;
-        if (recalibrationNeeded.compareAndSet(true, false)) {
-          Preconditions.checkArgument(lastNotificationSize != -1,
-                                      "Recalibration required, last notification should exist");
-          // We recalibrate the base notification to be:
-          // last notification minus the delta observed between the current polling info and the base polling info
-          baseNotificationSize = Math.max(0L, lastNotificationSize - (delta % dataTriggerBytes));
-        }
-
-        if (delta < dataTriggerBytes) {
+        if (pollingInfo.getSize() - basePollSize < toBytes(streamSizeSchedule.getDataTriggerMB())) {
           return;
         }
 
@@ -914,8 +746,27 @@ public class StreamSizeScheduler implements Scheduler {
       streamSizeSchedule = schedule;
     }
 
+    /**
+     * Indicates whether this task should trigger the execution of the program, or not.
+     *
+     * @param newEstimateSize estimate of the stream size as of now
+     * @return {@code true} if this task should trigger, {@code false} otherwise
+     */
+    public boolean shouldTriggerProgram(long newEstimateSize) {
+      return active.get() && newEstimateSize >= basePollSize + toBytes(streamSizeSchedule.getDataTriggerMB());
+    }
+
     private long toBytes(int mb) {
       return ((long) mb) * 1024 * 1024;
+    }
+
+    /**
+     * Reset the base counters - it happens when polling the stream using metrics shows less data that the previous
+     * poll. This can only be due to metrics deletion or metric TTL.
+     */
+    public void reset() {
+      basePollSize = 0L;
+      basePollTs = System.currentTimeMillis();
     }
   }
 
