@@ -50,6 +50,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private final ConcurrentMap<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
   private Throwable failureCause;
+  private boolean stopRequested;
 
   protected AbstractProgramController(String programName, RunId runId) {
     this.state = new AtomicReference<State>(State.STARTING);
@@ -57,6 +58,17 @@ public abstract class AbstractProgramController implements ProgramController {
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
     this.caller = new MultiListenerCaller();
+    this.stopRequested = false;
+  }
+
+  @Override
+  public void setStopRequested() {
+    stopRequested = true;
+  }
+
+  @Override
+  public boolean stopRequested() {
+    return stopRequested;
   }
 
   @Override

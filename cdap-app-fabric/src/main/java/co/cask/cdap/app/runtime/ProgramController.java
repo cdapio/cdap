@@ -92,7 +92,12 @@ public interface ProgramController {
     /**
      * Program runs into error. It is a terminal state, no more state transition is allowed.
      */
-    ERROR(ProgramRunStatus.FAILED);
+    ERROR(ProgramRunStatus.FAILED),
+
+    /**
+     * Program was killed by user.
+     */
+    TERMINATED(ProgramRunStatus.TERMINATED);
 
     private final ProgramRunStatus runStatus;
 
@@ -107,6 +112,8 @@ public interface ProgramController {
 
   RunId getRunId();
 
+  void setStopRequested();
+  boolean stopRequested();
   /**
    * Suspend the running {@link ProgramRunner}.
    * @return A {@link ListenableFuture} that will be completed when the program is actually suspended.
