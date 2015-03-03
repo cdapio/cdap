@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -343,12 +344,12 @@ public abstract class AbstractDatasetFrameworkTest {
     });
 
     // check get all in a namespace only includes those in that namespace
-    Collection<DatasetSpecification> specs = framework.getInstances(namespace1);
+    Collection<DatasetSpecificationSummary> specs = framework.getInstances(namespace1);
     Assert.assertEquals(1, specs.size());
-    Assert.assertEquals("table1", specs.iterator().next().getProperty("tag"));
+    Assert.assertEquals("table1", specs.iterator().next().getProperties().get("tag"));
     specs = framework.getInstances(namespace2);
     Assert.assertEquals(1, specs.size());
-    Assert.assertEquals("table2", specs.iterator().next().getProperty("tag"));
+    Assert.assertEquals("table2", specs.iterator().next().getProperties().get("tag"));
 
     // delete one instance and make sure the other still exists
     framework.deleteInstance(table1ID);

@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetRecord;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
@@ -423,9 +425,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   private String listDataEntities(Store store, DatasetFramework dsFramework,
                                   Id.Namespace namespace, Data type) throws Exception {
     if (type == Data.DATASET) {
-      Collection<DatasetSpecification> instances = dsFramework.getInstances(namespace);
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(namespace);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
-      for (DatasetSpecification instance : instances) {
+      for (DatasetSpecificationSummary instance : instances) {
         result.add(makeDataSetRecord(instance.getName(), instance.getType()));
       }
       return GSON.toJson(result);

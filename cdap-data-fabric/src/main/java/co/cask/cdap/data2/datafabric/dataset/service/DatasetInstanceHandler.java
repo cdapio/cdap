@@ -28,10 +28,12 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -50,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -85,10 +88,20 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     this.exploreFacade = exploreFacade;
   }
 
+  // the v2 version of the list API, which returns a collection of DatasetSpecification instead of
+  // a collection of DatasetSpecificationSummary
+  void v2list(HttpResponder responder, String namespaceId) {
+    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
+  }
+
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
+    List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
+    for (DatasetSpecification spec : instanceManager.getAll(Id.Namespace.from(namespaceId))) {
+      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+    }
+    responder.sendJson(HttpResponseStatus.OK, datasetSummaries);
   }
 
   @GET

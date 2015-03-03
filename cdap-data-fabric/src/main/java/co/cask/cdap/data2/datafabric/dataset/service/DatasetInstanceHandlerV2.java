@@ -47,8 +47,7 @@ public class DatasetInstanceHandlerV2 extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder) {
-    datasetInstanceHandler.list(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                Constants.DEFAULT_NAMESPACE);
+    datasetInstanceHandler.v2list(responder, Constants.DEFAULT_NAMESPACE);
   }
 
   @GET
