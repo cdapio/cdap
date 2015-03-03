@@ -68,10 +68,9 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
-  private static final boolean DEFAULT_DEBUG = false;
 
   private static final Option HELP_OPTION = new Option(
-    "h", "help", false, "Prints the usage message");
+    "h", "help", false, "Prints the usage message.");
 
   private static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
@@ -89,8 +88,7 @@ public class CLIMain {
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option DEBUG_OPTION = new Option(
-    "d", "debug", false, "If \"true\", print all exception stack traces." +
-    " Defaults to \"" + DEFAULT_DEBUG + "\".");
+    "d", "debug", false, "Print all exception stack traces.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -211,8 +209,8 @@ public class CLIMain {
         System.exit(0);
       }
       final String uri = command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI());
+      final boolean debug = command.hasOption(DEBUG_OPTION.getOpt());
       final boolean verifySSL = parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL);
-      final boolean debug = parseBooleanOption(command, DEBUG_OPTION, DEFAULT_DEBUG);
       final boolean autoconnect = parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT);
       String[] commandArgs = command.getArgs();
 

@@ -17,9 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.CLIMain;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.inject.name.Named;
 
 import java.io.PrintStream;
 import javax.inject.Inject;
@@ -31,11 +33,14 @@ public class ConnectCommand implements Command {
 
   private final CLIConfig cliConfig;
   private final InstanceURIParser instanceURIParser;
+  private final boolean debug;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser) {
+  public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
+                        @Named(CLIMain.NAME_DEBUG) final boolean debug) {
     this.cliConfig = cliConfig;
     this.instanceURIParser = instanceURIParser;
+    this.debug = debug;
   }
 
   @Override
@@ -43,9 +48,12 @@ public class ConnectCommand implements Command {
     String instanceURI = arguments.get("cdap-instance-uri");
     CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(instanceURI);
     try {
-      cliConfig.tryConnect(connectionInfo, output, true);
+      cliConfig.tryConnect(connectionInfo, output, debug);
     } catch (Exception e) {
       output.println("Failed to connect to " + instanceURI + ": " + e.getMessage());
+      if (debug) {
+        e.printStackTrace(output);
+      }
     }
   }
 
