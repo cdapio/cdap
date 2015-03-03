@@ -16,10 +16,14 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-/**
- * Common utility methods for dealing with HBase table name conversions.
- */
-public abstract class HBaseNameConverter {
-  public abstract String getSysConfigTablePrefix(String tableName);
+import org.junit.Assert;
+import org.junit.Test;
 
+public class HTable98NameConverterTest {
+  @Test
+  public void testGetSysConfigTablePrefix() throws Exception {
+    HTable98NameConverter hBaseNameConversionUtil = new HTable98NameConverter();
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user:some_table"));
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
+  }
 }

@@ -19,10 +19,10 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.common.conf.Constants;
 
 /**
- * Utility methods for dealing with HBase table name conversions in HBase 0.94.
+ * Utility methods for dealing with HBase table name conversions in HBase 0.96.
  */
-public class HBase94NameConverter extends HBaseNameConverter {
+public class HTable96NameConverter extends HTableNameConverter {
   public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
   }
 }

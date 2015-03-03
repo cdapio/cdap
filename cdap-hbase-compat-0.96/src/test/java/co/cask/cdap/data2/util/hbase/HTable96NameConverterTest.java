@@ -19,10 +19,10 @@ package co.cask.cdap.data2.util.hbase;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HBase96NameConverterTest {
+public class HTable96NameConverterTest {
   @Test
   public void testGetSysConfigTablePrefix() throws Exception {
-    HBase96NameConverter hBaseNameConversionUtil = new HBase96NameConverter();
+    HTable96NameConverter hBaseNameConversionUtil = new HTable96NameConverter();
     Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user:some_table"));
     Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
   }

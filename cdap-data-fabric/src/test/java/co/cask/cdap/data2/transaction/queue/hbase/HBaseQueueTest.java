@@ -38,9 +38,9 @@ import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableNamesFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -294,7 +294,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
       byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                                                  new HBaseTableNamesFactory().get());
+                                                                  new HTableNameConverterFactory().get());
       cache.updateCache();
       Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
@@ -307,7 +307,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       // Either the config table doesn't exists, or the consumer config is empty for the given queue
       ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                                                  new HBaseTableNamesFactory().get());
+                                                                  new HTableNameConverterFactory().get());
       try {
         cache.updateCache();
         Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));

@@ -16,14 +16,22 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import org.junit.Assert;
-import org.junit.Test;
+/**
+ * Factory for HBase version-specific {@link HTableNameConverterFactory} instances.
+ */
+public class HTableNameConverterFactory extends HBaseVersionSpecificFactory<HTableNameConverter> {
+  @Override
+  protected String getHBase94Classname() {
+    return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
+  }
 
-public class HBase94NameConverterTest {
-  @Test
-  public void testGetSysConfigTablePrefix() throws Exception {
-    HBase94NameConverter hBaseNameConversionUtil = new HBase94NameConverter();
-    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user.some_table"));
-    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
+  @Override
+  protected String getHBase96Classname() {
+    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
+  }
+
+  @Override
+  protected String getHBase98Classname() {
+    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
   }
 }

@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.coprocessor.hbase98;
 
 import co.cask.cdap.data2.increment.hbase98.IncrementFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.util.hbase.HBase98NameConverter;
+import co.cask.cdap.data2.util.hbase.HTable98NameConverter;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.hbase98.coprocessor.TransactionProcessor;
@@ -37,7 +37,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   @Override
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
     String sysConfigTablePrefix
-      = new HBase98NameConverter().getSysConfigTablePrefix(env.getRegion().getTableDesc().getNameAsString());
+      = new HTable98NameConverter().getSysConfigTablePrefix(env.getRegion().getTableDesc().getNameAsString());
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 
