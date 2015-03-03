@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
@@ -146,11 +147,13 @@ public class SingleTypeModule implements DatasetModule {
 
     CompositeDatasetDefinition<Dataset> def = new CompositeDatasetDefinition<Dataset>(typeName, defs) {
       @Override
-      public Dataset getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-        throws IOException {
+      public Dataset getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                                DatasetSpecification spec) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
-          params[i] = ctorParams[i] != null ? ctorParams[i].getValue(defs, spec, arguments, classLoader) : null;
+          params[i] = ctorParams[i] != null ?
+            ctorParams[i].getValue(datasetContext, defs, spec, arguments, classLoader) :
+            null;
         }
 
         try {
@@ -216,15 +219,15 @@ public class SingleTypeModule implements DatasetModule {
   }
 
   private interface DatasetCtorParam {
-    Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
+    Object getValue(DatasetContext datasetContext, Map<String, DatasetDefinition> defs, DatasetSpecification spec,
                     Map<String, String> arguments, ClassLoader cl)
       throws IOException;
   }
 
   private static final class DatasetSpecificationParam implements DatasetCtorParam {
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
-                           Map<String, String> arguments, ClassLoader cl) {
+    public Object getValue(DatasetContext datasetContext, Map<String, DatasetDefinition> defs,
+                           DatasetSpecification spec, Map<String, String> arguments, ClassLoader cl) {
       return spec;
     }
   }
@@ -237,11 +240,11 @@ public class SingleTypeModule implements DatasetModule {
     }
 
     @Override
-    public Object getValue(Map<String, DatasetDefinition> defs, DatasetSpecification spec,
-                           Map<String, String> arguments, ClassLoader cl)
-      throws IOException {
+    public Object getValue(DatasetContext datasetContext, Map<String, DatasetDefinition> defs,
+                           DatasetSpecification spec, Map<String, String> arguments,
+                           ClassLoader cl) throws IOException {
 
-      return defs.get(name).getDataset(spec.getSpecification(name), arguments, cl);
+      return defs.get(name).getDataset(datasetContext, arguments, cl, spec.getSpecification(name));
     }
   }
 }

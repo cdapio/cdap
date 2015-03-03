@@ -58,9 +58,9 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec,
-                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"), arguments, classLoader);
+  public KeyValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                  ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, spec.getSpecification("kv"));
     return new KeyValueTable(spec.getName(), table);
   }
 }

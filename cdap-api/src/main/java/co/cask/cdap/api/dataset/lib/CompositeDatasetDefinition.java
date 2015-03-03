@@ -60,19 +60,19 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @return dataset to perform data operations
    * @throws IOException
    */
-  protected final <T extends Dataset> T getDataset(String name, Class<T> type, DatasetSpecification spec,
-                                                   Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name, Class<T> type,
+                                                   DatasetSpecification spec, Map<String, String> arguments,
+                                                   ClassLoader classLoader) throws IOException {
 
-    return (T) delegates.get(name).getDataset(spec.getSpecification(name), arguments, classLoader);
+    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
   }
 
-  protected final <T extends Dataset> T getDataset(String name, DatasetSpecification spec,
-                                                   Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
+                                                   DatasetSpecification spec, Map<String, String> arguments,
+                                                   ClassLoader classLoader) throws IOException {
 
     // NOTE: by default we propagate properties to the embedded datasets
-    return (T) delegates.get(name).getDataset(spec.getSpecification(name), arguments, classLoader);
+    return (T) delegates.get(name).getDataset(datasetContext, arguments, classLoader, spec.getSpecification(name));
   }
 
   @Override

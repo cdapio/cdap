@@ -58,10 +58,9 @@ public class CounterTimeseriesTableDefinition
   }
 
   @Override
-  public CounterTimeseriesTable getDataset(DatasetSpecification spec, Map<String, String> arguments,
-                                           ClassLoader classLoader)
-    throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("ts"), arguments, classLoader);
+  public CounterTimeseriesTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                           ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, spec.getSpecification("ts"));
     return new CounterTimeseriesTable(spec, table);
   }
 }

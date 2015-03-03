@@ -68,13 +68,13 @@ public class IndexedObjectStoreDefinition
   }
 
   @Override
-  public IndexedObjectStore<?> getDataset(DatasetSpecification spec,
-                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public IndexedObjectStore<?> getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                          ClassLoader classLoader, DatasetSpecification spec) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(tableSpec, arguments, classLoader);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec, arguments, classLoader);
+    Table index = tableDef.getDataset(datasetContext, arguments, classLoader, tableSpec);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, arguments, classLoader, objectStoreSpec);
 
     return new IndexedObjectStore(spec.getName(), objectStore, index);
   }

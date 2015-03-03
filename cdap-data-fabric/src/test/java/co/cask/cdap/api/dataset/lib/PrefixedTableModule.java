@@ -66,10 +66,10 @@ class PrefixedTableDefinition extends AbstractDatasetDefinition<PrefixedTable, D
   }
 
   @Override
-  public PrefixedTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public PrefixedTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                                  DatasetSpecification spec) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, DatasetDefinition.NO_ARGUMENTS, classLoader);
+    KeyValueTable table = tableDef.getDataset(datasetContext, DatasetDefinition.NO_ARGUMENTS, classLoader, kvTableSpec);
     return new PrefixedTable(spec.getName(), table, arguments);
   }
 }

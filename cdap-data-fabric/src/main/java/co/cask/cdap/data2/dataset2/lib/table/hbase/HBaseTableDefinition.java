@@ -59,8 +59,8 @@ public class HBaseTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                          DatasetSpecification spec) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // NOTE: ttl property is applied on server-side in CPs

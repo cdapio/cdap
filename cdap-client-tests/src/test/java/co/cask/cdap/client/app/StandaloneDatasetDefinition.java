@@ -56,10 +56,10 @@ public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<Stand
   }
 
   @Override
-  public StandaloneDataset getDataset(DatasetSpecification spec, Map<String, String> arguments,
-                                ClassLoader classLoader) throws IOException {
+  public StandaloneDataset getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                      ClassLoader classLoader, DatasetSpecification spec) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
+    KeyValueTable table = tableDef.getDataset(datasetContext, arguments, classLoader, kvTableSpec);
 
     return new StandaloneDataset(spec.getName(), table);
   }

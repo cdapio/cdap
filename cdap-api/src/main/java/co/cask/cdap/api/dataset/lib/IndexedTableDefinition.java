@@ -70,13 +70,13 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public IndexedTable getDataset(DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public IndexedTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                                 DatasetSpecification spec) throws IOException {
     DatasetSpecification tableInstance = spec.getSpecification("d");
-    Table table = tableDef.getDataset(tableInstance, arguments, classLoader);
+    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, tableInstance);
 
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
-    Table index = tableDef.getDataset(indexTableInstance, arguments, classLoader);
+    Table index = tableDef.getDataset(datasetContext, arguments, classLoader, indexTableInstance);
 
     String columnNamesToIndex = spec.getProperty(INDEX_COLUMNS_CONF_KEY);
     Preconditions.checkNotNull(columnNamesToIndex, "columnsToIndex must be specified");

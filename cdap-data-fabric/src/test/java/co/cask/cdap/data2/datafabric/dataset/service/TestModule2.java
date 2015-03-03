@@ -54,7 +54,8 @@ public class TestModule2 implements DatasetModule {
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, Map arguments, ClassLoader classLoader) throws IOException {
+      public Dataset getDataset(DatasetContext datasetContext, Map arguments, ClassLoader classLoader,
+                                DatasetSpecification spec) throws IOException {
         return null;
       }
     };

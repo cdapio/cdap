@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.batch.SplitReaderAdapter;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
@@ -50,11 +51,12 @@ public class MyKeyValueTableDefinition
   }
 
   @Override
-  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
-                                                            Map<String, String> arguments,
-                                                            ClassLoader classLoader) throws IOException {
+  public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext,
+                                                            Map<String, String> arguments, ClassLoader classLoader,
+                                                            DatasetSpecification spec) throws IOException {
     return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
-                                                       getDataset("table", Table.class, spec, arguments, classLoader));
+                                                       getDataset(datasetContext, "table", Table.class, spec, arguments,
+                                                                  classLoader));
   }
 
   /**

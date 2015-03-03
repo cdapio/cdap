@@ -66,9 +66,9 @@ public class WritableKeyStructValueTableDefinition extends
   }
 
   @Override
-  public KeyStructValueTable getDataset(DatasetSpecification spec,
-    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("key-value-table"), arguments, classLoader);
+  public KeyStructValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                        ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, spec.getSpecification("key-value-table"));
     return new KeyStructValueTable(spec.getName(), table);
   }
 

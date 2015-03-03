@@ -197,7 +197,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(instanceInfo.getSpec(), arguments);
+    return (T) type.getDataset(new DatasetContext(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec(),
+                               arguments);
   }
 
   @Override

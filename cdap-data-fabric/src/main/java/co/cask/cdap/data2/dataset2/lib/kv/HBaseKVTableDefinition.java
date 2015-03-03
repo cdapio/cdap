@@ -70,8 +70,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   @Override
-  public NoTxKeyValueTable getDataset(DatasetSpecification spec,
-                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
+                                      ClassLoader classLoader, DatasetSpecification spec) throws IOException {
     return new KVTableImpl(spec.getName(), hConf);
   }
 

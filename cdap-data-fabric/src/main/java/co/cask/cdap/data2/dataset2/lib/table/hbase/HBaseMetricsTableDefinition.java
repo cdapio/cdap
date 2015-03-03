@@ -70,8 +70,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public MetricsTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
+                                 DatasetSpecification spec) throws IOException {
     return new HBaseMetricsTable(spec.getName(), hConf);
   }
 
