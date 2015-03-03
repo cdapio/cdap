@@ -1,38 +1,37 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource, WorkflowsFactory) {
     var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' +
-            $state.params.appId +
-            '/workflows/' +
-            $state.params.programId;
+        params = {
+          appId: $state.params.appId,
+          workflowId: $state.params.programId
+        };
+
+    var wf = WorkflowsFactory;
+
+    wf.runs(params, function(res) {
+
+      $scope.runs = res;
+      var count = 0;
+      angular.forEach(res, function(runs) {
+        if (runs.status === 'RUNNING') {
+          count += 1;
+        }
+      });
+
+      $scope.activeRuns = count;
+    });
+
 
     $scope.activeRuns = 0;
     $scope.runs = null;
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
-    }, function(res) {
-        $scope.runs = res;
-        var count = 0;
-        angular.forEach(res, function(runs) {
-          if (runs.status === 'RUNNING') {
-            count += 1;
-          }
-        });
-        $scope.activeRuns = count;
-      });
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/status'
-    }, function(res) {
+    wf.getStatus(params, function(res) {
       $scope.status = res.status;
     });
 
     $scope.toggleFlow = function(action) {
       $scope.status = action;
-      dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
-      });
+      wf[action](params);
     };
 
 });
