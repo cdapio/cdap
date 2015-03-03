@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,11 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateTestBase;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -48,6 +51,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
 
 /**
  *
@@ -63,6 +68,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
   private static StreamConsumerStateStoreFactory stateStoreFactory;
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClientService;
+  private static HBaseTableUtil tableUtil;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -97,13 +103,24 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
+
+    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    deleteNamespace(OTHER_NAMESPACE);
+    deleteNamespace(TEST_NAMESPACE);
     testHBase.stopHBase();
     zkClientService.stopAndWait();
     zkServer.stopAndWait();
+  }
+
+  private static void deleteNamespace(Id.Namespace namespace) throws IOException {
+    testHBase.deleteTables(tableUtil.toHBaseNamespace(namespace));
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
   }
 
   @Override

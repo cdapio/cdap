@@ -236,11 +236,11 @@ public class Main {
       String tableName = desc.getNameAsString();
       TableId tableId = TableId.from(tableName);
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
-      // todo: it works now, but we will want to change it if namespacing of datasets in HBase is more than +prefix
+      // TODO: CDAP-1602 - This works for 2.6, but not 2.8. Use DatasetFramework to get all the datasets to upgrade.
       if (namespace.fromNamespaced(datasetInstanceId) != null) {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
-        DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
+        DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {
             return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
