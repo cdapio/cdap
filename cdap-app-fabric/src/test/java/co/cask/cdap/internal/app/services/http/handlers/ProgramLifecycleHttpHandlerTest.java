@@ -413,8 +413,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // data requires appId, programId, and programType. Test missing fields/invalid programType
     // TODO: These json strings should be replaced with JsonObjects so it becomes easier to refactor in future
-    Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
-      .getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]").getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -475,8 +474,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
 
     // request for 2 more instances of the flowlet
-    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
-                                                     WORDCOUNT_FLOWLET_NAME, 2));
+    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME, 2));
     returnedBody = readResponse(doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'," +
       "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), LIST_OF_JSONOBJECT_TYPE);
     // verify that 2 more instances were requested
@@ -485,13 +483,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                          WORDCOUNT_FLOW_NAME, "stop");
-    getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
-                         APP_WITH_SERVICES_SERVICE_NAME, "stop");
+    getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "stop");
 
-    waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
-              ProgramController.State.STOPPED.toString());
-    waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
-              APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
+    waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, ProgramController.State.STOPPED.toString());
+    waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
   }
 
   /**
@@ -926,11 +921,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // deploy app with schedule in namespace 2
     HttpResponse response = deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   Constants.DEFAULT_NAMESPACE);
+                                   TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                                          APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME);
     Assert.assertEquals(2, schedules.size());
     String scheduleName1 = schedules.get(0).getSchedule().getName();
@@ -939,12 +934,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertFalse(scheduleName1.isEmpty());
 
     // Change notification threshold for stream
-    response = doPut(String.format("/v3/namespaces/%s/streams/%s/config", Constants.DEFAULT_NAMESPACE,
+    response = doPut(String.format("/v3/namespaces/%s/streams/%s/config", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                      "{'notification.threshold.mb': 1}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet(String.format("/v3/namespaces/%s/streams/%s/info", Constants.DEFAULT_NAMESPACE,
+    response = doGet(String.format("/v3/namespaces/%s/streams/%s/info", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME));
     String json = EntityUtils.toString(response.getEntity());
     StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
@@ -952,27 +947,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Ingest over 1MB of data in stream
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", Constants.DEFAULT_NAMESPACE,
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                       APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     TimeUnit.SECONDS.sleep(10);
-    String runsUrl = getRunsUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                 APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME,
                                 "completed");
     scheduleHistoryRuns(5, runsUrl, 0);
 
     //Check schedule status
-    String statusUrl1 = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
-    String statusUrl2 = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
+    String statusUrl1 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
+    String statusUrl2 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
     scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
     scheduleStatusCheck(5, statusUrl2, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                              scheduleName1));
-    Assert.assertEquals(200, suspendSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                              scheduleName2));
     //check paused state
     scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
@@ -984,7 +979,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", Constants.DEFAULT_NAMESPACE,
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                       APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -994,7 +989,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsUrl);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                             scheduleName1));
 
     scheduleHistoryRuns(5, runsUrl, workflowRunsAfterSuspend);
@@ -1003,10 +998,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String invalid = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule("default", APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
 
     //check paused state
     scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
