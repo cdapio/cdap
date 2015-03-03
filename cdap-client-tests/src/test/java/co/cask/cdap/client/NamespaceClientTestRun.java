@@ -79,7 +79,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
     NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID);
-    Assert.assertEquals(TEST_NAMESPACE_ID, meta.getId());
+    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
     Assert.assertEquals(TEST_NAME, meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
@@ -92,7 +92,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
     // verify that the existing namespace was not updated
     meta = namespaceClient.get(TEST_NAMESPACE_ID);
-    Assert.assertEquals(TEST_NAMESPACE_ID, meta.getId());
+    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
     Assert.assertEquals(TEST_NAME, meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
@@ -103,8 +103,8 @@ public class NamespaceClientTestRun extends ClientTestBase {
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
     meta = namespaceClient.get(TEST_DEFAULT_FIELDS);
-    Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getId());
-    Assert.assertEquals(TEST_DEFAULT_FIELDS, meta.getName());
+    Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getId());
+    Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getName());
     Assert.assertEquals("", meta.getDescription());
 
     // cleanup

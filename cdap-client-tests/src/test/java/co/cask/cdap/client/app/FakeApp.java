@@ -31,7 +31,7 @@ import java.util.List;
 public class FakeApp extends AbstractApplication {
 
   public static final String NAME = "FakeApp";
-  public static final Id.Application ID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, NAME);
+  public static final Id.Application ID = Id.Application.from("default", NAME);
   public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
 
