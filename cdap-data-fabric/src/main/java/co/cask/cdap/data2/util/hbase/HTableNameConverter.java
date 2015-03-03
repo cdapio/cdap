@@ -20,6 +20,14 @@ package co.cask.cdap.data2.util.hbase;
  * Common utility methods for dealing with HBase table name conversions.
  */
 public abstract class HTableNameConverter {
+  /**
+   * Gets the system configuration table prefix
+   * @param tableName Full table name.
+   * @return System configuration table prefix (full table name minus the table qualifier).
+   * Example input: "cdap_ns.table.name"  -->  output: "cdap_system."   (hbase 94)
+   * Example input: "cdap.table.name"     -->  output: "cdap_system."   (hbase 94. input table is in default namespace)
+   * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (hbase 96, 98)
+   */
   public abstract String getSysConfigTablePrefix(String tableName);
 
 }
