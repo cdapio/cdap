@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,6 +53,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -61,6 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final TwillRunner twillRunner;
   private final Configuration hConf;
@@ -104,7 +108,35 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       throw Throwables.propagate(e);
     }
 
-    final String runtimeArgs = new Gson().toJson(options.getUserArguments());
+    final String runtimeArgs = GSON.toJson(options.getUserArguments());
+    final File tempDir = Files.createTempDir();
+    URI logbackURI = null;
+    try {
+      // TODO: When CDAP-1273 is fixed you can get the resource directly from the program classloader.
+      // Make an unused call to getClassloader() to ensure that the jar is expanded into programDir.
+      copiedProgram.getClassLoader();
+      File logbackFile = new File(programDir, "logback.xml");
+      if (logbackFile.exists()) {
+        logbackURI = logbackFile.toURI();
+      } else {
+        URL containerLogbackURL = getClass().getResource("/logback-container.xml");
+        if (containerLogbackURL != null) {
+          File file = new File(tempDir.getPath(), "logback.xml");
+
+          try {
+            Files.copy(new File(containerLogbackURL.toURI()), file);
+            logbackURI = file.toURI();
+          } catch (IOException e) {
+            LOG.error("Error copying container logback.", e);
+          }
+        }
+      }
+    } catch (URISyntaxException e) {
+      LOG.error("Error getting logback for program.", e);
+    }
+
+    final URI programLogbackURI = logbackURI;
+    final String programOptions = GSON.toJson(options);
 
     // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
     // Twill would also ignore it if it is not running in secure mode.
@@ -112,11 +144,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
       @Override
       public TwillController launch(TwillApplication twillApplication) {
-        TwillPreparer twillPreparer = twillRunner
-          .prepare(twillApplication);
+        TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
         if (options.isDebug()) {
-          LOG.info("Starting {} with debugging enabled.", program.getId());
+          LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
+                   program.getId(), programOptions, programLogbackURI);
           twillPreparer.enableDebugging();
+        }
+        if (programLogbackURI != null) {
+          twillPreparer.withResources(programLogbackURI);
         }
         TwillController twillController = twillPreparer
           .withDependencies(new HBaseTableUtilFactory().get().getClass())
@@ -126,7 +161,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs
           ).start();
-        return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
+        return addCleanupListener(twillController, hConfFile, cConfFile, tempDir, copiedProgram, programDir);
       }
     });
   }
@@ -183,7 +218,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller, final File hConfFile,
-                                             final File cConfFile, final Program program, final File programDir) {
+                                             final File cConfFile, final File tempDir,
+                                             final Program program, final File programDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     controller.addListener(new ServiceListenerAdapter() {
@@ -208,6 +244,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                     program.getName(), hConfFile, cConfFile, program.getJarLocation().toURI());
           hConfFile.delete();
           cConfFile.delete();
+          tempDir.delete();
           try {
             program.getJarLocation().delete();
           } catch (IOException e) {
