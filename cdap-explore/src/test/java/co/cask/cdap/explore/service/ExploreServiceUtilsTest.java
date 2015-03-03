@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ public class ExploreServiceUtilsTest {
   @Test
   public void testHiveVersion() throws Exception {
     // This would throw an exception if it didn't pass
-    ExploreServiceUtils.checkHiveSupportWithSecurity(new Configuration(), this.getClass().getClassLoader());
+    ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
   }
 
   @Test

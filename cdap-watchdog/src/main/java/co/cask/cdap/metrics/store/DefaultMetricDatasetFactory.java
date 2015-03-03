@@ -27,8 +27,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.EntityTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
+import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
@@ -79,9 +79,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                  MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-    DatasetProperties props = ttl > 0 ?
-      DatasetProperties.builder().add(Table.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
-    MetricsTable table = getOrCreateMetricsTable(tableName, props);
+    DatasetProperties.Builder props = DatasetProperties.builder();
+    if (ttl > 0) {
+      props.add(Table.PROPERTY_TTL, ttl);
+    }
+    // for efficient counters
+    props.add(Table.PROPERTY_READLESS_INCREMENT, "true");
+
+    MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     LOG.info("FactTable created: {}", tableName);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }

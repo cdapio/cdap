@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
       //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-                                            && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
+        && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
         return fallbackService;
       }
 
@@ -160,14 +160,16 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
       return Constants.Service.METRICS;
+    } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
+      (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
+      // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
+      (uriParts[5].equals("queries") || uriParts[5].equals("streams") || uriParts[5].equals("datasets")
+        || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
+      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
-      if ((uriParts.length >= 5) && uriParts[4].equals("explore")
-        && (uriParts[5].equals("queries") || uriParts[5].equals("jdbc") || uriParts[5].equals("tables"))) {
-        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      } else if ((uriParts.length == 8) && uriParts[4].equals("explore") && uriParts[5].equals("datasets")) {
-        // v3/namespaces/<namespace>/data/explore/datasets/<dataset>/schema
-        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      }
       return Constants.Service.DATASET_MANAGER;
     }
     return Constants.Service.APP_FABRIC_HTTP;

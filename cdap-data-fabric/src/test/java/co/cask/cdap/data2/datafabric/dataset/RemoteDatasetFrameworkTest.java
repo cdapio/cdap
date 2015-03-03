@@ -120,6 +120,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                    "core", new CoreDatasetsModule()));
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
@@ -129,9 +130,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

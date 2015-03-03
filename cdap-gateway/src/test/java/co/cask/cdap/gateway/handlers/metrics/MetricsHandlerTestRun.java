@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.query.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
@@ -42,16 +42,26 @@ import java.util.concurrent.TimeUnit;
  * Search available contexts and metrics tests
  */
 public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
+  // for testing dots in tag names
+  private static final String DOT_NAMESPACE = Tag.NAMESPACE + ".my.namespace." + Tag.NAMESPACE;
+  private static final String DOT_APP = Tag.APP + ".my.app." + Tag.APP;
+  private static final String DOT_FLOW = Tag.FLOW + ".my.flow." + Tag.FLOW;
+  private static final String DOT_RUN = Tag.RUN_ID + ".my.run." + Tag.RUN_ID;
+  private static final String DOT_FLOWLET = Tag.FLOWLET + ".my.flowlet." + Tag.FLOWLET;
+
+  private static final String DOT_NAMESPACE_ESCAPED = DOT_NAMESPACE.replaceAll("\\.", "~");
+  private static final String DOT_APP_ESCAPED = DOT_APP.replaceAll("\\.", "~");
+  private static final String DOT_FLOW_ESCAPED = DOT_FLOW.replaceAll("\\.", "~");
+  private static final String DOT_RUN_ESCAPED = DOT_RUN.replaceAll("\\.", "~");
+  private static final String DOT_FLOWLET_ESCAPED = DOT_FLOWLET.replaceAll("\\.", "~");
+
+  private static final List<String> FLOW_TAGS = ImmutableList.of(Tag.NAMESPACE, Tag.APP, Tag.FLOW, Tag.FLOWLET);
 
   private static long emitTs;
-  private List<String> flowTags;
 
   @Before
   public void setup() throws Exception {
     setupMetrics();
-    flowTags = ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                                Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.FLOWLET);
-
   }
 
   private static void setupMetrics() throws Exception {
@@ -107,6 +117,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(new HashMap<String, String>());
     collector.increment("resources.total.storage", 10);
 
+    // dots in tag values
+    collector = collectionService.getCollector(getFlowletContext(DOT_NAMESPACE,
+                                                                 DOT_APP,
+                                                                 DOT_FLOW,
+                                                                 DOT_RUN,
+                                                                 DOT_FLOWLET));
+    collector.increment("dot.reads", 55);
+
+
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);
   }
@@ -115,7 +134,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                               ImmutableList.<String>of("namespace.myspace", "namespace.yourspace"));
+                               ImmutableList.<String>of("namespace." + DOT_NAMESPACE_ESCAPED,
+                                                        "namespace.myspace", "namespace.yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace",
@@ -175,11 +195,32 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.*.app.*",
                        ImmutableList.<String>of("namespace.*.app.*.flow.WCounter",
                                                 "namespace.*.app.*.flow.WordCounter",
+                                                "namespace.*.app.*.flow." + DOT_FLOW_ESCAPED,
                                                 "namespace.*.app.*.mapreduce.ClassicWordCount",
                                                 "namespace.*.app.*.procedure.RCounts"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.*.flow.WCounter",
                        ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.dataset.*"));
+
+    // verify dots more
+    String parts[] = new String[] {
+      "namespace." + DOT_NAMESPACE_ESCAPED,
+      "app." + DOT_APP_ESCAPED,
+      "flow." + DOT_FLOW_ESCAPED,
+      "dataset.*",
+      "run." + DOT_RUN_ESCAPED,
+      "flowlet." + DOT_FLOWLET_ESCAPED
+    };
+    // drilling down into above parts one at a time
+    String context = parts[0];
+    int i = 1;
+    do {
+      String contextNext = context + "." + parts[i];
+      verifySearchResult("/v3/metrics/search?target=childContext&context=" + context,
+                         ImmutableList.<String>of(contextNext));
+      context = contextNext;
+      i++;
+    } while (i < parts.length);
   }
 
 
@@ -194,15 +235,24 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "counter") +
         "&metric=system.reads&aggregate=true", 1);
 
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 4);
+
     // aggregate result, in the wrong namespace
     verifyEmptyQueryResult(
       "/v3/metrics/query?context=" + getContext("myspace", "WCount1", "WCounter", "splitter") +
         "&metric=system.reads&aggregate=true");
 
-      // time range
-      // now-60s, now+60s
-      verifyRangeQueryResult(
-        "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
+    verifyAggregateQueryResult("/v3/metrics/query?context=" +
+                                 getContext(DOT_NAMESPACE_ESCAPED, DOT_APP_ESCAPED,
+                                            DOT_FLOW_ESCAPED, DOT_FLOWLET_ESCAPED) +
+        "&metric=system.dot.reads&aggregate=true", 55);
+
+    // time range
+    // now-60s, now+60s
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
         "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
 
     // note: times are in seconds, hence "divide by 1000";
@@ -224,7 +274,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyGroupByResult(
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter") +
-        "&metric=system.reads&groupBy=" + Constants.Metrics.Tag.FLOWLET + "&start=" + start + "&end="
+        "&metric=system.reads&groupBy=" + Tag.FLOWLET + "&start=" + start + "&end="
         + end, groupByResult);
 
     groupByResult =
@@ -234,7 +284,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyGroupByResult(
       "/v3/metrics/query?metric=system.reads" +
-        "&groupBy=" + Constants.Metrics.Tag.NAMESPACE + "," + Constants.Metrics.Tag.FLOWLET +
+        "&groupBy=" + Tag.NAMESPACE + "," + Tag.FLOWLET +
         "&start=" + start + "&end=" + end, groupByResult);
   }
 
@@ -278,13 +328,23 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private String getContext(String... tags) {
     String context = "";
     for (int i = 0; i < tags.length; i++) {
-      context += flowTags.get(i) + "." + tags[i] + ".";
+      context += FLOW_TAGS.get(i) + "." + tags[i] + ".";
     }
     return context.substring(0, context.length() - 1);
   }
 
   @Test
   public void testSearchMetrics() throws Exception {
+
+    // verify dots
+    verifySearchMetricResult("/v3/metrics/search?target=metric&context=" +
+                              Tag.NAMESPACE + "." + DOT_NAMESPACE_ESCAPED + "." +
+                              Tag.APP + "." + DOT_APP_ESCAPED + "." +
+                              Tag.FLOW + "." + DOT_FLOW_ESCAPED + "." +
+                              Tag.DATASET + ".*." +
+                              Tag.RUN_ID + "." + DOT_RUN_ESCAPED + "." +
+                              Tag.FLOWLET + "." + DOT_FLOWLET_ESCAPED,
+                             ImmutableList.<String>of("system.dot.reads"));
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                          ".flow.WordCounter.dataset.*.run.run1.flowlet.splitter",
