@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,8 @@ import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import com.google.common.base.Function;
@@ -50,7 +52,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -73,9 +74,10 @@ public class HBaseTable extends BufferingTable {
   public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
     throws IOException {
     super(name, level, enableReadlessIncrements);
-
     hTableName = HBaseTableUtil.getHBaseTableName(name);
-    HTable hTable = new HTable(hConf, hTableName);
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+    TableId tableId = TableId.from(name);
+    HTable hTable = tableUtil.getHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

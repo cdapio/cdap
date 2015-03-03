@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,10 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -46,7 +49,7 @@ public abstract class MetricsTableTest {
 
   protected abstract MetricsTable getTable(String name) throws Exception;
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final DefaultDatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
 
   protected static final byte[] A = Bytes.toBytes(1L);
   protected static final byte[] B = Bytes.toBytes(2L);
@@ -60,7 +63,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testGetPutSwap() throws Exception {
-    MetricsTable table = getTable("testGetPutSwap");
+    String testGetPutSwap = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testGetPutSwap");
+    MetricsTable table = getTable(testGetPutSwap);
     // put two rows
     table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
               .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), Q, Bytes.toLong(Y)))
@@ -170,7 +174,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testConcurrentIncrement() throws Exception {
-    final MetricsTable table = getTable("testConcurrentIncrement");
+    String testConcurrentIncrement = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentIncrement");
+    final MetricsTable table = getTable(testConcurrentIncrement);
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);
     Map<byte[], Long> inc2 = ImmutableMap.of(Y, 1L, Z, 2L);
@@ -223,7 +228,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testConcurrentSwap() throws Exception {
-    MetricsTable table = getTable("testConcurrentSwap");
+    String testConcurrentSwap = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentSwap");
+    MetricsTable table = getTable(testConcurrentSwap);
     final long rounds = 500;
     table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                 .put(A, Bytes.immutableSortedMapOf(B, 0L)).build());
@@ -241,7 +247,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testDelete() throws Exception {
-    MetricsTable table = getTable("testDelete");
+    String testDelete = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testDelete");
+    MetricsTable table = getTable(testDelete);
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < 1024; i++) {
       writes.put(Bytes.toBytes(i << 22), Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
@@ -299,7 +306,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testFuzzyScan() throws Exception {
-    MetricsTable table = getTable("testFuzzyScan");
+    String testFuzzyScan = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testFuzzyScan");
+    MetricsTable table = getTable(testFuzzyScan);
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
@@ -338,7 +346,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testRangeDeleteWithoutFilter() throws Exception {
-    MetricsTable table = getTable("rangeDeleteWithoutFilter");
+    String rangeDeleteWithoutFilter = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "rangeDeleteWithoutFilter");
+    MetricsTable table = getTable(rangeDeleteWithoutFilter);
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
@@ -386,7 +395,8 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testRangeDeleteWithFilter() throws Exception {
-    MetricsTable table = getTable("rangeDelete");
+    String rangeDelete = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "rangeDelete");
+    MetricsTable table = getTable(rangeDelete);
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
