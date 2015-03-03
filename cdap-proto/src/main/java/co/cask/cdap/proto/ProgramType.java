@@ -35,7 +35,7 @@ public enum ProgramType {
   FLOW(1, Parameters.builder()
     .setCategoryName("flows")
     .setPrettyName("Flow")
-    .setListable(false)
+    .setListable(true)
     .build()),
 
   @SerializedName("Procedure")
