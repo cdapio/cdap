@@ -30,7 +30,6 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -82,28 +81,20 @@ public class LevelDBQueueTest extends QueueTest {
     LevelDBTableService.getInstance().clearTables();
   }
 
-  // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
+  // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, LevelDBQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
-    Assert.assertEquals("testNamespace", LevelDBQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
-
-    try {
-      LevelDBQueueAdmin.getNamespaceId("test.system.queue.myspace.app.flow.unexpected");
-      Assert.fail("Should fail because of invalid table name");
-    } catch (IllegalArgumentException e) {
-    }
   }
 }

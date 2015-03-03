@@ -41,30 +41,6 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
 
   /**
    * @param queueTableName actual queue table name
-   * @return namespace id that this queue belongs to
-   */
-  public static String getNamespaceId(String queueTableName) {
-    // last three parts are namespaceId, appName and flow
-    String[] parts = queueTableName.split("\\.");
-    String namespaceId;
-    if (parts.length == 6) {
-      // cdap.<namespace>.system.queue.<app>.<flow>
-      namespaceId = parts[1];
-    } else if (parts.length == 5) {
-      // cdap.system.queue.<app>.<flow>
-      // the namespace in the tablename is missing if it is default namespace (for backwards compatibility)
-      return Constants.DEFAULT_NAMESPACE;
-    } else {
-      throw new IllegalArgumentException(String.format("Unexpected format for queue table name. " +
-                                                         "Expected 'cdap.<namespace>.system.queue.<app>.<flow>'" +
-                                                         "Received '%s'",
-                                                       queueTableName));
-    }
-    return namespaceId;
-  }
-
-  /**
-   * @param queueTableName actual queue table name
    * @return app name this queue belongs to
    */
   public static String getApplicationName(String queueTableName) {

@@ -185,29 +185,21 @@ public abstract class HBaseQueueTest extends QueueTest {
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
-  // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
+  // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
     Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
-    Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
-
-    try {
-      HBaseQueueAdmin.getNamespaceId("test.system.queue.testNamespace.application1.flow1.unexpected");
-      Assert.fail("Should fail because of invalid table name");
-    } catch (IllegalArgumentException e) {
-    }
   }
 
   @Test
