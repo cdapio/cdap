@@ -182,12 +182,11 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     // Add the scheduleTask to the StreamSubscriber
-    if (streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
-                                            active, basePollSize, basePollTs, persist)) {
-      scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                     streamSizeSchedule.getName()),
-                              streamSubscriber);
-    }
+    streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule,
+                                        active, basePollSize, basePollTs, persist);
+    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                   streamSizeSchedule.getName()),
+                            streamSubscriber);
   }
 
   @Override
@@ -363,9 +362,9 @@ public class StreamSizeScheduler implements Scheduler {
      * Add a new scheduling task based on the data received by the stream referenced by {@code this} object.
      * @return {@code true} if the task was created successfully, {@code false} if it already exists
      */
-    public boolean createScheduleTask(Id.Program programId, SchedulableProgramType programType,
-                                      StreamSizeSchedule streamSizeSchedule, boolean active,
-                                      long baseRunSize, long baseRunTs, boolean persist) throws SchedulerException {
+    public void createScheduleTask(Id.Program programId, SchedulableProgramType programType,
+                                   StreamSizeSchedule streamSizeSchedule, boolean active,
+                                   long baseRunSize, long baseRunTs, boolean persist) throws SchedulerException {
       final StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
       synchronized (this) {
         StreamSizeScheduleTask previous =
@@ -374,7 +373,7 @@ public class StreamSizeScheduler implements Scheduler {
                                     newTask);
         if (previous != null) {
           // We cannot replace an existing schedule - that functionality is not wanted - yet
-          return false;
+          throw new SchedulerException("Tried to overwrite schedule " + streamSizeSchedule.getName());
         }
 
         if (active) {
@@ -419,7 +418,6 @@ public class StreamSizeScheduler implements Scheduler {
           }
         }
       }
-      return true;
     }
 
     /**
@@ -458,9 +456,8 @@ public class StreamSizeScheduler implements Scheduler {
           // notification received was too long ago, or if there is no last seen notification
           if (lastPollingInfo == null ||
             (lastPollingInfo.getTimestamp() + pollingDelay <= System.currentTimeMillis())) {
-            // Resume stream polling
-            cancelPollingAndScheduleNext();
             try {
+              // Resume stream polling
               StreamSize streamSize = queryStreamEventsSize();
               cancelPollingAndScheduleNext();
               lastPollingInfo = new StreamSizeNotification(streamSize.getTimestamp(), streamSize.getSize());
