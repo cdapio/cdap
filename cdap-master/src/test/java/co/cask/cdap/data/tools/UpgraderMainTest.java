@@ -24,7 +24,7 @@ import org.junit.Test;
 public class UpgraderMainTest {
   @Test
   public void testInjector() throws Exception {
-    UpgraderMain.main(new String[]{"help"});
+    UpgraderMain upgraderMain = new UpgraderMain();
     // should not throw exception
   }
 }

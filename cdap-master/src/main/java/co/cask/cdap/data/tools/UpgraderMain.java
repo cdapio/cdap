@@ -108,7 +108,7 @@ public class UpgraderMain {
     }
   }
 
-  public UpgraderMain() {
+  public UpgraderMain() throws Exception {
     cConf = CConfiguration.create();
     hConf = HBaseConfiguration.create();
 
@@ -128,7 +128,7 @@ public class UpgraderMain {
     });
   }
 
-  private Injector init() {
+  private Injector init() throws Exception {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
