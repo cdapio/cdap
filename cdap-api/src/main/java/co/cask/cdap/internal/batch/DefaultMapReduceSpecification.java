@@ -111,6 +111,7 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {
     ImmutableSet.Builder<String> builder = new ImmutableSet.Builder<String>();
     builder.addAll(dataSets);
+
     if (inputDataSet != null && !inputDataSet.isEmpty()) {
       builder.add(inputDataSet);
     }
