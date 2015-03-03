@@ -30,7 +30,7 @@ public class QueryResult {
   private final List<Object> columns;
 
   public QueryResult(List<Object> columns) {
-    this.columns = ImmutableList.copyOf(columns);
+    this.columns = columns;
   }
 
   public List<Object> getColumns() {
