@@ -61,16 +61,16 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
     int rootIndex = rootPrefix.length();
     // namespaceIndex is the index of the first dot after the rootIndex
     int namespaceIndex = namespaced.indexOf(".", rootIndex);
-    String expectedFormatMsg = "Dataset name is expected to be in the format " + rootPrefix +
-      "<namespace>.<dataset-name>.";
     // This check implies also that namespace is non-empty
     // Also, '.' is not permitted in namespace name. So this should return the full namespace.
     Preconditions.checkArgument(namespaceIndex > rootIndex,
-                                expectedFormatMsg + " Found invalid format - " + namespaced);
+                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+                                rootPrefix, namespaced);
     String namespace = namespaced.substring(rootIndex, namespaceIndex);
     String datasetName = namespaced.substring(namespaceIndex + 1);
     Preconditions.checkArgument(!datasetName.isEmpty(),
-                                expectedFormatMsg + " Found empty dataset name in " + namespaced);
+                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+                                rootPrefix, namespaced);
     return Id.DatasetInstance.from(Id.Namespace.from(namespace), datasetName);
   }
 
