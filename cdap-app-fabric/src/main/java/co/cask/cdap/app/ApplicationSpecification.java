@@ -35,7 +35,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import java.util.Map;
 
 /**
- * Application Specification used in core code.
+ * Application Specification used in core code.P
  */
 public interface ApplicationSpecification {
 
