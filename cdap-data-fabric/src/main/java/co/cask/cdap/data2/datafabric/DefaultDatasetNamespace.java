@@ -55,12 +55,23 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   @Override
   public Id.DatasetInstance fromNamespaced(String namespaced) {
     Preconditions.checkArgument(namespaced != null, "Dataset name should not be null");
-    // Dataset name is of the format cdap.<namespace>.<dataset-name>
-    String invalidFormatError = String.format("Invalid format for dataset name '%s'. " +
-                                                "Expected - cdap.<namespace>.<dataset-name>", namespaced);
-    String [] parts = namespaced.split("\\.", 3);
-    Preconditions.checkArgument(parts.length == 3, invalidFormatError);
-    return Id.DatasetInstance.from(Id.Namespace.from(parts[1]), parts[2]);
+    // Dataset name is of the format <table-prefix>.<namespace>.<dataset-name>
+    Preconditions.checkArgument(namespaced.startsWith(rootPrefix), "Dataset name should start with " + rootPrefix);
+    // rootIndex is the index of the first character after the root prefix
+    int rootIndex = rootPrefix.length();
+    // namespaceIndex is the index of the first dot after the rootIndex
+    int namespaceIndex = namespaced.indexOf(".", rootIndex);
+    String expectedFormatMsg = "Dataset name is expected to be in the format " + rootPrefix +
+      "<namespace>.<dataset-name>.";
+    // This check implies also that namespace is non-empty
+    // Also, '.' is not permitted in namespace name. So this should return the full namespace.
+    Preconditions.checkArgument(namespaceIndex > rootIndex,
+                                expectedFormatMsg + " Found invalid format - " + namespaced);
+    String namespace = namespaced.substring(rootIndex, namespaceIndex);
+    String datasetName = namespaced.substring(namespaceIndex + 1);
+    Preconditions.checkArgument(!datasetName.isEmpty(),
+                                expectedFormatMsg + " Found empty dataset name in " + namespaced);
+    return Id.DatasetInstance.from(Id.Namespace.from(namespace), datasetName);
   }
 
   @Override
