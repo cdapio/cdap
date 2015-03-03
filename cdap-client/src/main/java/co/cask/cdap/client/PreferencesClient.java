@@ -280,7 +280,8 @@ public class PreferencesClient {
     Id.Application app = Id.Application.from(namespace, applicationId);
     Id.Program program = Id.Program.from(app, programType, programId);
     URL url = config.resolveURLV3("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                  program.getNamespaceId(), program.getApplicationId(), programType, program.getId());
+                                  program.getNamespaceId(), program.getApplicationId(),
+                                  programType.getCategoryName(), program.getId());
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -307,7 +308,8 @@ public class PreferencesClient {
     Id.Application app = Id.Application.from(namespace, applicationId);
     Id.Program program = Id.Program.from(app, programType, programId);
     URL url = config.resolveURLV3("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                  program.getNamespaceId(), program.getApplicationId(), programType, program.getId());
+                                  program.getNamespaceId(), program.getApplicationId(),
+                                  programType.getCategoryName(), program.getId());
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

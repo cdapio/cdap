@@ -1040,7 +1040,7 @@ public abstract class Id {
 
     @Override
     public String getId() {
-      return null;
+      return typeName;
     }
   }
 
