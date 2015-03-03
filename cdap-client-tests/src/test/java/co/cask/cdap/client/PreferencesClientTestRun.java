@@ -151,8 +151,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID);
     propMap.put("k1", "instance");
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
-    Assert.assertEquals(ImmutableMap.<String, String>of(), client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID,
-                                                                                          false));
+    Assert.assertEquals(ImmutableMap.<String, String>of(),
+                        client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, false));
     propMap.put("k1", "namespace");
     client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
