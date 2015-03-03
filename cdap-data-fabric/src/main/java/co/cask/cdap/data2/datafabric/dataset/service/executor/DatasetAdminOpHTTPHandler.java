@@ -105,7 +105,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
     }
 
     DatasetSpecification spec = type.configure(name, props);
-    DatasetAdmin admin = type.getAdmin(new DatasetContext(namespaceId), spec);
+    DatasetAdmin admin = type.getAdmin(new DatasetContext.Builder().setNamespaceId(namespaceId).build(), spec);
     admin.create();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }
@@ -134,7 +134,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    DatasetAdmin admin = type.getAdmin(new DatasetContext(namespaceId), spec);
+    DatasetAdmin admin = type.getAdmin(new DatasetContext.Builder().setNamespaceId(namespaceId).build(), spec);
     admin.drop();
     responder.sendJson(HttpResponseStatus.OK, spec);
   }

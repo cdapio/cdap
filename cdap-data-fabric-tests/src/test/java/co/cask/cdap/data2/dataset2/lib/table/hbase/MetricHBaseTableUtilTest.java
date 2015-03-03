@@ -67,7 +67,8 @@ public class MetricHBaseTableUtilTest {
                                       new LocalLocationFactory(tmpFolder.newFolder()), CConfiguration.create());
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
-    DatasetAdmin admin = definition.getAdmin(new DatasetContext(Constants.SYSTEM_NAMESPACE), null, spec);
+    DatasetAdmin admin = definition.getAdmin(
+      new DatasetContext.Builder().setNamespaceId(Constants.SYSTEM_NAMESPACE).build(), null, spec);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);

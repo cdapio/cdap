@@ -16,13 +16,78 @@
 
 package co.cask.cdap.api.dataset;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
- * Created by bhooshanmogal on 3/2/15.
+ * Provides access to the context for a dataset including its environment and configuration
  */
+@Beta
 public class DatasetContext {
+
   private final String namespaceId;
 
-  public DatasetContext(String namespaceId) {
+  private DatasetContext(String namespaceId) {
     this.namespaceId = namespaceId;
+  }
+
+  /**
+   * Returns the namespace for a dataset
+   *
+   * @return the dataset's namespace
+   */
+  public String getNamespaceId() {
+    return namespaceId;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DatasetContext that = (DatasetContext) o;
+
+    if (!namespaceId.equals(that.namespaceId)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return namespaceId.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "DatasetContext{" +
+      "namespaceId='" + namespaceId + '\'' +
+      '}';
+  }
+
+  /**
+   * Builder for dataset context
+   */
+  public static class Builder {
+    private String namespaceId;
+
+    public Builder() {
+    }
+
+    public Builder setNamespaceId(String namespaceId) {
+      this.namespaceId = namespaceId;
+      return this;
+    }
+
+    public DatasetContext build() {
+      if (namespaceId == null) {
+        throw new IllegalArgumentException("Namespace Id can not be null");
+      }
+      return new DatasetContext(namespaceId);
+    }
   }
 }

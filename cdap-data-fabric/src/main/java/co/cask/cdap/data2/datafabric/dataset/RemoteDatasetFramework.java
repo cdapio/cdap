@@ -184,7 +184,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getAdmin(new DatasetContext(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
+    return (T) type.getAdmin(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                             instanceInfo.getSpec());
   }
 
   @Override
@@ -197,8 +198,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(new DatasetContext(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec(),
-                               arguments);
+    return (T) type.getDataset(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                               instanceInfo.getSpec(), arguments);
   }
 
   @Override

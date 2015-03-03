@@ -51,7 +51,7 @@ public abstract class NoTxKeyValueTableTest {
     DatasetSpecification spec = def.configure("table", DatasetProperties.EMPTY);
 
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
-    DatasetContext datasetContext = new DatasetContext(namespaceId);
+    DatasetContext datasetContext = new DatasetContext.Builder().setNamespaceId(namespaceId).build();
     // create & exists
     DatasetAdmin admin = def.getAdmin(datasetContext, cl, spec);
     Assert.assertFalse(admin.exists());

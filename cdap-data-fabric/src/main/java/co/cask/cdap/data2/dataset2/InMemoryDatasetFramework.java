@@ -124,7 +124,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     Preconditions.checkArgument(registry != null, "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
-    def.getAdmin(new DatasetContext(datasetInstanceId.getNamespaceId()), null, spec).create();
+    def.getAdmin(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                 null, spec).create();
     instances.put(datasetInstanceId, spec);
     LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
   }
@@ -142,7 +143,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
     instances.put(datasetInstanceId, spec);
-    def.getAdmin(new DatasetContext(datasetInstanceId.getNamespaceId()), null, spec).upgrade();
+    def.getAdmin(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                 null, spec).upgrade();
   }
 
   @Override
@@ -183,7 +185,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
     Preconditions.checkState(registry != null, "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(spec.getType());
-    def.getAdmin(new DatasetContext(datasetInstanceId.getNamespaceId()), null, spec).drop();
+    def.getAdmin(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                 null, spec).drop();
   }
 
   @Override
@@ -193,7 +196,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       DatasetDefinitionRegistry registry = getRegistryForType(namespaceId, datasetType);
       Preconditions.checkState(registry != null, "Dataset type '%s' is not registered", datasetType);
       DatasetDefinition def = registry.get(spec.getType());
-      def.getAdmin(new DatasetContext(namespaceId.getId()), null, spec).drop();
+      def.getAdmin(new DatasetContext.Builder().setNamespaceId(namespaceId.getId()).build(), null, spec).drop();
     }
     instances.clear();
   }
@@ -209,7 +212,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
     List<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
     DatasetDefinition impl = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-    return (T) impl.getAdmin(new DatasetContext(datasetInstanceId.getNamespaceId()), classLoader, spec);
+    return (T) impl.getAdmin(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                             classLoader, spec);
   }
 
   @Override
@@ -223,7 +227,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
     List<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
     DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-    return (T) (def.getDataset(new DatasetContext(datasetInstanceId.getNamespaceId()), arguments, classLoader, spec));
+    return (T) (def.getDataset(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
+                               arguments, classLoader, spec));
   }
 
   private DatasetDefinitionRegistry createRegistry(List<String> availableModuleClasses,
