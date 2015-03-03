@@ -22,16 +22,16 @@ package co.cask.cdap.data2.util.hbase;
 public class HTableNameConverterFactory extends HBaseVersionSpecificFactory<HTableNameConverter> {
   @Override
   protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
+    return "co.cask.cdap.data2.util.hbase.HTable94NameConverter";
   }
 
   @Override
   protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
+    return "co.cask.cdap.data2.util.hbase.HTable96NameConverter";
   }
 
   @Override
   protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+    return "co.cask.cdap.data2.util.hbase.HTable98NameConverter";
   }
 }
