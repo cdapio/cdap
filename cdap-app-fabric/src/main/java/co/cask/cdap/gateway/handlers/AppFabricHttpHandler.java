@@ -229,7 +229,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase());
-      runnableStatus(responder, id, ProgramType.WEBAPP);
+      programStatus(responder, id, ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable t) {
@@ -238,7 +238,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void runnableStatus(HttpResponder responder, Id.Program id, ProgramType type) {
+  private void programStatus(HttpResponder responder, Id.Program id, ProgramType type) {
     try {
       ProgramStatus status = programLifecycleHttpHandler.getProgramStatus(id, type);
       if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
@@ -302,43 +302,43 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/{program-type}/{program-id}/runs")
-  public void runnableHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") String appId,
-                              @PathParam("program-type") String runnableType,
-                              @PathParam("program-id") String runnableId,
-                              @QueryParam("status") String status,
-                              @QueryParam("start") String startTs,
-                              @QueryParam("end") String endTs,
-                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
+  public void programHistory(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @QueryParam("status") String status,
+                             @QueryParam("start") String startTs,
+                             @QueryParam("end") String endTs,
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
     programLifecycleHttpHandler.programHistory(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId,
+                                               Constants.DEFAULT_NAMESPACE, appId, programType, programId,
                                                status, startTs, endTs, resultLimit);
   }
 
   /**
-   * Get runnable runtime args.
+   * Get program runtime args.
    */
   @GET
   @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
-  public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("program-type") final String runnableType,
-                                     @PathParam("program-id") final String runnableId) {
+  public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("program-type") final String programType,
+                                    @PathParam("program-id") final String programId) {
     programLifecycleHttpHandler.getProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
+                                                      Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
 
   /**
-   * Save runnable runtime args.
+   * Save program runtime args.
    */
   @PUT
   @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
-  public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("program-type") final String runnableType,
-                                      @PathParam("program-id") final String runnableId) {
+  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("program-type") final String programType,
+                                     @PathParam("program-id") final String programId) {
     programLifecycleHttpHandler.saveProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                       Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
+                                                       Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
 
   /**
@@ -376,7 +376,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
         return;
       }
 
@@ -403,7 +403,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
         return;
       }
 
@@ -659,7 +659,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns specification of a runnable - flow.
+   * Returns specification of a program - flow.
    */
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}")
