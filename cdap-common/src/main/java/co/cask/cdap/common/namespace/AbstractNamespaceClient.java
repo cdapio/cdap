@@ -34,15 +34,14 @@ import java.net.URL;
 import java.util.List;
 
 /**
- *
+ * Common implementation of methods to interact with namespace service.
  */
-public abstract class AbstractNamespaceClient implements NamespaceClient {
+public abstract class AbstractNamespaceClient {
   private static final String NAMESPACE_ENTITY_TYPE = "namespace";
 
   protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnAuthorizedAccessTokenException;
   protected abstract URL resolve(String resource) throws IOException;
 
-  @Override
   public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {
     HttpRequest request = HttpRequest.get(resolve("namespaces")).build();
     HttpResponse response = execute(request);
@@ -53,7 +52,6 @@ public abstract class AbstractNamespaceClient implements NamespaceClient {
     throw new IOException("Cannot list namespaces. Reason: " + "getDetails(response)");
   }
 
-  @Override
   public NamespaceMeta get(String namespaceId) throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
     HttpResponse response = execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -64,7 +62,6 @@ public abstract class AbstractNamespaceClient implements NamespaceClient {
     throw new IOException("Cannot get namespace. Reason: " + "getDetails(response)");
   }
 
-  @Override
   public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
     UnAuthorizedAccessTokenException {
     HttpResponse response = execute(HttpRequest.delete(resolve(String.format("namespaces/%s", namespaceId))).build());
@@ -78,7 +75,6 @@ public abstract class AbstractNamespaceClient implements NamespaceClient {
     throw new IOException("Cannot delete namespace. Reason: " + "getDetails(response)");
   }
 
-  @Override
   public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
     UnAuthorizedAccessTokenException {
     URL url = resolve(String.format("namespaces/%s", namespaceMeta.getId()));

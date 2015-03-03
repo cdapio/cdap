@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.namespace.NamespaceClient;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -222,7 +222,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNamespaceClient() throws Exception {
     // tests the NamespaceClient's ability to interact with Namespace service/handlers.
-    NamespaceClient namespaceClient = getInjector().getInstance(NamespaceClient.class);
+    AbstractNamespaceClient namespaceClient = getInjector().getInstance(AbstractNamespaceClient.class);
     // test setup creates two namespaces in @BeforeClass
     List<NamespaceMeta> namespaces = namespaceClient.list();
     Assert.assertEquals(2, namespaces.size());

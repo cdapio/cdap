@@ -35,7 +35,8 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Implementation of NamespaceClient that uses {@link DiscoveryServiceClient} to dictate the resolution of namespace
+ * resources.
  */
 public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
