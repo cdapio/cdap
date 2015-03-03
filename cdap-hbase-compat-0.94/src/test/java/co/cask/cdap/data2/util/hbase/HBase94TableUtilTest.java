@@ -35,7 +35,7 @@ public class HBase94TableUtilTest extends AbstractHBaseTableUtilTest {
 
   @Override
   protected String getTableNameAsString(TableId tableId) {
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    Preconditions.checkArgument(tableId != null, "TableId should not be null.");
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
       return tableId.getTableName();
     }

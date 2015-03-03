@@ -26,11 +26,11 @@ import org.apache.hadoop.conf.Configuration;
  * coprocessors.
  */
 public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
-  private final String namespace;
+  private final String sysConfigTablePrefix;
 
-  public DefaultTransactionStateCacheSupplier(String namespace, Configuration conf) {
+  public DefaultTransactionStateCacheSupplier(String sysConfigTablePrefix, Configuration conf) {
     super(conf);
-    this.namespace = namespace;
+    this.sysConfigTablePrefix = sysConfigTablePrefix;
   }
 
   /**
@@ -42,7 +42,7 @@ public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheS
     if (instance == null) {
       synchronized (lock) {
         if (instance == null) {
-          instance = new DefaultTransactionStateCache(namespace);
+          instance = new DefaultTransactionStateCache(sysConfigTablePrefix);
           instance.setConf(conf);
           instance.start();
         }

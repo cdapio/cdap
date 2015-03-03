@@ -19,7 +19,6 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -57,11 +56,9 @@ public class ConfigurationTable {
   private static final byte[] FAMILY = Bytes.toBytes("f");
 
   private final Configuration hbaseConf;
-  private final DefaultDatasetNamespace dsNamespace;
 
   public ConfigurationTable(Configuration hbaseConf) {
     this.hbaseConf = hbaseConf;
-    this.dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
   }
 
   /**
@@ -117,26 +114,28 @@ public class ConfigurationTable {
 
   /**
    * Reads the given configuration type from the HBase table, looking for the HBase table name under the
-   * given "namespace".
+   * given "sysConfigTablePrefix".
    * @param type Type of configuration to read in
-   * @param namespace Namespace to use in constructing the table name (should be the same as root.namespace)
+   * @param sysConfigTablePrefix table prefix of the configuration table. (The full table name of the configuration
+   *                             table minus the table qualifier). Example: 'cdap.system:'
    * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
-  public CConfiguration read(Type type, String namespace) throws IOException {
-    String tableName = dsNamespace.namespace(TABLE_NAME).getId();
-    CConfiguration conf = CConfiguration.create();
+  public CConfiguration read(Type type, String sysConfigTablePrefix) throws IOException {
+    String tableName = sysConfigTablePrefix + TABLE_NAME;
     HTable table = null;
+    CConfiguration conf = null;
     try {
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-      table = tableUtil.getHTable(hbaseConf, TableId.from(conf.get(Constants.Dataset.TABLE_PREFIX),
-                                                          Constants.SYSTEM_NAMESPACE, TABLE_NAME));
+      // tableUtil is not used to create the HTable because this code is used from coprocessors which are already HBase
+      // version specific. Because of that, the sysConfigTablePrefix parameter passed in is already version-specific.
+      table = new HTable(hbaseConf, tableName);
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);
       Result result = table.get(get);
       int propertyCnt = 0;
       if (result != null && !result.isEmpty()) {
+        conf = CConfiguration.create();
         conf.clear();
         Map<byte[], byte[]> kvs = result.getFamilyMap(FAMILY);
         for (Map.Entry<byte[], byte[]> e : kvs.entrySet()) {
@@ -145,7 +144,7 @@ public class ConfigurationTable {
         }
       }
       LOG.info("Read " + propertyCnt + " properties from configuration table = " +
-                 tableName + ", row = " + type.name());
+                 Bytes.toString(table.getTableName()) + ", row = " + type.name());
     } catch (TableNotFoundException e) {
       // it's expected that this may occur when tables are created before MasterServiceMain has started
       LOG.warn("Configuration table " + tableName + " does not yet exist.");
@@ -154,7 +153,7 @@ public class ConfigurationTable {
         try {
           table.close();
         } catch (IOException ioe) {
-          LOG.error("Error closing HTable for " + Constants.SYSTEM_NAMESPACE + ":" + tableName, ioe);
+          LOG.error("Error closing HTable for " + tableName, ioe);
         }
       }
     }
