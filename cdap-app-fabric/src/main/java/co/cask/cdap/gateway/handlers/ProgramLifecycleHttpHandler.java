@@ -1692,18 +1692,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
       ProgramController controller = runtimeInfo.getController();
-      if (type == ProgramType.WORKFLOW) {
-        try {
-          controller.stop().get();
-        } catch (IllegalArgumentException ex) {
-          // Stopping workflow throws IllegalArgumentException
-          // Muting this exception here is no harm
-        }
-      } else {
-        controller.stop().get();
-      }
+      controller.stop().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
+      if (type == ProgramType.WORKFLOW) {
+        Throwable cause = throwable;
+        while (cause != null) {
+          if (cause instanceof InterruptedException) {
+            return AppFabricServiceStatus.OK;
+          }
+          cause = cause.getCause();
+        }
+      }
       LOG.warn(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }

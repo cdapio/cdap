@@ -150,7 +150,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       throw Throwables.propagate(cause);
     } catch (InterruptedException e) {
       Futures.getUnchecked(controller.stop());
-      throw Throwables.propagate(e);
+      throw e;
     }
   }
 }

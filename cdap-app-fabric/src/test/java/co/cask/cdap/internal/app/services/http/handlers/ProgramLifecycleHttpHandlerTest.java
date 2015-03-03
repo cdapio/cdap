@@ -30,9 +30,9 @@ import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.config.PreferencesStore;
@@ -61,7 +61,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -71,10 +70,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -96,7 +93,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  protected static final Type MAP_STRING_WORKFLOWSTATUS_TYPE = new TypeToken<Map<String, WorkflowStatus>>()
+  protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>()
   { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -763,13 +760,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private void checkCurrentRuns(int retries, String url, int currentRunningProgramsExpected) throws Exception {
     int trial = 0;
     String json;
-    Map<String, WorkflowStatus> output = null;
+    List<WorkflowActionNode> output = null;
     HttpResponse response;
     while (trial++ < retries) {
       response = doGet(url);
       if (response.getStatusLine().getStatusCode() == 200) {
         json = EntityUtils.toString(response.getEntity());
-        output = GSON.fromJson(json, MAP_STRING_WORKFLOWSTATUS_TYPE);
+        output = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
         Assert.assertTrue(output.size() == currentRunningProgramsExpected);
         return;
       }
@@ -787,7 +784,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // 2. Check the current run of the Workflow. It should return 404
     // 3. Start the Workflow
     // 4. Check the current run of the workflow. It should have 2 programs running in parallel
-    // 5. Check workflow run gets completed successfully
+    // 5. Stop the workflow
+    // 6. Check workflow runs. Since the workflow was stopped, it should be marked as failed
+    // 7. Start the workflow again
+    // 8. Check the current run of the workflow. It should have 2 programs running in parallel
+    // 9. Allow workflow to complete and make sure that one run is marked as complete
 
     final String oneInputPath = createInput("oneInputPath");
     final java.io.File oneOutputPath = new java.io.File(tmpFolder.newFolder(), "output");
@@ -817,7 +818,25 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int currentRunningProgramsExpected = 2;
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
-    String runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
+    status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
+                                  WORKFLOW_WITH_FORK, "stop");
+    Assert.assertEquals(200, status);
+
+    Assert.assertEquals(404, getWorkflowCurrentStatus(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK));
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "failed");
+    scheduleHistoryRuns(1, runsUrl, 0);
+
+    status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
+                                  WORKFLOW_WITH_FORK, "start");
+    Assert.assertEquals(200, status);
+
+    currentUrl = String.format("apps/%s/workflows/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK);
+    versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    currentRunningProgramsExpected = 2;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
     scheduleHistoryRuns(180, runsUrl, 0);
   }
 

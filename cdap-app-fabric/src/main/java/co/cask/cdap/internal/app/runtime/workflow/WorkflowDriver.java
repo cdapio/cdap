@@ -30,7 +30,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -38,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.http.NettyHttpService;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -51,6 +51,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -79,8 +81,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private NettyHttpService httpService;
-  private ExecutorService executor;
-  private ConcurrentHashMap<String, WorkflowStatus> status = new ConcurrentHashMap<String, WorkflowStatus>();
+  private volatile boolean running;
+  private Thread runningThread = null;
+  private Map<String, WorkflowActionNode> status = Collections.synchronizedMap(
+    new HashMap<String, WorkflowActionNode>());
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
@@ -111,17 +115,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       .build();
 
     httpService.startAndWait();
-
-    executor = Executors.newSingleThreadExecutor();
+    running = true;
+    runningThread = Thread.currentThread();
   }
 
   @Override
   protected void shutDown() throws Exception {
     httpService.stopAndWait();
-    shutdownExecutor();
   }
 
-  private void executeWorkflowAction(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
                                      InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
 
     WorkflowActionSpecification actionSpec;
@@ -148,8 +151,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         throw new IllegalStateException("Workflow stopped without executing all tasks");
     }
 
-    WorkflowStatus workflowStatus = new WorkflowStatus(state(), actionSpec, node.getNodeId());
-    status.put(node.getNodeId(), workflowStatus);
+    status.put(node.getNodeId(), node);
 
     WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
     try {
@@ -160,17 +162,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     } catch (Throwable t) {
-      LOG.warn("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
-      // this will always rethrow
-      throw Throwables.propagate(t.getCause());
+      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
+      if (t.getCause() != null) {
+        Throwables.propagateIfInstanceOf(t.getCause(), InterruptedException.class);
+      }
+      Throwables.propagateIfPossible(t, Exception.class);
     } finally {
       // Destroy the action.
       destroy(actionSpec, action);
+      status.remove(node.getNodeId());
     }
-    status.remove(node.getNodeId());
   }
 
-  private void executeWorkflowFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
+  private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                                    final InstantiatorFactory instantiator,
                                    final ClassLoader classLoader) throws Exception {
     ExecutorService executorService = Executors.newFixedThreadPool(fork.getBranches().size());
@@ -181,7 +185,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           @Override
           public String call() throws Exception {
             Iterator<WorkflowNode> iterator = branch.iterator();
-            while (!Thread.currentThread().isInterrupted() && iterator.hasNext()) {
+            while (!Thread.currentThread().isInterrupted() && iterator.hasNext() && running) {
               executeNode(appSpec, iterator.next(), instantiator, classLoader);
             }
             return branch.toString();
@@ -211,10 +215,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        executeWorkflowAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader);
+        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader);
         break;
       case FORK:
-        executeWorkflowFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
+        executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
         break;
       default:
         break;
@@ -231,50 +235,26 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     final ApplicationSpecification appSpec = program.getApplicationSpecification();
     final Iterator<WorkflowNode> iterator = workflowSpec.getNodes().iterator();
-    while (iterator.hasNext()) {
-      Future<Void> f = executor.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          executeNode(appSpec, iterator.next(), instantiator, classLoader);
-          return null;
-        }
-      });
-
+    while (running && iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
       try {
-        f.get();
-      } catch (ExecutionException ex) {
-        LOG.warn("Exeception in the execution of the workflow {} {}", workflowSpec);
-        shutdownExecutor();
-        throw ex;
+        executeNode(appSpec, iterator.next(), instantiator, classLoader);
+      } catch (Throwable t) {
+        if (t instanceof InterruptedException) {
+          LOG.warn("Workflow explicitly stopped. Treated as abort on error. {} {}", workflowSpec);
+        }
+        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
+        Throwables.propagate(t);
       }
-    }
-
-    shutdownExecutor();
-    // If there is some task left when the loop exited, it must be called by explicit stop of this driver.
-    if (iterator.hasNext()) {
-      LOG.warn("Workflow explicitly stopped. Treated as abort on error. {} {}", workflowSpec);
-      throw new IllegalStateException("Workflow stopped without executing all tasks: " + workflowSpec);
     }
 
     LOG.info("Workflow execution succeeded for {}", workflowSpec);
-  }
-
-  private void shutdownExecutor() {
-    if (executor != null) {
-      try {
-        executor.shutdownNow();
-        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-      } catch (InterruptedException ex) {
-        // ignore the interrupt
-      } finally {
-        executor = null;
-      }
-    }
+    running = false;
   }
 
   @Override
   protected void triggerShutdown() {
-    shutdownExecutor();
+    running = false;
+    runningThread.interrupt();
   }
 
   /**
@@ -337,11 +317,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return builder.build();
   }
 
-  private Supplier<Map<String, WorkflowStatus>> createStatusSupplier() {
-    return new Supplier<Map<String, WorkflowStatus>>() {
+  private Supplier<List<WorkflowActionNode>> createStatusSupplier() {
+    return new Supplier<List<WorkflowActionNode>>() {
       @Override
-      public Map<String, WorkflowStatus> get() {
-        return status;
+      public List<WorkflowActionNode> get() {
+        List<WorkflowActionNode> currentNodes = Lists.newArrayList();
+        for (Map.Entry<String, WorkflowActionNode> entry : status.entrySet()) {
+          currentNodes.add(entry.getValue());
+        }
+        return currentNodes;
       }
     };
   }

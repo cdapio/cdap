@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -28,7 +28,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
-import java.util.Map;
+import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -42,9 +42,9 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
                                                          new WorkflowActionSpecificationCodec())
                                     .create();
 
-  private final Supplier<Map<String, WorkflowStatus>> statusSupplier;
+  private final Supplier<List<WorkflowActionNode>> statusSupplier;
 
-  WorkflowServiceHandler(Supplier<Map<String, WorkflowStatus>> statusSupplier) {
+  WorkflowServiceHandler(Supplier<List<WorkflowActionNode>> statusSupplier) {
     this.statusSupplier = statusSupplier;
   }
 
@@ -54,7 +54,7 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
   @GET
   @Path("/status")
   public void handleStatus(HttpRequest request, HttpResponder responder) {
-    Type mapType = new TypeToken<Map<String, WorkflowStatus>>() { }.getType();
-    responder.sendJson(HttpResponseStatus.OK, statusSupplier.get(), mapType, GSON);
+    Type type = new TypeToken<List<WorkflowActionNode>>() { }.getType();
+    responder.sendJson(HttpResponseStatus.OK, statusSupplier.get(), type, GSON);
   }
 }
