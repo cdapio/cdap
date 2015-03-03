@@ -56,6 +56,11 @@ public class DefaultMetricStore implements MetricStore {
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
+    this(dsFactory, new int[] {1, 60, 3600, Integer.MAX_VALUE});
+  }
+
+  // NOTE: should never be used apart from data migration during cdap upgrade
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
@@ -67,7 +72,7 @@ public class DefaultMetricStore implements MetricStore {
       @Override
       public Cube get() {
         // 1 sec, 1 min, 1 hour and "all time totals"
-        return new DefaultCube(new int[] {1, 60, 3600, Integer.MAX_VALUE}, factTableSupplier, createAggregations());
+        return new DefaultCube(resolutions, factTableSupplier, createAggregations());
       }
     });
   }

@@ -128,7 +128,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.3.4</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.4.0-incubating</twill.version>
+    <twill.version>0.5.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <xstream.version>1.4.5</xstream.version>
     <zookeeper.version>3.4.5</zookeeper.version>
@@ -1635,32 +1635,6 @@
                       <resource>
                         <directory>conf</directory>
                         <targetPath>conf</targetPath>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-                <!-- Copy CLI scripts -->
-                <execution>
-                  <id>copy-cli-scripts</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration combine.self="override">
-                    <outputDirectory>${stage.opt.dir}</outputDirectory>
-                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                    <delimiters>
-                      <delimiter>@@</delimiter>
-                    </delimiters>
-                    <resources>
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                        <targetPath>bin</targetPath>
-                        <includes>
-                          <include>cdap-cli.sh</include>
-                          <include>cdap-cli.bat</include>
-                        </includes>
-                        <filtering>true</filtering>
                       </resource>
                     </resources>
                   </configuration>

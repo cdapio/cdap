@@ -74,8 +74,8 @@ public class DatasetClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws Exception {
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
-    namespaceClient.delete(TEST_NAMESPACE);
-    namespaceClient.delete(OTHER_NAMESPACE);
+    namespaceClient.delete(TEST_NAMESPACE.getId());
+    namespaceClient.delete(OTHER_NAMESPACE.getId());
   }
 
   @Test

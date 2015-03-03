@@ -78,7 +78,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     // verify that the namespace got created correctly
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
-    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID);
+    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
     Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
     Assert.assertEquals(TEST_NAME, meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
@@ -91,7 +91,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     } catch (AlreadyExistsException e) {
     }
     // verify that the existing namespace was not updated
-    meta = namespaceClient.get(TEST_NAMESPACE_ID);
+    meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
     Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
     Assert.assertEquals(TEST_NAME, meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
@@ -102,14 +102,14 @@ public class NamespaceClientTestRun extends ClientTestBase {
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
-    meta = namespaceClient.get(TEST_DEFAULT_FIELDS);
+    meta = namespaceClient.get(TEST_DEFAULT_FIELDS.getId());
     Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getId());
     Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getName());
     Assert.assertEquals("", meta.getDescription());
 
     // cleanup
-    namespaceClient.delete(TEST_NAMESPACE_ID);
-    namespaceClient.delete(TEST_DEFAULT_FIELDS);
+    namespaceClient.delete(TEST_NAMESPACE_ID.getId());
+    namespaceClient.delete(TEST_DEFAULT_FIELDS.getId());
 
     Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
   }
@@ -117,13 +117,13 @@ public class NamespaceClientTestRun extends ClientTestBase {
   private void verifyDoesNotExist(Id.Namespace namespaceId)
     throws IOException, UnAuthorizedAccessTokenException, CannotBeDeletedException {
     try {
-      namespaceClient.get(namespaceId);
+      namespaceClient.get(namespaceId.getId());
       Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
     } catch (NotFoundException e) {
     }
 
     try {
-      namespaceClient.delete(namespaceId);
+      namespaceClient.delete(namespaceId.getId());
       Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
     } catch (NotFoundException e) {
     }
@@ -147,12 +147,12 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   private void verifyReservedDelete() throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
     try {
-      namespaceClient.delete(DEFAULT);
+      namespaceClient.delete(DEFAULT.getId());
       Assert.fail(String.format("Must not delete '%s' namespace", DEFAULT));
     } catch (CannotBeDeletedException e) {
     }
     try {
-      namespaceClient.delete(SYSTEM);
+      namespaceClient.delete(SYSTEM.getId());
       Assert.fail(String.format("Must not delete '%s' namespace", SYSTEM));
     } catch (CannotBeDeletedException e) {
     }
