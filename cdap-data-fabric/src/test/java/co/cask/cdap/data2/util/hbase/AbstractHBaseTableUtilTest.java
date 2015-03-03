@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.proto.Id;
@@ -166,14 +167,14 @@ public abstract class AbstractHBaseTableUtilTest {
     TableId tableId = TableId.from("cdap.default.my.dataset");
     create(tableId);
     Assert.assertEquals("default", tableId.getHBaseNamespace());
-    Assert.assertEquals("cdap.user.my.dataset", tableId.getTableName());
+    Assert.assertEquals("cdap.user.my.dataset", tableId.getHBaseTableName());
     Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
                                                                                           tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("cdap.default.system.queue.config");
     create(tableId);
     Assert.assertEquals("default", tableId.getHBaseNamespace());
-    Assert.assertEquals("cdap.system.queue.config", tableId.getTableName());
+    Assert.assertEquals("cdap.system.queue.config", tableId.getHBaseTableName());
     Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
                                                                                           tableId).getTableName()));
     drop(tableId);
@@ -181,11 +182,64 @@ public abstract class AbstractHBaseTableUtilTest {
     createNamespace("myspace");
     create(tableId);
     Assert.assertEquals("cdap_myspace", tableId.getHBaseNamespace());
-    Assert.assertEquals("could.be.any.table.name", tableId.getTableName());
+    Assert.assertEquals("could.be.any.table.name", tableId.getHBaseTableName());
     Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
                                                                                           tableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
+  }
+
+  @Test
+  public void testDropAllInDefaultNamespace() throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId tableId = TableId.from("cdap.default.some.table1");
+    create(tableId);
+
+    tableId = TableId.from("cdap.default.other.table");
+    create(tableId);
+
+    tableId = TableId.from("cdap.default.some.table2");
+    create(tableId);
+
+    createNamespace("default2");
+    TableId tableIdInOtherNamespace = TableId.from("cdap.default2.my.dataset");
+    create(tableIdInOtherNamespace);
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Constants.DEFAULT_NAMESPACE_ID, "");
+    Assert.assertEquals(1, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("default2");
+  }
+
+  @Test
+  public void testDropAllInOtherNamespaceWithPrefix() throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    createNamespace("foonamespace");
+    createNamespace("barnamespace");
+    TableId tableId = TableId.from("cdap.foonamespace.some.table1");
+    create(tableId);
+
+    TableId tableIdWithOtherPrefix = TableId.from("cdap.foonamespace.other.table");
+    create(tableIdWithOtherPrefix);
+
+    tableId = TableId.from("cdap.foonamespace.some.table2");
+    create(tableId);
+
+    TableId tableIdInOtherNamespace = TableId.from("cdap.default.some.table1");
+    create(tableIdInOtherNamespace);
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), "some");
+    Assert.assertEquals(2, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    drop(tableIdWithOtherPrefix);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("foonamespace");
+    deleteNamespace("barnamespace");
   }
 
   private void waitForMetricsToUpdate() throws InterruptedException {

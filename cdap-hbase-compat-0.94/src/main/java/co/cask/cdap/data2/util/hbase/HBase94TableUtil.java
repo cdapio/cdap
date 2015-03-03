@@ -126,18 +126,10 @@ public class HBase94TableUtil extends HBaseTableUtil {
 
   @Override
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    // Note: the following method call is incorrect
-//    String tableName = toTableName(TableId.from(HBaseTableUtil.toHBaseNamespace(namespaceId), tablePrefix));
-//    String tableRegex = Pattern.quote(tableName);
-//    Pattern tablePattern = Pattern.compile("^" + tableRegex + ".*");
-//    admin.disableTables(tablePattern);
-//    admin.deleteTables(tablePattern);
-
-
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       TableId tableId = fromTableName(hTableDescriptor.getNameAsString());
-      if (namespaceId.equals(tableId.getNamespace()) && tableId.getCdapTableName().startsWith(tablePrefix)) {
+      if (namespaceId.equals(tableId.getNamespace()) && tableId.getTableName().startsWith(tablePrefix)) {
         disableTable(admin, tableId);
         deleteTable(admin, tableId);
       }
@@ -282,8 +274,8 @@ public class HBase94TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return tableId.getTableName();
+      return tableId.getHBaseTableName();
     }
-    return Joiner.on(".").join(tableId.getHBaseNamespace(), tableId.getTableName());
+    return Joiner.on(".").join(tableId.getHBaseNamespace(), tableId.getHBaseTableName());
   }
 }

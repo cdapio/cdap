@@ -48,23 +48,20 @@ public class TableId {
 
   @VisibleForTesting
   public String getHBaseNamespace() {
-    // TODO: pass in prefix as first param?
     return HBaseTableUtil.toHBaseNamespace(namespace);
   }
 
   /**
    * @return Backward compatible, ASCII encoded table name
    */
-  public String getTableName() {
+  public String getHBaseTableName() {
     return HBaseTableUtil.getHBaseTableName(getBackwardCompatibleTableName());
   }
-
-  //TODO: rename
 
   /**
    * @return the CDAP representation of the table name
    */
-  public String getCdapTableName() {
+  public String getTableName() {
     return tableName;
   }
 
@@ -73,7 +70,10 @@ public class TableId {
     if (Constants.DEFAULT_NAMESPACE_ID.equals(namespace)) {
       // if the table name starts with 'system.', then its a queue or stream table. Do not add namespace to table name
       // e.g. namespace = default, tableName = system.queue.config. Resulting table name = cdap.system.queue.config
-      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE))) {
+      // also no need to prepend the table name if it already starts with 'user'.
+      // TODO: the 'user' should be prepended by the HBaseTableAdmin.
+      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE)) ||
+          tableName.startsWith("user.")) {
         return Joiner.on(".").join(tablePrefix, tableName);
       }
       // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
@@ -123,7 +123,6 @@ public class TableId {
   }
 
 
-  // TODO: rename/cleanup
   public static String fromHBaseNamespace(String hBaseNamespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
@@ -163,7 +162,7 @@ public class TableId {
     TableId that = (TableId) o;
     return Objects.equal(tablePrefix, that.getTablePrefix()) &&
       Objects.equal(namespace, that.getNamespace()) &&
-      Objects.equal(tableName, that.getTableName());
+      Objects.equal(tableName, that.getHBaseTableName());
   }
 
   @Override

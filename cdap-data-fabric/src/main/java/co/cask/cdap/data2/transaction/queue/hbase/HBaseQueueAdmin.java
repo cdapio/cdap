@@ -387,7 +387,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     String trueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
     tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
 
-    // TODO: make this a no-op and see if test cases fail - they should!
     drop(getConfigTableId(namespaceId));
   }
 
@@ -400,7 +399,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
 
     HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
-//    new HTable(getHBaseAdmin().getConfiguration(), getConfigTableName(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();

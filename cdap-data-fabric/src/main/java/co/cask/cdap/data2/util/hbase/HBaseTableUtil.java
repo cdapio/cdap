@@ -31,6 +31,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
+import joptsimple.internal.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -392,17 +393,12 @@ public abstract class HBaseTableUtil {
     return info;
   }
 
-  //TODO: move to TableId?
   @VisibleForTesting
   public static String toHBaseNamespace(Id.Namespace namespace) {
-    return toHBaseNamespace(HBASE_NAMESPACE_PREFIX, namespace);
-  }
-
-  public static String toHBaseNamespace(String prefix, Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-      prefix + namespace.getId();
+      HBASE_NAMESPACE_PREFIX + namespace.getId();
   }
 
   /**
@@ -525,6 +521,18 @@ public abstract class HBaseTableUtil {
    */
   public abstract void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId,
                                             String tablePrefix) throws IOException;
+
+
+  /**
+   * Deletes all tables in the specified namespace
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being requested
+   * @throws IOException
+   */
+  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    deleteAllInNamespace(admin, namespaceId, Strings.EMPTY);
+  }
 
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
