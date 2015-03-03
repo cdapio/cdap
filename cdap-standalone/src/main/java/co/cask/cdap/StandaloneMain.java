@@ -21,6 +21,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -148,6 +149,7 @@ public class StandaloneMain {
    * Start the service.
    */
   public void startUp() throws Exception {
+    CConfigurationUtil.checkCConfValidity(configuration);
     // Start all the services.
     txService.startAndWait();
     metricsCollectionService.startAndWait();
