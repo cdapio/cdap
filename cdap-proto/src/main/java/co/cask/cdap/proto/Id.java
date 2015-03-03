@@ -74,7 +74,7 @@ public abstract class Id {
   /**
    * Indicates that the ID belongs to a namespace.
    */
-  public static abstract class NamespacedId extends Id {
+  public abstract static class NamespacedId extends Id {
     public abstract Namespace getNamespace();
   }
 
@@ -731,8 +731,10 @@ public abstract class Id {
     }
 
     private NotificationFeed(String namespace, String category, String name, String description) {
-      Preconditions.checkArgument(namespace != null && !namespace.isEmpty(), "Namespace value cannot be null or empty.");
-      Preconditions.checkArgument(category != null && !category.isEmpty(), "Category value cannot be null or empty.");
+      Preconditions.checkArgument(namespace != null && !namespace.isEmpty(),
+                                  "Namespace value cannot be null or empty.");
+      Preconditions.checkArgument(category != null && !category.isEmpty(),
+                                  "Category value cannot be null or empty.");
       Preconditions.checkArgument(name != null && !name.isEmpty(), "Name value cannot be null or empty.");
       Preconditions.checkArgument(isId(namespace) && isId(category) && isId(name),
                                   "Namespace, category or name has a wrong format.");

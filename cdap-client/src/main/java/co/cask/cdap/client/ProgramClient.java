@@ -372,7 +372,8 @@ public class ProgramClient {
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException, UnauthorizedException {
+  public int getProcedureInstances(String appId, String procedureId)
+    throws IOException, NotFoundException, UnauthorizedException {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Procedure procedure = Id.Procedure.from(app, procedureId);

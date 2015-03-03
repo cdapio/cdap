@@ -70,7 +70,9 @@ public class ApplicationClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationRecord> list() throws IOException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveNamespacedURLV3("apps"), config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+                                               config.resolveNamespacedURLV3("apps"),
+                                               config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
@@ -84,7 +86,8 @@ public class ApplicationClient {
    */
   public void delete(String appId) throws ApplicationNotFoundException, IOException, UnauthorizedException {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3("apps/" + app.getId()),
+    HttpResponse response = restClient.execute(HttpMethod.DELETE,
+                                               config.resolveNamespacedURLV3("apps/" + app.getId()),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);

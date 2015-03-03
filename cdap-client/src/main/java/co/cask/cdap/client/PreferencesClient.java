@@ -18,10 +18,10 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
@@ -98,7 +98,8 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public Map<String, String> getNamespacePreferences(String namespaceId, boolean resolved) throws IOException, UnauthorizedException, NotFoundException {
+  public Map<String, String> getNamespacePreferences(String namespaceId, boolean resolved)
+    throws IOException, UnauthorizedException, NotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     String res = Boolean.toString(resolved);
@@ -120,7 +121,8 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public void setNamespacePreferences(String namespaceId, Map<String, String> preferences) throws IOException, UnauthorizedException, NotFoundException {
+  public void setNamespacePreferences(String namespaceId, Map<String, String> preferences)
+    throws IOException, UnauthorizedException, NotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     URL url = config.resolveURLV3("configuration/preferences/namespaces/%s", namespace.getId());
@@ -269,7 +271,8 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
-  public void setProgramPreferences(String namespaceId, String applicationId, ProgramType programType, String programId,
+  public void setProgramPreferences(String namespaceId, String applicationId,
+                                    ProgramType programType, String programId,
                                     Map<String, String> preferences)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
 

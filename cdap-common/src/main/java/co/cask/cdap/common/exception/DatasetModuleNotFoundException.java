@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
