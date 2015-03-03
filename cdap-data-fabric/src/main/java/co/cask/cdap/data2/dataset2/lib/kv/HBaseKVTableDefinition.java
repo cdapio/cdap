@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -64,31 +65,31 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new DatasetAdminImpl(spec.getName(), tableUtil, hConf);
   }
 
   @Override
-  public NoTxKeyValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                      ClassLoader classLoader, DatasetSpecification spec) throws IOException {
-    return new KVTableImpl(spec.getName(), hConf);
+  public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                      ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+    return new KVTableImpl(spec.getName(), hConf, tableUtil);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
-    private final String tableName;
+    private final TableId tableId;
     protected final HBaseAdmin admin;
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(String tableName, HBaseTableUtil tableUtil, Configuration hConf) throws IOException {
-      this.tableName = tableName;
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
+      this.tableId = TableId.from(tableName);
     }
 
     @Override
     public boolean exists() throws IOException {
-      return admin.tableExists(tableName);
+      return tableUtil.tableExists(admin, tableId);
     }
 
     @Override
@@ -97,24 +98,23 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
       columnDescriptor.setMaxVersions(1);
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-      HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);
       tableDescriptor.addFamily(columnDescriptor);
-      tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
     }
 
     @Override
     public void drop() throws IOException {
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+      tableUtil.disableTable(admin, tableId);
+      tableUtil.deleteTable(admin, tableId);
     }
 
     @Override
     public void truncate() throws IOException {
-      byte[] tableName = Bytes.toBytes(this.tableName);
-      HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
-      admin.createTable(tableDescriptor);
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);
+      tableUtil.disableTable(admin, tableId);
+      tableUtil.deleteTable(admin, tableId);
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
     }
 
     @Override
@@ -131,10 +131,12 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   private static final class KVTableImpl implements NoTxKeyValueTable {
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
+    private final HBaseTableUtil tableUtil;
     private final HTable table;
 
-    public KVTableImpl(String tableName, Configuration hConf) throws IOException {
-      this.table = new HTable(hConf, tableName);
+    public KVTableImpl(String tableName, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+      this.tableUtil = tableUtil;
+      this.table = this.tableUtil.getHTable(hConf, TableId.from(tableName));
     }
 
     @Override

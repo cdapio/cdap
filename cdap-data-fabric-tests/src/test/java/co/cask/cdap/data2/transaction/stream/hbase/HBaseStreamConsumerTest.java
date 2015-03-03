@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,11 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -55,6 +58,8 @@ import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
+
 /**
  *
  */
@@ -72,6 +77,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static TransactionManager txManager;
   private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
+  private static HBaseTableUtil tableUtil;
 
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClientService;
@@ -119,12 +125,25 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
     txManager.startAndWait();
+
+    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    deleteNamespace(OTHER_NAMESPACE);
+    deleteNamespace(TEST_NAMESPACE);
+    deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
     txManager.stopAndWait();
     testHBase.stopHBase();
+  }
+
+  private static void deleteNamespace(Id.Namespace namespace) throws IOException {
+    testHBase.deleteTables(tableUtil.toHBaseNamespace(namespace));
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
   }
 
   @Override

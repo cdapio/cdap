@@ -70,14 +70,14 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
 
   @Override
-  public MetricsTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                                 DatasetSpecification spec) throws IOException {
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     return new HBaseMetricsTable(spec.getName(), hConf);
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

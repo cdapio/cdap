@@ -50,16 +50,7 @@ public class DatasetContext {
 
     DatasetContext that = (DatasetContext) o;
 
-    if (!namespaceId.equals(that.namespaceId)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return namespaceId.hashCode();
+    return namespaceId.equals(that.namespaceId);
   }
 
   @Override

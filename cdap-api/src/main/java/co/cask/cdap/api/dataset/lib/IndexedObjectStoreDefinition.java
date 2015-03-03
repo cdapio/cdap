@@ -59,22 +59,22 @@ public class IndexedObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("index")),
-      objectStoreDef.getAdmin(datasetContext, classLoader, spec.getSpecification("data"))
+      tableDef.getAdmin(datasetContext, spec.getSpecification("index"), classLoader),
+      objectStoreDef.getAdmin(datasetContext, spec.getSpecification("data"), classLoader)
     ));
   }
 
   @Override
-  public IndexedObjectStore<?> getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                          ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public IndexedObjectStore<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(datasetContext, arguments, classLoader, tableSpec);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, arguments, classLoader, objectStoreSpec);
+    Table index = tableDef.getDataset(datasetContext, tableSpec, classLoader, arguments);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, objectStoreSpec, classLoader, arguments);
 
     return new IndexedObjectStore(spec.getName(), objectStore, index);
   }

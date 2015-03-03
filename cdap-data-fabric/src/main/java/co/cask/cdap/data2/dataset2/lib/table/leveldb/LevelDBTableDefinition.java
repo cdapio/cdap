@@ -48,16 +48,16 @@ public class LevelDBTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                          DatasetSpecification spec) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new LevelDBTable(spec.getName(), conflictDetection, service);
   }
 
   @Override
-  public LevelDBTableAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                                    DatasetSpecification spec) throws IOException {
+  public LevelDBTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                    ClassLoader classLoader) throws IOException {
     return new LevelDBTableAdmin(spec, service);
   }
 }

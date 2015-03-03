@@ -59,16 +59,16 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
   }
 
   @Override
-  public PartitionedFileSet getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                       ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                       ClassLoader classLoader, Map<String, String> arguments) throws IOException {
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments);
 
-    FileSet fileset = filesetDef.getDataset(datasetContext, arguments, classLoader,
-                                            spec.getSpecification(FILESET_NAME));
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader,
-                                      spec.getSpecification(PARTITION_TABLE_NAME));
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), classLoader,
+                                            arguments);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader,
+                                      arguments);
 
     return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, spec, arguments,
                                              getExploreProvider());

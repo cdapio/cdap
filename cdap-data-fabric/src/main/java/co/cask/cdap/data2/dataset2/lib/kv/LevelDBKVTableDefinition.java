@@ -53,14 +53,14 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new DatasetAdminImpl(spec.getName(), service);
   }
 
   @Override
-  public NoTxKeyValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                      ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                      ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     return new KVTableImpl(spec.getName(), service);
   }
 

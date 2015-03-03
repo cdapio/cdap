@@ -61,22 +61,22 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("d")),
-      tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("i"))
+      tableDef.getAdmin(datasetContext, spec.getSpecification("d"), classLoader),
+      tableDef.getAdmin(datasetContext, spec.getSpecification("i"), classLoader)
     ));
   }
 
   @Override
-  public IndexedTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                                 DatasetSpecification spec) throws IOException {
+  public IndexedTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     DatasetSpecification tableInstance = spec.getSpecification("d");
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, tableInstance);
+    Table table = tableDef.getDataset(datasetContext, tableInstance, classLoader, arguments);
 
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
-    Table index = tableDef.getDataset(datasetContext, arguments, classLoader, indexTableInstance);
+    Table index = tableDef.getDataset(datasetContext, indexTableInstance, classLoader, arguments);
 
     String columnNamesToIndex = spec.getProperty(INDEX_COLUMNS_CONF_KEY);
     Preconditions.checkNotNull(columnNamesToIndex, "columnsToIndex must be specified");

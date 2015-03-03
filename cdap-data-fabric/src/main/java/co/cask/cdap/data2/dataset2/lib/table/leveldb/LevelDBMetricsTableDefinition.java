@@ -48,14 +48,14 @@ public class LevelDBMetricsTableDefinition
   }
 
   @Override
-  public MetricsTable getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                                 DatasetSpecification spec) throws IOException {
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     return new LevelDBMetricsTable(spec.getName(), service);
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
     return new LevelDBTableAdmin(spec, service);
   }

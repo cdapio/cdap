@@ -34,6 +34,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -73,7 +74,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
     String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
-    HTableDescriptor htd = new HTableDescriptor(hBaseTableName);
+    TableId tableId = TableId.from(hBaseTableName);
+    HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     htd.addFamily(hcd);
@@ -82,10 +84,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     int splits = cConf.getInt(Constants.Stream.CONSUMER_TABLE_PRESPLITS, 1);
     byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
 
-    tableUtil.createTableIfNotExists(getAdmin(), Bytes.toBytes(hBaseTableName), htd, splitKeys,
+    tableUtil.createTableIfNotExists(getAdmin(), tableId, htd, splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
-    HTable hTable = new HTable(hConf, hBaseTableName);
+    HTable hTable = tableUtil.getHTable(hConf, tableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,
@@ -96,9 +98,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   @Override
   protected void dropTable(String tableName) throws IOException {
     HBaseAdmin admin = getAdmin();
-    if (admin.tableExists(tableName)) {
-      admin.disableTable(tableName);
-      admin.deleteTable(tableName);
+    TableId tableId = TableId.from(tableName);
+    if (tableUtil.tableExists(admin, tableId)) {
+      tableUtil.disableTable(admin, tableId);
+      tableUtil.deleteTable(admin, tableId);
     }
   }
 

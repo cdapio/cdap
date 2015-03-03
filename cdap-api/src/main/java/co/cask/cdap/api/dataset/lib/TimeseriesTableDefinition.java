@@ -52,15 +52,15 @@ public class TimeseriesTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("ts"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("ts"), classLoader);
   }
 
   @Override
-  public TimeseriesTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                    ClassLoader classLoader, DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, spec.getSpecification("ts"));
+  public TimeseriesTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                    ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("ts"), classLoader, arguments);
     return new TimeseriesTable(spec, table);
   }
 }

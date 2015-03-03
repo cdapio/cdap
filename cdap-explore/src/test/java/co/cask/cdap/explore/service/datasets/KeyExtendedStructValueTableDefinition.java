@@ -65,15 +65,16 @@ public class KeyExtendedStructValueTableDefinition extends
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("key-value-table"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("key-value-table"), classLoader);
   }
 
   @Override
-  public KeyExtendedStructValueTable getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                                ClassLoader classLoader, DatasetSpecification spec) throws IOException {
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, spec.getSpecification("key-value-table"));
+  public KeyExtendedStructValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                                ClassLoader classLoader,
+                                                Map<String, String> arguments) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("key-value-table"), classLoader, arguments);
     return new KeyExtendedStructValueTable(spec.getName(), table);
   }
 

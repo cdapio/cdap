@@ -47,13 +47,14 @@ public class TestModule1 implements DatasetModule {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader, DatasetSpecification spec) {
+      public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                   ClassLoader classLoader) {
         return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
-      public Dataset getDataset(DatasetContext datasetContext, Map arguments, ClassLoader classLoader,
-                                DatasetSpecification spec) throws IOException {
+      public Dataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                ClassLoader classLoader, Map arguments) throws IOException {
         return null;
       }
     };

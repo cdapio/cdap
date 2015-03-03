@@ -50,16 +50,16 @@ public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification("objects"));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("objects"), classLoader);
   }
 
   @Override
-  public FakeDataset getDataset(DatasetContext datasetContext, Map<String, String> arguments, ClassLoader classLoader,
-                                DatasetSpecification spec) throws IOException {
+  public FakeDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                ClassLoader classLoader, Map<String, String> arguments) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(datasetContext, arguments, classLoader, kvTableSpec);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
 
     return new FakeDataset(spec.getName(), table);
   }

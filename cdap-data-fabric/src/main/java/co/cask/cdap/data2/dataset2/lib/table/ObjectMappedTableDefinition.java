@@ -81,16 +81,17 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, ClassLoader classLoader,
-                               DatasetSpecification spec) throws IOException {
-    return tableDef.getAdmin(datasetContext, classLoader, spec.getSpecification(TABLE_NAME));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification(TABLE_NAME), classLoader);
   }
 
   @Override
-  public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext, Map<String, String> arguments,
-                                                ClassLoader classLoader, DatasetSpecification spec) throws IOException {
+  public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                                ClassLoader classLoader,
+                                                Map<String, String> arguments) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
-    Table table = tableDef.getDataset(datasetContext, arguments, classLoader, tableSpec);
+    Table table = tableDef.getDataset(datasetContext, tableSpec, classLoader, arguments);
     Map<String, String> properties = spec.getProperties();
 
     TypeRepresentation typeRep = GSON.fromJson(
