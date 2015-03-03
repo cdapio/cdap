@@ -42,6 +42,12 @@ public class MetricSearchQuery {
     this.tagValues = tagValues;
   }
 
+  public MetricSearchQuery(long startTs, long endTs, int limit, List<TagValue> tagValues) {
+    // we use MAX-RESOLUTION for search as they contain all the metric-names
+    // that have been emitted and these metrics don't expire.
+    this(startTs, endTs, Integer.MAX_VALUE, limit, tagValues);
+  }
+
   public long getStartTs() {
     return startTs;
   }
