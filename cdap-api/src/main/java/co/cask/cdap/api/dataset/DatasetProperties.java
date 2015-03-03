@@ -35,6 +35,11 @@ public final class DatasetProperties {
   public static final DatasetProperties EMPTY =
     new DatasetProperties(Collections.<String, String>emptyMap());
 
+  /**
+   * Schema property. Not all datasets support schema.
+   */
+  public static final String SCHEMA = "schema";
+
   private final Map<String, String> properties;
 
   private DatasetProperties(Map<String, String> properties) {

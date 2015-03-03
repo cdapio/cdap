@@ -65,10 +65,16 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     final byte[] name = Bytes.toBytes(HBaseTableUtil.getHBaseTableName(tableName));
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
-    // todo: make stuff configurable
-    // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
-    //       also: currently we want max versions to support readless increments
-    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+
+    if (supportsReadlessIncrements(spec)) {
+      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+    } else if (isTransactional(spec)) {
+      // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
+      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+    } else {
+      columnDescriptor.setMaxVersions(1);
+    }
+
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
     String ttlProp = spec.getProperties().get(Table.PROPERTY_TTL);
@@ -79,8 +85,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       }
     }
 
-
     final HTableDescriptor tableDescriptor = new HTableDescriptor(name);
+    setVersion(tableDescriptor);
     tableDescriptor.addFamily(columnDescriptor);
 
     // if the dataset is configured for readless increments, the set the table property to support upgrades
@@ -90,7 +96,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     }
 
     // if the dataset is configured to be non-transactional, the set the table property to support upgrades
-    if (!isTansactional(spec)) {
+    if (!isTransactional(spec)) {
       tableDescriptor.setValue(Constants.Dataset.TABLE_TX_DISABLED, "true");
       if (supportsReadlessIncrements) {
         // readless increments CPs by default assume that table is transactional
@@ -119,10 +125,6 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
 
     boolean needUpgrade = false;
-    if (columnDescriptor.getMaxVersions() < Integer.MAX_VALUE) {
-      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
-      needUpgrade = true;
-    }
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
@@ -141,15 +143,26 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     // NOTE: transactional attribute for table cannot be changed between upgrades, currently
 
     // check if the readless increment setting has changed
+    boolean supportsReadlessIncrements;
     if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) == null &&
         tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT) != null) {
       tableDescriptor.remove(Table.PROPERTY_READLESS_INCREMENT);
+      supportsReadlessIncrements = false;
       needUpgrade = true;
     } else if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) != null &&
         !spec.getProperty(Table.PROPERTY_READLESS_INCREMENT).equals(
             tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT))) {
       tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT,
           spec.getProperty(Table.PROPERTY_READLESS_INCREMENT));
+      supportsReadlessIncrements = true;
+      needUpgrade = true;
+    } else {
+      supportsReadlessIncrements = supportsReadlessIncrements(tableDescriptor);
+    }
+
+    boolean setMaxVersions = supportsReadlessIncrements || HBaseTableAdmin.isTransactional(tableDescriptor);
+    if (setMaxVersions && columnDescriptor.getMaxVersions() < Integer.MAX_VALUE) {
+      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
       needUpgrade = true;
     }
 
@@ -159,7 +172,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
     boolean supportsIncrement = supportsReadlessIncrements(spec);
-    boolean transactional = isTansactional(spec);
+    boolean transactional = isTransactional(spec);
     return createCoprocessorJarInternal(conf, locationFactory, tableUtil, transactional, supportsIncrement);
   }
 
@@ -205,7 +218,23 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
    * Returns whether or not the dataset defined in the given specification is transactional.
    * Defaults to true.
    */
-  public static boolean isTansactional(DatasetSpecification spec) {
+  public static boolean isTransactional(DatasetSpecification spec) {
     return !"true".equalsIgnoreCase(spec.getProperty(Constants.Dataset.TABLE_TX_DISABLED));
+  }
+
+  /**
+   * Returns whether or not the table defined by the given descriptor has read-less increments enabled.
+   * Defaults to false.
+   */
+  public static boolean supportsReadlessIncrements(HTableDescriptor desc) {
+    return "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
+  }
+
+  /**
+   * Returns whether or not the table defined by the given descriptor has transactions enabled.
+   * Defaults to true.
+   */
+  public static boolean isTransactional(HTableDescriptor desc) {
+    return !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
   }
 }

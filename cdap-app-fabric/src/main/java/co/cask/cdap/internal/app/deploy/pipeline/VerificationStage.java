@@ -24,6 +24,10 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
@@ -133,29 +137,7 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     }
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
-      List<ScheduleProgramInfo> programs = entry.getValue().getActions();
-      for (ScheduleProgramInfo program : programs) {
-        switch (program.getProgramType()) {
-          case MAPREDUCE:
-            if (!specification.getMapReduce().containsKey(program.getProgramName())) {
-              throw new RuntimeException(String.format("MapReduce program '%s' is not configured with the Application.",
-                                                       program.getProgramName()));
-            }
-            break;
-          case SPARK:
-            if (!specification.getSpark().containsKey(program.getProgramName())) {
-              throw new RuntimeException(String.format("Spark program '%s' is not configured with the Application.",
-                                                       program.getProgramName()));
-            }
-            break;
-          case CUSTOM_ACTION:
-            // no-op
-            break;
-          default:
-            throw new RuntimeException(String.format("Unknown Program '%s' in the Workflow.",
-                                                     program.getProgramName()));
-        }
-      }
+      verifyWorkflowSpecifications(specification, entry.getValue());
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
@@ -188,6 +170,65 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     // Emit the input to next stage.
     emit(input);
   }
+
+  private void verifyWorkflowSpecifications(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec) {
+    List<WorkflowNode> nodes = workflowSpec.getNodes();
+    for (WorkflowNode node : nodes) {
+      verifyWorkflowNode(appSpec, workflowSpec, node);
+    }
+  }
+
+  private void verifyWorkflowNode(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                  WorkflowNode node) {
+    WorkflowNodeType nodeType = node.getType();
+    switch (nodeType) {
+      case ACTION:
+        verifyWorkflowAction(appSpec, node);
+        break;
+      case FORK:
+        verifyWorkflowFork(appSpec, workflowSpec, node);
+        break;
+      default:
+        break;
+    }
+  }
+
+  private void verifyWorkflowFork(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                  WorkflowNode node) {
+    WorkflowForkNode forkNode = (WorkflowForkNode) node;
+    Preconditions.checkNotNull(forkNode.getBranches(), String.format("Fork is added in the Workflow '%s' without" +
+                                                                       " any branches", workflowSpec.getName()));
+
+    for (List<WorkflowNode> branch : forkNode.getBranches()) {
+      for (WorkflowNode n : branch) {
+        verifyWorkflowNode(appSpec, workflowSpec, n);
+      }
+    }
+  }
+
+  private void verifyWorkflowAction(ApplicationSpecification appSpec, WorkflowNode node) {
+    WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    ScheduleProgramInfo program = actionNode.getProgram();
+    switch (program.getProgramType()) {
+      case MAPREDUCE:
+        Preconditions.checkArgument(appSpec.getMapReduce().containsKey(program.getProgramName()),
+                                    String.format("MapReduce program '%s' is not configured with the Application.",
+                                                  program.getProgramName()));
+        break;
+      case SPARK:
+        Preconditions.checkArgument(appSpec.getSpark().containsKey(program.getProgramName()),
+                                    String.format("Spark program '%s' is not configured with the Application.",
+                                                  program.getProgramName()));
+        break;
+      case CUSTOM_ACTION:
+        // no-op
+        break;
+      default:
+        throw new RuntimeException(String.format("Unknown Program '%s' in the Workflow.",
+                                                 program.getProgramName()));
+    }
+  }
+
 
   @SuppressWarnings("unchecked")
   private <T> Verifier<T> getVerifier(Class<? extends T> clz) {

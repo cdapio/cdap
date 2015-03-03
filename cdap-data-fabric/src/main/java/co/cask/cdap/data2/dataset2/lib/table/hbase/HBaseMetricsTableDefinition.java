@@ -20,19 +20,12 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.tephra.TxConstants;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -56,10 +49,19 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     super(name);
   }
 
+  // for unit-test purposes only
+  HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
+                                     LocationFactory locationFactory, CConfiguration conf) {
+    super(name);
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.locationFactory = locationFactory;
+    this.conf = conf;
+  }
+
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
-      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
       .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .properties(properties.getProperties())
       .build();

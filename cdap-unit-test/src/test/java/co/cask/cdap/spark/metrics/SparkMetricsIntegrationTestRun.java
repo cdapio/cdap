@@ -107,7 +107,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
     Collection<String> metricNames =
       RuntimeStats.metricStore.findMetricNames(
-        new MetricSearchQuery(startTs, endTs, resolution, Integer.MAX_VALUE, tagValues));
+        new MetricSearchQuery(startTs, endTs, Integer.MAX_VALUE, tagValues));
 
     String metricName = null;
     for (String name : metricNames) {
