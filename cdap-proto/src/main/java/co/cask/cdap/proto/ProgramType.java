@@ -126,6 +126,7 @@ public enum ProgramType {
     return parameters.getPrettyName();
   }
 
+  @Nullable
   public SchedulableProgramType getSchedulableType() {
     return parameters.getSchedulableType();
   }
@@ -180,6 +181,7 @@ public enum ProgramType {
       this.schedulableType = schedulableType;
     }
 
+    @Nullable
     public SchedulableProgramType getSchedulableType() {
       return schedulableType;
     }
