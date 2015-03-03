@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -24,6 +25,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -37,17 +39,18 @@ public interface Explore {
    * Execute a Hive SQL statement asynchronously. The returned {@link QueryHandle} can be used to get the
    * status/result of the operation.
    *
+   * @param namespace namespace to run the query in.
    * @param statement SQL statement.
    * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error executing statement.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle execute(String statement) throws ExploreException, SQLException;
+  QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException;
 
   /**
    * Fetch the status of a running Hive operation.
    *
-   * @param handle handle returned by {@link #execute(String)}.
+   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @return status of the operation.
    * @throws ExploreException on any error fetching status.
    * @throws HandleNotFoundException when handle is not found.
@@ -59,7 +62,7 @@ public interface Explore {
    * Fetch the schema of the result of a Hive operation. This can be called only after the state of the operation is
    *               {@link QueryStatus.OpStatus#FINISHED}.
    *
-   * @param handle handle returned by {@link #execute(String)}.
+   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
    * @throws ExploreException on any error fetching schema.
    * @throws HandleNotFoundException when handle is not found.
@@ -72,7 +75,7 @@ public interface Explore {
    * {@link QueryStatus.OpStatus#FINISHED}. Can be called multiple times, until it returns an empty list
    * indicating the end of results.
    *
-   * @param handle handle returned by {@link #execute(String)}.
+   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @param size max rows to fetch in the call.
    * @return list of {@link QueryResult}s.
    * @throws ExploreException on any error fetching results.
@@ -86,7 +89,7 @@ public interface Explore {
    * Fetch a preview of the results of a Hive operation. This can be called only after the state of the operation is
    * {@link QueryStatus.OpStatus#FINISHED}. Two subsequent calls to this methods will return the same list of results.
    * 
-   * @param handle handle returned by {@link #execute(String)}.
+   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @return preview list of {@link QueryResult}s.
    * @throws ExploreException on any error fetching a preview of the results.
    * @throws HandleNotFoundException when handle is not found.
@@ -98,7 +101,7 @@ public interface Explore {
   /**
    * Release resources associated with a Hive operation. After this call, handle of the operation becomes invalid.
    *
-   * @param handle handle returned by {@link #execute(String)}.
+   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @throws ExploreException on any error closing operation.
    * @throws HandleNotFoundException when handle is not found.
    */
@@ -107,10 +110,11 @@ public interface Explore {
   /**
    * Fetch information about queries executed in Hive.
    *
-   * @return List of {@link co.cask.cdap.proto.QueryInfo}
+   * @return List of {@link QueryInfo}
    * @throws ExploreException
+   * @param namespace namespace to get queries in.
    */
-  List<QueryInfo> getQueries() throws ExploreException, SQLException;
+  List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException;
 
 
   ////// Metadata methods
@@ -119,7 +123,7 @@ public interface Explore {
    * Retrieves a description of table columns available in the specified catalog.
    * Only column descriptions matching the catalog, schema, table and column name criteria are returned.
    *
-   * See {@link java.sql.DatabaseMetaData#getColumns(String, String, String, String)}.
+   * See {@link DatabaseMetaData#getColumns(String, String, String, String)}.
    *
    * @param catalog a catalog name; must match the catalog name as it is stored in the database;
    *                "" retrieves those without a catalog;
@@ -149,7 +153,7 @@ public interface Explore {
   /**
    * Retrieves the schema names available in this database.
    *
-   * See {@link java.sql.DatabaseMetaData#getSchemas(String, String)}.
+   * See {@link DatabaseMetaData#getSchemas(String, String)}.
    *
    * @param catalog a catalog name; must match the catalog name as it is stored in the database;
    *                "" retrieves those without a catalog;
@@ -168,7 +172,7 @@ public interface Explore {
    * Retrieves a description of the system and user functions available in the given catalog.
    * Only system and user function descriptions matching the schema and function name criteria are returned.
    *
-   * See {@link java.sql.DatabaseMetaData#getFunctions(String, String, String)}.
+   * See {@link DatabaseMetaData#getFunctions(String, String, String)}.
    *
    * @param catalog a catalog name; must match the catalog name as it is stored in the database;
    *                "" retrieves those without a catalog;
@@ -199,7 +203,7 @@ public interface Explore {
    * Retrieves a description of the tables available in the given catalog. Only table descriptions
    * matching the catalog, schema, table name and type criteria are returned.
    *
-   * See {@link java.sql.DatabaseMetaData#getTables(String, String, String, String[])}.
+   * See {@link DatabaseMetaData#getTables(String, String, String, String[])}.
    *
    * @param catalog a catalog name; must match the catalog name as it is stored in the database;
    *                "" retrieves those without a catalog;
@@ -242,7 +246,7 @@ public interface Explore {
   /**
    * Retrieves the table types available in this database.
    *
-   * See {@link java.sql.DatabaseMetaData#getTableTypes()}.
+   * See {@link DatabaseMetaData#getTableTypes()}.
    *
    * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the table types.
@@ -253,11 +257,31 @@ public interface Explore {
   /**
    * Retrieves a description of all the data types supported by this database.
    *
-   * See {@link java.sql.DatabaseMetaData#getTypeInfo()}.
+   * See {@link DatabaseMetaData#getTypeInfo()}.
    *
    * @return {@link QueryHandle} representing the operation.
    * @throws ExploreException on any error getting the types info.
    * @throws SQLException if there are errors in the SQL statement.
    */
   public QueryHandle getTypeInfo() throws ExploreException, SQLException;
+
+  /**
+   * Creates a new namespace in Explore.
+   *
+   * @param namespace namespace to create.
+   * @return {@link QueryHandle} representing the operation.
+   * @throws ExploreException on any errors creating the namespace.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+
+  /**
+   * Deletes a new namespace in Explore.
+   *
+   * @param namespace namespace to delete.
+   * @return {@link QueryHandle} representing the operation.
+   * @throws ExploreException on any errors deleting the namespace.
+   * @throws SQLException if there are errors in the SQL statement.
+   */
+  public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
 }

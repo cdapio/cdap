@@ -1,0 +1,49 @@
+<div ncy-breadcrumb></div>
+<h2>
+  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+  <small> <em>Type: Tigon </em></small>
+</h2>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h4>
+      <ng-pluralize data-count="activeRuns"
+          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
+    </h4>
+  </div>
+  <div class="col-sm-6 text-right h4">
+
+    <div ng-show="status != 'start' && status != 'stop'"
+         ng-disabled = "status == 'RUNNING'"
+         class="btn btn-default btn-md"
+         ng-click="toggleFlow('start')">
+      <span class="fa fa-play"> Start a new run</span>
+    </div>
+    <div ng-show="status == 'start' || status == 'stop'"
+         class="btn btn-default btn-md">
+      <span class="fa fa-refresh fa-spin"></span>
+    </div>
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.runs" ui-sref-opts="{reload: true}" role="tab" data-toggle="tab">Runs</a>
+  </li>
+<!--   <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.schedules" role="tab" data-toggle="tab">Schedules</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.metadata" role="tab" data-toggle="tab">Metadata</a>
+  </li> -->
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.history" role="tab" data-toggle="tab">History</a>
+  </li>
+<!--   <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.resources" role="tab" data-toggle="tab">Resources</a>
+  </li> -->
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

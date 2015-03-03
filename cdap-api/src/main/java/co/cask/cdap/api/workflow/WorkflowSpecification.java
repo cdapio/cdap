@@ -17,6 +17,8 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,21 +34,18 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String className;
   private final String name;
   private final String description;
-  private final Map<String, WorkflowActionSpecification> customActionMap;
-  private final List<ScheduleProgramInfo> actions;
   private final Map<String, String> properties;
 
+  private List<WorkflowNode> nodes = Lists.newArrayList();
+
   public WorkflowSpecification(String className, String name, String description,
-                                      Map<String, String> properties,
-                                      List<ScheduleProgramInfo> actions,
-                                      Map<String, WorkflowActionSpecification> customActionMap) {
+                                      Map<String, String> properties, List<WorkflowNode> nodes) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.actions = Collections.unmodifiableList(new ArrayList<ScheduleProgramInfo>(actions));
-    this.customActionMap = Collections.unmodifiableMap(new HashMap(customActionMap));
+    this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
   }
 
   @Override
@@ -74,12 +73,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     return properties.get(key);
   }
 
-  public List<ScheduleProgramInfo> getActions() {
-    return actions;
-  }
-
-  public Map<String, WorkflowActionSpecification> getCustomActionMap() {
-    return customActionMap;
+  public List<WorkflowNode> getNodes() {
+    return nodes;
   }
 
   @Override
@@ -88,9 +83,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     sb.append("className='").append(className).append('\'');
     sb.append(", name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
-    sb.append(", customActionMap=").append(customActionMap);
-    sb.append(", actions=").append(actions);
     sb.append(", properties=").append(properties);
+    sb.append(", nodes=").append(nodes);
     sb.append('}');
     return sb.toString();
   }

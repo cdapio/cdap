@@ -1,0 +1,28 @@
+<div ncy-breadcrumb></div>
+<div class="row">
+  <div class="col-sm-6">
+    <h3>
+      <span ng-bind="$state.params.streamId | caskCapitalizeFilter"></span>
+      <small> Type: Stream </small>
+    </h3>
+  </div>
+  <div class="col-sm-6 text-right">
+    <span class="btn-group h3">
+      <a class="btn btn-default" data-animation="am-flip-x" bs-dropdown="dropdown" disabled>
+        Action <span class="caret"></span>
+      </a>
+    </span>
+  </div>
+
+</div>
+
+<div class="cdap-subnav-end"></div>
+<!-- <my-tabs ng-if="false"
+  data-tabs-partial-path="/assets/features/streams/templates/tabs/"
+  data-tabs-list="['Status','Explore','Programs','Metadata','Resources']">
+</my-tabs>
+ -->
+<my-tabs
+  data-tabs-partial-path="/assets/features/streams/templates/tabs/"
+  data-tabs-list="['Status']">
+</my-tabs>

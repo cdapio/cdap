@@ -1,0 +1,122 @@
+@import "../../variables.less";
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap header {
+  background-color: @cdap-header;
+
+  [my-navbar] {
+
+    padding-top: 15px;
+    padding-bottom: 15px;
+
+    .navbar-brand {
+      position: relative;
+      top: -5px;
+
+      > strong {
+        display: inline-block;
+        visibility: hidden;
+        width: 77px;
+      }
+      background: url('@{img-path}/cdap.png') no-repeat 15px center;
+      background-size: 77px auto;
+
+      &:after {
+        position: absolute;
+        content: 'BETA';
+        width: 77px;
+        text-align: center;
+        background-color: @gray-light;
+        color: @cdap-darkness;
+        font-size: 8px;
+        font-weight: bold;
+        line-height: 12px;
+        border-radius: 12px;
+        bottom: 0;
+        left: 15px;
+      }
+
+    }
+
+    // center the navbar
+    @media (min-width: @screen-sm-min) {
+      nav {
+        position: absolute;
+        top: 19px;
+        left: 50%;
+        margin-left: -180px;
+
+        > ul.nav {
+          background-color: @cdap-darkness;
+          border-radius: 25px;
+          height: 37px;
+
+          li {
+            width: 120px;
+            overflow: hidden;
+
+            text-align: center;
+            text-transform: uppercase;
+            // font-weight: 300;
+
+            > a {
+              border-radius: 25px;
+              padding: 8px;
+              margin: 2px;
+              &:hover {
+                color: @cdap-orange;
+              }
+            }
+
+            &.active > a {
+              cursor: default;
+              color: @cdap-orange;
+              background-color: @gray-lighter;
+            }
+          }
+        }
+      }
+
+      li.dropdown {
+
+        &.open {
+          a.dropdown-toggle {
+            background-color: @cdap-darkness;
+            border-top-left-radius: @border-radius-base;
+            border-top-right-radius: @border-radius-base;
+          }
+        }
+
+        ul.dropdown-menu {
+          background-color: @cdap-darkness;
+          border-color: @cdap-darkness;
+          border-top-right-radius: @border-radius-base;
+          a {
+            color: white;
+            &:hover {
+              color: @text-color;
+            }
+          }
+          li.divider {
+            background-color: @cdap-header;
+          }
+          li.disabled {
+            a {
+              color: @gray-light;
+            }
+          }
+        }
+      }
+
+      .navbar-right li.dropdown {
+        ul.dropdown-menu {
+          border-top-right-radius: 0;
+          border-top-left-radius: @border-radius-base;
+        }
+      }
+
+    }
+
+  }
+
+}

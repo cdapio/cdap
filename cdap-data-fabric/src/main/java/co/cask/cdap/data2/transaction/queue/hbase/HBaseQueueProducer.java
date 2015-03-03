@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
@@ -32,16 +31,35 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * A {@link co.cask.cdap.data2.queue.QueueProducer} that uses HBase as the storage for queue entries and consumers
+ * states. The row key has the following format:
  *
+ * <pre>
+ * {@code
+ *
+ * row_key = <salt_prefix> <row_key_base>
+ * salt_prefix = 1 byte hash of <row_key_base>
+ * row_key_base = <queue_prefix> <write_point> <counter>
+ * queue_prefix = <name_hash> <queue_name>
+ * name_hash = First byte of MD5 of <queue_name>
+ * queue_name = flowlet_name + "/" + output_name
+ * write_pointer = 8 bytes long value of the write pointer of the transaction
+ * counter = 4 bytes int value of a monotonic increasing number assigned for each entry written in the same transaction
+ * }
+ * </pre>
  */
-public final class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
+public class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
 
+  private final HBaseQueueStrategy queueStrategy;
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
 
-  public HBaseQueueProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
+  public HBaseQueueProducer(HTable hTable, QueueName queueName,
+                            QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy) {
     super(queueMetrics, queueName);
+    this.queueStrategy = queueStrategy;
+    // Base row key = queue_name + writePointer + counter
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
@@ -62,30 +80,29 @@ public final class HBaseQueueProducer extends AbstractQueueProducer implements C
    * Persist queue entries into HBase.
    */
   protected int persist(Iterable<QueueEntry> entries, Transaction transaction) throws IOException {
-    long writePointer = transaction.getWritePointer();
-    byte[] rowKeyPrefix = Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer));
     int count = 0;
     List<Put> puts = Lists.newArrayList();
     int bytes = 0;
 
+    List<byte[]> rowKeys = Lists.newArrayList();
+    long writePointer = transaction.getWritePointer();
     for (QueueEntry entry : entries) {
-      // Row key = queue_name + writePointer + counter
-      byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
-      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
+      rowKeys.clear();
+      queueStrategy.getRowKeys(entry, queueRowPrefix, writePointer, count, rowKeys);
+      rollbackKeys.addAll(rowKeys);
 
-      rollbackKeys.add(rowKey);
-      // No need to write ts=writePointer, as the row key already contains the writePointer
-      Put put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY,
-              QueueEntryRow.DATA_COLUMN,
-              entry.getData());
-      put.add(QueueEntryRow.COLUMN_FAMILY,
-              QueueEntryRow.META_COLUMN,
-              QueueEntry.serializeHashKeys(entry.getHashKeys()));
+      byte[] metaData = QueueEntry.serializeHashKeys(entry.getHashKeys());
+      for (byte[] rowKey : rowKeys) {
+        // No need to write ts=writePointer, as the row key already contains the writePointer
+        Put put = new Put(rowKey);
+        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN, entry.getData());
+        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN, metaData);
 
-      puts.add(put);
+        puts.add(put);
 
-      bytes += entry.getData().length;
+        bytes += entry.getData().length;
+      }
+      count++;
     }
     hTable.put(puts);
     hTable.flushCommits();

@@ -1,0 +1,56 @@
+<aside role="toolbar">
+  <a class="btn btn-xs btn-info" title="add dashboard"
+    ng-click="caskPrompt('New dashboard name', 'Dashboard '+(dashboards.length+1))"
+    cask-promptable="addDashboard($value)">
+    <span class="fa fa-plus"></span>
+  </a>
+</aside>
+
+<div class="cdap-subnav-end"></div>
+<div
+  bs-active-pane="dashboards.activeIndex"
+  bs-tabs data-template="assets/features/dashboard/partials/tab.html">
+
+  <div
+    data-title="{{board.title}}"
+    ng-repeat="board in dashboards | orderBy:+$index"
+    bs-pane>
+
+      <p>
+        Board=<code>{{board.id}}</code>
+        $index=<code>{{$index}}</code>
+      </p>
+
+  </div>
+</div>
+
+
+<div class="row">
+
+  <div ng-class="'col-sm-'+(12/currentBoard.columns.length)"
+    ng-repeat="column in currentBoard.columns"
+    ng-model="column"
+    as-sortable="dragdrop">
+
+    <div class="panel"
+      ng-class="wdgt.getClassName()"
+      ng-repeat="wdgt in column"
+      as-sortable-item>
+
+      <div class="panel-heading"
+        ng-include="'/assets/features/dashboard/partials/wdgt-head.html'"
+        as-sortable-item-handle></div>
+
+      <div class="panel-body"
+        ng-include="wdgt.getPartial()"
+        ></div>
+
+      <div class="panel-footer"
+        ng-show="wdgt.metric"
+        ng-include="'/assets/features/dashboard/partials/wdgt-foot.html'"
+        ></div>
+
+    </div>
+  </div>
+
+</div>

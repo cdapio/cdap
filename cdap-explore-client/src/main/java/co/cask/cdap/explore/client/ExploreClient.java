@@ -18,6 +18,7 @@ package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.MetaDataInfo;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
@@ -37,68 +38,69 @@ public interface ExploreClient extends Closeable {
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    *
-   * @param datasetInstance dataset instance name.
+   * @param datasetInstance dataset instance id.
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreDataset(String datasetInstance);
+  ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance);
 
   /**
    * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    *
-   * @param datasetInstance dataset instance name.
+   * @param datasetInstance dataset instance id.
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the disable operation.
    */
-  ListenableFuture<Void> disableExploreDataset(String datasetInstance);
+  ListenableFuture<Void> disableExploreDataset(Id.DatasetInstance datasetInstance);
 
   /**
    * Enables ad-hoc exploration of the given stream.
    *
-   * @param streamName stream name.
+   * @param stream stream id.
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreStream(String streamName);
+  ListenableFuture<Void> enableExploreStream(Id.Stream stream);
 
   /**
    * Disable ad-hoc exploration of the given stream.
    *
-   * @param streamName stream name.
+   * @param stream stream id.
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> disableExploreStream(String streamName);
+  ListenableFuture<Void> disableExploreStream(Id.Stream stream);
 
   /**
    * Add a partition to a dataset's table.
    *
-   * @param datasetName name of the dataset
+   * @param datasetInstance instance of the dataset
    * @param key the partition key
    * @param path the file system path of the partition
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> addPartition(String datasetName, PartitionKey key, String path);
+  ListenableFuture<Void> addPartition(Id.DatasetInstance datasetInstance, PartitionKey key, String path);
 
   /**
    * Drop a partition from a dataset's table.
    *
-   * @param datasetName name of the dataset
+   * @param datasetInstance instance of the dataset
    * @param key the partition key
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the operation.
    */
-  ListenableFuture<Void> dropPartition(String datasetName, PartitionKey key);
+  ListenableFuture<Void> dropPartition(Id.DatasetInstance datasetInstance, PartitionKey key);
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
    *
+   * @param namespace namespace to run the statement in.
    * @param statement SQL statement.
    * @return {@link ListenableFuture} eventually containing the results of the statement execution.
    */
-  ListenableFuture<ExploreExecutionResult> submit(String statement);
+  ListenableFuture<ExploreExecutionResult> submit(Id.Namespace namespace, String statement);
 
   ///// METADATA
 
@@ -208,4 +210,20 @@ public interface ExploreClient extends Closeable {
    * @return {@link ListenableFuture} eventually containing the different data types available in Explore.
    */
   ListenableFuture<ExploreExecutionResult> dataTypes();
+
+  /**
+   * Creates a namespace in Explore.
+   *
+   * @param namespace namespace to create.
+   * @return {@link ListenableFuture} eventually creating the namespace (database in Hive).
+   */
+  ListenableFuture<ExploreExecutionResult> addNamespace(Id.Namespace namespace);
+
+  /**
+   * Deletes a namespace in Explore.
+   *
+   * @param namespace namespace to delete.
+   * @return {@link ListenableFuture} eventually deleting the namespace (database in Hive).
+   */
+  ListenableFuture<ExploreExecutionResult> removeNamespace(Id.Namespace namespace);
 }

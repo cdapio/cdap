@@ -59,8 +59,8 @@ public class DatasetSerDe implements SerDe {
     // It is then important that this schema be accurate and in the right order - the same order as
     // object inspectors will reflect them.
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
-    // note: namespacing will come in later. Perhaps initialize this class with a namespace or get it in each method
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+    String namespace = properties.getProperty(Constants.Explore.DATASET_NAMESPACE);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetName);
     try {
       Schema schema = DatasetAccessor.getRecordSchema(entries, datasetInstanceId);
       this.deserializer = new ObjectDeserializer(properties, schema);

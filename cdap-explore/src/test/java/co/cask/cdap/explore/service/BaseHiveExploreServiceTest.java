@@ -202,11 +202,11 @@ public class BaseHiveExploreServiceTest {
     return status;
   }
 
-  protected static void runCommand(String command, boolean expectedHasResult,
+  protected static void runCommand(Id.Namespace namespace, String command, boolean expectedHasResult,
                                    List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
 
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(command);
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(namespace, command);
     assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 
