@@ -45,7 +45,7 @@ public final class KafkaNotificationUtils {
    * @return the key of a Kafka message based on the {@code feed}
    */
   public static String getMessageKey(Id.NotificationFeed feed) {
-    return feed.getId();
+    return feed.getFeedId();
   }
 
   /**

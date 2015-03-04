@@ -74,7 +74,8 @@ public class ProcedureClientTestRun extends ClientTestBase {
 
     // Validate that procedure calls can not be made to non-default namespaces
     Id.Namespace testNamespace = clientConfig.getNamespace();
-    clientConfig.setNamespace(Id.Namespace.from("fooNamespace"));
+    Id.Namespace fooNamespace = Id.Namespace.from("fooNamespace");
+    clientConfig.setNamespace(fooNamespace);
     try {
       procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
                            ImmutableMap.of("customer", "joe"));

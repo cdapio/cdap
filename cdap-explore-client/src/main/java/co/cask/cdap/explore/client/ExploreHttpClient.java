@@ -92,21 +92,21 @@ abstract class ExploreHttpClient implements Explore {
 
   protected QueryHandle doEnableExploreStream(Id.Stream stream) throws ExploreException {
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/enable",
-                                                 stream.getNamespaceId(), stream.getName()), null, null);
+                                                 stream.getNamespaceId(), stream.getId()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot enable explore on stream " + stream.getName() + ". Reason: " +
+    throw new ExploreException("Cannot enable explore on stream " + stream.getId() + ". Reason: " +
                                  getDetails(response));
   }
 
   protected QueryHandle doDisableExploreStream(Id.Stream stream) throws ExploreException {
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/disable",
-                                                 stream.getNamespaceId(), stream.getName()), null, null);
+                                                 stream.getNamespaceId(), stream.getId()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException("Cannot disable explore on stream " + stream.getName() + ". Reason: " +
+    throw new ExploreException("Cannot disable explore on stream " + stream.getId() + ". Reason: " +
                                  getDetails(response));
   }
 

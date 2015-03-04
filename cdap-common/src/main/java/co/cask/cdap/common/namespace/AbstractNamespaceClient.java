@@ -16,11 +16,12 @@
 
 package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -52,38 +53,43 @@ public abstract class AbstractNamespaceClient {
     throw new IOException("Cannot list namespaces. Reason: " + "getDetails(response)");
   }
 
-  public NamespaceMeta get(String namespaceId) throws NotFoundException, IOException, UnauthorizedException {
+  public NamespaceMeta get(String namespaceId) throws NamespaceNotFoundException, IOException, UnauthorizedException {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     HttpResponse response = execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new NamespaceNotFoundException(namespace);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, NamespaceMeta.class).getResponseObject();
     }
     throw new IOException("Cannot get namespace. Reason: " + "getDetails(response)");
   }
 
-  public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
-    UnauthorizedException {
+  public void delete(String namespaceId)
+    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException, IOException, UnauthorizedException {
+
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     HttpResponse response = execute(HttpRequest.delete(resolve(String.format("namespaces/%s", namespaceId))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new NamespaceNotFoundException(namespace);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new CannotBeDeletedException(NAMESPACE_ENTITY_TYPE, namespaceId);
+      throw new NamespaceCannotBeDeletedException(namespace);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return;
     }
     throw new IOException("Cannot delete namespace. Reason: " + "getDetails(response)");
   }
 
-  public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
-    UnauthorizedException {
-    URL url = resolve(String.format("namespaces/%s", namespaceMeta.getId()));
+  public void create(NamespaceMeta namespaceMeta)
+    throws NamespaceAlreadyExistsException, BadRequestException, IOException, UnauthorizedException {
+
+    Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getId());
+    URL url = resolve(String.format("namespaces/%s", namespace.getId()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
                                                                     namespaceMeta.getId()))) {
-        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
+        throw new NamespaceAlreadyExistsException(namespace);
       }
       return;
     }

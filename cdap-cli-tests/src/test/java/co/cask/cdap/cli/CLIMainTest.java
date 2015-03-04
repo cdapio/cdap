@@ -36,6 +36,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
@@ -167,6 +168,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @Before
   public void setUp() {
+    cliConfig.setCurrentNamespace(Constants.DEFAULT_NAMESPACE_ID);
     clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
   }
 
@@ -252,8 +254,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
+    Id.DatasetType datasetType1 = Id.DatasetType.from(barspace, datasetType.getName());
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
-                              "Error: dataset type '" + datasetType.getName() + "' was not found");
+                              new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
@@ -265,15 +268,23 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @Test
   public void testProcedure() throws Exception {
-    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
-    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
+    String originalApiVersion = cliConfig.getClientConfig().getApiVersion();
     try {
-      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-        + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_2_TOKEN);
+      testCommandOutputContains(cli, "use namespace " + Constants.DEFAULT_NAMESPACE, "using namespace");
+
+      String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
+      testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
+      try {
+        testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+          + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      } finally {
+        testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+        assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
+      }
     } finally {
-      testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
+      cliConfig.getClientConfig().setApiVersion(originalApiVersion);
     }
   }
 

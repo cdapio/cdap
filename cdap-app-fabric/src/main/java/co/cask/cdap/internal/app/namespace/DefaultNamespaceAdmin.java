@@ -20,6 +20,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
@@ -93,12 +96,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    *
    * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
-   * @throws NotFoundException if the requested namespace is not found
+   * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException {
+  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NamespaceNotFoundException {
     NamespaceMeta ns = store.getNamespace(namespaceId);
     if (ns == null) {
-      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     return ns;
   }
@@ -128,20 +131,22 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * Creates a new namespace
    *
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
-   * @throws AlreadyExistsException if the specified namespace already exists
+   * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
-  public void createNamespace(NamespaceMeta metadata) throws NamespaceCannotBeCreatedException, AlreadyExistsException {
+  public void createNamespace(NamespaceMeta metadata)
+    throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getId()));
+    Id.Namespace namespace = Id.Namespace.from(metadata.getId());
+    NamespaceMeta existing = store.getNamespace(namespace);
     if (existing != null) {
-      throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
+      throw new NamespaceAlreadyExistsException(namespace);
     }
 
     try {
-      dsFramework.createNamespace(Id.Namespace.from(metadata.getId()));
+      dsFramework.createNamespace(namespace);
     } catch (DatasetManagementException e) {
-      throw new NamespaceCannotBeCreatedException(metadata.getId(), e);
+      throw new NamespaceCannotBeCreatedException(namespace, e);
     }
 
     store.createNamespace(metadata);
@@ -152,12 +157,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
-   * @throws NotFoundException if the specified namespace does not exist
+   * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId) throws NamespaceCannotBeDeletedException, NotFoundException {
+  public void deleteNamespace(Id.Namespace namespaceId)
+    throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
+
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (store.getNamespace(namespaceId) == null) {
-      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     // TODO: CDAP-870: Check if apps are running and abort if they are
     // Delete Preferences associated with this namespace
@@ -172,9 +179,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       dsFramework.deleteAllModules(namespaceId);
       dsFramework.deleteNamespace(namespaceId);
     } catch (DatasetManagementException e) {
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
     } catch (IOException e) {
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
 
     // TODO: CDAP-870: Delete streams, queues, apps

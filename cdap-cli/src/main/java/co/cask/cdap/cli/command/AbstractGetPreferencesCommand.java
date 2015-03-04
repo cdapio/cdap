@@ -18,24 +18,24 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
 
 /**
  * Abstract Class for getting preferences for instance, namespace, application, program.
  */
-public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand {
+public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
   private final PreferencesClient client;
   private final ElementType type;
   private final boolean resolved;
-  private final CLIConfig cliConfig;
 
   protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig,
                                           boolean resolved) {
@@ -43,7 +43,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
     this.type = type;
     this.client = client;
     this.resolved = resolved;
-    this.cliConfig = cliConfig;
   }
 
   private String joinMapEntries(Map<String, String> map) {
@@ -57,83 +56,28 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
 
+    printStream.print(joinMapEntries(parsePreferences(programIdParts)));
+  }
+
+  private Map<String, String> parsePreferences(String[] programIdParts)
+    throws IOException, UnauthorizedException, NotFoundException {
+
     switch(type) {
       case INSTANCE:
-        if (programIdParts.length != 0) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getInstancePreferences()));
-        break;
-
+        checkInputLength(programIdParts, 0);
+        return client.getInstancePreferences();
       case NAMESPACE:
-        if (programIdParts.length != 0) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved)));
-        break;
-
+        checkInputLength(programIdParts, 0);
+        return client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved);
       case APP:
-        if (programIdParts.length != 1) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getApplicationPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), resolved)));
-        break;
-
+        return client.getApplicationPreferences(parseAppId(programIdParts), resolved);
       case FLOW:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
       case PROCEDURE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
       case MAPREDUCE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
       case WORKFLOW:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
       case SERVICE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
       case SPARK:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        printStream.print(joinMapEntries(client.getProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
-        break;
-
+        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
       default:
         throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getPrettyName());
     }

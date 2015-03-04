@@ -80,10 +80,6 @@ public class ClientConfig {
     this.uploadHttpConfig = uploadHttpConfig;
   }
 
-  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
-  }
-
   /**
    * Resolves a path against the target CDAP server
    *
@@ -96,6 +92,10 @@ public class ClientConfig {
     return resolveURL(apiVersion, path);
   }
 
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
+  }
+
   /**
    * Resolves a path against the target CDAP server
    *
@@ -106,6 +106,14 @@ public class ClientConfig {
    */
   public URL resolveURLV3(String path) throws MalformedURLException {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
+  }
+
+  public URL resolveURLV3(String format, Object... args) throws MalformedURLException {
+    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, String.format(format, args));
+  }
+
+  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
   }
 
   private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace,
@@ -123,6 +131,10 @@ public class ClientConfig {
    */
   public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
     return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
+  }
+
+  public URL resolveNamespacedURLV3(String format, Object... args) throws MalformedURLException {
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, String.format(format, args));
   }
 
   /**
@@ -252,7 +264,7 @@ public class ClientConfig {
 
     private String hostname = DEFAULT_HOST;
     private Optional<Integer> port = Optional.absent();
-    private Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
+    private Id.Namespace namespace = Constants.DEFAULT_NAMESPACE_ID;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);

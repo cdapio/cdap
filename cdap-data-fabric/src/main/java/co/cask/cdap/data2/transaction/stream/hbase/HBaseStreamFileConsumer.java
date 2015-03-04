@@ -156,7 +156,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   private ExecutorService createScanExecutor(Id.Stream streamId) {
     ThreadFactory threadFactory = Threads.newDaemonThreadFactory(String.format("stream-%s-%s-consumer-scanner-",
                                                    streamId.getNamespaceId(),
-                                                   streamId.getName()));
+                                                   streamId.getId()));
     ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
                                                          new SynchronousQueue<Runnable>(), threadFactory);
     executor.allowCoreThreadTimeOut(true);

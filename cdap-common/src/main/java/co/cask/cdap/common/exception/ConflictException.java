@@ -16,21 +16,20 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.proto.Id;
-
 /**
- * Thrown when a program is not found
+ * Thrown when there was a conflict.
  */
-public class ProgramNotFoundException extends NotFoundException {
+public class ConflictException extends Exception {
 
-  private final Id.Program id;
-
-  public ProgramNotFoundException(Id.Program id) {
-    super(id);
-    this.id = id;
+  public ConflictException() {
+    super();
   }
 
-  public Id.Program getId() {
-    return id;
+  public ConflictException(String message) {
+    super(message);
+  }
+
+  public ConflictException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

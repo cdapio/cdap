@@ -55,8 +55,8 @@ public class MetaClient {
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public void resetUnrecoverably() throws ResetFailureException, IOException,
-    UnauthorizedException, ResetNotEnabledException {
+  public void resetUnrecoverably()
+    throws ResetFailureException, IOException, UnauthorizedException, ResetNotEnabledException {
 
     URL url = config.resolveURL(String.format("unrecoverable/reset"));
     HttpRequest request = HttpRequest.post(url).build();

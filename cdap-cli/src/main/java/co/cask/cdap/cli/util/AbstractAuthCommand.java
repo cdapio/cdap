@@ -28,7 +28,7 @@ import java.io.PrintStream;
  */
 public abstract class AbstractAuthCommand implements Command {
 
-  private final CLIConfig cliConfig;
+  protected final CLIConfig cliConfig;
 
   public AbstractAuthCommand(CLIConfig cliConfig) {
     this.cliConfig = cliConfig;

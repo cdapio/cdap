@@ -17,6 +17,7 @@ package co.cask.cdap.common.http;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Function;
 import com.google.inject.Inject;
@@ -37,5 +38,6 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
         }
       });
     }
+    this.setExceptionHandler(new HttpExceptionHandler());
   }
 }

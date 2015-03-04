@@ -200,9 +200,10 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
+      Id.Schedule schedule = Id.Schedule.from(program, programType, scheduleName);
       Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
       if (trigger == null) {
-        throw new ScheduleNotFoundException(scheduleName);
+        throw new ScheduleNotFoundException(schedule);
       }
 
       scheduler.unscheduleJob(trigger.getKey());

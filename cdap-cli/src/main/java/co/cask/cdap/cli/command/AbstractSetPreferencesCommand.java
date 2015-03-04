@@ -18,10 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.proto.Id;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -29,99 +27,46 @@ import java.util.Map;
 /**
  * Abstract Set Preferences Class.
  */
-public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand {
+public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
+
   private final PreferencesClient client;
   private final ElementType type;
-  private final CLIConfig cliConfig;
 
   protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
-    this.cliConfig = cliConfig;
   }
 
   protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
 
-  protected void setPreferences(String[] programIdParts, PrintStream printStream, Map<String, String> args)
-    throws Exception {
+  protected void setPreferences(String[] programIdParts, PrintStream printStream,
+                                Map<String, String> args) throws Exception {
     switch (type) {
       case INSTANCE:
-        if (programIdParts.length != 0) {
-          throw new CommandInputError(this);
-        }
+        checkInputLength(programIdParts, 0);
         client.setInstancePreferences(args);
         printSuccessMessage(printStream, type);
         break;
 
       case NAMESPACE:
-        if (programIdParts.length != 0) {
-          throw new CommandInputError(this);
-        }
+        checkInputLength(programIdParts, 0);
         client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
         printSuccessMessage(printStream, type);
         break;
 
       case APP:
-        if (programIdParts.length != 1) {
-          throw new CommandInputError(this);
-        }
-        client.setApplicationPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                         args);
+        client.setApplicationPreferences(parseAppId(programIdParts), args);
         printSuccessMessage(printStream, type);
         break;
 
       case FLOW:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
-        printSuccessMessage(printStream, type);
-        break;
-
       case PROCEDURE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
-        printSuccessMessage(printStream, type);
-        break;
-
       case MAPREDUCE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
-        printSuccessMessage(printStream, type);
-        break;
-
       case WORKFLOW:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
-        printSuccessMessage(printStream, type);
-        break;
-
       case SERVICE:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
-        printSuccessMessage(printStream, type);
-        break;
-
       case SPARK:
-        if (programIdParts.length != 2) {
-          throw new CommandInputError(this);
-        }
-        client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
         printSuccessMessage(printStream, type);
         break;
 

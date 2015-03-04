@@ -16,31 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when an element is not found
  */
 public class NotFoundException extends Exception {
 
-  private final String elementType;
-  private final String elementId;
+  private final Id objectId;
 
-  public NotFoundException(String elementType, String elementId) {
-    super(String.format("%s '%s' was not found", elementType, elementId));
-    this.elementType = elementType;
-    this.elementId = elementId;
+  public NotFoundException(Id id) {
+    super(String.format("'%s' was not found", id.getIdRep()));
+    this.objectId = id;
   }
 
-  /**
-   * @return Type of the element: flow, stream, dataset, etc.
-   */
-  public String getElementType() {
-    return elementType;
-  }
-
-  /**
-   * @return ID of the element
-   */
-  public String getElementId() {
-    return elementId;
+  public Id getObjectId() {
+    return objectId;
   }
 }

@@ -126,8 +126,10 @@ public enum ProgramType {
     return parameters.getPrettyName();
   }
 
-  @Nullable
   public SchedulableProgramType getSchedulableType() {
+    if (parameters.getSchedulableType() == null) {
+      throw new IllegalArgumentException(this + " is not a SchedulableProgramType");
+    }
     return parameters.getSchedulableType();
   }
 
@@ -137,7 +139,7 @@ public enum ProgramType {
 
   public static ProgramType valueOfSchedulableType(SchedulableProgramType schedulableType) {
     for (ProgramType type : ProgramType.values()) {
-      if (schedulableType.equals(type.getSchedulableType())) {
+      if (schedulableType.equals(type.parameters.getSchedulableType())) {
         return type;
       }
     }

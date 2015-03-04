@@ -16,21 +16,8 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.proto.Id;
-
 /**
- * Thrown when a program is not found
+ * Thrown when some operation is not implemented.
  */
-public class ProgramNotFoundException extends NotFoundException {
-
-  private final Id.Program id;
-
-  public ProgramNotFoundException(Id.Program id) {
-    super(id);
-    this.id = id;
-  }
-
-  public Id.Program getId() {
-    return id;
-  }
+public class NotImplementedException extends Exception {
 }
