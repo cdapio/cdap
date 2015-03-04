@@ -79,8 +79,7 @@ public abstract class TableTest<T extends Table> {
   protected static final DefaultDatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
   protected static final String MY_TABLE = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
-  protected static final DatasetContext MY_CONTEXT =
-    new DatasetContext.Builder().setNamespaceId(NAMESPACE_ID.getId()).build();
+  protected static final DatasetContext MY_CONTEXT = DatasetContext.from(NAMESPACE_ID.getId());
 
   protected TransactionSystemClient txClient;
 
