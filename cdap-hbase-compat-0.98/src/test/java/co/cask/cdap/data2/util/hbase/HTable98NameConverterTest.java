@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package co.cask.cdap.data2.util.hbase;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- */
-public class MainTest {
+public class HTable98NameConverterTest {
   @Test
-  public void testInjector() throws Exception {
-    Main.main(new String[] {"help"});
-    // should not throw exception
+  public void testGetSysConfigTablePrefix() throws Exception {
+    HTable98NameConverter hBaseNameConversionUtil = new HTable98NameConverter();
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user:some_table"));
+    Assert.assertEquals("cdap_system:", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
   }
 }

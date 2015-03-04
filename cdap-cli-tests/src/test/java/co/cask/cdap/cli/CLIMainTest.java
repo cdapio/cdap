@@ -25,18 +25,22 @@ import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -52,10 +56,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,6 +77,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -86,13 +96,13 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final String PROTOCOL = "http";
-  private static final String HOSTNAME = "localhost";
-  private static final String PORT = "10000";
+  private static final URI CONNECTION = URI.create("http://localhost:10000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
+  private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
+  private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
@@ -106,16 +116,31 @@ public class CLIMainTest extends StandaloneTestBase {
       StandaloneTestBase.setUpClass();
     }
 
-    cliConfig = new CLIConfig(HOSTNAME);
-    cliConfig.getClientConfig().setAllTimeouts(60000);
+    clientConfig = new ClientConfig.Builder().setUri(CONNECTION).build();
+    clientConfig.setAllTimeouts(60000);
+    cliConfig = new CLIConfig(clientConfig);
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PrintStream.class).toInstance(System.out);
+        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
+        bind(CLIConfig.class).toInstance(cliConfig);
+        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
+        bind(TableRenderer.class).to(CsvTableRenderer.class);
+      }
+    });
 
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = new CLIMain(cliConfig);
+    CLIMain cliMain = injector.getInstance(CLIMain.class);
     cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -140,12 +165,15 @@ public class CLIMainTest extends StandaloneTestBase {
     // NO-OP
   }
 
+  @Before
+  public void setUp() {
+    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+  }
+
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect " + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
   }
 
   @Test
@@ -217,8 +245,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
-    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
-    cliConfig.setCurrentNamespace("bar");
+    Id.Namespace barspace = Id.Namespace.from("bar");
+    namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
+    cliConfig.setCurrentNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -550,7 +579,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     String status;
     int numTries = 0;
@@ -568,7 +597,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }
@@ -577,17 +606,17 @@ public class CLIMainTest extends StandaloneTestBase {
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-    new AsciiTable<NamespaceMeta>(
-      new String[] {"id", "display_name", "description"},
-      expected,
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
         }
-      }
-    ).print(printStream);
+      }).build();
+    cliMain.getTableRenderer().render(printStream, table);
     final String expectedOutput = outputStream.toString();
+
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

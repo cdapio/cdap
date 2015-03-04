@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package co.cask.cdap.data2.util.hbase;
 
-/**
- * Constants for the CLI.
- */
-public class Constants {
+import org.junit.Assert;
+import org.junit.Test;
 
-  public static final String EV_HOSTNAME = "CDAP_HOST";
-
+public class HTable94NameConverterTest {
+  @Test
+  public void testGetSysConfigTablePrefix() throws Exception {
+    HTable94NameConverter hBaseNameConversionUtil = new HTable94NameConverter();
+    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user.some_table"));
+    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
+  }
 }

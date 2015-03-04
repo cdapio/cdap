@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -27,7 +28,9 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -37,6 +40,9 @@ import java.util.Map;
  * partitioned dataset, so all admin is simply on the partition table.
  */
 public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefinition {
+
+  @Inject
+  private CConfiguration cConf;
 
   public TimePartitionedFileSetDefinition(String name,
                                           DatasetDefinition<? extends FileSet, ?> filesetDef,
@@ -58,17 +64,18 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
   }
 
   @Override
-  public PartitionedFileSet getDataset(DatasetSpecification spec,
-                                       Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments);
 
-    FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
-    Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
+                                            classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
+                                      classLoader);
 
-    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, spec, arguments,
+    return new TimePartitionedFileSetDataset(cConf, spec.getName(), fileset, table, spec, arguments,
                                              getExploreProvider());
   }
 

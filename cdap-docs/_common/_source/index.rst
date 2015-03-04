@@ -20,8 +20,9 @@ application abstractions to simplify and accelerate application development, add
 broader range of real-time and batch use cases, and deploy applications into production
 while satisfying enterprise requirements.
 
-CDAP is a layer of software running on top of Apache |(TM)| Hadoop |(R)| platforms such as the
-Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides these essential capabilities:
+CDAP is a layer of software running on top of Apache Hadoop |(R)| platforms such as the
+Cloudera Enterprise Data Hub or the Hortonworks |(R)| Data Platform. CDAP provides these 
+essential capabilities:
 
 - Abstraction of data in the Hadoop environment through logical representations of underlying
   data;
@@ -97,7 +98,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Javadocs:** The Java APIs for writing CDAP Applications
   - **Java Client API:** Methods for interacting with CDAP from external Java applications
   - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
-  - **Licenses and Dependencies:** License information for the CDAP and list of CDAP Dependent Packages
+  - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP Dependent Packages
 
 
 .. |release-notes| replace:: **Release Notes:**
@@ -122,10 +123,3 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _search: search.html
 
 - |search|_ Search this documentation using *Quick Search*
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:
