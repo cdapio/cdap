@@ -152,13 +152,20 @@ public final class Id  {
    */
   public static class Program {
     private final Application application;
+    private final ProgramType type;
     private final String id;
 
-    public Program(Application application, final String id) {
+    public Program(Application application, ProgramType type, final String id) {
       Preconditions.checkNotNull(application, "Application cannot be null.");
+      Preconditions.checkNotNull(type, "Program type cannot be null.");
       Preconditions.checkNotNull(id, "Id cannot be null.");
       this.application = application;
+      this.type = type;
       this.id = id;
+    }
+
+    public ProgramType getType() {
+      return type;
     }
 
     public String getId() {
@@ -197,12 +204,12 @@ public final class Id  {
       return result;
     }
 
-    public static Program from(Application appId, String pgmId) {
-      return new Program(appId, pgmId);
+    public static Program from(Application appId, ProgramType type, String pgmId) {
+      return new Program(appId, type, pgmId);
     }
 
-    public static Program from(String namespaceId, String appId, String pgmId) {
-      return new Program(new Application(new Namespace(namespaceId), appId), pgmId);
+    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
     @Override
