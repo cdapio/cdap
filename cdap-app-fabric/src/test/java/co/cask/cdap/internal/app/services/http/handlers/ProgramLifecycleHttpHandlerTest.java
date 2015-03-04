@@ -1340,7 +1340,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       //active size should be 1
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
       // completed runs size should be 1
-      url = String.format("apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
+      url = String.format("apps/%s/%s/%s/runs?status=terminated", appId, runnableType, runnableId);
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "stop"));

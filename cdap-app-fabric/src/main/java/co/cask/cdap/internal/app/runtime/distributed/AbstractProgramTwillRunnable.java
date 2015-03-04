@@ -267,6 +267,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
 
       @Override
+      public void terminated() {
+        state.set(ProgramController.State.TERMINATED);
+      }
+
+      @Override
       public void error(Throwable cause) {
         LOG.error("Program runner error out.", cause);
         state.setException(cause);

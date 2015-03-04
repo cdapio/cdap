@@ -92,6 +92,9 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
         if (getState() != State.STOPPING) {
           // Service completed by itself. Simply signal the state change of this controller.
           stop();
+        } else {
+          // Service was terminated
+          terminate();
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);

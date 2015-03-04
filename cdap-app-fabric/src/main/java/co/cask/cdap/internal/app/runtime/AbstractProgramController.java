@@ -50,7 +50,6 @@ public abstract class AbstractProgramController implements ProgramController {
   private final ConcurrentMap<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
   private Throwable failureCause;
-  private boolean stopRequested;
 
   protected AbstractProgramController(String programName, RunId runId) {
     this.state = new AtomicReference<State>(State.STARTING);
@@ -58,17 +57,6 @@ public abstract class AbstractProgramController implements ProgramController {
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
     this.caller = new MultiListenerCaller();
-    this.stopRequested = false;
-  }
-
-  @Override
-  public void setStopRequested() {
-    stopRequested = true;
-  }
-
-  @Override
-  public boolean stopRequested() {
-    return stopRequested;
   }
 
   @Override
@@ -140,6 +128,31 @@ public abstract class AbstractProgramController implements ProgramController {
           state.set(State.STOPPED);
           result.set(AbstractProgramController.this);
           caller.stopped();
+        } catch (Throwable t) {
+          error(t, result);
+        }
+      }
+    });
+    return result;
+  }
+
+  @Override
+  public final ListenableFuture<ProgramController> terminate() {
+    if (!state.compareAndSet(State.STARTING, State.STOPPING)
+      && !state.compareAndSet(State.ALIVE, State.STOPPING)
+      && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
+      return Futures.immediateFailedFuture(new IllegalStateException("Stopping not allowed").fillInStackTrace());
+    }
+    final SettableFuture<ProgramController> result = SettableFuture.create();
+    executor(State.STOPPING).execute(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          caller.stopping();
+          doStop();
+          state.set(State.TERMINATED);
+          result.set(AbstractProgramController.this);
+          caller.terminated();
         } catch (Throwable t) {
           error(t, result);
         }
@@ -310,6 +323,13 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
+    public void terminated() {
+      for (ListenerCaller caller : listeners.keySet()) {
+        caller.terminated();
+      }
+    }
+
+    @Override
     public void error(Throwable cause) {
       for (ListenerCaller caller : listeners.keySet()) {
         caller.error(cause);
@@ -366,6 +386,11 @@ public abstract class AbstractProgramController implements ProgramController {
     @Override
     public void stopped() {
       addTask(State.STOPPED);
+    }
+
+    @Override
+    public void terminated() {
+      addTask(State.TERMINATED);
     }
 
     @Override
@@ -511,6 +536,9 @@ public abstract class AbstractProgramController implements ProgramController {
           break;
         case STOPPED:
           listener.stopped();
+          break;
+        case TERMINATED:
+          listener.terminated();
           break;
         case ERROR:
           listener.error(failureCause);

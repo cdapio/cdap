@@ -1430,7 +1430,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, type);
 
+      LOG.info("SAGAR: Checking status");
       if (runtimeInfo == null) {
+        LOG.info("SAGAR: Runtime info not found");
         if (type != ProgramType.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
           ProgramSpecification spec = getProgramSpecification(id, type);
@@ -1459,7 +1461,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           }
         }
       }
-
+      LOG.info("SAGAR: Found runtime info");
       String status = controllerStateToString(runtimeInfo.getController().getState());
       return new ProgramStatus(id.getApplicationId(), id.getId(), status);
     } catch (Throwable throwable) {
@@ -1635,15 +1637,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         @Override
         public void stopped() {
-          if (controller.stopRequested()) {
-            store.setStop(id, runId,
-                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.TERMINATED);
-          } else {
-            store.setStop(id, runId,
-                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.STOPPED);
-          }
+          store.setStop(id, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.STOPPED);
+        }
+
+        @Override
+        public void terminated() {
+          LOG.info("SAGAR: Terminating Program");
+          store.setStop(id, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.TERMINATED);
         }
 
         @Override
@@ -1669,7 +1673,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean isRunning(Id.Program id, ProgramType type) {
     String programStatus = getStatus(id, type).getStatus();
-    return programStatus != null && !"STOPPED".equals(programStatus);
+    return programStatus != null && !"STOPPED".equals(programStatus) && !"TERMINATED".equals(programStatus);
   }
 
   /**
@@ -1682,7 +1686,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramStatus status = getProgramStatus(identifier, type);
         if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-        } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
+        } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())
+          || ProgramController.State.TERMINATED.toString().equals(status.getStatus())) {
           return AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
         } else {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
@@ -1698,8 +1703,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
       ProgramController controller = runtimeInfo.getController();
-      controller.setStopRequested();
-      controller.stop().get();
+      controller.terminate().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);

@@ -52,6 +52,10 @@ public abstract class AbstractListener implements ProgramController.Listener {
   }
 
   @Override
+  public void terminated() {
+  }
+
+  @Override
   public void error(Throwable cause) {
   }
 }
