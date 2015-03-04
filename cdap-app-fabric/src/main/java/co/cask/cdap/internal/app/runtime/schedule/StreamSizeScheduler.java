@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * {@link Scheduler} that triggers program executions based on data availability in streams.
@@ -395,6 +396,7 @@ public class StreamSizeScheduler implements Scheduler {
       }
 
       boolean poll = false;
+      Long estimate = null;
       synchronized (deltaLock) {
         if (delta == null) {
           poll = true;
@@ -402,6 +404,7 @@ public class StreamSizeScheduler implements Scheduler {
           for (StreamSizeScheduleTask streamSizeScheduleTask : scheduleTasks.values()) {
             if (streamSizeScheduleTask.shouldTriggerProgram(notification.getSize() - delta)) {
               poll = true;
+              estimate = notification.getSize() - delta;
               break;
             }
           }
@@ -409,56 +412,61 @@ public class StreamSizeScheduler implements Scheduler {
       }
 
       if (poll) {
-        boolean nullDelta = delta == null;
-        StreamSize streamSize;
-        synchronized (deltaLock) {
+        pollAfterNotification(notification, estimate);
+      }
+    }
+
+    /**
+     * Poll the stream size using metrics after receiving a notification, either to set the delta between metric value
+     * and notification value, or because the notification indicates that one {@link StreamSizeScheduleTask} will
+     * execute, and polling the stream is required to confirm the information.
+     *
+     * @param notification {@link StreamSizeNotification} received which triggered polling
+     * @param estimate size of data present in the stream, in bytes, which will trigger the execution of a program
+     *                 in one of the {@link StreamSizeScheduleTask} present in this {@link StreamSubscriber}. It
+     *                 can be null if, when receiving the {@code notification}, not enough information was present
+     *                 to compute an estimate - ie, the {@code delta} was null
+     */
+    private void pollAfterNotification(final StreamSizeNotification notification, @Nullable final Long estimate) {
+      final AtomicBoolean firstPoll = new AtomicBoolean(true);
+      final AtomicInteger pollRetry = new AtomicInteger(POLLING_AFTER_NOTIFICATION_RETRY);
+      pollBookingExecutor.schedule(new Runnable() {
+        @Override
+        public void run() {
           try {
-            // We perform a first polling to recalibrate the delta
-            streamSize = pollOnce();
-            delta = notification.getSize() - streamSize.getSize();
+            StreamSize streamSize;
+            boolean estimateReached = false;
+            synchronized (deltaLock) {
+              streamSize = pollOnce();
+              if (firstPoll.compareAndSet(true, false)) {
+                // The first polling will recalibrate the delta, for future use when receiving a notification
+                delta = notification.getSize() - streamSize.getSize();
+              }
+              if (estimate != null && streamSize.getSize() >= estimate) {
+                estimateReached = true;
+              }
+            }
+
+            // It is always worth it to send the latest stream size to the active tasks. Even if the estimate was
+            // not reached, one of the tasks might expect less data than shown by the estimate
+            sendPollingInfoToActiveTasks(streamSize);
+
+            // TODO instead of relying on expected size to retry polling, use notification timestamp VS
+            // metric timestamp [CDAP-1676]
+            if (estimate != null && !estimateReached && pollRetry.decrementAndGet() >= 0) {
+              pollBookingExecutor.schedule(this, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                           TimeUnit.SECONDS);
+            } else if (estimate != null && !estimateReached) {
+              LOG.debug("Polling estimate {} was not reached for stream {} after {} retries",
+                        estimate, streamId.getName(), POLLING_AFTER_NOTIFICATION_RETRY);
+            }
           } catch (IOException e) {
             LOG.error("Could not poll stream {}", streamId.getName(), e);
-            return;
+          } catch (Throwable t) {
+            LOG.error("Error when polling stream {} and sending info to active tasks", streamId.getName(), t);
           }
         }
-
-        if (nullDelta) {
-          sendPollingInfoToActiveTasks(streamSize);
-          return;
-        }
-
-        final AtomicInteger pollRetry = new AtomicInteger(POLLING_AFTER_NOTIFICATION_RETRY);
-        pollBookingExecutor.schedule(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              StreamSize streamSize;
-              boolean estimateReached = false;
-              synchronized (deltaLock) {
-                streamSize = pollOnce();
-                if (streamSize.getSize() >= notification.getSize() - delta) {
-                  estimateReached = true;
-                }
-              }
-              // It is always worth it to send the last stream size to the active tasks. Even if the estimate was
-              // not reached, one of the tasks might expect less data than shown by the estimate
-              sendPollingInfoToActiveTasks(streamSize);
-              if (!estimateReached && pollRetry.get() > 0) {
-                pollRetry.decrementAndGet();
-                pollBookingExecutor.schedule(this, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
-                                             TimeUnit.SECONDS);
-              } else if (!estimateReached) {
-                LOG.debug("Polling estimate {} was not reached for stream {} after {} retries",
-                          notification.getSize() - delta, streamId.getName(), POLLING_AFTER_NOTIFICATION_RETRY);
-              }
-            } catch (IOException e) {
-              LOG.error("Could not poll stream {}", streamId.getName(), e);
-            } catch (Throwable t) {
-              LOG.error("Error when polling stream {} and sending info to active tasks", streamId.getName(), t);
-            }
-          }
-        }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
-      }
+      }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
