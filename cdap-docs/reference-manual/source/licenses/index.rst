@@ -55,12 +55,14 @@ Other product and company names mentioned herein, within our documentation or we
 be the trademarks of their respective owners. Where the ownership or registration is known,
 the addition of appropriate symbols has been made.
 
-Apache®, Apache Hadoop, and Hadoop® are either registered trademarks or trademarks of the
-Apache Software Foundation in the United States and/or other countries.
+Apache®, `Apache Hadoop <http://hadoop.apache.org>`__, and `Hadoop®
+<http://hadoop.apache.org>`__ are either registered trademarks or trademarks of the
+`Apache Software Foundation <http://www.apache.org>`__ in the United States and/or other
+countries.
 
-Cloudera, Cloudera Impala, and Impala are trademarks of Cloudera, Inc. 
+Cloudera, Cloudera Impala, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 
 
-Hortonworks is a registered trademark of Hortonworks, Inc.
+Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.com>`__
 
 CDAP Product License
 --------------------
