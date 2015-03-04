@@ -42,6 +42,11 @@ public class MetricsClient {
     this.restClient = restClient;
   }
 
+  public MetricsClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Gets the value of a particular metric.
    *

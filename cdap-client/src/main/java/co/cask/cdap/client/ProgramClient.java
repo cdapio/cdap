@@ -71,6 +71,12 @@ public class ProgramClient {
     this.applicationClient = applicationClient;
   }
 
+  public ProgramClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+    this.applicationClient = new ApplicationClient(config, restClient);
+  }
+
   /**
    * Starts a program using specified runtime arguments.
    *

@@ -60,6 +60,11 @@ public class DatasetClient {
     this.restClient = restClient;
   }
 
+  public DatasetClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all datasets.
    *

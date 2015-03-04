@@ -47,6 +47,11 @@ public class MetaClient {
     this.restClient = restClient;
   }
 
+  public MetaClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   public void ping() throws IOException, UnAuthorizedAccessTokenException {
     restClient.execute(HttpMethod.GET, config.resolveURL("ping"), config.getAccessToken());
   }

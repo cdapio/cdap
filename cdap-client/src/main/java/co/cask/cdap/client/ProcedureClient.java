@@ -56,6 +56,11 @@ public class ProcedureClient {
     this.restClient = restClient;
   }
 
+  public ProcedureClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Calls a procedure's method.
    *

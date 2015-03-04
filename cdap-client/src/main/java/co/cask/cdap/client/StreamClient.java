@@ -71,7 +71,16 @@ public class StreamClient {
   @Inject
   public StreamClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = restClient * Gets the configuration of a stream.
+    this.restClient = restClient;
+  }
+
+  public StreamClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
+  /**
+   * Gets the configuration of a stream.
    *
    * @param streamId ID of the stream
    * @throws IOException if a network error occurred

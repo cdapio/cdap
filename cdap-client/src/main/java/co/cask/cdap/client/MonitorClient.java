@@ -54,6 +54,11 @@ public class MonitorClient {
     this.restClient = restClient;
   }
 
+  public MonitorClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all system services.
    *

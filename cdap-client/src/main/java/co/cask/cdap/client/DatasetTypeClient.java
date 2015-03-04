@@ -52,6 +52,11 @@ public class DatasetTypeClient {
     this.restClient = restClient;
   }
 
+  public DatasetTypeClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all dataset types.
    *

@@ -49,6 +49,11 @@ public class ServiceClient {
     this.restClient = restClient;
   }
 
+  public ServiceClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Gets a {@link ServiceSpecification} for a {@link Service}.
    *

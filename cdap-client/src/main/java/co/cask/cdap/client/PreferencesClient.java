@@ -51,6 +51,11 @@ public class PreferencesClient {
     this.restClient = restClient;
   }
 
+  public PreferencesClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Returns the Preferences stored at the Instance Level.
    *

@@ -61,6 +61,11 @@ public class ApplicationClient {
     this.restClient = restClient;
   }
 
+  public ApplicationClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all applications currently deployed.
    *

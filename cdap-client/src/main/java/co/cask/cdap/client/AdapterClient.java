@@ -59,6 +59,11 @@ public class AdapterClient {
     this.restClient = restClient;
   }
 
+  public AdapterClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all adapters.
    *

@@ -42,6 +42,11 @@ public class NamespaceClient extends AbstractNamespaceClient {
     this.restClient = restClient;
   }
 
+  public NamespaceClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   @Override
   protected HttpResponse execute(HttpRequest request) throws IOException, UnAuthorizedAccessTokenException {
     // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle

@@ -60,6 +60,11 @@ public class DatasetModuleClient {
     this.restClient = restClient;
   }
 
+  public DatasetModuleClient(ClientConfig config) {
+    this.config = config;
+    this.restClient = new RESTClient(config);
+  }
+
   /**
    * Lists all dataset modules.
    *
