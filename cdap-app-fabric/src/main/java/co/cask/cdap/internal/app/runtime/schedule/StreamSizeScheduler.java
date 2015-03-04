@@ -33,6 +33,7 @@ import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
@@ -82,6 +83,7 @@ public class StreamSizeScheduler implements Scheduler {
   private final StoreFactory storeFactory;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
+  private final DatasetBasedStreamSizeScheduleStore scheduleStore;
   private final ConcurrentMap<Id.Stream, StreamSubscriber> streamSubscribers;
 
   // Key is scheduleId
@@ -99,7 +101,7 @@ public class StreamSizeScheduler implements Scheduler {
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
                              StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
-                             PreferencesStore preferencesStore) {
+                             PreferencesStore preferencesStore, DatasetBasedStreamSizeScheduleStore scheduleStore) {
     this.pollingDelay = TimeUnit.SECONDS.toMillis(
       cConf.getLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY));
     this.notificationService = notificationService;
@@ -107,12 +109,13 @@ public class StreamSizeScheduler implements Scheduler {
     this.storeFactory = storeFactory;
     this.programRuntimeService = programRuntimeService;
     this.preferencesStore = preferencesStore;
+    this.scheduleStore = scheduleStore;
     this.streamSubscribers = Maps.newConcurrentMap();
     this.scheduleSubscribers = new ConcurrentSkipListMap<String, StreamSubscriber>();
     this.store = null;
   }
 
-  public void start() {
+  public void start() throws SchedulerException {
     sendPollingInfoExecutor = Executors.newCachedThreadPool(
       Threads.createDaemonThreadFactory("stream-size-scheduler-%d"));
     streamPollingExecutor = Executors.newScheduledThreadPool(STREAM_POLLING_THREAD_POOL_SIZE,
@@ -121,6 +124,19 @@ public class StreamSizeScheduler implements Scheduler {
       Threads.createDaemonThreadFactory("polling-booking-executor"));
 
     store = storeFactory.create();
+
+    scheduleStore.initialize();
+
+    // Reschedule the persisted schedules
+    synchronized (this) {
+      List<DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState> scheduleStates =
+        scheduleStore.list();
+      for (DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState scheduleState : scheduleStates) {
+        schedule(scheduleState.getProgramId(), scheduleState.getProgramType(), scheduleState.getStreamSizeSchedule(),
+                 scheduleState.isRunning(), scheduleState.getBaseRunSize(), scheduleState.getBaseRunTs(),
+                 scheduleState.getLastRunSize(), scheduleState.getLastRunTs(), false);
+      }
+    }
   }
 
   public void stop() {
@@ -561,6 +577,7 @@ public class StreamSizeScheduler implements Scheduler {
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(scheduleName);
       }
+      scheduleTask.deleteSchedule();
       if (scheduleTask.isActive()) {
         activeTasks.decrementAndGet();
       }
@@ -709,6 +726,14 @@ public class StreamSizeScheduler implements Scheduler {
       this.lastRunSize = lastRunSize;
       this.lastRunTs = lastRunTs;
       this.active.set(active);
+      if (persist) {
+        scheduleStore.persist(programId, programType, streamSizeSchedule, basePollSize, basePollTs,
+                              lastRunSize, lastRunTs, active);
+      }
+    }
+
+    public void deleteSchedule() {
+      scheduleStore.delete(programId, programType, streamSizeSchedule.getName());
     }
 
     public boolean isActive() {
@@ -755,25 +780,37 @@ public class StreamSizeScheduler implements Scheduler {
         taskRunner.run(programId, ProgramType.valueOf(programType.name()), new BasicArguments(argsBuilder.build()));
         lastRunSize = pollingInfo.getSize();
         lastRunTs = pollingInfo.getTimestamp();
+        scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(), lastRunSize, lastRunSize);
       } catch (TaskExecutionException e) {
         // Note: in case of a failure, we don't reset the base information. We still act as if it was a success
         // and start counting again from the size of that failed run
         LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
       }
+
+      // Only persist the new run once we actually ran it
+      scheduleStore.updateBaseRun(programId, programType, streamSizeSchedule.getName(), basePollSize, basePollTs);
     }
 
     /**
      * @return true if we successfully suspended the schedule, false if it was already suspended
      */
     public boolean suspend() {
-      return active.compareAndSet(true, false);
+      if (active.compareAndSet(true, false)) {
+        scheduleStore.suspend(programId, programType, streamSizeSchedule.getName());
+        return true;
+      }
+      return false;
     }
 
     /**
      * @return true if we successfully resumed the schedule, false if it was already active
      */
     public boolean resume() {
-      return active.compareAndSet(false, true);
+      if (active.compareAndSet(false, true)) {
+        scheduleStore.resume(programId, programType, streamSizeSchedule.getName());
+        return true;
+      }
+      return false;
     }
 
     /**
@@ -781,6 +818,7 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public synchronized void updateSchedule(StreamSizeSchedule schedule) {
       streamSizeSchedule = schedule;
+      scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);
     }
 
     /**
