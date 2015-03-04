@@ -2,7 +2,7 @@
  * Dashboards' model
  */
 
-angular.module(PKG.name+'.feature.dashboard').factory('myDashboardsModel',
+angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
 function (Widget, MyDataSource, mySettings, $q) {
 
   var dSrc = new MyDataSource(),
@@ -141,7 +141,7 @@ function (Widget, MyDataSource, mySettings, $q) {
 /* ------------------------------------------------------------------------- */
 
 
-  function Model () {
+  function Model (suffix) {
     var data = [],
         self = this,
         deferred = $q.defer();
@@ -151,7 +151,12 @@ function (Widget, MyDataSource, mySettings, $q) {
 
     this.$promise = deferred.promise;
 
-    mySettings.get('dashboards')
+    this._key = 'dashsbyns';
+    if(suffix) { // per-namespace dashboards
+      this._key += '.'+suffix;
+    }
+
+    mySettings.get(this._key)
       .then(function(cfg){
         if(!angular.isArray(cfg)) {
           cfg = [];
@@ -161,7 +166,10 @@ function (Widget, MyDataSource, mySettings, $q) {
           return dSrc.request(
             {
               method: 'GET',
-              _cdapNsPath: API_PATH + '/' + id
+
+              // at this point, $stateParams.namespace
+              // may not be set yet... workaround
+              _cdapPath: '/namespaces/' + suffix  + API_PATH + '/' + id
             }
           );
         }));
@@ -175,9 +183,6 @@ function (Widget, MyDataSource, mySettings, $q) {
             p.id = v.id;
             data.push(new Dashboard(p));
           });
-
-        } else { // no dashboards yet
-          self.add(); // create a new default one
         }
 
         deferred.resolve(self);
@@ -197,7 +202,7 @@ function (Widget, MyDataSource, mySettings, $q) {
    * save dashboard config to backend
    */
   Model.prototype.persist = function () {
-    return mySettings.set('dashboards', this.data.map(function(one){
+    return mySettings.set(this._key, this.data.map(function(one){
       return one.id;
     }));
   };
@@ -257,16 +262,18 @@ function (Widget, MyDataSource, mySettings, $q) {
     // default widget in first column
     d.columns[0].push(new Widget());
 
-    // save to backend
-    d.persist().then(this.persist.bind(this));
-
     // insert at beginning of data array
     this.data.unshift(d);
+
+    // save to backend
+    return d.persist().then((function(){
+      return this.persist();
+    }).bind(this));
   };
 
 
 
-  return new Model();
+  return Model;
 });
 
 

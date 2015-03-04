@@ -14,7 +14,13 @@ angular.module(PKG.name+'.feature.dashboard')
         parent: 'ns',
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',
-        controller: 'DashboardCtrl'
+        controller: 'DashboardCtrl',
+        resolve: {
+          rDashboardsModel: function ($stateParams, MyDashboardsModel) {
+            return (new MyDashboardsModel($stateParams.namespace)).$promise;
+          }
+
+        }
       })
 
         .state('dashboard.addwdgt', {
