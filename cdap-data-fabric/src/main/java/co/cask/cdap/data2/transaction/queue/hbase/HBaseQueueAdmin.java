@@ -197,8 +197,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     HBaseAdmin admin = getHBaseAdmin();
     if (tableUtil.tableExists(admin, tableId)) {
       HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
+      tableUtil.dropTable(admin, tableId);
       tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
     }
   }
@@ -214,7 +213,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    drop(getTableIdFromFlow(namespaceId, app, flow));
+    drop(getHBaseAdmin(), getTableIdFromFlow(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -224,7 +223,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
-      drop(getDataTableId(queueName));
+      drop(getHBaseAdmin(), getDataTableId(queueName));
     } else {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
     }
@@ -232,11 +231,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     deleteConsumerConfigurations(queueName);
   }
 
-  private void drop(TableId tableId) throws IOException {
-    HBaseAdmin admin = getHBaseAdmin();
+  private void drop(HBaseAdmin admin, TableId tableId) throws IOException {
     if (tableUtil.tableExists(admin, tableId)) {
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
+      tableUtil.dropTable(admin, tableId);
     }
   }
 
@@ -375,7 +372,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     String trueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
     tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
 
-    drop(getConfigTableId(namespaceId));
+    drop(getHBaseAdmin(), getConfigTableId(namespaceId));
   }
 
   @Override
@@ -531,17 +528,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     String tableNamePrefix = getTableNamePrefix(namespace);
     return tableName.startsWith(tableNamePrefix);
   }
-
-  private boolean isConfigTable(String tableName) {
-    String[] parts = tableName.split("\\.");
-    if (parts.length != 5) {
-      return false;
-    }
-    String namespace = parts[1];
-    String tableNamePrefix = getConfigTableName(namespace);
-    return tableName.startsWith(tableNamePrefix);
-  }
-
 
   /**
    * Decodes group information from the given column values.

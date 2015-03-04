@@ -100,8 +100,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     HBaseAdmin admin = getAdmin();
     TableId tableId = TableId.from(tableName);
     if (tableUtil.tableExists(admin, tableId)) {
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
+      tableUtil.dropTable(admin, tableId);
     }
   }
 

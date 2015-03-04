@@ -301,8 +301,7 @@ public abstract class AbstractHBaseTableUtilTest {
     HTableDescriptor tableDescriptor =
       tableUtil.createHTableDescriptor(TableId.from(tablePrefix, namespace, tableName));
     TableId tableId = TableId.from(tablePrefix, namespace, tableName);
-    tableUtil.disableTable(hAdmin, tableId);
-    tableUtil.deleteTable(hAdmin, tableId);
+    tableUtil.dropTable(hAdmin, tableId);
     tableUtil.createTableIfNotExists(hAdmin, tableId, tableDescriptor);
   }
 
@@ -320,8 +319,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void drop(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    tableUtil.disableTable(hAdmin, tableId);
-    tableUtil.deleteTable(hAdmin, tableId);
+    tableUtil.dropTable(hAdmin, tableId);
   }
 
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {

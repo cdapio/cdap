@@ -83,15 +83,13 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   @Override
   public void truncate() throws IOException {
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
-    tableUtil.disableTable(getAdmin(), tableId);
-    tableUtil.deleteTable(getAdmin(), tableId);
+    tableUtil.dropTable(getAdmin(), tableId);
     tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor);
   }
 
   @Override
   public void drop() throws IOException {
-    tableUtil.disableTable(getAdmin(), tableId);
-    tableUtil.deleteTable(getAdmin(), tableId);
+    tableUtil.dropTable(getAdmin(), tableId);
   }
 
   @Override

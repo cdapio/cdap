@@ -505,6 +505,16 @@ public abstract class HBaseTableUtil {
     deleteAllInNamespace(admin, namespaceId, "");
   }
 
+  /**
+   * Disables and deletes a table.
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public void dropTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    disableTable(admin, tableId);
+    deleteTable(admin, tableId);
+  }
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 

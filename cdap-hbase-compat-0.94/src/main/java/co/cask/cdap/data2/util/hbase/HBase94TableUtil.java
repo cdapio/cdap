@@ -128,8 +128,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       TableId tableId = HTable94NameConverter.fromTableName(hTableDescriptor.getNameAsString());
       if (namespaceId.equals(tableId.getNamespace()) && tableId.getTableName().startsWith(tablePrefix)) {
-        disableTable(admin, tableId);
-        deleteTable(admin, tableId);
+        dropTable(admin, tableId);
       }
     }
   }

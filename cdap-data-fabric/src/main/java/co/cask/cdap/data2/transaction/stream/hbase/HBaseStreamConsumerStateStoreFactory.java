@@ -81,8 +81,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     try {
       TableId tableId = TableId.from(getTableName(namespace));
       if (tableUtil.tableExists(admin, tableId)) {
-        tableUtil.disableTable(admin, tableId);
-        tableUtil.deleteTable(admin, tableId);
+        tableUtil.dropTable(admin, tableId);
       }
     } finally {
       admin.close();
