@@ -20,10 +20,12 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -35,25 +37,28 @@ import java.util.List;
 public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   private final DatasetClient datasetClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.datasetClient = datasetClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetSpecification> datasetMetas = datasetClient.list();
 
-    new AsciiTable<DatasetSpecification>(
-      new String[]{"name", "type"}, datasetMetas,
-      new RowMaker<DatasetSpecification>() {
+    Table table = Table.builder()
+      .setHeader("name", "type")
+      .setRows(datasetMetas, new RowMaker<DatasetSpecification>() {
         @Override
-        public Object[] makeRow(DatasetSpecification object) {
-          return new Object[] { object.getName(), object.getType() };
+        public List<?> makeRow(DatasetSpecification object) {
+          return Lists.newArrayList(object.getName(), object.getType());
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

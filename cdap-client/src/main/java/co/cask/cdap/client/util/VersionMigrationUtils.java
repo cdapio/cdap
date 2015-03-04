@@ -37,7 +37,7 @@ public class VersionMigrationUtils {
    * @return true if procedures are supported with the given configuration; false otherwise.
    */
   public static boolean isProcedureSupported(ClientConfig config) {
-    return Constants.DEFAULT_NAMESPACE.equals(config.getNamespace());
+    return Constants.DEFAULT_NAMESPACE_ID.equals(config.getNamespace());
   }
 
   /**

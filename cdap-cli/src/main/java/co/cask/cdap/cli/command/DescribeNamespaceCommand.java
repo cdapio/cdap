@@ -18,41 +18,47 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * {@link Command} to describe a namespace.
  */
 public class DescribeNamespaceCommand implements Command {
+
   private final NamespaceClient namespaceClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeNamespaceCommand(NamespaceClient namespaceClient) {
+  public DescribeNamespaceCommand(NamespaceClient namespaceClient, TableRenderer tableRenderer) {
     this.namespaceClient = namespaceClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    NamespaceMeta namespaceMeta = namespaceClient.get(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
-    new AsciiTable<NamespaceMeta>(
-      new String[]{"id", "display_name", "description"},
-      Lists.newArrayList(namespaceMeta),
-      new RowMaker<NamespaceMeta>() {
+    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
+    NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(ImmutableList.of(namespaceMeta), new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

@@ -168,7 +168,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/{stream}/info")
+  @Path("/{stream}")
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
@@ -277,7 +277,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/{stream}/config")
+  @Path("/{stream}/properties")
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
