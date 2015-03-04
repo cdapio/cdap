@@ -23,7 +23,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
-import co.cask.cdap.data2.util.hbase.HBase94TableUtil;
 import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,8 +79,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
       }
 
-      namespaceId = HBase94TableUtil.fromTableName(tableDesc.getNameAsString()).getNamespace().getId();
-
+      namespaceId = HTable94NameConverter.fromTableName(tableDesc.getNameAsString()).getNamespace().getId();
       appName = HBaseQueueAdmin.getApplicationName(tableName);
       flowName = HBaseQueueAdmin.getFlowName(tableName);
 

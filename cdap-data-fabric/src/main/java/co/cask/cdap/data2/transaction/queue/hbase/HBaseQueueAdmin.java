@@ -232,18 +232,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     deleteConsumerConfigurations(queueName);
   }
 
-  @Override
-  public void upgrade(String tableName, Properties properties) throws Exception {
-    //TODO: check this
-    TableId tableId = TableId.from(tableName);
-    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
-    try {
-      dsAdmin.upgrade();
-    } finally {
-      dsAdmin.close();
-    }
-  }
-
   private void drop(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (tableUtil.tableExists(admin, tableId)) {
@@ -515,6 +503,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
         upgrade(tableName, properties);
         LOG.info(String.format("Upgraded queue hbase table: %s", tableName));
       }
+    }
+  }
+
+  private void upgrade(String tableName, Properties properties) throws Exception {
+    TableId tableId = TableId.from(tableName);
+    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
+    try {
+      dsAdmin.upgrade();
+    } finally {
+      dsAdmin.close();
     }
   }
 

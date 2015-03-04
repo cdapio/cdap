@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
@@ -74,7 +75,7 @@ public class HBaseTable extends BufferingTable {
   public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
     throws IOException {
     super(name, level, enableReadlessIncrements);
-    hTableName = HBaseTableUtil.getHBaseTableName(name);
+    hTableName = HTableNameConverter.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     TableId tableId = TableId.from(name);
     HTable hTable = tableUtil.createHTable(hConf, tableId);

@@ -17,13 +17,11 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase94.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase94.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.HBaseQueueRegionObserver;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -51,20 +49,20 @@ public class HBase94TableUtil extends HBaseTableUtil {
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, toTableName(tableId));
+    return new HTable(conf, HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
   public HTableDescriptor createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(toTableName(tableId));
+    return new HTableDescriptor(HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
   public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableDescriptor(Bytes.toBytes(toTableName(tableId)));
+    return admin.getTableDescriptor(Bytes.toBytes(HTable94NameConverter.toTableName(tableId)));
   }
 
   @Override
@@ -86,28 +84,28 @@ public class HBase94TableUtil extends HBaseTableUtil {
   public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(toTableName(tableId));
+    admin.disableTable(HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
   public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(toTableName(tableId));
+    admin.enableTable(HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
   public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(toTableName(tableId));
+    return admin.tableExists(HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
   public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(toTableName(tableId));
+    admin.deleteTable(HTable94NameConverter.toTableName(tableId));
   }
 
   @Override
@@ -121,14 +119,14 @@ public class HBase94TableUtil extends HBaseTableUtil {
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableRegions(Bytes.toBytes(toTableName(tableId)));
+    return admin.getTableRegions(Bytes.toBytes(HTable94NameConverter.toTableName(tableId)));
   }
 
   @Override
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
-      TableId tableId = fromTableName(hTableDescriptor.getNameAsString());
+      TableId tableId = HTable94NameConverter.fromTableName(hTableDescriptor.getNameAsString());
       if (namespaceId.equals(tableId.getNamespace()) && tableId.getTableName().startsWith(tablePrefix)) {
         disableTable(admin, tableId);
         deleteTable(admin, tableId);
@@ -249,33 +247,5 @@ public class HBase94TableUtil extends HBaseTableUtil {
       }
     }
     return datasetStat;
-  }
-
-  // Assumptions made:
-  // 1) root prefix can not have '.' or '_'.
-  // 2) namespace can not have '.'
-  public static TableId fromTableName(String hTableName) {
-    Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
-    String[] parts = hTableName.split("\\.", 2);
-    String hBaseNamespace;
-    String hBaseQualifier;
-
-    if (!parts[0].contains("_")) {
-      hBaseNamespace = Constants.DEFAULT_NAMESPACE;
-      hBaseQualifier = hTableName;
-    } else {
-      hBaseNamespace = parts[0];
-      hBaseQualifier = parts[1];
-    }
-    return TableId.from(hBaseNamespace, hBaseQualifier);
-  }
-
-  private String toTableName(TableId tableId) {
-    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    // backward compatibility
-    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return tableId.getHBaseTableName();
-    }
-    return Joiner.on(".").join(tableId.getHBaseNamespace(), tableId.getHBaseTableName());
   }
 }

@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.Id;
 
 /**
@@ -78,14 +78,14 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   protected String getTableNameForFlow(String namespaceId, String app, String flow) {
     String tablePrefix = getTableNamePrefix(namespaceId);
     String tableName = tablePrefix + "." + app + "." + flow;
-    return HBaseTableUtil.getHBaseTableName(tableName);
+    return HTableNameConverter.getHBaseTableName(tableName);
   }
 
   public String getTableNamePrefix(String namespaceId) {
     // returns String with format:  '<root namespace>.<namespaceId>.system.(stream|queue)'
     String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
                                                                      unqualifiedTableNamePrefix)).getId();
-    return HBaseTableUtil.getHBaseTableName(tablePrefix);
+    return HTableNameConverter.getHBaseTableName(tablePrefix);
   }
 
   public String getConfigTableName(QueueName queueName) {
@@ -96,6 +96,6 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     // returns String with format:  '<root namespace>.<namespaceId>.system.queue.config'
     String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
                                                                      unqualifiedConfigTableNameSuffix)).getId();
-    return HBaseTableUtil.getHBaseTableName(tablePrefix);
+    return HTableNameConverter.getHBaseTableName(tablePrefix);
   }
 }

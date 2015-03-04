@@ -23,6 +23,7 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -54,7 +55,7 @@ public class HBaseMetricsTable implements MetricsTable {
   private final HTable hTable;
 
   public HBaseMetricsTable(String name, Configuration hConf) throws IOException {
-    String hTableName = HBaseTableUtil.getHBaseTableName(name);
+    String hTableName = HTableNameConverter.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     HTable hTable = tableUtil.createHTable(hConf, TableId.from(hTableName));
     // todo: make configurable

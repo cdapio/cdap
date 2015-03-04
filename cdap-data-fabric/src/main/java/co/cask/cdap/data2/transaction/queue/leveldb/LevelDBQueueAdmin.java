@@ -136,11 +136,6 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     dropAllTablesWithPrefix(String.format("%s.", getTableNamePrefix(namespaceId)));
   }

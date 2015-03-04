@@ -59,13 +59,13 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   // for testing only
-  String getTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getActualTableName(queueName);
+  TableId getTableId(QueueName queueName) {
+    return (queueName.isStream() ? streamAdmin : queueAdmin).getDataTableId(queueName);
   }
 
   // for testing only
-  String getConfigTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableName(queueName);
+  TableId getConfigTableId(QueueName queueName) {
+    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableId(queueName);
   }
 
   @Override

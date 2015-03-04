@@ -19,7 +19,6 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -46,26 +45,11 @@ public class TableId {
     return namespace;
   }
 
-  @VisibleForTesting
-  public String getHBaseNamespace() {
-    return HBaseTableUtil.toHBaseNamespace(namespace);
-  }
-
-  /**
-   * @return Backward compatible, ASCII encoded table name
-   */
-  public String getHBaseTableName() {
-    return HBaseTableUtil.getHBaseTableName(getBackwardCompatibleTableName());
-  }
-
-  /**
-   * @return the CDAP representation of the table name
-   */
   public String getTableName() {
     return tableName;
   }
 
-  private String getBackwardCompatibleTableName() {
+  protected String getBackwardCompatibleTableName() {
     // handle table names in default namespace so we do not have to worry about upgrades
     if (Constants.DEFAULT_NAMESPACE_ID.equals(namespace)) {
       // if the table name starts with 'system.', then its a queue or stream table. Do not add namespace to table name
@@ -90,45 +74,6 @@ public class TableId {
     Preconditions.checkArgument(tableName != null, "Table name should not be null.");
     // Id.Namespace already checks for non-null namespace
     return new TableId(tablePrefix, Id.Namespace.from(namespace), tableName);
-  }
-
-  public static TableId from(String hBaseNamespace, String hTableName) {
-    Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
-    Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
-
-    String namespace;
-    String prefix;
-
-    // Handle backward compatibility to not add the prefix for default namespace
-    if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
-      namespace = hBaseNamespace;
-      // in Default namespace, hTableName is something like 'cdap.foo.table'
-      String[] parts = hTableName.split("\\.", 2);
-      Preconditions.checkArgument(parts.length == 2,
-                                  String.format("expected table name to contain '.': %s", hTableName));
-      prefix = parts[0];
-      hTableName = parts[1];
-      return TableId.from(prefix, namespace, hTableName);
-    }
-
-
-    String[] parts = hBaseNamespace.split("_");
-    Preconditions.checkArgument(parts.length == 2,
-                                String.format("expected hbase namespace to have a '_': %s", hBaseNamespace));
-    prefix = parts[0];
-    namespace = parts[1];
-
-    // Id.Namespace already checks for non-null namespace
-    return new TableId(prefix, Id.Namespace.from(namespace), hTableName);
-  }
-
-
-  public static String fromHBaseNamespace(String hBaseNamespace) {
-    // Handle backward compatibility to not add the prefix for default namespace
-    if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
-      return hBaseNamespace;
-    }
-    return hBaseNamespace.split("_")[1];
   }
 
   /**
@@ -162,7 +107,7 @@ public class TableId {
     TableId that = (TableId) o;
     return Objects.equal(tablePrefix, that.getTablePrefix()) &&
       Objects.equal(namespace, that.getNamespace()) &&
-      Objects.equal(tableName, that.getHBaseTableName());
+      Objects.equal(tableName, that.getTableName());
   }
 
   @Override

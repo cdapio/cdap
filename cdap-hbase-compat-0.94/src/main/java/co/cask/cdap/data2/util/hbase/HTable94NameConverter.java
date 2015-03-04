@@ -17,12 +17,44 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 
 /**
  * Utility methods for dealing with HBase table name conversions in HBase 0.94.
  */
 public class HTable94NameConverter extends HTableNameConverter {
-  public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+  @Override
+  public String getSysConfigTablePrefix(String hTableName) {
+    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+  }
+
+  public static String toTableName(TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    // backward compatibility
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+      return HTableNameConverter.getHBaseTableName(tableId);
+    }
+    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()),
+                               HTableNameConverter.getHBaseTableName(tableId));
+  }
+
+  // Assumptions made:
+  // 1) root prefix can not have '.' or '_'.
+  // 2) namespace can not have '.'
+  public static TableId fromTableName(String hTableName) {
+    Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
+    String[] parts = hTableName.split("\\.", 2);
+    String hBaseNamespace;
+    String hBaseQualifier;
+
+    if (!parts[0].contains("_")) {
+      hBaseNamespace = Constants.DEFAULT_NAMESPACE;
+      hBaseQualifier = hTableName;
+    } else {
+      hBaseNamespace = parts[0];
+      hBaseQualifier = parts[1];
+    }
+    return HTableNameConverter.from(hBaseNamespace, hBaseQualifier);
   }
 }

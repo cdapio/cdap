@@ -222,12 +222,12 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Test
   public void configTest() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
+    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableId(queueName);
 
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), TableId.from(tableName));
+    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
@@ -306,7 +306,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
-    TableId tableId = TableId.from(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getConfigTableId(queueName);
     String configTableName = tableUtil.createHTable(hConf, tableId).getTableDescriptor().getNameAsString();
     byte[] configTableNameBytes = Bytes.toBytes(configTableName);
     return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
@@ -334,10 +334,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void forceEviction(QueueName queueName) throws Exception {
-    // This functionality (internal-to-cdap tableName -> hbase tableName conversion) should be localized
-    // It's also used in HBaseQueueTest#getConsumerConfigCache
-    String tableNameString = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
-    byte[] tableName = tableUtil.createHTable(testHBase.getConfiguration(), TableId.from(tableNameString)).getTableName();
+    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getTableId(queueName);
+    byte[] tableName = tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName();
     // make sure consumer config cache is updated
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
     testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {

@@ -47,7 +47,7 @@ public class ConfigurationTableTest {
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    testHBase.deleteTables(tableUtil.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
+    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     testHBase.stopHBase();
   }

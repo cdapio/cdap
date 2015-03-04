@@ -33,6 +33,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -72,7 +73,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
-    String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
+    String hBaseTableName = HTableNameConverter.getHBaseTableName(tableName);
     TableId tableId = TableId.from(hBaseTableName);
     HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 

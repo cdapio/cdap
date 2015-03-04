@@ -35,6 +35,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -142,7 +143,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    testHBase.deleteTables(tableUtil.toHBaseNamespace(namespace));
+    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(namespace));
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
   }
 

@@ -17,12 +17,23 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.Constants;
+import org.apache.hadoop.hbase.TableName;
 
 /**
  * Utility methods for dealing with HBase table name conversions in HBase 0.98.
  */
 public class HTable98NameConverter extends HTableNameConverter {
-  public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+  @Override
+  public String getSysConfigTablePrefix(String hTableName) {
+    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+  }
+
+  public static TableName toTableName(TableId tableId) {
+    return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()),
+                             HTableNameConverter.getHBaseTableName(tableId));
+  }
+
+  public static TableId fromTableName(TableName tableName) {
+    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 }

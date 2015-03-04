@@ -17,11 +17,9 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -31,7 +29,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
-import joptsimple.internal.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -53,9 +50,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +58,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -94,21 +88,6 @@ public abstract class HBaseTableUtil {
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
-  protected static final String HBASE_NAMESPACE_PREFIX = "cdap_";
-
-  public static String getHBaseTableName(String tableName) {
-    return encodeTableName(tableName);
-  }
-
-  private static String encodeTableName(String tableName) {
-    try {
-      return URLEncoder.encode(tableName, "ASCII");
-    } catch (UnsupportedEncodingException e) {
-      // this can never happen - we know that ASCII is a supported character set!
-      LOG.error("Error encoding table name '" + tableName + "'", e);
-      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
@@ -393,14 +372,6 @@ public abstract class HBaseTableUtil {
     return info;
   }
 
-  @VisibleForTesting
-  public static String toHBaseNamespace(Id.Namespace namespace) {
-    // Handle backward compatibility to not add the prefix for default namespace
-    // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-      HBASE_NAMESPACE_PREFIX + namespace.getId();
-  }
-
   /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
    *
@@ -512,7 +483,7 @@ public abstract class HBaseTableUtil {
   public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
 
   /**
-   * Deletes all tables in the specified namespace, that match a specified {@link Pattern}
+   * Deletes all tables in the specified namespace, that begin with a particular prefix.
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being requested
@@ -531,7 +502,7 @@ public abstract class HBaseTableUtil {
    * @throws IOException
    */
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
-    deleteAllInNamespace(admin, namespaceId, Strings.EMPTY);
+    deleteAllInNamespace(admin, namespaceId, "");
   }
 
 
