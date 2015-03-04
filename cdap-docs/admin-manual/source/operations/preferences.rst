@@ -58,8 +58,7 @@ or provide Twitter API credentials::
       Map<String, String> args = context.getRuntimeArguments();
 
       if (args.containsKey("disable.public")) {
-        String publicArg = args.get("disable.public");
-        LOG.info("Public Twitter source turned off (disable.public={})", publicArg);
+        LOG.info("Public Twitter source turned off");
         return;
       }
 

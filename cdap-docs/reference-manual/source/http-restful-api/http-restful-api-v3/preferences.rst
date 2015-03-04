@@ -23,13 +23,13 @@ Set Preferences
 ---------------
 To set preferences for the CDAP Instance, Namespace, Application, or Program, submit an HTTP PUT request::
 
-  PUT http://<host>:<port>/v3/configuration/preferences/
+  PUT http://<host>:<port>/v3/preferences/
 
-  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
 
-  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  PUT http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
 :widths: 20 80
@@ -42,7 +42,7 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - One of ``flows``, ``map reduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
@@ -72,13 +72,13 @@ Get Preferences
 
 To retrieve the current preferences, issue an HTTP GET request::
 
-  GET http://<host>:<port>/v3/configuration/preferences/
+  GET http://<host>:<port>/v3/preferences/
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 This will return a JSON String map of the preferences::
 
@@ -87,13 +87,13 @@ This will return a JSON String map of the preferences::
 To retrieve the Resolved Preferences (collapsing Preferences from higher levels into a single level), set the
 ``resolved`` query parameter to ``true``::
 
-  GET http://<host>:<port>/v3/configuration/preferences?resolved=true
+  GET http://<host>:<port>/v3/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences?resolved=true
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences?resolved=true
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
+  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
 :widths: 20 80
@@ -106,7 +106,7 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - Program Type (flows, services, etc)
+     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
@@ -127,13 +127,13 @@ Delete Preferences
 ------------------
 To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at one level with each request::
 
-  DELETE http://<host>:<port>/v3/configuration/preferences/
+  DELETE http://<host>:<port>/v3/preferences/
 
-  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/preferences
+  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
 
-  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/preferences
+  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
 
-  DELETE http://<host>:<port>/v3/configuration/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
 :widths: 20 80
@@ -146,7 +146,7 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - Program Type (flows, services, etc)
+     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
