@@ -264,6 +264,11 @@ public class UpgraderMain {
     LOG.info("Upgrading System and User Datasets ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
+
+    LOG.info("Upgrading archives and files");
+    ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
+    archiveUpgrader.upgrade();
+
   }
 
   public static void main(String[] args) throws Exception {
