@@ -126,8 +126,10 @@ Re-build the Application with Column-level Conflict Detection
 Running CDAP Applications
 ============================================
 
-.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
-    :start-line: 9
+.. |example| replace:: UserProfiles
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 11
 
 Running the Example
 ===================

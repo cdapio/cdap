@@ -38,7 +38,8 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
 
-  private static final String TEST_NAMESPACE = "streamConsumerStateTestNamespace";
+  protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerStateTestNamespace");
+  protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
 
   @Test
   public void testStateExists() throws Exception {
@@ -90,7 +91,7 @@ public abstract class StreamConsumerStateTestBase {
     StreamAdmin streamAdmin = getStreamAdmin();
     String streamName = "testNamespacedStore";
     Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
-    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
+    Id.Stream otherStreamId = Id.Stream.from(OTHER_NAMESPACE, streamName);
 
     streamAdmin.create(streamId);
     streamAdmin.create(otherStreamId);

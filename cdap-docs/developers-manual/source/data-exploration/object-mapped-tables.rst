@@ -87,7 +87,7 @@ Creating the Dataset in this manner would result in a different column name and 
 
   (rowkey STRING, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT)
 
-.. _sql-limitations:
+.. _object-mapped-table-exploration-sql-limitations:
 
 Limitations
 -----------
@@ -110,9 +110,10 @@ Formulating Queries
 -------------------
 When creating your queries, keep these limitations in mind:
 
+.. TODO(CDAP-1671): update with namespaces
+
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
 - The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
-.. TODO(CDAP-1671): update with namespaces
 - When addressing your datasets in queries, you need to prefix the data set name with the CDAP
   namespace ``cdap_user_``. For example, if your Dataset is named ``Purchases``, then the corresponding table
   name is ``cdap_user_purchases``. Note that the table name is lower-case.

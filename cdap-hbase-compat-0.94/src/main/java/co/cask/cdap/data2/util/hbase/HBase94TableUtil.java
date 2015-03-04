@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase94.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase94.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
@@ -39,6 +40,7 @@ import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,20 +49,22 @@ import java.util.Map;
 public class HBase94TableUtil extends HBaseTableUtil {
 
   @Override
-  public boolean namespacesSupported() {
-    return false;
-  }
-
-  @Override
   public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, getTableNameWithNamespace(tableId));
+    return new HTable(conf, toTableName(tableId));
   }
 
   @Override
   public HTableDescriptor getHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(getTableNameWithNamespace(tableId));
+    return new HTableDescriptor(toTableName(tableId));
+  }
+
+  @Override
+  public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    return admin.getTableDescriptor(Bytes.toBytes(toTableName(tableId)));
   }
 
   @Override
@@ -79,9 +83,45 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public String getTableNameWithNamespace(TableId tableId) {
+  public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+    admin.disableTable(toTableName(tableId));
+  }
+
+  @Override
+  public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    admin.enableTable(toTableName(tableId));
+  }
+
+  @Override
+  public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    return admin.tableExists(toTableName(tableId));
+  }
+
+  @Override
+  public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    admin.deleteTable(toTableName(tableId));
+  }
+
+  @Override
+  public void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
+    admin.modifyTable(tableDescriptor.getName(), tableDescriptor);
+  }
+
+  @Override
+  public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
+    Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    return admin.getTableRegions(Bytes.toBytes(toTableName(tableId)));
   }
 
   @Override
@@ -199,4 +239,12 @@ public class HBase94TableUtil extends HBaseTableUtil {
     return datasetStat;
   }
 
+  private String toTableName(TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    // backward compatibility
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+      return tableId.getTableName();
+    }
+    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+  }
 }
