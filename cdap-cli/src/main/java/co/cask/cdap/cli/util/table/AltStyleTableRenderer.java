@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.cli.util;
+package co.cask.cdap.cli.util.table;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
- * Utility class to print an ASCII table. e.g.
+ * {@link TableRenderer} implementation to print an ASCII table in the alt style. e.g.
  *
  * +=======================================================================+
  * | pid                                  | end status | start      | stop |
@@ -43,74 +42,63 @@ import javax.annotation.Nullable;
  * | d9cae8f9-3fd3-45f4-b4e9-102ef38cf4e1 | STOPPED    | 1405371545 | 0    |
  * +=======================================================================+
  *
- * @param <T> type of object that the rows represent
+ * E.g. when cells are multiple lines:
+ *
+ * +========================================================================================+
+ * | c1                         | c2                         | c3333                        |
+ * +========================================================================================+
+ * | r1zzzzzzzzzzzzzzzzzzzzzzzz | r11                        | r1                           |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * | zzzzzzzzzzzzzzzzzzzzzzzzzz |                            |                              |
+ * |----------------------------------------------------------------------------------------|
+ * | r2                         | r2222 zzzzzzz z z z zzzzzz | r                            |
+ * |                            | z z zzzzzzzzz zzzzzzz zzzz |                              |
+ * |----------------------------------------------------------------------------------------|
+ * | r3333                      | r3                         | r3                           |
+ * |                            |                            | 1                            |
+ * +========================================================================================+
  */
-public class AsciiTable<T> {
+public class AltStyleTableRenderer implements TableRenderer {
 
   private static final int DEFAULT_WIDTH = 80;
-  private static final int MIN_COLUMN_WIDTH = 5;
+  private static final int DEFAULT_MIN_COLUMN_WIDTH = 5;
   private static final String DEFAULT_NEWLINE = System.getProperty("line.separator");
 
-  private final List<String> header;
-  private final List<T> records;
-  private final RowMaker<T> rowMaker;
   private final int width;
+  private final int minColumnWidth;
   private final Splitter newlineSplitter;
 
+  @Inject
+  public AltStyleTableRenderer() {
+    this(DEFAULT_WIDTH, DEFAULT_MIN_COLUMN_WIDTH, DEFAULT_NEWLINE);
+  }
 
-  /**
-   * @param header strings representing the header of the table
-   * @param records list of objects that represent the rows
-   * @param rowMaker makes Object arrays from a row object
-   * @param width maximum width of the table
-   * @param newline string to split on to force line breaks
-   */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width, String newline) {
-    this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
-    this.records = records;
-    this.rowMaker = rowMaker;
+  public AltStyleTableRenderer(int width, int minColumnWidth, String newline) {
     this.width = width;
+    this.minColumnWidth = minColumnWidth;
     this.newlineSplitter = Splitter.on(newline);
   }
 
-  /**
-   * @param header strings representing the header of the table
-   * @param records list of objects that represent the rows
-   * @param rowMaker makes Object arrays from a row object
-   * @param width maximum width of the table
-   */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker, int width) {
-    this(header, records, rowMaker, width, DEFAULT_NEWLINE);
-  }
-
-  /**
-   * @param header strings representing the header of the table
-   * @param records list of objects that represent the rows
-   * @param rowMaker makes Object arrays from a row object
-   */
-  public AsciiTable(@Nullable String[] header, List<T> records, RowMaker<T> rowMaker) {
-    this(header, records, rowMaker, DEFAULT_WIDTH, DEFAULT_NEWLINE);
-  }
-
-  /**
-   * Prints the ASCII table to the {@link PrintStream} output.
-   *
-   * @param output {@link PrintStream} to print to
-   */
-  public void print(PrintStream output) {
+  @Override
+  public void render(PrintStream output, Table table) {
+    List<String> header = table.getHeader();
+    List<Row> rows = Lists.newArrayList();
 
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
+    int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
     boolean useRowDivider = false;
-    List<Object[]> objectRows = Lists.newArrayList();
-    for (T row : records) {
-      objectRows.add(rowMaker.makeRow(row));
-    }
-    int[] columnWidths = calculateColumnWidths(header, objectRows, width);
-
-    List<Row> rows = Lists.newArrayList();
-    for (Object[] objectRow : objectRows) {
-      useRowDivider = generateRow(objectRow, columnWidths, rows) || useRowDivider;
+    for (List<String> row : table.getRows()) {
+      useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;
     }
 
     // If has header, prints the header.
@@ -180,17 +168,17 @@ public class AsciiTable<T> {
   /**
    * Generates a record row. A record row can span across multiple lines on the screen.
    *
-   * @param columns The set of columns to output.
+   * @param row The row containing the set of columns to output.
    * @param columnWidths The widths of each column.
    * @param collection Collection for collecting the generated {@link Row} object.
    * @return Returns true if the row spans multiple lines.
    */
-  private boolean generateRow(Object[] columns, int[] columnWidths, Collection<? super Row> collection) {
+  private boolean generateRow(List<String> row, int[] columnWidths, Collection<? super Row> collection) {
     ImmutableList.Builder<Cell> builder = ImmutableList.builder();
 
     boolean multiLines = false;
-    for (int column = 0; column < columns.length; column++) {
-      Object field = columns[column];
+    for (int column = 0; column < row.size(); column++) {
+      Object field = row.get(column);
       int width = columnWidths[column];
 
       String fieldString = field == null ? "" : field.toString();
@@ -206,7 +194,7 @@ public class AsciiTable<T> {
           while (endSplitIdx < splitFieldLine.length()) {
             cellLines.add(splitFieldLine.substring(startSplitIdx, endSplitIdx));
             startSplitIdx = endSplitIdx;
-            endSplitIdx = startSplitIdx + width + 1;
+            endSplitIdx = startSplitIdx + width;
           }
           // add any remaining part of the splitFieldLine string
           if (startSplitIdx < splitFieldLine.length() - 1) {
@@ -233,12 +221,12 @@ public class AsciiTable<T> {
    * @param maxTableWidth Maximum width of the table.
    * @return An array of integers, with contains maximum width for each column.
    */
-  private int[] calculateColumnWidths(List<String> header, Iterable<Object[]> rows, int maxTableWidth) {
+  private int[] calculateColumnWidths(List<String> header, Iterable<List<String>> rows, int maxTableWidth) {
     int[] widths;
     if (!header.isEmpty()) {
       widths = new int[header.size()];
     } else if (rows.iterator().hasNext()) {
-      widths = new int[rows.iterator().next().length];
+      widths = new int[rows.iterator().next().size()];
     } else {
       return new int[0];
     }
@@ -252,9 +240,9 @@ public class AsciiTable<T> {
     // fix any rounding issues by resizing the last column width
     widths[widths.length - 1] += remainingWidth;
 
-    // apply MIN_COLUMN_WIDTH constraint
+    // apply minColumnWidth constraint
     for (int i = 0; i < widths.length; i++) {
-      widths[i] = Math.max(widths[i], MIN_COLUMN_WIDTH);
+      widths[i] = Math.max(widths[i], minColumnWidth);
     }
 
     return widths;

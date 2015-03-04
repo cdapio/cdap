@@ -18,6 +18,7 @@ package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.common.cli.Command;
 
 import java.io.IOException;
@@ -32,7 +33,8 @@ public class GenerateCLIDocsTable {
   private final Command printDocsCommand;
 
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig).getCommandsSupplier());
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig, AltStyleTableRenderer.class)
+                                                              .getCommandsSupplier());
   }
 
   public static void main(String[] args) throws Exception {

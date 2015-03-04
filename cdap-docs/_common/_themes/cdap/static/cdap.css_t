@@ -138,6 +138,18 @@ div.sphinxsidebar a {
     color: #444;
 }
 
+div.sphinxsidebar a tt.docutils.literal {
+    font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
+    font-style: italic;
+    font-weight: normal;
+    font-size: 1.0em;
+}
+
+div.sphinxsidebar a:hover tt.docutils.literal {
+	  font-weight: bold;
+}
+
+
 div.sphinxsidebar input {
     border: 1px solid #ccc;
     font-family: sans-serif;
