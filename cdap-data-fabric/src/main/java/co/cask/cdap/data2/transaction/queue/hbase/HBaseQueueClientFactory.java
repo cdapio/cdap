@@ -114,7 +114,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   private HTable createHTable(String name) throws IOException {
-    HTable consumerTable = hBaseTableUtil.getHTable(hConf, TableId.from(name));
+    HTable consumerTable = hBaseTableUtil.createHTable(hConf, TableId.from(name));
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);

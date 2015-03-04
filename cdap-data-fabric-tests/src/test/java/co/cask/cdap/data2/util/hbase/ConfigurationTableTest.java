@@ -62,7 +62,7 @@ public class ConfigurationTableTest {
 
     String configTableQualifier = "configuration";
     TableId configTableId = TableId.from(String.format("%s.system.%s", expectedNamespace, configTableQualifier));
-    String configTableName = tableUtil.getHTableDescriptor(configTableId).getNameAsString();
+    String configTableName = tableUtil.createHTableDescriptor(configTableId).getNameAsString();
     // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
     String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());
 

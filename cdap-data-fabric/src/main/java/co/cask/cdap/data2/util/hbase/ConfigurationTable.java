@@ -75,7 +75,7 @@ public class ConfigurationTable {
     HTable table = null;
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-      HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd);
 
@@ -84,7 +84,7 @@ public class ConfigurationTable {
       byte[] typeBytes = Bytes.toBytes(type.name());
       LOG.info("Writing new config row with key " + type);
       // populate the configuration data
-      table = tableUtil.getHTable(hbaseConf, tableId);
+      table = tableUtil.createHTable(hbaseConf, tableId);
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
       for (Map.Entry<String, String> e : conf) {

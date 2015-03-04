@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileReader;
@@ -75,7 +74,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
     String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
     TableId tableId = TableId.from(hBaseTableName);
-    HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     htd.addFamily(hcd);
@@ -87,7 +86,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     tableUtil.createTableIfNotExists(getAdmin(), tableId, htd, splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,

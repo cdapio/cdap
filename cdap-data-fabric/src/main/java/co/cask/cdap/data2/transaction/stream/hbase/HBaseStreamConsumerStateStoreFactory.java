@@ -55,7 +55,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     HBaseAdmin admin = new HBaseAdmin(hConf);
     if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
       try {
-        HTableDescriptor htd = tableUtil.getHTableDescriptor(streamStateStoreTableId);
+        HTableDescriptor htd = tableUtil.createHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);
@@ -68,7 +68,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
       }
     }
 
-    HTable hTable = tableUtil.getHTable(hConf, streamStateStoreTableId);
+    HTable hTable = tableUtil.createHTable(hConf, streamStateStoreTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);

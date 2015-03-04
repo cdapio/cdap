@@ -56,7 +56,7 @@ public class HBaseMetricsTable implements MetricsTable {
   public HBaseMetricsTable(String name, Configuration hConf) throws IOException {
     String hTableName = HBaseTableUtil.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    HTable hTable = tableUtil.getHTable(hConf, TableId.from(hTableName));
+    HTable hTable = tableUtil.createHTable(hConf, TableId.from(hTableName));
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

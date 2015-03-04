@@ -77,7 +77,7 @@ public class HBaseTable extends BufferingTable {
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     TableId tableId = TableId.from(name);
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

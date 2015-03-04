@@ -49,13 +49,13 @@ import java.util.Map;
 public class HBase98TableUtil extends HBaseTableUtil {
 
   @Override
-  public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
+  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
     return new HTable(conf, toTableName(tableId));
   }
 
   @Override
-  public HTableDescriptor getHTableDescriptor(TableId tableId) {
+  public HTableDescriptor createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
     return new HTableDescriptor(toTableName(tableId));
   }

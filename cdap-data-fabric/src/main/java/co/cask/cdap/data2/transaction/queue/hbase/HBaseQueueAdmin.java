@@ -270,7 +270,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
-    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
+    HTable hTable = tableUtil.createHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
     try {
       byte[] rowKey = queueName.toBytes();
       hTable.delete(new Delete(rowKey));
@@ -296,7 +296,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     TableId tableId = TableId.from(configTableName);
     if (tableUtil.tableExists(admin, tableId)) {
       // we need to delete the row for this queue name from the config table
-      HTable hTable = tableUtil.getHTable(admin.getConfiguration(), tableId);
+      HTable hTable = tableUtil.createHTable(admin.getConfiguration(), tableId);
       try {
         byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
@@ -362,7 +362,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   private void createConfigTable(QueueName queueName) throws IOException {
     TableId tableId = getConfigTableId(queueName);
-    HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     htd.addFamily(hcd);
@@ -398,7 +398,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
+    HTable hTable = tableUtil.createHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -432,7 +432,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       create(queueName);
     }
 
-    HTable hTable = tableUtil.getHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
+    HTable hTable = tableUtil.createHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -659,7 +659,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
       for (String key : properties.stringPropertyNames()) {
         htd.setValue(key, properties.getProperty(key));
       }

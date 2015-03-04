@@ -168,23 +168,23 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableId);
     Assert.assertEquals("default", tableId.getHBaseNamespace());
     Assert.assertEquals("cdap.user.my.dataset", tableId.getHBaseTableName());
-    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
-                                                                                          tableId).getTableName()));
+    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(),
+                                                                                             tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("cdap.default.system.queue.config");
     create(tableId);
     Assert.assertEquals("default", tableId.getHBaseNamespace());
     Assert.assertEquals("cdap.system.queue.config", tableId.getHBaseTableName());
-    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
-                                                                                          tableId).getTableName()));
+    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(),
+                                                                                             tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("cdap.myspace.could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
     Assert.assertEquals("cdap_myspace", tableId.getHBaseNamespace());
     Assert.assertEquals("could.be.any.table.name", tableId.getHBaseTableName());
-    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.getHTable(testHBase.getConfiguration(),
-                                                                                          tableId).getTableName()));
+    Assert.assertEquals(getTableNameAsString(tableId), Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(),
+                                                                                             tableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
   }
@@ -250,8 +250,8 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private void writeSome(String namespace, String tableName) throws IOException {
-    HTable table = getTableUtil().getHTable(testHBase.getConfiguration(), TableId.from(tablePrefix, namespace,
-                                                                                       tableName));
+    HTable table = getTableUtil().createHTable(testHBase.getConfiguration(), TableId.from(tablePrefix, namespace,
+                                                                                          tableName));
     try {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
@@ -278,7 +278,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    HTableDescriptor desc = tableUtil.getHTableDescriptor(tableId);
+    HTableDescriptor desc = tableUtil.createHTableDescriptor(tableId);
     desc.addFamily(new HColumnDescriptor("d"));
     tableUtil.createTableIfNotExists(hAdmin, tableId, desc);
   }
@@ -298,7 +298,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void truncate(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(TableId.from(tablePrefix, namespace, tableName));
+    HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(TableId.from(tablePrefix, namespace, tableName));
     TableId tableId = TableId.from(tablePrefix, namespace, tableName);
     tableUtil.disableTable(hAdmin, tableId);
     tableUtil.deleteTable(hAdmin, tableId);
