@@ -23,7 +23,7 @@ import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testNamespaces() throws IOException, UnAuthorizedAccessTokenException, CannotBeDeletedException,
+  public void testNamespaces() throws IOException, UnauthorizedException, CannotBeDeletedException,
     NotFoundException, AlreadyExistsException, BadRequestException {
 
     List<NamespaceMeta> namespaces = namespaceClient.list();
@@ -114,7 +114,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
   }
 
   private void verifyDoesNotExist(String namespaceId)
-    throws IOException, UnAuthorizedAccessTokenException, CannotBeDeletedException {
+    throws IOException, UnauthorizedException, CannotBeDeletedException {
     try {
       namespaceClient.get(namespaceId);
       Assert.fail(String.format("Namespace '%s' must not be found", namespaceId));
@@ -128,7 +128,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
+  private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnauthorizedException {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setId(DEFAULT);
     try {
@@ -144,7 +144,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void verifyReservedDelete() throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
+  private void verifyReservedDelete() throws NotFoundException, IOException, UnauthorizedException {
     try {
       namespaceClient.delete(DEFAULT);
       Assert.fail(String.format("Must not delete '%s' namespace", DEFAULT));
