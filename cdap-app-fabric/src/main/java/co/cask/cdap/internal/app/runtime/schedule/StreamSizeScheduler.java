@@ -327,6 +327,8 @@ public class StreamSizeScheduler implements Scheduler {
     private Cancellable notificationSubscription;
     private StreamSizeNotification lastNotification;
     private StreamSize lastPollingInfo;
+
+    // delta represents the gap between notifications for the stream and the stream size metric
     private Long delta;
 
     private StreamSubscriber(Id.Stream streamId) {
@@ -407,25 +409,55 @@ public class StreamSizeScheduler implements Scheduler {
       }
 
       if (poll) {
-        for (int i = 0; i < POLLING_AFTER_NOTIFICATION_RETRY; i++) {
-          pollBookingExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                StreamSize streamSize;
-                synchronized (deltaLock) {
-                  streamSize = pollOnce();
-                  delta = notification.getSize() - streamSize.getSize();
-                }
-                sendPollingInfoToActiveTasks(streamSize);
-              } catch (IOException e) {
-                LOG.error("Could not poll stream {}", streamId.getName(), e);
-              } catch (Throwable t) {
-                LOG.error("Error when polling stream {} and sending info to active tasks", streamId.getName(), t);
-              }
-            }
-          }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS + i, TimeUnit.SECONDS);
+        boolean nullDelta = delta == null;
+        StreamSize streamSize;
+        synchronized (deltaLock) {
+          try {
+            // We perform a first polling to recalibrate the delta
+            streamSize = pollOnce();
+            delta = notification.getSize() - streamSize.getSize();
+          } catch (IOException e) {
+            LOG.error("Could not poll stream {}", streamId.getName(), e);
+            return;
+          }
         }
+
+        if (nullDelta) {
+          sendPollingInfoToActiveTasks(streamSize);
+          return;
+        }
+
+        final AtomicInteger pollRetry = new AtomicInteger(POLLING_AFTER_NOTIFICATION_RETRY);
+        pollBookingExecutor.schedule(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              StreamSize streamSize;
+              boolean estimateReached = false;
+              synchronized (deltaLock) {
+                streamSize = pollOnce();
+                if (streamSize.getSize() >= notification.getSize() - delta) {
+                  estimateReached = true;
+                }
+              }
+              // It is always worth it to send the last stream size to the active tasks. Even if the estimate was
+              // not reached, one of the tasks might expect less data than shown by the estimate
+              sendPollingInfoToActiveTasks(streamSize);
+              if (!estimateReached && pollRetry.get() > 0) {
+                pollRetry.decrementAndGet();
+                pollBookingExecutor.schedule(this, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                             TimeUnit.SECONDS);
+              } else if (!estimateReached) {
+                LOG.debug("Polling estimate {} was not reached for stream {} after {} retries",
+                          notification.getSize() - delta, streamId.getName(), POLLING_AFTER_NOTIFICATION_RETRY);
+              }
+            } catch (IOException e) {
+              LOG.error("Could not poll stream {}", streamId.getName(), e);
+            } catch (Throwable t) {
+              LOG.error("Error when polling stream {} and sending info to active tasks", streamId.getName(), t);
+            }
+          }
+        }, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
       }
     }
 
@@ -590,12 +622,12 @@ public class StreamSizeScheduler implements Scheduler {
     private synchronized StreamSize pollOnce() throws IOException {
       StreamSize streamSize = queryStreamEventsSize();
       if (lastPollingInfo != null && streamSize.getSize() < lastPollingInfo.getSize()) {
+        delta = null;
         for (StreamSizeScheduleTask streamSizeScheduleTask : scheduleTasks.values()) {
           streamSizeScheduleTask.reset(streamSize.getTimestamp());
         }
       }
       lastPollingInfo = streamSize;
-      delta = null;
       return streamSize;
     }
 
@@ -733,10 +765,6 @@ public class StreamSizeScheduler implements Scheduler {
           return;
         }
 
-        currentSchedule = streamSizeSchedule;
-        basePollSize = pollingInfo.getSize();
-        basePollTs = pollingInfo.getTimestamp();
-
         argsBuilder.put(ProgramOptionConstants.SCHEDULE_NAME, streamSizeSchedule.getName());
         argsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(pollingInfo.getTimestamp()));
         argsBuilder.put(ProgramOptionConstants.RUN_DATA_SIZE, Long.toString(pollingInfo.getSize()));
@@ -747,6 +775,10 @@ public class StreamSizeScheduler implements Scheduler {
           argsBuilder.put(ProgramOptionConstants.PAST_RUN_LOGICAL_START_TIME, Long.toString(lastRunTs));
           argsBuilder.put(ProgramOptionConstants.PAST_RUN_DATA_SIZE, Long.toString(lastRunSize));
         }
+
+        currentSchedule = streamSizeSchedule;
+        basePollSize = pollingInfo.getSize();
+        basePollTs = pollingInfo.getTimestamp();
       }
 
       ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
