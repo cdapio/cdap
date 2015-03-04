@@ -1,0 +1,21 @@
+<div class="row">
+  <div class="col-sm-2 control-label">
+    Instances:
+  </div>
+  <div class="col-sm-10">
+    <form class="form-inline">
+        <label>
+          Provisioned
+          <br />
+          <p class="form-control-static" ng-bind="model.provisioned"></p>
+        </label>
+        <label>
+          Requested
+          <br />
+          <input ng-placeholder="model.requested" type="number" min="0" name="requested" class="form-control" ng-model="model.requested"/>
+        </label>
+        <button type="button" class="btn btn-default" ng-disabled="model.provisioned === model.requested || processing" ng-click="handleSet()">Set</button>
+        <span ng-if="processing" class="fa fa-refresh fa-spin"></span>
+    </form>
+  </div>
+</div>

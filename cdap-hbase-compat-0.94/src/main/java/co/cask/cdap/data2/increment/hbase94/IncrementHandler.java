@@ -16,9 +16,10 @@
 
 package co.cask.cdap.data2.increment.hbase94;
 
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
 import co.cask.tephra.hbase94.Filters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -50,14 +51,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
  * HBase coprocessor that handles reading and writing read-less increment operations.
  *
  * <p>Writes of incremental values are performed as normal {@code Put}s, flagged with a special attribute
- * {@link co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable#DELTA_WRITE}.  The coprocessor intercepts these
+ * {@link HBaseTable#DELTA_WRITE}.  The coprocessor intercepts these
  * writes and rewrites the cell value to use a special marker prefix.</p>
  *
  * <p>For read (for {@code Get} and {@code Scan}) operations, all of the delta values are summed up for a column,
@@ -79,8 +79,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      this.state = new IncrementHandlerState(env.getConfiguration(),
-          env.getRegion().getTableDesc().getNameAsString());
+      this.state = new IncrementHandlerState(env.getConfiguration(), env.getRegion().getTableDesc().getNameAsString(),
+                                             new HTable94NameConverter());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
@@ -125,7 +125,7 @@ public class IncrementHandler extends BaseRegionObserver {
     throws IOException {
     // we assume that if any of the column families written to are transactional, the entire write is transactional
     boolean transactional = state.containsTransactionalFamily(put.getFamilyMap().keySet());
-    boolean isIncrement = put.getAttribute(HBaseOrderedTable.DELTA_WRITE) != null;
+    boolean isIncrement = put.getAttribute(HBaseTable.DELTA_WRITE) != null;
 
     if (isIncrement || !transactional) {
       // incremental write

@@ -39,7 +39,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.SimpleKVTable;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -116,10 +116,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     InMemoryDatasetFramework mdsFramework =
       new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                   ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule(),
+                                   ImmutableMap.of("memoryTable", new InMemoryTableModule(),
                                                    "core", new CoreDatasetsModule()));
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
@@ -129,9 +130,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

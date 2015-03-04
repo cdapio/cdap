@@ -71,4 +71,10 @@ public interface WorkflowConfigurer {
    * @param action to be added to the {@link Workflow}
    */
   void addAction(WorkflowAction action);
+
+  /**
+   * Forks the execution of the {@link Workflow} into multiple branches
+   * @return the configurer for the {@link Workflow}
+   */
+  WorkflowForkConfigurer<? extends WorkflowConfigurer> fork();
 }

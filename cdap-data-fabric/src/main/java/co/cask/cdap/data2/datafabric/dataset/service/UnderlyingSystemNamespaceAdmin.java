@@ -18,7 +18,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * Performs namespace admin operations on underlying storage (HBase, Filesystem, Hive, etc)
@@ -35,10 +37,13 @@ public class UnderlyingSystemNamespaceAdmin {
 
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private final ExploreFacade exploreFacade;
 
-  protected UnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory) {
+  protected UnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory,
+                                           ExploreFacade exploreFacade) {
     this.cConf = cConf;
     this.locationFactory = locationFactory;
+    this.exploreFacade = exploreFacade;
   }
 
   /**
@@ -50,7 +55,7 @@ public class UnderlyingSystemNamespaceAdmin {
    * @param namespaceId {@link Id.Namespace} for the namespace to create
    * @throws IOException if there are errors while creating the namespace
    */
-  protected void create(Id.Namespace namespaceId) throws IOException {
+  protected void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     Location namespaceHome = locationFactory.create(namespaceId.getId());
     if (namespaceHome.exists()) {
       throw new IOException(String.format("Home directory '%s' for namespace '%s' already exists.",
@@ -60,31 +65,35 @@ public class UnderlyingSystemNamespaceAdmin {
       throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
                                           namespaceHome.toURI().toString(), namespaceId));
     }
+
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      exploreFacade.createNamespace(namespaceId);
+    }
   }
 
   /**
    * Delete a namespace from the underlying system
    * Can perform operations such as deleting directories, deleting namespaces, etc.
-   * The default implementation soft deletes the namespace directory on the filesystem.
+   * The default implementation deletes the namespace directory on the filesystem.
    * Subclasses can override to add more logic such as delete namespaces in HBase, etc.
    *
    * @param namespaceId {@link Id.Namespace} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace
    */
-  protected void delete(Id.Namespace namespaceId) throws IOException {
+  protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+    // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = locationFactory.create(namespaceId.getId());
-    Location trashLocation = locationFactory.create(cConf.get(Constants.TRASH_LOCATION,
-                                                              Constants.DEFAULT_TRASH_LOCATION));
-    Locations.mkdirsIfNotExists(trashLocation);
-    if (namespaceHome.exists()) {
-      if (namespaceHome.renameTo(trashLocation.append(namespaceId.getId())) == null) {
+    if (namespaceHome.exists() && !namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
                                             namespaceHome.toURI().toString(), namespaceId.getId()));
-      }
     } else {
       // warn that namespace home was not found and skip delete step
       LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
                              namespaceHome.toURI().toString(), namespaceId));
+    }
+
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      exploreFacade.removeNamespace(namespaceId);
     }
   }
 }

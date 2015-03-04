@@ -18,6 +18,7 @@ package co.cask.cdap.explore.jdbc;
 
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +67,7 @@ public class ExploreResultSetTest {
                 true,
                 0x1,
                 (short) 2,
-                new Long(10),
+                (long) 10,
                 "2014-06-20",
                 "2014-06-20 07:37:00",
                 "1000000000",
@@ -77,8 +78,8 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query").get(),
-                                               new ExploreStatement(null, exploreClient),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(""), "mock_query").get(),
+                                               new ExploreStatement(null, exploreClient, ""),
                                                0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
@@ -119,8 +120,8 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit("mock_query").get(),
-                                               new ExploreStatement(null, exploreClient),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(""), "mock_query").get(),
+                                               new ExploreStatement(null, exploreClient, ""),
                                                0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));

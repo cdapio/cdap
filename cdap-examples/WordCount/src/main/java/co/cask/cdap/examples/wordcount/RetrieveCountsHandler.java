@@ -25,11 +25,15 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Maps;
 
 import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -112,6 +116,61 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     results.put("assocs", wordsAssocs);
 
     responder.sendJson(results);
+  }
+
+  /**
+   * Returns the counts for all words in the input.  The request body is expected to contain
+   * a comma-separated list of words.
+   */
+  @Path("counts")
+  @POST
+  public void getCounts(HttpServiceRequest request, HttpServiceResponder responder) {
+    String wordString = Charsets.UTF_8.decode(request.getContent()).toString();
+    String[] words = wordString.split(",");
+    Map<String, Long> wordCounts = Maps.newHashMap();
+    Stopwatch timer = new Stopwatch().start();
+    for (int i = 0; i < words.length; i++) {
+      byte[] countBytes = wordCountsTable.read(Bytes.toBytes(words[i]));
+      long count = countBytes != null ? Bytes.toLong(countBytes) : 0;
+      wordCounts.put(words[i], count);
+    }
+    timer.stop();
+    Map<String, Object> responseBody = Maps.newHashMap();
+    responseBody.put("counts", wordCounts);
+    responseBody.put("elapsed", timer.toString());
+    responder.sendJson(responseBody);
+  }
+
+  /**
+   * Returns the counts for all words in the input.  The request body is expected to contain
+   * a comma-separated list of words.
+   *
+   * <p>
+   * This endpoint method differs from {@link RetrieveCountsHandler#getCounts(HttpServiceRequest,HttpServiceResponder)}
+   * in using {@link KeyValueTable#readAll(byte[][])} to perform a batched read.
+   * </p>
+   */
+  @Path("multicounts")
+  @POST
+  public void getMultiCounts(HttpServiceRequest request, HttpServiceResponder responder) {
+    String wordString = Charsets.UTF_8.decode(request.getContent()).toString();
+    String[] words = wordString.split(",");
+    byte[][] wordBytes = new byte[words.length][];
+    for (int i = 0; i < words.length; i++) {
+      wordBytes[i] = Bytes.toBytes(words[i]);
+    }
+    Stopwatch timer = new Stopwatch().start();
+    Map<byte[], byte[]> results = wordCountsTable.readAll(wordBytes);
+    Map<String, Long> wordCounts = Maps.newHashMap();
+    for (Map.Entry<byte[], byte[]> entry : results.entrySet()) {
+      byte[] val = entry.getValue();
+      wordCounts.put(Bytes.toString(entry.getKey()), val != null ? Bytes.toLong(entry.getValue()) : 0);
+    }
+    timer.stop();
+    Map<String, Object> response = Maps.newHashMap();
+    response.put("counts", wordCounts);
+    response.put("elapsed", timer.toString());
+    responder.sendJson(response);
   }
 
   /**

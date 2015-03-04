@@ -74,15 +74,13 @@ public class DatasetAccessor {
    */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
     // todo: id should be passed in. along with a lot of other cleanup for this class
-    String datasetName = conf.get(Constants.Explore.DATASET_NAME);
-    // note: namespacing will come in later. Perhaps initialize this class with a namespace or get it in each method
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, datasetName);
+    Id.DatasetInstance datasetInstanceId = getDatasetInstanceId(conf);
     Dataset dataset = instantiate(conf, datasetInstanceId);
 
     if (!(dataset instanceof RecordScannable)) {
       throw new IOException(
         String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
-                      getDatasetName(conf)));
+                      getDatasetInstanceId(conf)));
     }
 
     RecordScannable recordScannable = (RecordScannable) dataset;
@@ -139,7 +137,7 @@ public class DatasetAccessor {
       }
       throw new IOException(
         String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
-                      getDatasetName(conf)));
+                      getDatasetInstanceId(conf)));
     } finally {
       dataset.close();
     }
@@ -198,7 +196,7 @@ public class DatasetAccessor {
       dataset.close();
       throw new IOException(
         String.format("Dataset %s does not implement RecordWritable, and hence cannot be written to in Hive.",
-                      datasetInstanceId != null ? datasetInstanceId : getDatasetName(conf)));
+                      datasetInstanceId != null ? datasetInstanceId : getDatasetInstanceId(conf)));
     }
     return (RecordWritable) dataset;
   }
@@ -226,7 +224,7 @@ public class DatasetAccessor {
       throw new NullJobConfException();
     }
     
-    Id.DatasetInstance datasetInstanceId = dsInstanceId != null ? dsInstanceId : getDatasetName(conf);
+    Id.DatasetInstance datasetInstanceId = dsInstanceId != null ? dsInstanceId : getDatasetInstanceId(conf);
 
     if (datasetInstanceId == null) {
       throw new IOException("Dataset name property could not be found.");
@@ -243,7 +241,6 @@ public class DatasetAccessor {
       if (queryId == null) {
         throw new IOException("QueryId property could not be found");
       }
-      
       QueryHandle queryHandle = QueryHandle.fromId(queryId);
       ClassLoader classLoader = DATASET_CLASSLOADER_MAP.getUnchecked(queryHandle).get(datasetInstanceId);
       Dataset dataset;
@@ -261,9 +258,8 @@ public class DatasetAccessor {
     }
   }
   
-  private static Id.DatasetInstance getDatasetName(@Nullable Configuration conf) {
-    // note: namespacing will come later.
-    return conf == null ? null : Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE,
+  private static Id.DatasetInstance getDatasetInstanceId(@Nullable Configuration conf) {
+    return conf == null ? null : Id.DatasetInstance.from(conf.get(Constants.Explore.DATASET_NAMESPACE),
                                                          conf.get(Constants.Explore.DATASET_NAME));
   }
 

@@ -25,8 +25,7 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
@@ -53,7 +52,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
-  private final LevelDBOrderedTableService ldbService;
+  private final LevelDBTableService ldbService;
   private final DatasetNamespace userDsNamespace;
   private final DatasetFramework dsFramework;
 
@@ -61,7 +60,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   @Inject
   public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
-                                       LevelDBOrderedTableService ldbService, DatasetFramework dsFramework,
+                                       LevelDBTableService ldbService, DatasetFramework dsFramework,
                                        CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
@@ -95,7 +94,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void reportStats() throws Exception {
-    Map<String, LevelDBOrderedTableService.TableStats> tableStats = ldbService.getTableStats();
+    Map<String, LevelDBTableService.TableStats> tableStats = ldbService.getTableStats();
     if (tableStats.size() > 0) {
       report(tableStats);
     }
@@ -111,9 +110,9 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
       .or(CharMatcher.is('$')).matchesAllOf(datasetId);
   }
 
-  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat)
+  private void report(Map<String, LevelDBTableService.TableStats> datasetStat)
     throws DatasetManagementException {
-    for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
+    for (Map.Entry<String, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetInstance == null) {
         // not a user dataset

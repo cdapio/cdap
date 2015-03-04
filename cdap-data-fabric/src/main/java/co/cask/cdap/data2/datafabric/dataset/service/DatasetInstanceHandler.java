@@ -18,8 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -77,17 +76,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
 
-  private final CConfiguration conf;
-
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
-                                CConfiguration conf) {
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.conf = conf;
   }
 
   @GET
@@ -139,16 +134,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
     // Disable explore if the table already existed
     if (existing != null) {
-      disableExplore(name);
+      disableExplore(datasetInstance);
     }
 
     if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "create")) {
       return;
     }
 
-    enableExplore(name, creationProperties);
+    enableExplore(datasetInstance, creationProperties);
 
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -182,13 +178,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    disableExplore(name);
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
+    disableExplore(datasetInstance);
 
     if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "update")) {
       return;
     }
 
-    enableExplore(name, creationProperties);
+    enableExplore(datasetInstance, creationProperties);
 
     //caling admin upgrade, after updating specification
     executeAdmin(request, responder, namespaceId, name, "upgrade");
@@ -197,10 +194,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    if (creationProperties.getProperties().containsKey(OrderedTable.PROPERTY_TTL)) {
+    if (creationProperties.getProperties().containsKey(Table.PROPERTY_TTL)) {
       long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
-        (creationProperties.getProperties().get(OrderedTable.PROPERTY_TTL)));
-      creationProperties.getProperties().put(OrderedTable.PROPERTY_TTL, String.valueOf(ttl));
+        (creationProperties.getProperties().get(Table.PROPERTY_TTL)));
+      creationProperties.getProperties().put(Table.PROPERTY_TTL, String.valueOf(ttl));
     }
     return  creationProperties;
   }
@@ -330,9 +327,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @throws Exception on error.
    */
   private boolean dropDataset(Id.DatasetInstance datasetInstanceId, DatasetSpecification spec) throws Exception {
-    String name = spec.getName();
-
-    disableExplore(name);
+    disableExplore(datasetInstanceId);
 
     if (!instanceManager.delete(datasetInstanceId)) {
       return false;
@@ -346,15 +341,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     return true;
   }
 
-  // TODO: Needs to be namespaced
-  private void disableExplore(String name) {
+  private void disableExplore(Id.DatasetInstance datasetInstance) {
     // Disable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.disableExploreDataset(name);
+      exploreFacade.disableExploreDataset(datasetInstance);
     } catch (Exception e) {
       String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
-                                 name, e.getMessage());
+                                 datasetInstance, e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
       //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -362,14 +356,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
   }
 
-  private void enableExplore(String name, DatasetInstanceConfiguration creationProperties) {
+  private void enableExplore(Id.DatasetInstance datasetInstance, DatasetInstanceConfiguration creationProperties) {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.enableExploreDataset(name);
+      exploreFacade.enableExploreDataset(datasetInstance);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 name, creationProperties.getProperties(), e.getMessage());
+                                 datasetInstance, creationProperties.getProperties(), e.getMessage());
       LOG.error(msg, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
       //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
@@ -387,7 +381,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       new Maps.EntryTransformer<String, String, String>() {
         @Override
         public String transformEntry(String key, String value) {
-          if (key.equals(OrderedTable.PROPERTY_TTL)) {
+          if (key.equals(Table.PROPERTY_TTL)) {
             return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
           } else {
             return value;

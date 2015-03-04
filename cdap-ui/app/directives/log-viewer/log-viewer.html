@@ -1,0 +1,32 @@
+<div class="row">
+  <div class="col-xs-2">
+
+    <ul class="nav nav-pills nav-stacked">
+      <li role="presentation"
+          ng-repeat="f in filters"
+          ng-class="{ active:activeFilter.key===f.key, disabled: !f.entries.length}">
+        <a href="#" ng-click="f.entries.length && setFilter(f.key)">
+          <span class="badge pull-right" ng-show="f.entries.length">{{f.entries.length}}</span>
+          <span>{{f.label}}</span>
+        </a>
+      </li>
+    </ul>
+
+  </div>
+  <div class="col-xs-10">
+
+    <div class="terminal">
+      <ul class="list-unstyled" ng-show="activeFilter.entries.length">
+        <li ng-repeat="entry in activeFilter.entries | orderBy:'offset'">
+          <code ng-bind="entry.log"></code>
+        </li>
+      </ul>
+      <div ng-hide="activeFilter.entries.length">
+        Nothing to show
+      </div>
+    </div>
+
+  </div>
+</div>
+
+

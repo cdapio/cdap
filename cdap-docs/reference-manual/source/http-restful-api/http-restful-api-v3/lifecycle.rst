@@ -10,7 +10,7 @@ Lifecycle HTTP RESTful API
 ===========================================================
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, MapReduce programs, Workflows, and Custom Services.
+Flows, MapReduce programs, Workflows, Workers, and Custom Services.
 
 .. highlight:: console
 
@@ -105,7 +105,7 @@ because they belong to the namespace, not the Application.
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, MapReduce 
-programs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
+programs, Workflows, Workers, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/<operation>
   GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/status
@@ -121,7 +121,7 @@ programs, Workflows, and Custom Services, and query for their status using HTTP 
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ```mapreduce``, ``spark``, ``workflows`` or ``services``
+     - One of ``flows``, ```mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
    * - ``<program-id>``
      - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
        being called
@@ -251,7 +251,7 @@ CDAP for a Flow or Service’s live info via an HTTP GET method::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows`` or ``services``
+     - One of ``flows``, ``workers``, or ``services``
    * - ``<program-id>``
      - Name of the program (*Flow* or *Custom Service*)
 
@@ -405,8 +405,8 @@ Scaling Services
 You can query or change the number of instances of a Service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
-  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -424,12 +424,8 @@ with the arguments as a JSON string in the body::
      - Name of the Application
    * - ``<service-id>``
      - Name of the Service
-   * - ``<runnable-id>``
-     - Name of the Service
    * - ``<quantity>``
      - Number of instances to be used
-
-**Note:** In this release the ``runnable-id`` is the same as the ``service-id``.
 
 .. rubric:: Example
 .. list-table::
@@ -437,10 +433,50 @@ with the arguments as a JSON string in the body::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
+     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances``
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application
        *PurchaseHistory* in the namespace *default*
+
+Scaling Workers
+...............
+You can query or change the number of instances of a Worker by using the ``instances``
+parameter with HTTP GET or PUT methods::
+
+  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workers/<worker-id>/instances
+  PUT <base-url>/namespaces/<namespace-id>/apps/<app-id>/workers/<worker-id>/instances
+
+with the arguments as a JSON string in the body::
+
+  { "instances" : <quantity> }
+
+.. list-table::
+:widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<worker-id>``
+     - Name of the Worker
+   * - ``<quantity>``
+     - Number of instances to be used
+
+Example
+.......
+.. list-table::
+:widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
+       ``instances``
+   * - Description
+     - Retrieve the number of instances of the Worker *DataWorker*
+       in the Application *HelloWorld* in the namespace *default*
 
 .. _rest-program-runs:
 

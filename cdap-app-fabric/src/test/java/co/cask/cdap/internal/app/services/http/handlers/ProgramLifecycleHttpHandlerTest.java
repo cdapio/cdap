@@ -27,6 +27,7 @@ import co.cask.cdap.MultiStreamApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
+import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
@@ -65,9 +66,14 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -106,6 +112,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String CONCURRENT_WORKFLOW_NAME = "ConcurrentWorkflow";
   private static final String WORKFLOW_APP_WITH_ERROR_RUNS = "WorkflowAppWithErrorRuns";
   private static final String WORKFLOW_WITH_ERROR_RUNS = "WorkflowWithErrorRuns";
+  private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS = "WorkflowAppWithScopedParameters";
+  private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW = "OneWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
 
@@ -525,6 +533,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   /**
+   * Worker Specification tests
+   */
+  @Test
+  public void testWorkerSpecification() throws Exception {
+    // deploy AppWithWorker in namespace1 and verify
+    HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    verifyProgramSpecification(TEST_NAMESPACE1, AppWithWorker.NAME, ProgramType.WORKER.getCategoryName(),
+                               AppWithWorker.WORKER);
+    Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
+                                                                 ProgramType.WORKER.getCategoryName(),
+                                                                 AppWithWorker.WORKER));
+  }
+
+  /**
    * Program specification tests through appfabric apis.
    */
   @Test
@@ -724,6 +748,69 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
       .API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     deleteApplication(60, deleteUrl, 200);
+  }
+
+  private String createInput(String folderName) throws IOException {
+    File inputDir = tmpFolder.newFolder(folderName);
+
+    File inputFile = new File(inputDir.getPath() + "/words.txt");
+    inputFile.deleteOnExit();
+    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
+    try {
+      writer.write("this text has");
+      writer.newLine();
+      writer.write("two words text inside");
+    } finally {
+      writer.close();
+    }
+
+    return inputDir.getAbsolutePath();
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowScopedArguments() throws Exception {
+    HttpResponse response = deploy(WorkflowAppWithScopedParameters.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+
+    runtimeArguments.put("debug", "true");
+    runtimeArguments.put("mapreduce.*.debug", "false");
+    runtimeArguments.put("mapreduce.OneMR.debug", "true");
+
+    runtimeArguments.put("input.path", createInput("ProgramInput"));
+    runtimeArguments.put("mapreduce.OneMR.input.path", createInput("OneMRInput"));
+    runtimeArguments.put("mapreduce.AnotherMR.input.path", createInput("AnotherMRInput"));
+    runtimeArguments.put("spark.*.input.path", createInput("SparkInput"));
+
+    runtimeArguments.put("output.path", new File(tmpFolder.newFolder(), "ProgramOutput").getAbsolutePath());
+    runtimeArguments.put("mapreduce.OneMR.output.path",
+                         new File(tmpFolder.newFolder(), "OneMROutput").getAbsolutePath());
+    runtimeArguments.put("spark.AnotherSpark.output.path",
+                         new File(tmpFolder.newFolder(), "AnotherSparkOutput").getAbsolutePath());
+
+    runtimeArguments.put("mapreduce.*.processing.time", "1HR");
+
+    runtimeArguments.put("dataset.Purchase.cache.seconds", "30");
+    runtimeArguments.put("dataset.UserProfile.schema.property", "constant");
+    runtimeArguments.put("dataset.unknown.dataset", "false");
+    runtimeArguments.put("dataset.*.read.timeout", "60");
+
+    setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_SCOPED_PARAMETERS, ProgramType.WORKFLOW.getCategoryName(),
+                          WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW, runtimeArguments);
+
+
+    // Start the workflow
+    int code = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_SCOPED_PARAMETERS,
+                                    ProgramType.WORKFLOW.getCategoryName(),
+                                    WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW, "start");
+    Assert.assertEquals(200, code);
+
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_SCOPED_PARAMETERS,
+                                WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW, "completed");
+    scheduleHistoryRuns(180, runsUrl, 0);
   }
 
   @Category(XSlowTests.class)
@@ -987,7 +1074,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private ServiceInstances getServiceInstances(String namespace, String app, String service) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String instanceUrl = String.format("apps/%s/services/%s/instances", app, service);
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -996,7 +1083,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private int setServiceInstances(String namespace, String app, String service, int instances) throws Exception {
-    String instanceUrl = String.format("apps/%s/services/%s/runnables/%s/instances", app, service, service);
+    String instanceUrl = String.format("apps/%s/services/%s/instances", app, service);
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     String instancesBody = GSON.toJson(new Instances(instances));
     return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();

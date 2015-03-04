@@ -25,8 +25,9 @@ import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -93,6 +94,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
   private static CLIConfig cliConfig;
+  private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
@@ -112,7 +114,7 @@ public class CLIMainTest extends StandaloneTestBase {
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = new CLIMain(cliConfig);
+    cliMain = new CLIMain(cliConfig, CsvTableRenderer.class);
     cli = cliMain.getCLI();
 
     testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
@@ -292,7 +294,7 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsKV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started Service");
     try {
@@ -304,7 +306,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-      String runtimeArgs2KV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
       testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
@@ -331,7 +333,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
@@ -353,8 +354,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
-    testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
+    testPreferencesOutput(cli, String.format("get namespace preferences"), propMap);
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
@@ -369,11 +369,22 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
     propMap.clear();
     propMap.put("key", "somevalue");
     testPreferencesOutput(cli, "get instance preferences", propMap);
+    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load namespace preferences " + file.getAbsolutePath() + " xml", "successful");
+    propMap.clear();
+    propMap.put("xml", "green");
+    testPreferencesOutput(cli, "get namespace preferences", propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
 
     //Try invalid Json
@@ -385,6 +396,17 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
+
+    //Try invalid xml
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " inv", "Unsupported");
   }
 
   @Test
@@ -557,17 +579,17 @@ public class CLIMainTest extends StandaloneTestBase {
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-    new AsciiTable<NamespaceMeta>(
-      new String[] {"id", "display_name", "description"},
-      expected,
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
         }
-      }
-    ).print(printStream);
+      }).build();
+    cliMain.getTableRenderer().render(printStream, table);
     final String expectedOutput = outputStream.toString();
+
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

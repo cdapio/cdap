@@ -16,8 +16,8 @@
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -31,10 +31,10 @@ import java.io.IOException;
  */
 public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
 
-  private final LevelDBOrderedTableService tableService;
+  private final LevelDBTableService tableService;
 
   @Inject
-  LevelDBStreamConsumerStateStoreFactory(LevelDBOrderedTableService tableService) {
+  LevelDBStreamConsumerStateStoreFactory(LevelDBTableService tableService) {
     this.tableService = tableService;
   }
 
@@ -43,7 +43,7 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
     String tableName = StreamUtils.getStateStoreTableName(namespace);
     tableService.ensureTableExists(tableName);
-    LevelDBOrderedTableCore coreTable = new LevelDBOrderedTableCore(tableName, tableService);
+    LevelDBTableCore coreTable = new LevelDBTableCore(tableName, tableService);
     return new LevelDBStreamConsumerStateStore(streamConfig, coreTable);
   }
 
