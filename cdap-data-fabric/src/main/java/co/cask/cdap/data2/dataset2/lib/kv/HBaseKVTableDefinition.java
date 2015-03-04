@@ -110,9 +110,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public void truncate() throws IOException {
-      HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
-      tableUtil.dropTable(admin, tableId);
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
+      tableUtil.truncateTable(admin, tableId);
     }
 
     @Override

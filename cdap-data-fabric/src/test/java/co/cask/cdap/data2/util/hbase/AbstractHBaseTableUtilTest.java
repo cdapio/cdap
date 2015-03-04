@@ -301,8 +301,7 @@ public abstract class AbstractHBaseTableUtilTest {
     HTableDescriptor tableDescriptor =
       tableUtil.createHTableDescriptor(TableId.from(tablePrefix, namespace, tableName));
     TableId tableId = TableId.from(tablePrefix, namespace, tableName);
-    tableUtil.dropTable(hAdmin, tableId);
-    tableUtil.createTableIfNotExists(hAdmin, tableId, tableDescriptor);
+    tableUtil.truncateTable(hAdmin, tableId);
   }
 
   private void disable(String namespace, String tableName) throws IOException {

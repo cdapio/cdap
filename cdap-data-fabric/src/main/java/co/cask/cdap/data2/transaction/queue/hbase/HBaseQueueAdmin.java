@@ -196,9 +196,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   private void truncate(TableId tableId) throws IOException {
     HBaseAdmin admin = getHBaseAdmin();
     if (tableUtil.tableExists(admin, tableId)) {
-      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
-      tableUtil.dropTable(admin, tableId);
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
+      tableUtil.truncateTable(getHBaseAdmin(), tableId);
     }
   }
 

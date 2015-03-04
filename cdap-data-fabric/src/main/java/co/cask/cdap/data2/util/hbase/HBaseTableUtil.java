@@ -516,6 +516,18 @@ public abstract class HBaseTableUtil {
     deleteTable(admin, tableId);
   }
 
+  /**
+   * Truncates a table
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
+    dropTable(admin, tableId);
+    createTableIfNotExists(admin, tableId, tableDescriptor);
+  }
+
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 
   public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
