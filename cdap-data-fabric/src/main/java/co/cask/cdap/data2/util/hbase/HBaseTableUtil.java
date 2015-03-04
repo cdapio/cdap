@@ -18,6 +18,7 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;

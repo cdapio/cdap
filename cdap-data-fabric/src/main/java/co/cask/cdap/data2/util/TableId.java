@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package co.cask.cdap.data2.util;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;

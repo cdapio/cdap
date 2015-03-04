@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
 import org.apache.hadoop.hbase.TableName;
 
 /**

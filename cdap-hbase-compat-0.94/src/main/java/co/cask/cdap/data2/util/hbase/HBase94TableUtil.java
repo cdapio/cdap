@@ -21,6 +21,7 @@ import co.cask.cdap.data2.increment.hbase94.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase94.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.HBaseQueueRegionObserver;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

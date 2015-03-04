@@ -18,7 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.hbase;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.data2.util.TableId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

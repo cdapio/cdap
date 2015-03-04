@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import com.google.common.base.Function;
