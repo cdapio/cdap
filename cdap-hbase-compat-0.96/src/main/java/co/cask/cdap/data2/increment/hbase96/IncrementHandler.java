@@ -19,6 +19,7 @@ package co.cask.cdap.data2.increment.hbase96;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
 import co.cask.tephra.hbase96.Filters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -70,7 +71,6 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
-
   private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
   private HRegion region;
@@ -81,8 +81,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      this.state = new IncrementHandlerState(env.getConfiguration(),
-          env.getRegion().getTableDesc().getNameAsString());
+      this.state = new IncrementHandlerState(env.getConfiguration(), env.getRegion().getTableDesc().getNameAsString(),
+                                             new HTable96NameConverter());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {

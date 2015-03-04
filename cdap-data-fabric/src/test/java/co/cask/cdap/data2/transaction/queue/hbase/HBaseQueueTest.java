@@ -40,6 +40,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -126,6 +127,10 @@ public abstract class HBaseQueueTest extends QueueTest {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
         }
       });
+
+    //create HBase namespace
+    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -286,8 +291,10 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  new HTableNameConverterFactory().get());
       cache.updateCache();
       Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
@@ -296,9 +303,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       // Either the config table doesn't exists, or the consumer config is empty for the given queue
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  new HTableNameConverterFactory().get());
       try {
         cache.updateCache();
         Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));

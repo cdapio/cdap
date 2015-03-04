@@ -36,7 +36,7 @@ Preparing the Cluster
 
 .. "To prepare your cluster"
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-preparing-the-cluster:
    :end-before:  .. _install-preparing-the-cluster-defaults:
 
@@ -61,7 +61,7 @@ the packages, and prior to starting services.
 Configuring Package Managers
 ----------------------------
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-rpm-using-yum:
    :end-before:  .. _install-configuration:
 
@@ -70,24 +70,24 @@ Configuring Package Managers
 
 .. "Configuration title"
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-configuration:
    :end-before:  .. _install-alternatives:
 
 .. "To configure your particular installation"
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-configuration-options:
    :end-before:  .. _install-configuring-explore-service:
 
 .. "Starting Services title"
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-starting-services:
    :end-before:  .. _install-highly-available:
 
 .. "Verification"
 
-.. include:: ../../build/_includes/installation.rst 
+.. include:: installation.rst 
    :start-after: .. _install-verification:
    :end-before:  .. _install-upgrade:

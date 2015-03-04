@@ -701,6 +701,7 @@ public final class Constants {
    * Default namespace to be used by v2 APIs
    */
   public static final String DEFAULT_NAMESPACE = "default";
+  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
   /**
    * 'system' reserved namespace name
    */
