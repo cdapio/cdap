@@ -869,7 +869,44 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
-    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+    return new ApplicationRecord(appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+  }
+
+  private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
+    List<ProgramDetail> programs = Lists.newArrayList();
+    for (ProgramSpecification programSpec : spec.getFlows().values()) {
+      programs.add(new ProgramDetail(ProgramType.FLOW, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
+      programs.add(new ProgramDetail(ProgramType.MAPREDUCE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getProcedures().values()) {
+      programs.add(new ProgramDetail(ProgramType.PROCEDURE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getServices().values()) {
+      programs.add(new ProgramDetail(ProgramType.SERVICE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getSpark().values()) {
+      programs.add(new ProgramDetail(ProgramType.SPARK, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getWorkers().values()) {
+      programs.add(new ProgramDetail(ProgramType.WORKER, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
+      programs.add(new ProgramDetail(ProgramType.WORKFLOW, programSpec.getName(), programSpec.getDescription()));
+    }
+
+    List<StreamDetail> streams = Lists.newArrayList();
+    for (StreamSpecification streamSpec : spec.getStreams().values()) {
+      streams.add(new StreamDetail(streamSpec.getName()));
+    }
+
+    List<DatasetDetail> datasets = Lists.newArrayList();
+    for (DatasetCreationSpec datasetSpec : spec.getDatasets().values()) {
+      datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
+    }
+
+    return new ApplicationDetail(spec.getName(), spec.getDescription(), streams, datasets, programs);
   }
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
