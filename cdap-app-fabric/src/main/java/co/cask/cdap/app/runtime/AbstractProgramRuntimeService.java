@@ -98,7 +98,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       @Override
       public void terminated() {
-        LOG.info("SAGAR: removing runtime info");
         remove(runtimeInfo);
       }
 

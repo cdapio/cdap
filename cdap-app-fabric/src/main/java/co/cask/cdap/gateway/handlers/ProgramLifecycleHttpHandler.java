@@ -1430,9 +1430,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, type);
 
-      LOG.info("SAGAR: Checking status");
       if (runtimeInfo == null) {
-        LOG.info("SAGAR: Runtime info not found");
         if (type != ProgramType.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
           ProgramSpecification spec = getProgramSpecification(id, type);
@@ -1461,7 +1459,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           }
         }
       }
-      LOG.info("SAGAR: Found runtime info");
+
       String status = controllerStateToString(runtimeInfo.getController().getState());
       return new ProgramStatus(id.getApplicationId(), id.getId(), status);
     } catch (Throwable throwable) {
@@ -1644,7 +1642,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         @Override
         public void terminated() {
-          LOG.info("SAGAR: Terminating Program");
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                         ProgramController.State.TERMINATED);
