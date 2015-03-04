@@ -58,6 +58,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setId(final Id.Namespace id) {
+      this.id = id.getId();
+      return this;
+    }
+
     public Builder setName(final String name) {
       this.name = name;
       return this;

@@ -25,6 +25,7 @@ import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
@@ -45,8 +46,8 @@ import java.util.concurrent.TimeUnit;
 public class DatasetClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetClientTestRun.class);
-  private static final String TEST_NAMESPACE = "testNamespace";
-  private static final String OTHER_NAMESPACE = "otherNamespace";
+  private static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("testNamespace");
+  private static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
 
   private DatasetClient datasetClient;
   private DatasetModuleClient moduleClient;
@@ -73,8 +74,8 @@ public class DatasetClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws Exception {
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
-    namespaceClient.delete(TEST_NAMESPACE);
-    namespaceClient.delete(OTHER_NAMESPACE);
+    namespaceClient.delete(TEST_NAMESPACE.getId());
+    namespaceClient.delete(OTHER_NAMESPACE.getId());
   }
 
   @Test
