@@ -121,7 +121,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
                               new Function<ProgramController, ListenableFuture<ProgramController>>() {
                                 @Override
                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                  return input.stop();
+                                  return input.terminate();
                                 }
                               }
           )).get();
@@ -168,7 +168,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       if (liveCount > newCount) {
         List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
         for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
-          futures.add(components.remove(runnableName, instanceId).stop());
+          futures.add(components.remove(runnableName, instanceId).terminate());
         }
         Futures.allAsList(futures).get();
       }

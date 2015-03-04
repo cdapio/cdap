@@ -134,8 +134,8 @@ public final class ScheduleTaskRunner {
       @Override
       public void init(ProgramController.State state) {
         store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-        if (state == ProgramController.State.STOPPED) {
-          stopped();
+        if (state == ProgramController.State.COMPLETED) {
+          completed();
         }
         if (state == ProgramController.State.ERROR) {
           error(controller.getFailureCause());
@@ -143,10 +143,10 @@ public final class ScheduleTaskRunner {
       }
 
       @Override
-      public void stopped() {
+      public void completed() {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.STOPPED);
+                      ProgramController.State.COMPLETED);
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();

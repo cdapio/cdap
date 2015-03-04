@@ -49,6 +49,8 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -1441,7 +1443,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           } else {
             // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
         } else {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
@@ -1454,7 +1456,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           if (webappLoc != null && webappLoc.exists()) {
             // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           } else {
             // webapp doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
@@ -1627,8 +1629,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         @Override
         public void init(ProgramController.State state) {
           store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.STOPPED) {
-            stopped();
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
           }
           if (state == ProgramController.State.ERROR) {
             error(controller.getFailureCause());
@@ -1636,17 +1638,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
 
         @Override
-        public void stopped() {
+        public void completed () {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.STOPPED);
+                        ProgramController.State.COMPLETED);
         }
 
         @Override
         public void terminated() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.TERMINATED);
+                        ProgramController.State.KILLED);
         }
 
         @Override
@@ -1657,6 +1659,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         ProgramController.State.ERROR);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
+
 
       return AppFabricServiceStatus.OK;
     } catch (DatasetInstantiationException e) {
@@ -1672,7 +1675,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean isRunning(Id.Program id, ProgramType type) {
     String programStatus = getStatus(id, type).getStatus();
-    return programStatus != null && !"STOPPED".equals(programStatus) && !"TERMINATED".equals(programStatus);
+    return programStatus != null && !"STOPPED".equals(programStatus);
   }
 
   /**
@@ -1685,8 +1688,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramStatus status = getProgramStatus(identifier, type);
         if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-        } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())
-          || ProgramController.State.TERMINATED.toString().equals(status.getStatus())) {
+        } else if (ProgramController.State.COMPLETED.toString().equals(status.getStatus())
+          || ProgramController.State.KILLED.toString().equals(status.getStatus())) {
           return AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
         } else {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;

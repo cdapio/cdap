@@ -177,7 +177,7 @@ public class OpenCloseDataSetTest {
 
     // stop flow and procedure, they shuld both close the data set foo
     for (ProgramController controller : controllers) {
-      controller.stop().get();
+      controller.terminate().get();
     }
     Assert.assertEquals(2, TrackingTable.getTracker(fooTableName, "close"));
 
@@ -193,7 +193,7 @@ public class OpenCloseDataSetTest {
     }
     Assert.assertNotNull(controller);
 
-    while (!controller.getState().equals(ProgramController.State.STOPPED)) {
+    while (!controller.getState().equals(ProgramController.State.COMPLETED)) {
       TimeUnit.MILLISECONDS.sleep(100);
     }
 

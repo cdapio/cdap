@@ -25,5 +25,5 @@ public enum ProgramRunStatus {
   RUNNING,
   COMPLETED,
   FAILED,
-  TERMINATED
+  KILLED
 }

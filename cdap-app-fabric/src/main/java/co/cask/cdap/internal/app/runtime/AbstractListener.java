@@ -48,7 +48,7 @@ public abstract class AbstractListener implements ProgramController.Listener {
   }
 
   @Override
-  public void stopped() {
+  public void completed() {
   }
 
   @Override

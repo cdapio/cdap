@@ -92,7 +92,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
     runtimeInfo.getController().addListener(new AbstractListener() {
       @Override
-      public void stopped() {
+      public void completed() {
         remove(runtimeInfo);
       }
 

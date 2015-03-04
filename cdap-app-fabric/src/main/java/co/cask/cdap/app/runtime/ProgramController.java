@@ -38,7 +38,7 @@ public interface ProgramController {
    *   |                                    |
    *   |        |-----------------------|   |
    *   v        v                       |   |
-   * ALIVE -> STOPPING ---> STOPPED     |   |
+   * ALIVE -> STOPPING ---> COMPLETED   |   |
    *   |   -> STOPPING ---> TERMINATED  |   |
    *   |                                |   |
    *   |----> SUSPENDING -> SUSPENDED --|   |
@@ -86,9 +86,9 @@ public interface ProgramController {
     STOPPING(ProgramRunStatus.RUNNING),
 
     /**
-     * Program stopped. It is a terminal state, no more state transition is allowed.
+     * Program completed. It is a terminal state, no more state transition is allowed.
      */
-    STOPPED(ProgramRunStatus.COMPLETED),
+    COMPLETED(ProgramRunStatus.COMPLETED),
 
     /**
      * Program runs into error. It is a terminal state, no more state transition is allowed.
@@ -96,9 +96,9 @@ public interface ProgramController {
     ERROR(ProgramRunStatus.FAILED),
 
     /**
-     * Program was terminated by user.
+     * Program was killed by user.
      */
-    TERMINATED(ProgramRunStatus.TERMINATED);
+    KILLED(ProgramRunStatus.KILLED);
 
     private final ProgramRunStatus runStatus;
 
@@ -121,7 +121,7 @@ public interface ProgramController {
 
   ListenableFuture<ProgramController> resume();
 
-  ListenableFuture<ProgramController> stop();
+  ListenableFuture<ProgramController> complete();
 
   ListenableFuture<ProgramController> terminate();
 
@@ -175,7 +175,7 @@ public interface ProgramController {
 
     void stopping();
 
-    void stopped();
+    void completed();
 
     void terminated();
 

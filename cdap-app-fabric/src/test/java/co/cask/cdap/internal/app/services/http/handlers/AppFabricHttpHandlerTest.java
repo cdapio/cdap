@@ -128,7 +128,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       //active size should be 1
       historyStatusWithRetry(url, 1);
       // completed runs size should be 1
-      url = String.format("/v2/apps/%s/%s/%s/runs?status=terminated", appId, runnableType, runnableId);
+      url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
       historyStatusWithRetry(url, 1);
 
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
@@ -1121,7 +1121,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState(runnableType, appId, runnableId, "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
     waitState(runnableType, appId, runnableId, "STOPPED");
-    String url = String.format("/v2/apps/%s/%s/%s/runs?status=terminated", appId, runnableType, runnableId);
+    String url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
     // verify the run by checking if history has one entry
     historyStatusWithRetry(url, 1);
 

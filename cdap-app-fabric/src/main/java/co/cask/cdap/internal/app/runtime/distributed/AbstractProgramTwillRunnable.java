@@ -231,7 +231,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void stop() {
     try {
       LOG.info("Stopping runnable: {}", name);
-      controller.stop().get();
+      controller.terminate().get();
       logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Fail to stop: {}", e, e);
@@ -253,8 +253,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       @Override
       public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED) {
-          stopped();
+        if (currentState == ProgramController.State.COMPLETED) {
+          completed();
         }
         if (currentState == ProgramController.State.ERROR) {
           error(controller.getFailureCause());
@@ -262,13 +262,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
 
       @Override
-      public void stopped() {
-        state.set(ProgramController.State.STOPPED);
+      public void completed() {
+        state.set(ProgramController.State.COMPLETED);
       }
 
       @Override
       public void terminated() {
-        state.set(ProgramController.State.TERMINATED);
+        state.set(ProgramController.State.KILLED);
       }
 
       @Override

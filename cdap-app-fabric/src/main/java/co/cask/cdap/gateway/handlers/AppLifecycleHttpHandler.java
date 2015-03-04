@@ -575,7 +575,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
     ProgramController controller = runtimeInfo.getController();
-    controller.stop().get();
+    controller.terminate().get();
   }
 
   private void getAppDetails(HttpResponder responder, String namespaceId, String appId) {
@@ -830,8 +830,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (ProgramType type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
         ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR
-          || programState == ProgramController.State.TERMINATED) {
+        if (programState == ProgramController.State.COMPLETED || programState == ProgramController.State.ERROR
+          || programState == ProgramController.State.KILLED) {
           continue;
         }
         Id.Program programId = entry.getValue().getProgramId();

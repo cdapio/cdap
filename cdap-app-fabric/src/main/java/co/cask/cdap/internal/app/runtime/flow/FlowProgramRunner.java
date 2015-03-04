@@ -127,7 +127,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           new Function<ProgramController, ListenableFuture<?>>() {
             @Override
             public ListenableFuture<?> apply(ProgramController controller) {
-              return controller.stop();
+              return controller.terminate();
             }
         })).get();
       } catch (Exception e) {
@@ -226,7 +226,7 @@ public final class FlowProgramRunner implements ProgramRunner {
                               new Function<ProgramController, ListenableFuture<ProgramController>>() {
                                 @Override
                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                  return input.stop();
+                                  return input.terminate();
                                 }
                               })).get();
       } finally {
@@ -328,7 +328,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // First stop the extra flowlets
       List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
       for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
-        futures.add(flowlets.remove(flowletName, instanceId).stop());
+        futures.add(flowlets.remove(flowletName, instanceId).terminate());
       }
       Futures.successfulAsList(futures).get();
 

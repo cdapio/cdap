@@ -377,13 +377,13 @@ public class MapReduceWithPartitionedTest {
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
+        if (currentState == ProgramController.State.COMPLETED || currentState == ProgramController.State.ERROR) {
           completion.countDown();
         }
       }
 
       @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 

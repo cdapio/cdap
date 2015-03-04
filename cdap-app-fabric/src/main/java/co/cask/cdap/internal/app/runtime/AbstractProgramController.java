@@ -112,7 +112,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final ListenableFuture<ProgramController> stop() {
+  public final ListenableFuture<ProgramController> complete() {
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
@@ -125,9 +125,9 @@ public abstract class AbstractProgramController implements ProgramController {
         try {
           caller.stopping();
           doStop();
-          state.set(State.STOPPED);
+          state.set(State.COMPLETED);
           result.set(AbstractProgramController.this);
-          caller.stopped();
+          caller.completed();
         } catch (Throwable t) {
           error(t, result);
         }
@@ -150,7 +150,7 @@ public abstract class AbstractProgramController implements ProgramController {
         try {
           caller.stopping();
           doStop();
-          state.set(State.TERMINATED);
+          state.set(State.KILLED);
           result.set(AbstractProgramController.this);
           caller.terminated();
         } catch (Throwable t) {
@@ -316,9 +316,9 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void stopped() {
+    public void completed() {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.stopped();
+        caller.completed();
       }
     }
 
@@ -384,13 +384,13 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void stopped() {
-      addTask(State.STOPPED);
+    public void completed() {
+      addTask(State.COMPLETED);
     }
 
     @Override
     public void terminated() {
-      addTask(State.TERMINATED);
+      addTask(State.KILLED);
     }
 
     @Override
@@ -534,10 +534,10 @@ public abstract class AbstractProgramController implements ProgramController {
         case STOPPING:
           listener.stopping();
           break;
-        case STOPPED:
-          listener.stopped();
+        case COMPLETED:
+          listener.completed();
           break;
-        case TERMINATED:
+        case KILLED:
           listener.terminated();
           break;
         case ERROR:

@@ -88,7 +88,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
         }
 
         @Override
-        public void stopped() {
+        public void completed() {
           try {
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
@@ -133,7 +133,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
         if (isRunning(runtimeInfo.getProgramId(), type)) {
-          futures.add(runtimeInfo.getController().stop());
+          futures.add(runtimeInfo.getController().terminate());
         }
       }
     }
