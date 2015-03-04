@@ -90,17 +90,17 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   @Override
   public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                       ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     // properties must contain the partitioning
     Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(spec.getProperties());
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments, partitioning);
 
-    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), classLoader,
-                                            arguments);
-    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader,
-                                      arguments);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
+                                            classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
+                                      classLoader);
 
     return new PartitionedFileSetDataset(spec.getName(), partitioning, fileset, table, spec, arguments,
                                          getExploreProvider());

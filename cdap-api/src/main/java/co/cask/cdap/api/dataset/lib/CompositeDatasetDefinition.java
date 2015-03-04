@@ -64,7 +64,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
                                                    DatasetSpecification spec, Map<String, String> arguments,
                                                    ClassLoader classLoader) throws IOException {
 
-    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), classLoader, arguments);
+    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
   }
 
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
@@ -72,7 +72,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
                                                    ClassLoader classLoader) throws IOException {
 
     // NOTE: by default we propagate properties to the embedded datasets
-    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), classLoader, arguments);
+    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
   }
 
   @Override

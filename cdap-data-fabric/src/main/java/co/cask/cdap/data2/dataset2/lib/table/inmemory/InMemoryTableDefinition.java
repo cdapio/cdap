@@ -45,7 +45,7 @@ public class InMemoryTableDefinition
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                          ClassLoader classLoader, Map<String, String> arguments) {
+                          Map<String, String> arguments, ClassLoader classLoader) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new InMemoryTable(spec.getName(), conflictDetection);

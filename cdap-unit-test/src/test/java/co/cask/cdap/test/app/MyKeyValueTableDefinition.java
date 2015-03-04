@@ -52,8 +52,8 @@ public class MyKeyValueTableDefinition
 
   @Override
   public MyKeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                                            ClassLoader classLoader,
-                                                            Map<String, String> arguments) throws IOException {
+                                                            Map<String, String> arguments,
+                                                            ClassLoader classLoader) throws IOException {
     return new MyKeyValueTableDefinition.KeyValueTable(spec.getName(),
                                                        getDataset(datasetContext, "table", Table.class,
                                                                   spec, arguments, classLoader));

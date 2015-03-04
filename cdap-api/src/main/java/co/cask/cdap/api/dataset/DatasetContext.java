@@ -40,20 +40,6 @@ public class DatasetContext {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    DatasetContext that = (DatasetContext) o;
-
-    return namespaceId.equals(that.namespaceId);
-  }
-
-  @Override
   public String toString() {
     return "DatasetContext{" +
       "namespaceId='" + namespaceId + '\'' +

@@ -56,10 +56,10 @@ public class IntegerStoreDefinition
 
   @Override
   public ObjectStoreDataset<Integer> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                                ClassLoader classLoader,
-                                                Map<String, String> arguments) throws IOException {
+                                                Map<String, String> arguments,
+                                                ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 
     try {
       return new IntegerStore(spec.getName(), table);

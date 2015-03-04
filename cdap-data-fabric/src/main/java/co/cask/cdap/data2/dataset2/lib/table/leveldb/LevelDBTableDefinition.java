@@ -49,7 +49,7 @@ public class LevelDBTableDefinition
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     return new LevelDBTable(spec.getName(), conflictDetection, service);

@@ -42,7 +42,7 @@ public class UniqueCountTableDefinition
 
   @Override
   public UniqueCountTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                     ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new UniqueCountTable(spec.getName(),
                                 getDataset(datasetContext, "entryCountTable", Table.class, spec, arguments,
                                            classLoader),

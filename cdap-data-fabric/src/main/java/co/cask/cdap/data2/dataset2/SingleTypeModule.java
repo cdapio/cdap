@@ -148,7 +148,7 @@ public class SingleTypeModule implements DatasetModule {
     CompositeDatasetDefinition<Dataset> def = new CompositeDatasetDefinition<Dataset>(typeName, defs) {
       @Override
       public Dataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                Map<String, String> arguments, ClassLoader classLoader) throws IOException {
         Object[] params = new Object[ctorParams.length];
         for (int i = 0; i < ctorParams.length; i++) {
           params[i] = ctorParams[i] != null ?
@@ -220,8 +220,7 @@ public class SingleTypeModule implements DatasetModule {
 
   private interface DatasetCtorParam {
     Object getValue(DatasetContext datasetContext, Map<String, DatasetDefinition> defs, DatasetSpecification spec,
-                    Map<String, String> arguments, ClassLoader cl)
-      throws IOException;
+                    Map<String, String> arguments, ClassLoader cl) throws IOException;
   }
 
   private static final class DatasetSpecificationParam implements DatasetCtorParam {
@@ -244,7 +243,7 @@ public class SingleTypeModule implements DatasetModule {
                            DatasetSpecification spec, Map<String, String> arguments,
                            ClassLoader cl) throws IOException {
 
-      return defs.get(name).getDataset(datasetContext, spec.getSpecification(name), cl, arguments);
+      return defs.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, cl);
     }
   }
 }

@@ -51,6 +51,6 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
 
   public D getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                       Map<String, String> arguments) throws IOException {
-    return delegate.getDataset(datasetContext, spec, classLoader, arguments);
+    return delegate.getDataset(datasetContext, spec, arguments, classLoader);
   }
 }
