@@ -44,6 +44,7 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
@@ -190,14 +191,20 @@ public abstract class HBaseQueueTest extends QueueTest {
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
-    String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
+    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    Assert.assertEquals("test", tableId.getTablePrefix());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
+    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
-    tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
+    tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    Assert.assertEquals("test", tableId.getTablePrefix());
+    Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
+    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }
@@ -209,11 +216,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
-    String tableName = admin.getActualTableName(queueName);
+    TableId tableId = admin.getDataTableId(queueName);
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }
-    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), TableId.from(tableName));
+    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -324,12 +331,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     txService.stop();
     testHBase.stopHBase();
     zkClientService.stopAndWait();
-  }
-
-  @Test
-  public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix(Constants.DEFAULT_NAMESPACE);
-    Assert.assertTrue(queueTablename.startsWith("test."));
   }
 
   @Override

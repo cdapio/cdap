@@ -19,24 +19,25 @@ package co.cask.cdap.data2.transaction.queue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.data2.util.hbase.TableId;
 
 /**
  * Common implementation of table-based QueueAdmin
  */
 public abstract class AbstractQueueAdmin implements QueueAdmin {
+  protected final String root;
+  protected final QueueConstants.QueueType type;
   protected final String unqualifiedTableNamePrefix;
   private final String unqualifiedConfigTableNameSuffix;
-  protected final DefaultDatasetNamespace namespace;
 
   public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scoped
     this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
+    // system.queue.config'
     this.unqualifiedConfigTableNameSuffix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
-    this.namespace = new DefaultDatasetNamespace(conf);
+    this.root = conf.get(Constants.Dataset.TABLE_PREFIX);
+    this.type = type;
   }
 
   /**
@@ -59,43 +60,32 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     return parts[parts.length - 1];
   }
 
+  public TableId getConfigTableId(QueueName queueName) {
+    return getConfigTableId(queueName.getFirstComponent());
+  }
+
+  public TableId getConfigTableId(String namespace) {
+    return TableId.from(root, namespace, unqualifiedConfigTableNameSuffix);
+  }
+
   /**
-   * This determines the actual table name from the table name prefix and the name of the queue.
+   * This determines the actual TableId from the table name prefix and the name of the queue.
    * @param queueName The name of the queue.
    * @return the full name of the table that holds this queue.
    */
-  public String getActualTableName(QueueName queueName) {
+  public TableId getDataTableId(QueueName queueName) {
     if (queueName.isQueue()) {
-      // <root namespace>.<queue namespace>.system.queue.<app>.<flow>
-      return getTableNameForFlow(queueName.getFirstComponent(),
-                                 queueName.getSecondComponent(),
-                                 queueName.getThirdComponent());
+      return getDataTableId(queueName.getFirstComponent(),
+                            queueName.getSecondComponent(),
+                            queueName.getThirdComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  protected String getTableNameForFlow(String namespaceId, String app, String flow) {
-    String tablePrefix = getTableNamePrefix(namespaceId);
-    String tableName = tablePrefix + "." + app + "." + flow;
-    return HTableNameConverter.getHBaseTableName(tableName);
-  }
-
-  public String getTableNamePrefix(String namespaceId) {
-    // returns String with format:  '<root namespace>.<namespaceId>.system.(stream|queue)'
-    String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
-                                                                     unqualifiedTableNamePrefix)).getId();
-    return HTableNameConverter.getHBaseTableName(tablePrefix);
-  }
-
-  public String getConfigTableName(QueueName queueName) {
-    return getConfigTableName(queueName.getFirstComponent());
-  }
-
-  protected String getConfigTableName(String namespaceId) {
-    // returns String with format:  '<root namespace>.<namespaceId>.system.queue.config'
-    String tablePrefix = namespace.namespace(Id.DatasetInstance.from(namespaceId,
-                                                                     unqualifiedConfigTableNameSuffix)).getId();
-    return HTableNameConverter.getHBaseTableName(tablePrefix);
+  public TableId getDataTableId(String namespaceId, String app, String flow) {
+    // tableName = system.queue.<app>.<flow>
+    String tableName = unqualifiedTableNamePrefix + "." + app + "." + flow;
+    return TableId.from(root, namespaceId, tableName);
   }
 }

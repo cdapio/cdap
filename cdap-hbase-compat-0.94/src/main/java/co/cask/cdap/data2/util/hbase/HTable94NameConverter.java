@@ -42,7 +42,8 @@ public class HTable94NameConverter extends HTableNameConverter {
   // Assumptions made:
   // 1) root prefix can not have '.' or '_'.
   // 2) namespace can not have '.'
-  public static TableId fromTableName(String hTableName) {
+  @Override
+  public TableId fromTableName(String hTableName) {
     Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
     String[] parts = hTableName.split("\\.", 2);
     String hBaseNamespace;

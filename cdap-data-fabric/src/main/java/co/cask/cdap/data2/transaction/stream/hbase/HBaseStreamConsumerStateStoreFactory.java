@@ -23,7 +23,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
@@ -52,7 +51,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
-    TableId streamStateStoreTableId = TableId.from(getTableName(namespace));
+    TableId streamStateStoreTableId = StreamUtils.getStateStoreTableId(namespace);
     HBaseAdmin admin = new HBaseAdmin(hConf);
     if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
       try {
@@ -79,16 +78,12 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     HBaseAdmin admin = new HBaseAdmin(hConf);
     try {
-      TableId tableId = TableId.from(getTableName(namespace));
+      TableId tableId = StreamUtils.getStateStoreTableId(namespace);
       if (tableUtil.tableExists(admin, tableId)) {
         tableUtil.dropTable(admin, tableId);
       }
     } finally {
       admin.close();
     }
-  }
-
-  private String getTableName(Id.Namespace namespace) {
-    return HTableNameConverter.getHBaseTableName(StreamUtils.getStateStoreTableName(namespace));
   }
 }

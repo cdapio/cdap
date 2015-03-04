@@ -53,13 +53,14 @@ public abstract class HTableNameConverter {
    */
   public abstract String getSysConfigTablePrefix(String hTableName);
 
+  public abstract TableId fromTableName(String hTableName);
 
   @VisibleForTesting
   public static String toHBaseNamespace(Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-      HBASE_NAMESPACE_PREFIX + namespace.getId();
+    return HTableNameConverter.getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
+                                                   HBASE_NAMESPACE_PREFIX + namespace.getId());
   }
 
   /**
@@ -69,7 +70,7 @@ public abstract class HTableNameConverter {
     return HTableNameConverter.getHBaseTableName(tableId.getBackwardCompatibleTableName());
   }
 
-  public static TableId from(String hBaseNamespace, String hTableName) {
+  protected static TableId from(String hBaseNamespace, String hTableName) {
     Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
     Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
 

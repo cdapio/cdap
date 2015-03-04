@@ -72,10 +72,10 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public QueueConsumer createConsumer(QueueName queueName,
                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HTable configTable = createHTable(admin.getConfigTableName(queueName));
+    HTable configTable = createHTable(admin.getConfigTableId(queueName));
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
     HBaseConsumerState consumerState = stateStore.getState();
-    return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getActualTableName(queueName)),
+    return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),
                                       queueName, consumerState, stateStore, getQueueStrategy());
   }
 
@@ -87,7 +87,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    return new HBaseQueueProducer(createHTable(admin.getActualTableName(queueName)), queueName, queueMetrics,
+    return new HBaseQueueProducer(createHTable(admin.getDataTableId(queueName)), queueName, queueMetrics,
                                   getQueueStrategy());
   }
 
@@ -108,13 +108,13 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
         admin.create(queueName);
       }
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + admin.getActualTableName(queueName), e);
+      throw new IOException("Failed to open table " + admin.getDataTableId(queueName), e);
     }
     return admin;
   }
 
-  private HTable createHTable(String name) throws IOException {
-    HTable consumerTable = hBaseTableUtil.createHTable(hConf, TableId.from(name));
+  private HTable createHTable(TableId tableId) throws IOException {
+    HTable consumerTable = hBaseTableUtil.createHTable(hConf, tableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);

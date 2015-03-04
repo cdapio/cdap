@@ -126,7 +126,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
-      TableId tableId = HTable94NameConverter.fromTableName(hTableDescriptor.getNameAsString());
+      TableId tableId = new HTable94NameConverter().fromTableName(hTableDescriptor.getNameAsString());
       if (namespaceId.equals(tableId.getNamespace()) && tableId.getTableName().startsWith(tablePrefix)) {
         dropTable(admin, tableId);
       }

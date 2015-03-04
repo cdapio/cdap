@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
@@ -44,10 +45,11 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   }
 
   @Override
-  public String getActualTableName(QueueName queueName) {
+  public TableId getDataTableId(QueueName queueName) {
+    // tableName = system.stream.<stream name>
     if (queueName.isStream()) {
-      // <cdap namespace>.<namespace>.system.stream.<stream name>
-      return getTableNamePrefix(queueName.getFirstComponent()) + "." + queueName.getSecondComponent();
+      String tableName = unqualifiedTableNamePrefix + "." + queueName.getSecondComponent();
+      return TableId.from(root, queueName.getFirstComponent(), tableName);
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }

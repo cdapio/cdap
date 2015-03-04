@@ -28,6 +28,11 @@ public class HTable96NameConverter extends HTableNameConverter {
     return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
   }
 
+  @Override
+  public TableId fromTableName(String hTableName) {
+    return fromTableName(TableName.valueOf(hTableName));
+  }
+
   public static TableName toTableName(TableId tableId) {
     return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()),
                              HTableNameConverter.getHBaseTableName(tableId));

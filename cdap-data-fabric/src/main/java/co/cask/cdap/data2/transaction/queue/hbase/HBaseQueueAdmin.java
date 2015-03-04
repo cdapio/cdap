@@ -18,12 +18,15 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
+import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
@@ -203,7 +206,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    truncate(getTableIdFromFlow(namespaceId, app, flow));
+    truncate(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -211,7 +214,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    drop(getHBaseAdmin(), getTableIdFromFlow(namespaceId, app, flow));
+    drop(getHBaseAdmin(), getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -235,22 +238,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  public TableId getConfigTableId(QueueName queueName) {
-    return getConfigTableId(queueName.getFirstComponent());
-  }
-
-  public TableId getConfigTableId(String namespace) {
-    return TableId.from(getConfigTableName(namespace));
-  }
-
-  public TableId getDataTableId(QueueName queueName) {
-    return TableId.from(getActualTableName(queueName));
-  }
-
-  public TableId getTableIdFromFlow(String namespaceId, String app, String flow) {
-    return TableId.from(getTableNameForFlow(namespaceId, app, flow));
-  }
-
   private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
     HTable hTable = tableUtil.createHTable(getHBaseAdmin().getConfiguration(), getConfigTableId(queueName));
@@ -264,22 +251,21 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws IOException {
     deleteConsumerConfigurationsForPrefix(QueueName.prefixForFlow(namespaceId, app, flow),
-                                          getConfigTableName(namespaceId));
+                                          getConfigTableId(namespaceId));
   }
 
   /**
    * @param tableNamePrefix defines the entries to be removed
-   * @param configTableName the config table to remove the configurations from
+   * @param configTableId the config table to remove the configurations from
    * @throws IOException
    */
-  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix, String configTableName)
+  private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix, TableId configTableId)
     throws IOException {
     // table is created lazily, possible it may not exist yet.
     HBaseAdmin admin = getHBaseAdmin();
-    TableId tableId = TableId.from(configTableName);
-    if (tableUtil.tableExists(admin, tableId)) {
+    if (tableUtil.tableExists(admin, configTableId)) {
       // we need to delete the row for this queue name from the config table
-      HTable hTable = tableUtil.createHTable(admin.getConfiguration(), tableId);
+      HTable hTable = tableUtil.createHTable(admin.getConfiguration(), configTableId);
       try {
         byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
@@ -512,19 +498,22 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   /**
-   * @param tableName being checked
+   * @param hTableName being checked
    * @return true if the given table is the actual table for the queue (opposed to the config table for the queue
    * or tables for things other than queues).
    */
-  private boolean isDataTable(String tableName) {
+  private boolean isDataTable(String hTableName) {
     // checks if table is constructed by getActualTableName(String)
+    HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
+    String tableName = hTableNameConverter.fromTableName(hTableName).getTableName();
     String[] parts = tableName.split("\\.");
-    if (parts.length != 6) {
+    if (parts.length != 4) {
       return false;
     }
-    String namespace = parts[1];
-    String tableNamePrefix = getTableNamePrefix(namespace);
-    return tableName.startsWith(tableNamePrefix);
+    if (!Constants.SYSTEM_NAMESPACE.equals(parts[0])) {
+      return false;
+    }
+    return type.toString().equals(parts[1]);
   }
 
   /**
