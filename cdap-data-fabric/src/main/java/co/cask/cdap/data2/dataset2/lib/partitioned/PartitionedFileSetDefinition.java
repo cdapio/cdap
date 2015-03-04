@@ -30,9 +30,11 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
@@ -40,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 /**
  * Defines the partitioned dataset type. At this time, the partitions are not managed by the
@@ -59,6 +60,9 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   @Inject
   private Injector injector;
+
+  @Inject
+  private CConfiguration cConf;
 
   public PartitionedFileSetDefinition(String name,
                                       DatasetDefinition<? extends FileSet, ?> filesetDef,
@@ -98,7 +102,7 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
     Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
 
-    return new PartitionedFileSetDataset(spec.getName(), partitioning,
+    return new PartitionedFileSetDataset(cConf, spec.getName(), partitioning,
                                          fileset, table, spec, arguments,
                                          getExploreProvider());
   }
