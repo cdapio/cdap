@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -29,11 +30,18 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.AbstractWorker;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -84,7 +92,28 @@ public class AppWritingtoStream extends AbstractApplication {
 
     @Override
     public void run() {
-      for (int i = 0; i < VALUE; i++) {
+      try {
+        getContext().write(STREAM, ByteBuffer.wrap(Bytes.toBytes("Event 0")));
+        getContext().write(STREAM, new StreamEventData(ImmutableMap.<String, String>of(),
+                                                       ByteBuffer.wrap(Bytes.toBytes("Event 1"))));
+        File file = new File("tmpfile");
+        BufferedWriter fileWriter = Files.newWriter(file, Charsets.UTF_8);
+        fileWriter.write("Event 2\n");
+        fileWriter.write("Event 3");
+        fileWriter.close();
+        getContext().writeFile(STREAM, file, "text/plain");
+        file.delete();
+
+        StreamBatchWriter streamBatchWriter = getContext().createBatchWriter(STREAM, "text/plain");
+        streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 4\n")));
+        streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 5\n")));
+        streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 6\n")));
+        streamBatchWriter.close();
+      } catch (IOException e) {
+        LOG.error(e.getMessage(), e);
+      }
+
+      for (int i = 7; i < VALUE; i++) {
         try {
           getContext().write(STREAM, String.format("Event %d", i));
         } catch (IOException e) {
