@@ -14,14 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package co.cask.cdap.gateway.apps;
 
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamWriteException;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -59,7 +58,6 @@ public class AppWritingtoStream extends AbstractApplication {
     addStream(new Stream(STREAM));
     addWorker(new WritingWorker());
     addFlow(new SimpleFlow());
-    addService(PingService.NAME, new PingService());
     addService(SERVICE, new MyServiceHandler());
     createDataset(DATASET, KeyValueTable.class);
   }
@@ -77,6 +75,7 @@ public class AppWritingtoStream extends AbstractApplication {
   }
 
   private static final class WritingWorker extends AbstractWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(WritingWorker.class);
 
     @Override
     public void configure() {
@@ -89,16 +88,12 @@ public class AppWritingtoStream extends AbstractApplication {
         try {
           getContext().write(STREAM, String.format("Event %d", i));
         } catch (IOException e) {
-          e.printStackTrace();
-        } catch (StreamWriteException e) {
-          e.printStackTrace();
+          LOG.error(e.getMessage(), e);
         }
       }
 
       try {
         getContext().write("invalidStream", "Hello");
-      } catch (StreamWriteException e) {
-        // no-op - the comparison of event count will fail if writing to invalidStream succeeded
       } catch (IOException e) {
         // no-op
       }

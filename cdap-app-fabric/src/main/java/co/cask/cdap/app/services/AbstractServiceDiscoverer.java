@@ -17,34 +17,18 @@
 package co.cask.cdap.app.services;
 
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.stream.StreamBatchWriter;
-import co.cask.cdap.api.data.stream.StreamContext;
-import co.cask.cdap.api.data.stream.StreamWriteException;
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
-import com.google.common.collect.Maps;
-import com.google.common.net.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -53,7 +37,7 @@ import javax.annotation.Nullable;
  * It provides definition for {@link ServiceDiscoverer#getServiceURL}  and expects the sub-classes to give definition
  * for {@link AbstractServiceDiscoverer#getDiscoveryServiceClient}.
  */
-public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, StreamContext {
+public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
@@ -100,86 +84,5 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer, St
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
-  }
-
-  private URL getStreamURL(String stream) throws StreamWriteException {
-    return getStreamURL(stream, false);
-  }
-
-  private URL getStreamURL(String stream, boolean batch) throws StreamWriteException {
-    ServiceDiscovered discovered = getDiscoveryServiceClient().discover(Constants.Service.STREAMS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
-    if (discoverable != null) {
-      InetSocketAddress address = discoverable.getSocketAddress();
-      String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
-                                  Constants.Gateway.API_VERSION_3, namespaceId, stream);
-      if (batch) {
-        path = String.format("%s/batch", path);
-      }
-      try {
-        return new URL(path);
-      } catch (MalformedURLException e) {
-        LOG.error("Got exception while creating StreamURL", e);
-      }
-    }
-    throw new StreamWriteException("Stream Service Endpoint not found");
-  }
-
-  private void writeToStream(String stream, HttpRequest request) throws IOException, StreamWriteException {
-    HttpResponse response = HttpRequests.execute(request);
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new StreamWriteException(String.format("Stream %s not found", stream));
-    }
-  }
-
-  @Override
-  public void write(String stream, String data) throws IOException, StreamWriteException {
-    write(stream, data, Maps.<String, String>newHashMap());
-  }
-
-  @Override
-  public void write(String stream, String data, Map<String, String> headers) throws IOException, StreamWriteException {
-    URL streamURL = getStreamURL(stream);
-    HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(stream, request);
-  }
-
-  @Override
-  public void write(String stream, ByteBuffer data) throws IOException, StreamWriteException {
-    write(stream, data, Maps.<String, String>newHashMap());
-  }
-
-  @Override
-  public void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException,
-    StreamWriteException {
-    URL streamURL = getStreamURL(stream);
-    HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(stream, request);
-  }
-
-  @Override
-  public void write(String stream, StreamEventData data) throws IOException, StreamWriteException {
-    write(stream, data.getBody(), data.getHeaders());
-  }
-
-  @Override
-  public void writeInBatch(String stream, File file, String contentType) throws IOException, StreamWriteException {
-    URL url = getStreamURL(stream, true);
-    HttpRequest request = HttpRequest.post(url).withBody(file).addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
-    writeToStream(stream, request);
-  }
-
-  @Override
-  public StreamBatchWriter writeInBatch(String stream, String contentType) throws IOException, StreamWriteException {
-    URL url = getStreamURL(stream, true);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod(HttpMethod.POST.name());
-    connection.setReadTimeout(15000);
-    connection.setConnectTimeout(15000);
-    connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, contentType);
-    connection.setDoOutput(true);
-    connection.setChunkedStreamingMode(0);
-    connection.connect();
-    return new DefaultStreamBatchWriter(connection, stream);
   }
 }

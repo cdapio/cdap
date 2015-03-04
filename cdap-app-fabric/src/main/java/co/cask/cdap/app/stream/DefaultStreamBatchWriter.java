@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.services;
+package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
-import co.cask.cdap.api.data.stream.StreamWriteException;
 import co.cask.cdap.common.io.ByteBuffers;
+import co.cask.cdap.proto.Id;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
@@ -31,9 +31,9 @@ import java.nio.ByteBuffer;
 public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
   private final HttpURLConnection connection;
-  private final String stream;
+  private final Id.Stream stream;
 
-  public DefaultStreamBatchWriter(HttpURLConnection connection, String stream) {
+  public DefaultStreamBatchWriter(HttpURLConnection connection, Id.Stream stream) {
     this.connection = connection;
     this.stream = stream;
   }
@@ -44,13 +44,13 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
   }
 
   @Override
-  public void close() throws IOException, StreamWriteException {
+  public void close() throws IOException {
     connection.getOutputStream().close();
     int responseCode = connection.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new StreamWriteException(String.format("Stream %s not found", stream));
+      throw new IOException(String.format("Stream %s not found", stream));
     } else if (responseCode < 200 || responseCode >= 300) {
-      throw new StreamWriteException(String.format("Writing to Stream %s did not succeed", stream));
+      throw new IOException(String.format("Writing to Stream %s did not succeed", stream));
     }
   }
 }

@@ -32,19 +32,19 @@ import java.util.Map;
 final class LengthBasedContentWriter implements ContentWriter {
 
   private final long bufferThreshold;
-  private final ContentWriter bufferedContentWriter;
+  private final BufferedContentWriter bufferedContentWriter;
   private final FileContentWriterFactory fileContentWriterFactory;
 
   private ContentWriter fileContentWriter;
-  private long dataSoFar;
+  private long bodySize;
 
   LengthBasedContentWriter(StreamConfig streamConfig, ConcurrentStreamWriter streamWriter, Map<String, String> headers,
                            long bufferThreshold) throws IOException {
     this.bufferThreshold = bufferThreshold;
-    this.bufferedContentWriter = new BufferedContentWriterFactory(streamConfig.getStreamId(), streamWriter, headers)
-      .create(ImmutableMap.<String, String>of());
+    this.bufferedContentWriter = (BufferedContentWriter) new BufferedContentWriterFactory(
+      streamConfig.getStreamId(), streamWriter, headers).create(ImmutableMap.<String, String>of());
     this.fileContentWriterFactory = new FileContentWriterFactory(streamConfig, streamWriter, headers);
-    dataSoFar = 0;
+    bodySize = 0;
     fileContentWriter = null;
   }
 
@@ -53,8 +53,9 @@ final class LengthBasedContentWriter implements ContentWriter {
     if (fileContentWriter != null) {
       fileContentWriter.append(body, immutable);
     } else {
+      int size = body.remaining();
       bufferedContentWriter.append(body, immutable);
-      updateWriter(body.array().length);
+      updateWriter(size);
     }
   }
 
@@ -66,8 +67,8 @@ final class LengthBasedContentWriter implements ContentWriter {
       long tempSize = 0;
       while (bodies.hasNext()) {
         ByteBuffer next = bodies.next();
+        tempSize += next.remaining();
         bufferedContentWriter.append(next, immutable);
-        tempSize += next.array().length;
       }
       updateWriter(tempSize);
     }
@@ -92,10 +93,11 @@ final class LengthBasedContentWriter implements ContentWriter {
   }
 
   private void updateWriter(long length) throws IOException {
-    dataSoFar += length;
-    if (dataSoFar >= bufferThreshold) {
-      bufferedContentWriter.close();
+    bodySize += length;
+    if (bodySize >= bufferThreshold) {
       fileContentWriter = fileContentWriterFactory.create(ImmutableMap.<String, String>of());
+      fileContentWriter.appendAll(bufferedContentWriter.getBufferedContent(), true);
+      bufferedContentWriter.cancel();
     }
   }
 }

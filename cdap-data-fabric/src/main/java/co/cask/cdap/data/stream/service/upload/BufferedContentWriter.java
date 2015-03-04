@@ -74,6 +74,10 @@ final class BufferedContentWriter implements ContentWriter {
     // No-op
   }
 
+  Iterator<ByteBuffer> getBufferedContent() {
+    return bodies.iterator();
+  }
+
   private static final class StreamEventDataIterator extends AbstractIterator<StreamEventData> {
 
     private final Iterator<? extends ByteBuffer> bodies;
