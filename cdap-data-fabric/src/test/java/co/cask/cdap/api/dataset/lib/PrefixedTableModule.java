@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -59,15 +60,16 @@ class PrefixedTableDefinition extends AbstractDatasetDefinition<PrefixedTable, D
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("table"), classLoader);
   }
 
   @Override
-  public PrefixedTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public PrefixedTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, DatasetDefinition.NO_ARGUMENTS, classLoader);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, DatasetDefinition.NO_ARGUMENTS, classLoader);
     return new PrefixedTable(spec.getName(), table, arguments);
   }
 }
