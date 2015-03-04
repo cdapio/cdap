@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.CLI;
@@ -31,10 +32,13 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -68,6 +72,7 @@ public class CLIMain {
   public static final String NAME_VERIFY_SSL = "verify_ssl";
   public static final String NAME_AUTOCONNECT = "autoconnect";
 
+  private static final Gson GSON = new Gson();
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
@@ -105,7 +110,7 @@ public class CLIMain {
    * @throws IOException
    */
   @Inject
-  public CLIMain(PrintStream output,
+  public CLIMain(final PrintStream output,
                  @Named(NAME_URI) String uri,
                  @Named(NAME_AUTOCONNECT) boolean autoconnect,
                  @Named(NAME_DEBUG) final boolean debug,
@@ -114,7 +119,38 @@ public class CLIMain {
                  DefaultCommands defaultCommands,
                  DefaultCompleters defaultCompleters,
                  EndpointSupplier endpointSupplier,
-                 TableRenderer tableRenderer) throws URISyntaxException, IOException {
+                 TableRenderer tableRenderer,
+                 RESTClient restClient) throws URISyntaxException, IOException {
+
+    if (debug) {
+      restClient.addListener(new RESTClient.Listener() {
+        @Override
+        public void onRequest(HttpRequest request, int attempt) {
+          output.printf("DEBUG: Executing HTTP request (attempt %d): " +
+                        "method=%s url=%s hasBody=%s bodyLength=%s headers=%s",
+                        attempt, request.getMethod().name(), request.getURL().toString(),
+                        request.getBody() != null, request.getBodyLength(), GSON.toJson(request.getHeaders()));
+          output.println();
+        }
+
+        @Override
+        public void onResponse(HttpRequest request, HttpResponse response, int attemptsMade) {
+          output.printf("DEBUG: Got HTTP response (after %d attempt(s)): " +
+                          "request={method=%s url=%s hasBody=%s bodyLength=%s headers=%s} " +
+                          "response={code=%d message=%s body=%s headers=%s}",
+                        attemptsMade, request.getMethod().name(),
+                        request.getURL().toString(),
+                        request.getBody() != null,
+                        request.getBodyLength(),
+                        limit(GSON.toJson(request.getHeaders()), 100),
+                        response.getResponseCode(),
+                        limit(response.getResponseMessage(), 100),
+                        limit(response.getResponseBodyAsString(), 100),
+                        limit(GSON.toJson(response.getHeaders()), 100));
+          output.println();
+        }
+      });
+    }
 
     this.tableRenderer = tableRenderer;
     if (autoconnect) {
@@ -138,8 +174,8 @@ public class CLIMain {
         new HelpCommand(getCommandsSupplier()),
         new SearchCommandsCommand(getCommandsSupplier())
       )));
-
     Map<String, Completer> completers = defaultCompleters.get();
+
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
@@ -181,6 +217,18 @@ public class CLIMain {
     String namespace = Constants.DEFAULT_NAMESPACE;
 
     return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
+  }
+
+  private String limit(String string, int maxLength) {
+    if (string.length() <= maxLength) {
+      return string;
+    }
+
+    if (string.length() >= 4) {
+      return string.substring(0, string.length() - 3) + "...";
+    } else {
+      return string;
+    }
   }
 
   private void updateCLIPrompt(ClientConfig clientConfig) {
