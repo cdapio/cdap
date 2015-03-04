@@ -22,6 +22,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -50,6 +51,7 @@ import static org.junit.Assert.assertEquals;
 @Category(XSlowTests.class)
 public class PreferencesClientTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
+  private static final Id.Application FAKE_APP_ID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
 
   private PreferencesClient client;
   private ApplicationClient appClient;
@@ -128,8 +130,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   @Test
   public void testPreferences() throws Exception {
-    String invalidNamespace = "invalid";
-    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace).build());
+    Id.Namespace invalidNamespace = Id.Namespace.from("invalid");
+    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace.getId()).build());
 
     Map<String, String> propMap = client.getInstancePreferences();
     Assert.assertEquals(ImmutableMap.<String, String>of(), propMap);
@@ -141,118 +143,118 @@ public class PreferencesClientTestRun extends ClientTestBase {
     appClient.deploy(jarFile);
 
     propMap.put("k1", "namespace");
-    client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE, propMap);
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false));
+    client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, false));
     Assert.assertTrue(client.getNamespacePreferences(invalidNamespace, false).isEmpty());
     Assert.assertEquals("instance", client.getNamespacePreferences(invalidNamespace, true).get("k1"));
 
-    client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
+    client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID);
     propMap.put("k1", "instance");
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(ImmutableMap.<String, String>of(), client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE,
-                                                                                          false));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(ImmutableMap.<String, String>of(),
+                        client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, false));
+
     propMap.put("k1", "namespace");
-    client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE, propMap);
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false));
+    client.setNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, false));
+
     propMap.put("k1", "application");
-    client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, propMap);
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
+    client.setApplicationPreferences(FAKE_APP_ID, propMap);
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
+
     propMap.put("k1", "program");
-    client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows", FakeApp.FLOWS.get(0), propMap);
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), true));
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), false));
-    client.deleteProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows", FakeApp.FLOWS.get(0));
-    propMap.put("k1", "application");
-    Assert.assertTrue(client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                   FakeApp.FLOWS.get(0), false).isEmpty());
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), true));
+    client.setProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), propMap);
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), true));
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), false));
+    client.deleteProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0));
 
-    client.deleteApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME);
+    propMap.put("k1", "application");
+    Assert.assertTrue(client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), false).isEmpty());
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), true));
+
+    client.deleteApplicationPreferences(FAKE_APP_ID);
 
     propMap.put("k1", "namespace");
-    Assert.assertTrue(client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false).isEmpty());
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), true));
+    Assert.assertTrue(client.getApplicationPreferences(FAKE_APP_ID, false).isEmpty());
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), true));
 
-    client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE);
+    client.deleteNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID);
     propMap.put("k1", "instance");
-    Assert.assertTrue(client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, false).isEmpty());
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), true));
+    Assert.assertTrue(client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, false).isEmpty());
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), true));
 
     client.deleteInstancePreferences();
     propMap.clear();
     Assert.assertEquals(propMap, client.getInstancePreferences());
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE, true));
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, true));
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), true));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(Constants.DEFAULT_NAMESPACE_ID, true));
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), true));
 
 
     //Test Deleting Application
     propMap.put("k1", "application");
-    client.setApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, propMap);
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
+    client.setApplicationPreferences(FAKE_APP_ID, propMap);
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
 
     propMap.put("k1", "program");
-    client.setProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows", FakeApp.FLOWS.get(0), propMap);
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), false));
+    client.setProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), propMap);
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), false));
 
-    appClient.delete(FakeApp.NAME);
+    appClient.delete(FAKE_APP_ID.getId());
     // deleting the app should have deleted the preferences that were stored. so deploy the app and check
     // if the preferences are empty. we need to deploy the app again since getting preferences of non-existent apps
     // is not allowed by the API.
     appClient.deploy(jarFile);
     propMap.clear();
-    Assert.assertEquals(propMap, client.getApplicationPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, false));
-    Assert.assertEquals(propMap, client.getProgramPreferences(Constants.DEFAULT_NAMESPACE, FakeApp.NAME, "flows",
-                                                              FakeApp.FLOWS.get(0), false));
+    Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
+    Assert.assertEquals(propMap, client.getProgramPreferences(FAKE_APP_ID, "flows", FakeApp.FLOWS.get(0), false));
 
-    appClient.delete(FakeApp.NAME);
-    namespaceClient.delete(invalidNamespace);
+    appClient.delete(FAKE_APP_ID.getId());
+    namespaceClient.delete(invalidNamespace.getId());
   }
 
   @Test
   public void testDeletingNamespace() throws Exception {
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("k1", "namespace");
-    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
 
-    client.setNamespacePreferences("myspace", propMap);
-    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", false));
-    Assert.assertEquals(propMap, client.getNamespacePreferences("myspace", true));
+    Id.Namespace myspace = Id.Namespace.from("myspace");
+    namespaceClient.create(new NamespaceMeta.Builder().setId(myspace.getId()).build());
 
-    namespaceClient.delete("myspace");
-    namespaceClient.create(new NamespaceMeta.Builder().setId("myspace").build());
-    Assert.assertTrue(client.getNamespacePreferences("myspace", false).isEmpty());
-    Assert.assertTrue(client.getNamespacePreferences("myspace", true).isEmpty());
+    client.setNamespacePreferences(myspace, propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, false));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, true));
 
-    namespaceClient.delete("myspace");
+    namespaceClient.delete(myspace.getId());
+    namespaceClient.create(new NamespaceMeta.Builder().setId(myspace.getId()).build());
+    Assert.assertTrue(client.getNamespacePreferences(myspace, false).isEmpty());
+    Assert.assertTrue(client.getNamespacePreferences(myspace, true).isEmpty());
+
+    namespaceClient.delete(myspace.getId());
   }
 
   @Test(expected = NotFoundException.class)
   public void testInvalidNamespace() throws Exception {
-    client.setNamespacePreferences("somespace", ImmutableMap.of("k1", "v1"));
+    Id.Namespace somespace = Id.Namespace.from("somespace");
+    client.setNamespacePreferences(somespace, ImmutableMap.of("k1", "v1"));
   }
 
   @Test(expected = NotFoundException.class)
   public void testInvalidApplication() throws Exception {
-    client.getApplicationPreferences("somespace", "someapp", true);
+    Id.Application someapp = Id.Application.from("somespace", "someapp");
+    client.getApplicationPreferences(someapp, true);
   }
 
   @Test(expected = ProgramNotFoundException.class)
   public void testInvalidProgram() throws Exception {
-    client.deleteProgramPreferences("somespace", "someapp", "flows", "myflow");
+    Id.Application someapp = Id.Application.from("somespace", "someapp");
+    client.deleteProgramPreferences(someapp, "flows", "myflow");
   }
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -97,14 +98,16 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public Map<String, String> getNamespacePreferences(String namespace, boolean resolved) throws IOException,
-    UnauthorizedException, NotFoundException {
+  public Map<String, String> getNamespacePreferences(Id.Namespace namespace, boolean resolved)
+    throws IOException, UnauthorizedException, NotFoundException {
+
     String res = Boolean.toString(resolved);
-    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s?resolved=%s", namespace, res));
+    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s?resolved=%s",
+                                                namespace.getId(), res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace", namespace);
+      throw new NotFoundException("namespace", namespace.getId());
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -118,13 +121,13 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public void setNamespacePreferences(String namespace, Map<String, String> preferences) throws IOException,
+  public void setNamespacePreferences(Id.Namespace namespace, Map<String, String> preferences) throws IOException,
     UnauthorizedException, NotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace", namespace);
+      throw new NotFoundException("namespace", namespace.getId());
     }
   }
 
@@ -136,20 +139,19 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested namespace is not found
    */
-  public void deleteNamespacePreferences(String namespace) throws IOException, UnauthorizedException,
+  public void deleteNamespacePreferences(Id.Namespace namespace) throws IOException, UnauthorizedException,
     NotFoundException {
-    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace));
+    URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s", namespace.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace", namespace);
+      throw new NotFoundException("namespace", namespace.getId());
     }
   }
 
   /**
    * Returns the Preferences stored at the Application Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @param resolved Set to True if collapsed/resolved properties are desired
    * @return map of key-value pairs
@@ -157,15 +159,16 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested application or namespace is not found
    */
-  public Map<String, String> getApplicationPreferences(String namespace, String application, boolean resolved)
+  public Map<String, String> getApplicationPreferences(Id.Application application, boolean resolved)
     throws IOException, UnauthorizedException, NotFoundException {
+
     String res = Boolean.toString(resolved);
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s?resolved=%s",
-                                                namespace, application, res));
+                                                application.getNamespaceId(), application.getId(), res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace or application", namespace + "/" + application);
+      throw new NotFoundException("namespace or application", application.getNamespace() + "/" + application);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -173,48 +176,47 @@ public class PreferencesClient {
   /**
    * Sets Preferences at the Application Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @param preferences map of key-value pairs
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the requested application or namespace is not found
    */
-  public void setApplicationPreferences(String namespace, String application, Map<String, String> preferences)
+  public void setApplicationPreferences(Id.Application application, Map<String, String> preferences)
     throws IOException, UnauthorizedException, NotFoundException {
+
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s",
-                                                namespace, application));
+                                                application.getNamespaceId(), application.getId()));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace or application", namespace + "/" + application);
+      throw new NotFoundException("namespace or application", application.getNamespaceId() + "/" + application);
     }
   }
 
   /**
    * Deletes Preferences at the Application Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the request application or namespace is not found
    */
-  public void deleteApplicationPreferences(String namespace, String application)
+  public void deleteApplicationPreferences(Id.Application application)
     throws IOException, UnauthorizedException, NotFoundException {
+
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s",
-                                                namespace, application));
+                                                application.getNamespaceId(), application.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("namespace or application", namespace + "/" + application);
+      throw new NotFoundException("namespace or application", application.getNamespaceId() + "/" + application);
     }
   }
 
   /**
    * Returns the Preferences stored at the Program Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
    * @param programId Program Id
@@ -224,16 +226,17 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
-  public Map<String, String> getProgramPreferences(String namespace, String application, String programType,
+  public Map<String, String> getProgramPreferences(Id.Application application, String programType,
                                                    String programId, boolean resolved)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
     String res = Boolean.toString(resolved);
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s?resolved=%s",
-                                                namespace, application, programType, programId, res));
+                                                application.getNamespaceId(), application.getId(),
+                                                programType, programId, res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application, programId);
+      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application.getId(), programId);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -241,7 +244,6 @@ public class PreferencesClient {
   /**
    * Sets Preferences at the Program Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
    * @param programId Program Id
@@ -250,22 +252,22 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
-  public void setProgramPreferences(String namespace, String application, String programType, String programId,
+  public void setProgramPreferences(Id.Application application, String programType, String programId,
                                     Map<String, String> preferences)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                                namespace, application, programType, programId));
+                                                application.getNamespaceId(), application.getId(),
+                                                programType, programId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application, programId);
+      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application.getId(), programId);
     }
   }
 
   /**
    * Deletes Preferences at the Program Level.
    *
-   * @param namespace Namespace Id
    * @param application Application Id
    * @param programType Program Type
    * @param programId Program Id
@@ -273,14 +275,16 @@ public class PreferencesClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ProgramNotFoundException if the requested program is not found
    */
-  public void deleteProgramPreferences(String namespace, String application, String programType, String programId)
+  public void deleteProgramPreferences(Id.Application application, String programType, String programId)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
+
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
-                                                namespace, application, programType, programId));
+                                                application.getNamespaceId(), application.getId(),
+                                                programType, programId));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application, programId);
+      throw new ProgramNotFoundException(ProgramType.valueOfCategoryName(programType), application.getId(), programId);
     }
   }
 }
