@@ -478,6 +478,8 @@ public abstract class TableTest<T extends Table> {
     ((TransactionAware) myTable).startTx(tx);
 
     myTable.increment(R1, a(C1), la(-3L));
+    // we'll use this one to test that we can delete increment and increment again
+    myTable.increment(R2, a(C2), la(5L));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
@@ -489,6 +491,10 @@ public abstract class TableTest<T extends Table> {
     myTable.increment(R1, a(C1), la(-3L));
     verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
+    verify(Bytes.toBytes(5L), myTable.get(R2, C2));
+    myTable.delete(R2, C2);
+    verify(null, myTable.get(R2, C2));
+
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
     // start 3rd tx
@@ -497,7 +503,20 @@ public abstract class TableTest<T extends Table> {
 
     verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
+    verify(null, myTable.get(R2, C2));
+    myTable.increment(R2, a(C2), la(7L));
+    verify(Bytes.toBytes(7L), myTable.get(R2, C2));
+
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
+
+    // start 4rd tx
+    tx = txClient.startShort();
+    ((TransactionAware) myTable).startTx(tx);
+
+    verify(Bytes.toBytes(7L), myTable.get(R2, C2));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+
     admin.drop();
   }
 

@@ -75,9 +75,10 @@ public final class DefaultProgram implements Program {
     mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
     id = Id.Program.from(getAttribute(manifest, ManifestFields.ACCOUNT_ID),
                          getAttribute(manifest, ManifestFields.APPLICATION_ID),
+                         ProgramType.valueOf(getAttribute(manifest, ManifestFields.PROGRAM_TYPE)),
                          getAttribute(manifest, ManifestFields.PROGRAM_NAME));
 
-    this.processorType = ProgramType.valueOfPrettyName(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
+    this.processorType = ProgramType.valueOfPrettyName(getAttribute(manifest, ManifestFields.PROGRAM_TYPE));
 
     // Load the app spec from the jar file if no expand folder is provided. Otherwise do lazy loading after the jar
     // is expanded.

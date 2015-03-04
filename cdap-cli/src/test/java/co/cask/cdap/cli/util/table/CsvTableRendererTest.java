@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.cli.util.table;
 
-package co.cask.cdap.data.tools;
-
-import org.junit.Test;
+import org.junit.Ignore;
 
 /**
  *
  */
-public class MainTest {
-  @Test
-  public void testInjector() throws Exception {
-    Main.main(new String[] {"help"});
-    // should not throw exception
+@Ignore
+public class CsvTableRendererTest extends TableRendererTest {
+
+  @Override
+  public TableRenderer getRenderer() {
+    return new CsvTableRenderer();
   }
 }

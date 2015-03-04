@@ -689,7 +689,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+      Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
@@ -701,7 +701,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
+      Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
 
       // Collects stream name to all group ids consuming that stream
       Multimap<String, Long> streamGroups = HashMultimap.create();
@@ -804,7 +804,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     for (ProgramSpecification spec : programSpecs) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
         Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
         location.delete();
@@ -817,7 +817,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // TODO: this will go away once webapp gets a spec
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
-                                             ProgramType.WEBAPP.name().toLowerCase());
+                                             ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
       Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
       location.delete();
     } catch (FileNotFoundException e) {

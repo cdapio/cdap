@@ -109,7 +109,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     List<Row> ops = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
       Delete delete = new Delete(queueStrategy.getActualRowKey(getConfig(), rowKey));
-      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       ops.add(delete);
     }
     hTable.batch(ops);
