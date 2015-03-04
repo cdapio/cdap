@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,10 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -49,7 +53,6 @@ public final class FileSetDataset implements FileSet {
   private final Map<String, String> properties;
   private final Map<String, String> runtimeArguments;
 
-  private final String name;
   private final Location baseLocation;
   private final List<Location> inputLocations;
   private final Location outputLocation;
@@ -60,16 +63,18 @@ public final class FileSetDataset implements FileSet {
 
   /**
    * Constructor.
+   *
+   * @param cConf the CDAP configuration
    * @param name name of the dataset
    * @param locationFactory the location factory
    * @param properties the dataset's properties from the spec
    * @param runtimeArguments the runtime arguments
    * @param classLoader the class loader to instantiate the input and output format class
    */
-  public FileSetDataset(String name, LocationFactory locationFactory,
+  public FileSetDataset(CConfiguration cConf, String name, LocationFactory locationFactory,
                         @Nonnull Map<String, String> properties,
                         @Nonnull Map<String, String> runtimeArguments,
-                        @Nullable ClassLoader classLoader) {
+                        @Nullable ClassLoader classLoader) throws IOException {
 
     Preconditions.checkNotNull(name, "Dataset name must not be null");
     Preconditions.checkArgument(!name.isEmpty(), "Dataset name must not be empty");
@@ -77,9 +82,12 @@ public final class FileSetDataset implements FileSet {
     Preconditions.checkNotNull(properties, "Dataset properties must not be null");
     Preconditions.checkNotNull(FileSetProperties.getBasePath(properties), "Base path must not be null");
 
-    this.name = name;
+    DatasetNamespace dsNamespace = new DefaultDatasetNamespace(cConf);
+    String namespaceId = dsNamespace.fromNamespaced(name).getNamespaceId();
     this.properties = properties;
-    this.baseLocation = locationFactory.create(FileSetProperties.getBasePath(properties));
+    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+    String basePath = FileSetProperties.getBasePath(properties);
+    this.baseLocation = locationFactory.create(namespaceId).append(dataDir).append(basePath);
     this.runtimeArguments = runtimeArguments;
     this.classLoader = classLoader;
     this.inputFormatClassName = FileSetProperties.getInputFormat(properties);

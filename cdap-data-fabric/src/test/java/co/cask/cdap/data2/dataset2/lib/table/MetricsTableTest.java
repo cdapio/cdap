@@ -295,8 +295,8 @@ public abstract class MetricsTableTest {
   @Test
   public void testDeleteIncrements() throws Exception {
     // note: this is pretty important test case for tables with counters, e.g. metrics
-
-    MetricsTable table = getTable("testDeleteIncrements");
+    String testDeleteIncrements = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testDeleteIncrements");
+    MetricsTable table = getTable(testDeleteIncrements);
     // delete increment and increment again
     table.increment(A, ImmutableMap.of(B, 5L));
     table.increment(A, ImmutableMap.of(B, 2L));

@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -79,11 +80,11 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   // this flag will tell whether the dataset was created before release 2.8
   private final boolean isLegacyDataset;
 
-  public TimePartitionedFileSetDataset(String name,
+  public TimePartitionedFileSetDataset(CConfiguration cConf, String name,
                                        FileSet fileSet, Table partitionTable,
                                        DatasetSpecification spec, Map<String, String> arguments,
                                        Provider<ExploreFacade> exploreFacadeProvider) {
-    super(name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
+    super(cConf, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
 
     isLegacyDataset = arguments.containsKey(ARGUMENT_LEGACY_DATASET) ||
       PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null;
