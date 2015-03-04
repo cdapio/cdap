@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 
@@ -52,9 +53,25 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   }
 
   @Override
-  @Nullable
-  public Id.DatasetInstance fromNamespaced(String datasetInstanceName) {
-    return fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
+  public Id.DatasetInstance fromNamespaced(String namespaced) {
+    Preconditions.checkArgument(namespaced != null, "Dataset name should not be null");
+    // Dataset name is of the format <table-prefix>.<namespace>.<dataset-name>
+    Preconditions.checkArgument(namespaced.startsWith(rootPrefix), "Dataset name should start with " + rootPrefix);
+    // rootIndex is the index of the first character after the root prefix
+    int rootIndex = rootPrefix.length();
+    // namespaceIndex is the index of the first dot after the rootIndex
+    int namespaceIndex = namespaced.indexOf(".", rootIndex);
+    // This check implies also that namespace is non-empty
+    // Also, '.' is not permitted in namespace name. So this should return the full namespace.
+    Preconditions.checkArgument(namespaceIndex > rootIndex,
+                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+                                rootPrefix, namespaced);
+    String namespace = namespaced.substring(rootIndex, namespaceIndex);
+    String datasetName = namespaced.substring(namespaceIndex + 1);
+    Preconditions.checkArgument(!datasetName.isEmpty(),
+                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+                                rootPrefix, namespaced);
+    return Id.DatasetInstance.from(Id.Namespace.from(namespace), datasetName);
   }
 
   @Override

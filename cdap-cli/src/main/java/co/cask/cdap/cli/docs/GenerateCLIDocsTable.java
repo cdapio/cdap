@@ -18,8 +18,16 @@ package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIMain;
-import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
+import co.cask.cdap.cli.commandset.DefaultCommands;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.TableRenderer;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.cli.Command;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -33,14 +41,27 @@ public class GenerateCLIDocsTable {
   private final Command printDocsCommand;
 
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig, AltStyleTableRenderer.class)
-                                                              .getCommandsSupplier());
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PrintStream.class).toInstance(System.out);
+        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance("");
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
+        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
+        bind(CLIConfig.class).toInstance(cliConfig);
+        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
+        bind(TableRenderer.class).to(CsvTableRenderer.class);
+      }
+    });
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(injector.getInstance(DefaultCommands.class));
   }
 
   public static void main(String[] args) throws Exception {
     PrintStream output = System.out;
 
-    CLIConfig config = new CLIConfig(null);
+    CLIConfig config = new CLIConfig(new ClientConfig.Builder().build());
     GenerateCLIDocsTable generateCLIDocsTable = new GenerateCLIDocsTable(config);
     generateCLIDocsTable.printDocsCommand.execute(null, output);
   }
