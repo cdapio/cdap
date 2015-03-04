@@ -21,6 +21,8 @@ import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.cdap.cli.command.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
+import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.Id;
@@ -53,15 +55,18 @@ public class CLIMain {
   private final CLI cli;
 
   private final Iterable<CommandSet<Command>> commands;
+  private final Injector injector;
 
-  public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    Injector injector = Guice.createInjector(
+  public CLIMain(final CLIConfig cliConfig,
+                 final Class<? extends TableRenderer> tableRendererClass) throws URISyntaxException, IOException {
+    injector = Guice.createInjector(
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
           bind(CConfiguration.class).toInstance(CConfiguration.create());
+          bind(TableRenderer.class).to(tableRendererClass);
         }
       }
     );
@@ -111,6 +116,10 @@ public class CLIMain {
     cli.getReader().setPrompt("cdap (" + uri + "/" + namespace.getId() + ")> ");
   }
 
+  public TableRenderer getTableRenderer() {
+    return injector.getInstance(TableRenderer.class);
+  }
+
   public CLI getCLI() {
     return this.cli;
   }
@@ -129,7 +138,7 @@ public class CLIMain {
     PrintStream output = System.out;
 
     CLIConfig config = new CLIConfig(hostname);
-    CLIMain cliMain = new CLIMain(config);
+    CLIMain cliMain = new CLIMain(config, AltStyleTableRenderer.class);
     CLI cli = cliMain.getCLI();
 
     if (args.length == 0) {

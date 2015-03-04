@@ -189,8 +189,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (!matcher.matches()) {
         continue;
       }
-      ProgramType appType = getType(matcher.group(1));
-      if (appType != type) {
+      if (!type.equals(getType(matcher.group(1)))) {
         continue;
       }
 
@@ -200,7 +199,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           continue;
         }
 
-        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), appType, matcher.group(4));
+        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
         RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
         if (runtimeInfo != null) {
           result.put(runId, runtimeInfo);
