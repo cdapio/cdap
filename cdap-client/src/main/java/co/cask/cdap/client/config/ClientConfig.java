@@ -245,6 +245,10 @@ public class ClientConfig {
     this.accessToken = Suppliers.ofInstance(accessToken);
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /**
    * Builder for {@link ClientConfig}.
    */

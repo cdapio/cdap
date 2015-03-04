@@ -61,7 +61,7 @@ public class GenerateCLIDocsTable {
   public static void main(String[] args) throws Exception {
     PrintStream output = System.out;
 
-    CLIConfig config = new CLIConfig(new ClientConfig.Builder().build());
+    CLIConfig config = new CLIConfig();
     GenerateCLIDocsTable generateCLIDocsTable = new GenerateCLIDocsTable(config);
     generateCLIDocsTable.printDocsCommand.execute(null, output);
   }

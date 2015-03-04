@@ -18,6 +18,8 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
+import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
@@ -56,6 +58,8 @@ public class CLIConfig {
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
+  private final PrintStream output;
+  private final TableRenderer tableRenderer;
 
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
@@ -63,15 +67,25 @@ public class CLIConfig {
   /**
    * @param clientConfig client configuration
    */
-  public CLIConfig(ClientConfig clientConfig) {
+  public CLIConfig(ClientConfig clientConfig, PrintStream output, TableRenderer tableRenderer) {
     this.clientConfig = clientConfig;
+    this.output = output;
+    this.tableRenderer = tableRenderer;
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
     this.connectionChangeListeners = Lists.newArrayList();
   }
 
   public CLIConfig() {
-    this(null);
+    this(null, System.out, new AltStyleTableRenderer());
+  }
+
+  public PrintStream getOutput() {
+    return output;
+  }
+
+  public TableRenderer getTableRenderer() {
+    return tableRenderer;
   }
 
   public Id.Namespace getCurrentNamespace() {
