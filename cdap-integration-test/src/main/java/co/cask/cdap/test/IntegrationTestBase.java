@@ -29,7 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -260,7 +260,7 @@ public class IntegrationTestBase {
   @SuppressWarnings("deprecation")
   private void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
                                           int numInstances)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, NotFoundException, UnauthorizedException {
 
     // TODO: replace with programClient.waitForProcedureInstances()
     int actualInstances;
@@ -275,7 +275,7 @@ public class IntegrationTestBase {
 
   private void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
                                         int numInstances)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, NotFoundException, UnauthorizedException {
 
     // TODO: replace with programClient.waitForFlowletInstances()
     int actualInstances;
@@ -290,21 +290,21 @@ public class IntegrationTestBase {
 
   private void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
   private void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
 
   private void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
       programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
