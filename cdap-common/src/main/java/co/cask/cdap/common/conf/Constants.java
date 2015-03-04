@@ -705,6 +705,7 @@ public final class Constants {
    */
   public static final String DEFAULT_NAMESPACE = "default";
   public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+
   /**
    * 'system' reserved namespace name
    */

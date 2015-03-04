@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.inject.Inject;
@@ -39,8 +40,8 @@ public class DeleteNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream out) throws Exception {
-    String namespaceId = arguments.get(ArgumentName.NAMESPACE_ID.toString());
-    namespaceClient.delete(namespaceId);
+    Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
+    namespaceClient.delete(namespaceId.getId());
     out.println(String.format(SUCCESS_MSG, namespaceId));
   }
 

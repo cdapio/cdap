@@ -22,12 +22,14 @@ import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -54,17 +56,15 @@ public class CLIConfig {
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
-  private final boolean hostnameProvided;
 
   private List<ConnectionChangeListener> connectionChangeListeners;
   private ConnectionInfo connectionInfo;
 
   /**
-   * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
+   * @param clientConfig client configuration
    */
-  public CLIConfig(String hostname) {
-    this.hostnameProvided = hostname != null && !hostname.isEmpty();
-    this.clientConfig = createClientConfig(hostname);
+  public CLIConfig(ClientConfig clientConfig) {
+    this.clientConfig = clientConfig;
     this.resolver = new FilePathResolver();
     this.version = tryGetVersion();
     this.connectionChangeListeners = Lists.newArrayList();
@@ -74,48 +74,30 @@ public class CLIConfig {
     this(null);
   }
 
-  private ClientConfig createClientConfig(String hostname) {
-    ClientConfig.Builder clientConfigBuilder = new ClientConfig.Builder();
-    if (hostname != null) {
-      clientConfigBuilder.setHostname(hostname);
-    }
-    if (System.getProperty(PROP_VERIFY_SSL_CERT) != null) {
-      clientConfigBuilder.setVerifySSLCert(Boolean.parseBoolean(System.getProperty(PROP_VERIFY_SSL_CERT)));
-    }
-    return clientConfigBuilder.build();
-  }
-
-  public String getCurrentNamespace() {
+  public Id.Namespace getCurrentNamespace() {
     return clientConfig.getNamespace();
   }
 
-  public void setCurrentNamespace(String currentNamespace) {
+  public void setCurrentNamespace(Id.Namespace currentNamespace) {
     clientConfig.setNamespace(currentNamespace);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(currentNamespace, clientConfig.getBaseURI());
+      listener.onConnectionChanged(clientConfig);
     }
   }
 
-  public boolean isHostnameProvided() {
-    return hostnameProvided;
-  }
-
-  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean verbose) throws Exception {
-
+  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean debug) throws Exception {
     this.connectionInfo = connectionInfo;
     try {
-      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, verbose);
+      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, debug);
       checkConnection(clientConfig, connectionInfo, accessToken);
       setHostname(connectionInfo.getHostname());
       setPort(connectionInfo.getPort());
-      setCurrentNamespace(Constants.DEFAULT_NAMESPACE);
+      setCurrentNamespace(connectionInfo.getNamespace());
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
 
-      if (verbose) {
-        output.printf("Successfully connected CDAP instance at %s:%d\n",
-                      connectionInfo.getHostname(), connectionInfo.getPort());
-      }
+      output.printf("Successfully connected CDAP instance at %s:%d\n",
+                    connectionInfo.getHostname(), connectionInfo.getPort());
     } catch (IOException e) {
       throw new IOException(String.format("Host %s on port %d could not be reached: %s",
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
@@ -146,8 +128,8 @@ public class CLIConfig {
     return getAuthenticationClient(connectionInfo).isAuthEnabled();
   }
 
-  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo, PrintStream output,
-                                         boolean verbose) throws IOException {
+  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo,
+                                         PrintStream output, boolean debug) throws IOException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
@@ -161,11 +143,11 @@ public class CLIConfig {
       // access token invalid - fall through to try acquiring token manually
     }
 
-    return getNewAccessToken(connectionInfo, output, verbose);
+    return getNewAccessToken(connectionInfo, output, debug);
   }
 
   private AccessToken getNewAccessToken(ConnectionInfo connectionInfo, PrintStream output,
-                                        boolean verbose) throws IOException {
+                                        boolean debug) throws IOException {
 
     AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
 
@@ -190,7 +172,7 @@ public class CLIConfig {
     AccessToken accessToken = authenticationClient.getAccessToken();
 
     if (accessToken != null) {
-      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && verbose) {
+      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && debug) {
         output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
       }
     }
@@ -278,21 +260,21 @@ public class CLIConfig {
   public void setHostname(String hostname) {
     clientConfig.setHostname(hostname);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getNamespace(), clientConfig.getBaseURI());
+      listener.onConnectionChanged(clientConfig);
     }
   }
 
   public void setPort(int port) {
     clientConfig.setPort(port);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getNamespace(), clientConfig.getBaseURI());
+      listener.onConnectionChanged(clientConfig);
     }
   }
 
   public void setSSLEnabled(boolean sslEnabled) {
     clientConfig.setSSLEnabled(sslEnabled);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig.getNamespace(), clientConfig.getBaseURI());
+      listener.onConnectionChanged(clientConfig);
     }
   }
 
@@ -308,21 +290,37 @@ public class CLIConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(String currentNamespace, URI newURI);
+    void onConnectionChanged(ClientConfig clientConfig);
   }
 
   /**
    * Connection information to a CDAP instance.
    */
   public static final class ConnectionInfo {
+
     private final String hostname;
     private final int port;
     private final boolean sslEnabled;
+    private final Id.Namespace namespace;
 
-    public ConnectionInfo(String hostname, int port, boolean sslEnabled) {
+    public ConnectionInfo(String hostname, int port, boolean sslEnabled, Id.Namespace namespace) {
       this.hostname = hostname;
       this.port = port;
       this.sslEnabled = sslEnabled;
+      this.namespace = namespace;
+    }
+
+    public ConnectionInfo(String hostname, int port, boolean sslEnabled) {
+      this(hostname, port, sslEnabled, Constants.DEFAULT_NAMESPACE_ID);
+    }
+
+    public static ConnectionInfo of(ClientConfig clientConfig) {
+      return new ConnectionInfo(clientConfig.getHostname(), clientConfig.getPort(), clientConfig.isSSLEnabled(),
+                                clientConfig.getNamespace());
+    }
+
+    public Id.Namespace getNamespace() {
+      return namespace;
     }
 
     public String getHostname() {
@@ -335,6 +333,36 @@ public class CLIConfig {
 
     public boolean isSSLEnabled() {
       return sslEnabled;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(hostname, port, sslEnabled, namespace);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      final ConnectionInfo other = (ConnectionInfo) obj;
+      return Objects.equal(this.hostname, other.hostname) &&
+        Objects.equal(this.port, other.port) &&
+        Objects.equal(this.sslEnabled, other.sslEnabled) &&
+        Objects.equal(this.namespace, other.namespace);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("hostname", hostname)
+        .add("port", port)
+        .add("sslEnabled", sslEnabled)
+        .add("namespace", namespace)
+        .toString();
     }
   }
 }
