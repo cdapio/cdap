@@ -17,7 +17,7 @@
 package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -71,31 +71,31 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnAuthorizedAccessTokenException {
+    throws IOException, UnauthorizedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnAuthorizedAccessTokenException {
+    throws IOException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url).addHeaders(getAuthHeaders(accessToken)).build(),
                    allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
-                              int... allowedErrorCodes) throws IOException, UnAuthorizedAccessTokenException {
+                              int... allowedErrorCodes) throws IOException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnAuthorizedAccessTokenException {
+    throws IOException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
                      .withBody(body).build(), allowedErrorCodes);
   }
 
-  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
-    UnAuthorizedAccessTokenException {
+  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+    throws IOException, UnauthorizedException {
 
     int currentTry = 0;
     HttpResponse response;
@@ -116,7 +116,7 @@ public class RESTClient {
 
       onResponse(request, response, currentTry);
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+        throw new UnauthorizedException("Unauthorized status code received from the server.");
       }
       if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
         throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
@@ -139,13 +139,13 @@ public class RESTClient {
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnAuthorizedAccessTokenException {
+    throws IOException, UnauthorizedException {
     HttpResponse response = HttpRequests.execute(
       HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), uploadConfig);
     int responseCode = response.getResponseCode();
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+        throw new UnauthorizedException("Unauthorized status code received from the server.");
       }
       throw new IOException(response.getResponseBodyAsString());
     }

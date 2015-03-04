@@ -17,7 +17,7 @@
 
 package co.cask.cdap.client.util;
 
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -86,7 +86,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testPostUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();
     HttpRequest request = HttpRequest.post(url).build();
@@ -101,7 +101,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testPutUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPutAuth").toURL();
     HttpRequest request = HttpRequest.put(url).build();
@@ -116,7 +116,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testGetUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testGetAuth").toURL();
     HttpRequest request = HttpRequest.get(url).build();
@@ -131,7 +131,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testDeleteUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testDeleteAuth").toURL();
     HttpRequest request = HttpRequest.delete(url).build();
