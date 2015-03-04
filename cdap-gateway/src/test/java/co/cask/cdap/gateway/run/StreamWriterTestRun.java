@@ -94,5 +94,4 @@ public class StreamWriterTestRun extends GatewayTestBase {
     }
     Assert.assertTrue(trials < 5);
   }
-
 }
