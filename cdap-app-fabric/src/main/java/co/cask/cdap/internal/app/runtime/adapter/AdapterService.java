@@ -282,7 +282,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
                                 constructScheduleName(programId, adapterName));
     }
@@ -306,7 +307,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
                                constructScheduleName(programId, adapterName));
     }
@@ -360,7 +362,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       addSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec);
     }
   }
@@ -374,7 +377,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
                      constructScheduleName(programId, adapterSpec.getName()));
     }
