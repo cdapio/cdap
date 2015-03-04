@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.data.tools;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import org.junit.Test;
 
 /**
- * Default Ids to use in test if you do not want to construct your own.
+ *
  */
-public class DefaultId {
-  private static final String DEFAULT_APPLICATION_ID = "myapp";
-
-  public static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  public static final Id.Application APPLICATION = new Id.Application(NAMESPACE, DEFAULT_APPLICATION_ID);
+public class UpgraderMainTest {
+  @Test
+  public void testInjector() throws Exception {
+    UpgraderMain upgraderMain = new UpgraderMain();
+    // should not throw exception
+  }
 }
