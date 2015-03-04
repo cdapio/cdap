@@ -144,7 +144,8 @@ public class CLIMain {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
         if (e instanceof SSLHandshakeException) {
-          output.printf("To ignore this error, set -D%s=false when starting the CLI\n", CLIConfig.PROP_VERIFY_SSL_CERT);
+          output.printf("To ignore this error, set \"--%s false\" when starting the CLI\n",
+                        VERIFY_SSL_OPTION.getLongOpt());
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());

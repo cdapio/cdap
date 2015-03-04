@@ -52,7 +52,6 @@ import java.util.Properties;
  */
 public class CLIConfig {
 
-  public static final String PROP_VERIFY_SSL_CERT = "verify.ssl.cert";
   public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
 
   private final ClientConfig clientConfig;
