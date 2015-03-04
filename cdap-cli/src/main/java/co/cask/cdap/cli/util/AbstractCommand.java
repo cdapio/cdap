@@ -19,6 +19,8 @@ package co.cask.cdap.cli.util;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -123,5 +125,16 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
     } catch (NumberFormatException e) {
       throw new CommandInputError(this, "Invalid number value: " + arg + ". Reason: " + e.getMessage());
     }
+  }
+
+  protected Id.Application parseAppId(String[] programIdParts) {
+    checkInputLength(programIdParts, 1);
+    return Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
+  }
+
+  protected Id.Program parseProgramId(String[] programIdParts, ProgramType programType) {
+    checkInputLength(programIdParts, 2);
+    return Id.Program.from(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                           programType, programIdParts[1]);
   }
 }

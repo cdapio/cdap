@@ -327,6 +327,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Worker worker = Id.Worker.from(app, workerId);
+
     URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -351,6 +352,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Worker worker = Id.Worker.from(app, workerId);
+
     URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
@@ -430,6 +432,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Service service = Id.Service.from(app, serviceId);
+
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -484,6 +487,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Service service = Id.Service.from(app, serviceId);
+
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -670,6 +674,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programId);
+
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -696,6 +701,7 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programId);
+
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();

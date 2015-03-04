@@ -41,6 +41,8 @@ public class NamespaceClient extends AbstractNamespaceClient {
     this.config = config;
     this.restClient = RESTClient.create(this.config);
   }
+
+  @Override
   protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle
     return restClient.execute(request, config.getAccessToken(),

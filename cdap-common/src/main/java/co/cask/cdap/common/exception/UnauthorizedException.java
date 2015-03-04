@@ -25,12 +25,12 @@ public class UnauthorizedException extends Exception {
     super();
   }
 
-  public UnauthorizedException(String msg) {
-    super(msg);
-  }
-
   public UnauthorizedException(String msg, Throwable throwable) {
     super(msg, throwable);
+  }
+
+  public UnauthorizedException(String message) {
+    super(message);
   }
 
 }

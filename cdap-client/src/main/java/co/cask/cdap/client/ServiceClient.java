@@ -65,6 +65,7 @@ public class ServiceClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Service service = Id.Service.from(app, serviceId);
+
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);

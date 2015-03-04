@@ -195,7 +195,6 @@ public class ApplicationClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> listAllPrograms(ProgramType programType) throws IOException, UnauthorizedException {
-
     Preconditions.checkArgument(programType.isListable());
 
     String path = programType.getCategoryName();

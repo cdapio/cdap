@@ -20,7 +20,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 

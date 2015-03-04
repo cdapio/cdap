@@ -40,9 +40,9 @@ public class DeleteNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream out) throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
-    namespaceClient.delete(namespace.getId());
-    out.println(String.format(SUCCESS_MSG, namespace.getId()));
+    Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
+    namespaceClient.delete(namespaceId.getId());
+    out.println(String.format(SUCCESS_MSG, namespaceId));
   }
 
   @Override

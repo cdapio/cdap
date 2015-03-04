@@ -28,19 +28,14 @@ import java.util.Map;
  * Abstract Set Preferences Class.
  */
 public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
+
   private final PreferencesClient client;
   private final ElementType type;
-  private final CLIConfig cliConfig;
 
   protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
-    this.cliConfig = cliConfig;
-  }
-
-  private String getCurrentNamespaceId() {
-    return cliConfig.getCurrentNamespace().getId();
   }
 
   protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
@@ -56,13 +51,12 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        client.setNamespacePreferences(getCurrentNamespaceId(), args);
+        client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
         printSuccessMessage(printStream, type);
         break;
 
       case APP:
-        checkInputLength(programIdParts, 1);
-        client.setApplicationPreferences(getCurrentNamespaceId(), programIdParts[0], args);
+        client.setApplicationPreferences(parseAppId(programIdParts), args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -72,9 +66,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        checkInputLength(programIdParts, 2);
-        client.setProgramPreferences(getCurrentNamespaceId(), programIdParts[0],
-                                     type.getProgramType(), programIdParts[1], args);
+        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
         printSuccessMessage(printStream, type);
         break;
 

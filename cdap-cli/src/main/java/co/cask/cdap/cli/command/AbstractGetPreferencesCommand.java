@@ -36,7 +36,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
   private final PreferencesClient client;
   private final ElementType type;
   private final boolean resolved;
-  private final CLIConfig cliConfig;
 
   protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig,
                                           boolean resolved) {
@@ -44,7 +43,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
     this.type = type;
     this.client = client;
     this.resolved = resolved;
-    this.cliConfig = cliConfig;
   }
 
   private String joinMapEntries(Map<String, String> map) {
@@ -61,10 +59,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
     printStream.print(joinMapEntries(parsePreferences(programIdParts)));
   }
 
-  private String getCurrentNamespaceId() {
-    return cliConfig.getCurrentNamespace().getId();
-  }
-
   private Map<String, String> parsePreferences(String[] programIdParts)
     throws IOException, UnauthorizedException, NotFoundException {
 
@@ -74,42 +68,16 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
         return client.getInstancePreferences();
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        return client.getNamespacePreferences(getCurrentNamespaceId(), resolved);
+        return client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved);
       case APP:
-        checkInputLength(programIdParts, 1);
-        return client.getApplicationPreferences(getCurrentNamespaceId(), programIdParts[0], resolved);
+        return client.getApplicationPreferences(parseAppId(programIdParts), resolved);
       case FLOW:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
-
       case PROCEDURE:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
       case MAPREDUCE:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
-
       case WORKFLOW:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
       case SERVICE:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
       case SPARK:
-        checkInputLength(programIdParts, 2);
-        return client.getProgramPreferences(getCurrentNamespaceId(),
-                                            programIdParts[0], type.getProgramType(),
-                                            programIdParts[1], resolved);
+        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
       default:
         throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getPrettyName());
     }

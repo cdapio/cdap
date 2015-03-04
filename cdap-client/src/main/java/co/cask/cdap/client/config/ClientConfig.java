@@ -64,7 +64,8 @@ public class ClientConfig {
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled, int unavailableRetryLimit,
+  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled,
+                       int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
@@ -115,6 +116,11 @@ public class ClientConfig {
     return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
   }
 
+  private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace,
+                                   String path) throws MalformedURLException {
+    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace.getId() + "/" + path).toURL();
+  }
+
   /**
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
@@ -124,15 +130,11 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
-    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), path);
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
   }
 
   public URL resolveNamespacedURLV3(String format, Object... args) throws MalformedURLException {
-    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace.getId(), String.format(format, args));
-  }
-
-  private URL resolveNamespacedURL(String apiVersion, String namespace, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace + "/" + path).toURL();
+    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, String.format(format, args));
   }
 
   /**
@@ -225,6 +227,17 @@ public class ClientConfig {
   public void setAllTimeouts(int timeout) {
     this.defaultHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
     this.uploadHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
+  }
+
+  public void setURI(URI uri) {
+    this.hostname = uri.getHost();
+    this.sslEnabled = "https".equals(uri.getScheme());
+    if (uri.getPort() != -1) {
+      this.port = uri.getPort();
+    }
+    if (uri.getPath() != null && !uri.getPath().isEmpty()) {
+      this.namespace = Id.Namespace.from(uri.getPath().substring(1));
+    }
   }
 
   @Nullable
