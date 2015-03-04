@@ -38,6 +38,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.Map;
  *
  */
 public class HBase98TableUtil extends HBaseTableUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(HBase98TableUtil.class);
 
   @Override
   public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
@@ -234,18 +237,20 @@ public class HBase98TableUtil extends HBaseTableUtil {
   public Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-    Map<String, TableStats> datasetStat = Maps.newHashMap();
+    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
     for (ServerName serverName : clusterStatus.getServers()) {
       Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
-        String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        TableName tableName = HRegionInfo.getTable(regionLoad.getName());
         TableStats stat = datasetStat.get(tableName);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          datasetStat.put(tableName, stat);
+          LOG.info("HBase Table Name {}", tableName);
+          datasetStat.put(TableId.from(), stat);
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
           stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());

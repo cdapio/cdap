@@ -38,6 +38,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.Map;
  *
  */
 public class HBase94TableUtil extends HBaseTableUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(HBase94TableUtil.class);
 
   @Override
   public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
@@ -229,6 +232,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
         TableStats stat = datasetStat.get(tableName);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
+          LOG.info("HBase Table Name is {}", tableName);
           datasetStat.put(tableName, stat);
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());

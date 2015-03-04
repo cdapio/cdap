@@ -100,16 +100,6 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     }
   }
 
-  private static boolean isValidDatasetId(String datasetId) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9'))
-      .or(CharMatcher.is('.'))
-      .or(CharMatcher.is('$')).matchesAllOf(datasetId);
-  }
-
   private void report(Map<String, LevelDBTableService.TableStats> datasetStat)
     throws DatasetManagementException {
     for (Map.Entry<String, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
