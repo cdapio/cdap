@@ -22,6 +22,8 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -53,7 +55,8 @@ public class HBaseMetricsTable implements MetricsTable {
 
   public HBaseMetricsTable(String name, Configuration hConf) throws IOException {
     String hTableName = HBaseTableUtil.getHBaseTableName(name);
-    HTable hTable = new HTable(hConf, hTableName);
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+    HTable hTable = tableUtil.getHTable(hConf, TableId.from(hTableName));
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
@@ -214,7 +217,7 @@ public class HBaseMetricsTable implements MetricsTable {
   public void delete(byte[] row, byte[][] columns) throws Exception {
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumn(DATA_COLUMN_FAMILY, column);
+      delete.deleteColumns(DATA_COLUMN_FAMILY, column);
     }
     hTable.delete(delete);
   }

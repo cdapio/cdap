@@ -466,6 +466,12 @@
         <value>${master.service.memory.mb}</value>
     </property>
 
+    <property>
+        <name>dataset.data.dir</name>
+        <value>data</value>
+        <description>Base directory for user data on the filesystem</description>
+    </property>
+
     <!--
         Queue-related Configuration
     -->

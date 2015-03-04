@@ -16,11 +16,13 @@
 
 package co.cask.cdap.cli.util;
 
+import java.util.List;
+
 /**
  * Makes an {@link Object} row from some object.
  *
  * @param <T> the type of object to make rows from
  */
 public interface RowMaker<T> {
-  Object[] makeRow(T object);
+  List<?> makeRow(T object);
 }

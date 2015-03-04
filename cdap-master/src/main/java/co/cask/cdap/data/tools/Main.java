@@ -15,18 +15,13 @@
  */
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -34,9 +29,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
@@ -45,10 +38,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
-import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
-import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.UpgradeMetricsConstants;
@@ -62,7 +51,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -75,7 +63,6 @@ public class Main {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrade all tables."),
     // NOTE : Metrics migration is not required for CDAP to work after upgrade,
     // some may opt not to migrate data as it may take a while.
     MIGRATE_METRICS_DATA("Migrate metrics data"),
@@ -127,9 +114,6 @@ public class Main {
         });
 
       switch (action) {
-        case UPGRADE:
-          performUpgrade(injector);
-        break;
         case MIGRATE_METRICS_DATA:
           migrateMetricsData(injector);
           break;
@@ -165,46 +149,6 @@ public class Main {
       return Action.valueOf(action.toUpperCase());
     } catch (IllegalArgumentException e) {
       return null;
-    }
-  }
-
-  private void performUpgrade(Injector injector) throws Exception {
-    // Upgrade system datasets
-    upgradeSystemDatasets(injector);
-
-    // Upgrade all user hbase tables
-    upgradeUserTables(injector);
-
-    // Upgrade all queue and stream tables.
-    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-    queueAdmin.upgrade();
-  }
-
-  private void upgradeSystemDatasets(Injector injector) throws Exception {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    // Setting up all system datasets to be upgraded, collecting them from respective components
-    DatasetFramework framework = createRegisteredDatasetFramework(injector);
-    // dataset service
-    DatasetMetaTableUtil.setupDatasets(framework);
-    // app metadata
-    DefaultStore.setupDatasets(framework);
-    // config store
-    DefaultConfigStore.setupDatasets(framework);
-    // logs metadata
-    LogSaverTableUtil.setupDatasets(framework);
-    // scheduler metadata
-    ScheduleStoreTableUtil.setupDatasets(framework);
-    // metrics data
-    DefaultMetricDatasetFactory.setupDatasets(cConf, framework);
-
-    // Upgrade all datasets in system namespace
-    Id.Namespace systemNamespace = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
-    for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
-      System.out.println(String.format("Upgrading dataset: %s, spec: %s", spec.getName(), spec.toString()));
-      DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
-      // we know admin is not null, since we are looping over existing datasets
-      admin.upgrade();
-      System.out.println(String.format("Upgraded dataset: %s", spec.getName()));
     }
   }
 
@@ -302,55 +246,5 @@ public class Main {
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
 
     return datasetFramework;
-  }
-
-  private static void upgradeUserTables(final Injector injector) throws Exception  {
-    // We assume that all tables in USER namespace belong to Table type datasets. So we loop thru them
-    // and upgrading with the help of HBaseTableAdmin
-    final CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    DefaultDatasetNamespace namespace = new DefaultDatasetNamespace(cConf);
-
-    Configuration hConf = injector.getInstance(Configuration.class);
-    HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-    final HBaseTableUtil hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
-
-    for (HTableDescriptor desc : hAdmin.listTables()) {
-      String tableName = desc.getNameAsString();
-      TableId tableId = TableId.from(tableName);
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(tableId.getNamespace(), tableId.getTableName());
-      // todo: it works now, but we will want to change it if namespacing of datasets in HBase is more than +prefix
-      if (namespace.fromNamespaced(datasetInstanceId) != null) {
-        System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
-
-        final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
-        final boolean transactional =
-          !"true".equalsIgnoreCase(desc.getValue(Constants.Dataset.TABLE_TX_DISABLED));
-        DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
-          @Override
-          protected CoprocessorJar createCoprocessorJar() throws IOException {
-            return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
-                injector.getInstance(LocationFactory.class),
-                hBaseTableUtil,
-                transactional,
-                supportsIncrement);
-          }
-
-          @Override
-          protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-            // we don't do any other changes apart from coprocessors upgrade
-            return false;
-          }
-
-          @Override
-          public void create() throws IOException {
-            // no-op
-            throw new UnsupportedOperationException("This DatasetAdmin is only used for upgrade() operation");
-          }
-        };
-        admin.upgrade();
-        System.out.println(String.format("Upgraded hbase table: %s", tableName));
-      }
-    }
   }
 }

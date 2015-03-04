@@ -451,7 +451,7 @@ with the arguments as a JSON string in the body::
   { "instances" : <quantity> }
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
    * - Parameter
@@ -468,7 +468,7 @@ with the arguments as a JSON string in the body::
 Example
 .......
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method
