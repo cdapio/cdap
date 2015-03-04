@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
@@ -55,8 +56,9 @@ public class AbstractDatasetTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final DatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
 
-  private static DatasetFramework framework;
+  protected static DatasetFramework framework;
   private static final Id.DatasetModule inMemory = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
   private static final Id.DatasetModule core = Id.DatasetModule.from(NAMESPACE_ID, "core");
   private static final Id.DatasetModule fileSet = Id.DatasetModule.from(NAMESPACE_ID, "fileSet");
