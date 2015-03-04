@@ -88,10 +88,3 @@ introduces the CDAP Console.**
 .. _troubleshooting: operations/troubleshooting.html
 
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:

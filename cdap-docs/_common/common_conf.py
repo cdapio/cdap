@@ -134,7 +134,19 @@ rst_epilog = """
 
 .. |http:| replace:: http:
 
-""" % {'version': version, 'short_version': short_version, 'release': release}
+.. |(TM)| unicode:: U+2122 .. trademark sign
+   :ltrim:
+
+.. |(R)| unicode:: U+00AE .. registered trademark sign
+   :ltrim:
+
+.. |copyright| replace:: %(copyright)s
+
+""" % {'version': version, 
+       'short_version': short_version, 
+       'release': release,
+       'copyright': copyright,
+       }
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
