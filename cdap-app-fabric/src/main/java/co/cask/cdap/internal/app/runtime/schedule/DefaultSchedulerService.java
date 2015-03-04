@@ -73,7 +73,7 @@ public class DefaultSchedulerService {
         ProgramOptionConstants.SCHEDULE_NAME, scheduleName
       ));
 
-      taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
+      taskRunner.run(Id.Program.from(accountId, applicationId, programType, programId), programType, args);
     }
   }
 }

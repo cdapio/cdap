@@ -11,7 +11,8 @@ Pentaho Data Integration
 transformations of data coming from various sources. Let's see how to connect it to
 CDAP Datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
-#. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``
+#. Before opening the *Pentaho Data Integration* application, copy the 
+   ``co.cask.cdap.cdap-explore-jdbc-``\ |literal-release|\ ``.jar``
    file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
