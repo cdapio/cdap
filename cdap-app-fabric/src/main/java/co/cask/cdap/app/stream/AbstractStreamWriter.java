@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractStreamWriter extends AbstractServiceDiscoverer implements StreamWriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamWriter.class);
 
   protected String namespaceId;
   protected String applicationId;
