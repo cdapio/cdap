@@ -59,7 +59,6 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramDetail;
@@ -100,7 +99,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -228,7 +226,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    getAppRecords(responder, namespaceId, null);
+    getAppRecords(responder, store, namespaceId, null);
   }
 
   /**
@@ -602,45 +600,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getAppRecords(HttpResponder responder, String namespaceId, String appId) {
-    if (appId != null && appId.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
-      return;
-    }
-
-    try {
-      Id.Namespace accId = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> appRecords = Lists.newArrayList();
-      List<ApplicationSpecification> specList;
-      if (appId == null) {
-        specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
-      } else {
-        ApplicationSpecification appSpec = store.getApplication(new Id.Application(accId, appId));
-        if (appSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          return;
-        }
-        specList = Collections.singletonList(store.getApplication(new Id.Application(accId, appId)));
-      }
-
-      for (ApplicationSpecification appSpec : specList) {
-        appRecords.add(makeAppRecord(appSpec));
-      }
-
-      if (appId == null) {
-        responder.sendJson(HttpResponseStatus.OK, appRecords);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
-      }
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   /**
    * Protected only to support v2 APIs
    */
@@ -866,10 +825,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return false;
-  }
-
-  private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
-    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
   }
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
