@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -50,12 +51,14 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   private final LocationFactory locationFactory;
 
-  public HBaseTableAdmin(DatasetSpecification spec,
+  public HBaseTableAdmin(DatasetContext datasetContext,
+                         DatasetSpecification spec,
                          Configuration hConf,
                          HBaseTableUtil tableUtil,
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
-    super(TableId.from(spec.getName()), hConf, tableUtil);
+    super(TableId.from(conf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(), spec.getName()),
+          hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;

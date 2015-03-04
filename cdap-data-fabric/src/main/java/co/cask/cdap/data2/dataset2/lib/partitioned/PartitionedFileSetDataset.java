@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -73,20 +74,20 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected final Partitioning partitioning;
   protected boolean ignoreInvalidRowsSilently = false;
 
-  private final DatasetNamespace dsNamespace;
+  private final DatasetContext datasetContext;
 
-  public PartitionedFileSetDataset(CConfiguration cConf, String name, Partitioning partitioning,
-                                   FileSet fileSet, Table partitionTable,
+  public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
+                                   Partitioning partitioning, FileSet fileSet, Table partitionTable,
                                    DatasetSpecification spec, Map<String, String> arguments,
                                    Provider<ExploreFacade> exploreFacadeProvider) {
     super(name, partitionTable);
+    this.datasetContext = datasetContext;
     this.files = fileSet;
     this.partitionsTable = partitionTable;
     this.spec = spec;
     this.exploreFacadeProvider = exploreFacadeProvider;
     this.runtimeArguments = arguments;
-    this.partitioning = partitioning;
-    this.dsNamespace = new DefaultDatasetNamespace(cConf);
+    this.partitioning = partitioning;;
   }
 
   @Override
@@ -124,8 +125,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          Id.Namespace namespace = dsNamespace.fromNamespaced(getName()).getNamespace();
-          exploreFacade.addPartition(Id.DatasetInstance.from(namespace, getName()), key,
+          exploreFacade.addPartition(Id.DatasetInstance.from(datasetContext.getNamespaceId(), getName()), key,
                                      files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
@@ -148,8 +148,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          Id.Namespace namespace = dsNamespace.fromNamespaced(getName()).getNamespace();
-          exploreFacade.dropPartition(Id.DatasetInstance.from(namespace, getName()), key);
+          exploreFacade.dropPartition(Id.DatasetInstance.from(datasetContext.getNamespaceId(), getName()), key);
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to drop partition for key %s from explore table.", key.toString()), e);

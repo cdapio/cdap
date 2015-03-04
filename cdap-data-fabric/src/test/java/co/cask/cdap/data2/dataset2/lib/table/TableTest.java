@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Get;
@@ -78,6 +79,8 @@ public abstract class TableTest<T extends Table> {
   protected static final DefaultDatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
   protected static final String MY_TABLE = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
+  protected static final DatasetContext MY_CONTEXT =
+    new DatasetContext.Builder().setNamespaceId(NAMESPACE_ID.getId()).build();
 
   protected TransactionSystemClient txClient;
 

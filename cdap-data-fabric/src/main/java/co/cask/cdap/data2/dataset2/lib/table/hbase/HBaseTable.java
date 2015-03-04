@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -71,12 +72,13 @@ public class HBaseTable extends BufferingTable {
 
   private final TransactionCodec txCodec;
 
-  public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
-    throws IOException {
+  public HBaseTable(DatasetContext datasetContext, String name, ConflictDetection level, Configuration hConf,
+                    boolean enableReadlessIncrements) throws IOException {
     super(name, level, enableReadlessIncrements);
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    TableId tableId = TableId.from(name);
+    // TODO: get from configuration
+    TableId tableId = TableId.from("cdap", datasetContext.getNamespaceId(), name);
     HTable hTable = tableUtil.getHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
@@ -53,10 +54,10 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HTable hTable;
 
-  public HBaseMetricsTable(String name, Configuration hConf) throws IOException {
+  public HBaseMetricsTable(DatasetContext datasetContext, String name, Configuration hConf) throws IOException {
     String hTableName = HBaseTableUtil.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    HTable hTable = tableUtil.getHTable(hConf, TableId.from(hTableName));
+    HTable hTable = tableUtil.getHTable(hConf, TableId.from("cdap", datasetContext.getNamespaceId(), name));
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

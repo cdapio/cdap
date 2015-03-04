@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -36,9 +37,9 @@ public class FileAdmin implements DatasetAdmin {
 
   private final String basePath;
 
-  public FileAdmin(CConfiguration cConf, LocationFactory locationFactory, DatasetSpecification spec) {
-    DatasetNamespace dsNamespace = new DefaultDatasetNamespace(cConf);
-    String namespace = dsNamespace.fromNamespaced(spec.getName()).getNamespaceId();
+  public FileAdmin(DatasetContext datasetContext, CConfiguration cConf, LocationFactory locationFactory,
+                   DatasetSpecification spec) {
+    String namespace = datasetContext.getNamespaceId();
     this.locationFactory = locationFactory;
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
     String basePath = FileSetProperties.getBasePath(spec.getProperties());

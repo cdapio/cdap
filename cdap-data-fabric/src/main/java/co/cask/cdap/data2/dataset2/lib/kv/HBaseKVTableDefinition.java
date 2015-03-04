@@ -67,13 +67,13 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(spec.getName(), tableUtil, hConf);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf);
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new KVTableImpl(spec.getName(), hConf, tableUtil);
+    return new KVTableImpl(datasetContext, spec.getName(), hConf, tableUtil);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
@@ -81,10 +81,11 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     protected final HBaseAdmin admin;
     protected final HBaseTableUtil tableUtil;
 
-    private DatasetAdminImpl(String tableName, HBaseTableUtil tableUtil, Configuration hConf) throws IOException {
+    private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
+                             Configuration hConf) throws IOException {
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
-      this.tableId = TableId.from(tableName);
+      this.tableId = TableId.from("cdap", datasetContext.getNamespaceId(), tableName);
     }
 
     @Override
@@ -134,9 +135,10 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     private final HBaseTableUtil tableUtil;
     private final HTable table;
 
-    public KVTableImpl(String tableName, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    public KVTableImpl(DatasetContext datasetContext, String tableName, Configuration hConf,
+                       HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      this.table = this.tableUtil.getHTable(hConf, TableId.from(tableName));
+      this.table = this.tableUtil.getHTable(hConf, TableId.from("cdap", datasetContext.getNamespaceId(), tableName));
     }
 
     @Override
