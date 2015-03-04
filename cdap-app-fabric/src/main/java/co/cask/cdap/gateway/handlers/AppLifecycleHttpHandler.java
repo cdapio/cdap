@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -37,6 +38,7 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -56,12 +58,16 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramDetail;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -222,7 +228,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    getAppDetails(responder, namespaceId, null);
+    getAppRecords(responder, namespaceId, null);
   }
 
   /**
@@ -578,7 +584,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     controller.stop().get();
   }
 
-  private void getAppDetails(HttpResponder responder, String namespaceId, String appId) {
+  private void getAppDetails(HttpResponder responder, String namespace, String name) {
+    try {
+      ApplicationSpecification appSpec =  store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
+      if (appSpec == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      ApplicationDetail appDetail = makeAppDetail(appSpec);
+      responder.sendJson(HttpResponseStatus.OK, appDetail);
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while retrieving app details: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception : ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void getAppRecords(HttpResponder responder, String namespaceId, String appId) {
     if (appId != null && appId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
       return;
@@ -845,6 +869,43 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
-    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+    return new ApplicationRecord(appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+  }
+
+  private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
+    List<ProgramDetail> programs = Lists.newArrayList();
+    for (ProgramSpecification programSpec : spec.getFlows().values()) {
+      programs.add(new ProgramDetail(ProgramType.FLOW, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
+      programs.add(new ProgramDetail(ProgramType.MAPREDUCE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getProcedures().values()) {
+      programs.add(new ProgramDetail(ProgramType.PROCEDURE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getServices().values()) {
+      programs.add(new ProgramDetail(ProgramType.SERVICE, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getSpark().values()) {
+      programs.add(new ProgramDetail(ProgramType.SPARK, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getWorkers().values()) {
+      programs.add(new ProgramDetail(ProgramType.WORKER, programSpec.getName(), programSpec.getDescription()));
+    }
+    for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
+      programs.add(new ProgramDetail(ProgramType.WORKFLOW, programSpec.getName(), programSpec.getDescription()));
+    }
+
+    List<StreamDetail> streams = Lists.newArrayList();
+    for (StreamSpecification streamSpec : spec.getStreams().values()) {
+      streams.add(new StreamDetail(streamSpec.getName()));
+    }
+
+    List<DatasetDetail> datasets = Lists.newArrayList();
+    for (DatasetCreationSpec datasetSpec : spec.getDatasets().values()) {
+      datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
+    }
+
+    return new ApplicationDetail(spec.getName(), spec.getDescription(), streams, datasets, programs);
   }
 }
