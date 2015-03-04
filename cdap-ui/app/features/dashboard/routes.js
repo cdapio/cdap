@@ -25,9 +25,12 @@ angular.module(PKG.name+'.feature.dashboard')
 
         .state('dashboard.addwdgt', {
           // url: '/widget/add',
-          onEnter: function ($state, $modal) {
+          onEnter: function ($state, $modal, $rootScope, rDashboardsModel) {
+            var scope = $rootScope.$new();
+            scope.currentDashboard = rDashboardsModel.current();
             $modal({
-              template: '/assets/features/dashboard/partials/addwdgt.html'
+              template: '/assets/features/dashboard/partials/addwdgt.html',
+              scope: scope
             }).$promise.then(function () {
               $state.go('^', $state.params);
             });

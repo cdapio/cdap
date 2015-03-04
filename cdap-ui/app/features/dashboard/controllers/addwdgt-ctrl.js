@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardAddWdgtCtrl',
-function ($scope, caskFocusManager, rDashboardsModel, Widget) {
+function ($scope, caskFocusManager, Widget) {
 
   caskFocusManager.focus('addWdgtType');
 
@@ -19,7 +19,7 @@ function ($scope, caskFocusManager, rDashboardsModel, Widget) {
   ];
 
   $scope.doAddWidget = function () {
-    rDashboardsModel.current().addWidget($scope.model);
+    $scope.currentDashboard.addWidget($scope.model);
     $scope.$hide();
   };
 
