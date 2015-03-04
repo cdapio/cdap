@@ -94,7 +94,7 @@ Glossary
       for *Ubuntu 12* and *CentOS 6*.
 
    Hadoop
-      Refers to the `Apache™ Hadoop® <http://hadoop.apache.org>`__ project, which describes
+      Refers to the `Apache Hadoop® <http://hadoop.apache.org>`__ project, which describes
       itself as:
 
       *"The Apache Hadoop software library is a framework that allows for the distributed
@@ -131,13 +131,4 @@ Glossary
       primary motivation for namespaces in CDAP is to achieve application and data
       isolation.
   
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:
-
-.. Apache |(TM)| Hadoop |(R)|
-.. Apache™ Hadoop®
 
