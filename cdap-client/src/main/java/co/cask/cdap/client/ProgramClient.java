@@ -62,11 +62,13 @@ public class ProgramClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private final ApplicationClient applicationClient;
 
   @Inject
-  public ProgramClient(ClientConfig config) {
+  public ProgramClient(ClientConfig config, RESTClient restClient, ApplicationClient applicationClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
+    this.applicationClient = applicationClient;
   }
 
   /**
@@ -145,7 +147,7 @@ public class ProgramClient {
    * @throws TimeoutException
    */
   public void stopAll() throws IOException, UnAuthorizedAccessTokenException, InterruptedException, TimeoutException {
-    Map<ProgramType, List<ProgramRecord>> allPrograms = new ApplicationClient(config).listAllPrograms();
+    Map<ProgramType, List<ProgramRecord>> allPrograms = applicationClient.listAllPrograms();
     for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
       ProgramType programType = entry.getKey();
       List<ProgramRecord> programRecords = entry.getValue();
@@ -500,14 +502,9 @@ public class ProgramClient {
                                         long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state,
-                                       Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
-                                       Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
-                                       Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state, Constants.AppFabric.QUERY_PARAM_START_TIME, startTime, Constants.AppFabric.QUERY_PARAM_END_TIME, endTime, Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    String path = String.format("apps/%s/%s/%s/runs?%s",
-                                appId, programType.getCategoryName(),
-                                programId, queryParams);
+    String path = String.format("apps/%s/%s/%s/runs?%s", appId, programType.getCategoryName(), programId, queryParams);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -569,9 +566,7 @@ public class ProgramClient {
   public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
-                                appId, programType.getCategoryName(),
-                                programId, start, stop);
+    String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d", appId, programType.getCategoryName(), programId, start, stop);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -597,8 +592,7 @@ public class ProgramClient {
   public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
-                                                          appId, serviceId, runnableId, start, stop));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d", appId, serviceId, runnableId, start, stop));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

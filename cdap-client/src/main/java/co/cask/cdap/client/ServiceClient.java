@@ -44,9 +44,9 @@ public class ServiceClient {
   private final ClientConfig config;
 
   @Inject
-  public ServiceClient(ClientConfig config) {
+  public ServiceClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**

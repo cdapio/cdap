@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
@@ -34,7 +35,7 @@ public class QueryClient {
   private final ExploreClient exploreClient;
 
   @Inject
-  public QueryClient(final ClientConfig config) {
+  public QueryClient(final ClientConfig config, RESTClient restClient) {
     this.config = config;
 
     Supplier<String> hostname = new Supplier<String>() {

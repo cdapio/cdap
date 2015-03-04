@@ -25,6 +25,7 @@ import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
@@ -43,30 +44,11 @@ public class RESTClient {
   private final HttpRequestConfig uploadConfig;
   private final int unavailableRetryLimit;
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int retryLimit) {
-    this.defaultConfig = defaultConfig;
-    this.uploadConfig = uploadConfig;
-    this.unavailableRetryLimit = retryLimit;
-  }
-
-  /**
-   * Creates a {@link RESTClient}.
-   *
-   * @param clientConfig default {@link ClientConfig} that configures timeouts
-   * @return {@link RESTClient} instance
-   */
-  public static RESTClient create(ClientConfig clientConfig) {
-    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig(),
-                          clientConfig.getUnavailableRetryLimit());
-  }
-
-  /**
-   * Creates a default {@link RESTClient}.
-   *
-   * @return {@link RESTClient} instance
-   */
-  public static RESTClient create(int unavailableRetryLimit) {
-    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT, unavailableRetryLimit);
+  @Inject
+  public RESTClient(ClientConfig clientConfig) {
+    this.defaultConfig = clientConfig.getDefaultHttpConfig();
+    this.uploadConfig = clientConfig.getUploadHttpConfig();
+    this.unavailableRetryLimit = clientConfig.getUnavailableRetryLimit();
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)

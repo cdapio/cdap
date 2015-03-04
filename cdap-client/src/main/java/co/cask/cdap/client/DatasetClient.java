@@ -55,9 +55,9 @@ public class DatasetClient {
   private final ClientConfig config;
 
   @Inject
-  public DatasetClient(ClientConfig config) {
+  public DatasetClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**

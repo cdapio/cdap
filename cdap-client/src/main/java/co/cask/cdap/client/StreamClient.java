@@ -69,13 +69,9 @@ public class StreamClient {
   private final ClientConfig config;
 
   @Inject
-  public StreamClient(ClientConfig config) {
+  public StreamClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
-  }
-
-  /**
-   * Gets the configuration of a stream.
+    this.restClient = restClient * Gets the configuration of a stream.
    *
    * @param streamId ID of the stream
    * @throws IOException if a network error occurred
@@ -100,7 +96,7 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the client is unauthorized
    * @throws BadRequestException if the request is bad
-   * @throws StreamNotFoundException if the stream was not found
+   * @throws StreamNotFoundException if the stream was not stream was not found
    */
   public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
     UnAuthorizedAccessTokenException, BadRequestException, StreamNotFoundException {

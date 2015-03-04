@@ -23,7 +23,6 @@ import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
@@ -57,9 +56,9 @@ public class ApplicationClient {
   private final ClientConfig config;
 
   @Inject
-  public ApplicationClient(ClientConfig config) {
+  public ApplicationClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**

@@ -42,9 +42,9 @@ public class MetaClient {
   private final ClientConfig config;
 
   @Inject
-  public MetaClient(ClientConfig config) {
+  public MetaClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   public void ping() throws IOException, UnAuthorizedAccessTokenException {

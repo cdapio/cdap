@@ -54,9 +54,9 @@ public class AdapterClient {
   private final ClientConfig config;
 
   @Inject
-  public AdapterClient(ClientConfig config) {
+  public AdapterClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**

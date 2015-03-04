@@ -37,9 +37,9 @@ public class NamespaceClient extends AbstractNamespaceClient {
   private final ClientConfig config;
 
   @Inject
-  public NamespaceClient(ClientConfig config) {
+  public NamespaceClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(this.config);
+    this.restClient = restClient;
   }
 
   @Override

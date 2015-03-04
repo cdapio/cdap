@@ -37,9 +37,9 @@ public class MetricsClient {
   private final ClientConfig config;
 
   @Inject
-  public MetricsClient(ClientConfig config) {
+  public MetricsClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**

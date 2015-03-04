@@ -46,9 +46,9 @@ public class PreferencesClient {
   private final ClientConfig config;
 
   @Inject
-  public PreferencesClient(ClientConfig config) {
+  public PreferencesClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = restClient;
   }
 
   /**
