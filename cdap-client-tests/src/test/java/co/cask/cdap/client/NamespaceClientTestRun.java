@@ -38,6 +38,7 @@ import java.util.List;
  */
 public class NamespaceClientTestRun extends ClientTestBase {
   private NamespaceClient namespaceClient;
+
   private static final Id.Namespace DOES_NOT_EXIST = Id.Namespace.from("doesnotexist");
   private static final Id.Namespace DEFAULT = Id.Namespace.from("default");
   private static final Id.Namespace SYSTEM = Id.Namespace.from("system");

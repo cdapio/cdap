@@ -23,6 +23,7 @@ import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
@@ -86,10 +87,12 @@ public class ApplicationClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public void delete(String appId) throws ApplicationNotFoundException, IOException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3("apps/" + appId),
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE,
+                                               config.resolveNamespacedURLV3("apps/" + app.getId()),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
+      throw new ApplicationNotFoundException(app);
     }
   }
 
@@ -191,9 +194,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramRecord> listAllPrograms(ProgramType programType) throws IOException,
-    UnauthorizedException {
-
+  public List<ProgramRecord> listAllPrograms(ProgramType programType) throws IOException, UnauthorizedException {
     Preconditions.checkArgument(programType.isListable());
 
     String path = programType.getCategoryName();
@@ -239,6 +240,8 @@ public class ApplicationClient {
    */
   public List<ProgramRecord> listPrograms(String appId, ProgramType programType)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Preconditions.checkArgument(programType.isListable());
 
     String path = String.format("apps/%s/%s", appId, programType.getCategoryName());
@@ -250,7 +253,7 @@ public class ApplicationClient {
       new TypeToken<List<ProgramRecord>>() { });
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
+      throw new ApplicationNotFoundException(app);
     }
 
     return response.getResponseObject();

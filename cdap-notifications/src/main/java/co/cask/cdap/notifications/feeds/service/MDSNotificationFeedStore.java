@@ -94,12 +94,12 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
       public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        String feedId = feed.getId();
+        String feedId = feed.getFeedId();
         Id.NotificationFeed existing = input.feeds.get(getKey(feedId), Id.NotificationFeed.class);
         if (existing != null) {
           return existing;
         }
-        input.feeds.write(getKey(feed.getId()), feed);
+        input.feeds.write(getKey(feed.getFeedId()), feed);
         return null;
       }
     });

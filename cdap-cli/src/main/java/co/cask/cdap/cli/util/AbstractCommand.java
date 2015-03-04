@@ -19,6 +19,8 @@ package co.cask.cdap.cli.util;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -42,7 +44,7 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
    * Creates a string representing the body in the output. It only prints up to {@link #DEFAULT_MAX_BODY_SIZE},
    * with line wrap at each {@link #DEFAULT_LINE_WRAP_LIMIT} character.
    */
-  public String getBody(ByteBuffer body) {
+  protected String getBody(ByteBuffer body) {
     return getBody(body, DEFAULT_MAX_BODY_SIZE, DEFAULT_LINE_WRAP_LIMIT, DEFAULT_LINE_SEPARATOR);
   }
 
@@ -50,7 +52,7 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
    * Creates a string representing the body in the output. It only prints up to {@code maxBodySize}, with line
    * wrap at each {@code lineWrapLimit} character.
    */
-  public String getBody(ByteBuffer body, int maxBodySize, int lineWrapLimit, String lineSeparator) {
+  protected String getBody(ByteBuffer body, int maxBodySize, int lineWrapLimit, String lineSeparator) {
     ByteBuffer bodySlice = body.slice();
     boolean hasMore = false;
     if (bodySlice.remaining() > maxBodySize) {
@@ -65,11 +67,17 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
     return Joiner.on(lineSeparator).join(Splitter.fixedLength(lineWrapLimit).split(str));
   }
 
+  protected void checkInputLength(String[] inputParts, int requiredLength) {
+    if (inputParts.length != requiredLength) {
+      throw new CommandInputError(this);
+    }
+  }
+
   /**
    * Creates a string representing the output of response headers. Each key/value pair is outputted on its own
    * line in the form {@code <key> : <value>}.
    */
-  public String formatHeader(Map<String, String> headers) {
+  protected String formatHeader(Map<String, String> headers) {
     StringBuilder builder = new StringBuilder();
     String separator = "";
     for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -87,7 +95,7 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
    * @return Timestamp in milliseconds
    * @throws co.cask.cdap.cli.exception.CommandInputError if failed to parse input.
    */
-  public long getTimestamp(String arg, long base) {
+  protected long getTimestamp(String arg, long base) {
     try {
       if (arg.startsWith("+") || arg.startsWith("-")) {
         int dir = arg.startsWith("+") ? 1 : -1;
@@ -117,5 +125,16 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
     } catch (NumberFormatException e) {
       throw new CommandInputError(this, "Invalid number value: " + arg + ". Reason: " + e.getMessage());
     }
+  }
+
+  protected Id.Application parseAppId(String[] programIdParts) {
+    checkInputLength(programIdParts, 1);
+    return Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
+  }
+
+  protected Id.Program parseProgramId(String[] programIdParts, ProgramType programType) {
+    checkInputLength(programIdParts, 2);
+    return Id.Program.from(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+                           programType, programIdParts[1]);
   }
 }

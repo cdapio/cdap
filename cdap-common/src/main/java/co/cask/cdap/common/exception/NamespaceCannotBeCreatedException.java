@@ -14,34 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package co.cask.cdap.common.exception;
+
+import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a namespace cannot be created due to errors.
- * TODO: Make generic and move to common if its needed elsewhere
  */
-public class NamespaceCannotBeCreatedException extends Exception {
+public class NamespaceCannotBeCreatedException extends CannotBeCreatedException {
 
-  private final String namespaceId;
-  private final String reason;
+  private final Id.Namespace namespaceId;
 
-  public NamespaceCannotBeCreatedException(String namespaceId, String reason) {
-    super(String.format("Namespace %s cannot be created. Reason: %s", namespaceId, reason));
+  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, String reason) {
+    super(namespaceId, reason);
     this.namespaceId = namespaceId;
-    this.reason = reason;
   }
 
-  public NamespaceCannotBeCreatedException(String namespaceId, Throwable cause) {
-    super(String.format("Namespace %s cannot be created. Reason: %s", namespaceId, cause.getMessage()), cause);
+  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, Throwable cause) {
+    super(namespaceId, cause);
     this.namespaceId = namespaceId;
-    this.reason = cause.getMessage();
   }
 
-  public String getNamespaceId() {
+  public Id.Namespace getNamespaceId() {
     return namespaceId;
-  }
-
-  public String getReason() {
-    return reason;
   }
 }

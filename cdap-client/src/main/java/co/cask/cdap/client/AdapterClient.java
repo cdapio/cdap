@@ -25,6 +25,7 @@ import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -82,11 +83,13 @@ public class AdapterClient {
    */
   public AdapterSpecification get(String adapterName)
     throws AdapterNotFoundException, IOException, UnauthorizedException {
+
+    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
     URL url = config.resolveNamespacedURLV3("adapters/" + adapterName);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterSpecification>() { }).getResponseObject();
   }
@@ -104,13 +107,14 @@ public class AdapterClient {
   public void create(String adapterName, AdapterConfig adapterConfig)
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnauthorizedException {
 
+    Id.AdapterType adapterType = Id.AdapterType.from(config.getNamespace(), adapterConfig.type);
     URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterTypeNotFoundException(adapterConfig.type);
+      throw new AdapterTypeNotFoundException(adapterType);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseMessage());
     }
@@ -124,13 +128,13 @@ public class AdapterClient {
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String adapterName) throws AdapterNotFoundException, IOException,
-    UnauthorizedException {
+  public void delete(String adapterName) throws AdapterNotFoundException, IOException, UnauthorizedException {
+    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
     URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
   }
 

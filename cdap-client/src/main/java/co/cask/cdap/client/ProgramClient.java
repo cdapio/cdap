@@ -27,6 +27,7 @@ import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
@@ -83,12 +84,14 @@ public class ProgramClient {
   public void start(String appId, ProgramType programType, String programName, Map<String, String> runtimeArgs)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programName);
+      throw new ProgramNotFoundException(program);
     }
   }
 
@@ -105,12 +108,14 @@ public class ProgramClient {
   public void start(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.post(url).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programName);
+      throw new ProgramNotFoundException(program);
     }
   }
 
@@ -127,12 +132,14 @@ public class ProgramClient {
   public void stop(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/stop", appId, programType.getCategoryName(), programName);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programName);
+      throw new ProgramNotFoundException(program);
     }
   }
 
@@ -178,12 +185,14 @@ public class ProgramClient {
   public String getStatus(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/status", appId, programType.getCategoryName(), programName);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new ProgramNotFoundException(programType, appId, programName);
+      throw new ProgramNotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
@@ -237,12 +246,14 @@ public class ProgramClient {
   public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/live-info", appId, programType.getCategoryName(), programName);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programName);
+      throw new ProgramNotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, DistributedProgramLiveInfo.class).getResponseObject();
@@ -262,12 +273,14 @@ public class ProgramClient {
   public int getFlowletInstances(String appId, String flowId, String flowletId)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(app, flowId, flowletId);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/flows/%s/flowlets/%s/instances",
                                                           appId, flowId, flowletId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
+      throw new NotFoundException(flowlet);
     }
 
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
@@ -287,13 +300,15 @@ public class ProgramClient {
   public void setFlowletInstances(String appId, String flowId, String flowletId, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(app, flowId, flowletId);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/flows/%s/flowlets/%s/instances",
                                                           appId, flowId, flowletId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
+      throw new NotFoundException(flowlet);
     }
   }
 
@@ -307,13 +322,17 @@ public class ProgramClient {
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public int getWorkerInstances(String appId, String workerId) throws IOException, NotFoundException,
-    UnauthorizedException {
+  public int getWorkerInstances(String appId, String workerId)
+    throws IOException, NotFoundException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Worker worker = Id.Worker.from(app, workerId);
+
     URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or worker", appId + "/" + workerId);
+      throw new NotFoundException(worker);
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -328,14 +347,18 @@ public class ProgramClient {
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void setWorkerInstances(String appId, String workerId, int instances) throws IOException, NotFoundException,
-    UnauthorizedException {
+  public void setWorkerInstances(String appId, String workerId, int instances)
+    throws IOException, NotFoundException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Worker worker = Id.Worker.from(app, workerId);
+
     URL url = config.resolveURL(String.format("apps/%s/workers/%s/instances", appId, workerId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or worker", appId + "/" + workerId);
+      throw new NotFoundException(worker);
     }
   }
 
@@ -351,15 +374,17 @@ public class ProgramClient {
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException,
-    UnauthorizedException {
+  public int getProcedureInstances(String appId, String procedureId)
+    throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Procedure procedure = Id.Procedure.from(app, procedureId);
     String path = String.format("apps/%s/procedures/%s/instances", appId, procedureId);
     URL url = VersionMigrationUtils.resolveURL(config, ProgramType.PROCEDURE, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or procedure", appId + "/" + procedureId);
+      throw new NotFoundException(procedure);
     }
 
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
@@ -380,13 +405,15 @@ public class ProgramClient {
   public void setProcedureInstances(String appId, String procedureId, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Procedure procedure = Id.Procedure.from(app, procedureId);
     String path = String.format("apps/%s/procedures/%s/instances", appId, procedureId);
     URL url = VersionMigrationUtils.resolveURL(config, ProgramType.PROCEDURE, path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or procedure", appId + "/" + procedureId);
+      throw new NotFoundException(procedure);
     }
   }
 
@@ -400,13 +427,17 @@ public class ProgramClient {
    * @throws NotFoundException if the application or service could not found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public int getServiceInstances(String appId, String serviceId) throws IOException, NotFoundException,
-    UnauthorizedException {
+  public int getServiceInstances(String appId, String serviceId)
+    throws IOException, NotFoundException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
+
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service", appId + "/" + serviceId);
+      throw new NotFoundException(service);
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -427,12 +458,15 @@ public class ProgramClient {
   public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
+    Id.Service.Runnable runnable = Id.Service.Runnable.from(service, runnableId);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
                                                           appId, serviceId, runnableId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
+      throw new NotFoundException(runnable);
     }
 
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
@@ -450,11 +484,15 @@ public class ProgramClient {
    */
   public void setServiceInstances(String appId, String serviceId, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
+
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/instances", appId, serviceId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service", appId + "/" + serviceId);
+      throw new NotFoundException(service);
     }
   }
 
@@ -474,14 +512,47 @@ public class ProgramClient {
   public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
+    Id.Service.Runnable runnable = Id.Service.Runnable.from(service, runnableId);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
                                                           appId, serviceId, runnableId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
+      throw new NotFoundException(runnable);
     }
+  }
+
+  /**
+   * Gets the logs of a service runnable.
+   *
+   * @param appId ID of the application that the service runnable belongs to
+   * @param serviceId ID of the service that the service runnable belongs to
+   * @param runnableId ID of the service runnable
+   * @param start start time of the time range of desired logs
+   * @param stop end time of the time range of desired logs
+   * @return the logs of the program
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, service, or runnable could not be found
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
+    throws IOException, NotFoundException, UnauthorizedException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Service service = Id.Service.from(app, serviceId);
+    Id.Service.Runnable runnable = Id.Service.Runnable.from(service, runnableId);
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
+                                                          appId, serviceId, runnableId, start, stop));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(runnable);
+    }
+
+    return new String(response.getResponseBody(), Charsets.UTF_8);
   }
 
   /**
@@ -500,6 +571,8 @@ public class ProgramClient {
                                         long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programId);
     String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state,
                                        Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
@@ -513,7 +586,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
+      throw new NotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
@@ -534,6 +607,8 @@ public class ProgramClient {
                                            long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programId);
     String queryParams = String.format("%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
@@ -546,7 +621,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
+      throw new NotFoundException(program);
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
@@ -569,40 +644,15 @@ public class ProgramClient {
   public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
     throws IOException, NotFoundException, UnauthorizedException {
 
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programId);
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
                                 appId, programType.getCategoryName(),
                                 programId, start, stop);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programId);
-    }
-
-    return new String(response.getResponseBody(), Charsets.UTF_8);
-  }
-
-  /**
-   * Gets the logs of a service runnable.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the logs of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   */
-  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
-                                                          appId, serviceId, runnableId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
+      throw new ProgramNotFoundException(program);
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);
@@ -621,12 +671,16 @@ public class ProgramClient {
    */
   public Map<String, String> getRuntimeArgs(String appId, ProgramType programType, String programId)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programId);
+
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programId);
+      throw new ProgramNotFoundException(program);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -644,12 +698,16 @@ public class ProgramClient {
    */
   public void setRuntimeArgs(String appId, ProgramType programType, String programId, Map<String, String> runtimeArgs)
     throws IOException, UnauthorizedException, ProgramNotFoundException {
+
+    Id.Application app = Id.Application.from(config.getNamespace(), appId);
+    Id.Program program = Id.Program.from(app, programType, programId);
+
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(programType, appId, programId);
+      throw new ProgramNotFoundException(program);
     }
   }
 }

@@ -108,7 +108,7 @@ public final class QueueName {
   }
 
   public static QueueName fromStream(Id.Stream streamId) {
-    return fromStream(streamId.getNamespaceId(), streamId.getName());
+    return fromStream(streamId.getNamespaceId(), streamId.getId());
   }
 
   public Id.Stream toStreamId() {

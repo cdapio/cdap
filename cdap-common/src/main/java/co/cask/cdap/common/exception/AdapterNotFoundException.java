@@ -16,22 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when an adapter was not found.
  */
 public class AdapterNotFoundException extends NotFoundException {
 
-  private final String adapterName;
+  private final Id.Adapter id;
 
-  public AdapterNotFoundException(String adapterName) {
-    super("adapter", adapterName);
-    this.adapterName = adapterName;
+  public AdapterNotFoundException(Id.Adapter id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return Name of the adapter that was not found
-   */
-  public String getAdapterName() {
-    return adapterName;
+  public Id.Adapter getId() {
+    return id;
   }
 }
