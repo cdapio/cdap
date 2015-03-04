@@ -57,9 +57,9 @@ public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset
 
   @Override
   public FakeDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 
     return new FakeDataset(spec.getName(), table);
   }

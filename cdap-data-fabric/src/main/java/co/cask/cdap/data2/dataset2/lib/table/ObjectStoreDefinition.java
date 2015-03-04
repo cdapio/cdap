@@ -70,9 +70,9 @@ public class ObjectStoreDefinition
 
   @Override
   public ObjectStoreDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                          ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, classLoader, arguments);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 
     TypeRepresentation typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
     Schema schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);

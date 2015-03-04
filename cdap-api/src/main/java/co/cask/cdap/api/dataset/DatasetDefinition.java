@@ -38,7 +38,7 @@ import java.util.Map;
  *   <li>
  *     a way to perform operations to manipulate data of the dataset instance (e.g. read, write etc.) by providing
  *     implementation of {@link Dataset} via
- *     {@link #getDataset(DatasetContext, DatasetSpecification, ClassLoader, Map)} method
+ *     {@link #getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)} method
  *   </li>
  * </ul>
  *
@@ -66,7 +66,7 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    *         The {@link DatasetSpecification} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
    *         administrative and data operations respectively, see {@link #getAdmin(DatasetContext,
    *         DatasetSpecification, ClassLoader)}
-   *         and {@link #getDataset(DatasetContext, DatasetSpecification, ClassLoader, Map)}.
+   *         and {@link #getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)}.
    */
   DatasetSpecification configure(String instanceName, DatasetProperties properties);
 
@@ -90,12 +90,12 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    *
    * @param datasetContext context for the dataset
    * @param spec specification of the dataset instance.
-   * @param classLoader classloader to use when executing dataset operations
    * @param arguments arguments for this instance of the dataset. Should not be null - provide an empty map for no
    *                  arguments.
+   * @param classLoader classloader to use when executing dataset operations
    * @return dataset to perform object operations
    * @throws IOException
    */
-  D getDataset(DatasetContext datasetContext, DatasetSpecification spec, ClassLoader classLoader,
-               Map<String, String> arguments) throws IOException;
+  D getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
+               ClassLoader classLoader) throws IOException;
 }

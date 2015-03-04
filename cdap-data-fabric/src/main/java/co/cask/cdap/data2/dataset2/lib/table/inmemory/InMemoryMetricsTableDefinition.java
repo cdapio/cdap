@@ -45,7 +45,7 @@ public class InMemoryMetricsTableDefinition
 
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 ClassLoader classLoader, Map<String, String> arguments) {
+                                 Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryMetricsTable(spec.getName());
   }
 

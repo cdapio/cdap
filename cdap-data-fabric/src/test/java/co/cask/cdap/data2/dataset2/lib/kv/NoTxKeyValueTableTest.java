@@ -66,7 +66,7 @@ public abstract class NoTxKeyValueTableTest {
     Assert.assertTrue(admin.exists());
 
     // put/get
-    NoTxKeyValueTable table = def.getDataset(datasetContext, spec, cl, NO_ARGS);
+    NoTxKeyValueTable table = def.getDataset(datasetContext, spec, NO_ARGS, cl);
     Assert.assertNull(table.get(KEY1));
     table.put(KEY1, VALUE1);
     Assert.assertArrayEquals(VALUE1, table.get(KEY1));

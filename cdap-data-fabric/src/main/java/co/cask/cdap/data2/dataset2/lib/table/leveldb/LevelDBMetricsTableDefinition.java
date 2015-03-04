@@ -49,7 +49,7 @@ public class LevelDBMetricsTableDefinition
 
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new LevelDBMetricsTable(spec.getName(), service);
   }
 

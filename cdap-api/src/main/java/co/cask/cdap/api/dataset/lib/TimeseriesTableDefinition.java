@@ -59,8 +59,8 @@ public class TimeseriesTableDefinition
 
   @Override
   public TimeseriesTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                    ClassLoader classLoader, Map<String, String> arguments) throws IOException {
-    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("ts"), classLoader, arguments);
+                                    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("ts"), arguments, classLoader);
     return new TimeseriesTable(spec, table);
   }
 }

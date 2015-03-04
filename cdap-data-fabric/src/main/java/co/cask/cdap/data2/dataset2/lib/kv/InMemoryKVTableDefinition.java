@@ -57,7 +57,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      ClassLoader classLoader, Map<String, String> arguments) {
+                                      Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryKVTable(spec.getName());
   }
 

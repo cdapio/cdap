@@ -60,7 +60,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      ClassLoader classLoader, Map<String, String> arguments) throws IOException {
+                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(spec.getName(), service);
   }
 

@@ -228,7 +228,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     List<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
     DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
     return (T) (def.getDataset(new DatasetContext.Builder().setNamespaceId(datasetInstanceId.getNamespaceId()).build(),
-                               spec, classLoader, arguments));
+                               spec, arguments, classLoader));
   }
 
   private DatasetDefinitionRegistry createRegistry(List<String> availableModuleClasses,

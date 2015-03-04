@@ -72,8 +72,8 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> 
   }
 
   @Override
-  public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, ClassLoader classLoader,
-                            Map<String, String> arguments) throws IOException {
+  public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
+                            ClassLoader classLoader) throws IOException {
     return new FileSetDataset(spec.getName(), locationFactory, spec.getProperties(),
                            arguments == null ? Collections.<String, String>emptyMap() : arguments,
                            classLoader);

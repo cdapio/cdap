@@ -196,10 +196,9 @@ public class AppsWithDataset {
     }
 
     @Override
-    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext,
-                                                            DatasetSpecification spec,
-                                                            ClassLoader classLoader,
-                                                            Map<String, String> arguments) throws IOException {
+    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                                            Map<String, String> arguments,
+                                                            ClassLoader classLoader) throws IOException {
       return new KeyValueTable(spec, getDataset(datasetContext, "data", Table.class, spec, arguments, classLoader));
     }
 
