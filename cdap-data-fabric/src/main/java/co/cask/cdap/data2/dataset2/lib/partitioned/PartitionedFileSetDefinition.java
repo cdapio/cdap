@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -30,9 +31,11 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
@@ -40,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 /**
  * Defines the partitioned dataset type. At this time, the partitions are not managed by the
@@ -59,6 +61,9 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   @Inject
   private Injector injector;
+
+  @Inject
+  private CConfiguration cConf;
 
   public PartitionedFileSetDefinition(String name,
                                       DatasetDefinition<? extends FileSet, ?> filesetDef,
@@ -80,26 +85,28 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(filesetDef.getAdmin(spec.getSpecification(FILESET_NAME), classLoader),
-                                     tableDef.getAdmin(spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return new CompositeDatasetAdmin(
+      filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
+      tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
   }
 
   @Override
-  public PartitionedFileSet getDataset(DatasetSpecification spec,
-                                       Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     // properties must contain the partitioning
     Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(spec.getProperties());
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments, partitioning);
 
-    FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
-    Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
+                                            classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
+                                      classLoader);
 
-    return new PartitionedFileSetDataset(spec.getName(), partitioning,
-                                         fileset, table, spec, arguments,
+    return new PartitionedFileSetDataset(cConf, spec.getName(), partitioning, fileset, table, spec, arguments,
                                          getExploreProvider());
   }
 

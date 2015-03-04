@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,9 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.hbase.HBaseTestBase;
+import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.test.SlowTests;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,17 +36,20 @@ import static org.junit.Assert.assertNotNull;
  */
 @Category(SlowTests.class)
 public class ConfigurationTableTest {
-  private static HBaseTestingUtility hbaseUtil;
+  private static HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTestBase testHBase = new HBaseTestFactory().get();
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    hbaseUtil = new HBaseTestingUtility();
-    hbaseUtil.startMiniCluster();
+    testHBase.startHBase();
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    hbaseUtil.shutdownMiniCluster();
+    testHBase.deleteTables(tableUtil.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    testHBase.stopHBase();
   }
 
   @Test
@@ -53,10 +57,16 @@ public class ConfigurationTableTest {
     CConfiguration cconf = CConfiguration.create();
     String expectedNamespace = cconf.get(Constants.Dataset.TABLE_PREFIX);
 
-    ConfigurationTable configTable = new ConfigurationTable(hbaseUtil.getConfiguration());
+    ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cconf);
 
-    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, expectedNamespace);
+    String configTableQualifier = "configuration";
+    TableId configTableId = TableId.from(String.format("%s.system.%s", expectedNamespace, configTableQualifier));
+    String configTableName = tableUtil.getHTableDescriptor(configTableId).getNameAsString();
+    // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
+    String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());
+
+    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, configTablePrefix);
     assertNotNull(cconf2);
 
     for (Map.Entry<String, String> e : cconf) {

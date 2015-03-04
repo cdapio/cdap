@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.common.base.Objects;
@@ -350,7 +351,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     htd.addFamily(hcd);
     hcd.setMaxVersions(1);
 
-    tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, null,
+    // the TableId below is ignored, since the HTableDescriptor is created without it.
+    tableUtil.createTableIfNotExists(getHBaseAdmin(), TableId.from(configTableName), htd, null,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
 
@@ -606,12 +608,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   // only used for create & upgrade of data table
   private final class DatasetAdmin extends AbstractHBaseDataSetAdmin {
-
     private final Properties properties;
+    // TODO: Temporary Hack. Should be removed once queues use HBase namespaces
+    private final String tableName;
 
     private DatasetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil, Properties properties) {
-      super(name, hConf, tableUtil);
+      super(TableId.from(name), hConf, tableUtil);
       this.properties = properties;
+      this.tableName = name;
     }
 
     @Override
@@ -670,7 +674,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                                 QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
 
-      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableName, htd, splitKeys);
+      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd, splitKeys);
     }
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -46,12 +47,14 @@ public class TestModule1 implements DatasetModule {
       }
 
       @Override
-      public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) {
+      public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                   ClassLoader classLoader) {
         return new CompositeDatasetAdmin(Collections.<DatasetAdmin>emptyList());
       }
 
       @Override
-      public Dataset getDataset(DatasetSpecification spec, Map arguments, ClassLoader classLoader) throws IOException {
+      public Dataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                Map arguments, ClassLoader classLoader) throws IOException {
         return null;
       }
     };
