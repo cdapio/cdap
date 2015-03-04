@@ -137,8 +137,8 @@ public class ObjectMappedTableProperties {
     /**
      * Sets the column type for the row key column in the corresponding Hive table for an ObjectMappedTable.
      * By default, the type of the row key in your Hive table will be binary. You can set the type using this
-     * method. Only {@link co.cask.cdap.api.data.schema.Schema.Type#BYTES Schema.Type#BYTES} and 
-     * {@link co.cask.cdap.api.data.schema.Schema.Type#STRING Schema.Type#STRING} are allowed.
+     * method. Only {@link co.cask.cdap.api.data.schema.Schema.Type#BYTES Schema.Type.BYTES} and
+     * {@link co.cask.cdap.api.data.schema.Schema.Type#STRING Schema.Type.STRING} are allowed.
      *
      * For example, if you are storing an Object with a single string field named "id", the corresponding
      * Hive table will have a schema of (rowkey binary, id string). If you set the type to a string using this method,
