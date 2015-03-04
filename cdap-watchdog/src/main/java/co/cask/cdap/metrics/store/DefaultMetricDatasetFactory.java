@@ -78,7 +78,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     DatasetProperties.Builder props = DatasetProperties.builder();
-    if (ttl > 0) {
+    // don't add TTL for MAX_RESOLUTION table. CDAP-1626
+    if (ttl > 0 && resolution != Integer.MAX_VALUE) {
       props.add(Table.PROPERTY_TTL, ttl);
     }
     // for efficient counters

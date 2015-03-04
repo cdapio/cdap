@@ -69,7 +69,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
     Thread.sleep(3000);
 
-    String namespace = getClientConfig().getNamespace();
+    Id.Namespace namespace = getClientConfig().getNamespace();
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
 
     executeBasicQuery(FakeApp.DS_NAME);

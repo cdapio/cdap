@@ -16,10 +16,27 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.common.io.Locations;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import javax.annotation.Nullable;
+
 /**
  * Abstract class for Upgrade
  */
 public abstract class AbstractUpgrader {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractUpgrader.class);
+  protected static final String DEVELOPER_ACCOUNT = "developer";
+  protected final LocationFactory locationFactory;
+
+  public AbstractUpgrader(LocationFactory locationFactory) {
+    this.locationFactory = locationFactory;
+  }
 
   /**
    * Modules which want to upgrade should provide a definition for this
@@ -27,4 +44,32 @@ public abstract class AbstractUpgrader {
    * @throws Exception if the upgrade failed
    */
   abstract void upgrade() throws Exception;
+
+  /**
+   * Renames the old location to new location if old location exists and the new one does not
+   *
+   * @param oldLocation the old {@link Location}
+   * @param newLocation the new {@link Location}
+   * @return new location if and only if the file or directory is successfully moved; null otherwise.
+   * @throws IOException
+   */
+  @Nullable
+  protected Location renameLocation(Location oldLocation, Location newLocation) throws IOException {
+    // if the newLocation does not exists or the oldLocation does we try to rename. If either one of them is false then
+    // the underlying call to renameTo will throw IOException which we propagate.
+    if (!newLocation.exists() || oldLocation.exists()) {
+      Locations.getParent(newLocation).mkdirs();
+      try {
+        return oldLocation.renameTo(newLocation);
+      } catch (IOException ioe) {
+        newLocation.delete();
+        LOG.warn("Failed to rename {} to {}", oldLocation, newLocation);
+        throw ioe;
+      }
+    } else {
+      LOG.debug("New location {} already exists and old location {} does not exists. The location might already be " +
+                  "updated.", newLocation, oldLocation);
+      return null;
+    }
+  }
 }
