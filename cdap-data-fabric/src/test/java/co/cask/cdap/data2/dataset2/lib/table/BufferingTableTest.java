@@ -39,12 +39,12 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
-    DatasetAdmin admin = getTableAdmin("myTable");
+    DatasetAdmin admin = getTableAdmin(MY_TABLE);
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
       BufferingTable myTable1 =
-        new BufferingTableWithPersistingFailure(getTable("myTable"));
+        new BufferingTableWithPersistingFailure(getTable(MY_TABLE));
       myTable1.startTx(tx1);
       // write some data but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -71,7 +71,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable("myTable");
+      Table myTable2 = getTable(MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
@@ -88,12 +88,13 @@ public abstract class BufferingTableTest<T extends BufferingTable>
    */
   @Test
   public void testScanWithBuffering() throws Exception {
-    DatasetAdmin admin = getTableAdmin("testScanWithBuffering");
+    String testScanWithBuffering = DS_NAMESPACE.namespace(NAMESPACE_ID, "testScanWithBuffering");
+    DatasetAdmin admin = getTableAdmin(testScanWithBuffering);
     admin.create();
     try {
       //
       Transaction tx1 = txClient.startShort();
-      Table table1 = getTable("testScanWithBuffering");
+      Table table1 = getTable(testScanWithBuffering);
       ((TransactionAware) table1).startTx(tx1);
 
       table1.put(Bytes.toBytes("1_01"), a(C1), a(V1));
@@ -185,13 +186,13 @@ public abstract class BufferingTableTest<T extends BufferingTable>
     // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
     // affecting the stored data.
     // Also, one can re-use (modify) returned data from the table without affecting the stored data.
-
-    DatasetAdmin admin = getTableAdmin("myTable");
+    String myTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
+    DatasetAdmin admin = getTableAdmin(myTable);
     admin.create();
     try {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingTable table = getTable("myTable");
+      BufferingTable table = getTable(myTable);
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});

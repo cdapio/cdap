@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.AppWithDataset;
+import co.cask.cdap.AppWithMR;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -75,6 +76,28 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals("problem with dataset " + ds.get("id"),
                           expectedDataSets.get(ds.get("id")), ds.get("classname"));
     }
+
+
+    response = doGet(getVersionedAPIPath("apps/WordCountApp/datasets",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    responseString = EntityUtils.toString(response.getEntity());
+    responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(1, responseList.size());
+    Assert.assertEquals("mydataset", responseList.get(0).get("name"));
+  }
+
+  @Test
+  public void testDatasetForApp() throws Exception {
+    HttpResponse response = deploy(AppWithMR.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = doGet(getVersionedAPIPath("apps/AppWithMR/datasets",
+                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String responseString = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertTrue(responseList.size() > 0);
   }
 
   @Test
