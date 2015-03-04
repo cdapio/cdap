@@ -273,9 +273,8 @@ public final class FactTable {
                                                          startRow, true);
     Row rowResult;
     SortedSet<String> measureNames = Sets.newTreeSet();
-    Scanner scanner = null;
+    Scanner scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
     try {
-      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
       while ((rowResult = scanner.next()) != null) {
         byte[] rowKey = rowResult.getRow();
         // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
@@ -300,12 +299,18 @@ public final class FactTable {
     return measureNames;
   }
 
-  private boolean startsWithTags(List<TagValue> expected, List<TagValue> actual) {
-    if (actual.size() < expected.size()) {
+  private boolean startsWithTags(List<TagValue> expectedTags, List<TagValue> actualTags) {
+    if (actualTags.size() < expectedTags.size()) {
       return false;
     }
-    for (int i = 0; i < expected.size(); i++) {
-      if (expected.get(i).getValue() != null && !expected.get(i).equals(actual.get(i))) {
+    for (int i = 0; i < expectedTags.size(); i++) {
+      TagValue expected = expectedTags.get(i);
+      TagValue actual = actualTags.get(i);
+      // compare tag names
+      boolean matches = expected.getTagName().equals(actual.getTagName());
+      // compare values; note: expected value = null means "any"
+      matches = matches && (expected.getValue() == null || expected.getValue().equals(actual.getValue()));
+      if (!matches) {
         return false;
       }
     }
