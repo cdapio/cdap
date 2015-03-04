@@ -17,13 +17,13 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.inject.name.Named;
 
 import java.io.PrintStream;
-import java.net.URI;
 import javax.inject.Inject;
 
 /**
@@ -32,37 +32,28 @@ import javax.inject.Inject;
 public class ConnectCommand implements Command {
 
   private final CLIConfig cliConfig;
-  private final CConfiguration cConf;
+  private final InstanceURIParser instanceURIParser;
+  private final boolean debug;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig, CConfiguration cConf) {
-    this.cConf = cConf;
+  public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
+                        @Named(CLIMain.NAME_DEBUG) final boolean debug) {
     this.cliConfig = cliConfig;
+    this.instanceURIParser = instanceURIParser;
+    this.debug = debug;
   }
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    String uriString = arguments.get("cdap-instance-uri");
-    if (!uriString.contains("://")) {
-      uriString = "http://" + uriString;
-    }
-
-    URI uri = URI.create(uriString);
-    String hostname = uri.getHost();
-    boolean sslEnabled = "https".equals(uri.getScheme());
-    int port = uri.getPort();
-
-    if (port == -1) {
-      port = sslEnabled ?
-        cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-        cConf.getInt(Constants.Router.ROUTER_PORT);
-    }
-
-    CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
+    String instanceURI = arguments.get("cdap-instance-uri");
+    CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(instanceURI);
     try {
-      cliConfig.tryConnect(connectionInfo, output, true);
+      cliConfig.tryConnect(connectionInfo, output, debug);
     } catch (Exception e) {
-      output.println("Failed to connect to " + uriString + ": " + e.getMessage());
+      output.println("Failed to connect to " + instanceURI + ": " + e.getMessage());
+      if (debug) {
+        e.printStackTrace(output);
+      }
     }
   }
 
@@ -74,24 +65,5 @@ public class ConnectCommand implements Command {
   @Override
   public String getDescription() {
     return "Connects to a CDAP instance.";
-  }
-
-  /**
-   * Tries default connection specified by CConfiguration.
-   */
-  public void tryDefaultConnection(PrintStream output, boolean verbose) {
-    CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    String hostname = cConf.get(Constants.Router.ADDRESS);
-    int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-      cConf.getInt(Constants.Router.ROUTER_PORT);
-    CLIConfig.ConnectionInfo connectionInfo = new CLIConfig.ConnectionInfo(hostname, port, sslEnabled);
-
-    try {
-      cliConfig.tryConnect(connectionInfo, output, verbose);
-    } catch (Exception e) {
-      // NO-OP
-    }
   }
 }
