@@ -413,7 +413,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // data requires appId, programId, and programType. Test missing fields/invalid programType
     // TODO: These json strings should be replaced with JsonObjects so it becomes easier to refactor in future
-    Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]").getStatusLine().getStatusCode());
+    Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'}]")
+      .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -474,7 +475,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
 
     // request for 2 more instances of the flowlet
-    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME, 2));
+    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
+                                                     WORDCOUNT_FLOWLET_NAME, 2));
     returnedBody = readResponse(doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow'," +
       "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), LIST_OF_JSONOBJECT_TYPE);
     // verify that 2 more instances were requested
@@ -483,10 +485,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                          WORDCOUNT_FLOW_NAME, "stop");
-    getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "stop");
+    getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+                         APP_WITH_SERVICES_SERVICE_NAME, "stop");
 
-    waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, ProgramController.State.STOPPED.toString());
-    waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
+    waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
+              ProgramController.State.STOPPED.toString());
+    waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
+              APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
   }
 
   /**
