@@ -67,6 +67,23 @@ you for the required credentials to acquire an access token from the CDAP instan
 the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
 the current CLI session.
 
+Options
+-------
+
+The CLI may be started with command-line options, as detailed below::
+
+  usage: CDAP CLI
+   -a,--autoconnect <arg>   If "true", try provided connection (from uri)
+                            upon launch or try default connection if none
+                            provided. Defaults to "true".
+   -d,--debug               Print exception stack traces.
+   -h,--help                Print the usage message.
+   -s,--verify-ssl <arg>    If "true", verify SSL certificate when making
+                            requests. Defaults to "true".
+   -u,--uri <arg>           CDAP instance URI to interact with in the format
+                            "[http[s]://]<hostname>[:<port>[/<namespace>]]".
+                            Defaults to "http://127.0.0.1:10000/default".
+
 .. _cli-available-commands:
 
 Available Commands
@@ -190,5 +207,5 @@ These are the available commands:
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream."
    **Egress**
    ``call procedure <app-id.procedure-id> <app-id.method-id> [<parameter-map>]``,"Calls a Procedure."
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String." 
-     
+   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String."
+
