@@ -47,24 +47,15 @@ public class DatasetContext {
   }
 
   /**
-   * Builder for dataset context
+   * Constructs a new {@link DatasetContext} containing the specified namespace id
+   *
+   * @param namespaceId the namespace id to construct the {@link DatasetContext} with
+   * @return a new {@link DatasetContext} containing the specified namespace id
    */
-  public static class Builder {
-    private String namespaceId;
-
-    public Builder() {
+  public static DatasetContext from(String namespaceId) {
+    if (namespaceId == null) {
+      throw new IllegalArgumentException("Namespace Id can not be null");
     }
-
-    public Builder setNamespaceId(String namespaceId) {
-      this.namespaceId = namespaceId;
-      return this;
-    }
-
-    public DatasetContext build() {
-      if (namespaceId == null) {
-        throw new IllegalArgumentException("Namespace Id can not be null");
-      }
-      return new DatasetContext(namespaceId);
-    }
+    return new DatasetContext(namespaceId);
   }
 }
