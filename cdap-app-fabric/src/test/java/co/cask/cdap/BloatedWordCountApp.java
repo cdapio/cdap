@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,11 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
@@ -52,11 +57,11 @@ import javax.annotation.Nullable;
 
 /**
  * This is a sample word count app that is used in testing in
- * many places.
+ * many places. It has one of each program type, most of which don't do anything.
  */
-public class WordCountApp extends AbstractApplication {
+public class BloatedWordCountApp extends AbstractApplication {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WordCountApp.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BloatedWordCountApp.class);
 
   @Override
   public void configure() {
@@ -67,6 +72,10 @@ public class WordCountApp extends AbstractApplication {
     addFlow(new WordCountFlow());
     addProcedure(new WordFrequency("word"));
     addMapReduce(new VoidMapReduceJob());
+    addService(new NoopService());
+    addSpark(new SparklingNothing());
+    addWorker(new LazyGuy());
+    addWorkflow(new SingleStep());
   }
 
   /**
@@ -245,6 +254,48 @@ public class WordCountApp extends AbstractApplication {
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
       responder.sendJson(result);
+    }
+  }
+
+  public static class NoopService extends AbstractService {
+    @Override
+    protected void configure() {
+      setName("NoopService");
+      setDescription("Dummy Service");
+      addHandler(new DummyHandler());
+    }
+  }
+
+  private static class DummyHandler extends AbstractHttpServiceHandler {
+  }
+
+  private static class SparklingNothing extends AbstractSpark {
+    @Override
+    protected void configure() {
+      setDescription("Spark program that does nothing");
+      setMainClass(this.getClass());
+    }
+    public static void main(String[] args) {
+    }
+
+  }
+
+  private static class LazyGuy extends AbstractWorker {
+    @Override
+    protected void configure() {
+      setDescription("nothing to describe");
+    }
+
+    @Override
+    public void run() {
+      // do nothing
+    }
+  }
+
+  private static class SingleStep extends AbstractWorkflow {
+    @Override
+    public void configure() {
+      addSpark("SparklingNothing");
     }
   }
 }

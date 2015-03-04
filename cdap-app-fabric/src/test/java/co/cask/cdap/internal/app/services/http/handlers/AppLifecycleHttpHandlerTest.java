@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
+import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -87,7 +88,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testListAndGet() throws Exception {
     final String appName = "AppWithDatasetName";
     //deploy without name to testnamespace1
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    HttpResponse response = deploy(BloatedWordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //deploy with name to testnamespace2
