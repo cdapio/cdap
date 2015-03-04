@@ -21,6 +21,8 @@ import co.cask.cdap.cli.command.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.cli.util.InstanceURIParser;
+import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -92,6 +94,7 @@ public class CLIMain {
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
+  private final TableRenderer tableRenderer;
 
   /**
    * @param output output to print to
@@ -110,8 +113,10 @@ public class CLIMain {
                  CLIConfig cliConfig,
                  DefaultCommands defaultCommands,
                  DefaultCompleters defaultCompleters,
-                 EndpointSupplier endpointSupplier) throws URISyntaxException, IOException {
+                 EndpointSupplier endpointSupplier,
+                 TableRenderer tableRenderer) throws URISyntaxException, IOException {
 
+    this.tableRenderer = tableRenderer;
     if (autoconnect) {
       try {
         CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(uri);
@@ -184,6 +189,10 @@ public class CLIMain {
     cli.getReader().setPrompt("cdap (" + uri + ")> ");
   }
 
+  public TableRenderer getTableRenderer() {
+    return tableRenderer;
+  }
+
   public CLI getCLI() {
     return this.cli;
   }
@@ -229,6 +238,7 @@ public class CLIMain {
               bind(CLIConfig.class).toInstance(cliConfig);
               bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
               bind(CConfiguration.class).toInstance(CConfiguration.create());
+              bind(TableRenderer.class).to(AltStyleTableRenderer.class);
             }
           }
         );

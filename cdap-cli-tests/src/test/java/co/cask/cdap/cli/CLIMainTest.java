@@ -25,8 +25,10 @@ import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -100,6 +102,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static AdapterClient adapterClient;
   private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
+  private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
@@ -127,6 +130,7 @@ public class CLIMainTest extends StandaloneTestBase {
         bind(CLIConfig.class).toInstance(cliConfig);
         bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
         bind(CConfiguration.class).toInstance(CConfiguration.create());
+        bind(TableRenderer.class).to(CsvTableRenderer.class);
       }
     });
 
@@ -602,17 +606,17 @@ public class CLIMainTest extends StandaloneTestBase {
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-    new AsciiTable<NamespaceMeta>(
-      new String[] {"id", "display_name", "description"},
-      expected,
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
         }
-      }
-    ).print(printStream);
+      }).build();
+    cliMain.getTableRenderer().render(printStream, table);
     final String expectedOutput = outputStream.toString();
+
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

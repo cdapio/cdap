@@ -447,7 +447,7 @@ public class LevelDBTableCore {
     }
   }
 
-  private void deleteColumn(byte[] row, byte[] column) throws IOException {
+  public void deleteColumn(byte[] row, byte[] column) throws IOException {
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
     DBIterator iterator = db.iterator();
