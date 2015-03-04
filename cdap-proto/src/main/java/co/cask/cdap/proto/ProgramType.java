@@ -139,7 +139,7 @@ public enum ProgramType {
 
   public static ProgramType valueOfSchedulableType(SchedulableProgramType schedulableType) {
     for (ProgramType type : ProgramType.values()) {
-      if (schedulableType.equals(type.getSchedulableType())) {
+      if (schedulableType.equals(type.parameters.getSchedulableType())) {
         return type;
       }
     }
