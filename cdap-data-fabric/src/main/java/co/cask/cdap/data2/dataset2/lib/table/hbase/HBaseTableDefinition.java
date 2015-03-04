@@ -66,7 +66,7 @@ public class HBaseTableDefinition
     // NOTE: ttl property is applied on server-side in CPs
     // check if read-less increment operations are supported
     boolean supportsIncrements = HBaseTableAdmin.supportsReadlessIncrements(spec);
-    return new HBaseTable(datasetContext, spec.getName(), conflictDetection, hConf, supportsIncrements);
+    return new HBaseTable(datasetContext, spec.getName(), conflictDetection, conf, hConf, supportsIncrements);
   }
 
   @Override

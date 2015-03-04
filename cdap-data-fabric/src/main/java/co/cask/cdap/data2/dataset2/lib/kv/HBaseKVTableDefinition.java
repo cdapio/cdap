@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.base.Throwables;
@@ -49,6 +51,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   @Inject
+  private CConfiguration cConf;
+  @Inject
   private Configuration hConf;
   @Inject
   private HBaseTableUtil tableUtil;
@@ -67,13 +71,13 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, cConf, hConf);
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new KVTableImpl(datasetContext, spec.getName(), hConf, tableUtil);
+    return new KVTableImpl(datasetContext, spec.getName(), cConf, hConf, tableUtil);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
@@ -82,10 +86,11 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
-                             Configuration hConf) throws IOException {
+                             CConfiguration cConf, Configuration hConf) throws IOException {
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
-      this.tableId = TableId.from("cdap", datasetContext.getNamespaceId(), tableName);
+      this.tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(),
+                                  tableName);
     }
 
     @Override
@@ -135,10 +140,12 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     private final HBaseTableUtil tableUtil;
     private final HTable table;
 
-    public KVTableImpl(DatasetContext datasetContext, String tableName, Configuration hConf,
+    public KVTableImpl(DatasetContext datasetContext, String tableName, CConfiguration cConf, Configuration hConf,
                        HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      this.table = this.tableUtil.getHTable(hConf, TableId.from("cdap", datasetContext.getNamespaceId(), tableName));
+      TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(),
+                                     tableName);
+      this.table = this.tableUtil.getHTable(hConf, tableId);
     }
 
     @Override

@@ -19,6 +19,8 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -54,10 +56,11 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HTable hTable;
 
-  public HBaseMetricsTable(DatasetContext datasetContext, String name, Configuration hConf) throws IOException {
-    String hTableName = HBaseTableUtil.getHBaseTableName(name);
+  public HBaseMetricsTable(DatasetContext datasetContext, String name, CConfiguration cConf,
+                           Configuration hConf) throws IOException {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    HTable hTable = tableUtil.getHTable(hConf, TableId.from("cdap", datasetContext.getNamespaceId(), name));
+    TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(), name);
+    HTable hTable = tableUtil.getHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

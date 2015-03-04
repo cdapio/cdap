@@ -73,6 +73,7 @@ import static org.junit.Assert.fail;
 @Category(SlowTests.class)
 public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
+  private static final CConfiguration cConf = CConfiguration.create();
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -99,14 +100,14 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   protected BufferingTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
     return new HBaseTable(MY_CONTEXT, name, ConflictDetection.valueOf(conflictLevel.name()),
-                          testHBase.getConfiguration(), true);
+                          cConf, testHBase.getConfiguration(), true);
   }
 
   @Override
   protected HBaseTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
     return new HBaseTableAdmin(MY_CONTEXT, spec, testHBase.getConfiguration(), hBaseTableUtil,
-                               CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
+                               cConf, new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
   @Test
@@ -118,7 +119,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin(ttlTable, props).create();
-    HBaseTable table = new HBaseTable(MY_CONTEXT, ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(), false);
+    HBaseTable table = new HBaseTable(MY_CONTEXT, ttlTable, ConflictDetection.ROW, cConf, testHBase.getConfiguration(),
+                                      false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -147,8 +149,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin(noTtlTable, props2).create();
-    HBaseTable table2 = new HBaseTable(MY_CONTEXT, noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(),
-                                       false);
+    HBaseTable table2 = new HBaseTable(MY_CONTEXT, noTtlTable, ConflictDetection.ROW, cConf,
+                                       testHBase.getConfiguration(), false);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);
