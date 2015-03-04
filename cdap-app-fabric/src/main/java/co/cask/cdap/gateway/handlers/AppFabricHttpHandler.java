@@ -228,7 +228,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase());
+      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP,
+                                      ProgramType.WEBAPP.getPrettyName().toLowerCase());
       programStatus(responder, id, ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -373,7 +374,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
@@ -400,7 +401,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");

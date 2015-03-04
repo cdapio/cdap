@@ -72,7 +72,9 @@ public class ApplicationClient {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3("apps"),
                                                config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+    List<ApplicationRecord> result = ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
+    return result;
   }
 
   /**

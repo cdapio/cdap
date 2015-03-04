@@ -19,14 +19,17 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Lists all applications.
@@ -34,25 +37,26 @@ import java.io.PrintStream;
 public class ListAppsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAppsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  public ListAppsCommand(ApplicationClient appClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.appClient = appClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    new AsciiTable<ApplicationRecord>(
-      new String[] { "id", "description" },
-      appClient.list(),
-      new RowMaker<ApplicationRecord>() {
+    Table table = Table.builder()
+      .setHeader("id", "description")
+      .setRows(appClient.list(), new RowMaker<ApplicationRecord>() {
         @Override
-        public Object[] makeRow(ApplicationRecord object) {
-          return new Object[] { object.getId(), object.getDescription() };
+        public List<?> makeRow(ApplicationRecord object) {
+          return Lists.newArrayList(object.getId(), object.getDescription());
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override
