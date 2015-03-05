@@ -42,17 +42,11 @@ public class LevelDBTable extends BufferingTable {
   private final LevelDBTableCore core;
   private Transaction tx;
   private long persistedVersion;
-  // name length + name of the table: handy to have one cached
-  private final byte[] nameAsTxChangePrefix;
 
   public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
                       LevelDBTableService service, CConfiguration cConf) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level);
     this.core = new LevelDBTableCore(getTableName(), service);
-    // TODO: having central dataset management service will allow us to use table ids instead of names, which will
-    //       reduce changeset size transferred to/from server
-    // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
   }
 
   // TODO this is the same for all OcTableClient implementations -> promote to base class
@@ -66,11 +60,6 @@ public class LevelDBTable extends BufferingTable {
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     // for local operation with leveldb, we don't worry about the cost of reads
     incrementAndGet(row, columns, amounts);
-  }
-
-  @Override
-  public byte[] getNameAsTxChangePrefix() {
-    return nameAsTxChangePrefix;
   }
 
   @Override

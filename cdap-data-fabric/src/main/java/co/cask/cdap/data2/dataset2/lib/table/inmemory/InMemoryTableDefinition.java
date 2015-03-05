@@ -34,8 +34,8 @@ import java.util.Map;
 public class InMemoryTableDefinition
   extends AbstractDatasetDefinition<Table, InMemoryTableAdmin> {
 
-  // TODO: get injection to work
-  private CConfiguration cConf = CConfiguration.create();
+  @Inject
+  private CConfiguration cConf;
 
   public InMemoryTableDefinition(String name) {
     super(name);

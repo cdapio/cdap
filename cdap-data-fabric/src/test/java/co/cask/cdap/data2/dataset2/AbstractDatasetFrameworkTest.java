@@ -21,9 +21,13 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.Id;
@@ -32,7 +36,10 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
 import com.google.common.collect.Maps;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -63,6 +70,28 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final Id.DatasetType simpleKvType = Id.DatasetType.from(NAMESPACE_ID, SimpleKVTable.class.getName());
   private static final Id.DatasetType doubleKvType = Id.DatasetType.from(NAMESPACE_ID,
                                                                          DoubleWrappedKVTable.class.getName());
+
+
+  protected static DatasetDefinitionRegistryFactory registryFactory;
+  protected static CConfiguration cConf;
+
+  @BeforeClass
+  public static void setup() {
+    cConf = CConfiguration.create();
+
+    final Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules());
+
+    registryFactory = new DatasetDefinitionRegistryFactory() {
+      @Override
+      public DatasetDefinitionRegistry create() {
+        DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
+        injector.injectMembers(registry);
+        return registry;
+      }
+    };
+  }
 
   @Test
   public void testSimpleDataset() throws Exception {

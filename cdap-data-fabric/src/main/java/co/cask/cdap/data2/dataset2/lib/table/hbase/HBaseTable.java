@@ -89,9 +89,8 @@ public class HBaseTable extends BufferingTable {
     this.hTable = hTable;
     this.txCodec = new TransactionCodec();
     this.hTableName = this.hTable.getTableDescriptor().getNameAsString();
-    // TODO: having central dataset management service will allow us to use table ids instead of names, which will
-    //       reduce changeset size transferred to/from server
-    // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
+    // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
+    // table name is not the same as the dataset name anymore
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
   }
 

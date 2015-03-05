@@ -38,8 +38,6 @@ public class InMemoryTable extends BufferingTable {
   private static final long NO_TX_VERSION = 0L;
 
   private Transaction tx;
-  // name length + name of the table: handy to have one cached
-  private final byte[] nameAsTxChangePrefix;
 
   /**
    * To be used in tests which do not need namespaces
@@ -53,7 +51,6 @@ public class InMemoryTable extends BufferingTable {
    */
   public InMemoryTable(String name, ConflictDetection level) {
     super(name, level);
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
   }
 
   /**
@@ -68,15 +65,6 @@ public class InMemoryTable extends BufferingTable {
    */
   public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf) {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level);
-    // TODO: having central dataset management service will allow us to use table ids instead of names, which will
-    //       reduce changeset size transferred to/from server
-    // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
-  }
-
-  @Override
-  public byte[] getNameAsTxChangePrefix() {
-    return nameAsTxChangePrefix;
   }
 
   @Override

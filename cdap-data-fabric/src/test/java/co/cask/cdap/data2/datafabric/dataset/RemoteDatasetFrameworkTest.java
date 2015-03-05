@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -85,7 +84,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Before
   public void before() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
     File dataDir = new File(tmpFolder.newFolder(), "data");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
@@ -103,7 +101,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
-    framework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
+    framework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                            new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
@@ -115,7 +113,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     opExecutorService.startAndWait();
 
     InMemoryDatasetFramework mdsFramework =
-      new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
+      new InMemoryDatasetFramework(registryFactory,
                                    ImmutableMap.of("memoryTable", new InMemoryTableModule(),
                                                    "core", new CoreDatasetsModule()));
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
