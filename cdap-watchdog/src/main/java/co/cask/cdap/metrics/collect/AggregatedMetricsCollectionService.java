@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.base.Objects;
@@ -45,7 +46,6 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
-  private static final long DEFAULT_FREQUENCY_SECONDS = 1;
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
@@ -107,7 +107,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(DEFAULT_FREQUENCY_SECONDS, DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
+    return Scheduler.newFixedRateSchedule(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                          Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                          TimeUnit.SECONDS);
   }
 
   @Override
