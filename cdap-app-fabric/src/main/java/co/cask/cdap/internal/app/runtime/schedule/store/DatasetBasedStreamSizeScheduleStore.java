@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -232,7 +233,7 @@ public class DatasetBasedStreamSizeScheduleStore {
               if (splits.length != 6) {
                 continue;
               }
-              Id.Program program = Id.Program.from(splits[1], splits[2], splits[4]);
+              Id.Program program = Id.Program.from(splits[1], splits[2], ProgramType.valueOf(splits[3]), splits[4]);
               SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[3]);
 
               StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);

@@ -857,8 +857,10 @@ public class StreamSizeScheduler implements Scheduler {
      * Replace the {@link StreamSizeSchedule} of this task.
      */
     public synchronized void updateSchedule(StreamSizeSchedule schedule) {
-      streamSizeSchedule = schedule;
-      scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);
+      if (!schedule.equals(streamSizeSchedule)) {
+        streamSizeSchedule = schedule;
+        scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);
+      }
     }
 
     /**
