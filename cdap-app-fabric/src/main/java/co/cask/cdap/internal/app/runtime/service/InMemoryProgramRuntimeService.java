@@ -77,7 +77,20 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
       Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
       RuntimeInfo info = super.run(bundleJarProgram, options);
-      info.getController().addListener(new AbstractListener() {
+      final ProgramController controller = info.getController();
+      controller.addListener(new AbstractListener() {
+
+        @Override
+        public void init(ProgramController.State state) {
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
+          }
+          if (state == ProgramController.State.ERROR) {
+            error(controller.getFailureCause());
+          }
+        }
+
+
         @Override
         public void killed() {
           try {
