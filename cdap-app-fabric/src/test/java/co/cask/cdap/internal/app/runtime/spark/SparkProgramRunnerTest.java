@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -120,7 +121,7 @@ public class SparkProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }

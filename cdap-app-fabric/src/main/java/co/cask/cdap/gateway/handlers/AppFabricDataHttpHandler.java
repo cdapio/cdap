@@ -21,6 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -95,23 +96,21 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of dataset associated with namespace.
+   * Returns a list of dataset associated with namespace. This is here for the v2 API to use,
+   * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
    */
-  @GET
-  @Path("/datasets")
-  public void getDatasets(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) {
+  void getDatasets(HttpRequest request, HttpResponder responder,
+                   @PathParam("namespace-id") String namespaceId) {
     dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
   }
 
   /**
-   * Returns a dataset associated with namespace.
+   * Returns a dataset associated with namespace. This is here for the v2 API to use,
+   * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
    */
-  @GET
-  @Path("/datasets/{dataset-id}")
-  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") String namespaceId,
-                                      @PathParam("dataset-id") String datasetId) {
+  void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("dataset-id") String datasetId) {
     dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
   }
 
@@ -130,9 +129,9 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns all flows associated with a dataset.
    */
   @GET
-  @Path("/datasets/{dataset-id}/flows")
+  @Path("/data/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
+                                @PathParam("namespace-id") String namespaceId,
                                 @PathParam("dataset-id") String datasetId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
                             namespaceId, datasetId);
@@ -142,11 +141,23 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns all workers associated with a dataset.
    */
   @GET
-  @Path("/datasets/{dataset-id}/workers")
+  @Path("/data/datasets/{dataset-id}/workers")
   public void getWorkersByDataset(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("dataset-id") String datasetId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.WORKER, Data.DATASET,
+                            namespaceId, datasetId);
+  }
+
+  /**
+   * Returns all mapreduce programs associated with a dataset.
+   */
+  @GET
+  @Path("/data/datasets/{dataset-id}/mapreduce")
+  public void getMapReduceByDataset(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("dataset-id") String datasetId) {
+    programListByDataAccess(request, responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
                             namespaceId, datasetId);
   }
 }
