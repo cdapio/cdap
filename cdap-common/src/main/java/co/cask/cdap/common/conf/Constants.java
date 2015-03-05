@@ -178,6 +178,8 @@ public final class Constants {
     public static final String DATA_DIR = "dataset.data.dir";
     public static final String DEFAULT_DATA_DIR = "data";
 
+    public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
+
     /**
      * DatasetManager service configuration.
      */
