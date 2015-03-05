@@ -10,12 +10,20 @@
           ng-class="{'fa-chevron-right': activePanel!==0,
                      'fa-chevron-down': activePanel===0}"
           class="fa fa-fw"
-        ></span>Choose table
+        ></span>Latest events
       </h4>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <pre>{{tables | json}}</pre>
+        <ul class="list-unstyled">
+          <li ng-repeat="event in events | orderBy:'-timestamp' | limitTo:10">
+            <small>{{event.timestamp | amTimeAgo}}</small>
+            <code>{{event.body}}</code>
+          </li>
+        </ul>
+        <p ng-hide="events.length">
+          (no events)
+        </p>
       </div>
     </div>
   </div>
@@ -34,10 +42,10 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
         <p>
-          <textarea class="form-control">SELECT * from someTable;</textarea>
+          <textarea class="form-control" disabled>SELECT * from someTable;</textarea>
         </p>
         <div class="text-right">
-          <button class="btn btn-primary" type="button">
+          <button class="btn btn-primary" type="button" disabled>
             Execute
           </button>
         </div>

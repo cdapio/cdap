@@ -7,11 +7,10 @@ angular.module(PKG.name + '.feature.streams')
       $scope.activePanel = 0;
 
       dataSrc
-        .request({
-          _cdapNsPath: '/data/explore/tables'
-        })
-        .then(function (result) {
-          $scope.tables = result;
+        .poll({
+          _cdapNsPath: '/streams/' + $state.params.streamId + '/events'
+        }, function (result) {
+          $scope.events = result;
         });
 
     }
