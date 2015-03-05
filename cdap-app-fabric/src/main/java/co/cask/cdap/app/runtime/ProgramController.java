@@ -38,7 +38,7 @@ public interface ProgramController {
    *   |                                    |
    *   |        |-----------------------|   |
    *   v        v                       |   |
-   * ALIVE -> STOPPING ---> COMPLETED   |   |
+   * ALIVE ---------------> COMPLETED   |   |
    *   |   -> STOPPING ---> TERMINATED  |   |
    *   |                                |   |
    *   |----> SUSPENDING -> SUSPENDED --|   |
@@ -91,14 +91,14 @@ public interface ProgramController {
     COMPLETED(ProgramRunStatus.COMPLETED),
 
     /**
-     * Program runs into error. It is a terminal state, no more state transition is allowed.
-     */
-    ERROR(ProgramRunStatus.FAILED),
-
-    /**
      * Program was killed by user.
      */
-    KILLED(ProgramRunStatus.KILLED);
+    KILLED(ProgramRunStatus.KILLED),
+
+    /**
+     * Program runs into error. It is a terminal state, no more state transition is allowed.
+     */
+    ERROR(ProgramRunStatus.FAILED);
 
     private final ProgramRunStatus runStatus;
 

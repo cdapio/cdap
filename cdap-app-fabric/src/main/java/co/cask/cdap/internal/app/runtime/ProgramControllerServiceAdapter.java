@@ -91,6 +91,8 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
           error(failure);
         } else if (getState() != State.STOPPING) {
           complete();
+        } else {
+          kill();
         }
       }
 
