@@ -508,7 +508,11 @@ public class ProgramClient {
                                         long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthorizedException {
 
-    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state, Constants.AppFabric.QUERY_PARAM_START_TIME, startTime, Constants.AppFabric.QUERY_PARAM_END_TIME, endTime, Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
+                                       Constants.AppFabric.QUERY_PARAM_STATUS, state,
+                                       Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
+                                       Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
+                                       Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
     String path = String.format("apps/%s/%s/%s/runs?%s", appId, programType.getCategoryName(), programId, queryParams);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
@@ -572,7 +576,8 @@ public class ProgramClient {
   public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
     throws IOException, NotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d", appId, programType.getCategoryName(), programId, start, stop);
+    String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
+                                appId, programType.getCategoryName(), programId, start, stop);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -598,7 +603,8 @@ public class ProgramClient {
   public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
     throws IOException, NotFoundException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d", appId, serviceId, runnableId, start, stop));
+    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
+                                                          appId, serviceId, runnableId, start, stop));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
