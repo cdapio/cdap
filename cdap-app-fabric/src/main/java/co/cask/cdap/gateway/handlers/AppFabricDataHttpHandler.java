@@ -21,9 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.ProgramType;
@@ -60,7 +58,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
                                   StoreFactory storeFactory, DatasetFramework dsFramework) {
     super(authenticator);
     this.store = storeFactory.create();
-    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = dsFramework;
   }
 
   /**

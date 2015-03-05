@@ -118,7 +118,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
                                    ImmutableMap.of("memoryTable", new InMemoryTableModule(),
                                                    "core", new CoreDatasetsModule()));
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,

@@ -40,7 +40,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
@@ -289,9 +288,7 @@ public class UpgraderMain {
   private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
                                                             DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new DefaultDatasetNamespace(cConf));
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory);
     addModules(datasetFramework);
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
