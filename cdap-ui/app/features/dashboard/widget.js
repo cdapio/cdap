@@ -10,7 +10,7 @@ angular.module(PKG.name+'.feature.dashboard')
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
-      this.type = opts.type || 'welcome';
+      this.type = opts.type;
       this.metric = opts.metric || false;
     }
 

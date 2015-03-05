@@ -46,6 +46,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -66,7 +67,6 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final DatasetFramework datasetFramework;
   private final ExploreFacade exploreFacade;
   private final Scheduler scheduler;
   private final boolean exploreEnabled;
@@ -74,6 +74,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
 
+  private final DatasetFramework datasetFramework;
+  private final DatasetFramework inMemoryDatasetFramework;
 
 
   @Inject
@@ -82,6 +84,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
+                      @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                       StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                       Scheduler scheduler, AdapterService adapterService,
                       @Assisted ProgramTerminator programTerminator) {
@@ -96,6 +99,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.programTerminator = programTerminator;
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
+    this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.scheduler = scheduler;
@@ -108,8 +112,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, appId));
     pipeline.addLast(new VerificationStage(store, datasetFramework, adapterService));
-    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));

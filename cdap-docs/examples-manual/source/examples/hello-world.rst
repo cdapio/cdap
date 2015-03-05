@@ -150,7 +150,7 @@ ready to receive events.
 
 Now you can make a request to the service using curl::
 
-  $ curl -w '\n' http://localhost:10000/v2/apps/HelloWorld/services/Greeting/methods/greet
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
 
 If the last name you entered was *Tom*, the Service will respond with ``Hello Tom!``
 
@@ -165,19 +165,19 @@ Retrieving Metrics
 You can now query the metrics that are emitted by the flow. To see the value of the ``names.bytes`` metric,
 you can make an HTTP request to the :ref:`http-restful-api-metrics` using curl::
 
-  $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
   {"data":3}
 
 To see the value of the ``names.longnames`` metric (the number of names greater than 10 characters),
 you can use::
 
-  $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.longnames?aggregate=true
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.longnames?aggregate=true
   {"data":2}
   
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been seen),
 you can use::
 
-  $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate=true
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate=true
   {"data":0}
   
 Stopping the Application

@@ -74,7 +74,7 @@ Using Namespaces
 ----------------
 The best practices with using namespaces would be to create desired namespaces and use
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
-udertaken.
+undertaken.
 
 .. rubric::  Examples of Using Namespaces
 
