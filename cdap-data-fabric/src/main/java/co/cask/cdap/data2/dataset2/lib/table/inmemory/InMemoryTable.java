@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.tephra.Transaction;
@@ -39,16 +41,37 @@ public class InMemoryTable extends BufferingTable {
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
+  /**
+   * To be used in tests which do not need namespaces
+   */
   public InMemoryTable(String name) {
     this(name, ConflictDetection.ROW);
   }
 
+  /**
+   * To be used in tests that do not need namespaces
+   */
   public InMemoryTable(String name, ConflictDetection level) {
     super(name, level);
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
+  }
+
+  /**
+   * To be used in tests that need namespaces
+   */
+  public InMemoryTable(DatasetContext datasetContext, String name, CConfiguration cConf) {
+    this(datasetContext, name, ConflictDetection.ROW, cConf);
+  }
+
+  /**
+   * To be used in tests that need namespaces
+   */
+  public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf) {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level);
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
   }
 
   @Override

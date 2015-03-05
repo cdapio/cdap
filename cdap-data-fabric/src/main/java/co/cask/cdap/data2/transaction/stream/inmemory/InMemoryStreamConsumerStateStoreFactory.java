@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
@@ -32,10 +34,12 @@ import java.io.IOException;
  */
 public final class InMemoryStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
   private final InMemoryTableService tableService;
+  private final CConfiguration cConf;
 
   @Inject
-  InMemoryStreamConsumerStateStoreFactory(InMemoryTableService tableService) {
+  InMemoryStreamConsumerStateStoreFactory(InMemoryTableService tableService, CConfiguration cConf) {
     this.tableService = tableService;
+    this.cConf = cConf;
   }
 
   @Override
@@ -45,7 +49,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
     if (!tableService.exists(tableName)) {
       tableService.create(tableName);
     }
-    InMemoryTable table = new InMemoryTable(tableName);
+    InMemoryTable table = new InMemoryTable(DatasetContext.from(namespace.getId()), tableName, cConf);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 

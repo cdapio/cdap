@@ -23,16 +23,26 @@ import com.google.common.base.Joiner;
 /**
  * Defines a prefix-based namespace strategy for in-memory and LevelDB tables.
  * Only used to generate internal representation (name) of datasets, in-memory and LevelDB tables.
- * Generates a table name of the form:
- * <pre>
- *   {root-prefix}_{namespace-id}.{dataset-name}
- * </pre>
+ *
+ * Note: This namespacing should always only be one-way, i.e. we should never have to derive the components
+ * (root prefix, namespace id and dataset name) from the namespaced name.
  */
 public class PrefixedNamespaces {
 
   private PrefixedNamespaces() {
   }
 
+  /**
+   * Generates a table name of the form:
+   * <pre>
+   *   {root-prefix}_{namespace-id}.{dataset-name}
+   * </pre>
+   *
+   * @param cConf CDAP configuration
+   * @param namespaceId the dataset's namespace
+   * @param name the dataset's name
+   * @return the dataset's name qualified with a root prefix and a namespace id
+   */
   public static String namespace(CConfiguration cConf, String namespaceId, String name) {
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     String namespace = Joiner.on("_").join(rootPrefix, namespaceId);
