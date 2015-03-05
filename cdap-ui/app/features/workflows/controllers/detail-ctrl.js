@@ -1,14 +1,12 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource, WorkflowsFactory) {
-    var dataSrc = new MyDataSource($scope),
-        params = {
+  .controller('WorkflowsDetailController', function($scope, $state, myWorkFlowApi) {
+    var params = {
           appId: $state.params.appId,
           workflowId: $state.params.programId
-        };
+        },
+        wf = myWorkFlowApi;
 
-    var wf = WorkflowsFactory;
-
-    wf.runs(params, function(res) {
+    wf.runs(angular.extend({status: 'running'}, params), function(res) {
 
       $scope.runs = res;
       var count = 0;
@@ -25,7 +23,7 @@ angular.module(PKG.name + '.feature.workflows')
     $scope.activeRuns = 0;
     $scope.runs = null;
 
-    wf.getStatus(params, function(res) {
+    wf.status(params, function(res) {
       $scope.status = res.status;
     });
 
