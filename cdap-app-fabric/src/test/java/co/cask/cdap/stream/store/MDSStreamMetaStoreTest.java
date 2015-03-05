@@ -17,6 +17,7 @@
 package co.cask.cdap.stream.store;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -31,20 +32,18 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -74,6 +73,10 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
         protected void configure() {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          install(new FactoryModuleBuilder()
+                    .implement(Store.class, DefaultStore.class)
+                    .build(StoreFactory.class)
+          );
         }
       }
     );
@@ -83,9 +86,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    store = new DefaultStore(injector.getInstance(CConfiguration.class), injector.getInstance(LocationFactory.class),
-                             injector.getInstance(TransactionSystemClient.class),
-                             injector.getInstance(DatasetFramework.class));
+    store = injector.getInstance(StoreFactory.class).create();
   }
 
   @AfterClass
