@@ -304,8 +304,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // TODO: CDAP-1562. Have to wrap it with a NamespacedFramework because the dataset implementations
     // expect the name to be namespaced to avoid conflicts. This is being cleaned up separately, after which this
     // test can be cleaned up to just use the framework directly instead of wrapping it.
-    CConfiguration conf = CConfiguration.create();
-    DatasetFramework framework = new NamespacedDatasetFramework(getFramework(), new DefaultDatasetNamespace(conf));
+    DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
+    DatasetFramework framework = getFramework();
 
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
@@ -314,8 +314,8 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.createNamespace(namespace2);
 
     // create 2 tables, one in each namespace. both tables have the same name.
-    Id.DatasetInstance table1ID = Id.DatasetInstance.from(namespace1, "table");
-    Id.DatasetInstance table2ID = Id.DatasetInstance.from(namespace2, "table");
+    Id.DatasetInstance table1ID = dsNamespace.namespace(Id.DatasetInstance.from(namespace1, "table"));
+    Id.DatasetInstance table2ID = dsNamespace.namespace(Id.DatasetInstance.from(namespace2, "table"));
     // have slightly different properties so that we can distinguish between them
     framework.addInstance(Table.class.getName(), table1ID, DatasetProperties.builder().add("tag", "table1").build());
     framework.addInstance(Table.class.getName(), table2ID, DatasetProperties.builder().add("tag", "table2").build());
