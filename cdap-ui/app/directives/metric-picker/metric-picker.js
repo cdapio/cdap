@@ -34,6 +34,10 @@ angular.module(PKG.name + '.commons')
 
       link: function (scope, elem, attr, ngModel) {
 
+        if(attr.required!==undefined) {
+          elem.find('input').attr('required', true);
+        }
+
         function getBaseContext () {
           var output;
 
