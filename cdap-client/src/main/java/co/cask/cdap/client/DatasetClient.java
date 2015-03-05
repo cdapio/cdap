@@ -25,6 +25,7 @@ import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -72,10 +73,11 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetSpecification> list() throws IOException, UnauthorizedException {
+  public List<DatasetSpecificationSummary> list() throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("data/datasets");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetSpecification>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response,
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }).getResponseObject();
   }
 
   /**
