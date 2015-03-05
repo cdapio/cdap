@@ -49,9 +49,14 @@ public class MonitorClient {
   private final ClientConfig config;
 
   @Inject
+  public MonitorClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public MonitorClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**

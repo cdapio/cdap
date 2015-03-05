@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
@@ -69,13 +70,14 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new HBaseMetricsTable(spec.getName(), hConf);
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
   }
 }

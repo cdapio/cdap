@@ -30,6 +30,7 @@ import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.logging.write.LogWriteEvent;
 import co.cask.cdap.logging.write.SimpleLogFileWriter;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -59,7 +60,7 @@ public class FileLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "FileLogAppender";
 
   private final LogSaverTableUtil tableUtil;
-  private final TransactionSystemClient txClient;
+  private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
   private final Location logBaseDir;
   private final int syncIntervalBytes;
@@ -78,12 +79,12 @@ public class FileLogAppender extends LogAppender {
   @Inject
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
-                         TransactionSystemClient txClient,
+                         TransactionExecutorFactory txExecutorFactory,
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
 
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
-    this.txClient = txClient;
+    this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -129,7 +130,7 @@ public class FileLogAppender extends LogAppender {
     try {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
-                                                                        txClient,
+                                                                        txExecutorFactory,
                                                                         locationFactory);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,

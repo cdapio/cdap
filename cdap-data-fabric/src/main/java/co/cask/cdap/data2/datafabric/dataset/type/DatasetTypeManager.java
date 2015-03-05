@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramClassLoader;
@@ -70,15 +71,17 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final LocationFactory locationFactory;
 
   private final Map<String, DatasetModule> defaultModules;
+  private final boolean allowDatasetUncheckedUpgrade;
 
   @Inject
-  public DatasetTypeManager(MDSDatasetsRegistry mdsDatasets,
+  public DatasetTypeManager(CConfiguration configuration, MDSDatasetsRegistry mdsDatasets,
                             LocationFactory locationFactory,
                             @Named("defaultDatasetModules")
                             Map<String, ? extends DatasetModule> defaultModules) {
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);
+    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   @Override
@@ -110,7 +113,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
           DatasetModuleMeta existing = datasets.getTypeMDS().getModule(datasetModuleId);
-          if (existing != null) {
+          if (existing != null && !allowDatasetUncheckedUpgrade) {
             String msg = String.format("cannot add module %s, module with the same name already exists: %s",
                                        datasetModuleId, existing);
             LOG.warn(msg);
@@ -428,7 +431,8 @@ public class DatasetTypeManager extends AbstractIdleService {
     @Override
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
-      if (datasets.getTypeMDS().getType(Id.DatasetType.from(namespaceId, typeName)) != null) {
+      Id.DatasetType typeId = Id.DatasetType.from(namespaceId, typeName);
+      if (datasets.getTypeMDS().getType(typeId) != null && !allowDatasetUncheckedUpgrade) {
         String msg = "Cannot add dataset type: it already exists: " + typeName;
         LOG.error(msg);
         throw new TypeConflictException(msg);

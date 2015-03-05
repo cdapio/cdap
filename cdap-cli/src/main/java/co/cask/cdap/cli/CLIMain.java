@@ -133,7 +133,6 @@ public class CLIMain {
         new HelpCommand(getCommandsSupplier()),
         new SearchCommandsCommand(getCommandsSupplier())
       )));
-
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
@@ -177,6 +176,18 @@ public class CLIMain {
     String namespace = Constants.DEFAULT_NAMESPACE;
 
     return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
+  }
+
+  private String limit(String string, int maxLength) {
+    if (string.length() <= maxLength) {
+      return string;
+    }
+
+    if (string.length() >= 4) {
+      return string.substring(0, string.length() - 3) + "...";
+    } else {
+      return string;
+    }
   }
 
   private void updateCLIPrompt(ClientConfig clientConfig) {
@@ -267,7 +278,13 @@ public class CLIMain {
 
   private static void usage() {
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp("CDAP CLI", getOptions());
+    String args =
+      "[--autoconnect <true|false>] " +
+      "[--debug] " +
+      "[--help] " +
+      "[--verify-ssl <true|false>] " +
+      "[--uri <arg>]";
+    formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
 }
