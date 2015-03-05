@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package co.cask.cdap.proto;
 
 /**
- * Constants for the CLI.
+ * Represents a stream in an HTTP response.
  */
-public class Constants {
+public class StreamDetail {
 
-  public static final String EV_HOSTNAME = "CDAP_HOST";
+  private String name;
 
+  public StreamDetail(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

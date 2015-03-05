@@ -58,6 +58,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
                           @Named("namespacedDSFramework") DatasetFramework namespacedFramework) {
 
+    super(locationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;

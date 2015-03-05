@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -80,15 +81,17 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification(TABLE_NAME), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification(TABLE_NAME), classLoader);
   }
 
   @Override
-  public ObjectMappedTableDataset<?> getDataset(DatasetSpecification spec, Map<String, String> arguments,
+  public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                                Map<String, String> arguments,
                                                 ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
-    Table table = tableDef.getDataset(tableSpec, arguments, classLoader);
+    Table table = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
     Map<String, String> properties = spec.getProperties();
 
     TypeRepresentation typeRep = GSON.fromJson(

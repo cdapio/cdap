@@ -648,8 +648,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
       o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertEquals(1, o.size());
-      Set<String> expectedStreams = ImmutableSet.of("text");
+      Assert.assertEquals(2, o.size());
+      Set<String> expectedStreams = ImmutableSet.of("text", "stream");
       for (Map<String, String> stream : o) {
         Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
         Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));

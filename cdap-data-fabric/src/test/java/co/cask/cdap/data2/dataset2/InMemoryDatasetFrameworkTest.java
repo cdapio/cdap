@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 
 /**
@@ -24,7 +25,10 @@ import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Override
-  protected DatasetFramework getFramework() {
-    return new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), DEFAULT_MODULES);
+  protected DatasetFramework getFramework() throws DatasetManagementException {
+    DatasetFramework framework = new InMemoryDatasetFramework(
+      new InMemoryDefinitionRegistryFactory(), DEFAULT_MODULES, CConfiguration.create());
+    framework.createNamespace(NAMESPACE_ID);
+    return framework;
   }
 }

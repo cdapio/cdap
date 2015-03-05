@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -183,7 +184,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getAdmin(instanceInfo.getSpec());
+    return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 
   @Override
@@ -196,7 +197,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(instanceInfo.getSpec(), arguments);
+    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec(),
+                               arguments);
   }
 
   @Override
