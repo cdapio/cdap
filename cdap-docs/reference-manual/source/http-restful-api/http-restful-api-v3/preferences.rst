@@ -16,7 +16,7 @@ Use the CDAP Preferences HTTP RESTful API to save, retrieve, and delete preferen
 
 Preferences, their use and examples of using them, are described in the :ref:`Administration Manual: Preferences <preferences>`.
 
-For the remainder of this API, it is assumed that the preferences you are using is defined
+For the remainder of this API, it is assumed that the preferences you are using are defined
 by the ``<base-url>``, as described under :ref:`Conventions <http-restful-api-conventions>`.
 
 Set Preferences
@@ -32,7 +32,7 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
   PUT http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Parameter
@@ -42,7 +42,7 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
@@ -54,7 +54,7 @@ that does not exist or an application that has not yet been deployed.
 .. rubric:: HTTP Responses
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Status Codes
@@ -96,7 +96,7 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
   GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Parameter
@@ -106,14 +106,14 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
 .. rubric:: HTTP Responses
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Status Codes
@@ -136,7 +136,7 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
   DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Parameter
@@ -146,14 +146,14 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
      * - ``<app-id>``
      - Application ID
      * - ``<program-type>``
-     - One of ``flows``, ``map reduce``, ``spark``, ``workflows``, ``services`` or ``workers``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
      * - ``<program-id>``
      - Program ID
 
 .. rubric:: HTTP Responses
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Status Codes

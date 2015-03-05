@@ -8,13 +8,14 @@
 Preferences and Runtime Arguments
 =================================
 
-.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
-
 Preferences provide the ability to save configuration information at various levels of the system, including the
 CDAP Instance, Namespace, Application, and Program levels. A configuration is represented by a map of string-string
 pairs. Preferences can be retrieved, saved, and deleted through a RESTful API and through the Command Line Interface.
 When programs are started, all the Preferences at the different levels are collapsed into a single map. Preferences
-are persisted across a restart of Programs and CDAP.
+are persisted across a restart of either Programs or CDAP itself.
+
+Order of Preferences
+====================
 
 The overriding order of Preferences is:
 
@@ -27,12 +28,15 @@ the Namespace level and thus the value for the preference ``SAMPLE_KEY`` will be
 Programs such as Flows, MapReduce programs, Services, Workflows and Workers will receive the resolved preferences
 and can be accessed through the ``getRuntimeArguments`` method of the context:
 
-- For Flows, Services, Workers preferences are available to the ``initialize`` method in the context.
+- For Flows, Services, and Workers: preferences are available to the ``initialize`` method in the context.
 
-- For MapReduce, Spark preferences are available to the ``beforeSubmit`` and ``onFinish`` methods in the context.
+- For MapReduce and Spark: preferences are available to the ``beforeSubmit`` and ``onFinish`` methods in the context.
   The ``beforeSubmit`` method can pass them to the Mappers and Reducers through the job configuration.
 
 - When a Workflow receives preferences, it passes them to each MapReduce in the Workflow.
+
+Preferences Example
+===================
 
 .. highlight:: java
 

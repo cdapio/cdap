@@ -125,6 +125,7 @@ ApplicationClient
 PreferencesClient
 -----------------
 ::
+
   ClientConfig clientConfig;
 
   // Construct the client used to interact with CDAP
@@ -132,11 +133,12 @@ PreferencesClient
 
   Map<String, String> propMap = Maps.newHashMap();
   propMap.put("k1", "v1");
+
   // Set Preferences at the Instance level
   preferencesClient.setInstancePreferences(propMap);
 
   // Get Preferences at the Instance level
-  preferencesClient.getInstancePreferences();
+  Map<String, String> currentPropMap = preferencesClient.getInstancePreferences();
 
   // Delete Preferences at the Instance level
   preferencesClient.deleteInstancePreferences();
@@ -145,10 +147,10 @@ PreferencesClient
   preferencesClient.setApplicationPreferences("Dev", "MyApp", propMap);
 
   // Get only the Preferences of MyApp application which is deployed in the Dev namespace
-  preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
+  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
 
   // Get the resolved Preferences (collapsed with higher level(s) of preferences)
-  preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
+  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
 
 .. _program-client:
 

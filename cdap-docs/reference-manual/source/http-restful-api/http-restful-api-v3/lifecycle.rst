@@ -218,12 +218,12 @@ with the arguments as a JSON string in the body::
 CDAP will use these these runtime arguments only for this single invocation of the
 program.
 
-.. topic::  **Note: Runtime Arguments REST API Deprecated**
+.. topic::  **Note: Runtime Arguments RESTful API Deprecated**
 
-    As of *CDAP v2.8.0*, *Runtime Arguments REST API* have been deprecated, pending removal in a later version.
-    Replace all use of *Runtime Arguments REST API* with :ref:`Preferences REST API <http-restful-api-v3-preferences>`.
-    *Preferences REST API* will have feature-parity with *Runtime Arguments REST API* as of the version in which
-    *Runtime Arguments REST API* are removed.
+    As of *CDAP v2.8.0*, *Runtime Arguments RESTful API* have been deprecated, pending removal in a later version.
+    Replace all use of *Runtime Arguments RESTful API* with :ref:`Preferences RESTful API <http-restful-api-v3-preferences>`.
+    *Preferences RESTful API* will have feature-parity with *Runtime Arguments RESTful API* as of the version in which
+    *Runtime Arguments RESTful API* are removed.
 
 To save the runtime arguments so that CDAP will use them every time you start the program,
 issue an HTTP PUT with the parameter ``runtimeargs``::
