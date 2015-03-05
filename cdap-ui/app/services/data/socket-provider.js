@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.commons')
   .provider('MySocketProvider', function() {
 
+    var mySocketProviderMinErr = angular.$$minErr('mySocketProvider');
     var provider = this;
 
     this.defaults = {
@@ -38,7 +39,7 @@ angular.module(PKG.name + '.commons')
           var urlParams = self.urlParams = {};
           forEach(url.split(/\W/), function(param) {
             if (param === 'hasOwnProperty') {
-              throw $resourceMinErr('badname', "hasOwnProperty is not a valid parameter name.");
+              throw mySocketProviderMinErr('badname', "hasOwnProperty is not a valid parameter name.");
             }
             if (!(new RegExp("^\\d+$").test(param)) && param &&
               (new RegExp("(^|[^\\\\]):" + param + "(\\W|$)").test(url))) {
@@ -159,7 +160,7 @@ angular.module(PKG.name + '.commons')
                 break;
               case 0: break;
               default:
-                throw $resourceMinErr('badargs',
+                throw mySocketProviderMinErr('badargs',
                   "Expected up to 4 arguments [params, data, success, error], got {0} arguments",
                   arguments.length);
             }
@@ -182,8 +183,9 @@ angular.module(PKG.name + '.commons')
             if (hasBody) httpConfig.data = data;
 
             // Custom Implemention
-            var requestType = action.options && action.options.type;
-            requestType && delete action.options;
+            var requestType = (action.options && action.options.type) || 'request';
+            delete action.options;
+
             route.setUrlParams(httpConfig,
               extend({}, extractParams(data, action.params || {}), params),
               action.url);
@@ -191,10 +193,13 @@ angular.module(PKG.name + '.commons')
 
             httpConfig.url = buildUrl(httpConfig.url, httpConfig.params);
 
-            if (!requestType || requestType === 'request') {
-              dataSrc.request(httpConfig, success);
-            } else if (requestType === 'poll') {
-              dataSrc.poll(httpConfig, success);
+            switch(requestType) {
+              case 'request':
+                dataSrc.request(httpConfig, success);
+                break;
+              case 'poll':
+                dataSrc.poll(httpConfig, success);
+                break;
             }
 
             // Custom Implemention END
@@ -276,7 +281,7 @@ function isValidDottedPath(path) {
 
 function lookupDottedPath(obj, path) {
   if (!isValidDottedPath(path)) {
-    throw $resourceMinErr('badmember', 'Dotted member path "@{0}" is invalid.', path);
+    throw mySocketProviderMinErr('badmember', 'Dotted member path "@{0}" is invalid.', path);
   }
   var keys = path.split('.');
   for (var i = 0, ii = keys.length; i < ii && obj !== undefined; i++) {
