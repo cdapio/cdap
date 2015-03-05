@@ -18,15 +18,19 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
+import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -84,7 +88,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testListAndGet() throws Exception {
     final String appName = "AppWithDatasetName";
     //deploy without name to testnamespace1
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    HttpResponse response = deploy(BloatedWordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     //deploy with name to testnamespace2
@@ -102,12 +106,64 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     //get and verify app details in testnamespace1
     JsonObject result = getAppDetails(TEST_NAMESPACE1, "WordCountApp");
-    Assert.assertEquals("App", result.get("type").getAsString());
     Assert.assertEquals("WordCountApp", result.get("name").getAsString());
+    Assert.assertEquals("Application for counting words", result.get("description").getAsString());
+
+    JsonArray streams = result.get("streams").getAsJsonArray();
+    Assert.assertEquals(1, streams.size());
+    JsonObject stream = streams.get(0).getAsJsonObject();
+    Assert.assertEquals("text", stream.get("name").getAsString());
+
+    JsonArray datasets = result.get("datasets").getAsJsonArray();
+    Assert.assertEquals(1, datasets.size());
+    JsonObject dataset = datasets.get(0).getAsJsonObject();
+    Assert.assertEquals("mydataset", dataset.get("name").getAsString());
+
+    JsonArray programs = result.get("programs").getAsJsonArray();
+    Assert.assertEquals(7, programs.size());
+    JsonObject[] progs = new JsonObject[programs.size()];
+    for (int i = 0; i < programs.size(); i++) {
+      progs[i] = programs.get(i).getAsJsonObject();
+    }
+    // sort the programs by name to make this test deterministic
+    Arrays.sort(progs, new Comparator<JsonObject>() {
+      @Override
+      public int compare(JsonObject o1, JsonObject o2) {
+        return o1.get("name").getAsString().compareTo(o2.get("name").getAsString());
+      }
+    });
+    int i = 0;
+    Assert.assertEquals("Worker", progs[i].get("type").getAsString());
+    Assert.assertEquals("LazyGuy", progs[i].get("name").getAsString());
+    Assert.assertEquals("nothing to describe", progs[i].get("description").getAsString());
+    i++;
+    Assert.assertEquals("Service", progs[i].get("type").getAsString());
+    Assert.assertEquals("NoopService", progs[i].get("name").getAsString());
+    Assert.assertEquals("Dummy Service", progs[i].get("description").getAsString());
+    i++;
+    Assert.assertEquals("Workflow", progs[i].get("type").getAsString());
+    Assert.assertEquals("SingleStep", progs[i].get("name").getAsString());
+    Assert.assertEquals("", progs[i].get("description").getAsString());
+    i++;
+    Assert.assertEquals("Spark", progs[i].get("type").getAsString());
+    Assert.assertEquals("SparklingNothing", progs[i].get("name").getAsString());
+    Assert.assertEquals("Spark program that does nothing", progs[i].get("description").getAsString());
+    i++;
+    Assert.assertEquals("Mapreduce", progs[i].get("type").getAsString());
+    Assert.assertEquals("VoidMapReduceJob", progs[i].get("name").getAsString());
+    Assert.assertTrue(progs[i].get("description").getAsString().startsWith("Mapreduce that does nothing"));
+    i++;
+    Assert.assertEquals("Flow", progs[i].get("type").getAsString());
+    Assert.assertEquals("WordCountFlow", progs[i].get("name").getAsString());
+    Assert.assertEquals("Flow for counting words", progs[i].get("description").getAsString());
+    i++;
+    Assert.assertEquals("Procedure", progs[i].get("type").getAsString());
+    Assert.assertEquals("WordFrequency", progs[i].get("name").getAsString());
+    Assert.assertEquals("Procedure for executing WordFrequency.", progs[i].get("description").getAsString());
 
     //get and verify app details in testnamespace2
     result = getAppDetails(TEST_NAMESPACE2, appName);
-    Assert.assertEquals(appName, result.get("id").getAsString());
+    Assert.assertEquals(appName, result.get("name").getAsString());
 
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
