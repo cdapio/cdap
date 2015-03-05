@@ -303,7 +303,9 @@ The default TTL for all Streams is infinite, meaning that events will never expi
 The format property defines how Stream event bodies should be read for data exploration.
 Different formats support different types of schemas. Schemas are used to determine
 the table schema used for running ad-hoc SQL-like queries on the Stream.
-See :ref:`stream-exploration` for more information about formats and schemas. 
+See :ref:`stream-exploration` for more information about formats and schemas.
+The notification threshold defines increment of data that a Stream has to receive before
+publishing a notification.
 
 Stream properties can be changed with an HTTP PUT method to the URL::
 
@@ -332,6 +334,9 @@ New properties are passed in the JSON request body.
      - Number of seconds that an event will be valid for since ingested
    * - ``format``
      - JSON Object describing the format name, schema, and settings
+   * - ``notification.threshold.mb``
+     - Increment of data, in MB, that a Stream has to receive before
+       publishing a notification.
 
 If a property is not given in the request body, no change will be made to the value.
 For example, setting format but not TTL will preserve the current value for TTL.
@@ -375,7 +380,8 @@ the Stream and re-create it with the new schema.
                ]
              },
              "settings": { "delimiter": " " }
-           } 
+           },
+           "notification.threshold.mb" : 1000
          }
      
    * - Description
