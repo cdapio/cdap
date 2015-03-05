@@ -25,7 +25,6 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.common.base.Objects;
@@ -102,18 +101,20 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Inject
   public HBaseQueueAdmin(Configuration hConf,
                          CConfiguration cConf,
-                         LocationFactory locationFactory) throws IOException {
-    this(hConf, cConf, locationFactory, QUEUE);
+                         LocationFactory locationFactory,
+                         HBaseTableUtil tableUtil) throws IOException {
+    this(hConf, cConf, locationFactory, tableUtil, QUEUE);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
                             CConfiguration cConf,
                             LocationFactory locationFactory,
+                            HBaseTableUtil tableUtil,
                             QueueConstants.QueueType type) throws IOException {
     super(cConf, type);
     this.hConf = hConf;
     this.cConf = cConf;
-    this.tableUtil = new HBaseTableUtilFactory().get(cConf);
+    this.tableUtil = tableUtil;
     this.type = type;
     this.locationFactory = locationFactory;
   }

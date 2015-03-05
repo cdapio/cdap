@@ -263,9 +263,8 @@ public class ExploreServiceUtils {
     }
     Set<String> bootstrapClassPaths = getBoostrapClasses();
 
-    Set<File> hBaseTableDeps =
-      traceDependencies(new HBaseTableUtilFactory().getHBaseTableUtilClass().getCanonicalName(),
-                        bootstrapClassPaths, usingCL);
+    Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getCanonicalName(),
+                                                 bootstrapClassPaths, usingCL);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.

@@ -43,7 +43,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get(CConfiguration.create());
+  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create()).get();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -65,6 +65,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
       @Override
       protected void configure() {
         bind(Configuration.class).toInstance(testHBase.getConfiguration());
+        bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }
     });
 

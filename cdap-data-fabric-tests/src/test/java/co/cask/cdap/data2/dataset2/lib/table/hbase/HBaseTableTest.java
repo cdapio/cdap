@@ -87,7 +87,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     cConf = CConfiguration.create();
-    hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
+    hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
     hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
   }
@@ -103,7 +103,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   protected BufferingTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
     return
-      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), cConf, true);
+      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(),
+                     hBaseTableUtil, true);
   }
 
   @Override
@@ -122,7 +123,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin(ttlTable, props).create();
-    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(), cConf, false);
+    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(),
+                                      hBaseTableUtil, false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -151,7 +153,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin(noTtlTable, props2).create();
-    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(), cConf, false);
+    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(),
+                                       hBaseTableUtil, false);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);

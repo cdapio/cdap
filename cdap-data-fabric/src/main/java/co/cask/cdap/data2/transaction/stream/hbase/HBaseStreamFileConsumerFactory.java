@@ -34,7 +34,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -60,11 +59,11 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Inject
   HBaseStreamFileConsumerFactory(StreamAdmin streamAdmin, StreamConsumerStateStoreFactory stateStoreFactory,
-                                 CConfiguration cConf, Configuration hConf) {
+                                 CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
     super(cConf, streamAdmin, stateStoreFactory);
     this.hConf = hConf;
     this.cConf = cConf;
-    this.tableUtil = new HBaseTableUtilFactory().get(cConf);
+    this.tableUtil = tableUtil;
   }
 
   @Override

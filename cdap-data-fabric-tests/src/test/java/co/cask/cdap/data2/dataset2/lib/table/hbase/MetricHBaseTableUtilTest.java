@@ -54,7 +54,7 @@ public class MetricHBaseTableUtilTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     cConf = CConfiguration.create();
-    hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
+    hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
     hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 

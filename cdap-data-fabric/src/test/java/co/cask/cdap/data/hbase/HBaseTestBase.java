@@ -50,9 +50,9 @@ public abstract class HBaseTestBase {
   }
 
   // TODO: This method should be removed in favor of HBaseTableUtil#createHTable. Currently only used in Queue Tests
-    public HTable createHTable(byte[] tableName) throws IOException {
-      return new HTable(getConfiguration(), tableName);
-    }
+  public HTable createHTable(byte[] tableName) throws IOException {
+    return new HTable(getConfiguration(), tableName);
+  }
 
   // TODO: This method should be removed in favor of HBaseTableUtil#deleteAllInNamespace - AGREED.
   public void deleteTables(String prefix) throws IOException {

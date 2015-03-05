@@ -39,7 +39,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCach
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -128,14 +127,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
 
-    //create HBase namespace
-    tableUtil = new HBaseTableUtilFactory().get(cConf);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
-
-    final Injector injector = Guice.createInjector(
+        final Injector injector = Guice.createInjector(
       dataFabricModule,
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -162,6 +154,13 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       })
     );
+
+    //create HBase namespace
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+
+    ConfigurationTable configTable = new ConfigurationTable(hConf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();

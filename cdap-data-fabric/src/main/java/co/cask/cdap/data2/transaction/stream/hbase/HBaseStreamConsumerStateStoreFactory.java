@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -25,7 +24,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
@@ -46,9 +44,9 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   private final HBaseTableUtil tableUtil;
 
   @Inject
-  HBaseStreamConsumerStateStoreFactory(Configuration hConf, CConfiguration cConf) {
+  HBaseStreamConsumerStateStoreFactory(Configuration hConf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
-    this.tableUtil = new HBaseTableUtilFactory().get(cConf);
+    this.tableUtil = tableUtil;
   }
 
   @Override

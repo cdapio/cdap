@@ -34,7 +34,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -105,7 +104,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
 
-    tableUtil = new HBaseTableUtilFactory().get(cConf);
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
   }

@@ -75,7 +75,7 @@ public class ConfigurationTable {
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get(cConf);
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
       HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd);

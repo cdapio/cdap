@@ -44,7 +44,7 @@ public class ConfigurationTableTest {
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     testHBase.startHBase();
-    tableUtil = new HBaseTableUtilFactory().get(cConf);
+    tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
