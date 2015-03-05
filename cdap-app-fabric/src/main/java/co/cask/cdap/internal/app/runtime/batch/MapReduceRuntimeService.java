@@ -651,7 +651,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // Ignore
     }
     try {
-      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
+      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().getHBaseTableUtilClass();
       classes.add(hbaseTableUtilClass);
     } catch (ProvisionException e) {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");

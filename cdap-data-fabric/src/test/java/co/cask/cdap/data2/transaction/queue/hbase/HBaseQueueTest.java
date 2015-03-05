@@ -129,7 +129,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       });
 
     //create HBase namespace
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = new HBaseTableUtilFactory().get(cConf);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
@@ -180,7 +180,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    tableUtil = new HBaseTableUtilFactory().get();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
@@ -219,7 +218,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.createHTable(Bytes.toBytes(tableName));
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -233,7 +232,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.createHTable(Bytes.toBytes(tableName));
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));

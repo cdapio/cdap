@@ -45,7 +45,7 @@ public final class DistributedUnderlyingSystemNamespaceAdmin extends UnderlyingS
                                                    ExploreFacade exploreFacade) {
     super(cConf, locationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
-    this.tableUtil = new HBaseTableUtilFactory().get();
+    this.tableUtil = new HBaseTableUtilFactory().get(cConf);
   }
 
   @Override

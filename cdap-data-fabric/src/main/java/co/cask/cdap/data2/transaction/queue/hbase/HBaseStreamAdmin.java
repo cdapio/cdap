@@ -44,9 +44,9 @@ import javax.annotation.Nullable;
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Inject
-  public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, locationFactory, tableUtil, QueueConstants.QueueType.STREAM);
+  public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf,
+                          LocationFactory locationFactory) throws IOException {
+    super(hConf, cConf, locationFactory, QueueConstants.QueueType.STREAM);
   }
 
   @Override

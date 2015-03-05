@@ -29,9 +29,10 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
@@ -78,19 +79,22 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTableUtil hBaseTableUtil;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
+    cConf = CConfiguration.create();
+    hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
     hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testHBase.deleteTables(hBaseTableUtil.toHBaseNamespace(NAMESPACE_ID));
+    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(NAMESPACE_ID));
     hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     testHBase.stopHBase();
   }
@@ -99,14 +103,14 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   protected BufferingTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
     return
-      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), true);
+      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(), cConf, true);
   }
 
   @Override
   protected HBaseTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
     return new HBaseTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
-                               CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
+                               cConf, new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
   @Test
@@ -118,7 +122,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin(ttlTable, props).create();
-    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(), false);
+    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(), cConf, false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -147,7 +151,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin(noTtlTable, props2).create();
-    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(), false);
+    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(), cConf, false);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);

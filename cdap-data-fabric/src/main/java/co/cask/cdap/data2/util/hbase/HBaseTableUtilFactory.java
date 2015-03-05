@@ -16,22 +16,43 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
+
 /**
  * Factory for HBase version-specific {@link HBaseTableUtil} instances.
  */
-public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTableUtil> {
-  @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
+public class HBaseTableUtilFactory {
+  private final HBaseVersionSpecificFactory<HBaseTableUtil> delegate;
+
+  public HBaseTableUtilFactory() {
+    delegate = new HBaseVersionSpecificFactory<HBaseTableUtil>() {
+      @Override
+      protected String getHBase94Classname() {
+        return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
+      }
+
+      @Override
+      protected String getHBase96Classname() {
+        return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
+      }
+
+      @Override
+      protected String getHBase98Classname() {
+        return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+      }
+    };
   }
 
-  @Override
-  protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
+  // There are a few places where we only need the class of the HBaseTableUtil, and so it does not need to be configured
+  // with a CConfiguration
+  public Class<? extends HBaseTableUtil> getHBaseTableUtilClass() {
+    return delegate.get().getClass();
   }
 
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+  public HBaseTableUtil get(CConfiguration cConf) {
+    HBaseTableUtil hBaseTableUtil = delegate.get();
+    hBaseTableUtil.setCConf(cConf);
+    return hBaseTableUtil;
   }
+
 }
