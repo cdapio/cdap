@@ -70,7 +70,7 @@ You can deploy the application into your running instance of CDAP either by usin
 
 or using ``curl`` to directly make an HTTP request::
 
-  $ curl -H "X-Archive-Name: cdap-wise-0.2.1.jar" localhost:10000/v2/apps \
+  $ curl -H "X-Archive-Name: cdap-wise-0.2.1.jar" localhost:10000/v3/namespaces/default/apps \
     --data-binary @target/cdap-wise-0.2.2.jar
 
 **Learn More:** *You can also deploy apps* :ref:`using the CDAP Console. <cdap-console>`
@@ -86,14 +86,14 @@ Now that the application is deployed, we can start the real-time processing::
 This starts the Flow named *WiseFlow,* which listens for log events from web servers to
 analyze them in realtime. Another way to start the flow is using ``curl``::
 
-  $ curl -w '\n' -X POST localhost:10000/v2/apps/Wise/flows/WiseFlow/start
+  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 
 At any time, you can find out whether the Flow is running::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh get status flow Wise.WiseFlow
   RUNNING
   
-  $ curl -w '\n' localhost:10000/v2/apps/Wise/flows/WiseFlow/status
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status
   {"status":"RUNNING"}
 
 
@@ -109,7 +109,7 @@ Command Line Interface::
 
 Or, you can use an HTTP request::
 
-  $ curl localhost:10000/v2/streams/logEventStream \
+  $ curl localhost:10000/v3/namespaces/default/streams/logEventStream \
     -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" \ 
     401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 
@@ -164,7 +164,7 @@ events into the Stream.
 The same query can be made using curl with an HTTP request. However, you'll need to adjust the
 start and end of the time range to milliseconds since the start of the Epoch::
 
-  $ curl -w '\n' localhost:10000/v2/streams/logEventStream/events?start=1412385622228\&end=1412386402228\&limit=5
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412385622228\&end=1412386402228\&limit=5
   
 The current time in seconds since the start of the Epoch can be found with::
 
@@ -189,7 +189,7 @@ In this case, it is a Flowlet named *parser*. Here is a ``curl`` command to retr
 number of events it has processed (the number return will vary, depending on how many
 events you have sent)::
 
-  $ curl -w '\n' localhost:10000/v2/metrics/system/apps/Wise/flows/WiseFlow/flowlets/parser/\
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/metrics/system/apps/Wise/flows/WiseFlow/flowlets/parser/\
   process.events.processed\?aggregate=true
   {"data":3000}
 
@@ -229,9 +229,9 @@ can start the service using the Command Line Interface::
   
 Or, using a REST call::
 
-  $ curl -X POST localhost:10000/v2/apps/Wise/services/WiseService/start
+  $ curl -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start
   
-  $ curl -w '\n' localhost:10000/v2/apps/Wise/services/WiseService/status
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status
   {"status":"RUNNING"}
 
 Now that the service is running, we can query it to find out the current count for a
@@ -244,12 +244,12 @@ particular IP address. For example, the data injected by our script contains thi
 To find out the total number of page views from this IP address, we can query the service
 using a REST call::
 
-  $ curl -w '\n' localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
   42
 
 Or, we can find out how many times the URL "/home.html" was accessed from the same IP address::
 
-  $ curl -w '\n' -d "/home.html" localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
+  $ curl -w'\n' -d "/home.html" localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
   6
 
 Note that this is a POST request, because we need to send over the URL of interest.
@@ -294,7 +294,7 @@ CLI::
   
 or using a REST call::
 
-  $ curl -X POST localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
+  $ curl -X POST localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
 
 Note that this MapReduce program processes the exact same data that is consumed by the
 WiseFlow, namely, the log event stream, and both programs can run at the same time without
@@ -302,7 +302,7 @@ getting in each other’s way.
 
 We can inquire as to the status of the MapReduce::
 
-  $ curl -w '\n' localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/status
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/status
   {"status":"RUNNING"}
 
 When the job has finished, the returned status will be *STOPPED*. Now we can query the
