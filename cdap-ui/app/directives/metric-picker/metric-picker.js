@@ -62,6 +62,7 @@ angular.module(PKG.name + '.commons')
             context += '.' + scope.metric.context;
           }
 
+          scope.available.contexts = [];
           dSrc.request(
             {
               method: 'POST',
@@ -80,6 +81,7 @@ angular.module(PKG.name + '.commons')
             }
           );
 
+          scope.available.names = [];
           dSrc.request(
             {
               method: 'POST',
