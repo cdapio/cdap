@@ -375,14 +375,14 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.createNamespace(namespace2);
 
     // add modules in each namespace, with one module that shares the same name
-    Id.DatasetModule module1_ns1_ID = Id.DatasetModule.from(namespace1, SimpleKVTable.class.getName());
-    Id.DatasetModule module1_ns2_ID = Id.DatasetModule.from(namespace2, SimpleKVTable.class.getName());
-    Id.DatasetModule module2_ns2_ID = Id.DatasetModule.from(namespace2, DoubleWrappedKVTable.class.getName());
+    Id.DatasetModule simpleModuleNs1 = Id.DatasetModule.from(namespace1, SimpleKVTable.class.getName());
+    Id.DatasetModule simpleModuleNs2 = Id.DatasetModule.from(namespace2, SimpleKVTable.class.getName());
+    Id.DatasetModule doubleModuleNs2 = Id.DatasetModule.from(namespace2, DoubleWrappedKVTable.class.getName());
     DatasetModule module1 = new SingleTypeModule(SimpleKVTable.class);
     DatasetModule module2 = new SingleTypeModule(DoubleWrappedKVTable.class);
-    framework.addModule(module1_ns1_ID, module1);
-    framework.addModule(module1_ns2_ID, module1);
-    framework.addModule(module2_ns2_ID, module2);
+    framework.addModule(simpleModuleNs1, module1);
+    framework.addModule(simpleModuleNs2, module1);
+    framework.addModule(doubleModuleNs2, module2);
 
     // check that we can add instances of datasets in those modules
     framework.addInstance(SimpleKVTable.class.getName(),
@@ -417,11 +417,11 @@ public abstract class AbstractDatasetFrameworkTest {
     }
 
     // add back modules to namespace2
-    framework.addModule(module1_ns2_ID, module1);
-    framework.addModule(module2_ns2_ID, module2);
+    framework.addModule(simpleModuleNs2, module1);
+    framework.addModule(doubleModuleNs2, module2);
     // check that deleting a single module from namespace1 does not affect namespace2
     framework.deleteAllInstances(namespace1);
-    framework.deleteModule(module1_ns1_ID);
+    framework.deleteModule(simpleModuleNs1);
     // should still be able to add an instance in namespace2
     framework.addInstance(DoubleWrappedKVTable.class.getName(),
                           Id.DatasetInstance.from(namespace2, "kv1"), DatasetProperties.EMPTY);
