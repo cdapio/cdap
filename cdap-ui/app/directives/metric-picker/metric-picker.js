@@ -70,7 +70,12 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               scope.available.contexts = res.map(function(d){
-                return d.substring(bLen);
+                return {
+                  value: d.substring(bLen),
+                  display: d.substring(bLen+scope.metric.context.length)
+                };
+              }).filter(function(d) {
+                return d.display;
               });
             }
           );
