@@ -37,11 +37,24 @@ function guide_rewrite() {
   sed -e "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$GUIDE/README_SOURCE.rst > $INCLUDES_DIR/$GUIDE/README.rst
 }
 
+function guide_rewrite_rst() {
+  echo "Re-writing $1 $2"
+  # Re-writes the links in the RST file to point to a local copy of any image links.
+  INCLUDES_DIR=$1
+  GUIDE=$2
+  REDIRECT_S="../../../../.." # Source, 5 redirects
+  REDIRECT_T="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
+  
+  mkdir $INCLUDES_DIR/$GUIDE
+  sed -e "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.rst > $INCLUDES_DIR/$GUIDE/README.rst
+}
+
 function pandoc_includes() {
+  # Re-writes all the image links...
+  guide_rewrite_rst $1 cdap-bi-guide
+  guide_rewrite_rst $1 cdap-flow-guide
   # Uses pandoc to translate the README markdown files to rst in the target directory
   # and then re-writes all the image links...
-  guide_rewrite $1 cdap-bi-guide
-  guide_rewrite $1 cdap-flow-guide
   guide_rewrite $1 cdap-flume-guide
   guide_rewrite $1 cdap-kafka-ingest-guide
   guide_rewrite $1 cdap-mapreduce-guide
