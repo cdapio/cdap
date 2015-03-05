@@ -284,7 +284,13 @@ public class CLIMain {
 
   private static void usage() {
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp("CDAP CLI", getOptions());
+    String args =
+      "[--autoconnect <true|false>] " +
+      "[--debug] " +
+      "[--help] " +
+      "[--verify-ssl <true|false>] " +
+      "[--uri <arg>]";
+    formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
 }
