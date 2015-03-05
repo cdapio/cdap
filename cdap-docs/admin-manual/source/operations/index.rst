@@ -91,6 +91,24 @@ On success, the calls return a valid HTTP response with a 200 code.
 - To retrieve the **health check of all the services running in YARN**, make a GET request
   to the URI::
   
-    http://<host>:10000/v2/system/services
+    http://<host>:10000/v3/system/services
 
-  On success, the call returns a JSON string with component names and their corresponding statuses.
+  On success, the call returns a JSON string with component names and their corresponding 
+  statuses (reformatted to fit)::
+  
+    [{"name":"appfabric","description":"Service for managing application
+      lifecycle.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"dataset.executor","description":"Service to perform Dataset
+      operations.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"explore.service","description":"Service to run Ad-hoc
+      queries.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"log.saver","description":"Service to collect and store
+      logs.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"metrics","description":"Service to handle metrics
+      requests.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"metrics.processor","description":"Service to process application and system
+      metrics.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"streams","description":"Service that handles stream data
+      ingestion.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
+     {"name":"transaction","description":"Service that maintains transaction
+      states.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1}]

@@ -43,7 +43,7 @@ import javax.ws.rs.Path;
 /**
  * Console Settings HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration/consolesettings")
+@Path(Constants.Gateway.API_VERSION_3 + "/configuration/user")
 public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
