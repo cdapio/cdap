@@ -278,11 +278,11 @@ public final class FactTable {
         // todo: fast-forwarding (jumping) should be done on server-side (CDAP-1421)
         if (filledIndex >= 0) {
           scanner.close();
+          scanner = null;
           scans++;
           if (scans > MAX_SCANS_DURING_SEARCH) {
             break;
           }
-          scanner = null;
           startRow = codec.getNextRowKey(rowResult.getRow(), filledIndex);
           scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
         }
