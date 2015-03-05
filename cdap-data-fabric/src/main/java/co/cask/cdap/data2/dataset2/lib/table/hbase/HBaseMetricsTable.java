@@ -24,7 +24,6 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -54,10 +53,9 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HTable hTable;
 
-  public HBaseMetricsTable(String name, Configuration hConf, CConfiguration cConf,
+  public HBaseMetricsTable(String tableName, Configuration hConf, CConfiguration cConf,
                            HBaseTableUtil tableUtil) throws IOException {
-    String hTableName = HTableNameConverter.getHBaseTableName(name);
-    HTable hTable = tableUtil.createHTable(hConf, TableId.from(hTableName));
+    HTable hTable = tableUtil.createHTable(hConf, TableId.from(tableName));
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

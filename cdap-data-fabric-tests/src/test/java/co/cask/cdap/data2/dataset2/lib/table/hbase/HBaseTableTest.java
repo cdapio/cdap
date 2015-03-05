@@ -32,7 +32,6 @@ import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
@@ -94,7 +93,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     testHBase.stopHBase();
   }

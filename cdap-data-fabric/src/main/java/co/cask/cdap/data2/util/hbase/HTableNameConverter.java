@@ -33,11 +33,11 @@ import java.net.URLEncoder;
 public abstract class HTableNameConverter {
   protected static final String HBASE_NAMESPACE_PREFIX = "cdap_";
 
-  public static String getHBaseTableName(String tableName) {
+  private static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);
   }
 
-  public static String encodeTableName(String tableName) {
+  private static String encodeTableName(String tableName) {
     try {
       return URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -46,7 +46,7 @@ public abstract class HTableNameConverter {
     }
   }
 
-  public static String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
+  private static String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
     String tableName = tableId.getTableName();
     // handle table names in default namespace so we do not have to worry about upgrades
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
@@ -70,7 +70,7 @@ public abstract class HTableNameConverter {
   /**
    * @return Backward compatible, ASCII encoded table name
    */
-  public static String getHBaseTableName(CConfiguration cConf, TableId tableId) {
+  protected static String getHBaseTableName(CConfiguration cConf, TableId tableId) {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     Preconditions.checkArgument(tablePrefix != null, "Table prefix should not be null.");
     return getHBaseTableName(getBackwardCompatibleTableName(tablePrefix, tableId));
@@ -86,10 +86,10 @@ public abstract class HTableNameConverter {
    */
   public abstract String getSysConfigTablePrefix(String hTableName);
 
-  public abstract TableId fromTableName(String hTableName);
+  protected abstract TableId fromTableName(String hTableName);
 
   @VisibleForTesting
-  public static String toHBaseNamespace(Id.Namespace namespace) {
+  protected static String toHBaseNamespace(Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return HTableNameConverter.getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :

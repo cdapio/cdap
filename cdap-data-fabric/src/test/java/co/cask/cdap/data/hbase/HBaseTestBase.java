@@ -54,13 +54,6 @@ public abstract class HBaseTestBase {
     return new HTable(getConfiguration(), tableName);
   }
 
-  // TODO: This method should be removed in favor of HBaseTableUtil#deleteAllInNamespace - AGREED.
-  public void deleteTables(String prefix) throws IOException {
-    Pattern pattern = Pattern.compile(prefix + ".*");
-    getHBaseAdmin().disableTables(pattern);
-    getHBaseAdmin().deleteTables(pattern);
-  }
-
   public String getZkConnectionString() {
     return "localhost:" + getZKClientPort();
   }

@@ -39,7 +39,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
@@ -100,7 +99,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     testHBase.stopHBase();
   }
