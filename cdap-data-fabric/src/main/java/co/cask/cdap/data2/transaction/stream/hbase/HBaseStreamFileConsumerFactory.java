@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileReader;
@@ -33,8 +32,9 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -73,9 +73,9 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
-    String hBaseTableName = HBaseTableUtil.getHBaseTableName(tableName);
+    String hBaseTableName = HTableNameConverter.getHBaseTableName(tableName);
     TableId tableId = TableId.from(hBaseTableName);
-    HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     htd.addFamily(hcd);
@@ -87,7 +87,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     tableUtil.createTableIfNotExists(getAdmin(), tableId, htd, splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,
@@ -100,8 +100,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     HBaseAdmin admin = getAdmin();
     TableId tableId = TableId.from(tableName);
     if (tableUtil.tableExists(admin, tableId)) {
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
+      tableUtil.dropTable(admin, tableId);
     }
   }
 

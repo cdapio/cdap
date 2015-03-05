@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.test.SlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -36,46 +37,47 @@ import static org.junit.Assert.assertNotNull;
  */
 @Category(SlowTests.class)
 public class ConfigurationTableTest {
-  private static HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTableUtil tableUtil;
   private static HBaseTestBase testHBase = new HBaseTestFactory().get();
+  private static CConfiguration cConf = CConfiguration.create();
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     testHBase.startHBase();
+    tableUtil = new HBaseTableUtilFactory().get(cConf);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    testHBase.deleteTables(tableUtil.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
+    testHBase.deleteTables(HTableNameConverter.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     testHBase.stopHBase();
   }
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    CConfiguration cconf = CConfiguration.create();
-    String expectedNamespace = cconf.get(Constants.Dataset.TABLE_PREFIX);
+    String expectedNamespace = cConf.get(Constants.Dataset.TABLE_PREFIX);
 
     ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
-    configTable.write(ConfigurationTable.Type.DEFAULT, cconf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     String configTableQualifier = "configuration";
     TableId configTableId = TableId.from(String.format("%s.system.%s", expectedNamespace, configTableQualifier));
-    String configTableName = tableUtil.getHTableDescriptor(configTableId).getNameAsString();
+    String configTableName = tableUtil.createHTableDescriptor(configTableId).getNameAsString();
     // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
     String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());
 
-    CConfiguration cconf2 = configTable.read(ConfigurationTable.Type.DEFAULT, configTablePrefix);
-    assertNotNull(cconf2);
+    CConfiguration cConf2 = configTable.read(ConfigurationTable.Type.DEFAULT, configTablePrefix);
+    assertNotNull(cConf2);
 
-    for (Map.Entry<String, String> e : cconf) {
-      assertEquals("Configuration value mismatch (cconf -> cconf2) for key: " + e.getKey(),
-                   e.getValue(), cconf2.get(e.getKey()));
+    for (Map.Entry<String, String> e : cConf) {
+      assertEquals("Configuration value mismatch (cConf -> cConf2) for key: " + e.getKey(),
+                   e.getValue(), cConf2.get(e.getKey()));
     }
-    for (Map.Entry<String, String> e : cconf2) {
-      assertEquals("Configuration value mismatch (cconf2 -> cconf) for key: " + e.getKey(),
-                   e.getValue(), cconf.get(e.getKey()));
+    for (Map.Entry<String, String> e : cConf2) {
+      assertEquals("Configuration value mismatch (cConf2 -> cConf) for key: " + e.getKey(),
+                   e.getValue(), cConf.get(e.getKey()));
     }
   }
 }

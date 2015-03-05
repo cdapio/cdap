@@ -23,6 +23,7 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -53,13 +54,13 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   private HBaseAdmin hAdmin;
 
   @Inject
-  public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                     Configuration hConf, CConfiguration conf) {
+  public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService,
+                                     Configuration hConf, CConfiguration cConf) {
     this.metricsService = metricsService;
-    this.hBaseTableUtil = hBaseTableUtil;
+    this.hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
     this.hConf = hConf;
-    this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf);
+    this.reportIntervalInSec = cConf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
+    this.userDsNamespace = new DefaultDatasetNamespace(cConf);
   }
 
   @Override

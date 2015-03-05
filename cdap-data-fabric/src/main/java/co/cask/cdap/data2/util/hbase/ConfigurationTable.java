@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -65,17 +66,17 @@ public class ConfigurationTable {
    * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
    * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
    * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
-   * @param conf The CConfiguration instance to store
+   * @param cConf The CConfiguration instance to store
    * @throws IOException If an error occurs while writing the configuration
    */
-  public void write(Type type, CConfiguration conf) throws IOException {
-    TableId tableId = TableId.from(conf.get(Constants.Dataset.TABLE_PREFIX), Constants.SYSTEM_NAMESPACE, TABLE_NAME);
+  public void write(Type type, CConfiguration cConf) throws IOException {
+    TableId tableId = TableId.from(Constants.SYSTEM_NAMESPACE, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-      HTableDescriptor htd = tableUtil.getHTableDescriptor(tableId);
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get(cConf);
+      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd);
 
@@ -84,10 +85,10 @@ public class ConfigurationTable {
       byte[] typeBytes = Bytes.toBytes(type.name());
       LOG.info("Writing new config row with key " + type);
       // populate the configuration data
-      table = tableUtil.getHTable(hbaseConf, tableId);
+      table = tableUtil.createHTable(hbaseConf, tableId);
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
-      for (Map.Entry<String, String> e : conf) {
+      for (Map.Entry<String, String> e : cConf) {
         p.add(FAMILY, Bytes.toBytes(e.getKey()), now, Bytes.toBytes(e.getValue()));
       }
       table.put(p);

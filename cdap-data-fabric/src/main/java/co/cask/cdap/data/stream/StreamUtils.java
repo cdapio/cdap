@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.io.LocationStatus;
@@ -23,6 +24,7 @@ import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
@@ -425,12 +427,24 @@ public final class StreamUtils {
   }
 
   /**
-   * Gets a table name for stream consumer state stores within a given namespace.
+   * Gets a TableId for stream consumer state stores within a given namespace.
+   * @param namespace the namespace for which the table is for.
+   * @return constructed TableId
+   */
+  public static TableId getStateStoreTableId(Id.Namespace namespace) {
+    String tableName = String.format("%s.%s.state.store",
+                                     Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
+    return TableId.from(namespace.getId(), tableName);
+  }
+
+  /**
+   * Gets the table name for stream consumer state stores within a given namespace.
    * @param namespace the namespace for which the table is for.
    * @return constructed table name
    */
   public static String getStateStoreTableName(Id.Namespace namespace) {
-    return String.format("cdap.%s.%s.state.store", namespace.getId(), QueueConstants.QueueType.STREAM.toString());
+    TableId tableId = getStateStoreTableId(namespace);
+    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
   }
 
   /**

@@ -21,15 +21,26 @@ package co.cask.cdap.data2.transaction.queue;
 public final class QueueUtils {
 
   public static String determineQueueConfigTableName(String queueTableName) {
-    // the name of this table has the form: <cdap root namespace>.<queue namespace>.<system namespace>.(queue|stream).*
+    // the name of this table has the form:
+    // <cdap root namespace>.<queue namespace><hbase namespace delimiter><system namespace>.(queue|stream).*
     // beware that the cdap name space may also contain ., but there must be at least two .
 
-    int firstDot = queueTableName.indexOf('.');
-    if (firstDot < 0) {
+    int dotPos = queueTableName.indexOf('.');
+    int colonPos = queueTableName.indexOf(':');
+
+    int nsDivider;
+    // In hbase 0.96, 0.98, a ':' is used as the namespace divider. In 0.94, a '.' is used.
+    if (colonPos >= 0) {
+      nsDivider = colonPos;
+    } else {
+      nsDivider = dotPos;
+    }
+
+    if (nsDivider < 0) {
       throw new IllegalArgumentException(
         "Unable to determine config table name from queue table name '" + queueTableName + "'");
     }
-    int secondDot = queueTableName.indexOf('.', firstDot + 1);
+    int secondDot = queueTableName.indexOf('.', nsDivider + 1);
     if (secondDot < 0) {
       throw new IllegalArgumentException(
         "Unable to determine config table name from queue table name '" + queueTableName + "'");
