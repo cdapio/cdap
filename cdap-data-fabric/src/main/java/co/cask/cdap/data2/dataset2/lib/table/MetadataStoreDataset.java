@@ -62,22 +62,22 @@ public class MetadataStoreDataset extends AbstractDataset {
   // returns first that matches
   @Nullable
   public <T> T get(MDSKey id, Class<T> classOfT) {
-    try {
-      Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
-      Row row = scan.next();
-      if (row == null || row.isEmpty()) {
-        return null;
-      }
+    return deserialize(get(id), classOfT);
+  }
 
-      byte[] value = row.get(COLUMN);
-      if (value == null) {
-        return null;
-      }
-
-      return deserialize(value, classOfT);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+  @Nullable
+  public byte[] get(MDSKey id) {
+    Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
+    Row row = scan.next();
+    if (row == null || row.isEmpty()) {
+      return null;
     }
+
+    return row.get(COLUMN);
+  }
+
+  public boolean exists(MDSKey id) {
+    return get(id) != null;
   }
 
   // lists all that has same first id parts

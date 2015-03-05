@@ -16,11 +16,14 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -41,7 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Store for application metadata
@@ -58,6 +60,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private static final String TYPE_APP_META = "appMeta";
+  private static final String TYPE_PROGRAM = "program";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
@@ -65,8 +68,28 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
 
+  private final RootView root;
+  private final NamespaceView namespaces;
+  private final StreamView streams;
+  private final AdapterView adapters;
+  private final AppView apps;
+
+  private final ProgramView programs;
+  private final RunRecordView runsStarted;
+  private final RunRecordView runsCompleted;
+  private final ProgramArgsView programArgs;
+
   public AppMetadataStore(Table table) {
     super(table);
+    this.root = new RootView(this);
+    this.namespaces = new NamespaceView(root, this, TYPE_NAMESPACE);
+    this.apps = new AppView(namespaces, this, TYPE_APP_META);
+    this.programs = new ProgramView(apps, this, TYPE_PROGRAM);
+    this.programArgs = new ProgramArgsView(programs, this, TYPE_PROGRAM_ARGS);
+    this.runsStarted = new RunRecordView(programs, this, TYPE_RUN_RECORD_STARTED);
+    this.runsCompleted = new RunRecordView(programs, this, TYPE_RUN_RECORD_COMPLETED);
+    this.streams = new StreamView(namespaces, this, TYPE_STREAM);
+    this.adapters = new AdapterView(namespaces, this, TYPE_ADAPTER);
   }
 
   @Override
@@ -79,30 +102,34 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return GSON.fromJson(Bytes.toString(serialized), classOfT);
   }
 
-  @Nullable
-  public ApplicationMeta getApplication(String namespaceId, String appId) {
-    return get(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  public ApplicationMeta getApplication(Id.Application application) throws NotFoundException {
+    return apps.get(application);
   }
 
-  public List<ApplicationMeta> getAllApplications(String namespaceId) {
-    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
+  public ApplicationMeta getApplication(String namespaceId, String appId) throws NotFoundException {
+    return apps.get(Id.Application.from(namespaceId, appId));
+  }
+
+  public List<ApplicationMeta> getAllApplications(String namespaceId) throws NotFoundException {
+    return apps.list(Id.Namespace.from(namespaceId));
   }
 
   public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec,
-                               String archiveLocation) {
+                               String archiveLocation) throws AlreadyExistsException, NotFoundException {
+    // TODO: throw not found
+
     // NOTE: we use Gson underneath to do serde, as it doesn't serialize inner classes (which we use everywhere for
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
-    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-          new ApplicationMeta(appId, spec, archiveLocation));
+    apps.create(Id.Application.from(namespaceId, appId), new ApplicationMeta(appId, spec, archiveLocation));
   }
 
-  public void deleteApplication(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build());
+  public void deleteApplication(String namespaceId, String appId) throws NotFoundException {
+    apps.delete(Id.Application.from(namespaceId, appId));
   }
 
-  public void deleteApplications(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build());
+  public void deleteApplications(String namespaceId) throws NotFoundException {
+    apps.deleteAll(Id.Namespace.from(namespaceId));
   }
 
   // todo: do we need appId? may be use from appSpec?
@@ -128,7 +155,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public void recordProgramStart(Id.Program program, String pid, long startTs) {
+  public void recordProgramStart(Id.Program program, String pid, long startTs) throws NotFoundException {
+    // TODO: throw not found
       write(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED)
               .add(program.getNamespaceId())
               .add(program.getApplicationId())
@@ -139,7 +167,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
-  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramController.State endStatus) {
+  public void recordProgramStop(Id.Program program, String pid, long stopTs,
+                                ProgramController.State endStatus) throws NotFoundException {
+    // TODO: throw not found
+
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -172,7 +203,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,
-                                 long startTime, long endTime, int limit) {
+                                 long startTime, long endTime, int limit) throws NotFoundException {
+    // TODO: throw not found
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecord> resultRecords = Lists.newArrayList();
       resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit));
@@ -231,6 +263,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void writeStream(String namespaceId, StreamSpecification spec) {
+    // TODO: throw namespace not found
     write(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, spec.getName()).build(), spec);
   }
 
@@ -239,10 +272,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<StreamSpecification> getAllStreams(String namespaceId) {
+    // TODO: throw namespace not found
     return list(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build(), StreamSpecification.class);
   }
 
-  public void deleteAllStreams(String namespaceId) {
+  public void deleteStreams(String namespaceId) {
     deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build());
   }
 
@@ -270,105 +304,212 @@ public class AppMetadataStore extends MetadataStoreDataset {
                  .build(), ProgramArgs.class);
   }
 
-  public void deleteProgramArgs(Id.Program program) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS)
-                .add(program.getNamespaceId())
-                .add(program.getApplicationId())
-                .add(program.getType().name())
-                .add(program.getId())
-                .build());
+  public void deleteProgramArgs(Id.Program program) throws NotFoundException {
+    programArgs.delete(program);
   }
 
-  public void deleteProgramArgs(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
+  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException {
+    namespaces.create(Id.Namespace.from(metadata.getId()), metadata);
   }
 
-  public void deleteProgramArgs(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
+  public NamespaceMeta getNamespace(Id.Namespace id) throws NotFoundException {
+    return namespaces.get(id);
   }
 
-  public void deleteProgramHistory(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build());
+  public void deleteNamespace(Id.Namespace id) throws NotFoundException {
+    namespaces.deleteAll(null);
   }
 
-  public void deleteProgramHistory(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
+  public List<NamespaceMeta> listNamespaces() throws NotFoundException {
+    return namespaces.list(null);
   }
 
-  public void createNamespace(NamespaceMeta metadata) {
-    write(getNamespaceKey(metadata.getId()), metadata);
+  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec,
+                           AdapterStatus adapterStatus) throws AlreadyExistsException {
+    Id.Adapter adapter = Id.Adapter.from(id, adapterSpec.getName());
+    adapters.create(adapter, new AdapterMeta(adapterSpec, adapterStatus));
   }
 
-  public NamespaceMeta getNamespace(Id.Namespace id) {
-    return get(getNamespaceKey(id.getId()), NamespaceMeta.class);
+  public AdapterSpecification getAdapter(Id.Adapter adapter) throws NotFoundException {
+    return adapters.get(adapter).getSpec();
   }
 
-  public void deleteNamespace(Id.Namespace id) {
-    deleteAll(getNamespaceKey(id.getId()));
+  public AdapterStatus getAdapterStatus(Id.Adapter adapter) throws NotFoundException {
+    return adapters.get(adapter).getStatus();
   }
 
-  public List<NamespaceMeta> listNamespaces() {
-    return list(getNamespaceKey(null), NamespaceMeta.class);
-  }
-
-  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, AdapterStatus adapterStatus) {
-    write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
-          new AdapterMeta(adapterSpec, adapterStatus));
-  }
-
-
-  @Nullable
-  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    return adapterMeta == null ?  null : adapterMeta.getSpec();
-  }
-
-  @Nullable
-  public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    return adapterMeta == null ?  null : adapterMeta.getStatus();
-  }
-
-  @Nullable
-  public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    if (adapterMeta == null) {
-      return null;
-    }
+  public AdapterStatus setAdapterStatus(Id.Adapter adapter, AdapterStatus status) throws NotFoundException {
+    AdapterMeta adapterMeta = adapters.get(adapter);
     AdapterStatus previousStatus = adapterMeta.getStatus();
-    writeAdapter(id, adapterMeta.getSpec(), status);
+    adapters.update(adapter, new AdapterMeta(adapterMeta.getSpec(), status));
     return previousStatus;
   }
 
-  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
+  private AdapterMeta getAdapterMeta(Id.Adapter adapter) throws NotFoundException {
+    return adapters.get(adapter);
   }
 
-  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
+  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) throws NotFoundException {
+    List<AdapterMeta> adapterMetas = adapters.list(id);
     List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
-                                          AdapterMeta.class);
     for (AdapterMeta adapterMeta : adapterMetas) {
       adapterSpecs.add(adapterMeta.getSpec());
     }
     return adapterSpecs;
   }
 
-  public void deleteAdapter(Id.Namespace id, String name) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
+  public void deleteAdapter(Id.Adapter adapter) throws NotFoundException {
+    adapters.delete(adapter);
   }
 
-  public void deleteAllAdapters(Id.Namespace id) {
-    deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build());
+  public void deleteAdapters(Id.Namespace id) throws NotFoundException {
+    adapters.deleteAll(id);
   }
 
-  private MDSKey getNamespaceKey(@Nullable String name) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(TYPE_NAMESPACE);
-    if (null != name) {
-      builder.add(name);
+  // ---------------------------------------------------------------------------
+
+  public static final class RootView extends MetadataStoreView<Id.None, Void> {
+    public RootView(MetadataStoreDataset metadataStore) {
+      super(metadataStore, null, null);
     }
-    return builder.build();
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.None id) {
+      // NO-OP
+    }
+  }
+
+  public static final class NamespaceView extends ParentedMetadataStoreView<Id.None, Id.Namespace, NamespaceMeta> {
+    public NamespaceView(RootView rootView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, NamespaceMeta.class, partition, rootView);
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Namespace id) {
+      builder.add(id.getId());
+    }
+
+    @Override
+    protected Id.None getParent(Id.Namespace id) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  public static final class AppView extends ParentedMetadataStoreView<Id.Namespace, Id.Application, ApplicationMeta> {
+    public AppView(NamespaceView namespaceView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, ApplicationMeta.class, partition, namespaceView);
+    }
+
+    @Override
+    protected Id.Namespace getParent(Id.Application id) {
+      return id.getNamespace();
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Application id) {
+      builder.add(id.getId());
+    }
+  }
+
+  public static final class ProgramView
+    extends ParentedMetadataStoreView<Id.Application, Id.Application.Program, ProgramSpecification> {
+
+    public ProgramView(AppView appView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, ProgramSpecification.class, partition, appView);
+    }
+
+    @Override
+    protected Id.Application getParent(Id.Application.Program id) {
+      return id.getApplication();
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Application.Program id) {
+      builder.add(id.getId());
+    }
+  }
+
+  public static final class AdapterView extends ParentedMetadataStoreView<Id.Namespace, Id.Adapter, AdapterMeta> {
+    public AdapterView(NamespaceView namespaceView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, AdapterMeta.class, partition, namespaceView);
+    }
+
+    @Override
+    protected Id.Namespace getParent(Id.Adapter id) {
+      return id.getNamespace();
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Adapter id) {
+      builder.add(id.getId());
+    }
+  }
+
+//  private static final class ProgramView extends MetadataStoreView<Id.Application, Id.Program, ApplicationMeta> {
+//    public ProgramView(AppView apps, MetadataStoreDataset metadataStore, String partition) {
+//      super(metadataStore, ProgramMeta.class, partition, apps);
+//    }
+//
+//    @Override
+//    protected Id.Namespace getParent(Id.Application id) {
+//      return id.getNamespace();
+//    }
+//
+//    @Override
+//    protected void appendKey(MDSKey.Builder builder, Id.Application id) {
+//      builder.add(id.getId());
+//    }
+//  }
+
+  public static final class StreamView extends ParentedMetadataStoreView<Id.Namespace, Id.Stream, StreamSpecification> {
+    public StreamView(NamespaceView namespaceView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, StreamSpecification.class, partition, namespaceView);
+    }
+
+    @Override
+    protected Id.Namespace getParent(Id.Stream id) {
+      return id.getNamespace();
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Stream id) {
+      builder.add(id.getId());
+    }
+  }
+
+  public static final class RunRecordView
+    extends ParentedMetadataStoreView<Id.Program, Id.Program.RunRecord, RunRecord> {
+
+    public RunRecordView(ProgramView programView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, RunRecord.class, partition, programView);
+    }
+
+    @Override
+    protected Id.Program getParent(Id.Program.RunRecord id) {
+      return id.getProgram();
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Program.RunRecord id) {
+      builder.add(id.getId());
+    }
+  }
+
+  public static final class ProgramArgsView
+    extends ParentedMetadataStoreView<Id.Program, Id.Program, ProgramArgs> {
+
+    public ProgramArgsView(ProgramView programView, MetadataStoreDataset metadataStore, String partition) {
+      super(metadataStore, ProgramArgs.class, partition, programView);
+    }
+
+    @Override
+    protected Id.Program getParent(Id.Program id) {
+      return id;
+    }
+
+    @Override
+    protected void appendKey(MDSKey.Builder builder, Id.Program id) {
+      // NO-OP
+    }
   }
 }

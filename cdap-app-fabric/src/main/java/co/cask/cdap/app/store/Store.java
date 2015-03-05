@@ -25,6 +25,8 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
@@ -54,7 +56,7 @@ public interface Store {
    * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
+  Program loadProgram(Id.Program program, ProgramType type) throws IOException, NotFoundException;
 
   /**
    * Logs start of program run.
@@ -63,7 +65,7 @@ public interface Store {
    * @param pid       run id
    * @param startTime start timestamp
    */
-  void setStart(Id.Program id, String pid, long startTime);
+  void setStart(Id.Program id, String pid, long startTime) throws NotFoundException;
 
   /**
    * Logs end of program run.
@@ -73,7 +75,7 @@ public interface Store {
    * @param endTime end timestamp
    * @param state   State of program
    */
-  void setStop(Id.Program id, String pid, long endTime, ProgramController.State state);
+  void setStop(Id.Program id, String pid, long endTime, ProgramController.State state) throws NotFoundException;
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -87,21 +89,21 @@ public interface Store {
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
-                          long startTime, long endTime, int limit);
+                          long startTime, long endTime, int limit) throws NotFoundException;
 
   /**
    * Creates a new stream if it does not exist.
    * @param id the namespace id
    * @param stream the stream to create
    */
-  void addStream(Id.Namespace id, StreamSpecification stream);
+  void addStream(Id.Namespace id, StreamSpecification stream) throws NotFoundException;
 
   /**
    * Get the spec of a named stream.
    * @param id the namespace id
    * @param name the name of the stream
    */
-  StreamSpecification getStream(Id.Namespace id, String name);
+  StreamSpecification getStream(Id.Namespace id, String name) throws NotFoundException;
 
   /**
    * Get the specs of all streams for a namespace.
@@ -109,7 +111,7 @@ public interface Store {
    * @param id the namespace id
    */
 
-  Collection<StreamSpecification> getAllStreams(Id.Namespace id);
+  Collection<StreamSpecification> getAllStreams(Id.Namespace id) throws NotFoundException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -119,7 +121,7 @@ public interface Store {
    * @param appArchiveLocation location of the deployed app archive
    */
   void addApplication(Id.Application id,
-                      ApplicationSpecification specification, Location appArchiveLocation);
+                      ApplicationSpecification specification, Location appArchiveLocation) throws AlreadyExistsException, NotFoundException;
 
 
   /**
@@ -131,7 +133,7 @@ public interface Store {
    * @return                     List of ProgramSpecifications that are deleted
    */
   List<ProgramSpecification> getDeletedProgramSpecifications (Id.Application id,
-                                                              ApplicationSpecification specification);
+                                                              ApplicationSpecification specification) throws NotFoundException;
 
   /**
    * Returns application specification by id.
@@ -139,13 +141,12 @@ public interface Store {
    * @param id application id
    * @return application specification
    */
-  @Nullable
-  ApplicationSpecification getApplication(Id.Application id);
+  ApplicationSpecification getApplication(Id.Application id) throws NotFoundException;
 
   /**
    * Returns a collection of all application specs.
    */
-  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
+  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id) throws NotFoundException;
 
   /**
    * Returns location of the application archive.
@@ -154,7 +155,7 @@ public interface Store {
    * @return application archive location
    */
   @Nullable
-  Location getApplicationArchiveLocation(Id.Application id);
+  Location getApplicationArchiveLocation(Id.Application id) throws NotFoundException;
 
   /**
    * Sets number of instances of specific flowlet.
@@ -163,7 +164,7 @@ public interface Store {
    * @param flowletId flowlet id
    * @param count new number of instances
    */
-  void setFlowletInstances(Id.Program id, String flowletId, int count);
+  void setFlowletInstances(Id.Program id, String flowletId, int count) throws NotFoundException;
 
   /**
    * Gets number of instances of specific flowlet.
@@ -171,7 +172,7 @@ public interface Store {
    * @param id flow id
    * @param flowletId flowlet id
    */
-  int getFlowletInstances(Id.Program id, String flowletId);
+  int getFlowletInstances(Id.Program id, String flowletId) throws NotFoundException;
 
   /**
    * Set the number of procedure instances.
@@ -181,7 +182,7 @@ public interface Store {
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  void setProcedureInstances(Id.Program id, int count);
+  void setProcedureInstances(Id.Program id, int count) throws NotFoundException;
 
   /**
    * Gets the number of procedure instances.
@@ -191,7 +192,7 @@ public interface Store {
    * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
-  int getProcedureInstances(Id.Program id);
+  int getProcedureInstances(Id.Program id) throws NotFoundException;
 
   /**
    * Sets the number of instances of a service.
@@ -199,14 +200,14 @@ public interface Store {
    * @param id program id
    * @param instances number of instances
    */
-  void setServiceInstances(Id.Program id, int instances);
+  void setServiceInstances(Id.Program id, int instances) throws NotFoundException;
 
   /**
    * Returns the number of instances of a service.
    * @param id program id
    * @return number of instances
    */
-  int getServiceInstances(Id.Program id);
+  int getServiceInstances(Id.Program id) throws NotFoundException;
 
   /**
    * Sets the number of instances of a {@link ServiceWorker}.
@@ -215,7 +216,7 @@ public interface Store {
    * @param workerName name of the {@link ServiceWorker}
    * @param instances number of instances
    */
-  void setServiceWorkerInstances(Id.Program id, String workerName, int instances);
+  void setServiceWorkerInstances(Id.Program id, String workerName, int instances) throws NotFoundException;
 
   /**
    * Returns the number of instances of a {@link ServiceWorker}.
@@ -224,7 +225,7 @@ public interface Store {
    * @param workerName name of the {@link ServiceWorker}.
    * @return number of instances
    */
-  int getServiceWorkerInstances(Id.Program id, String workerName);
+  int getServiceWorkerInstances(Id.Program id, String workerName) throws NotFoundException;
 
   /**
    * Sets the number of instances of a {@link Worker}
@@ -232,35 +233,35 @@ public interface Store {
    * @param id program id
    * @param instances number of instances
    */
-  void setWorkerInstances(Id.Program id, int instances);
+  void setWorkerInstances(Id.Program id, int instances) throws NotFoundException;
 
   /**
    * Gets the number of instances of a {@link Worker}
    * @param id program id
    * @return number of instances
    */
-  int getWorkerInstances(Id.Program id);
+  int getWorkerInstances(Id.Program id) throws NotFoundException;
 
   /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id
    */
-  void removeApplication(Id.Application id);
+  void removeApplication(Id.Application id) throws NotFoundException;
 
   /**
    * Removes all applications (with programs) associated with the given namespace.
    *
    * @param id namespace id whose applications to remove
    */
-  void removeAllApplications(Id.Namespace id);
+  void removeAllApplications(Id.Namespace id) throws NotFoundException;
 
   /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove
    */
-  void removeAll(Id.Namespace id);
+  void removeAll(Id.Namespace id) throws NotFoundException;
 
   /**
    * Store the user arguments needed in the run-time.
@@ -268,7 +269,7 @@ public interface Store {
    * @param programId id of program
    * @param arguments Map of key value arguments
    */
-  void storeRunArguments(Id.Program programId, Map<String, String> arguments);
+  void storeRunArguments(Id.Program programId, Map<String, String> arguments) throws NotFoundException;
 
   /**
    * Get run time arguments for a program.
@@ -276,7 +277,7 @@ public interface Store {
    * @param programId id of the program.
    * @return Map of key, value pairs
    */
-  Map<String, String> getRunArguments(Id.Program programId);
+  Map<String, String> getRunArguments(Id.Program programId) throws NotFoundException;
 
   /**
    * Changes input stream for a flowlet connection
@@ -285,14 +286,14 @@ public interface Store {
    * @param oldValue name of the stream in stream connection to change
    * @param newValue name of the new stream to connect to
    */
-  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
+  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue) throws NotFoundException;
   /**
    * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
    * throw RuntimeException.
    * @param program defines program to which a schedule is being added
    * @param scheduleSpecification defines the schedule to be added for the program
    */
-  void addSchedule(Id.Program program, ScheduleSpecification scheduleSpecification);
+  void addSchedule(Id.Program program, ScheduleSpecification scheduleSpecification) throws NotFoundException, AlreadyExistsException;
 
   /**
    * Deletes a schedules from a particular program
@@ -300,7 +301,7 @@ public interface Store {
    * @param programType defines the type of the program
    * @param scheduleName the name of the schedule to be removed from the program
    */
-  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) throws NotFoundException, AlreadyExistsException;
 
   /**
    * Check if a program exists.
@@ -319,7 +320,7 @@ public interface Store {
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
    */
   @Nullable
-  NamespaceMeta createNamespace(NamespaceMeta metadata);
+  NamespaceMeta createNamespace(NamespaceMeta metadata) throws AlreadyExistsException;
 
   /**
    * Retrieves a namespace from the namespace metadata store.
@@ -328,7 +329,7 @@ public interface Store {
    * @return {@link NamespaceMeta} of the requested namespace
    */
   @Nullable
-  NamespaceMeta getNamespace(Id.Namespace id);
+  NamespaceMeta getNamespace(Id.Namespace id) throws NotFoundException;
 
   /**
    * Deletes a namespace from the namespace metadata store.
@@ -339,7 +340,7 @@ public interface Store {
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
    */
   @Nullable
-  NamespaceMeta deleteNamespace(Id.Namespace id);
+  NamespaceMeta deleteNamespace(Id.Namespace id) throws NotFoundException;
 
   /**
    * Lists all registered namespaces.
@@ -354,7 +355,7 @@ public interface Store {
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec) throws AlreadyExistsException;
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
@@ -364,7 +365,7 @@ public interface Store {
    * @return an instance of {@link AdapterSpecification}.
    */
   @Nullable
-  AdapterSpecification getAdapter(Id.Namespace id, String name);
+  AdapterSpecification getAdapter(Id.Namespace id, String name) throws NotFoundException;
 
   /**
    * Fetch the status for an adapter identified by the name in a give namespace.
@@ -374,7 +375,7 @@ public interface Store {
    * @return status of specified adapter.
    */
   @Nullable
-  AdapterStatus getAdapterStatus(Id.Namespace id, String name);
+  AdapterStatus getAdapterStatus(Id.Namespace id, String name) throws NotFoundException;
 
   /**
    * Set the status for an adapter identified by the name in a give namespace.
@@ -385,7 +386,7 @@ public interface Store {
    * @return previous status of adapter, or null if specified adapter is not found.
    */
   @Nullable
-  AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status);
+  AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) throws NotFoundException;
 
   /**
    * Fetch all the adapters in a given namespace.
@@ -401,13 +402,13 @@ public interface Store {
    * @param id Namespace id.
    * @param name Adapter name.
    */
-  void removeAdapter(Id.Namespace id, String name);
+  void removeAdapter(Id.Namespace id, String name) throws NotFoundException;
 
   /**
    * Remove all the adapters in a given namespace.
    *
    * @param id Namespace id.
    */
-  void removeAllAdapters(Id.Namespace id);
+  void removeAllAdapters(Id.Namespace id) throws NotFoundException;
 
 }

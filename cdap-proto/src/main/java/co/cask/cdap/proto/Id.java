@@ -72,6 +72,27 @@ public abstract class Id {
   public abstract String getId();
 
   /**
+   * Placeholder for no id.
+   */
+  public static final class None extends Id {
+
+    public None() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getId() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  /**
    * Indicates that the ID belongs to a namespace.
    */
   public abstract static class NamespacedId extends Id {
@@ -471,6 +492,40 @@ public abstract class Id {
     @Override
     public Id getParent() {
       return application;
+    }
+
+    /**
+     * Uniquely identifies a Program's run record.
+     */
+    public static class RunRecord extends NamespacedId {
+
+      private final Program program;
+      private final String pid;
+
+      public RunRecord(Program program, String pid) {
+        this.program = program;
+        this.pid = pid;
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return program.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return program;
+      }
+
+      @Override
+      public String getId() {
+        return pid;
+      }
+
+      public Program getProgram() {
+        return program;
+      }
     }
   }
 

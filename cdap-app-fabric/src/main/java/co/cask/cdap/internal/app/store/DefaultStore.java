@@ -39,6 +39,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,6 +62,7 @@ import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -143,19 +146,14 @@ public class DefaultStore implements Store {
     framework.addInstance(Table.class.getName(), appMetaDatasetInstanceId, DatasetProperties.EMPTY);
   }
 
-  @Nullable
   @Override
-  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException {
-    ApplicationMeta appMeta = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
+  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException, NotFoundException {
+    ApplicationMeta appMeta = execute(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
-        return mds.apps.getApplication(id.getNamespaceId(), id.getApplicationId());
+        return mds.apps.getApplication(id.getApplication());
       }
-    });
-
-    if (appMeta == null) {
-      return null;
-    }
+    }, NotFoundException.class);
 
     Location programLocation = getProgramLocation(id, type);
     // I guess this can happen when app is being deployed at the moment... todo: should be prevented by framework
@@ -167,49 +165,48 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void setStart(final Id.Program id, final String pid, final long startTime) throws NotFoundException {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordProgramStart(id, pid, startTime);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
+  public void setStop(final Id.Program id, final String pid, final long endTime,
+                      final ProgramController.State state) throws NotFoundException {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordProgramStop(id, pid, endTime, state);
         return null;
       }
-    });
-
-
-
+    }, NotFoundException.class);
     // todo: delete old history data
   }
 
   @Override
   public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                 final long startTime, final long endTime, final int limit) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+                                 final long startTime, final long endTime, final int limit) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
         return mds.apps.getRuns(id, status, startTime, endTime, limit);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
   public void addApplication(final Id.Application id,
-                             final ApplicationSpecification spec, final Location appArchiveLocation) {
+                             final ApplicationSpecification spec,
+                             final Location appArchiveLocation) throws AlreadyExistsException, NotFoundException {
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
@@ -220,165 +217,158 @@ public class DefaultStore implements Store {
 
         return null;
       }
-    });
+    }, NotFoundException.class, AlreadyExistsException.class);
 
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
-  public List<ProgramSpecification> getDeletedProgramSpecifications(final Id.Application id,
-                                                                    ApplicationSpecification appSpec) {
+  public List<ProgramSpecification> getDeletedProgramSpecifications(
+    final Id.Application id, ApplicationSpecification appSpec) throws NotFoundException {
 
-    ApplicationMeta existing = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
+    ApplicationMeta existing = execute(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
         return mds.apps.getApplication(id.getNamespaceId(), id.getId());
       }
-    });
+    }, NotFoundException.class);
 
     List<ProgramSpecification> deletedProgramSpecs = Lists.newArrayList();
+    ApplicationSpecification existingAppSpec = existing.getSpec();
 
-    if (existing != null) {
-      ApplicationSpecification existingAppSpec = existing.getSpec();
+    ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
+                                                                    .putAll(existingAppSpec.getMapReduce())
+                                                                    .putAll(existingAppSpec.getSpark())
+                                                                    .putAll(existingAppSpec.getWorkflows())
+                                                                    .putAll(existingAppSpec.getFlows())
+                                                                    .putAll(existingAppSpec.getProcedures())
+                                                                    .putAll(existingAppSpec.getServices())
+                                                                    .build();
 
-      ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(existingAppSpec.getMapReduce())
-                                                                      .putAll(existingAppSpec.getSpark())
-                                                                      .putAll(existingAppSpec.getWorkflows())
-                                                                      .putAll(existingAppSpec.getFlows())
-                                                                      .putAll(existingAppSpec.getProcedures())
-                                                                      .putAll(existingAppSpec.getServices())
-                                                                      .build();
+    ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
+                                                                    .putAll(appSpec.getMapReduce())
+                                                                    .putAll(existingAppSpec.getSpark())
+                                                                    .putAll(appSpec.getWorkflows())
+                                                                    .putAll(appSpec.getFlows())
+                                                                    .putAll(appSpec.getProcedures())
+                                                                    .putAll(appSpec.getServices())
+                                                                    .build();
 
-      ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(appSpec.getMapReduce())
-                                                                      .putAll(existingAppSpec.getSpark())
-                                                                      .putAll(appSpec.getWorkflows())
-                                                                      .putAll(appSpec.getFlows())
-                                                                      .putAll(appSpec.getProcedures())
-                                                                      .putAll(appSpec.getServices())
-                                                                      .build();
-
-
-      MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
-      deletedProgramSpecs.addAll(mapDiff.entriesOnlyOnLeft().values());
-    }
-
+    MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
+    deletedProgramSpecs.addAll(mapDiff.entriesOnlyOnLeft().values());
     return deletedProgramSpecs;
   }
 
   @Override
-  public void addStream(final Id.Namespace id, final StreamSpecification streamSpec) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void addStream(final Id.Namespace id, final StreamSpecification streamSpec) throws NotFoundException {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeStream(id.getId(), streamSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public StreamSpecification getStream(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, StreamSpecification>() {
+  public StreamSpecification getStream(final Id.Namespace id, final String name) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, StreamSpecification>() {
       @Override
       public StreamSpecification apply(AppMds mds) throws Exception {
         return mds.apps.getStream(id.getId(), name);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public Collection<StreamSpecification> getAllStreams(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<StreamSpecification>>() {
+  public Collection<StreamSpecification> getAllStreams(final Id.Namespace id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Collection<StreamSpecification>>() {
       @Override
       public Collection<StreamSpecification> apply(AppMds mds) throws Exception {
         return mds.apps.getAllStreams(id.getId());
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
+  public void setFlowletInstances(final Id.Program id, final String flowletId,
+                                  final int count) throws NotFoundException {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
 
     LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
                 "new instances count: {}", id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
-
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
 
     LOG.trace("Set flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
   }
 
   @Override
-  public int getFlowletInstances(final Id.Program id, final String flowletId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+  public int getFlowletInstances(final Id.Program id, final String flowletId) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
         FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, id);
         return flowletDef.getInstances();
       }
-    });
-
+    }, NotFoundException.class);
   }
 
   @Override
-  public int getProcedureInstances(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+  public int getProcedureInstances(final Id.Program id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
         return specification.getInstances();
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void setWorkerInstances(final Id.Program id, final int instances) {
+  public void setWorkerInstances(final Id.Program id, final int instances) throws NotFoundException {
     Preconditions.checkArgument(instances > 0, "cannot change number of program " +
       "instances to negative number: " + instances);
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
         WorkerSpecification newSpecification = new WorkerSpecification(workerSpec.getClassName(),
                                                                        workerSpec.getName(),
                                                                        workerSpec.getDescription(),
                                                                        workerSpec.getProperties(),
                                                                        workerSpec.getDatasets(),
-                                                                       workerSpec.getResources(),
-                                                                       instances);
+                                                                       workerSpec.getResources(), instances);
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.WORKER);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void setProcedureInstances(final Id.Program id, final int count) {
+  public void setProcedureInstances(final Id.Program id, final int count) throws NotFoundException {
     Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
 
         ProcedureSpecification newSpecification =  new DefaultProcedureSpecification(specification.getClassName(),
@@ -395,21 +385,21 @@ public class DefaultStore implements Store {
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, procedure: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), count);
   }
 
   @Override
-  public void setServiceInstances(final Id.Program id, final int instances) {
+  public void setServiceInstances(final Id.Program id, final int instances) throws NotFoundException {
     Preconditions.checkArgument(instances > 0,
                                 "cannot change number of program instances to negative number: %s", instances);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
 
         // Create a new spec copy from the old one, except with updated instances number
@@ -423,34 +413,34 @@ public class DefaultStore implements Store {
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
   @Override
-  public int getServiceInstances(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+  public int getServiceInstances(final Id.Program id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
         return serviceSpec.getInstances();
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
   public void setServiceWorkerInstances(final Id.Program id,
-                                        final String workerName, final int instances) {
+                                        final String workerName, final int instances) throws NotFoundException {
     Preconditions.checkArgument(instances > 0,
                                 "cannot change number of program instances to negative number: %s", instances);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
         ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
 
@@ -473,150 +463,145 @@ public class DefaultStore implements Store {
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class);
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
   @Override
-  public int getWorkerInstances(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+  public int getWorkerInstances(final Id.Program id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
         return workerSpec.getInstances();
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public int getServiceWorkerInstances(final Id.Program id, final String workerName) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+  public int getServiceWorkerInstances(final Id.Program id, final String workerName) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
         ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
         return workerSpec.getInstances();
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void removeApplication(final Id.Application id) {
+  public void removeApplication(final Id.Application id) throws NotFoundException {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespaceId(), id.getId());
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplication(id.getNamespaceId(), id.getId());
-        mds.apps.deleteProgramArgs(id.getNamespaceId(), id.getId());
-        mds.apps.deleteProgramHistory(id.getNamespaceId(), id.getId());
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void removeAllApplications(final Id.Namespace id) {
+  public void removeAllApplications(final Id.Namespace id) throws NotFoundException {
     LOG.trace("Removing all applications of namespace with id: {}", id.getId());
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
-        mds.apps.deleteProgramArgs(id.getId());
-        mds.apps.deleteProgramHistory(id.getId());
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void removeAll(final Id.Namespace id) {
+  public void removeAll(final Id.Namespace id) throws NotFoundException {
     LOG.trace("Removing all applications of namespace with id: {}", id.getId());
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
-        mds.apps.deleteProgramArgs(id.getId());
-        mds.apps.deleteAllStreams(id.getId());
-        mds.apps.deleteProgramHistory(id.getId());
+        mds.apps.deleteStreams(id.getId());
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void storeRunArguments(final Id.Program id, final Map<String, String> arguments) {
+  public void storeRunArguments(final Id.Program id, final Map<String, String> arguments) throws NotFoundException {
     LOG.trace("Updated program args in mds: id: {}, app: {}, prog: {}, args: {}",
-              id.getId(), id.getApplicationId(), id.getId(), Joiner.on(",").withKeyValueSeparator("=").join(arguments));
+              id.getId(), id.getApplicationId(), id.getId(),
+              Joiner.on(",").withKeyValueSeparator("=").join(arguments));
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeProgramArgs(id, arguments);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public Map<String, String> getRunArguments(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Map<String, String>>() {
+  public Map<String, String> getRunArguments(final Id.Program id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Map<String, String>>() {
       @Override
       public Map<String, String> apply(AppMds mds) throws Exception {
         ProgramArgs programArgs = mds.apps.getProgramArgs(id);
         return programArgs == null ? Maps.<String, String>newHashMap() : programArgs.getArgs();
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Nullable
   @Override
-  public ApplicationSpecification getApplication(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
+  public ApplicationSpecification getApplication(final Id.Application id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, ApplicationSpecification>() {
       @Override
       public ApplicationSpecification apply(AppMds mds) throws Exception {
         return getApplicationSpec(mds, id);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
+  public Collection<ApplicationSpecification> getAllApplications(final Id.Namespace id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Collection<ApplicationSpecification>>() {
       @Override
       public Collection<ApplicationSpecification> apply(AppMds mds) throws Exception {
         return Lists.transform(mds.apps.getAllApplications(id.getId()),
                                new Function<ApplicationMeta, ApplicationSpecification>() {
-                                 @Override
-                                 public ApplicationSpecification apply(ApplicationMeta input) {
-                                   return input.getSpec();
-                                 }
-                               });
+          @Override
+          public ApplicationSpecification apply(ApplicationMeta input) {
+            return input.getSpec();
+          }
+        });
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Nullable
   @Override
-  public Location getApplicationArchiveLocation(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Location>() {
+  public Location getApplicationArchiveLocation(final Id.Application id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Location>() {
       @Override
       public Location apply(AppMds mds) throws Exception {
         ApplicationMeta meta = mds.apps.getApplication(id.getNamespaceId(), id.getId());
         return meta == null ? null : locationFactory.create(URI.create(meta.getArchiveLocation()));
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
   public void changeFlowletSteamConnection(final Id.Program flow, final String flowletId,
-                                           final String oldValue, final String newValue) {
+                                           final String oldValue, final String newValue) throws NotFoundException {
 
     Preconditions.checkArgument(flow != null, "flow cannot be null");
     Preconditions.checkArgument(flowletId != null, "flowletId cannot be null");
@@ -624,13 +609,13 @@ public class DefaultStore implements Store {
     Preconditions.checkArgument(newValue != null, "newValue cannot be null");
 
     LOG.trace("Changing flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
-                " old coonnected stream: {}, new connected stream: {}",
+                " old connected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, flow);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, flow.getApplication());
 
         FlowSpecification flowSpec = getFlowSpecOrFail(flow, appSpec);
 
@@ -665,60 +650,59 @@ public class DefaultStore implements Store {
         mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
         return null;
       }
-    });
-
+    }, NotFoundException.class);
 
     LOG.trace("Changed flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
-                " old coonnected stream: {}, new connected stream: {}",
+                " old connected stream: {}, new connected stream: {}",
               flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
 
     // todo: change stream "used by" flow mapping in metadata?
   }
 
   @Override
-  public void addSchedule(final Id.Program program, final ScheduleSpecification scheduleSpecification) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void addSchedule(final Id.Program program, final ScheduleSpecification spec)
+    throws NotFoundException, AlreadyExistsException {
+
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, program.getApplication());
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
-        String scheduleName = scheduleSpecification.getSchedule().getName();
-        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
-          scheduleName  + "' already exists.");
-        schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
+        String scheduleName = spec.getSchedule().getName();
+        if (schedules.containsKey(scheduleName)) {
+          throw new AlreadyExistsException(Id.Schedule.from(program, spec.getProgram().getProgramType(),
+                                                            spec.getSchedule().getName()));
+        }
+        schedules.put(spec.getSchedule().getName(), spec);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec,
-                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
+        ProgramType programType = ProgramType.valueOfSchedulableType(spec.getProgram().getProgramType());
+        replaceAppSpecInProgramJar(program, newAppSpec, programType);
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class, AlreadyExistsException.class);
   }
 
   @Override
   public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
-                             final String scheduleName) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+                             final String scheduleName) throws NotFoundException, AlreadyExistsException {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, program);
+        ApplicationSpecification appSpec = getApplicationSpec(mds, program.getApplication());
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
         ScheduleSpecification removed = schedules.remove(scheduleName);
         if (removed == null) {
-          throw new NoSuchElementException("no such schedule @ account id: " + program.getNamespaceId() +
-                                             ", app id: " + program.getApplication() +
-                                             ", program id: " + program.getId() +
-                                             ", schedule name: " + scheduleName);
+          throw new AlreadyExistsException(Id.Schedule.from(program, programType, scheduleName));
         }
-
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()
         replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
-    });
+    }, NotFoundException.class, AlreadyExistsException.class);
   }
 
   private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
@@ -746,42 +730,36 @@ public class DefaultStore implements Store {
         if (appSpec == null) {
           return false;
         }
-        ProgramSpecification programSpecification = null;
-        try {
-          if (type == ProgramType.FLOW) {
-            programSpecification = getFlowSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.PROCEDURE) {
-            programSpecification = getProcedureSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.SERVICE) {
-            programSpecification = getServiceSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.WORKFLOW) {
-            programSpecification = appSpec.getWorkflows().get(id.getId());
-          } else if (type == ProgramType.MAPREDUCE) {
-            programSpecification = appSpec.getMapReduce().get(id.getId());
-          } else if (type == ProgramType.SPARK) {
-            programSpecification = appSpec.getSpark().get(id.getId());
-          } else if (type == ProgramType.WORKER) {
-            programSpecification = appSpec.getWorkers().get(id.getId());
-          } else if (type == ProgramType.WEBAPP) {
-            // no-op
-          } else {
-            throw new IllegalArgumentException("Invalid ProgramType");
-          }
-        } catch (NoSuchElementException e) {
-          programSpecification = null;
-        } catch (Exception e) {
-          Throwables.propagate(e);
+        ProgramSpecification programSpecification;
+        if (type == ProgramType.FLOW) {
+          programSpecification = appSpec.getFlows().get(id.getId());
+        } else if (type == ProgramType.PROCEDURE) {
+          programSpecification = appSpec.getProcedures().get(id.getId());
+        } else if (type == ProgramType.SERVICE) {
+          programSpecification = appSpec.getServices().get(id.getId());
+        } else if (type == ProgramType.WORKFLOW) {
+          programSpecification = appSpec.getWorkflows().get(id.getId());
+        } else if (type == ProgramType.MAPREDUCE) {
+          programSpecification = appSpec.getMapReduce().get(id.getId());
+        } else if (type == ProgramType.SPARK) {
+          programSpecification = appSpec.getSpark().get(id.getId());
+        } else if (type == ProgramType.WORKER) {
+          programSpecification = appSpec.getWorkers().get(id.getId());
+        } else if (type == ProgramType.WEBAPP) {
+          return false;
+        } else {
+          throw new IllegalArgumentException("Invalid ProgramType");
         }
-        return (programSpecification != null);
+        return programSpecification != null;
       }
     });
   }
 
   @Override
   @Nullable
-  public NamespaceMeta createNamespace(final NamespaceMeta metadata) {
+  public NamespaceMeta createNamespace(final NamespaceMeta metadata) throws AlreadyExistsException {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+    return execute(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
         Id.Namespace namespaceId = Id.Namespace.from(metadata.getId());
@@ -792,26 +770,26 @@ public class DefaultStore implements Store {
         input.apps.createNamespace(metadata);
         return null;
       }
-    });
+    }, AlreadyExistsException.class);
   }
 
   @Override
   @Nullable
-  public NamespaceMeta getNamespace(final Id.Namespace id) {
+  public NamespaceMeta getNamespace(final Id.Namespace id) throws NotFoundException {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+    return execute(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
         return input.apps.getNamespace(id);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
   @Nullable
-  public NamespaceMeta deleteNamespace(final Id.Namespace id) {
+  public NamespaceMeta deleteNamespace(final Id.Namespace id) throws NotFoundException {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+    return execute(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
         NamespaceMeta existing = input.apps.getNamespace(id);
@@ -820,7 +798,7 @@ public class DefaultStore implements Store {
         }
         return existing;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
@@ -835,49 +813,82 @@ public class DefaultStore implements Store {
 
 
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) throws AlreadyExistsException {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
         return null;
       }
-    });
+    }, AlreadyExistsException.class);
   }
 
 
-  @Nullable
   @Override
-  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) throws NotFoundException {
+    final Id.Adapter adapter = Id.Adapter.from(id, name);
+    return execute(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
       public AdapterSpecification apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapter(id, name);
+        return mds.apps.getAdapter(adapter);
       }
-    });
+    }, NotFoundException.class);
   }
 
+  private <RESULT, X extends Throwable> RESULT execute(
+    TransactionExecutor.Function<AppMds, RESULT> txFunc, Class<X> x) throws X {
+
+    try {
+      return txnl.execute(txFunc);
+    } catch (TransactionFailureException e) {
+      Throwables.propagateIfPossible(e.getCause(), x);
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private <RESULT, X extends Throwable, Y extends Throwable> RESULT execute(
+    TransactionExecutor.Function<AppMds, RESULT> txFunc, Class<X> x, Class<Y> y) throws X, Y {
+
+    try {
+      return txnl.execute(txFunc);
+    } catch (TransactionFailureException e) {
+      Throwables.propagateIfPossible(e.getCause(), x);
+      Throwables.propagateIfPossible(e.getCause(), y);
+      throw Throwables.propagate(e);
+    } catch (InterruptedException e) {
+      throw Throwables.propagate(e);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
   @Nullable
   @Override
-  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
+  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) throws NotFoundException {
+    final Id.Adapter adapter = Id.Adapter.from(id, name);
+    return execute(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
       @Override
       public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapterStatus(id, name);
+        return mds.apps.getAdapterStatus(adapter);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Nullable
   @Override
-  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
+  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name,
+                                        final AdapterStatus status) throws NotFoundException {
+    final Id.Adapter adapter = Id.Adapter.from(id, name);
+    return execute(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
       @Override
       public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.setAdapterStatus(id, name, status);
+        return mds.apps.setAdapterStatus(adapter, status);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
@@ -891,25 +902,26 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAdapter(final Id.Namespace id, final String name) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void removeAdapter(final Id.Namespace id, final String name) throws NotFoundException {
+    final Id.Adapter adapter = Id.Adapter.from(id, name);
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.deleteAdapter(id, name);
+        mds.apps.deleteAdapter(adapter);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override
-  public void removeAllAdapters(final Id.Namespace id) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public void removeAllAdapters(final Id.Namespace id) throws NotFoundException {
+    execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.deleteAllAdapters(id);
+        mds.apps.deleteAdapters(id);
         return null;
       }
-    });
+    }, NotFoundException.class);
   }
 
   @VisibleForTesting
@@ -930,9 +942,8 @@ public class DefaultStore implements Store {
     return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
   }
 
-  private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) {
-    ApplicationMeta meta = mds.apps.getApplication(id.getNamespaceId(), id.getId());
-    return meta == null ? null : meta.getSpec();
+  private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) throws NotFoundException {
+    return mds.apps.getApplication(id.getNamespaceId(), id.getId()).getSpec();
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
@@ -1012,63 +1023,54 @@ public class DefaultStore implements Store {
     return flowletDef;
   }
 
-  private static FlowSpecification getFlowSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+  private static FlowSpecification getFlowSpecOrFail(
+    Id.Program id, ApplicationSpecification appSpec) throws NotFoundException {
+
     FlowSpecification flowSpec = appSpec.getFlows().get(id.getId());
     if (flowSpec == null) {
-      throw new NoSuchElementException("no such flow @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication() +
-                                           ", flow id: " + id.getId());
+      throw new NotFoundException(Id.Flow.from(id.getApplication(), id.getId()));
     }
     return flowSpec;
   }
 
-  private static ServiceSpecification getServiceSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+  private static ServiceSpecification getServiceSpecOrFail(
+    Id.Program id, ApplicationSpecification appSpec) throws NotFoundException {
+
     ServiceSpecification spec = appSpec.getServices().get(id.getId());
     if (spec == null) {
-      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication() +
-                                           ", service id: " + id.getId());
+      throw new NotFoundException(Id.Service.from(id.getApplication(), id.getId()));
     }
     return spec;
   }
 
-  private static WorkerSpecification getWorkerSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+  private static WorkerSpecification getWorkerSpecOrFail(
+    Id.Program id, ApplicationSpecification appSpec) throws NotFoundException {
+
     WorkerSpecification workerSpecification = appSpec.getWorkers().get(id.getId());
     if (workerSpecification == null) {
-      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication() +
-                                         ", worker id: " + id.getId());
+      throw new NotFoundException(id);
     }
     return workerSpecification;
   }
 
-  private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
+  private static ProcedureSpecification getProcedureSpecOrFail(
+    Id.Program id, ApplicationSpecification appSpec) throws NotFoundException {
+
     ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
     if (procedureSpecification == null) {
-      throw new NoSuchElementException("no such procedure @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication() +
-                                           ", procedure id: " + id.getId());
+      throw new NotFoundException(id);
     }
     return procedureSpecification;
   }
 
-  private static ApplicationSpecification updateFlowletInstancesInAppSpec(ApplicationSpecification appSpec,
-                                                                          Id.Program id, String flowletId, int count) {
+  private static ApplicationSpecification updateFlowletInstancesInAppSpec(
+    ApplicationSpecification appSpec, Id.Program id, String flowletId, int count) throws NotFoundException {
 
     FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
     FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, id);
 
     final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     return replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
-  }
-
-  private ApplicationSpecification getAppSpecOrFail(AppMds mds, Id.Program id) {
-    ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
-    if (appSpec == null) {
-      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication().getId());
-    }
-    return appSpec;
   }
 
   private static ApplicationSpecification replaceInAppSpec(final ApplicationSpecification appSpec,

@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -367,7 +368,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   private String getDataEntity(Store store, DatasetFramework dsFramework,
-                               Id.Namespace namespace, Data type, String name) {
+                               Id.Namespace namespace, Data type, String name) throws NotFoundException {
     if (type == Data.DATASET) {
       DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
       return dsSpec == null ? "" : GSON.toJson(makeDataSetRecord(name, dsSpec.getType()));
