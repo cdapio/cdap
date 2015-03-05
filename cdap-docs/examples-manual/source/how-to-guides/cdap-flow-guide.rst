@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. highlight:: console
 
 .. _cdap-flow-guide:
 
 .. include:: ../../build/_includes/cdap-flow-guide/README.rst
-   :end-line: 3
+   :end-line: 4
 
 .. pull-quote::
 
@@ -15,4 +15,4 @@
   `CDAP Guides GitHub repository <https://github.com/cdap-guides/cdap-flow-guide>`__.
 
 .. include:: ../../build/_includes/cdap-flow-guide/README.rst
-   :start-line: 2
+   :start-line: 4

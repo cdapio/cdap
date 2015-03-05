@@ -46,7 +46,7 @@ function guide_rewrite_rst() {
   REDIRECT_T="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
   
   mkdir $INCLUDES_DIR/$GUIDE
-  sed -e "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.rst > $INCLUDES_DIR/$GUIDE/README.rst
+  sed -e "s|image:: docs/images|image:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.rst > $INCLUDES_DIR/$GUIDE/README.rst
 }
 
 function pandoc_includes() {
