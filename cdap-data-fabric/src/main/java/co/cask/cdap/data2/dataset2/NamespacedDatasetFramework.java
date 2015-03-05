@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 
@@ -73,12 +74,13 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
-    Collection<DatasetSpecification> specs = delegate.getInstances(namespaceId);
+  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
+    throws DatasetManagementException {
+    Collection<DatasetSpecificationSummary> specs = delegate.getInstances(namespaceId);
     // client may pass the name back e.g. do delete instance, so we need to un-namespace it
-    ImmutableList.Builder<DatasetSpecification> builder = ImmutableList.builder();
-    for (DatasetSpecification spec : specs) {
-      DatasetSpecification s = fromNamespaced(namespaceId, spec);
+    ImmutableList.Builder<DatasetSpecificationSummary> builder = ImmutableList.builder();
+    for (DatasetSpecificationSummary spec : specs) {
+      DatasetSpecificationSummary s = fromNamespaced(namespaceId, spec);
       if (s != null) {
         builder.add(s);
       }
@@ -115,7 +117,7 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     // delete all instances ONLY in this namespace
-    for (DatasetSpecification spec : getInstances(namespaceId)) {
+    for (DatasetSpecificationSummary spec : getInstances(namespaceId)) {
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, spec.getName());
       deleteInstance(datasetInstanceId);
     }
@@ -157,6 +159,19 @@ public class NamespacedDatasetFramework implements DatasetFramework {
       return null;
     }
     return DatasetSpecification.changeName(spec, notNamespaced.getId());
+  }
+
+  @Nullable
+  private DatasetSpecificationSummary fromNamespaced(Id.Namespace namespaceId, DatasetSpecificationSummary spec) {
+    if (spec == null) {
+      return null;
+    }
+    Id.DatasetInstance namespaced = Id.DatasetInstance.from(namespaceId, spec.getName());
+    Id.DatasetInstance notNamespaced = namespace.fromNamespaced(namespaced);
+    if (notNamespaced == null) {
+      return null;
+    }
+    return new DatasetSpecificationSummary(notNamespaced.getId(), spec.getType(), spec.getProperties());
   }
 
   private Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
