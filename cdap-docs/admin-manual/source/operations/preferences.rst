@@ -17,7 +17,7 @@ are persisted across a restart of either Programs or CDAP itself.
 Order of Preferences
 ====================
 
-The overriding order of Preferences is:
+The overriding order of Preferences is (from lowest to highest precedence):
 
 CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the Program)
 
