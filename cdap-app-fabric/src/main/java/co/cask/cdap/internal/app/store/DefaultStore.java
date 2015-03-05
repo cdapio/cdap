@@ -54,11 +54,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -103,34 +100,27 @@ public class DefaultStore implements Store {
   @Inject
   public DefaultStore(CConfiguration conf,
                       LocationFactory locationFactory,
-                      final TransactionSystemClient txClient,
+                      TransactionExecutorFactory txExecutorFactory,
                       DatasetFramework framework) {
 
     this.locationFactory = locationFactory;
     this.configuration = conf;
     this.dsFramework = framework;
 
-    txnl =
-      Transactional.of(
-        new TransactionExecutorFactory() {
-          @Override
-          public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
-            return new DefaultTransactionExecutor(txClient, transactionAwares);
-          }},
-        new Supplier<AppMds>() {
-          @Override
-          public AppMds get() {
-            try {
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
-                                                               DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
-              return new AppMds(mdsTable);
-            } catch (Exception e) {
-              LOG.error("Failed to access app.meta table", e);
-              throw Throwables.propagate(e);
-            }
-          }
-        });
+    txnl = Transactional.of(txExecutorFactory, new Supplier<AppMds>() {
+      @Override
+      public AppMds get() {
+        try {
+          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
+                                                           DatasetProperties.EMPTY,
+                                                           DatasetDefinition.NO_ARGUMENTS, null);
+          return new AppMds(mdsTable);
+        } catch (Exception e) {
+          LOG.error("Failed to access app.meta table", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   /**

@@ -26,11 +26,8 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -55,31 +52,25 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   private Transactional<NotificationFeedMds, MetadataStoreDataset> txnl;
 
   @Inject
-  public MDSNotificationFeedStore(final TransactionSystemClient txClient,
-                                  final DatasetFramework dsFramework) {
-    txnl = Transactional.of(
-      new TransactionExecutorFactory() {
-        @Override
-        public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
-          return new DefaultTransactionExecutor(txClient, transactionAwares);
-        }},
-      new Supplier<NotificationFeedMds>() {
-        @Override
-        public NotificationFeedMds get() {
-          try {
-            Id.DatasetInstance notificationsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
-                                                                                        NOTIFICATION_FEED_TABLE);
-            Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, notificationsDatasetInstanceId, "table",
-                                                             DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS,
-                                                             null);
+  public MDSNotificationFeedStore(TransactionExecutorFactory txExecutorFactory, final DatasetFramework dsFramework) {
 
-            return new NotificationFeedMds(new MetadataStoreDataset(mdsTable));
-          } catch (Exception e) {
-            LOG.debug("Failed to access app.meta table", e);
-            throw Throwables.propagate(e);
-          }
+    txnl = Transactional.of(txExecutorFactory, new Supplier<NotificationFeedMds>() {
+      @Override
+      public NotificationFeedMds get() {
+        try {
+          Id.DatasetInstance notificationsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                      NOTIFICATION_FEED_TABLE);
+          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, notificationsDatasetInstanceId, "table",
+                                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS,
+                                                           null);
+
+          return new NotificationFeedMds(new MetadataStoreDataset(mdsTable));
+        } catch (Exception e) {
+          LOG.debug("Failed to access app.meta table", e);
+          throw Throwables.propagate(e);
         }
-      });
+      }
+    });
   }
 
   @Override

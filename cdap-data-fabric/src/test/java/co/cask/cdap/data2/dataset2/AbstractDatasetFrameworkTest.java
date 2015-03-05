@@ -301,11 +301,12 @@ public abstract class AbstractDatasetFrameworkTest {
 
   @Test
   public void testNamespaceInstanceIsolation() throws Exception {
-    // TODO: CDAP-1562. Have to wrap it with a NamespacedFramework because the dataset implementations
+    DatasetFramework framework = getFramework();
+    // TODO: CDAP-1562. Have to namespace instances with DefaultDatasetNamespace because the dataset implementations
     // expect the name to be namespaced to avoid conflicts. This is being cleaned up separately, after which this
     // test can be cleaned up to just use the framework directly instead of wrapping it.
-    DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-    DatasetFramework framework = getFramework();
+    // TODO: Remove this namespacing of names after using DatasetContext in InMemoryTable
+    DatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
 
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
