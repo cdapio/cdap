@@ -212,7 +212,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
-                              "Successfully set notification threshold of stream");
+                              "Successfully set notification threshold of Stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
