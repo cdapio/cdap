@@ -24,6 +24,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
@@ -36,6 +37,7 @@ public final class CheckpointManager {
   private final Transactional<DatasetContext<Table>, Table> mds;
   private final byte [] rowKeyPrefix;
 
+  @Inject
   public CheckpointManager(final LogSaverTableUtil tableUtil,
                            TransactionExecutorFactory txExecutorFactory, String topic) {
     this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));

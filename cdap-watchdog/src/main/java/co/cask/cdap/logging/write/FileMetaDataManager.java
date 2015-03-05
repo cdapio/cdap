@@ -30,6 +30,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -52,6 +53,7 @@ public final class FileMetaDataManager {
 
   private final Transactional<DatasetContext<Table>, Table> mds;
 
+  @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
                              LocationFactory locationFactory) {
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
