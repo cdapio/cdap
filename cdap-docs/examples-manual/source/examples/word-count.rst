@@ -138,12 +138,12 @@ Querying the Results
 If the Service has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-  curl -v -X POST 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/start'
+  curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start'
 
 To query the ``RetrieveCounts`` service,
 send a query via an HTTP request using the ``curl`` command. For example::
 
-  curl -w '\n' -v 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
+  curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``

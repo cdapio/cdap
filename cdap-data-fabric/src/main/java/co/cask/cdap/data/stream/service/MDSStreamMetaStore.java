@@ -29,11 +29,8 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -61,33 +58,28 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   private Transactional<StreamMds, MetadataStoreDataset> txnl;
 
   @Inject
-  public MDSStreamMetaStore(CConfiguration conf, final TransactionSystemClient txClient, DatasetFramework framework) {
+  public MDSStreamMetaStore(CConfiguration conf,
+                            TransactionExecutorFactory txExecutorFactory, DatasetFramework framework) {
 
     final DatasetFramework dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
 
-    txnl = Transactional.of(
-        new TransactionExecutorFactory() {
-          @Override
-          public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
-            return new DefaultTransactionExecutor(txClient, transactionAwares);
-          }},
-        new Supplier<StreamMds>() {
-          @Override
-          public StreamMds get() {
-            try {
-              Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
-                                                                                       STREAM_META_TABLE);
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, streamMetaDatasetInstanceId, "table",
-                                                               DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
+    txnl = Transactional.of(txExecutorFactory, new Supplier<StreamMds>() {
+      @Override
+      public StreamMds get() {
+        try {
+          Id.DatasetInstance streamMetaDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE,
+                                                                                   STREAM_META_TABLE);
+          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, streamMetaDatasetInstanceId, "table",
+                                                           DatasetProperties.EMPTY,
+                                                           DatasetDefinition.NO_ARGUMENTS, null);
 
-              return new StreamMds(new MetadataStoreDataset(mdsTable));
-            } catch (Exception e) {
-              LOG.error("Failed to access app.meta table", e);
-              throw Throwables.propagate(e);
-            }
-          }
-        });
+          return new StreamMds(new MetadataStoreDataset(mdsTable));
+        } catch (Exception e) {
+          LOG.error("Failed to access app.meta table", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   @Override

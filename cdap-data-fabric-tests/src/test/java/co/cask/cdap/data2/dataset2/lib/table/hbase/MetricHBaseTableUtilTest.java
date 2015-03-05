@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -69,7 +70,7 @@ public class MetricHBaseTableUtilTest {
                                       new LocalLocationFactory(tmpFolder.newFolder()), CConfiguration.create());
     DatasetSpecification spec = definition.configure("cdap.system.metricV2.8", DatasetProperties.EMPTY);
 
-    DatasetAdmin admin = definition.getAdmin(spec, null);
+    DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Constants.SYSTEM_NAMESPACE), spec, null);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
