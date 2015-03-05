@@ -36,17 +36,22 @@ public class CConfigurationUtil extends Configuration {
     }
   }
 
-  public static void checkCConfValidity(CConfiguration cConf) {
+  /**
+   * Asserts that the given CConfiguration has valid properties.
+   * @param cConf the CConfiguration object to check
+   * @throws IllegalArgumentException if the given cConf is invalid.
+   */
+  public static void verify(CConfiguration cConf) {
     // Checks to ensure that certain keys (e.g. "root.prefix") are valid as expected by CDAP.
-    checkAlphaNumberic(cConf, Constants.CFG_ROOT_NAMESPACE);
-    checkAlphaNumberic(cConf, Constants.Dataset.TABLE_PREFIX);
+    assertAlphanumeric(cConf, Constants.ROOT_NAMESPACE);
+    assertAlphanumeric(cConf, Constants.Dataset.TABLE_PREFIX);
   }
 
-  private static void checkAlphaNumberic(CConfiguration cConf, String key) {
+  private static void assertAlphanumeric(CConfiguration cConf, String key) {
     String value = cConf.get(key);
-    Preconditions.checkNotNull(value, String.format("Entry of CConf with key: %s is null", key));
+    Preconditions.checkNotNull(value, "Entry of CConf with key: {} is null", key);
     Preconditions.checkArgument(value.matches("[a-zA-Z0-9]+"),
-                                String.format("CConf entry with key: %s must consist " +
-                                                "of only alphanumeric characters; it is: %s", key, value));
+                                "CConf entry with key: {} must consist " +
+                                  "of only alphanumeric characters; it is: {}", key, value);
   }
 }

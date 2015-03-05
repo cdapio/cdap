@@ -27,21 +27,21 @@ public class CConfigurationUtilTest {
     assertIsValidCConf(cConf);
 
     // test some invalid values (and combinations)
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "invalid_root");
+    cConf.set(Constants.ROOT_NAMESPACE, "invalid_root");
     assertIsInvalidCConf(cConf);
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "invalid.root");
+    cConf.set(Constants.ROOT_NAMESPACE, "invalid.root");
     assertIsInvalidCConf(cConf);
     cConf.set(Constants.Dataset.TABLE_PREFIX, "invalid/root");
     assertIsInvalidCConf(cConf);
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "invalid\root");
+    cConf.set(Constants.ROOT_NAMESPACE, "invalid\root");
     assertIsInvalidCConf(cConf);
 
     // set the invalid values back to valid values
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "cdap");
+    cConf.set(Constants.ROOT_NAMESPACE, "cdap");
     cConf.set(Constants.Dataset.TABLE_PREFIX, "dsprefix");
     assertIsValidCConf(cConf);
 
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "cdap1");
+    cConf.set(Constants.ROOT_NAMESPACE, "cdap1");
     assertIsValidCConf(cConf);
 
     // test additional invalid values (and combinations)
@@ -49,19 +49,19 @@ public class CConfigurationUtilTest {
     cConf.set(Constants.Dataset.TABLE_PREFIX, "invalid.table.prefix");
     assertIsInvalidCConf(cConf);
 
-    cConf.set(Constants.CFG_ROOT_NAMESPACE, "invalid/root/prefix");
+    cConf.set(Constants.ROOT_NAMESPACE, "invalid/root/prefix");
     assertIsInvalidCConf(cConf);
   }
 
   private void assertIsInvalidCConf(CConfiguration cConf) {
     try {
-      CConfigurationUtil.checkCConfValidity(cConf);
+      CConfigurationUtil.verify(cConf);
       Assert.fail("Expected cConf to be invalid");
     } catch (IllegalArgumentException expected) {
     }
   }
 
   private void assertIsValidCConf(CConfiguration cConf) {
-    CConfigurationUtil.checkCConfValidity(cConf);
+    CConfigurationUtil.verify(cConf);
   }
 }

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public final class Constants {
 
   public static final String ARCHIVE_DIR = "archive";
-  public static final String CFG_ROOT_NAMESPACE = "root.namespace";
+  public static final String ROOT_NAMESPACE = "root.namespace";
 
   /**
    * Global Service names.
