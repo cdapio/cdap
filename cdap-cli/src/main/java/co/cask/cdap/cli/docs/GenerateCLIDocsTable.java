@@ -17,7 +17,7 @@
 package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
@@ -27,7 +27,6 @@ import co.cask.common.cli.Command;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -44,15 +43,12 @@ public class GenerateCLIDocsTable {
     Injector injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
+        bind(LaunchOptions.class).toInstance(LaunchOptions.DEFAULT);
         bind(PrintStream.class).toInstance(System.out);
-        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance("");
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
         bind(CLIConfig.class).toInstance(cliConfig);
         bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-        bind(CConfiguration.class).toInstance(CConfiguration.create());
-        bind(TableRenderer.class).to(CsvTableRenderer.class);
+        bind(TableRenderer.class).toInstance(new CsvTableRenderer());
       }
     });
     this.printDocsCommand = new GenerateCLIDocsTableCommand(injector.getInstance(DefaultCommands.class));

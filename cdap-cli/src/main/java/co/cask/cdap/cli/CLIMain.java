@@ -60,11 +60,6 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class CLIMain {
 
-  public static final String NAME_DEBUG = "debug";
-  public static final String NAME_URI = "uri";
-  public static final String NAME_VERIFY_SSL = "verify_ssl";
-  public static final String NAME_AUTOCONNECT = "autoconnect";
-
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
@@ -106,6 +101,7 @@ public class CLIMain {
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(LaunchOptions.class).toInstance(options);
           bind(CConfiguration.class).toInstance(CConfiguration.create());
           bind(PrintStream.class).toInstance(output);
           bind(CLIConfig.class).toInstance(cliConfig);

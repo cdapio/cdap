@@ -76,7 +76,7 @@ public class CLIConfig {
   }
 
   public CLIConfig() {
-    this(null, System.out, new AltStyleTableRenderer());
+    this(ClientConfig.builder().build(), System.out, new AltStyleTableRenderer());
   }
 
   public PrintStream getOutput() {
