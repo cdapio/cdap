@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -58,21 +59,22 @@ public class IndexedObjectStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("index"), classLoader),
-      objectStoreDef.getAdmin(spec.getSpecification("data"), classLoader)
+      tableDef.getAdmin(datasetContext, spec.getSpecification("index"), classLoader),
+      objectStoreDef.getAdmin(datasetContext, spec.getSpecification("data"), classLoader)
     ));
   }
 
   @Override
-  public IndexedObjectStore<?> getDataset(DatasetSpecification spec,
+  public IndexedObjectStore<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("index");
     DatasetSpecification objectStoreSpec = spec.getSpecification("data");
 
-    Table index = tableDef.getDataset(tableSpec, arguments, classLoader);
-    ObjectStore<?> objectStore = objectStoreDef.getDataset(objectStoreSpec, arguments, classLoader);
+    Table index = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
+    ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, objectStoreSpec, arguments, classLoader);
 
     return new IndexedObjectStore(spec.getName(), objectStore, index);
   }

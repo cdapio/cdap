@@ -37,7 +37,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -579,7 +579,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     String status;
     int numTries = 0;
@@ -597,7 +597,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }

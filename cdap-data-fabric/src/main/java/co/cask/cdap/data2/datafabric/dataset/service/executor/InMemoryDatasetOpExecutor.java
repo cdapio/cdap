@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
@@ -59,7 +60,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
     // TODO: Note - for now, just sending the name. However, type likely needs to be namesapce-aware too.
     DatasetSpecification spec = type.configure(datasetInstanceId.getId(), props);
-    DatasetAdmin admin = type.getAdmin(spec);
+    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
     admin.create();
 
     return spec;
@@ -74,7 +75,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetAdmin admin = type.getAdmin(spec);
+    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
     admin.drop();
   }
 

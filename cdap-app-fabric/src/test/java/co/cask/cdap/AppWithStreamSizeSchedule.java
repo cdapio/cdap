@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,44 +20,58 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 /**
- * App with workflow.
+ * Application with workflow scheduling based on a {@link StreamSizeSchedule}.
  */
-public class AppWithWorkflow extends AbstractApplication {
-  public static final String NAME = "AppWithWorkflow";
+public class AppWithStreamSizeSchedule extends AbstractApplication {
 
   @Override
   public void configure() {
     try {
-      setName(NAME);
+      setName("AppWithStreamSizeSchedule");
       setDescription("Sample application");
-      addStream(new Stream("stream"));
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
+      addStream(new Stream("stream"));
+
+      Map<String, String> scheduleProperties = Maps.newHashMap();
+      scheduleProperties.put("oneKey", "oneValue");
+      scheduleProperties.put("anotherKey", "anotherValue");
+      scheduleProperties.put("someKey", "someValue");
+
+      scheduleWorkflow(Schedules.createDataSchedule("SampleSchedule1", "", Schedules.Source.STREAM, "stream", 1),
+                       "SampleWorkflow", scheduleProperties);
+      scheduleWorkflow(Schedules.createDataSchedule("SampleSchedule2", "", Schedules.Source.STREAM, "stream", 2),
+                       "SampleWorkflow", scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
   }
 
   /**
-   * Sample workflow. has a dummy action.
+   * Sample workflow. Schedules a dummy MR job.
    */
   public static class SampleWorkflow extends AbstractWorkflow {
-    public static final String NAME = "SampleWorkflow";
 
     @Override
     public void configure() {
-        setName(NAME);
-        setDescription("SampleWorkflow description");
-        addAction(new DummyAction());
-        addAction(new DummyAction());
+      setName("SampleWorkflow");
+      setDescription("SampleWorkflow description");
+      addAction(new DummyAction());
     }
   }
 
@@ -69,7 +83,14 @@ public class AppWithWorkflow extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someValue"));
+      } catch (InterruptedException e) {
+        LOG.info("Interrupted");
+      }
     }
   }
 }
-

@@ -20,7 +20,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.ResetFailureException;
 import co.cask.cdap.common.exception.ResetNotEnabledException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
@@ -47,17 +46,17 @@ public class MetaClient {
     this.restClient = RESTClient.create(config);
   }
 
-  public void ping() throws IOException, UnAuthorizedAccessTokenException {
+  public void ping() throws IOException, UnauthorizedException {
     restClient.execute(HttpMethod.GET, config.resolveURL("ping"), config.getAccessToken());
   }
 
-  public Version getVersion() throws IOException, UnAuthorizedAccessTokenException {
+  public Version getVersion() throws IOException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public void resetUnrecoverably() throws ResetFailureException, UnauthorizedException, IOException,
-    UnAuthorizedAccessTokenException, ResetNotEnabledException {
+  public void resetUnrecoverably() throws ResetFailureException, IOException,
+    UnauthorizedException, ResetNotEnabledException {
 
     URL url = config.resolveURL(String.format("unrecoverable/reset"));
     HttpRequest request = HttpRequest.post(url).build();

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
@@ -43,12 +44,14 @@ public class InMemoryMetricsTableDefinition
   }
 
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader) {
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryMetricsTable(spec.getName());
   }
 
   @Override
-  public InMemoryTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                     ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
     return new InMemoryTableAdmin(spec.getName());
   }
