@@ -9,6 +9,8 @@ describe('myNamespace', function() {
   var mocked;
   var $rootScope, myNamespace;
   var requestSpy;
+  var res;
+
 
   beforeEach(module(function ($provide) {
     requestSpy = jasmine.createSpy('MyDataSource.request');
@@ -16,22 +18,31 @@ describe('myNamespace', function() {
     mocked = {
       MyDataSource: function() {
         this.request = function() {
-          return [
-            { id: '1', name: 'namespace 1' },
-            { id: '2', name: 'namespace 2' }
-          ];
+          return res.promise;
         };
         return this;
       }
     };
 
-    //spyOn(mocked, 'MyDataSource').and.callThrough();
+
+    // spyOn(mocked, 'MyDataSource').and.callThrough();
     $provide.value('MyDataSource', mocked.MyDataSource);
   }));
 
-  beforeEach(inject(function(_$rootScope_, _myNamespace_) {
+  beforeEach(inject(function(_$rootScope_, _myNamespace_, _$q_) {
     $rootScope = _$rootScope_;
     myNamespace = _myNamespace_;
+
+    res = _$q_.defer();
+
+    res.resolve(
+      [
+        { id: '1', name: 'namespace 1' },
+        { id: '2', name: 'namespace 2' }
+      ]
+    );
+
+
   }));
 
   // actual testing
@@ -41,22 +52,21 @@ describe('myNamespace', function() {
   });
 
 
-  // it('should return a promise when getList is called', function() {
+  it('should return a promise when getList is called', function() {
 
-  //   //var namespaceService = myNamespace($q, mocked.MyDataSource);
-  //   // define the promise resolution method before calling "getList"
-  //   var result;
+    //var namespaceService = myNamespace($q, mocked.MyDataSource);
+    // define the promise resolution method before calling "getList"
+    var result;
+    var promise = myNamespace.getList(true).then(function(res) {
+      console.log('Executing the then of the promise.');
+      result = res;
+    });
 
-  //   var promise = myNamespace.getList(true).then(function(res) {
-  //     console.log('Executing the then of the promise.');
-  //     result = res;
-  //   });
+    expect(result).toBeUndefined();
 
-  //   expect(result).toBeUndefined();
-
-  //   $rootScope.$digest();
-  //   //expect(result).toBeDefined();
-  //   expect(requestSpy).toHaveBeenCalled();
-  // });
+    // resolving the promise
+    $rootScope.$apply();
+    expect(promise.then).toEqual(jasmine.any(Function));
+  });
 
 });

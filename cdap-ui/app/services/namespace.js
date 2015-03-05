@@ -1,11 +1,12 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, $log) {
     this.namespaceList = [];
 
     var data = new MyDataSource(),
         queryInProgress = null;
 
     this.getList = function (force) {
+
       if (!force && this.namespaceList.length) {
           return $q.when(this.namespaceList);
       }
