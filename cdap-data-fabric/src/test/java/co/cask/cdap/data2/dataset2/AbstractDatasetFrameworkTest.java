@@ -356,6 +356,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete all instances in one namespace and make sure the other still exists
+    framework.addInstance(Table.class.getName(), table1ID, DatasetProperties.EMPTY);
     framework.deleteAllInstances(namespace1);
     Assert.assertTrue(framework.hasInstance(table2ID));
 

@@ -110,7 +110,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       // keep track of default module classes. These are used when creating registries for other namespaces,
       // which need to register system classes too.
       String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
-      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, moduleName);
+      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, moduleName);
       moduleClasses.put(Constants.SYSTEM_NAMESPACE_ID, moduleId, moduleClassName);
     }
     registries.put(Constants.SYSTEM_NAMESPACE_ID, systemRegistry);
