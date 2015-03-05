@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class StreamWriterTestRun extends GatewayTestBase {
 
   @Test
-  public void testSingleEvents() throws Exception {
+  public void testStreamWrites() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.deploy(AppWritingtoStream.class, AppWritingtoStream.APPNAME);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     //Start Flow

@@ -20,9 +20,13 @@ import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -32,7 +36,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,21 +51,27 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract implementation of {@link StreamWriter}
  */
-public abstract class AbstractStreamWriter extends AbstractServiceDiscoverer implements StreamWriter {
+public abstract class AbstractStreamWriter extends AbstractContext implements StreamWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamWriter.class);
 
   protected String namespaceId;
-  protected String applicationId;
 
-  public AbstractStreamWriter(Program program) {
+  public AbstractStreamWriter(Program program, RunId runId,
+                              Arguments arguments,
+                              Set<String> datasets,
+                              final MetricsCollector metricsCollector,
+                              DatasetFramework dsFramework,
+                              CConfiguration conf,
+                              DiscoveryServiceClient discoveryServiceClient) {
+    super(program, runId, arguments, datasets, metricsCollector, dsFramework, conf, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();
-    this.applicationId = program.getApplicationId();
   }
 
   private URL getStreamURL(String stream) throws IOException {
