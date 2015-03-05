@@ -74,7 +74,7 @@ public class DefaultSchedulerService {
       ));
 
       try {
-        taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
+        taskRunner.run(Id.Program.from(accountId, applicationId, programType, programId), programType, args);
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       }

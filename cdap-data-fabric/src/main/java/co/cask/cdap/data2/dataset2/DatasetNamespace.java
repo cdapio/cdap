@@ -62,20 +62,18 @@ public interface DatasetNamespace {
 
   /**
    * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the specified instance name
-   * Used for dataset instance names in the system namespace
-   * Calls #fromNamespaced(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName)
+   * e.g. if cdap.myspace.myinstance is passed, this will return Id.DatasetInstance(myspace, myinstance)
    * @see #fromNamespaced(Id.DatasetInstance)
    *
-   * @param datasetInstanceName namespaced name of the dataset
+   * @param namespaced namespaced name of the dataset
    * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
    */
-  @Nullable
-  Id.DatasetInstance fromNamespaced(String datasetInstanceName);
+  Id.DatasetInstance fromNamespaced(String namespaced);
 
   /**
    * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the instance name in the
    * specified {@link Id.DatasetInstance}
-   * e.g. e.g. If Id.DatasetInstance(default, cdap.default.purchases) is passed, this will return
+   * e.g. If Id.DatasetInstance(default, cdap.default.purchases) is passed, this will return
    * Id.DatasetInstance(default, purchases)
    *
    * @param datasetInstanceId namespaced {@link Id.DatasetInstance} of the dataset

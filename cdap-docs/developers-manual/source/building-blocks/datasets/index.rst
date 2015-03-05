@@ -167,8 +167,10 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
   :ref:`Word Count <examples-word-count>`, and
   :ref:`Purchase <examples-purchase>` examples.
 
-- For examples of **ObjectStore datasets,** see the :ref:`Spark K-Means <examples-spark-k-means>`
-  and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+- For an example of an **ObjectMappedTable dataset,** see the :ref:`Purchase <examples-purchase>` example.
+
+- For examples of **ObjectStore datasets,** see the :ref:`Purchase <examples-purchase>`,
+  :ref:`Spark K-Means <examples-spark-k-means>`, and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.
 

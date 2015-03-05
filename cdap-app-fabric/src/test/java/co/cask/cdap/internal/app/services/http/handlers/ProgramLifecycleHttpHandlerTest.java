@@ -939,12 +939,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertFalse(scheduleName1.isEmpty());
 
     // Change notification threshold for stream
-    response = doPut(String.format("/v3/namespaces/%s/streams/%s/config", TEST_NAMESPACE2,
+    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                      "{'notification.threshold.mb': 1}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet(String.format("/v3/namespaces/%s/streams/%s/info", TEST_NAMESPACE2,
+    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME));
     String json = EntityUtils.toString(response.getEntity());
     StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);

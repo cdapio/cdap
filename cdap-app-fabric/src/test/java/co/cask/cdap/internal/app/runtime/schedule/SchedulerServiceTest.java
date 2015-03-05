@@ -29,6 +29,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -48,7 +49,8 @@ public class SchedulerServiceTest {
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
+                                                           AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(account, "stream");
   private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
@@ -81,7 +83,8 @@ public class SchedulerServiceTest {
                          locationFactory.create("app"));
 
     Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()), program.getId());
+      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()),
+                      program.getType(), program.getId());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());

@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.streams')
   .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource) {
     var dataSrc = new MyDataSource($scope);
     dataSrc.request({
-      _cdapNsPath: '/streams/' + $state.params.streamId + '/info'
+      _cdapNsPath: '/streams/' + $state.params.streamId
     })
       .then(function(stream) {
         $scope.schema = stream.format.schema.fields;

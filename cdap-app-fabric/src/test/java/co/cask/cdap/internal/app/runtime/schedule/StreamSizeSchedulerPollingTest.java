@@ -33,6 +33,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableMap;
@@ -62,7 +63,7 @@ public class StreamSizeSchedulerPollingTest {
 
   private static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application APP_ID = new Id.Application(NAMESPACE, "AppWithStreamSizeSchedule");
-  private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, "SampleWorkflow");
+  private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;

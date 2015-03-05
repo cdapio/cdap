@@ -19,14 +19,17 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Lists streams.
@@ -34,24 +37,26 @@ import java.io.PrintStream;
 public class ListStreamsCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.streamClient = streamClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    new AsciiTable<StreamRecord>(
-      new String[] { "name" },
-      streamClient.list(),
-      new RowMaker<StreamRecord>() {
+    Table table = Table.builder()
+      .setHeader("name")
+      .setRows(streamClient.list(), new RowMaker<StreamRecord>() {
         @Override
-        public Object[] makeRow(StreamRecord object) {
-          return new String[]{object.getId()};
+        public List<?> makeRow(StreamRecord object) {
+          return Lists.newArrayList(object.getId());
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

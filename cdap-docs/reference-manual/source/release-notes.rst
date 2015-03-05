@@ -239,7 +239,7 @@ Known Issues
 CDAP Bug Fixes
 --------------
 
-- Fixed a problem with a Coopr-provisioned secure cluster failing to start due to a classpath
+- Fixed a problem with a Coopr |(TM)|\ -provisioned secure cluster failing to start due to a classpath
   issue (`CDAP-478 <https://issues.cask.co/browse/CDAP-478>`__).
 - Fixed a problem with the WISE app zip distribution not packaged correctly; a new version
   (0.2.1) has been released (`CDAP-533 <https://issues.cask.co/browse/CDAP-533>`__).

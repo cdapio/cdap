@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,7 @@ import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
@@ -83,10 +84,14 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
+    // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
+    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
+    testHBase.deleteTables(hBaseTableUtil.toHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     testHBase.stopHBase();
   }
 
@@ -101,7 +106,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   protected HBaseTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
     return new HBaseTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
-                                      CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
+                               CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
   @Test
@@ -109,9 +114,11 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
     int ttl = 1000;
+    String ttlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "ttl");
+    String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
-    getTableAdmin("ttl", props).create();
-    HBaseTable table = new HBaseTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration(), false);
+    getTableAdmin(ttlTable, props).create();
+    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(), false);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -139,9 +146,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // test a table with no TTL
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
-    getTableAdmin("nottl", props2).create();
-    HBaseTable table2 = new HBaseTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
-                                                     false);
+    getTableAdmin(noTtlTable, props2).create();
+    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(), false);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);
@@ -166,11 +172,12 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public void testPreSplit() throws Exception {
     byte[][] splits = new byte[][] {Bytes.toBytes("a"), Bytes.toBytes("b"), Bytes.toBytes("c")};
     DatasetProperties props = DatasetProperties.builder().add("hbase.splits", new Gson().toJson(splits)).build();
-    getTableAdmin("presplitted", props).create();
+    String presplittedTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "presplitted");
+    getTableAdmin(presplittedTable, props).create();
 
     HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
     try {
-      List<HRegionInfo> regions = hBaseAdmin.getTableRegions(Bytes.toBytes("presplitted"));
+      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(presplittedTable));
       // note: first region starts at very first row key, so we have one extra to the splits count
       Assert.assertEquals(4, regions.size());
       Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
@@ -184,10 +191,13 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   @Test
   public void testEnableIncrements() throws Exception {
     // setup a table with increments disabled and with it enabled
-    String disableTableName = "incr-disable";
-    String enabledTableName = "incr-enable";
+    String disableTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-disable");
+    String enabledTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-enable");
+    TableId disabledTableId = TableId.from(disableTableName);
+    TableId enabledTableId = TableId.from(enabledTableName);
     HBaseTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
+    HBaseAdmin admin = testHBase.getHBaseAdmin();
 
     DatasetProperties props =
       DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
@@ -195,13 +205,13 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     enabledAdmin.create();
 
     try {
-      HBaseAdmin admin = testHBase.getHBaseAdmin();
+
       try {
-        HTableDescriptor htd = admin.getTableDescriptor(Bytes.toBytes(disableTableName));
+        HTableDescriptor htd = hBaseTableUtil.getHTableDescriptor(admin, disabledTableId);
         List<String> cps = htd.getCoprocessors();
         assertFalse(cps.contains(IncrementHandler.class.getName()));
 
-        htd = admin.getTableDescriptor(Bytes.toBytes(enabledTableName));
+        htd = hBaseTableUtil.getHTableDescriptor(admin, enabledTableId);
         cps = htd.getCoprocessors();
         assertTrue(cps.contains(IncrementHandler.class.getName()));
       } finally {
@@ -219,7 +229,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       // verify that value was written as a delta value
       final byte[] expectedValue = Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
       final AtomicBoolean foundValue = new AtomicBoolean();
-      testHBase.forEachRegion(Bytes.toBytes(enabledTableName), new Function<HRegion, Object>() {
+      byte [] enabledTableNameBytes = hBaseTableUtil.getHTableDescriptor(admin, enabledTableId).getName();
+      testHBase.forEachRegion(enabledTableNameBytes, new Function<HRegion, Object>() {
         @Nullable
         @Override
         public Object apply(@Nullable HRegion hRegion) {

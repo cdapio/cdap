@@ -18,7 +18,7 @@ package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.ApplicationRecord;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -47,7 +47,7 @@ public class AppIdCompleter extends StringsCompleter {
           return appIds;
         } catch (IOException e) {
           return Lists.newArrayList();
-        } catch (UnAuthorizedAccessTokenException e) {
+        } catch (UnauthorizedException e) {
           return Lists.newArrayList();
         }
       }
