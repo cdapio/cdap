@@ -49,12 +49,11 @@ import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.app.store.DefaultStoreFactory;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -147,7 +146,10 @@ public class UpgraderMain {
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
-          bind(StoreFactory.class).to(DefaultStoreFactory.class);
+          install(new FactoryModuleBuilder()
+                    .implement(Store.class, DefaultStore.class)
+                    .build(StoreFactory.class)
+          );
           bind(ConfigStore.class).to(DefaultConfigStore.class);
         }
 
@@ -173,8 +175,8 @@ public class UpgraderMain {
         @Named("nonNamespacedStore")
         public Store getNonNamespacedStore(@Named("nonNamespacedDSFramework") DatasetFramework nonNamespacedFramework,
                                            CConfiguration cConf, LocationFactory locationFactory,
-                                           TransactionSystemClient txClient) {
-          return new DefaultStore(cConf, locationFactory, txClient, nonNamespacedFramework);
+                                           TransactionExecutorFactory txExecutorFactory) {
+          return new DefaultStore(cConf, locationFactory, txExecutorFactory, nonNamespacedFramework);
         }
       });
   }
