@@ -24,8 +24,8 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
-function guide_rewrite() {
-  echo "Re-writing $1 $2"
+function guide_rewrite_pandoc() {
+  echo "Re-writing using pandoc and sed $1 $2"
   # Re-writes the links in the RST file to point to a local copy of any image links.
   INCLUDES_DIR=$1
   GUIDE=$2
@@ -37,8 +37,8 @@ function guide_rewrite() {
   sed -e "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$GUIDE/README_SOURCE.rst > $INCLUDES_DIR/$GUIDE/README.rst
 }
 
-function guide_rewrite_rst() {
-  echo "Re-writing $1 $2"
+function guide_rewrite_sed() {
+  echo "Re-writing using sed $1 $2"
   # Re-writes the links in the RST file to point to a local copy of any image links.
   INCLUDES_DIR=$1
   GUIDE=$2
@@ -51,16 +51,16 @@ function guide_rewrite_rst() {
 
 function pandoc_includes() {
   # Re-writes all the image links...
-  guide_rewrite_rst $1 cdap-bi-guide
-  guide_rewrite_rst $1 cdap-flow-guide
+  guide_rewrite_sed $1 cdap-bi-guide
+  guide_rewrite_sed $1 cdap-flow-guide
+  guide_rewrite_sed $1 cdap-flume-guide
   # Uses pandoc to translate the README markdown files to rst in the target directory
   # and then re-writes all the image links...
-  guide_rewrite $1 cdap-flume-guide
-  guide_rewrite $1 cdap-kafka-ingest-guide
-  guide_rewrite $1 cdap-mapreduce-guide
-  guide_rewrite $1 cdap-spark-guide
-  guide_rewrite $1 cdap-timeseries-guide
-  guide_rewrite $1 cdap-twitter-ingest-guide
+  guide_rewrite_pandoc $1 cdap-kafka-ingest-guide
+  guide_rewrite_pandoc $1 cdap-mapreduce-guide
+  guide_rewrite_pandoc $1 cdap-spark-guide
+  guide_rewrite_pandoc $1 cdap-timeseries-guide
+  guide_rewrite_pandoc $1 cdap-twitter-ingest-guide
 }
 
 run_command $1
