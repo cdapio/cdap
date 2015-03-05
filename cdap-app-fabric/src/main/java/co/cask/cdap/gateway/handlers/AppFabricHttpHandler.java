@@ -37,8 +37,10 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
@@ -52,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -792,8 +795,21 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
-    programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId, workflowName);
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.WORKFLOW, workflowName);
+      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, Long.MIN_VALUE, Long.MAX_VALUE,
+                                                    100);
+      if (runRecordList.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      String runId = runRecordList.get(0).getPid();
+      programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId, workflowName, runId);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
