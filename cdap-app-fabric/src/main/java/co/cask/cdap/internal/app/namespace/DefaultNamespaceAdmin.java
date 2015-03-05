@@ -98,7 +98,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NamespaceNotFoundException {
+  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException {
     NamespaceMeta ns = store.getNamespace(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -134,14 +134,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   public void createNamespace(NamespaceMeta metadata)
-    throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
+    throws NamespaceCannotBeCreatedException, AlreadyExistsException {
+
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
     Id.Namespace namespace = Id.Namespace.from(metadata.getId());
-    NamespaceMeta existing = store.getNamespace(namespace);
-    if (existing != null) {
-      throw new NamespaceAlreadyExistsException(namespace);
-    }
+    store.createNamespace(metadata);
 
     try {
       dsFramework.createNamespace(namespace);
@@ -149,7 +147,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceCannotBeCreatedException(namespace, e);
     }
 
-    store.createNamespace(metadata);
   }
 
   /**
@@ -159,8 +156,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId)
-    throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
+  public void deleteNamespace(Id.Namespace namespaceId) throws NamespaceCannotBeDeletedException, NotFoundException {
 
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (store.getNamespace(namespaceId) == null) {

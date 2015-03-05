@@ -107,7 +107,7 @@ public class AdapterClient {
   public void create(String adapterName, AdapterConfig adapterConfig)
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnauthorizedException {
 
-    Id.AdapterType adapterType = Id.AdapterType.from(config.getNamespace(), adapterConfig.type);
+    Id.AdapterType adapterType = Id.AdapterType.from(adapterConfig.type);
     URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
 

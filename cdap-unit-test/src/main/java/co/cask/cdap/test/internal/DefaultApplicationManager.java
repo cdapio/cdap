@@ -18,6 +18,7 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
@@ -285,12 +286,22 @@ public class DefaultApplicationManager implements ApplicationManager {
     return new WorkflowManager() {
       @Override
       public List<ScheduleSpecification> getSchedules() {
-        return appFabricClient.getSchedules(applicationId, workflowName);
+        try {
+          // TODO: don't propagate
+          return appFabricClient.getSchedules(applicationId, workflowName);
+        } catch (NotFoundException e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override
       public List<RunRecord> getHistory() {
-        return appFabricClient.getHistory(applicationId, workflowName);
+        try {
+          // TODO: don't propagate
+          return appFabricClient.getHistory(applicationId, workflowName);
+        } catch (NotFoundException e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       public ScheduleManager getSchedule(final String schedName) {

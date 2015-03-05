@@ -32,7 +32,7 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.utils.DirUtils;
@@ -295,12 +295,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Namespace '%s' does not exist.", namespaceId));
-      return;
-    }
+                           @PathParam("namespace-id") String namespaceId) throws NotFoundException {
     responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
   }
 
@@ -311,13 +306,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-id") String adapterName) {
-    try {
-      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
+                         @PathParam("adapter-id") String adapterName) throws NotFoundException {
+    AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
+    responder.sendJson(HttpResponseStatus.OK, adapterSpec);
   }
 
   /**
@@ -328,7 +319,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId,
-                               @PathParam("action") String action) {
+                               @PathParam("action") String action) throws NotFoundException {
     try {
       if ("start".equals(action)) {
         adapterService.startAdapter(namespaceId, adapterId);
@@ -340,16 +331,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (InvalidAdapterOperationException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (SchedulerException e) {
       LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
                 namespaceId, adapterId, action, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -361,12 +347,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}/status")
   public void getAdapterStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId) {
-    try {
-      responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
+                               @PathParam("adapter-id") String adapterId) throws NotFoundException {
+    responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
   }
 
   /**
@@ -376,19 +358,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
+                            @PathParam("adapter-id") String adapterName) throws NotFoundException {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (SchedulerException e) {
       LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
                 namespaceId, adapterName, "delete", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -400,40 +376,28 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
+                            @PathParam("adapter-id") String adapterName)
+    throws SchedulerException, NotFoundException, AlreadyExistsException, IOException {
 
-    try {
-      if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
-        return;
-      }
-
-      AdapterConfig config = parseBody(request, AdapterConfig.class);
-      if (config == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
-        return;
-      }
-
-      // Validate the adapter
-      String adapterType = config.getType();
-      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
-      if (adapterTypeInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
-        return;
-      }
-
-      AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
-      adapterService.createAdapter(namespaceId, spec);
-      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (AdapterAlreadyExistsException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (Throwable th) {
-      LOG.error("Failed to deploy adapter", th);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
+    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
+      return;
     }
+
+    AdapterConfig config = parseBody(request, AdapterConfig.class);
+    if (config == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
+      return;
+    }
+
+    // Validate the adapter
+    String adapterType = config.getType();
+    AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
+
+    AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
+    adapterService.createAdapter(namespaceId, spec);
+    responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
   }
 
   private AdapterSpecification convertToSpec(String name, AdapterConfig config, AdapterTypeInfo typeInfo) {
@@ -709,7 +673,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
    * the reset API has a v3 version
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException {
+  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException, NotFoundException {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -760,7 +724,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
+  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) throws NotFoundException {
     ApplicationSpecification appSpec = store.getApplication(appId);
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
                                                                    appSpec.getMapReduce().values(),
@@ -775,7 +739,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param appId        applicationId.
    * @throws IOException if there are errors with location IO
    */
-  private void deleteProgramLocations(Id.Application appId) throws IOException {
+  private void deleteProgramLocations(Id.Application appId) throws IOException, NotFoundException {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     for (ProgramSpecification spec : programSpecs) {
@@ -805,7 +769,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete stored Preferences of the application and all its programs.
    * @param appId applicationId
    */
-  private void deletePreferences(Id.Application appId) {
+  private void deletePreferences(Id.Application appId) throws NotFoundException {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 

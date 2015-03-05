@@ -45,7 +45,7 @@ public interface NamespaceAdmin {
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NamespaceNotFoundException;
+  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NotFoundException;
 
   /**
    * Checks if the specified namespace exists
@@ -62,8 +62,7 @@ public interface NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    * @throws co.cask.cdap.common.exception.NamespaceCannotBeCreatedException if the creation operation was unsuccessful
    */
-  public void createNamespace(NamespaceMeta metadata)
-    throws NamespaceAlreadyExistsException, NamespaceCannotBeCreatedException;
+  public void createNamespace(NamespaceMeta metadata) throws AlreadyExistsException, NamespaceCannotBeCreatedException;
 
   /**
    * Deletes the specified namespace
@@ -72,6 +71,5 @@ public interface NamespaceAdmin {
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
-  public void deleteNamespace(Id.Namespace namespaceId)
-    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException;
+  public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException, NamespaceCannotBeDeletedException;
 }

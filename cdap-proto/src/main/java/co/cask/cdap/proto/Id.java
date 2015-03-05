@@ -208,24 +208,12 @@ public abstract class Id {
   /**
    * Uniquely identifies an Adapter Type.
    */
-  public static final class AdapterType extends NamespacedId {
-    private final Namespace namespace;
+  public static final class AdapterType extends Id {
     private final String adapterTypeId;
 
-    public AdapterType(final Namespace namespace, final String adapterTypeId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
+    public AdapterType(final String adapterTypeId) {
       Preconditions.checkNotNull(adapterTypeId, "adapterTypeId cannot be null.");
-      this.namespace = namespace;
       this.adapterTypeId = adapterTypeId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
     }
 
     @Override
@@ -243,25 +231,21 @@ public abstract class Id {
       }
 
       AdapterType that = (AdapterType) o;
-      return namespace.equals(that.namespace) && adapterTypeId.equals(that.adapterTypeId);
+      return adapterTypeId.equals(that.adapterTypeId);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(namespace, adapterTypeId);
+      return Objects.hashCode(adapterTypeId);
     }
 
-    public static AdapterType from(Namespace id, String adapterTypeId) {
-      return new AdapterType(id, adapterTypeId);
-    }
-
-    public static AdapterType from(String namespaceId, String adapterTypeId) {
-      return new AdapterType(Namespace.from(namespaceId), adapterTypeId);
+    public static AdapterType from(String adapterTypeId) {
+      return new AdapterType(adapterTypeId);
     }
 
     @Override
     public Id getParent() {
-      return namespace;
+      return null;
     }
   }
 

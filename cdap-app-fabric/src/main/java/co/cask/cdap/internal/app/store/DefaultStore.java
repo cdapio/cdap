@@ -686,7 +686,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
-                             final String scheduleName) throws NotFoundException, AlreadyExistsException {
+                             final String scheduleName) throws NotFoundException {
     execute(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -694,7 +694,7 @@ public class DefaultStore implements Store {
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
         ScheduleSpecification removed = schedules.remove(scheduleName);
         if (removed == null) {
-          throw new AlreadyExistsException(Id.Schedule.from(program, programType, scheduleName));
+          throw new NotFoundException(Id.Schedule.from(program, programType, scheduleName));
         }
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()
@@ -702,7 +702,7 @@ public class DefaultStore implements Store {
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
-    }, NotFoundException.class, AlreadyExistsException.class);
+    }, NotFoundException.class);
   }
 
   private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
@@ -892,13 +892,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) throws NotFoundException {
+    return execute(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
       @Override
       public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
         return mds.apps.getAllAdapters(id);
       }
-    });
+    }, NotFoundException.class);
   }
 
   @Override

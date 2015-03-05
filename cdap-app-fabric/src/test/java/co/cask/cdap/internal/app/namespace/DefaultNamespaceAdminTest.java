@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
@@ -57,7 +56,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     try {
       namespaceAdmin.getNamespace(Id.Namespace.from("random"));
       Assert.fail("Namespace 'random' should not exist.");
-    } catch (NamespaceNotFoundException e) {
+    } catch (NotFoundException e) {
       Assert.assertEquals(Id.Namespace.from("random"), e.getObjectId());
     }
 
@@ -119,8 +118,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     try {
       namespaceAdmin.getNamespace(namespaceId);
       Assert.fail(String.format("Namespace '%s' should not be found since it was just deleted", namespaceId.getId()));
-    } catch (NamespaceNotFoundException e) {
-      Assert.assertEquals(Id.Namespace.from(namespaceId.getId()), e.getId());
+    } catch (NotFoundException e) {
+      Assert.assertEquals(Id.Namespace.from(namespaceId.getId()), e.getObjectId());
     }
   }
 }

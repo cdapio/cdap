@@ -22,6 +22,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
@@ -310,7 +311,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+    throws NotFoundException {
+
     programLifecycleHttpHandler.programHistory(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                Constants.DEFAULT_NAMESPACE, appId, programType, programId,
                                                status, startTs, endTs, resultLimit);
@@ -324,7 +327,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("program-type") final String programType,
-                                    @PathParam("program-id") final String programId) {
+                                    @PathParam("program-id") final String programId) throws NotFoundException {
     programLifecycleHttpHandler.getProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                       Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
@@ -337,7 +340,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("program-type") final String programType,
-                                     @PathParam("program-id") final String programId) {
+                                     @PathParam("program-id") final String programId) throws NotFoundException, IOException {
     programLifecycleHttpHandler.saveProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                        Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
@@ -606,7 +609,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
-                                   @PathParam("workflow-id") String workflowId) {
+                                   @PathParam("workflow-id") String workflowId) throws NotFoundException {
     programLifecycleHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                      Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }

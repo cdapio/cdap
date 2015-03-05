@@ -20,6 +20,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -186,7 +187,6 @@ public class UpgraderMain {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-
     createDefaultNamespace();
   }
 
@@ -329,10 +329,14 @@ public class UpgraderMain {
    * Creates the {@link Constants#DEFAULT_NAMESPACE} namespace
    */
   private void createDefaultNamespace() {
-    getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
-                                 .setName(Constants.DEFAULT_NAMESPACE)
-                                 .setDescription(Constants.DEFAULT_NAMESPACE)
-                                 .build());
+    try {
+      getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
+                                   .setName(Constants.DEFAULT_NAMESPACE)
+                                   .setDescription(Constants.DEFAULT_NAMESPACE)
+                                   .build());
+    } catch (AlreadyExistsException ignored) {
+
+    }
   }
 
   /**

@@ -22,6 +22,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -84,7 +85,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
       adapterService.createAdapter(TEST_NAMESPACE1, adapterSpecification);
       Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
-    } catch (AdapterAlreadyExistsException expected) {
+    } catch (AlreadyExistsException expected) {
     }
 
     AdapterSpecification actualAdapterSpec = adapterService.getAdapter(TEST_NAMESPACE1, adapterName);

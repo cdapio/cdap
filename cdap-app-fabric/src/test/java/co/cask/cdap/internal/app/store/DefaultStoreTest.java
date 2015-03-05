@@ -53,6 +53,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
@@ -109,7 +110,7 @@ public class DefaultStoreTest {
   }
 
   @Test(expected = RuntimeException.class)
-  public void testStopBeforeStart() throws RuntimeException {
+  public void testStopBeforeStart() throws RuntimeException, NotFoundException {
     Id.Program programId = Id.Program.from("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
     store.setStop(programId, "runx", now, ProgramController.State.ERROR);
@@ -607,7 +608,7 @@ public class DefaultStoreTest {
     verifyRunHistory(flowProgramId2, 0);
   }
 
-  private void verifyRunHistory(Id.Program programId, int count) {
+  private void verifyRunHistory(Id.Program programId, int count) throws NotFoundException {
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
@@ -743,7 +744,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(null, schedules.get("Schedule2"));
   }
 
-  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {
+  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) throws NotFoundException {
     ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();

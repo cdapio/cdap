@@ -25,6 +25,11 @@ public class NotFoundException extends Exception {
 
   private final Id objectId;
 
+  public NotFoundException() {
+    super();
+    this.objectId = null;
+  }
+
   public NotFoundException(Id id) {
     super(String.format("'%s' was not found", id.getIdRep()));
     this.objectId = id;

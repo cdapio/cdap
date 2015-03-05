@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -33,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.apache.twill.common.Threads;
 import org.quartz.JobExecutionException;
@@ -133,7 +135,14 @@ public final class ScheduleTaskRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State state) {
-        store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        try {
+          store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        } catch (NotFoundException e) {
+          throw Throwables.propagate(e);
+        }
+
+        // TODO: what if setStart doesn't throw NotFound, but stopped()/error() throws NotFound?
+
         if (state == ProgramController.State.STOPPED) {
           stopped();
         }
@@ -144,24 +153,33 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void stopped() {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.STOPPED);
-        LOG.debug("Program {} {} {} completed successfully.",
-                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
-        latch.countDown();
+        try {
+          store.setStop(programId, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.STOPPED);
+        } catch (NotFoundException e) {
+          throw Throwables.propagate(e);
+        } finally {
+          LOG.debug("Program {} {} {} completed successfully.",
+                    programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+          latch.countDown();
+        }
       }
 
       @Override
       public void error(Throwable cause) {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.ERROR);
-        LOG.debug("Program {} {} {} execution failed.",
-                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                  cause);
-
-        latch.countDown();
+        try {
+          store.setStop(programId, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.ERROR);
+        } catch (NotFoundException e) {
+          throw Throwables.propagate(e);
+        } finally {
+          LOG.debug("Program {} {} {} execution failed.",
+                    programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                    cause);
+          latch.countDown();
+        }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 

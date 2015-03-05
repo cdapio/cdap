@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
@@ -167,7 +168,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
-  public List<ScheduleSpecification> getSchedules(String appId, String wflowId) {
+  public List<ScheduleSpecification> getSchedules(String appId, String wflowId) throws NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
@@ -179,7 +180,7 @@ public class AppFabricClient {
     return schedules;
   }
 
-  public List<RunRecord> getHistory(String appId, String wflowId) {
+  public List<RunRecord> getHistory(String appId, String wflowId) throws NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);

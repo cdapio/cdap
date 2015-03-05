@@ -301,7 +301,7 @@ public interface Store {
    * @param programType defines the type of the program
    * @param scheduleName the name of the schedule to be removed from the program
    */
-  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) throws NotFoundException, AlreadyExistsException;
+  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) throws NotFoundException;
 
   /**
    * Check if a program exists.
@@ -394,7 +394,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id) throws NotFoundException;
 
   /**
    * Remove the adapter specified by the name in a given namespace.
