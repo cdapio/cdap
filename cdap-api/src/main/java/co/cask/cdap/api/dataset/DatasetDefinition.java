@@ -32,11 +32,13 @@ import java.util.Map;
  *   </li>
  *   <li>
  *     a way to perform administrative operations on the dataset instance (e.g. create, drop etc.) by providing
- *     implementation of {@link DatasetAdmin} via {@link #getAdmin(DatasetSpecification, ClassLoader)} method
+ *     implementation of {@link DatasetAdmin} via
+ *     {@link #getAdmin(DatasetContext, DatasetSpecification, ClassLoader)} method
  *   </li>
  *   <li>
  *     a way to perform operations to manipulate data of the dataset instance (e.g. read, write etc.) by providing
- *     implementation of {@link Dataset} via {@link #getDataset(DatasetSpecification, Map, ClassLoader)} method
+ *     implementation of {@link Dataset} via
+ *     {@link #getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)} method
  *   </li>
  * </ul>
  *
@@ -62,8 +64,9 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * @param properties instance configuration properties
    * @return instance of {@link DatasetSpecification} that fully describes dataset instance.
    *         The {@link DatasetSpecification} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
-   *         administrative and data operations respectively, see {@link #getAdmin(DatasetSpecification, ClassLoader)}
-   *         and {@link #getDataset(DatasetSpecification, Map, ClassLoader)}.
+   *         administrative and data operations respectively, see {@link #getAdmin(DatasetContext,
+   *         DatasetSpecification, ClassLoader)}
+   *         and {@link #getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)}.
    */
   DatasetSpecification configure(String instanceName, DatasetProperties properties);
 
@@ -71,17 +74,21 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * Provides dataset admin to be used to perform administrative operations on the dataset instance defined by passed
    * {@link DatasetSpecification}.
    *
+   *
+   * @param datasetContext context for the dataset
    * @param spec specification of the dataset instance.
    * @param classLoader classloader to use when executing admin operations
    * @return dataset admin to perform administrative operations
    * @throws IOException
    */
-  A getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException;
+  A getAdmin(DatasetContext datasetContext, DatasetSpecification spec, ClassLoader classLoader) throws IOException;
 
   /**
    * Provides dataset to be used to perform data operations on the dataset instance data defined by passed
    * {@link DatasetSpecification} and the given arguments.
    *
+   *
+   * @param datasetContext context for the dataset
    * @param spec specification of the dataset instance.
    * @param arguments arguments for this instance of the dataset. Should not be null - provide an empty map for no
    *                  arguments.
@@ -89,6 +96,6 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * @return dataset to perform object operations
    * @throws IOException
    */
-  D getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-      throws IOException;
+  D getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
+               ClassLoader classLoader) throws IOException;
 }

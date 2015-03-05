@@ -23,7 +23,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -44,9 +44,14 @@ public class ServiceClient {
   private final ClientConfig config;
 
   @Inject
+  public ServiceClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public ServiceClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**
@@ -56,11 +61,11 @@ public class ServiceClient {
    * @param serviceId ID of the service
    * @return {@link ServiceSpecification} representing the service
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
   public ServiceSpecification get(String appId, String serviceId)
-    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+    throws IOException, UnauthorizedException, NotFoundException {
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -77,11 +82,11 @@ public class ServiceClient {
    * @param serviceId ID of the service
    * @return A list of {@link ServiceHttpEndpoint}
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
   public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
-    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
+    throws IOException, UnauthorizedException, NotFoundException {
 
     ServiceSpecification specification = get(appId, serviceId);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<ServiceHttpEndpoint>();
@@ -92,7 +97,7 @@ public class ServiceClient {
   }
 
   public URL getServiceURL(String appId, String serviceId)
-    throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
+    throws NotFoundException, IOException, UnauthorizedException {
     // Make sure the service actually exists
     get(appId, serviceId);
     return config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/methods/", appId, serviceId));

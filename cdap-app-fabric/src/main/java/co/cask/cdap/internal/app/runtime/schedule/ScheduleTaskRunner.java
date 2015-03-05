@@ -67,9 +67,9 @@ public final class ScheduleTaskRunner {
    * @param programId Program Id
    * @param programType Program type.
    * @param arguments Arguments that would be supplied as system runtime arguments for the program.
-   * @throws JobExecutionException If fails to execute the program.
+   * @throws TaskExecutionException If fails to execute the program.
    */
-  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws JobExecutionException {
+  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws TaskExecutionException {
     Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
@@ -98,7 +98,7 @@ public final class ScheduleTaskRunner {
         }
       }
     } catch (Throwable t) {
-      throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
+      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
     executeAndBlock(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
@@ -122,7 +122,7 @@ public final class ScheduleTaskRunner {
   /**
    * Executes a program and block until it is completed.
    */
-  private void executeAndBlock(final Program program, ProgramOptions options) throws JobExecutionException {
+  private void executeAndBlock(final Program program, ProgramOptions options) throws TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
     final ProgramController controller = runtimeInfo.getController();
@@ -168,7 +168,7 @@ public final class ScheduleTaskRunner {
     try {
       latch.await();
     } catch (InterruptedException e) {
-      throw new JobExecutionException(e, false);
+      throw new TaskExecutionException(e, false);
     }
   }
 }

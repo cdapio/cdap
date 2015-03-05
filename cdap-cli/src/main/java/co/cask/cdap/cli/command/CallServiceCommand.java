@@ -63,11 +63,12 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
   private final TableRenderer tableRenderer;
 
   @Inject
-  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient, CLIConfig cliConfig,
+  public CallServiceCommand(ClientConfig clientConfig, RESTClient restClient,
+                            ServiceClient serviceClient, CLIConfig cliConfig,
                             TableRenderer tableRenderer) {
     super(cliConfig);
     this.clientConfig = clientConfig;
-    this.restClient = RESTClient.create(clientConfig);
+    this.restClient = restClient;
     this.serviceClient = serviceClient;
     this.tableRenderer = tableRenderer;
   }

@@ -67,6 +67,24 @@ you for the required credentials to acquire an access token from the CDAP instan
 the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
 the current CLI session.
 
+Options
+-------
+
+The CLI may be started with command-line options, as detailed below::
+
+  usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
+                     [--verify-ssl <true|false>] [--uri <arg>]
+   -a,--autoconnect <arg>   If "true", try provided connection (from uri)
+                            upon launch or try default connection if none
+                            provided. Defaults to "true".
+   -d,--debug               Print exception stack traces.
+   -h,--help                Print the usage message.
+   -s,--verify-ssl <arg>    If "true", verify SSL certificate when making
+                            requests. Defaults to "true".
+   -u,--uri <arg>           CDAP instance URI to interact with in the format
+                            "[http[s]://]<hostname>[:<port>[/<namespace>]]".
+                            Defaults to "http://127.0.0.1:10000/default".
+
 .. _cli-available-commands:
 
 Available Commands
@@ -84,7 +102,7 @@ These are the available commands:
    ``help [<command-category>]``,"Prints this helper text. Optionally, provide <command-category> to get help with a specific category."
    ``quit``,"Exits the CLI."
    ``search commands <query>``,"Searches available commands using regex."
-   ``version``,"Prints the CLI version."
+   ``version``,"Prints the CDAP version."
    **Namespace**
    ``create namespace <namespace-id> [<namespace-display-name>] [<namespace-description>]``,"Creates a namespace in CDAP."
    ``delete namespace <namespace-id>``,"Deletes a Namespace."
@@ -94,7 +112,7 @@ These are the available commands:
    **Lifecycle**
    ``create adapter <adapter-name> type <adapter-type> [props <adapter-props>] src <adapter-source> [src-props <adapter-source-config>] sink <adapter-sink> [sink-props <adapter-sink-config>]``,"Creates an Adapter."
    ``create stream <new-stream-id>``,"Creates a Stream."
-   ``create stream-conversion adapter <adapter-name> on <stream-id> [frequency <frequency>] [format <format>] [schema <schema>] [headers <headers>] [to <dataset-name>]``,"Creates a Stream conversion Adapter that periodically reads from a Stream and writes to a time-partitioned fileset. <frequency> is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. <format> is the name of the Stream format, such as 'text', 'avro', 'csv', or 'tsv'. <schema> is a sql-like schema of comma separated column name followed by column type. <headers> is a comma separated list of Stream headers to include in the output schema. <dataset-name> is the name of the time-partitioned fileset to write to."
+   ``create stream-conversion adapter <adapter-name> on <stream-id> [frequency <frequency>] [format <format>] [schema <schema>] [headers <headers>] [to <dataset-name>]``,"Creates a Stream conversion Adapter that periodically reads from a Stream and writes to a time-partitioned fileset. <frequency> is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. <format> is the name of the stream format, such as 'text', 'avro', 'csv', or 'tsv'. <schema> is a sql-like schema of comma separated column name followed by column type. <headers> is a comma separated list of Stream headers to include in the output schema. <dataset-name> is the name of the time-partitioned fileset to write to."
    ``delete adapter <adapter-name>``,"Deletes an Adapter."
    ``delete app <app-id>``,"Deletes an Application."
    ``deploy app <app-jar-file>``,"Deploys an Application."
@@ -170,6 +188,7 @@ These are the available commands:
    ``stop procedure <app-id.procedure-id>``,"Stops a Procedure."
    ``stop service <app-id.service-id>``,"Stops a Service."
    ``stop spark <app-id.spark-id>``,"Stops a Spark Program."
+   ``stop workflow <app-id.workflow-id>``,"Stops a Workflow."
    ``truncate stream <stream-id>``,"Truncates a Stream."
    **Dataset**
    ``create dataset instance <dataset-type> <new-dataset-name>``,"Creates a Dataset."
@@ -183,12 +202,11 @@ These are the available commands:
    ``list dataset types``,"Lists all Dataset types."
    ``truncate dataset instance <dataset-name>``,"Truncates a Dataset."
    **Explore**
-   ``execute <query> [<timeout>]``,"Executes a Dataset query with optional <timeout> in minutes (default is no timeout)."
+   ``execute <query> [<timeout>]``,"Executes a Dataset query with an optional timeout (default 60) in minutes."
    **Ingest**
-   ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a Stream. The contents of the file will become multiple events in the Stream, based on the content type. If <content-type> is not provided, it will be detected by the file extension."
+   ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a Stream. The content of the file will become multiple events in the Stream, based on the content type. If <content-type> is not provided, it will be detected by the file extension."
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream."
    **Egress**
    ``call procedure <app-id.procedure-id> <app-id.method-id> [<parameter-map>]``,"Calls a Procedure."
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String." 
-  
-       
+   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"" and the <body> is a String."
+

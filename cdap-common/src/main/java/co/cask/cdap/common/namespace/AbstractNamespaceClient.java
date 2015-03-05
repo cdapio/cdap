@@ -20,7 +20,7 @@ import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -39,10 +39,10 @@ import java.util.List;
 public abstract class AbstractNamespaceClient {
   private static final String NAMESPACE_ENTITY_TYPE = "namespace";
 
-  protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnAuthorizedAccessTokenException;
+  protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException;
   protected abstract URL resolve(String resource) throws IOException;
 
-  public List<NamespaceMeta> list() throws IOException, UnAuthorizedAccessTokenException {
+  public List<NamespaceMeta> list() throws IOException, UnauthorizedException {
     HttpRequest request = HttpRequest.get(resolve("namespaces")).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -52,7 +52,7 @@ public abstract class AbstractNamespaceClient {
     throw new IOException("Cannot list namespaces. Reason: " + "getDetails(response)");
   }
 
-  public NamespaceMeta get(String namespaceId) throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
+  public NamespaceMeta get(String namespaceId) throws NotFoundException, IOException, UnauthorizedException {
     HttpResponse response = execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
@@ -63,7 +63,7 @@ public abstract class AbstractNamespaceClient {
   }
 
   public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
-    UnAuthorizedAccessTokenException {
+    UnauthorizedException {
     HttpResponse response = execute(HttpRequest.delete(resolve(String.format("namespaces/%s", namespaceId))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
@@ -76,7 +76,7 @@ public abstract class AbstractNamespaceClient {
   }
 
   public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
-    UnAuthorizedAccessTokenException {
+    UnauthorizedException {
     URL url = resolve(String.format("namespaces/%s", namespaceMeta.getId()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
