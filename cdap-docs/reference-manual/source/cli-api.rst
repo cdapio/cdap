@@ -176,6 +176,7 @@ These are the available commands:
    ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a Stream. <schema> is a sql-like schema ""column_name data_type, ..."" or avro-like json schema and <settings> is specified in the format ""key1=v1, key2=v2""."
    ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a Stream, such as TTL, format, and notification threshold."
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the Time-to-Live (TTL) of a Stream."
+   ``set stream notification-threshold <stream-id> <notification-threshold-mb>``,"Sets the Notification Threshold of a Stream."
    ``set workflow runtimeargs <app-id.workflow-id> <runtime-args>``,"Sets the runtime arguments of a Workflow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start flow <app-id.flow-id> [<runtime-args>]``,"Starts a Flow. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce Program. <runtime-args> is specified in the format ""key1=a key2=b""."
