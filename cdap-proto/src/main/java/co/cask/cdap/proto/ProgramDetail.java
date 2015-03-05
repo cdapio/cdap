@@ -14,19 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.proto;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Represents a program in an HTTP response.
  */
-public class UnauthorizedException extends Exception {
+public class ProgramDetail {
+  private final ProgramType type;
+  private final String name;
+  private final String description;
 
-  public UnauthorizedException() {
-    super();
+  public ProgramDetail(ProgramType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
   }
 
-  public UnauthorizedException(String message) {
-    super(message);
+  public ProgramType getType() {
+    return type;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
 }

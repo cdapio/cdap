@@ -21,7 +21,7 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -113,7 +113,7 @@ public class CLIConfig {
 
   private void checkConnection(ClientConfig baseClientConfig,
                                ConnectionInfo connectionInfo,
-                               AccessToken accessToken) throws IOException, UnAuthorizedAccessTokenException {
+                               AccessToken accessToken) throws IOException, UnauthorizedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
       .setHostname(connectionInfo.getHostname())
       .setPort(connectionInfo.getPort())
@@ -139,7 +139,7 @@ public class CLIConfig {
       AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
       checkConnection(clientConfig, connectionInfo, savedAccessToken);
       return savedAccessToken;
-    } catch (UnAuthorizedAccessTokenException ignored) {
+    } catch (UnauthorizedException ignored) {
       // access token invalid - fall through to try acquiring token manually
     }
 

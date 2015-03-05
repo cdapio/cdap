@@ -14,19 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.proto;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Represents a dataset in an HTTP response.
  */
-public class UnauthorizedException extends Exception {
+public class DatasetDetail {
 
-  public UnauthorizedException() {
-    super();
+  private final String name;
+  private final String classname;
+
+  public DatasetDetail(String name, String classname) {
+    this.name = name;
+    this.classname = classname;
   }
 
-  public UnauthorizedException(String message) {
-    super(message);
+  public String getName() {
+    return name;
   }
 
+  public String getClassname() {
+    return classname;
+  }
 }

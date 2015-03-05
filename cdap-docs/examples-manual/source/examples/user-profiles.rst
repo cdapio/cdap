@@ -114,7 +114,7 @@ Re-build the Application with Column-level Conflict Detection
 - Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
 
-    curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
+    curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
 
 - Now, rebuild the application, setting the ``tableProperties`` back to its original value, ``ConflictDetection.COLUMN``.
 - Re-deploy and re-run the application. You should not see any errors now in the log.    
@@ -140,7 +140,7 @@ Deleting an Existing Dataset
 If it has been created from an earlier run of the example, delete the ``profiles``
 Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call::
 
-  curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
+  curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
 
 
 Starting the Service and the Flow
