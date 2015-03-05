@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixNamespaces;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.TableId;
@@ -79,7 +79,7 @@ public class HBaseTable extends BufferingTable {
 
   public HBaseTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf,
                     Configuration hConf, boolean enableReadlessIncrements) throws IOException {
-    super(PrefixNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level, enableReadlessIncrements);
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level, enableReadlessIncrements);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(), name);
     HTable hTable = tableUtil.getHTable(hConf, tableId);

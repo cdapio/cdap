@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,12 +47,14 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   static LevelDBTableService service;
   static Injector injector = null;
 
+  private static CConfiguration cConf;
+
   @BeforeClass
   public static void init() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
-      new ConfigModule(conf),
+      new ConfigModule(cConf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
@@ -61,16 +63,15 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
   @Override
   protected LevelDBTable getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBTable(name,
-                                   ConflictDetection.valueOf(level.name()),
-                                   service);
+    return new LevelDBTable(MY_CONTEXT, name, ConflictDetection.valueOf(level.name()),
+                            service, cConf);
   }
 
   @Override
   protected LevelDBTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
     DatasetSpecification spec =
       new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
-    return new LevelDBTableAdmin(spec, service);
+    return new LevelDBTableAdmin(MY_CONTEXT, spec, service, cConf);
   }
 
   @Test

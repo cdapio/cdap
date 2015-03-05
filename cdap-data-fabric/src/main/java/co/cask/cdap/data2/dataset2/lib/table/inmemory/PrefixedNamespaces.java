@@ -21,12 +21,16 @@ import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 
 /**
- * Defines a prefix-based namespace strategy for in-memory and level-db tables.
- * Only used to generate internal representation (name) of datasets.
+ * Defines a prefix-based namespace strategy for in-memory and LevelDB tables.
+ * Only used to generate internal representation (name) of datasets, in-memory and LevelDB tables.
+ * Generates a table name of the form:
+ * <pre>
+ *   {root-prefix}_{namespace-id}.{dataset-name}
+ * </pre>
  */
-public class PrefixNamespaces {
+public class PrefixedNamespaces {
 
-  private PrefixNamespaces() {
+  private PrefixedNamespaces() {
   }
 
   public static String namespace(CConfiguration cConf, String namespaceId, String name) {

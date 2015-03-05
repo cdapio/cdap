@@ -26,8 +26,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -76,9 +74,8 @@ public abstract class TableTest<T extends Table> {
   static final byte[] L4 = Bytes.toBytes(4L);
   static final byte[] L5 = Bytes.toBytes(5L);
 
-  protected static final DefaultDatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
-  protected static final String MY_TABLE = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
+  protected static final String MY_TABLE = "myTable";
   protected static final DatasetContext MY_CONTEXT = DatasetContext.from(NAMESPACE_ID.getId());
 
   protected TransactionSystemClient txClient;
@@ -911,7 +908,7 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testMultiGetWithTx() throws Exception {
-    String testMultiGet = DS_NAMESPACE.namespace(NAMESPACE_ID, "testMultiGet");
+    String testMultiGet = "testMultiGet";
     DatasetAdmin admin = getTableAdmin(testMultiGet);
     admin.create();
     try {
@@ -1134,10 +1131,10 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testTxUsingMultipleTables() throws Exception {
-    String table1 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table1");
-    String table2 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table2");
-    String table3 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table3");
-    String table4 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table4");
+    String table1 = "table1";
+    String table2 = "table2";
+    String table3 = "table3";
+    String table4 = "table4";
     getTableAdmin(table1).create();
     getTableAdmin(table2).create();
     getTableAdmin(table3).create();
@@ -1238,8 +1235,8 @@ public abstract class TableTest<T extends Table> {
 
   private void testConflictDetection(ConflictDetection level) throws Exception {
     // we use tableX_Y format for variable names which means "tableX that is used in tx Y"
-    String table1 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table1");
-    String table2 = DS_NAMESPACE.namespace(NAMESPACE_ID, "table2");
+    String table1 = "table1";
+    String table2 = "table2";
     getTableAdmin(table1).create();
     getTableAdmin(table2).create();
     try {
@@ -1431,7 +1428,7 @@ public abstract class TableTest<T extends Table> {
   // this test ensures that an existing client survives the truncating or dropping and recreating of a table
   @Test
   public void testClientSurvivesTableReset() throws Exception {
-    final String tableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "survive");
+    final String tableName = "survive";
     DatasetAdmin admin = getTableAdmin(tableName);
     admin.create();
     Table table = getTable(tableName);

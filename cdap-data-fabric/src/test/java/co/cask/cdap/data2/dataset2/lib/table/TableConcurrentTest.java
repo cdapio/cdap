@@ -49,8 +49,6 @@ public abstract class TableConcurrentTest<T extends Table>
 
   private static final byte[][] ROWS_TO_APPEND_TO;
 
-  private static final String concCreate = DS_NAMESPACE.namespace(NAMESPACE_ID, "conccreate");
-
   static {
     ROWS_TO_APPEND_TO = new byte[6][];
     ROWS_TO_APPEND_TO[0] = ROW_TO_INCREMENT;
@@ -257,7 +255,7 @@ public abstract class TableConcurrentTest<T extends Table>
     Assert.assertTrue("First thread failed. ", success1.get());
     Assert.assertTrue("Second thread failed. ", success2.get());
     // perform a read - if the table was not opened successfully this will fail
-    getTable(concCreate).get(new byte[]{'a'}, new byte[][]{{'b'}});
+    getTable("conccreate").get(new byte[]{'a'}, new byte[][]{{'b'}});
   }
 
   class CreateThread extends Thread {
@@ -271,7 +269,7 @@ public abstract class TableConcurrentTest<T extends Table>
     public void run() {
       try {
         success.set(false);
-        getTableAdmin(concCreate).create();
+        getTableAdmin("conccreate").create();
         success.set(true);
       } catch (Throwable throwable) {
         success.set(false);

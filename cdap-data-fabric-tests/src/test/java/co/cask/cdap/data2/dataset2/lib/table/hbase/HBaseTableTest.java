@@ -117,8 +117,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
     int ttl = 1000;
-    String ttlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "ttl");
-    String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
+    String ttlTable = "ttl";
+    String noTtlTable = "nottl";
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin(ttlTable, props).create();
     HBaseTable table = new HBaseTable(MY_CONTEXT, ttlTable, ConflictDetection.ROW, cConf, testHBase.getConfiguration(),

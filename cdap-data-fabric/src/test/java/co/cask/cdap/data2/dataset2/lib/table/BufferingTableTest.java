@@ -88,7 +88,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
    */
   @Test
   public void testScanWithBuffering() throws Exception {
-    String testScanWithBuffering = DS_NAMESPACE.namespace(NAMESPACE_ID, "testScanWithBuffering");
+    String testScanWithBuffering = "testScanWithBuffering";
     DatasetAdmin admin = getTableAdmin(testScanWithBuffering);
     admin.create();
     try {
@@ -186,13 +186,12 @@ public abstract class BufferingTableTest<T extends BufferingTable>
     // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
     // affecting the stored data.
     // Also, one can re-use (modify) returned data from the table without affecting the stored data.
-    String myTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
-    DatasetAdmin admin = getTableAdmin(myTable);
+    DatasetAdmin admin = getTableAdmin(MY_TABLE);
     admin.create();
     try {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingTable table = getTable(myTable);
+      BufferingTable table = getTable(MY_TABLE);
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,15 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 
@@ -42,14 +45,14 @@ public class LevelDBTable extends BufferingTable {
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
-  public LevelDBTable(String tableName, ConflictDetection level, LevelDBTableService service)
-    throws IOException {
-    super(tableName, level);
-    this.core = new LevelDBTableCore(tableName, service);
+  public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
+                      LevelDBTableService service, CConfiguration cConf) throws IOException {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level);
+    this.core = new LevelDBTableCore(getTableName(), service);
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) tableName.length()}, Bytes.toBytes(tableName));
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) getTableName().length()}, Bytes.toBytes(getTableName()));
   }
 
   // TODO this is the same for all OcTableClient implementations -> promote to base class
