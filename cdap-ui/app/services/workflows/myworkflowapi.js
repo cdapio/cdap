@@ -1,9 +1,10 @@
 angular.module(PKG.name + '.services')
-  .factory('WorkflowsFactory', function(MySocketProvider, $state, myCdapUrl) {
+  .factory('myWorkFlowApi', function(MySocketProvider, $state, myCdapUrl) {
 
+    var url = myCdapUrl.constructUrl;
 
     return MySocketProvider(
-      myCdapUrl.constructUrl({
+      url({
         _cdapNsPath: '/apps/:appId/workflows/:workflowId'
       }),
     {
@@ -12,31 +13,31 @@ angular.module(PKG.name + '.services')
     },
     {
       runs: {
-        url: myCdapUrl.constructUrl({
+        url: url({
           _cdapNsPath: '/apps/:appId/workflows/:workflowId/runs'
         }),
         method: 'GET',
-        params: {
+        options: {
           type: 'poll'
         }
       },
-      getStatus: {
-        url: myCdapUrl.constructUrl({
+      status: {
+        url: url({
           _cdapNsPath: '/apps/:appId/workflows/:workflowId/status'
         }),
         method: 'GET',
-        params: {
+        options: {
           type: 'poll'
         }
       },
       start: {
-        url: myCdapUrl.constructUrl({
+        url: url({
           _cdapNsPath: '/apps/:appId/workflows/:workflowId/start'
         }),
         method: 'POST'
       },
       stop: {
-        url: myCdapUrl.constructUrl({
+        url: url({
           _cdapNsPath: '/apps/:appId/workflows/:workflowId/stop'
         }),
         method: 'POST'
