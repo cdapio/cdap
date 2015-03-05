@@ -86,8 +86,6 @@ public abstract class HTableNameConverter {
    */
   public abstract String getSysConfigTablePrefix(String hTableName);
 
-  protected abstract TableId fromTableName(String hTableName);
-
   @VisibleForTesting
   protected static String toHBaseNamespace(Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace

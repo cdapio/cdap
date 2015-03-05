@@ -18,7 +18,6 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
@@ -95,11 +94,9 @@ public abstract class HBaseTableUtil {
 
 
   protected CConfiguration cConf;
-  private String tableNamePrefix;
 
   public void setCConf(CConfiguration cConf) {
     this.cConf = cConf;
-    this.tableNamePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
   }
 
   /**

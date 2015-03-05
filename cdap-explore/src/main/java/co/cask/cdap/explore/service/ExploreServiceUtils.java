@@ -263,7 +263,7 @@ public class ExploreServiceUtils {
     }
     Set<String> bootstrapClassPaths = getBoostrapClasses();
 
-    Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getCanonicalName(),
+    Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getName(),
                                                  bootstrapClassPaths, usingCL);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
