@@ -112,7 +112,7 @@ public class MultiConsumerTest {
     Assert.assertTrue(trial < 60);
 
     for (ProgramController controller : controllers) {
-      controller.terminate().get();
+      controller.kill().get();
     }
   }
 }

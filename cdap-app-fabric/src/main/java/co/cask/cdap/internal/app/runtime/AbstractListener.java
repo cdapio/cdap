@@ -52,7 +52,7 @@ public abstract class AbstractListener implements ProgramController.Listener {
   }
 
   @Override
-  public void terminated() {
+  public void killed() {
   }
 
   @Override

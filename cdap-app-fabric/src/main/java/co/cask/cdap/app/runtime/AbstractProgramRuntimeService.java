@@ -97,7 +97,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       }
 
       @Override
-      public void terminated() {
+      public void killed() {
         remove(runtimeInfo);
       }
 

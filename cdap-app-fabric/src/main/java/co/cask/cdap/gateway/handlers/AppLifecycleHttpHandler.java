@@ -575,7 +575,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
     ProgramController controller = runtimeInfo.getController();
-    controller.terminate().get();
+    controller.kill().get();
   }
 
   private void getAppDetails(HttpResponder responder, String namespaceId, String appId) {

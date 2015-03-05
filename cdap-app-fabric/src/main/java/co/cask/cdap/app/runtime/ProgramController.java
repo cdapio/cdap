@@ -123,7 +123,7 @@ public interface ProgramController {
 
   ListenableFuture<ProgramController> complete();
 
-  ListenableFuture<ProgramController> terminate();
+  ListenableFuture<ProgramController> kill();
 
   /**
    * @return The current state of the program at the time when this method is called.
@@ -177,7 +177,7 @@ public interface ProgramController {
 
     void completed();
 
-    void terminated();
+    void killed();
 
     void error(Throwable cause);
   }

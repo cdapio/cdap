@@ -1643,7 +1643,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
 
         @Override
-        public void terminated() {
+        public void killed() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                         ProgramController.State.KILLED);
@@ -1703,7 +1703,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
       ProgramController controller = runtimeInfo.getController();
-      controller.terminate().get();
+      controller.kill().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);

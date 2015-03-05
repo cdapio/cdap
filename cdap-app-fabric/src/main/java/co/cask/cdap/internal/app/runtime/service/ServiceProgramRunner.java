@@ -116,7 +116,7 @@ public class ServiceProgramRunner extends AbstractInMemoryProgramRunner {
          new Function<ProgramController, ListenableFuture<?>>() {
            @Override
            public ListenableFuture<?> apply(ProgramController controller) {
-             return controller.terminate();
+             return controller.kill();
            }
          })).get();
         throw Throwables.propagate(t);

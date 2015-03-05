@@ -124,7 +124,7 @@ public abstract class AbstractProgramController implements ProgramController {
       public void run() {
         try {
           caller.stopping();
-          doStop();
+          doComplete();
           state.set(State.COMPLETED);
           result.set(AbstractProgramController.this);
           caller.completed();
@@ -137,7 +137,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final ListenableFuture<ProgramController> terminate() {
+  public final ListenableFuture<ProgramController> kill() {
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
@@ -149,10 +149,10 @@ public abstract class AbstractProgramController implements ProgramController {
       public void run() {
         try {
           caller.stopping();
-          doStop();
+          doKill();
           state.set(State.KILLED);
           result.set(AbstractProgramController.this);
-          caller.terminated();
+          caller.killed();
         } catch (Throwable t) {
           error(t, result);
         }
@@ -263,7 +263,9 @@ public abstract class AbstractProgramController implements ProgramController {
 
   protected abstract void doResume() throws Exception;
 
-  protected abstract void doStop() throws Exception;
+  protected abstract void doComplete() throws Exception;
+
+  protected abstract void doKill() throws Exception;
 
   protected abstract void doCommand(String name, Object value) throws Exception;
 
@@ -323,9 +325,9 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void terminated() {
+    public void killed() {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.terminated();
+        caller.killed();
       }
     }
 
@@ -389,7 +391,7 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void terminated() {
+    public void killed() {
       addTask(State.KILLED);
     }
 
@@ -538,7 +540,7 @@ public abstract class AbstractProgramController implements ProgramController {
           listener.completed();
           break;
         case KILLED:
-          listener.terminated();
+          listener.killed();
           break;
         case ERROR:
           listener.error(failureCause);

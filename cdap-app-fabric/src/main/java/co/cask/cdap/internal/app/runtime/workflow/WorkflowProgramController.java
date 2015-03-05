@@ -59,7 +59,12 @@ final class WorkflowProgramController extends AbstractProgramController {
   }
 
   @Override
-  protected void doStop() throws Exception {
+  protected void doComplete() throws Exception {
+    driver.stopAndWait();
+  }
+
+  @Override
+  protected void doKill() throws Exception {
     driver.stopAndWait();
   }
 
@@ -84,7 +89,13 @@ final class WorkflowProgramController extends AbstractProgramController {
         LOG.info("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
         cancelAnnounce.cancel();
         LOG.info("Service {} unregistered.", serviceName);
-        complete();
+        if (getState() != State.STOPPING) {
+          // service completed itself.
+          complete();
+        } else {
+          // service was terminated
+          kill();
+        }
       }
 
       @Override

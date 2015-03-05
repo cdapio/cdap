@@ -79,7 +79,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       RuntimeInfo info = super.run(bundleJarProgram, options);
       info.getController().addListener(new AbstractListener() {
         @Override
-        public void terminated() {
+        public void killed() {
           try {
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
@@ -133,7 +133,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
         if (isRunning(runtimeInfo.getProgramId(), type)) {
-          futures.add(runtimeInfo.getController().terminate());
+          futures.add(runtimeInfo.getController().kill());
         }
       }
     }

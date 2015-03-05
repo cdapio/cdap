@@ -127,7 +127,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           new Function<ProgramController, ListenableFuture<?>>() {
             @Override
             public ListenableFuture<?> apply(ProgramController controller) {
-              return controller.terminate();
+              return controller.kill();
             }
         })).get();
       } catch (Exception e) {
@@ -217,8 +217,13 @@ public final class FlowProgramRunner implements ProgramRunner {
     }
 
     @Override
-    protected void doStop() throws Exception {
-      LOG.info("Stopping flow: " + flowSpec.getName());
+    protected void doComplete() throws Exception {
+      // no-op
+    }
+
+    @Override
+    protected void doKill() throws Exception {
+      LOG.info("Killing flow: " + flowSpec.getName());
       lock.lock();
       try {
         Futures.successfulAsList(
@@ -226,13 +231,13 @@ public final class FlowProgramRunner implements ProgramRunner {
                               new Function<ProgramController, ListenableFuture<ProgramController>>() {
                                 @Override
                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                  return input.terminate();
+                                  return input.kill();
                                 }
                               })).get();
       } finally {
         lock.unlock();
       }
-      LOG.info("Flow stopped: " + flowSpec.getName());
+      LOG.info("Flow killed: " + flowSpec.getName());
     }
 
     @Override
@@ -328,7 +333,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // First stop the extra flowlets
       List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
       for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
-        futures.add(flowlets.remove(flowletName, instanceId).terminate());
+        futures.add(flowlets.remove(flowletName, instanceId).kill());
       }
       Futures.successfulAsList(futures).get();
 

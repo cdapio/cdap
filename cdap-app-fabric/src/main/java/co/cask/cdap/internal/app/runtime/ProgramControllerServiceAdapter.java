@@ -50,7 +50,14 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   }
 
   @Override
-  protected void doStop() throws Exception {
+  protected void doComplete() throws Exception {
+    if (service.state() != Service.State.TERMINATED && service.state() != Service.State.FAILED) {
+      service.stopAndWait();
+    }
+  }
+
+  @Override
+  protected void doKill() throws Exception {
     if (service.state() != Service.State.TERMINATED && service.state() != Service.State.FAILED) {
       service.stopAndWait();
     }
@@ -93,8 +100,8 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
           // Service completed by itself. Simply signal the state change of this controller.
           complete();
         } else {
-          // Service was terminated
-          terminate();
+          // Service was killed
+          kill();
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);

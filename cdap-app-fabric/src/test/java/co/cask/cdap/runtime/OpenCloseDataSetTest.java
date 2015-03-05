@@ -177,7 +177,7 @@ public class OpenCloseDataSetTest {
 
     // stop flow and procedure, they shuld both close the data set foo
     for (ProgramController controller : controllers) {
-      controller.terminate().get();
+      controller.kill().get();
     }
     Assert.assertEquals(2, TrackingTable.getTracker(fooTableName, "close"));
 

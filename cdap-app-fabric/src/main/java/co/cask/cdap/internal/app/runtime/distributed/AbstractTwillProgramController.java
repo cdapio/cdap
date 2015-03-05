@@ -62,8 +62,13 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   }
 
   @Override
-  protected final void doStop() throws Exception {
+  protected final void doComplete() throws Exception {
     twillController.stopAndWait();
+  }
+
+  @Override
+  protected final void doKill() throws Exception {
+    twillController.kill();
   }
 
   private TwillController.Listener createTwillListener() {
@@ -78,7 +83,13 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
       @Override
       public void terminated(Service.State from) {
         LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
-        terminate();
+        if (getState() != State.STOPPING) {
+          // Service completed by itself. Simply signal the state change of this controller.
+          complete();
+        } else {
+          // Service was killed
+          kill();
+        }
       }
 
       @Override

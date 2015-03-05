@@ -251,8 +251,13 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     }
 
     @Override
-    protected void doStop() throws Exception {
-      LOG.info("Stopping procedure: " + procedureContext);
+    protected void doComplete() throws Exception {
+      // no-op
+    }
+
+    @Override
+    protected void doKill() throws Exception {
+      LOG.info("Killing procedure: " + procedureContext);
       cancellable.cancel();
       try {
         if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT, TimeUnit.SECONDS)) {
@@ -264,7 +269,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       }
       handlerMethodFactory.stopAndWait();
 
-      LOG.info("Procedure stopped: " + procedureContext);
+      LOG.info("Procedure killed: " + procedureContext);
     }
 
     @Override

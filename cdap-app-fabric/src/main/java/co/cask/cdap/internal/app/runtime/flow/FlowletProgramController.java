@@ -74,8 +74,13 @@ final class FlowletProgramController extends AbstractProgramController {
   }
 
   @Override
-  protected void doStop() throws Exception {
-    LOG.info("Stopping flowlet: " + flowletContext);
+  protected void doComplete() throws Exception {
+    // no-op
+  }
+
+  @Override
+  protected void doKill() throws Exception {
+    LOG.info("Killing flowlet: " + flowletContext);
     try {
       driver.stopAndWait();
     } finally {
@@ -85,7 +90,7 @@ final class FlowletProgramController extends AbstractProgramController {
       }
       flowletContext.close();
     }
-    LOG.info("Flowlet stopped: " + flowletContext);
+    LOG.info("Flowlet killed: " + flowletContext);
   }
 
   @Override
