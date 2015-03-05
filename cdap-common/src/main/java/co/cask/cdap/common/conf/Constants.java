@@ -444,6 +444,13 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics collector.
+   */
+  public static final class MetricsCollector {
+    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
+  }
+
+  /**
    * Configurations for log saver.
    */
   public static final class LogSaver {
@@ -637,6 +644,7 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "stream";
       public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
+      public static final String STREAM_SIZE_SCHEDULE_POLLING_DELAY = "stream.size.schedule.polling.delay";
     }
   }
 
