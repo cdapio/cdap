@@ -49,8 +49,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
