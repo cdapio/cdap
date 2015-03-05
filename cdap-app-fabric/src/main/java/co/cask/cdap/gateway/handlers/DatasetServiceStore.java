@@ -43,7 +43,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory);
+    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf);
     this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 

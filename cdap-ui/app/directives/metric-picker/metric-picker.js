@@ -34,6 +34,14 @@ angular.module(PKG.name + '.commons')
 
       link: function (scope, elem, attr, ngModel) {
 
+        if(attr.required!==undefined) {
+          elem.find('input').attr('required', true);
+          ngModel.$validators.metricAndContext = function (m, v) {
+            var t = m || v;
+            return t && t.name && t.context;
+          };
+        }
+
         function getBaseContext () {
           var output;
 
@@ -62,6 +70,7 @@ angular.module(PKG.name + '.commons')
             context += '.' + scope.metric.context;
           }
 
+          scope.available.contexts = [];
           dSrc.request(
             {
               method: 'POST',
@@ -70,11 +79,17 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               scope.available.contexts = res.map(function(d){
-                return d.substring(bLen);
+                return {
+                  value: d.substring(bLen),
+                  display: d.substring(bLen+scope.metric.context.length)
+                };
+              }).filter(function(d) {
+                return d.display;
               });
             }
           );
 
+          scope.available.names = [];
           dSrc.request(
             {
               method: 'POST',

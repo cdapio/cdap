@@ -23,7 +23,7 @@ public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Override
   protected DatasetFramework getFramework() throws DatasetManagementException {
-    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES);
+    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
     framework.createNamespace(NAMESPACE_ID);
     return framework;
   }
