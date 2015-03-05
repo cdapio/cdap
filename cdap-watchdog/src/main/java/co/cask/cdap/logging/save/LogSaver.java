@@ -26,7 +26,6 @@ import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -85,8 +84,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
 
   @Inject
-
-  public LogSaver(LogSaverTableUtil tableUtil, TransactionSystemClient txClient, KafkaClientService kafkaClient,
+  public LogSaver(CheckpointManager checkpointManager,
+                  FileMetaDataManager fileMetaDataManager, KafkaClientService kafkaClient,
                   CConfiguration cConfig, LocationFactory locationFactory) throws Exception {
     LOG.info("Initializing LogSaver...");
 
@@ -94,8 +93,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info(String.format("Kafka topic is %s", this.topic));
     this.serializer = new LoggingEventSerializer();
 
-    this.checkpointManager = new CheckpointManager(tableUtil, txClient, topic);
-    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txClient, locationFactory);
+    this.checkpointManager = checkpointManager;
     this.messageTable = TreeBasedTable.create();
 
     this.kafkaClient = kafkaClient;

@@ -25,11 +25,14 @@ import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.HttpHeaders;
@@ -39,34 +42,32 @@ import javax.ws.rs.core.HttpHeaders;
  */
 public class RESTClient {
 
+  private final List<Listener> listeners;
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
   private final int unavailableRetryLimit;
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int retryLimit) {
+  @Inject
+  public RESTClient(ClientConfig clientConfig) {
+    this.listeners = Lists.newArrayList();
+    this.defaultConfig = clientConfig.getDefaultHttpConfig();
+    this.uploadConfig = clientConfig.getUploadHttpConfig();
+    this.unavailableRetryLimit = clientConfig.getUnavailableRetryLimit();
+  }
+
+  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int unavailableRetryLimit) {
+    this.listeners = Lists.newArrayList();
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
-    this.unavailableRetryLimit = retryLimit;
+    this.unavailableRetryLimit = unavailableRetryLimit;
   }
 
-  /**
-   * Creates a {@link RESTClient}.
-   *
-   * @param clientConfig default {@link ClientConfig} that configures timeouts
-   * @return {@link RESTClient} instance
-   */
-  public static RESTClient create(ClientConfig clientConfig) {
-    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig(),
-                          clientConfig.getUnavailableRetryLimit());
+  public void addListener(Listener listener) {
+    listeners.add(listener);
   }
 
-  /**
-   * Creates a default {@link RESTClient}.
-   *
-   * @return {@link RESTClient} instance
-   */
-  public static RESTClient create(int unavailableRetryLimit) {
-    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT, unavailableRetryLimit);
+  public boolean removeListener(Listener listener) {
+    return listeners.remove(listener);
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
@@ -93,20 +94,16 @@ public class RESTClient {
                      .withBody(body).build(), allowedErrorCodes);
   }
 
-  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
-    UnauthorizedException {
+  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+    throws IOException, UnauthorizedException {
+
     int currentTry = 0;
     HttpResponse response;
     do {
+      onRequest(request, currentTry);
       response = HttpRequests.execute(request, defaultConfig);
+
       int responseCode = response.getResponseCode();
-      if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        throw new UnauthorizedException("Unauthorized status code received from the server.");
-      }
-      if (!isSuccessful(responseCode) && responseCode != HttpURLConnection.HTTP_UNAVAILABLE
-        && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
-      }
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
         currentTry++;
         try {
@@ -116,9 +113,29 @@ public class RESTClient {
         }
         continue;
       }
+
+      onResponse(request, response, currentTry);
+      if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        throw new UnauthorizedException("Unauthorized status code received from the server.");
+      }
+      if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
+      }
       return response;
     } while (currentTry <= unavailableRetryLimit);
     return response;
+  }
+
+  private void onRequest(HttpRequest request, int attempt) {
+    for (Listener listener : listeners) {
+      listener.onRequest(request, attempt);
+    }
+  }
+
+  private void onResponse(HttpRequest request, HttpResponse response, int attemptsMade) {
+    for (Listener listener : listeners) {
+      listener.onResponse(request, response, attemptsMade);
+    }
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
@@ -145,5 +162,13 @@ public class RESTClient {
       headers = ImmutableMap.of(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
     }
     return headers;
+  }
+
+  /**
+   * Listener for when requests are made and when responses are received.
+   */
+  public static interface Listener {
+    void onRequest(HttpRequest request, int attempt);
+    void onResponse(HttpRequest request, HttpResponse response, int attemptsMade);
   }
 }

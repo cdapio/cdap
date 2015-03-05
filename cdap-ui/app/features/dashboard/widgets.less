@@ -10,15 +10,18 @@ body.state-dashboard {
 
     .panel-footer dl {
       margin: 0;
-      dt,dd {
-        float: left;
-      }
+      white-space: nowrap;
       dt {
+        float: left;
         clear: left;
         min-width: 70px;
         &:after {
           content: ':\00a0';
         }
+      }
+      dd {
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
   }

@@ -24,9 +24,11 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -34,6 +36,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
@@ -66,25 +69,31 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final Set<Id.Namespace> namespaces;
   private final SetMultimap<Id.Namespace, String> nonDefaultTypes;
+
   // Id.Namespace is contained in Id.DatasetInstance. But we need to be able to get all instances in a namespace
   // and delete all instances in a namespace, so we keep it as a separate key
   private final Table<Id.Namespace, Id.DatasetInstance, DatasetSpecification> instances;
   private final Table<Id.Namespace, Id.DatasetModule, String> moduleClasses;
 
+  private final boolean allowDatasetUncheckedUpgrade;
+
   // NOTE: used only for "internal" operations, that doesn't return to client object of custom type
   // NOTE: for getting dataset/admin objects we construct fresh new one using all modules (no dependency management in
-  //       this in-mem implementation for now) and passed client (program) classloader
+  //       this in-mem implementation for now) and passed client (program) class loader
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory) {
-    this(registryFactory, new HashMap<String, DatasetModule>());
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
+    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules) {
+                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules,
+                                  CConfiguration configuration) {
     this.registryFactory = registryFactory;
+    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+
     this.namespaces = Sets.newHashSet();
     this.nonDefaultTypes = HashMultimap.create();
     this.instances = HashBasedTable.create();
@@ -162,7 +171,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public synchronized void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
                                        DatasetProperties props) throws DatasetManagementException, IOException {
-    if (instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
+    if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceId);
     }
 
@@ -196,8 +205,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) {
-    return Collections.unmodifiableCollection(instances.row(namespaceId).values());
+  public synchronized Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) {
+    // don't expect this to be called a lot.
+    // might be better to maintain this collection separately and just return it, but seems like its not worth it.
+    Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
+    ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
+    for (DatasetSpecification spec : specs) {
+      specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+    }
+    return specSummaries.build();
   }
 
   @Nullable
