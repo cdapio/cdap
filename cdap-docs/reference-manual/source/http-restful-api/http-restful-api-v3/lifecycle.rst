@@ -52,7 +52,8 @@ For detailed information on an application that has been deployed in the namespa
 
   GET <base-url>/namespaces/<namespace-id>/apps/<app-id>
 
-The information will be returned in the body of the response.
+The information will be returned in the body of the response. It includes the name and description
+of the application, the streams and datasets it uses, and all of its programs.
 
 .. list-table::
    :widths: 20 80
