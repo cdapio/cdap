@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.kv;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -63,6 +64,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
     Injector injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
         bind(Configuration.class).toInstance(testHBase.getConfiguration());
         bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }

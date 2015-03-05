@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
@@ -74,6 +75,7 @@ import static org.junit.Assert.fail;
 public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
   private static final CConfiguration cConf = CConfiguration.create();
+  private static final String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -175,12 +177,14 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public void testPreSplit() throws Exception {
     byte[][] splits = new byte[][] {Bytes.toBytes("a"), Bytes.toBytes("b"), Bytes.toBytes("c")};
     DatasetProperties props = DatasetProperties.builder().add("hbase.splits", new Gson().toJson(splits)).build();
-    String presplittedTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "presplitted");
+    String presplittedTable = "presplitted";
     getTableAdmin(presplittedTable, props).create();
 
     HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
     try {
-      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(presplittedTable));
+      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(rootPrefix,
+                                                                                          NAMESPACE_ID.getId(),
+                                                                                          presplittedTable));
       // note: first region starts at very first row key, so we have one extra to the splits count
       Assert.assertEquals(4, regions.size());
       Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
@@ -194,10 +198,10 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   @Test
   public void testEnableIncrements() throws Exception {
     // setup a table with increments disabled and with it enabled
-    String disableTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-disable");
-    String enabledTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-enable");
-    TableId disabledTableId = TableId.from(disableTableName);
-    TableId enabledTableId = TableId.from(enabledTableName);
+    String disableTableName = "incr-disable";
+    String enabledTableName = "incr-enable";
+    TableId disabledTableId = TableId.from(rootPrefix, NAMESPACE_ID.getId(), disableTableName);
+    TableId enabledTableId = TableId.from(rootPrefix, NAMESPACE_ID.getId(), enabledTableName);
     HBaseTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
     HBaseAdmin admin = testHBase.getHBaseAdmin();

@@ -417,13 +417,22 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
   public static class BufferingTableWithPersistingFailure extends BufferingTable {
     private BufferingTable delegate;
+    private final byte[] nameAsTxChangePrefix;
 
     public BufferingTableWithPersistingFailure(BufferingTable delegate) {
       super(delegate.getTableName());
       this.delegate = delegate;
+      String delegateTableName = delegate.getTableName();
+      this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) delegateTableName.length()},
+                                            Bytes.toBytes(delegateTableName));
     }
 
     // override persist to simulate failure in the middle
+
+    @Override
+    public byte[] getNameAsTxChangePrefix() {
+      return nameAsTxChangePrefix;
+    }
 
     @Override
     protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {

@@ -43,7 +43,6 @@ public abstract class NoTxKeyValueTableTest {
   private static final byte[] VALUE2 = Bytes.toBytes("value2");
 
   private static final Map<String, String> NO_ARGS = DatasetDefinition.NO_ARGUMENTS;
-  private static final String namespaceId = "testNamespace";
 
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
@@ -58,7 +57,7 @@ public abstract class NoTxKeyValueTableTest {
     DatasetSpecification spec = def.configure(name, DatasetProperties.EMPTY);
 
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
-    DatasetContext datasetContext = DatasetContext.from(namespaceId);
+    DatasetContext datasetContext = DatasetContext.from(NAMESPACE_ID.getId());
     // create & exists
     DatasetAdmin admin = def.getAdmin(datasetContext, spec, cl);
     Assert.assertFalse(admin.exists());

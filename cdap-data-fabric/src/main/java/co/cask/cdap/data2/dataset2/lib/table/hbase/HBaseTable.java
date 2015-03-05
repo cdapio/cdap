@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixNamespaces;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.TableId;
@@ -73,11 +74,12 @@ public class HBaseTable extends BufferingTable {
   private Transaction tx;
 
   private final TransactionCodec txCodec;
+  // name length + name of the table: handy to have one cached
+  private final byte[] nameAsTxChangePrefix;
 
   public HBaseTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf,
                     Configuration hConf, boolean enableReadlessIncrements) throws IOException {
-    super(name, level, enableReadlessIncrements);
-    hTableName = HBaseTableUtil.getHBaseTableName(name);
+    super(PrefixNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level, enableReadlessIncrements);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(), name);
     HTable hTable = tableUtil.getHTable(hConf, tableId);
@@ -86,6 +88,11 @@ public class HBaseTable extends BufferingTable {
     hTable.setAutoFlush(false);
     this.hTable = hTable;
     this.txCodec = new TransactionCodec();
+    this.hTableName = this.hTable.getTableDescriptor().getNameAsString();
+    // TODO: having central dataset management service will allow us to use table ids instead of names, which will
+    //       reduce changeset size transferred to/from server
+    // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
   }
 
   @Override
@@ -127,6 +134,11 @@ public class HBaseTable extends BufferingTable {
     } catch (IOException ioe) {
       throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
     }
+  }
+
+  @Override
+  public byte[] getNameAsTxChangePrefix() {
+    return nameAsTxChangePrefix;
   }
 
   @Override
