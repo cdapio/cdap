@@ -72,7 +72,8 @@ Options
 
 The CLI may be started with command-line options, as detailed below::
 
-  usage: CDAP CLI
+  usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
+                     [--verify-ssl <true|false>] [--uri <arg>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)
                             upon launch or try default connection if none
                             provided. Defaults to "true".
