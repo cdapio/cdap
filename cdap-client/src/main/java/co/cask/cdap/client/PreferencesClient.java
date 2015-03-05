@@ -274,7 +274,8 @@ public class PreferencesClient {
     URL url = config.resolveURLV3(String.format("configuration/preferences/namespaces/%s/apps/%s/%s/%s",
                                                 program.getNamespaceId(), program.getApplicationId(),
                                                 program.getType().getCategoryName(), program.getId()));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(program);
     }
