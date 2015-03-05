@@ -10,6 +10,7 @@
     "bootstrap": "3.3.2",
     "font-awesome": "4.3.0",
     "angular-strap": "2.2.0",
+    "angular-motion": "0.3.4",
     "angular-ui-router": "0.2.13",
     "angular-loading-bar": "0.6.0",
     "ngstorage": "0.3.0",
