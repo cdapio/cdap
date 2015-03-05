@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, amMoment, $filter) {
+  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, amMoment, $filter, myHelpers) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
@@ -8,10 +8,30 @@ angular.module(PKG.name + '.feature.workflows')
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
+    $scope.data = {};
     dataSrc.request({
       _cdapNsPath: basePath
     })
       .then(function(res) {
+        var edges = [],
+            nodes = [];
+
+        myHelpers.convert(angular.copy(res.nodes), edges);
+        myHelpers.expandForks(res.nodes, nodes);
+
+        nodes = nodes.map(function(item) {
+          return angular.extend({
+            name: item.program.programName + item.nodeId,
+            type: item.nodeType
+          }, item);
+        });
+
+        $scope.data = {
+          nodes: nodes,
+          edges: edges,
+          metrics: {}
+        };
+
         var programs = [];
         angular.forEach(res.nodes, function(value, key) {
           programs.push(value.program);

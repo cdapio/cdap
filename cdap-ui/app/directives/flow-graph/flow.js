@@ -33,7 +33,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
       scope.render = function (){
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
-
+        console.log("Nodes: Edges - ", nodes, edges);
         var instanceMap = {};
 
         var bytesFilter = $filter('bytes');

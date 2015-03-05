@@ -97,12 +97,62 @@ angular.module(PKG.name+'.services')
     return obj;
   }
 
+  function convert(nodes, connections) {
+    // Accepts list of nodes -> Converts to list of connections
+    for (var i=0; i+1 < nodes.length; i++) {
+
+      if ( i === 0 && nodes[i].nodeType === 'FORK') {
+        flatten(null, nodes[i], nodes[i+1], connections);
+      }
+
+      if (nodes[i].nodeType === 'ACTION' && nodes[i+1].nodeType === 'ACTION') {
+        connections.push({
+          sourceName: nodes[i].program.programName + nodes[i].nodeId,
+          targetName: nodes[i+1].program.programName + nodes[i+1].nodeId,
+          sourceType: nodes[i].nodeType
+        });
+      } else if (nodes[i].nodeType === 'FORK') {
+        flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
+      }
+
+      if ( (i+1 === nodes.length-1) && nodes[i+1].nodeType === 'FORK') {
+        flatten(nodes[i], nodes[i+1], null, connections);
+      }
+    }
+  }
+
+  function flatten(source, fork, target, connections) {
+    // Flatten a source-fork-target combo to [list of connections]
+    var branches = fork.branches,
+        temp = [];
+
+    for (var i =0; i<branches.length; i++) {
+      temp = branches[i];
+      temp.unshift(source);
+      temp.push(target);
+      convert(temp, connections);
+    }
+  }
+
+  function expandForks(nodes, expandedNodes) {
+    for(var i=0; i<nodes.length; i++) {
+      if (nodes[i].nodeType === 'ACTION') {
+        expandedNodes.push(nodes[i]);
+      } else if (nodes[i].nodeType === 'FORK') {
+        for (var j=0; j<nodes[i].branches.length; j++) {
+          expandForks(nodes[i].branches[j], expandedNodes);
+        }
+      }
+    }
+  }
 
   /* ----------------------------------------------------------------------- */
 
   return {
     deepSet: deepSet,
     deepGet: deepGet,
-    objectQuery: objectQuery
+    objectQuery: objectQuery,
+    convert: convert,
+    expandForks: expandForks
   };
 });
