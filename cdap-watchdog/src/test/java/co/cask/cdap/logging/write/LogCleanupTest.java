@@ -73,7 +73,7 @@ public class LogCleanupTest {
   @BeforeClass
   public static void init() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -83,7 +83,7 @@ public class LogCleanupTest {
         @Override
         protected void configure() {
           bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
+            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf));
         }
       });
 

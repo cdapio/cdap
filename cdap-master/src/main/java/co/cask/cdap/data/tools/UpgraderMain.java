@@ -30,7 +30,6 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
@@ -195,7 +194,6 @@ public class UpgraderMain {
    * Stop services and
    */
   private void stop() {
-    LOG.info("Stopping Upgrade ...");
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
@@ -290,7 +288,7 @@ public class UpgraderMain {
   private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
                                                             DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory);
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(datasetFramework);
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
@@ -339,7 +337,7 @@ public class UpgraderMain {
    */
   private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException {
-    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory);
+    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(nonNamespacedFramework);
     return nonNamespacedFramework;
   }

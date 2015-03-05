@@ -72,7 +72,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   @BeforeClass
   public static void init() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
@@ -85,7 +85,7 @@ public class TestKafkaLogging extends KafkaTestBase {
         @Override
         protected void configure() {
           bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
+            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf));
         }
       });
 

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -75,14 +76,16 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
+  private final boolean allowDatasetUncheckedUpgrade;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade) {
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
+    this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   @GET
@@ -126,7 +129,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
              namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
 
     DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
-    if (existing != null) {
+    if (existing != null && !allowDatasetUncheckedUpgrade) {
       String message = String.format("Cannot create dataset %s.%s: instance with same name already exists %s",
                                      namespaceId, name, existing);
       LOG.info(message);

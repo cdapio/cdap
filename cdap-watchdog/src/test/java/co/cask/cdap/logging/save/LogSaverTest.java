@@ -103,7 +103,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, getZkConnectString());
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -130,7 +130,7 @@ public class LogSaverTest extends KafkaTestBase {
         @Override
         protected void configure() {
           bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
+            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf));
         }
       });
 

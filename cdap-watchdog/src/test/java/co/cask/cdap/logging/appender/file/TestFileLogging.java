@@ -72,10 +72,9 @@ public class TestFileLogging {
   @BeforeClass
   public static void setUpContext() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -85,7 +84,7 @@ public class TestFileLogging {
         @Override
         protected void configure() {
           bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
+            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf));
         }
       });
 
