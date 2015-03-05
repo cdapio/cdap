@@ -36,6 +36,10 @@ angular.module(PKG.name + '.commons')
 
         if(attr.required!==undefined) {
           elem.find('input').attr('required', true);
+          ngModel.$validators.metricAndContext = function (m, v) {
+            var t = m || v;
+            return t && t.name && t.context;
+          };
         }
 
         function getBaseContext () {

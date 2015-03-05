@@ -18,6 +18,13 @@ function ($scope, caskFocusManager, Widget) {
     { name: 'Debug',                 type: 'json' }
   ];
 
+  $scope.$watch('model.metric.name', function (newVal) {
+    if(newVal) {
+      $scope.model.title = newVal;
+    }
+
+  });
+
   $scope.doAddWidget = function () {
     $scope.currentDashboard.addWidget($scope.model);
     $scope.$hide();

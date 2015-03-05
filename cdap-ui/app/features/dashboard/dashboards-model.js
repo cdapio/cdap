@@ -260,7 +260,7 @@ function (Widget, MyDataSource, mySettings, $q) {
     }
 
     // default widget in first column
-    d.columns[0].push(new Widget());
+    d.columns[0].push(new Widget({type:'welcome'}));
 
     // insert at beginning of data array
     this.data.unshift(d);
