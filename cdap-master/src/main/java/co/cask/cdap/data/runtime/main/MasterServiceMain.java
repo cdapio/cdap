@@ -50,7 +50,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -197,7 +196,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private void createSystemHBaseNamespace() {
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get(cConf);
     try {
       HBaseAdmin admin = new HBaseAdmin(hConf);
       tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
@@ -395,7 +394,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private TwillPreparer prepare(TwillPreparer preparer) {
-    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+    return preparer.withDependencies(new HBaseTableUtilFactory().getHBaseTableUtilClass())
       // TokenSecureStoreUpdater.update() ignores parameters
       .addSecureStore(secureStoreUpdater.update(null, null));
   }

@@ -49,7 +49,7 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
     // tableName = system.stream.<stream name>
     if (queueName.isStream()) {
       String tableName = unqualifiedTableNamePrefix + "." + queueName.getSecondComponent();
-      return TableId.from(root, queueName.getFirstComponent(), tableName);
+      return TableId.from(queueName.getFirstComponent(), tableName);
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }

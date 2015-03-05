@@ -24,10 +24,10 @@ import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
@@ -115,7 +115,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                             LocationFactory locationFactory,
                             HBaseTableUtil tableUtil,
                             QueueConstants.QueueType type) throws IOException {
-    super(cConf, type);
+    super(type);
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;

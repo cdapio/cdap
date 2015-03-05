@@ -434,7 +434,7 @@ public final class StreamUtils {
   public static TableId getStateStoreTableId(Id.Namespace namespace) {
     String tableName = String.format("%s.%s.state.store",
                                      Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
-    return TableId.from("cdap", namespace.getId(), tableName);
+    return TableId.from(namespace.getId(), tableName);
   }
 
   /**
@@ -444,7 +444,7 @@ public final class StreamUtils {
    */
   public static String getStateStoreTableName(Id.Namespace namespace) {
     TableId tableId = getStateStoreTableId(namespace);
-    return String.format("%s.%s.%s", tableId.getTablePrefix(), tableId.getNamespace(), tableId.getTableName());
+    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
   }
 
   /**

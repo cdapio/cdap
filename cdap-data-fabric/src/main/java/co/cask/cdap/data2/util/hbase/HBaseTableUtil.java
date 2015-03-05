@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
@@ -65,6 +67,7 @@ import javax.annotation.Nullable;
  * Common utilities for dealing with HBase.
  */
 public abstract class HBaseTableUtil {
+
   /**
    * Represents the compression types supported for HBase tables.
    */
@@ -89,6 +92,15 @@ public abstract class HBaseTableUtil {
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
+
+
+  protected CConfiguration cConf;
+  private String tableNamePrefix;
+
+  public void setCConf(CConfiguration cConf) {
+    this.cConf = cConf;
+    this.tableNamePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+  }
 
   /**
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
@@ -163,7 +175,6 @@ public abstract class HBaseTableUtil {
     }
     LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableId, MAX_CREATE_TABLE_WAIT);
   }
-
 
   // This is a workaround for unit-tests which should run even if compression is not supported
   // todo: this should be addressed on a general level: CDAP may use HBase cluster (or multiple at a time some of)
@@ -493,7 +504,6 @@ public abstract class HBaseTableUtil {
    */
   public abstract void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId,
                                             String tablePrefix) throws IOException;
-
 
   /**
    * Deletes all tables in the specified namespace

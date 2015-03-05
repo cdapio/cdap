@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -58,7 +59,14 @@ public class StreamUtilsTest {
   @Test
   public void testGetStateStoreTableName() {
     Id.Namespace namespace = Id.Namespace.from("foonamespace");
-    String expected = "cdap.foonamespace.system.stream.state.store";
+    String expected = "foonamespace.system.stream.state.store";
     Assert.assertEquals(expected, StreamUtils.getStateStoreTableName(namespace));
+  }
+
+  @Test
+  public void testGetStateStoreTableId() {
+    Id.Namespace namespace = Id.Namespace.from("foonamespace");
+    TableId expected = TableId.from("foonamespace", "system.stream.state.store");
+    Assert.assertEquals(expected, StreamUtils.getStateStoreTableId(namespace));
   }
 }

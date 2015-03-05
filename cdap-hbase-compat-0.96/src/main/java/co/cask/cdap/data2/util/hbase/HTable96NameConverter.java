@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import org.apache.hadoop.hbase.TableName;
@@ -34,9 +35,9 @@ public class HTable96NameConverter extends HTableNameConverter {
     return fromTableName(TableName.valueOf(hTableName));
   }
 
-  public static TableName toTableName(TableId tableId) {
+  public static TableName toTableName(CConfiguration cConf, TableId tableId) {
     return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()),
-                             HTableNameConverter.getHBaseTableName(tableId));
+                             getHBaseTableName(cConf, tableId));
   }
 
   public static TableId fromTableName(TableName tableName) {

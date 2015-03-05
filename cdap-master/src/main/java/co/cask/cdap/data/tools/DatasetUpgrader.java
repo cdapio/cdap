@@ -25,8 +25,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -55,7 +56,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                          QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
+                          QueueAdmin queueAdmin,
                           @Named("namespacedDSFramework") DatasetFramework namespacedFramework) {
 
     super(locationFactory);
@@ -63,7 +64,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.queueAdmin = queueAdmin;
-    this.hBaseTableUtil = hBaseTableUtil;
+    this.hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
     this.namespacedFramework = namespacedFramework;
   }
 

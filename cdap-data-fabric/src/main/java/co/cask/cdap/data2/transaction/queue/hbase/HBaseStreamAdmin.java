@@ -21,8 +21,8 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +55,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
     // tableName = system.stream.<stream name>
     if (queueName.isStream()) {
       String tableName = unqualifiedTableNamePrefix + "." + queueName.getSecondComponent();
-      return TableId.from(root, queueName.getFirstComponent(), tableName);
+      return TableId.from(queueName.getFirstComponent(), tableName);
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }

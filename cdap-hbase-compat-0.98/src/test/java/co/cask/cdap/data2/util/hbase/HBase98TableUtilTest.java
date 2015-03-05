@@ -31,17 +31,19 @@ public class HBase98TableUtilTest extends AbstractHBaseTableUtilTest {
 
   @Override
   protected HBaseTableUtil getTableUtil() {
-    return new HBase98TableUtil();
+    HBase98TableUtil hBaseTableUtil = new HBase98TableUtil();
+    hBaseTableUtil.setCConf(cConf);
+    return hBaseTableUtil;
   }
 
   @Override
   protected String getTableNameAsString(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "TableId should not be null.");
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return HTableNameConverter.getHBaseTableName(tableId);
+      return HTableNameConverter.getHBaseTableName(cConf, tableId);
     }
     return Joiner.on(':').join(HTableNameConverter.toHBaseNamespace(tableId.getNamespace()),
-                               HTableNameConverter.getHBaseTableName(tableId));
+                               HTableNameConverter.getHBaseTableName(cConf, tableId));
   }
 
   @Override

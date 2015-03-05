@@ -18,11 +18,11 @@ package co.cask.cdap.data2.dataset2.lib.kv;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -43,7 +43,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get(CConfiguration.create());
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -65,7 +65,6 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
       @Override
       protected void configure() {
         bind(Configuration.class).toInstance(testHBase.getConfiguration());
-        bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }
     });
 

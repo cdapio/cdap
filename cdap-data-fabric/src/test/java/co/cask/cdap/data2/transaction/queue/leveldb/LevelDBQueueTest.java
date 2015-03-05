@@ -87,13 +87,13 @@ public class LevelDBQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     String tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("default.system.queue.application1.flow1", tableName);
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableName = ((LevelDBQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
+    Assert.assertEquals("testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
   }

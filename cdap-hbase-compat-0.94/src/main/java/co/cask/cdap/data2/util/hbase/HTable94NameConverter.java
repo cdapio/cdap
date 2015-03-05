@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import com.google.common.base.Joiner;
@@ -30,14 +31,14 @@ public class HTable94NameConverter extends HTableNameConverter {
     return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
   }
 
-  public static String toTableName(TableId tableId) {
+  public static String toTableName(CConfiguration cConf, TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return HTableNameConverter.getHBaseTableName(tableId);
+      return getHBaseTableName(cConf, tableId);
     }
     return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()),
-                               HTableNameConverter.getHBaseTableName(tableId));
+                               getHBaseTableName(cConf, tableId));
   }
 
   // Assumptions made:

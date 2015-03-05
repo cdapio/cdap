@@ -22,8 +22,6 @@ import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.PooledClientProvider;
 import co.cask.tephra.distributed.ThreadLocalClientProvider;
@@ -56,7 +54,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
-    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);

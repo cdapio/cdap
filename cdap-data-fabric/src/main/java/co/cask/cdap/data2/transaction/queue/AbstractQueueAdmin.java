@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.transaction.queue;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.util.TableId;
@@ -25,18 +24,16 @@ import co.cask.cdap.data2.util.TableId;
  * Common implementation of table-based QueueAdmin
  */
 public abstract class AbstractQueueAdmin implements QueueAdmin {
-  protected final String root;
   protected final QueueConstants.QueueType type;
   protected final String unqualifiedTableNamePrefix;
   private final String unqualifiedConfigTableNameSuffix;
 
-  public AbstractQueueAdmin(CConfiguration conf, QueueConstants.QueueType type) {
+  public AbstractQueueAdmin(QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scoped
     this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
     // system.queue.config'
     this.unqualifiedConfigTableNameSuffix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
-    this.root = conf.get(Constants.Dataset.TABLE_PREFIX);
     this.type = type;
   }
 
@@ -65,7 +62,7 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   }
 
   public TableId getConfigTableId(String namespace) {
-    return TableId.from(root, namespace, unqualifiedConfigTableNameSuffix);
+    return TableId.from(namespace, unqualifiedConfigTableNameSuffix);
   }
 
   /**
@@ -86,6 +83,6 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   public TableId getDataTableId(String namespaceId, String app, String flow) {
     // tableName = system.queue.<app>.<flow>
     String tableName = unqualifiedTableNamePrefix + "." + app + "." + flow;
-    return TableId.from(root, namespaceId, tableName);
+    return TableId.from(namespaceId, tableName);
   }
 }

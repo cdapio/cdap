@@ -23,9 +23,9 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.TableId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
@@ -55,7 +55,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
     this.streamAdmin = streamAdmin;
     this.queueUtil = new HBaseQueueUtilFactory().get();
-    this.hBaseTableUtil = new HBaseTableUtilFactory().get();
+    this.hBaseTableUtil = new HBaseTableUtilFactory().get(cConf);
   }
 
   // for testing only

@@ -29,8 +29,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoa
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
@@ -76,9 +74,6 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new AbstractModule() {
         @Override
         protected void configure() {
-
-          // Data-fabric bindings
-          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
           // txds2
           install(new FactoryModuleBuilder()

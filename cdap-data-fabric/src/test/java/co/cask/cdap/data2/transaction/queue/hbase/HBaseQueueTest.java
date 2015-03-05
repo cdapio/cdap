@@ -37,11 +37,11 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -131,7 +131,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       });
 
     //create HBase namespace
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = new HBaseTableUtilFactory().get(cConf);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
@@ -192,7 +192,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
     TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
-    Assert.assertEquals("test", tableId.getTablePrefix());
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
     Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
     String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
@@ -201,7 +200,6 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
     tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
-    Assert.assertEquals("test", tableId.getTablePrefix());
     Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
     Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
     tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();

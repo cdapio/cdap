@@ -105,7 +105,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
 
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = new HBaseTableUtilFactory().get(cConf);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
   }

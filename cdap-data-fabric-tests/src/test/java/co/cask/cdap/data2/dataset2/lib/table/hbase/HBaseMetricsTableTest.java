@@ -95,7 +95,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
     dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-hbase"),
                           new HBaseMetricsTableModule());
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = new HBaseTableUtilFactory().get(conf);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 

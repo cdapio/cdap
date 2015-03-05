@@ -16,10 +16,12 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 import java.io.UnsupportedEncodingException;
@@ -44,6 +46,36 @@ public abstract class HTableNameConverter {
     }
   }
 
+  public static String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
+    String tableName = tableId.getTableName();
+    // handle table names in default namespace so we do not have to worry about upgrades
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+      // if the table name starts with 'system.', then its a queue or stream table. Do not add namespace to table name
+      // e.g. namespace = default, tableName = system.queue.config. Resulting table name = cdap.system.queue.config
+      // also no need to prepend the table name if it already starts with 'user'.
+      // TODO: the 'user' should be prepended by the HBaseTableAdmin.
+      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE)) ||
+          tableName.startsWith("user.")) {
+        return Joiner.on(".").join(tablePrefix, tableName);
+      }
+      // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
+      // maintain backward compatibility. Also, do not add namespace to the table name
+      // e.g. namespace = default, tableName = purchases. Resulting table name = cdap.user.purchases
+      return Joiner.on(".").join(tablePrefix, "user", tableName);
+    }
+    // if the namespace is not default, do not need to change anything
+    return tableName;
+  }
+
+  /**
+   * @return Backward compatible, ASCII encoded table name
+   */
+  public static String getHBaseTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    Preconditions.checkArgument(tablePrefix != null, "Table prefix should not be null.");
+    return getHBaseTableName(getBackwardCompatibleTableName(tablePrefix, tableId));
+  }
+
   /**
    * Gets the system configuration table prefix
    * @param hTableName Full HBase table name.
@@ -64,13 +96,6 @@ public abstract class HTableNameConverter {
                                                    HBASE_NAMESPACE_PREFIX + namespace.getId());
   }
 
-  /**
-   * @return Backward compatible, ASCII encoded table name
-   */
-  public static String getHBaseTableName(TableId tableId) {
-    return HTableNameConverter.getHBaseTableName(tableId.getBackwardCompatibleTableName());
-  }
-
   protected static TableId from(String hBaseNamespace, String hTableName) {
     Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
     Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
@@ -85,19 +110,19 @@ public abstract class HTableNameConverter {
       String[] parts = hTableName.split("\\.", 2);
       Preconditions.checkArgument(parts.length == 2,
                                   String.format("expected table name to contain '.': %s", hTableName));
-      prefix = parts[0];
+      // prefix is parts[0], but it is not needed
       hTableName = parts[1];
-      return TableId.from(prefix, namespace, hTableName);
+      return TableId.from(namespace, hTableName);
     }
 
 
     String[] parts = hBaseNamespace.split("_");
     Preconditions.checkArgument(parts.length == 2,
                                 String.format("expected hbase namespace to have a '_': %s", hBaseNamespace));
-    prefix = parts[0];
+    // prefix is parts[0], but it is not needed
     namespace = parts[1];
 
     // Id.Namespace already checks for non-null namespace
-    return TableId.from(prefix, namespace, hTableName);
+    return TableId.from(namespace, hTableName);
   }
 }
