@@ -24,15 +24,13 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -55,26 +53,20 @@ public final class FileMetaDataManager {
 
   private final Transactional<DatasetContext<Table>, Table> mds;
 
-  public FileMetaDataManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient,
+  @Inject
+  public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
                              LocationFactory locationFactory) {
-    this.mds = Transactional.of(
-      new TransactionExecutorFactory() {
-        @Override
-        public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
-          return new DefaultTransactionExecutor(txClient, txAwares);
+    this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
+      @Override
+      public DatasetContext<Table> get() {
+        try {
+          return DatasetContext.of(tableUtil.getMetaTable());
+        } catch (Exception e) {
+          // there's nothing much we can do here
+          throw Throwables.propagate(e);
         }
-      },
-      new Supplier<DatasetContext<Table>>() {
-        @Override
-        public DatasetContext<Table> get() {
-          try {
-            return DatasetContext.of(tableUtil.getMetaTable());
-          } catch (Exception e) {
-            // there's nothing much we can do here
-            throw Throwables.propagate(e);
-          }
-        }
-      });
+      }
+    });
     this.locationFactory = locationFactory;
   }
 
