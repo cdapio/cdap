@@ -129,21 +129,16 @@ public class CLIMain {
           output.printf("DEBUG: Executing HTTP request (attempt %d): " +
                         "method=%s url=%s hasBody=%s bodyLength=%s headers=%s",
                         attempt, request.getMethod().name(), request.getURL().toString(),
-                        request.getBody() != null, request.getBodyLength(), GSON.toJson(request.getHeaders()));
+                        request.getBody() != null, request.getBodyLength(),
+                        limit(GSON.toJson(request.getHeaders()), 100));
           output.println();
         }
 
         @Override
         public void onResponse(HttpRequest request, HttpResponse response, int attemptsMade) {
           output.printf("DEBUG: Got HTTP response (after %d attempt(s)): " +
-                          "request={method=%s url=%s hasBody=%s bodyLength=%s headers=%s} " +
                           "response={code=%d message=%s body=%s headers=%s}",
-                        attemptsMade, request.getMethod().name(),
-                        request.getURL().toString(),
-                        request.getBody() != null,
-                        request.getBodyLength(),
-                        limit(GSON.toJson(request.getHeaders()), 100),
-                        response.getResponseCode(),
+                        attemptsMade, response.getResponseCode(),
                         limit(response.getResponseMessage(), 100),
                         limit(response.getResponseBodyAsString(), 100),
                         limit(GSON.toJson(response.getHeaders()), 100));
