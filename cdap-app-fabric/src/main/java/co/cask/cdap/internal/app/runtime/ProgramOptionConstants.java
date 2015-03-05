@@ -41,9 +41,9 @@ public final class ProgramOptionConstants {
 
   public static final String RUN_DATA_SIZE = "runDataSize";
 
-  public static final String PAST_RUN_DATA_SIZE = "pastRunDataSize";
+  public static final String LAST_SCHEDULED_RUN_DATA_SIZE = "lastScheduledRunDataSize";
 
-  public static final String PAST_RUN_LOGICAL_START_TIME = "pastRunLogicalStartTime";
+  public static final String LAST_SCHEDULED_RUN_LOGICAL_START_TIME = "lastScheduledRunLogicalStartTime";
 
   public static final String RUN_BASE_COUNT_SIZE = "runBaseCountSize";
 

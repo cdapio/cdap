@@ -304,7 +304,7 @@ The format property defines how Stream event bodies should be read for data expl
 Different formats support different types of schemas. Schemas are used to determine
 the table schema used for running ad-hoc SQL-like queries on the Stream.
 See :ref:`stream-exploration` for more information about formats and schemas.
-The notification threshold defines increment of data that a Stream has to receive before
+The notification threshold defines the increment of data that a Stream has to receive before
 publishing a notification.
 
 Stream properties can be changed with an HTTP PUT method to the URL::
