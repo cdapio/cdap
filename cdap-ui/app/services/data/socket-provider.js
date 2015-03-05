@@ -11,9 +11,6 @@ angular.module(PKG.name + '.commons')
       actions: {
         'get': {method: 'GET'},
         'save': {method: 'POST'}
-        // 'query': {method: 'GET', isArray: true},
-        // 'remove': {method: 'DELETE'},
-        // 'delete': {method: 'DELETE'}
       }
     };
 
@@ -24,23 +21,6 @@ angular.module(PKG.name + '.commons')
         extend = angular.extend,
         copy = angular.copy,
         isFunction = angular.isFunction;
-
-
-      function encodeUriSegment(val) {
-        return encodeUriQuery(val, true).
-          replace(/%26/gi, '&').
-          replace(/%3D/gi, '=').
-          replace(/%2B/gi, '+');
-      }
-
-      function encodeUriQuery(val, pctEncodeSpaces) {
-        return encodeURIComponent(val).
-          replace(/%40/gi, '@').
-          replace(/%3A/gi, ':').
-          replace(/%24/g, '$').
-          replace(/%2C/gi, ',').
-          replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
-      }
 
       function Route(template, defaults) {
         this.template = template;
@@ -200,20 +180,24 @@ angular.module(PKG.name + '.commons')
             });
 
             if (hasBody) httpConfig.data = data;
+
+            // Custom Implemention
+            var requestType = action.options && action.options.type;
+            requestType && delete action.options;
             route.setUrlParams(httpConfig,
               extend({}, extractParams(data, action.params || {}), params),
               action.url);
 
 
-            if (action.params) {
-              if (!action.params.type) {
-                dataSrc.request(httpConfig, success);
-              } else if (action.params.type === 'poll') {
-                dataSrc.poll(httpConfig, success);
-              }
-            } else {
+            httpConfig.url = buildUrl(httpConfig.url, httpConfig.params);
+
+            if (!requestType || requestType === 'request') {
               dataSrc.request(httpConfig, success);
+            } else if (requestType === 'poll') {
+              dataSrc.poll(httpConfig, success);
             }
+
+            // Custom Implemention END
 
           };
 
@@ -238,6 +222,49 @@ angular.module(PKG.name + '.commons')
     };
 
   });
+
+function encodeUriSegment(val) {
+  return encodeUriQuery(val, true).
+    replace(/%26/gi, '&').
+    replace(/%3D/gi, '=').
+    replace(/%2B/gi, '+');
+}
+
+function encodeUriQuery(val, pctEncodeSpaces) {
+  return encodeURIComponent(val).
+    replace(/%40/gi, '@').
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+}
+
+
+// Ported from $http factory.
+function buildUrl(url, params) {
+  if (!params) return url;
+  var parts = [];
+  angular.forEach(params, function(value, key) {
+    if (value === null || angular.isUndefined(value)) return;
+    if (!angular.isArray(value)) value = [value];
+
+    angular.forEach(value, function(v) {
+      if (angular.isObject(v)) {
+        if (angular.isDate(v)) {
+          v = v.toISOString();
+        } else {
+          v = toJson(v);
+        }
+      }
+      parts.push(encodeUriQuery(key) + '=' +
+                 encodeUriQuery(v));
+    });
+  });
+  if (parts.length > 0) {
+    url += ((url.indexOf('?') == -1) ? '?' : '&') + parts.join('&');
+  }
+  return url;
+}
 
 
 var MEMBER_NAME_REGEX = /^(\.[a-zA-Z_$][0-9a-zA-Z_$]*)+$/;
