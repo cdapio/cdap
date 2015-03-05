@@ -133,7 +133,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/data/datasets/{dataset-id}/flows")
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
+                                @PathParam("namespace-id") String namespaceId,
                                 @PathParam("dataset-id") String datasetId) {
     programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
                             namespaceId, datasetId);

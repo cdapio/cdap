@@ -27,8 +27,8 @@ import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -65,7 +65,7 @@ import javax.annotation.Nullable;
  */
 class DatasetServiceClient {
   private static final Gson GSON = new Gson();
-  private static final Type META_SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
+  private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
   private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
@@ -102,7 +102,7 @@ class DatasetServiceClient {
                                                          getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), META_SUMMARY_LIST_TYPE);
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), SUMMARY_LIST_TYPE);
   }
 
   public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {

@@ -33,8 +33,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
@@ -135,7 +135,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
+    throws DatasetManagementException {
     return clientCache.getUnchecked(namespaceId).getAllInstances();
   }
 
