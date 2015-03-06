@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegion
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -143,15 +144,27 @@ public class HBase96TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    TableName[] hTableNames = admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(namespaceId));
-    for (TableName hTableName : hTableNames) {
-      String tableName = HTable96NameConverter.fromTableName(hTableName).getTableName();
-      if (tableName.startsWith(tablePrefix)) {
-        admin.disableTable(hTableName);
-        admin.deleteTable(hTableName);
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    TableName[] tableNames = admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(namespaceId));
+    for (TableName tableName : tableNames) {
+      if (isCDAPTable(tableName.getNameAsString())) {
+        tableIds.add(HTable96NameConverter.fromTableName(tableName));
       }
     }
+    return tableIds;
+  }
+
+  @Override
+  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    TableName[] tableNames = admin.listTableNames();
+    for (TableName tableName : tableNames) {
+      if (isCDAPTable(tableName.getNameAsString())) {
+        tableIds.add(HTable96NameConverter.fromTableName(tableName));
+      }
+    }
+    return tableIds;
   }
 
   @Override

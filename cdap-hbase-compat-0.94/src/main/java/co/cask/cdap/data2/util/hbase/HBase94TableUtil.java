@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.HBaseQueueRegion
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -124,14 +125,27 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    HTableDescriptor[] hTableDescriptors = admin.listTables();
-    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
-      TableId tableId = HTable94NameConverter.fromTableName(hTableDescriptor.getNameAsString());
-      if (namespaceId.equals(tableId.getNamespace()) && tableId.getTableName().startsWith(tablePrefix)) {
-        dropTable(admin, tableId);
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    for (TableId tableId : listTables(admin)) {
+      if (namespaceId.equals(tableId.getNamespace())) {
+        tableIds.add(tableId);
       }
     }
+    return tableIds;
+  }
+
+  @Override
+  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    HTableDescriptor[] hTableDescriptors = admin.listTables();
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      String hTableName = hTableDescriptor.getNameAsString();
+      if (isCDAPTable(hTableName)) {
+        tableIds.add(HTable94NameConverter.fromTableName(hTableName));
+      }
+    }
+    return tableIds;
   }
 
   @Override

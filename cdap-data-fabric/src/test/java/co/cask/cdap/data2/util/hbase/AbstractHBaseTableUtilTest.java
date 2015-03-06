@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -193,6 +195,39 @@ public abstract class AbstractHBaseTableUtilTest {
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     deleteNamespace("myspace");
+  }
+
+  @Test
+  public void testListAllInNamespace() throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("cdap.foo.some.table1"),
+                                                        TableId.from("cdap.foo.other.table"),
+                                                        TableId.from("cdap.foo.some.table2"));
+    createNamespace("foo");
+    for (TableId tableId : fooNamespaceTableIds) {
+      create(tableId);
+    }
+
+    createNamespace("foobar");
+    TableId tableIdInOtherNamespace = TableId.from("cdap.foobar.my.dataset");
+    create(tableIdInOtherNamespace);
+
+
+    Set<TableId> retrievedTableIds =
+      ImmutableSet.copyOf(tableUtil.listTablesInNamespace(hAdmin, Id.Namespace.from("foo")));
+    Assert.assertEquals(fooNamespaceTableIds, retrievedTableIds);
+
+    Set<TableId> allTableIds =
+      ImmutableSet.<TableId>builder().addAll(fooNamespaceTableIds).add(tableIdInOtherNamespace).build();
+    Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foo"));
+    Assert.assertEquals(1, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("foobar");
   }
 
   @Test

@@ -82,7 +82,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
       }
 
-      namespaceId = HBaseQueueAdmin.getNamespaceId(tableName);
+      namespaceId = HTable98NameConverter.fromTableName(tableDesc.getTableName()).getNamespace().getId();
       appName = HBaseQueueAdmin.getApplicationName(tableName);
       flowName = HBaseQueueAdmin.getFlowName(tableName);
 

@@ -55,7 +55,7 @@ public abstract class HTableNameConverter {
       // also no need to prepend the table name if it already starts with 'user'.
       // TODO: the 'user' should be prepended by the HBaseTableAdmin.
       if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE)) ||
-          tableName.startsWith("user.")) {
+        tableName.startsWith("user.")) {
         return Joiner.on(".").join(tablePrefix, tableName);
       }
       // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
@@ -98,12 +98,9 @@ public abstract class HTableNameConverter {
     Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
     Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
 
-    String namespace;
-    String prefix;
-
     // Handle backward compatibility to not add the prefix for default namespace
     if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
-      namespace = hBaseNamespace;
+      String namespace = hBaseNamespace;
       // in Default namespace, hTableName is something like 'cdap.foo.table'
       String[] parts = hTableName.split("\\.", 2);
       Preconditions.checkArgument(parts.length == 2,
@@ -118,7 +115,7 @@ public abstract class HTableNameConverter {
     Preconditions.checkArgument(parts.length == 2,
                                 String.format("expected hbase namespace to have a '_': %s", hBaseNamespace));
     // prefix is parts[0], but it is not needed
-    namespace = parts[1];
+    String namespace = parts[1];
 
     // Id.Namespace already checks for non-null namespace
     return TableId.from(namespace, hTableName);
