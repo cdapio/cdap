@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
@@ -56,16 +55,15 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Command line tool.
+ * Command line tool to migrate data between different versions of CDAP.
+ * Usually used along with upgrade tool{@link UpgraderMain}
  */
-public class Main {
+public class DataMigration {
   /**
    * Set of Action available in this tool.
    */
   private enum Action {
-    // NOTE : Metrics migration is not required for CDAP to work after upgrade,
-    // some may opt not to migrate data as it may take a while.
-    MIGRATE_METRICS_DATA("Migrate metrics data"),
+    METRICS("Migrate metrics data"),
     HELP("Show this help.");
 
     private final String description;
@@ -114,12 +112,12 @@ public class Main {
         });
 
       switch (action) {
-        case MIGRATE_METRICS_DATA:
+        case METRICS:
           migrateMetricsData(injector);
           break;
         case HELP:
           printHelp();
-        break;
+          break;
       }
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
@@ -157,17 +155,21 @@ public class Main {
     // find version to migrate
     MetricHBaseTableUtil metricHBaseTableUtil = new MetricHBaseTableUtil(injector.getInstance(HBaseTableUtil.class));
     Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
-                                                  injector.getInstance(Configuration.class), metricHBaseTableUtil);
+                                              injector.getInstance(Configuration.class), metricHBaseTableUtil);
     if (version != null) {
+      System.out.println("Migrating Metrics Data from " + version.name());
       DatasetFramework framework = createRegisteredDatasetFramework(injector);
       // migrate metrics data
       DefaultMetricDatasetFactory.migrateData(injector.getInstance(CConfiguration.class), framework, version);
+      System.out.println("Successfully Migrated Metrics Data from " + version.name());
+    } else {
+      System.out.println("Did not find compatible CDAP Version to migrate Metrics data from");
     }
   }
 
   @Nullable
   private Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf,
-                                                      MetricHBaseTableUtil metricHBaseTableUtil) {
+                                          MetricHBaseTableUtil metricHBaseTableUtil) {
 
 
     // Figure out what is the latest working version of CDAP
@@ -217,15 +219,14 @@ public class Main {
 
   private Version verifyVersion(Version expected, Version actual) {
     if (expected != actual) {
-      System.out.println("Unable to migrate, Version mismatch, Expected Version " + expected +
-                           "Actual Version " + actual);
+      System.out.println("Version detected based on table name does not match table configuration");
       return null;
     }
     return actual;
   }
 
   public static void main(String[] args) throws Exception {
-    new Main().doMain(args);
+    new DataMigration().doMain(args);
   }
 
   /**
@@ -235,8 +236,7 @@ public class Main {
     throws DatasetManagementException, IOException {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new DefaultDatasetNamespace(injector.getInstance(CConfiguration.class)));
+      new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
                                new HBaseTableModule());
