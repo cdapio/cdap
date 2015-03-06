@@ -14,20 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.query;
+package co.cask.cdap.proto;
 
 import java.util.Map;
 
 /**
  * Represents metric query result. This is used for decorating REST API output.
  */
-// todo: move to cdap-proto along with adding CLI support for metrics querying
 public final class MetricQueryResult {
   private final long startTime;
   private final long endTime;
   private final TimeSeries[] series;
 
-  MetricQueryResult(long startTime, long endTime, TimeSeries[] series) {
+  public MetricQueryResult(long startTime, long endTime, TimeSeries[] series) {
     this.startTime = startTime;
     this.endTime = endTime;
     this.series = series;
@@ -53,7 +52,7 @@ public final class MetricQueryResult {
     private final Map<String, String> grouping;
     private final TimeValue[] data;
 
-    TimeSeries(String metricName, Map<String, String> grouping, TimeValue[] data) {
+    public TimeSeries(String metricName, Map<String, String> grouping, TimeValue[] data) {
       this.metricName = metricName;
       this.grouping = grouping;
       this.data = data;
@@ -79,7 +78,7 @@ public final class MetricQueryResult {
     private final long time;
     private final long value;
 
-    TimeValue(long time, long value) {
+    public TimeValue(long time, long value) {
       this.time = time;
       this.value = value;
     }

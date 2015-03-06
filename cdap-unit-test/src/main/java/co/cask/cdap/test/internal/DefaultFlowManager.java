@@ -16,7 +16,9 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.FlowManager;
+import co.cask.cdap.test.RuntimeStats;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -49,6 +51,11 @@ public class DefaultFlowManager implements FlowManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public RuntimeMetrics getFlowletMetrics(String flowletId) {
+    return RuntimeStats.getFlowletMetrics(applicationId, flowName, flowletId);
   }
 
   @Override
