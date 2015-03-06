@@ -25,6 +25,7 @@ import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
@@ -34,6 +35,7 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
@@ -116,7 +118,8 @@ public class CLIMainTest extends StandaloneTestBase {
       StandaloneTestBase.setUpClass();
     }
 
-    clientConfig = new ClientConfig.Builder().setUri(CONNECTION).build();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
+    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig);
     Injector injector = Guice.createInjector(new AbstractModule() {
@@ -247,7 +250,7 @@ public class CLIMainTest extends StandaloneTestBase {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
-    cliConfig.setCurrentNamespace(barspace);
+    cliConfig.getClientConfig().setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -269,8 +272,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
     try {
-      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-        + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
     } finally {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");

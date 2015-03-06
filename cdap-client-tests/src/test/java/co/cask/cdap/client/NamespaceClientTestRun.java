@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
@@ -48,9 +47,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   @Before
   public void setup() {
-    ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setHostname(HOSTNAME).setPort(PORT);
-    namespaceClient = new NamespaceClient(builder.build());
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
