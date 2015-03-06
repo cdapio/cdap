@@ -178,6 +178,8 @@ public class CLIMain {
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
+        } else if (e instanceof DisconnectedException) {
+          cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else {
           output.println("Error: " + e.getMessage());
         }
@@ -225,9 +227,13 @@ public class CLIMain {
   }
 
   private void updateCLIPrompt(ConnectionConfig connectionConfig) {
-    URI baseURI = connectionConfig.getURI();
-    URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
-    cli.getReader().setPrompt("cdap (" + uri + ")> ");
+    try {
+      URI baseURI = connectionConfig.getURI();
+      URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+      cli.getReader().setPrompt("cdap (" + uri + ")> ");
+    } catch (DisconnectedException e) {
+      cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
+    }
   }
 
   public TableRenderer getTableRenderer() {
