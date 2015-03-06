@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -59,6 +60,16 @@ public class FileSetProperties {
    * Whether this dataset should be enabled for explore.
    */
   public static final String PROPERTY_ENABLE_EXPLORE_ON_CREATE = "explore.enabled";
+
+  /**
+   * The format to use for the explore table. Currently, only text is supported.
+   */
+  public static final String PROPERTY_EXPLORE_FORMAT = "explore.format";
+
+  /**
+   * The schema to use for the explore table. This should have the form: column type, ...
+   */
+  public static final String PROPERTY_EXPLORE_SCHEMA = "explore.schema";
 
   /**
    * The serde to use for the Hive table.
@@ -128,6 +139,31 @@ public class FileSetProperties {
   }
 
   /**
+   * @return the format of the explore table.
+   */
+  public static String getExploreFormat(Map<String, String> properties) {
+    return properties.get(PROPERTY_EXPLORE_FORMAT);
+  }
+
+  /**
+   * @return the schema of the explore table.
+   */
+  public static String getExploreSchema(Map<String, String> properties) {
+    return properties.get(PROPERTY_EXPLORE_SCHEMA);
+  }
+
+  /**
+   * @return the schema of the explore table.
+   */
+  public static Map<String, String> getExploreFormatProperties(Map<String, String> properties) {
+    String format = getExploreFormat(properties);
+    if (format == null) {
+      return Collections.emptyMap();
+    }
+    return propertiesWithPrefix(properties, String.format("%s.%s.", PROPERTY_EXPLORE_FORMAT, format));
+  }
+
+  /**
    * @return the class name of the serde configured in the properties.
    */
   public static String getSerDe(Map<String, String> properties) {
@@ -176,6 +212,8 @@ public class FileSetProperties {
    * A Builder to construct properties for FileSet datasets.
    */
   public static class Builder extends DatasetProperties.Builder {
+
+    private String format = null;
 
     /**
      * Package visible default constructor, to allow sub-classing by other datasets in this package.
@@ -243,6 +281,37 @@ public class FileSetProperties {
      */
     public Builder setEnableExploreOnCreate(boolean enabled) {
       add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
+      return this;
+    }
+
+    /**
+     * Set the format for the Hive table.
+     * @param format currently, only "text" and "csv" are supported.
+     */
+    public Builder setExploreFormat(String format) {
+      add(PROPERTY_EXPLORE_FORMAT, format);
+      this.format = format;
+      return this;
+    }
+
+    /**
+     * Set the schema for the Hive table.
+     * @param schema a Hive schema string of the form: field type, ...
+     */
+    public Builder setExploreSchema(String schema) {
+      add(PROPERTY_EXPLORE_SCHEMA, schema);
+      return this;
+    }
+
+    /**
+     * Set a property for the table format.
+     * This may only be a called after setting the format using {@link #setExploreFormat(String))}.
+     */
+    public Builder setExploreFormatProperty(String name, String value) {
+      if (format == null) {
+        throw new IllegalStateException("explore format has not been set");
+      }
+      add(String.format("%s.%s.%s", PROPERTY_EXPLORE_FORMAT, format, name), value);
       return this;
     }
 
