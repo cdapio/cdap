@@ -30,7 +30,9 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.config.PreferencesStore;
@@ -42,6 +44,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
@@ -88,7 +91,9 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
+
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -723,33 +728,61 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
-    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    // create app in default namespace so that v2 and v3 api can be tested in the same test
+    String defaultNamespace = "default";
+    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
+    store.setProperties(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
                         CONCURRENT_WORKFLOW_NAME, propMap);
 
-    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
+    String runsUrl = getRunsUrl(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
 
     List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
     // Two instances of the ConcurrentWorkflow should be RUNNING
     Assert.assertTrue(historyRuns.size() >= 2);
 
     // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
+    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                          CONCURRENT_WORKFLOW_NAME);
 
     for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
+      Assert.assertEquals(200, suspendSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                spec.getSchedule().getName()));
     }
 
+    String currentUrl = String.format("/v2/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
+                                      CONCURRENT_WORKFLOW_NAME);
+
+    response = doGet(currentUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    WorkflowStatus status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+                                                     historyRuns.get(0).get("runid"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+                                        historyRuns.get(1).get("runid"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
     // delete the application
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
-      .API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+      .API_VERSION_3_TOKEN, defaultNamespace);
     deleteApplication(60, deleteUrl, 200);
   }
 
@@ -1223,10 +1256,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return response;
   }
 
-  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+  private HttpResponse getWorkflowCurrentStatus(String namespace, String app, String workflow,
+                                                String runId) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", app, workflow, runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    return doGet(versionedUrl).getStatusLine().getStatusCode();
+    return doGet(versionedUrl);
   }
 
   private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)
