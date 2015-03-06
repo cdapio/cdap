@@ -16,32 +16,42 @@
 
 package co.cask.cdap.logging.write;
 
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -50,17 +60,15 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Test LogCleanup class.
  */
 public class LogCleanupTest {
-  private static final Random RANDOM = new Random(System.currentTimeMillis());
   private static final Logger LOG = LoggerFactory.getLogger(LogCleanupTest.class);
 
   @ClassRule
@@ -68,30 +76,50 @@ public class LogCleanupTest {
 
   private static final int RETENTION_DURATION_MS = 100000;
 
-  private static LocationFactory locationFactory;
+  private static Injector injector;
+  private static TransactionManager txManager;
+
 
   @BeforeClass
-  public static void init() throws IOException {
-    locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+  public static void init() throws Exception {
+    Configuration hConf = HBaseConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+            .annotatedWith(Names.named("defaultDatasetModules")).toInstance(Maps.<String, DatasetModule>newHashMap());
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+        }
+      });
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+
+    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
+                          new InMemoryTableModule());
+  }
+
+  @AfterClass
+  public static void finish() {
+    txManager.stopAndWait();
   }
 
   @Test
   public void testCleanup() throws Exception {
-    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
-                          new InMemoryTableModule());
-
-    CConfiguration cConf = CConfiguration.create();
-
-    Configuration conf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, conf);
-    TransactionManager txManager = new TransactionManager(conf);
-    txManager.startAndWait();
-    TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
-    FileMetaDataManager fileMetaDataManager =
-      new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf), txClient, locationFactory);
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
 
     // Create base dir
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     // Deletion boundary
@@ -160,10 +188,8 @@ public class LogCleanupTest {
 
   @Test
   public void testDeleteEmptyDir1() throws Exception {
-    FileSystem fileSystem = FileSystem.get(new Configuration());
-
     // Create base dir
-    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
+    Location baseDir = injector.getInstance(LocationFactory.class).create(TEMP_FOLDER.newFolder().toURI());
 
     // Create dirs with files
     Set<Location> files = Sets.newHashSet();
@@ -215,15 +241,12 @@ public class LogCleanupTest {
 
     // Assert base dir exists
     Assert.assertTrue(baseDir.exists());
-
-    fileSystem.close();
   }
 
   @Test
   public void testDeleteEmptyDir2() throws Exception {
-    FileSystem fileSystem = FileSystem.get(new Configuration());
-
     // Create base dir
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     LogCleanup logCleanup = new LogCleanup(null, baseDir, RETENTION_DURATION_MS);
@@ -245,8 +268,6 @@ public class LogCleanupTest {
     logCleanup.deleteEmptyDir(tmpPath);
     // Assert tmp still exists
     Assert.assertTrue(tmpPath.exists());
-
-    fileSystem.close();
   }
 
   private Location createFile(Location path) throws Exception {
