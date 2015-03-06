@@ -96,7 +96,9 @@ public class AppWritingtoStream extends AbstractApplication {
         getContext().write(STREAM, ByteBuffer.wrap(Bytes.toBytes("Event 0")));
         getContext().write(STREAM, new StreamEventData(ImmutableMap.<String, String>of(),
                                                        ByteBuffer.wrap(Bytes.toBytes("Event 1"))));
-        File file = new File("tmpfile");
+
+        File tempDir = Files.createTempDir();
+        File file = File.createTempFile("abc", "tmp", tempDir);
         BufferedWriter fileWriter = Files.newWriter(file, Charsets.UTF_8);
         fileWriter.write("Event 2\n");
         fileWriter.write("Event 3");
