@@ -172,7 +172,7 @@ public abstract class AbstractHBaseTableUtilTest {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("cdap.default.my.dataset");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
                         HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
@@ -180,7 +180,7 @@ public abstract class AbstractHBaseTableUtilTest {
     drop(tableId);
     tableId = TableId.from("cdap.default.system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
                         HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
@@ -189,7 +189,7 @@ public abstract class AbstractHBaseTableUtilTest {
     tableId = TableId.from("cdap.myspace.could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
                         HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),

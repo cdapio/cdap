@@ -30,8 +30,6 @@ import java.net.URLEncoder;
  * Common utility methods for dealing with HBase table name conversions.
  */
 public abstract class HTableNameConverter {
-  protected static final String HBASE_NAMESPACE_PREFIX = "cdap";
-
   private static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);
   }
@@ -85,11 +83,11 @@ public abstract class HTableNameConverter {
   public abstract String getSysConfigTablePrefix(String hTableName);
 
   @VisibleForTesting
-  protected static String toHBaseNamespace(Id.Namespace namespace) {
+  protected static String toHBaseNamespace(String hBaseNamespacePrefix, Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return HTableNameConverter.getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-                                                   HBASE_NAMESPACE_PREFIX + "_" + namespace.getId());
+                                                   hBaseNamespacePrefix + "_" + namespace.getId());
   }
 
   protected static PrefixedTableId from(String hBaseNamespace, String hTableName) {

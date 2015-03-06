@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.TableName;
 public class HTable96NameConverter extends HTableNameConverter {
   @Override
   public String getSysConfigTablePrefix(String hTableName) {
-    return HBASE_NAMESPACE_PREFIX + "_" + Constants.SYSTEM_NAMESPACE + ":";
+    return getHbaseNamespacePrefix(TableName.valueOf(hTableName)) + "_" + Constants.SYSTEM_NAMESPACE + ":";
   }
 
   public static TableName toTableName(CConfiguration cConf, TableId tableId) {
@@ -36,16 +36,19 @@ public class HTable96NameConverter extends HTableNameConverter {
   }
 
   public static TableName toTableName(String tablePrefix, TableId tableId) {
-    return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()),
+    return TableName.valueOf(toHBaseNamespace(tablePrefix, tableId.getNamespace()),
                              getHBaseTableName(tablePrefix, tableId));
   }
 
   public static TableId fromTableName(TableName tableName) {
-    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString()).getTableId();
+    return prefixedTableIdFromTableName(tableName).getTableId();
   }
 
   public static String getHbaseNamespacePrefix(TableName tableName) {
-    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString())
-      .getTablePrefix();
+    return prefixedTableIdFromTableName(tableName).getTablePrefix();
+  }
+
+  private static PrefixedTableId prefixedTableIdFromTableName(TableName tableName) {
+    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 }

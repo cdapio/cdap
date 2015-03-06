@@ -74,7 +74,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
-      admin.getNamespaceDescriptor(HTableNameConverter.toHBaseNamespace(namespace));
+      admin.getNamespaceDescriptor(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace));
       return true;
     } catch (NamespaceNotFoundException e) {
       return false;
@@ -87,7 +87,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (!hasNamespace(admin, namespace)) {
       NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(HTableNameConverter.toHBaseNamespace(namespace)).build();
+        NamespaceDescriptor.create(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace)).build();
       admin.createNamespace(namespaceDescriptor);
     }
   }
@@ -97,7 +97,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(HTableNameConverter.toHBaseNamespace(namespace));
+      admin.deleteNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace));
     }
   }
 
@@ -146,7 +146,8 @@ public class HBase98TableUtil extends HBaseTableUtil {
   @Override
   public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
-    TableName[] tableNames = admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(namespaceId));
+    TableName[] tableNames =
+      admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespaceId));
     for (TableName tableName : tableNames) {
       if (isCDAPTable(tableName.getNameAsString())) {
         tableIds.add(HTable98NameConverter.fromTableName(tableName));
