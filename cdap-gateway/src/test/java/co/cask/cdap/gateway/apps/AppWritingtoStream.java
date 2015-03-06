@@ -104,7 +104,6 @@ public class AppWritingtoStream extends AbstractApplication {
         fileWriter.write("Event 3");
         fileWriter.close();
         getContext().writeFile(STREAM, file, "text/plain");
-        file.delete();
 
         StreamBatchWriter streamBatchWriter = getContext().createBatchWriter(STREAM, "text/plain");
         streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 4\n")));

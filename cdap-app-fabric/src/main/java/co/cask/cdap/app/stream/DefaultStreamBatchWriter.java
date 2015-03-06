@@ -54,9 +54,15 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
   @Override
   public void close() throws IOException {
-    connection.getOutputStream().close();
-    open = false;
-    int responseCode = connection.getResponseCode();
+    int responseCode;
+    try {
+      open = false;
+      connection.getOutputStream().close();
+      responseCode = connection.getResponseCode();
+    } finally {
+      connection.disconnect();
+    }
+
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }

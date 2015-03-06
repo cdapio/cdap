@@ -434,7 +434,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
    */
   private ContentWriterFactory createContentWriterFactory(Id.Stream streamId, HttpRequest request) throws IOException {
-    long contentLength = HttpHeaders.getContentLength(request, -1L);
     String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
