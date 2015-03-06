@@ -126,7 +126,21 @@ public class StreamSizeScheduler implements Scheduler {
 
     store = storeFactory.create();
 
-    scheduleStore.initialize();
+    initializeScheduleStore();
+  }
+
+  /**
+   * Initialize the stream size schedule store, and restart all the schedule tasks that were persisted in it.
+   *
+   * @throws SchedulerException if the persistent store could not be initialized, or if we couldn't list the
+   *                            persisted tasks
+   */
+  private void initializeScheduleStore() throws SchedulerException {
+    try {
+      scheduleStore.initialize();
+    } catch (Throwable t) {
+      throw new SchedulerException("Error when initializing store for stream size schedules", t);
+    }
 
     // Reschedule the persisted schedules
     List<DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState> scheduleStates;
@@ -137,9 +151,15 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     for (DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState scheduleState : scheduleStates) {
-      schedule(scheduleState.getProgramId(), scheduleState.getProgramType(), scheduleState.getStreamSizeSchedule(),
-               scheduleState.isRunning(), scheduleState.getBaseRunSize(), scheduleState.getBaseRunTs(),
-               scheduleState.getLastRunSize(), scheduleState.getLastRunTs(), false);
+      try {
+        schedule(scheduleState.getProgramId(), scheduleState.getProgramType(),
+                 scheduleState.getStreamSizeSchedule(), scheduleState.isRunning(),
+                 scheduleState.getBaseRunSize(), scheduleState.getBaseRunTs(),
+                 scheduleState.getLastRunSize(), scheduleState.getLastRunTs(), false);
+      } catch (SchedulerException e) {
+        // We should never enter this, but if we do, we still want the other schedule tasks to be handled
+        LOG.error("Could not schedule task '{}' from persistent store", scheduleState, e);
+      }
     }
   }
 
@@ -512,7 +532,7 @@ public class StreamSizeScheduler implements Scheduler {
                                    StreamSizeSchedule streamSizeSchedule, boolean active,
                                    long basePollSize, long basePollTs, long lastRunSize, long lastRunTs,
                                    boolean persist) throws SchedulerException {
-      StreamSize streamSize;
+      StreamSize streamSize = null;
       synchronized (this) {
         String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType,
                                                                    streamSizeSchedule.getName());
@@ -525,18 +545,23 @@ public class StreamSizeScheduler implements Scheduler {
         try {
           streamSize = pollOnce();
         } catch (IOException e) {
-          // Polling should not fail - the whole logic of stream size schedules relies on it
-          throw new SchedulerException("Polling could not be performed on stream " + streamSizeSchedule.getStreamName(),
-                                       e);
+          if (persist) {
+            // Polling should not fail when creating a schedule for the first time -
+            // the whole logic of stream size schedules relies on it
+            throw new SchedulerException("Polling could not be performed on stream " +
+                                           streamSizeSchedule.getStreamName(),
+                                         e);
+          }
         }
 
         // Initialize the schedule task
         StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
-        if (basePollSize == -1 && basePollTs == -1) {
+        if (persist) {
+          // First time that we create this schedule, it has to be initialized with the latest polling info
           newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(),
-                                lastRunSize, lastRunTs, active, persist);
+                                lastRunSize, lastRunTs, active, true);
         } else {
-          newTask.startSchedule(basePollSize, basePollTs, lastRunSize, lastRunTs, active, persist);
+          newTask.startSchedule(basePollSize, basePollTs, lastRunSize, lastRunTs, active, false);
         }
 
         // We only modify the scheduleTasks if the persistence in startSchedule() did not throw any exception
@@ -547,7 +572,9 @@ public class StreamSizeScheduler implements Scheduler {
         }
       }
 
-      sendPollingInfoToActiveTasks(streamSize);
+      if (streamSize != null) {
+        sendPollingInfoToActiveTasks(streamSize);
+      }
     }
 
     /**
@@ -620,13 +647,18 @@ public class StreamSizeScheduler implements Scheduler {
      * Delete a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public synchronized void deleteSchedule(Id.Program programId, SchedulableProgramType programType,
-                                            String scheduleName) throws ScheduleNotFoundException {
+                                            String scheduleName) throws ScheduleNotFoundException, SchedulerException {
       String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
-      StreamSizeScheduleTask scheduleTask = scheduleTasks.remove(scheduleId);
+      StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleId);
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(scheduleName);
       }
       scheduleTask.deleteSchedule();
+
+      // The task is only removed from the map of scheduleTasks if deleting it from the persistent
+      // store succeeded in the previous call
+      scheduleTasks.remove(scheduleId);
+
       if (scheduleTask.isActive()) {
         activeTasks.decrementAndGet();
       }
@@ -786,8 +818,18 @@ public class StreamSizeScheduler implements Scheduler {
       }
     }
 
-    public void deleteSchedule() {
-      scheduleStore.delete(programId, programType, streamSizeSchedule.getName());
+    /**
+     * Remove the schedule task information from the persistent store.
+     *
+     * @throws SchedulerException when the task could not be deleted from the store
+     */
+    public void deleteSchedule() throws SchedulerException {
+      try {
+        scheduleStore.delete(programId, programType, streamSizeSchedule.getName());
+      } catch (Throwable t) {
+        throw new SchedulerException("Error when deleting schedule " + streamSizeSchedule.getName() + "from store",
+                                     t);
+      }
     }
 
     public boolean isActive() {
@@ -838,9 +880,9 @@ public class StreamSizeScheduler implements Scheduler {
       }
 
       ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
+      long previousLastRunSize = lastRunSize;
+      long previousLastRunTs = lastRunTs;
       try {
-        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-        taskRunner.run(programId, ProgramType.valueOf(programType.name()), new BasicArguments(argsBuilder.build()));
         try {
           scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
                                       pollingInfo.getSize(), pollingInfo.getTimestamp());
@@ -849,11 +891,25 @@ public class StreamSizeScheduler implements Scheduler {
         } catch (Throwable t) {
           LOG.error("Error when persisting last run information for schedule {} in store",
                     streamSizeSchedule.getName(), t);
+          return;
         }
+        // The taskRunner.run() call will wait for the program to be run entirely, and can't be wrapped in
+        // the transaction used in scheduleStore.updateLastRun
+        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
+        taskRunner.run(programId, ProgramType.valueOf(programType.name()), new BasicArguments(argsBuilder.build()));
       } catch (TaskExecutionException e) {
-        // Note: in case of a failure, we don't reset the base information. We still act as if it was a success
-        // and start counting again from the size of that failed run
+        // Note: in case of a failure, we don't reset the base information,
+        // but we reset the last scheduled run info
         LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
+        try {
+          scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
+                                      previousLastRunSize, previousLastRunTs);
+          lastRunSize = previousLastRunSize;
+          lastRunTs = previousLastRunTs;
+        } catch (Throwable t) {
+          LOG.error("Error when rolling back last run information for schedule {} in store",
+                    streamSizeSchedule.getName(), t);
+        }
       }
     }
 

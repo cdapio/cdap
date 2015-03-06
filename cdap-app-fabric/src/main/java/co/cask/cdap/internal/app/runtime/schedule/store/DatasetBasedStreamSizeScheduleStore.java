@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -31,7 +32,6 @@ import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -40,6 +40,7 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -71,14 +72,10 @@ public class DatasetBasedStreamSizeScheduleStore {
   /**
    * Initialize this persistent store.
    */
-  public void initialize() {
-    try {
-      table = tableUtil.getMetaTable();
-      Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
-                                 ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
-    }
+  public void initialize() throws IOException, DatasetManagementException {
+    table = tableUtil.getMetaTable();
+    Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
+                               ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
   }
 
   /**
@@ -193,20 +190,17 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void delete(final Id.Program programId, final SchedulableProgramType programType, final String scheduleName) {
-    try {
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                        getScheduleId(programId, programType, scheduleName)));
-            table.delete(rowKey);
-          }
-        });
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
-    }
+  public void delete(final Id.Program programId, final SchedulableProgramType programType, final String scheduleName)
+    throws InterruptedException, TransactionFailureException {
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
+                                                      getScheduleId(programId, programType, scheduleName)));
+          table.delete(rowKey);
+        }
+      });
   }
 
   /**

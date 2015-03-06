@@ -33,9 +33,9 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.apache.twill.common.Threads;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,7 @@ public final class ScheduleTaskRunner {
     Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
-      program =  store.loadProgram(programId, ProgramType.WORKFLOW);
+      program = store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
       String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
@@ -94,10 +94,11 @@ public final class ScheduleTaskRunner {
       if (!runMultipleProgramInstances) {
         ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
         if (existingRuntimeInfo != null) {
-          throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
+          throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
         }
       }
     } catch (Throwable t) {
+      Throwables.propagateIfInstanceOf(t, TaskExecutionException.class);
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
