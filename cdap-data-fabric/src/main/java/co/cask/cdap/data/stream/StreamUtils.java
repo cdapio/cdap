@@ -438,16 +438,6 @@ public final class StreamUtils {
   }
 
   /**
-   * Gets the table name for stream consumer state stores within a given namespace.
-   * @param namespace the namespace for which the table is for.
-   * @return constructed table name
-   */
-  public static String getStateStoreTableName(Id.Namespace namespace) {
-    TableId tableId = getStateStoreTableId(namespace);
-    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
-  }
-
-  /**
    * Gets a {@link Id.Stream} given a stream's base directory.
    * @param streamBaseLocation the location of the stream's directory
    * @return Id of the stream associated with the location

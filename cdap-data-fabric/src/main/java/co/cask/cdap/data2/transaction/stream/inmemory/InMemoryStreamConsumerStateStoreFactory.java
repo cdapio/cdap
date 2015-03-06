@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
@@ -43,19 +44,22 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
-    String tableName = StreamUtils.getStateStoreTableName(namespace);
-    InMemoryTableAdmin admin = new InMemoryTableAdmin(DatasetContext.from(namespace.getId()), tableName, cConf);
+    TableId tableId = StreamUtils.getStateStoreTableId(namespace);
+    InMemoryTableAdmin admin =
+      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
     if (!admin.exists()) {
       admin.create();
     }
-    InMemoryTable table = new InMemoryTable(DatasetContext.from(namespace.getId()), tableName, cConf);
+    InMemoryTable table =
+      new InMemoryTable(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 
   @Override
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
-    String tableName = StreamUtils.getStateStoreTableName(namespace);
-    InMemoryTableAdmin admin = new InMemoryTableAdmin(DatasetContext.from(namespace.getId()), tableName, cConf);
+    TableId tableId = StreamUtils.getStateStoreTableId(namespace);
+    InMemoryTableAdmin admin =
+      new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), tableId.getTableName(), cConf);
     admin.drop();
   }
 }
