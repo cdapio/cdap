@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.metrics;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -26,6 +25,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
@@ -134,8 +134,8 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
         continue;
       }
       try {
-        Collection<DatasetSpecification> instances = dsFramework.getInstances(datasetInstance.getNamespace());
-        for (DatasetSpecification spec : instances) {
+        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(datasetInstance.getNamespace());
+        for (DatasetSpecificationSummary spec : instances) {
           if (statEntry.getKey().startsWith(spec.getName())) {
             datasetInstance = userDsNamespace.fromNamespaced(spec.getName());
             break;

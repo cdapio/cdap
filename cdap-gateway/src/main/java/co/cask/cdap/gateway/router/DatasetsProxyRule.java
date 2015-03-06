@@ -64,7 +64,11 @@ public class DatasetsProxyRule implements ProxyRule {
   }
 
   private HttpRequest applyToV3(HttpRequest request, String [] uriParts, String path) {
-    if ((uriParts.length >= 6) && uriParts[3].equals("data") && uriParts[4].equals("datasets")) {
+    if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
+      (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
+      // this goes to app fabric, which doesn't have the namespaced name.
+      return request;
+    } else if ((uriParts.length >= 6) && uriParts[3].equals("data") && uriParts[4].equals("datasets")) {
       // five parts with '/' wrapping them
       int insertAt = uriParts[0].length() + uriParts[1].length() + uriParts[2].length() + uriParts[3].length() +
         uriParts[4].length() + 6;

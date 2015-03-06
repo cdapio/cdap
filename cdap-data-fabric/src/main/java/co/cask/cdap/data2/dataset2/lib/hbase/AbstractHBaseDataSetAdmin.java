@@ -17,8 +17,8 @@ package co.cask.cdap.data2.dataset2.lib.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -82,16 +82,12 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public void truncate() throws IOException {
-    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
-    tableUtil.disableTable(getAdmin(), tableId);
-    tableUtil.deleteTable(getAdmin(), tableId);
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor);
+    tableUtil.truncateTable(getAdmin(), tableId);
   }
 
   @Override
   public void drop() throws IOException {
-    tableUtil.disableTable(getAdmin(), tableId);
-    tableUtil.deleteTable(getAdmin(), tableId);
+    tableUtil.dropTable(getAdmin(), tableId);
   }
 
   @Override
@@ -108,7 +104,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    * @throws IOException If upgrade failed.
    */
   protected void upgradeTable(TableId tableId) throws IOException {
-    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);
+    HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
 
     // Upgrade any table properties if necessary
     boolean needUpgrade = upgradeTable(tableDescriptor);
@@ -185,7 +181,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
     String value = tableDescriptor.getValue(CDAP_VERSION);
-    return value == null ? null : new ProjectInfo.Version(value);
+    return new ProjectInfo.Version(value);
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,

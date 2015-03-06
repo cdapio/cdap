@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.proto;
 
 /**
- * Thrown when an access token is unauthorized or the authentication header is not exist.
+ * Represents a dataset in an HTTP response.
  */
-public class UnAuthorizedAccessTokenException extends Exception {
+public class DatasetDetail {
 
-  public UnAuthorizedAccessTokenException() {
-    super();
+  private final String name;
+  private final String classname;
+
+  public DatasetDetail(String name, String classname) {
+    this.name = name;
+    this.classname = classname;
   }
 
-  public UnAuthorizedAccessTokenException(String msg) {
-    super(msg);
+  public String getName() {
+    return name;
   }
 
-  public UnAuthorizedAccessTokenException(String msg, Throwable throwable) {
-    super(msg, throwable);
+  public String getClassname() {
+    return classname;
   }
 }

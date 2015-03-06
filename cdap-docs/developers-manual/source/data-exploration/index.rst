@@ -15,7 +15,9 @@ Data Exploration
    
     Stream Exploration <streams>
     Fileset Exploration <filesets>
+    ObjectMappedTable Exploration <object-mapped-tables>
     Custom Dataset Exploration <custom-datasets>
+    
 
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
 Queries can be run over Streams and certain types of Datasets.
@@ -35,14 +37,17 @@ Queries can be run over Streams and certain types of Datasets.
 - |fileset-exploration|_ Describes how you can make a ``FileSet`` or 
   ``TimePartitionedFileSet`` that is **explorable.**
 
+
 .. |object-mapped-table-exploration| replace:: **ObjectMappedTable Exploration:**
 .. _object-mapped-table-exploration: object-mapped-tables.html
 
 - |object-mapped-table-exploration|_ Describes how you can make an ``ObjectMappedTable`` that is **explorable.**
 
+
 .. |custom-dataset-exploration| replace:: **Custom Dataset Exploration:**
 .. _custom-dataset-exploration: custom-datasets.html
 
 - |custom-dataset-exploration|_ Describes how you can make a **custom Dataset** that is **explorable.**
+
 
 Further information on Data Exploration can be found in our :ref:`Integrations Manual <integrations-index>`.

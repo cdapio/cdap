@@ -63,8 +63,10 @@ Building and Starting
 Running CDAP Applications
 ============================================
 
-.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
-   :start-line: 9
+.. |example| replace:: SparkKMeans
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 11
 
 Running the Example
 ===================
@@ -134,8 +136,8 @@ There are three ways to start the Spark program:
 
 #. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w '\n' -v -d '{args="3"}' \
-      'http://localhost:10000/v2/apps/SparkKMeans/spark/SparkKMeansProgram/start'
+    curl -w'\n' -v  -d '{args="3"}' \
+      http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start
 
    **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
    SDK in ``libexec\bin\curl.exe``
@@ -157,7 +159,7 @@ Querying the Results
 To query the *centers* ObjectStore using the ``CentersService``,
 send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w '\n' -v 'http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/methods/centers/1'
+    curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``

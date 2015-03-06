@@ -228,7 +228,7 @@
                   <div class="instances-requested">
                     <div>
                     <form {{action "changeInstances" service on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
+                      {{input keyUp=keyPressed placeholder=service.requested value=service.instancesInput class="services-instances-input" }}
                     </form>
                     </div>
                     <div>
@@ -294,7 +294,7 @@
                 <div class="instance-wrapper">
                   <div>
                     <form {{action "runnableChangeInstances" model model.handler on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=model.handler.requested maxlength="3" value=model.handler.instancesInput class="services-instances-input" }}
+                      {{input keyUp=keyPressed placeholder=model.handler.requested value=model.handler.instancesInput class="services-instances-input" }}
                     </form>
                   </div>
                   <div>
@@ -348,7 +348,7 @@
                     <div class="instance-wrapper">
                       <div>
                         <form {{action "runnableChangeInstances" model runnable on="submit"}}>
-                          {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
+                          {{input keyUp=keyPressed placeholder=runnable.requested value=runnable.instancesInput class="services-instances-input" }}
                         </form>
                       </div>
                       <div>
@@ -1438,7 +1438,7 @@
             </div>
             <div style="display: inline-block; width: 50%">
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
               <button class="btn btn-blank btn-set" disabled="true" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>
@@ -1704,7 +1704,7 @@
             <div>
               <button style="border:0;padding-right:120px;" disabled="disabled" class="btn btn-blank">Instances Provisioned: {{actualInstances}}</button>
               <button style="border:0;" disabled="disabled" class="btn btn-blank">Instances Requested: </button>
-              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" maxlength="3" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
+              {{input keyUp=keyPressed action="changeInstances" id="instancesInput" class="btn btn-blank" placeholder=model.instances value=instancesInput}}
               <button class="btn btn-blank btn-set" style="margin-right: 6px;" disabled="true" {{action "changeInstances" on="click"}}>SET</button>
             </div>
           </div>

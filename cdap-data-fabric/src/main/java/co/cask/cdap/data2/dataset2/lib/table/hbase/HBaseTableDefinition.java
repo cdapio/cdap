@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
@@ -44,7 +45,7 @@ public class HBaseTableDefinition
   private LocationFactory locationFactory;
   // todo: datasets should not depend on cdap configuration!
   @Inject
-  private CConfiguration conf;
+  private CConfiguration cConf;
 
   public HBaseTableDefinition(String name) {
     super(name);
@@ -58,18 +59,19 @@ public class HBaseTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
     // NOTE: ttl property is applied on server-side in CPs
     // check if read-less increment operations are supported
     boolean supportsIncrements = HBaseTableAdmin.supportsReadlessIncrements(spec);
-    return new HBaseTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
+    return new HBaseTable(spec.getName(), conflictDetection, hConf, hBaseTableUtil, supportsIncrements);
   }
 
   @Override
-  public HBaseTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
+  public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                  ClassLoader classLoader) throws IOException {
+    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }

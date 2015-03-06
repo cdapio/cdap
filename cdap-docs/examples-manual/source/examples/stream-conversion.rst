@@ -108,8 +108,10 @@ Building and Starting
 Running CDAP Applications
 =========================
 
-.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
-    :start-line: 9
+.. |example| replace:: StreamConversion
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 11
 
 Running the Example
 ===================
@@ -159,5 +161,5 @@ Stopping the Application
 The only thing you need to do to stop the application is suspend the schedule. This is not possible
 with the CLI; instead you can use ``curl`` to make a RESTful request::
 
-  curl -X POST http://localhost:10000/v2/apps/StreamConversionApp/schedules/every5min/suspend
+  curl -X POST http://localhost:10000/v3/namespaces/default/apps/StreamConversionApp/schedules/every5min/suspend
 

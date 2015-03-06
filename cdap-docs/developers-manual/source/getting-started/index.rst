@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Index document
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -45,7 +45,7 @@ Follow these steps:
 #. We suggest the :ref:`Examples, Guides, and Tutorials <examples:examples-introduction-index>` 
    as the easiest way to become familiar with CDAP.
 #. To begin writing your own application, start by setting up your :ref:`development environment <dev-env>`.
-#. There are instructions for :doc:`starting and stopping CDAP<start-stop-cdap>`, 
+#. There are instructions for :doc:`starting and stopping CDAP <start-stop-cdap>`, 
    and :doc:`building and running examples and applications <building-apps>`.
 
 Online, we have additional resources ranging from :ref:`user groups <faq-cdap-user-groups>` to these manuals,
