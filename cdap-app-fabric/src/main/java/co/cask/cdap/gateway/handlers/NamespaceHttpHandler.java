@@ -92,7 +92,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
-  public void properties(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespaceId) {
     try {
       Map<String, String> properties = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), STRING_MAP_TYPE);
       namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), properties);

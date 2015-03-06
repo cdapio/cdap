@@ -277,7 +277,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
-    // cleanup
     Map<String, String> properties = ImmutableMap.of("yarn.queue", "prod");
     setProperties(ID, properties);
     response = getNamespace(ID);
@@ -291,7 +290,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(properties, returnedProperties);
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
-
+    // cleanup
     response = deleteNamespace(ID);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
