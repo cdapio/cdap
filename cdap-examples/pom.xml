@@ -37,6 +37,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>Sports</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
