@@ -43,7 +43,6 @@ public class ProgramClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private ProcedureClient procedureClient;
   private ProgramClient programClient;
-  private ServiceClient serviceClient;
 
   @Before
   public void setUp() throws Throwable {
@@ -51,7 +50,6 @@ public class ProgramClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
-    serviceClient = new ServiceClient(clientConfig);
   }
 
   @Test
