@@ -225,6 +225,7 @@ These are the available commands:
    ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a Stream. <schema> is a sql-like schema ""column_name data_type, ..."" or avro-like json schema and <settings> is specified in the format ""key1=v1, key2=v2""."
    ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a Stream, such as TTL, format, and notification threshold."
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the Time-to-Live (TTL) of a Stream."
+   ``set stream notification-threshold <stream-id> <notification-threshold-mb>``,"Sets the Notification Threshold of a Stream."
    ``set worker instances <app-id.worker-id> <num-instances>``,"Sets the instances of a Worker."
    ``set worker preferences <runtime-args> [<app-id.worker-id>]``,"Sets the preferences of a Workers. <runtime-args> is specified in the format ""key1=v1, key2=v2""."
    ``set worker runtimeargs <app-id.worker-id> <runtime-args>``,"Sets the runtime arguments of a Worker. <runtime-args> is specified in the format ""key1=a key2=b""."
