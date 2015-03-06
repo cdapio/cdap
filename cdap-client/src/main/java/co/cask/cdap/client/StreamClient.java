@@ -105,7 +105,7 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the client is unauthorized
    * @throws BadRequestException if the request is bad
-   * @throws StreamNotFoundException if the stream was not stream was not found
+   * @throws StreamNotFoundException if the stream was not found
    */
   public void setStreamProperties(String streamId, StreamProperties properties) throws IOException,
     UnauthorizedException, BadRequestException, StreamNotFoundException {
