@@ -97,8 +97,64 @@ angular.module(PKG.name+'.services')
     return obj;
   }
 
+  /**
+    * Purpose: Converts a list of nodes to a list of connections
+    * @param  [Array] of nodes
+    * @return [Array] of connections
+    * Usage: Can handle all cases, including:
+        1. Fork in the middle
+        2. Only a fork
+        3. Fork at the beginning
+        4. Fork at the end
+        5. Only an Action node
+
+        var z = [
+          {
+            nodeType: 'ACTION',
+            program: {
+              programName: "asd"
+            }
+          }, {
+            nodeType: 'FORK',
+            branches: [
+              [
+                [
+                  {
+                    nodeType: 'ACTION',
+                    program: {
+                      programName: "1"
+                    }
+                  }
+                ],
+                [
+                  {
+                    nodeType: 'ACTION',
+                    program: {
+                      programName: "2"
+                    }
+                  }
+                ]
+              ],
+              [
+                {
+                  nodeType: 'ACTION',
+                  program: {
+                    programName: "3"
+                  }
+                }
+              ]
+            ]
+          }, {
+            nodeType: 'ACTION',
+            program: {
+              programName: "4"
+            }
+          }
+        ];
+  */
+
   function convert(nodes, connections) {
-    // Accepts list of nodes -> Converts to list of connections
+
     for (var i=0; i+1 < nodes.length; i++) {
 
       if ( i === 0 && nodes[i].nodeType === 'FORK') {
@@ -121,18 +177,38 @@ angular.module(PKG.name+'.services')
     }
   }
 
+  /**
+    * Purpose: Flatten a source-fork-target combo to a list of connections
+    * @param  [Array] of nodes
+    * @param  [Array] of nodes
+    * @param  [Array] of nodes
+    * @return [Array] of connections
+
+  */
+
   function flatten(source, fork, target, connections) {
-    // Flatten a source-fork-target combo to [list of connections]
     var branches = fork.branches,
         temp = [];
 
     for (var i =0; i<branches.length; i++) {
       temp = branches[i];
-      temp.unshift(source);
-      temp.push(target);
+      if(source) {
+        temp.unshift(source);
+      }
+      if(target) {
+        temp.push(target);
+      }
       convert(temp, connections);
     }
   }
+
+  /**
+    Purpose: Expand a fork and convert branched nodes to a list of connections
+    * @param  [Array] of nodes
+    * @return [Array] of connections
+
+  */
+
 
   function expandForks(nodes, expandedNodes) {
     for(var i=0; i<nodes.length; i++) {
