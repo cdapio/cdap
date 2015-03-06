@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
@@ -74,7 +75,7 @@ public class HBaseTable extends BufferingTable {
 
   public HBaseTable(DatasetSpecification spec, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(spec.getName(),
-          ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name())),
+          ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
           HBaseTableAdmin.supportsReadlessIncrements(spec));
     TableId tableId = TableId.from(spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);

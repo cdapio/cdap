@@ -227,7 +227,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
    * If it is not set, the {@link #DEFAULT_DATA_COLUMN_FAMILY} will be returned.
    */
   public static byte[] getColumnFamily(DatasetSpecification spec) {
-    String columnFamily = spec.getProperty(Table.COLUMN_FAMILY);
+    String columnFamily = spec.getProperty(Table.PROPERTY_COLUMN_FAMILY);
     return columnFamily == null ? DEFAULT_DATA_COLUMN_FAMILY : Bytes.toBytes(columnFamily);
   }
 

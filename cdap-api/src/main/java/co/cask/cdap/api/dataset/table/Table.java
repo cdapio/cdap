@@ -42,10 +42,18 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
 
   /**
-   * Property set to configure name of the column family. The property only applies to implementations that support
+   * Property set to configure name of the column family. This property only applies to implementations that support
    * it. If not set, a default column family will be used.
    */
-  String COLUMN_FAMILY = "dataset.table.column.family";
+  String PROPERTY_COLUMN_FAMILY = "dataset.table.column.family";
+
+  /**
+   * Property set to configure transaction conflict detection level. This property only applies to implementations
+   * that support transaction. The property value must be obtained by {@link ConflictDetection#name()}.
+   *
+   * @see ConflictDetection
+   */
+  String PROPERTY_CONFLICT_LEVEL = "conflict.level";
 
   /**
    * Reads values of all columns of the specified row.

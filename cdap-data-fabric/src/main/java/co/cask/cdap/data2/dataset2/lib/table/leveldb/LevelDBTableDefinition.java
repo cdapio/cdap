@@ -51,7 +51,7 @@ public class LevelDBTableDefinition
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
-      ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
+      ConflictDetection.valueOf(spec.getProperty(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name()));
     return new LevelDBTable(spec.getName(), conflictDetection, service);
   }
 

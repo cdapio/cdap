@@ -110,7 +110,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // ttl=-1 means "keep data forever"
     DatasetSpecification spec = DatasetSpecification.builder(name, "foo")
       .property(Table.PROPERTY_READLESS_INCREMENT, "true")
-      .property("conflict.level", conflictLevel.name())
+      .property(Table.PROPERTY_CONFLICT_LEVEL, conflictLevel.name())
       .build();
     return new HBaseTable(spec, testHBase.getConfiguration(), hBaseTableUtil);
   }
@@ -285,7 +285,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @Test
   public void testColumnFamily() throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(Table.COLUMN_FAMILY, "t").build();
+    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
     HBaseTableDefinition tableDefinition = new HBaseTableDefinition("foo");
     String tableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "testcf");
     DatasetSpecification spec = tableDefinition.configure(tableName, props);
