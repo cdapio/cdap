@@ -96,6 +96,7 @@ public class AltStyleTableRenderer implements TableRenderer {
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
     int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
+
     boolean useRowDivider = false;
     for (List<String> row : table.getRows()) {
       useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;
@@ -103,11 +104,13 @@ public class AltStyleTableRenderer implements TableRenderer {
 
     // If has header, prints the header.
     if (!header.isEmpty()) {
+      List<Row> headerRow = Lists.newArrayList();
+      generateRow(header, columnWidths, headerRow);
+
       outputDivider(output, columnWidths, '=', '+');
-      for (int i = 0; i < columnWidths.length; i++) {
-        output.printf("| %-" + columnWidths[i] + "s ", header.get(i));
+      for (Row row : headerRow) {
+        printRow(output, columnWidths, row);
       }
-      output.printf("|").println();
     }
 
     // Prints a divider between header and first row if no divider is needed between rows.
@@ -129,20 +132,24 @@ public class AltStyleTableRenderer implements TableRenderer {
       }
 
       // Print each cell. It has to loop until all lines from all cells are printed.
-      boolean done = false;
-      int line = 0;
-      while (!done) {
-        done = true;
-        for (int i = 0; i < row.size(); i++) {
-          Cell cell = row.get(i);
-          cell.output(output, "| %-" + columnWidths[i] + "s ", line);
-          done = done && (line + 1 >= cell.size());
-        }
-        output.printf("|").println();
-        line++;
-      }
+      printRow(output, columnWidths, row);
     }
     outputDivider(output, columnWidths, '=', '+');
+  }
+
+  private void printRow(PrintStream output, int[] columnWidths, Row row) {
+    boolean done = false;
+    int line = 0;
+    while (!done) {
+      done = true;
+      for (int i = 0; i < row.size(); i++) {
+        Cell cell = row.get(i);
+        cell.output(output, "| %-" + columnWidths[i] + "s ", line);
+        done = done && (line + 1 >= cell.size());
+      }
+      output.printf("|").println();
+      line++;
+    }
   }
 
   /**
