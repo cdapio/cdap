@@ -109,7 +109,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
-
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);

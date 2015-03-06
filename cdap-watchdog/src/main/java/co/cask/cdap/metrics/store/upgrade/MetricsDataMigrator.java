@@ -158,8 +158,7 @@ public class MetricsDataMigrator {
   }
 
   private void migrateMetricsTableFromVersion27(Version version) {
-    EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(
-      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME, DatasetProperties.EMPTY));
+    EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(entityTableName, DatasetProperties.EMPTY));
     MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
     migrateMetricsData(entityTable, metricsTable, null, version);
   }
@@ -285,8 +284,11 @@ public class MetricsDataMigrator {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
     System.out.println("Migrating Metrics data from table : " + tableName);
     MetricsTable table = null;
+    // for default namespace, we have to provide the complete table name.
+    tableName = "cdap.system." + tableName;
+    System.out.println("Complete Table Name is " + tableName);
     // metrics tables are in the system namespace
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);

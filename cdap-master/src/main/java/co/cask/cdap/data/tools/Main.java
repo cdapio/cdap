@@ -192,6 +192,7 @@ public class Main {
       hAdmin = new HBaseAdmin(hConf);
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (desc.getNameAsString().equals(metricsEntityTable27)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
           version = metricHBaseTableUtil.getVersion(desc);
           version = verifyVersion(Version.VERSION_2_7, version);
           if (version == null) {
@@ -200,6 +201,7 @@ public class Main {
           break;
         }
         if (desc.getNameAsString().equals(metricsEntityTable26)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
           version = metricHBaseTableUtil.getVersion(desc);
           version = verifyVersion(Version.VERSION_2_6_OR_LOWER, version);
           if (version == null) {
@@ -231,12 +233,10 @@ public class Main {
    */
   public static DatasetFramework createRegisteredDatasetFramework(Injector injector)
     throws DatasetManagementException, IOException {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
       new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new DefaultDatasetNamespace(cConf));
+                                     new DefaultDatasetNamespace(injector.getInstance(CConfiguration.class)));
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
                                new HBaseTableModule());
@@ -244,7 +244,6 @@ public class Main {
                                new HBaseMetricsTableModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
-
     return datasetFramework;
   }
 }
