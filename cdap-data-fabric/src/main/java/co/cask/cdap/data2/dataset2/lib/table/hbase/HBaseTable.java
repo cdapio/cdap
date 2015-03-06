@@ -25,9 +25,8 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import com.google.common.base.Function;
@@ -65,19 +64,18 @@ public class HBaseTable extends BufferingTable {
 
   public static final String DELTA_WRITE = "d";
   private final HTable hTable;
-  private final String hTableName;
+  private final String tableName;
 
   private Transaction tx;
 
   private final TransactionCodec txCodec;
 
-  public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
-    throws IOException {
-    super(name, level, enableReadlessIncrements);
-    hTableName = HBaseTableUtil.getHBaseTableName(name);
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    TableId tableId = TableId.from(name);
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+  public HBaseTable(String tableName, ConflictDetection level, Configuration hConf,
+                    HBaseTableUtil tableUtil, boolean enableReadlessIncrements) throws IOException {
+    super(tableName, level, enableReadlessIncrements);
+    this.tableName = tableName;
+    TableId tableId = TableId.from(tableName);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
@@ -89,7 +87,7 @@ public class HBaseTable extends BufferingTable {
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
-                  .add("hTableName", hTableName)
+                  .add("tableName", tableName)
                   .toString();
   }
 
@@ -122,7 +120,7 @@ public class HBaseTable extends BufferingTable {
       });
       return rows;
     } catch (IOException ioe) {
-      throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
+      throw new DataSetException("Multi-get failed on table " + tableName, ioe);
     }
   }
 
