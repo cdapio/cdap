@@ -163,28 +163,22 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
                          ".mapreduce.ClassicWordCount",
                        ImmutableList.<String>of("namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.dataset.*"));
-
-    // verify other metrics for WCount app
-    verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
-                         ".mapreduce.ClassicWordCount.dataset.*",
-                       ImmutableList.<String>of("namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.dataset.*.run.run1"));
+                                                  ".mapreduce.ClassicWordCount.run.run1"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
-                         ".mapreduce.ClassicWordCount.dataset.*.run.run1",
+                         ".mapreduce.ClassicWordCount.run.run1",
                        ImmutableList.<String>of("namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.dataset.*.run.run1.tasktype.m",
+                                                  ".mapreduce.ClassicWordCount.run.run1.tasktype.m",
                                                 "namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.dataset.*.run.run1.tasktype.r"));
+                                                  ".mapreduce.ClassicWordCount.run.run1.tasktype.r"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
-                         ".mapreduce.ClassicWordCount.dataset.*.run.run1.tasktype.m",
+                         ".mapreduce.ClassicWordCount.run.run1.tasktype.m",
                        ImmutableList.<String>of("namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount" +
-                                                  ".dataset.*.run.run1.tasktype.m.instance.task1"));
+                                                  ".run.run1.tasktype.m.instance.task1"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
-                         ".mapreduce.ClassicWordCount.dataset.*.run.run1.tasktype.m.instance.task1",
+                         ".mapreduce.ClassicWordCount.run.run1.tasktype.m.instance.task1",
                        ImmutableList.<String>of());
 
     // verify "*"
@@ -200,14 +194,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                 "namespace.*.app.*.procedure.RCounts"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.*.flow.WCounter",
-                       ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.dataset.*"));
+                       ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.run.run1"));
 
     // verify dots more
     String parts[] = new String[] {
       "namespace." + DOT_NAMESPACE_ESCAPED,
       "app." + DOT_APP_ESCAPED,
       "flow." + DOT_FLOW_ESCAPED,
-      "dataset.*",
       "run." + DOT_RUN_ESCAPED,
       "flowlet." + DOT_FLOWLET_ESCAPED
     };

@@ -45,7 +45,7 @@ public class HBaseTableDefinition
   private LocationFactory locationFactory;
   // todo: datasets should not depend on cdap configuration!
   @Inject
-  private CConfiguration conf;
+  private CConfiguration cConf;
 
   public HBaseTableDefinition(String name) {
     super(name);
@@ -66,12 +66,12 @@ public class HBaseTableDefinition
     // NOTE: ttl property is applied on server-side in CPs
     // check if read-less increment operations are supported
     boolean supportsIncrements = HBaseTableAdmin.supportsReadlessIncrements(spec);
-    return new HBaseTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
+    return new HBaseTable(spec.getName(), conflictDetection, hConf, hBaseTableUtil, supportsIncrements);
   }
 
   @Override
   public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                   ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
+    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }
