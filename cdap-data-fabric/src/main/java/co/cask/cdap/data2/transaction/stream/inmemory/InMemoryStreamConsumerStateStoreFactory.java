@@ -16,9 +16,11 @@
 
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -31,27 +33,29 @@ import java.io.IOException;
  * Factory for creating {@link StreamConsumerStateStore} in memory.
  */
 public final class InMemoryStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
-  private final InMemoryTableService tableService;
+  private final CConfiguration cConf;
 
   @Inject
-  InMemoryStreamConsumerStateStoreFactory(InMemoryTableService tableService) {
-    this.tableService = tableService;
+  InMemoryStreamConsumerStateStoreFactory(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
     String tableName = StreamUtils.getStateStoreTableName(namespace);
-    if (!tableService.exists(tableName)) {
-      tableService.create(tableName);
+    InMemoryTableAdmin admin = new InMemoryTableAdmin(DatasetContext.from(namespace.getId()), tableName, cConf);
+    if (!admin.exists()) {
+      admin.create();
     }
-    InMemoryTable table = new InMemoryTable(tableName);
+    InMemoryTable table = new InMemoryTable(DatasetContext.from(namespace.getId()), tableName, cConf);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 
   @Override
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     String tableName = StreamUtils.getStateStoreTableName(namespace);
-    tableService.drop(tableName);
+    InMemoryTableAdmin admin = new InMemoryTableAdmin(DatasetContext.from(namespace.getId()), tableName, cConf);
+    admin.drop();
   }
 }

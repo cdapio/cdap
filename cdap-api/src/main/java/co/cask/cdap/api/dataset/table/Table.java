@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,20 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write operation.
    */
   String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
+
+  /**
+   * Property set to configure name of the column family. This property only applies to implementations that support
+   * it. If not set, a default column family will be used.
+   */
+  String PROPERTY_COLUMN_FAMILY = "dataset.table.column.family";
+
+  /**
+   * Property set to configure transaction conflict detection level. This property only applies to implementations
+   * that support transaction. The property value must be obtained by {@link ConflictDetection#name()}.
+   *
+   * @see ConflictDetection
+   */
+  String PROPERTY_CONFLICT_LEVEL = "conflict.level";
 
   /**
    * Reads values of all columns of the specified row.
