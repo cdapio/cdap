@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  */
 public class ConsumerConfigCache {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
-  
+
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;

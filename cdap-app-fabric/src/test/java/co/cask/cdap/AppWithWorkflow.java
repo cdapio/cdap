@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
@@ -36,6 +37,7 @@ public class AppWithWorkflow extends AbstractApplication {
     try {
       setName(NAME);
       setDescription("Sample application");
+      addStream(new Stream("stream"));
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
