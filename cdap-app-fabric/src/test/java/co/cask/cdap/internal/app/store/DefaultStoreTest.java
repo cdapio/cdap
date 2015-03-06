@@ -125,8 +125,8 @@ public class DefaultStoreTest {
     store.setStart(programId, "run1", now - 1000);
     store.setStart(programId, "run2", now - 1000);
 
-    store.setStop(programId, "run1", now, ProgramController.State.STOPPED);
-    store.setStop(programId, "run2", now, ProgramController.State.STOPPED);
+    store.setStop(programId, "run1", now, ProgramController.State.COMPLETED);
+    store.setStop(programId, "run2", now, ProgramController.State.COMPLETED);
 
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -144,7 +144,7 @@ public class DefaultStoreTest {
 
     // record another finished flow
     store.setStart(programId, "run2", now - 1000);
-    store.setStop(programId, "run2", now - 500, ProgramController.State.STOPPED);
+    store.setStop(programId, "run2", now - 500, ProgramController.State.COMPLETED);
 
     // record not finished flow
     store.setStart(programId, "run3", now);
@@ -152,7 +152,7 @@ public class DefaultStoreTest {
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
     store.setStart(programId2, "run4", now - 500);
-    store.setStop(programId2, "run4", now - 400, ProgramController.State.STOPPED);
+    store.setStop(programId2, "run4", now - 400, ProgramController.State.COMPLETED);
 
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"), "run3", now - 300);
@@ -172,7 +172,7 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.STOPPED.getRunStatus(), run.getStatus());
+    Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
@@ -567,19 +567,19 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     store.setStart(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.STOPPED);
+    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED);
 
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.STOPPED);
+    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED);
 
     store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
-    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.STOPPED);
+    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.COMPLETED);
 
     store.setStart(workflowProgramId1, "wfRun1", now - 1000);
-    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.STOPPED);
+    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.COMPLETED);
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.STOPPED);
+    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED);
 
     verifyRunHistory(flowProgramId1, 1);
     verifyRunHistory(mapreduceProgramId1, 1);

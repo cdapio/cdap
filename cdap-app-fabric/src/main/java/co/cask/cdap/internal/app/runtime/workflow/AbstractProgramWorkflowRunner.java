@@ -129,7 +129,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
 
       @Override
-      public void stopped() {
+      public void completed() {
         completion.set(context);
       }
 

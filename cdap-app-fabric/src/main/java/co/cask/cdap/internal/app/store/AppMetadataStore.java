@@ -212,7 +212,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
     }
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.STOPPED));
+      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.COMPLETED));
+    }
+    if (status.equals(ProgramRunStatus.KILLED)) {
+      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.KILLED));
     }
     return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.ERROR));
   }
