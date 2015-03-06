@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -31,6 +33,9 @@ import java.util.Map;
  */
 public class InMemoryTableDefinition
   extends AbstractDatasetDefinition<Table, InMemoryTableAdmin> {
+
+  @Inject
+  private CConfiguration cConf;
 
   public InMemoryTableDefinition(String name) {
     super(name);
@@ -48,13 +53,13 @@ public class InMemoryTableDefinition
                           Map<String, String> arguments, ClassLoader classLoader) {
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name()));
-    return new InMemoryTable(spec.getName(), conflictDetection);
+    return new InMemoryTable(datasetContext, spec.getName(), conflictDetection, cConf);
   }
 
   @Override
   public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                      ClassLoader classLoader) throws IOException {
     // todo: or pass the full spec?
-    return new InMemoryTableAdmin(spec.getName());
+    return new InMemoryTableAdmin(datasetContext, spec.getName(), cConf);
   }
 }

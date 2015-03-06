@@ -18,15 +18,17 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.tephra.Transaction;
@@ -67,31 +69,39 @@ public class HBaseTable extends BufferingTable {
   public static final String DELTA_WRITE = "d";
 
   private final HTable hTable;
-  private final String tableName;
+  private final String hTableName;
   private final byte[] columnFamily;
   private final TransactionCodec txCodec;
+  // name length + name of the table: handy to have one cached
+  private final byte[] nameAsTxChangePrefix;
 
   private Transaction tx;
 
-  public HBaseTable(DatasetSpecification spec, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
-    super(spec.getName(),
+  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
+                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
           HBaseTableAdmin.supportsReadlessIncrements(spec));
-    TableId tableId = TableId.from(spec.getName());
+    TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
-    this.tableName = Bytes.toStringBinary(hTable.getTableName());
+    this.hTableName = Bytes.toStringBinary(hTable.getTableName());
     this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
     this.txCodec = new TransactionCodec();
+    // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
+    // table name is not the same as the dataset name anymore
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
+                  .add("hTableName", hTableName)
+                  .add("nameAsTxChangePrefix", nameAsTxChangePrefix)
                   .toString();
   }
 
@@ -123,8 +133,13 @@ public class HBaseTable extends BufferingTable {
         }
       });
     } catch (IOException ioe) {
-      throw new DataSetException("Multi-get failed on table " + tableName, ioe);
+      throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
     }
+  }
+
+  @Override
+  public byte[] getNameAsTxChangePrefix() {
+    return nameAsTxChangePrefix;
   }
 
   @Override

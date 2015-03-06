@@ -22,8 +22,6 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +41,6 @@ public abstract class NoTxKeyValueTableTest {
   private static final byte[] VALUE2 = Bytes.toBytes("value2");
 
   private static final Map<String, String> NO_ARGS = DatasetDefinition.NO_ARGUMENTS;
-  private static final String namespaceId = "testNamespace";
 
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
@@ -52,13 +49,11 @@ public abstract class NoTxKeyValueTableTest {
 
   @Test
   public void test() throws IOException {
-    DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-    String name = dsNamespace.namespace(NAMESPACE_ID, "table");
     DatasetDefinition<? extends NoTxKeyValueTable, ? extends DatasetAdmin> def = getDefinition();
-    DatasetSpecification spec = def.configure(name, DatasetProperties.EMPTY);
+    DatasetSpecification spec = def.configure("table", DatasetProperties.EMPTY);
 
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
-    DatasetContext datasetContext = DatasetContext.from(namespaceId);
+    DatasetContext datasetContext = DatasetContext.from(NAMESPACE_ID.getId());
     // create & exists
     DatasetAdmin admin = def.getAdmin(datasetContext, spec, cl);
     Assert.assertFalse(admin.exists());

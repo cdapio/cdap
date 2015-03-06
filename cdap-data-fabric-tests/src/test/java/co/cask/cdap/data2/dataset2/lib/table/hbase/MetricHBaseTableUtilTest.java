@@ -69,14 +69,15 @@ public class MetricHBaseTableUtilTest {
     HBaseMetricsTableDefinition definition =
       new HBaseMetricsTableDefinition("foo", testHBase.getConfiguration(), hBaseTableUtil,
                                       new LocalLocationFactory(tmpFolder.newFolder()), cConf);
-    DatasetSpecification spec = definition.configure("cdap.system.metricV2.8", DatasetProperties.EMPTY);
+    DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
     DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Constants.SYSTEM_NAMESPACE), spec, null);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
     HBaseAdmin hAdmin = testHBase.getHBaseAdmin();
-    HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(spec.getName()));
+    HTableDescriptor desc =
+      hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Constants.SYSTEM_NAMESPACE, spec.getName()));
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version

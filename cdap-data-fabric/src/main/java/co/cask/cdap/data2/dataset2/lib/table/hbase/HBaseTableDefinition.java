@@ -59,12 +59,12 @@ public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBase
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseTable(spec, hConf, hBaseTableUtil);
+    return new HBaseTable(datasetContext, spec, cConf, hConf, hBaseTableUtil);
   }
 
   @Override
   public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                   ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, cConf, locationFactory);
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }

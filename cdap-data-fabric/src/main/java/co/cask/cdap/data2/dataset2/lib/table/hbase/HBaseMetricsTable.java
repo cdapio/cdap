@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -52,9 +53,10 @@ public class HBaseMetricsTable implements MetricsTable {
   private final HTable hTable;
   private final byte[] columnFamily;
 
-  public HBaseMetricsTable(DatasetSpecification spec,
+  public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
                            Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
-    HTable hTable = tableUtil.createHTable(hConf, TableId.from(spec.getName()));
+    TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

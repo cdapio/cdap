@@ -63,7 +63,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                          Set<String> datasets,
                          final MetricsCollector metricsCollector,
                          DatasetFramework dsFramework,
-                         CConfiguration conf,
                          DiscoveryServiceClient discoveryServiceClient) {
     super(program);
     this.program = program;
@@ -72,7 +71,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     this.discoveryServiceClient = discoveryServiceClient;
 
     this.programMetrics = metricsCollector;
-    this.dsInstantiator = new DatasetInstantiator(Id.Namespace.from(namespaceId), dsFramework, conf,
+    this.dsInstantiator = new DatasetInstantiator(Id.Namespace.from(namespaceId), dsFramework,
                                                   program.getClassLoader(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
