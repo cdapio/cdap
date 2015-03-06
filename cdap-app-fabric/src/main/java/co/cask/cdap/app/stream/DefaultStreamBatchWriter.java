@@ -49,7 +49,9 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
     int responseCode = connection.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException(String.format("Stream %s not found", stream));
-    } else if (responseCode < 200 || responseCode >= 300) {
+    }
+
+    if (responseCode < 200 || responseCode >= 300) {
       throw new IOException(String.format("Writing to Stream %s did not succeed", stream));
     }
   }

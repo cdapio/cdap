@@ -20,14 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -37,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -51,27 +44,21 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract implementation of {@link StreamWriter}
+ * Default implementation of {@link StreamWriter}
  */
-public abstract class AbstractStreamWriter extends AbstractContext implements StreamWriter {
+public class DefaultStreamWriter implements StreamWriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamWriter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamWriter.class);
 
-  protected final String namespaceId;
+  private final String namespaceId;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
-  public AbstractStreamWriter(Program program, RunId runId,
-                              Arguments arguments,
-                              Set<String> datasets,
-                              final MetricsCollector metricsCollector,
-                              DatasetFramework dsFramework,
-                              CConfiguration conf,
-                              DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, arguments, datasets, metricsCollector, dsFramework, conf, discoveryServiceClient);
-    this.namespaceId = program.getNamespaceId();
+  public DefaultStreamWriter(String namespaceId, DiscoveryServiceClient discoveryServiceClient) {
+    this.namespaceId = namespaceId;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -79,7 +66,7 @@ public abstract class AbstractStreamWriter extends AbstractContext implements St
   }
 
   private URL getStreamURL(String stream, boolean batch) throws IOException {
-    ServiceDiscovered discovered = getDiscoveryServiceClient().discover(Constants.Service.STREAMS);
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.STREAMS);
     Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new IOException("Stream Service Endpoint not found");
@@ -99,7 +86,9 @@ public abstract class AbstractStreamWriter extends AbstractContext implements St
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException(String.format("Stream %s not found", stream));
-    } else if (responseCode < 200 || responseCode >= 300) {
+    }
+
+    if (responseCode < 200 || responseCode >= 300) {
       throw new IOException(String.format("Writing to Stream %s did not succeed", stream));
     }
   }
