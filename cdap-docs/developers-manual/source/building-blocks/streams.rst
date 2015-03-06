@@ -78,8 +78,8 @@ by using the :ref:`Command Line Interface. <cli>`
 Streams publish notifications internally to CDAP when they ingest data. The increment of data that they have to ingest
 in order for a notification to be published is defined by the ``notification.threshold.mb`` configuration of a Stream,
 and can be changed using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or
-by using the :ref:`Command Line Interface. <cli>` When creating a Stream, the threshold is set to the value of
-:ref:`stream.notification.threshold in cdap-site.xml. <appendix-cdap-site.xml>`
+by using the :ref:`Command Line Interface <cli>`. When creating a Stream, by default the threshold is set to the value of
+``stream.notification.threshold`` in the :ref:`cdap-site.xml <appendix-cdap-site.xml>`.
 
 The notifications describe the absolute size of events ever ingested by a Stream, and as such, they will always describe
 increasing data size. In particular, they do not reset when the Stream is truncated, and they do not decrease when
