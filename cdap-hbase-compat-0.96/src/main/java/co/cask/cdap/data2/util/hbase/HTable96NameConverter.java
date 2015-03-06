@@ -27,15 +27,25 @@ import org.apache.hadoop.hbase.TableName;
 public class HTable96NameConverter extends HTableNameConverter {
   @Override
   public String getSysConfigTablePrefix(String hTableName) {
-    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+    return HBASE_NAMESPACE_PREFIX + "_" + Constants.SYSTEM_NAMESPACE + ":";
   }
 
   public static TableName toTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return toTableName(tablePrefix, tableId);
+  }
+
+  public static TableName toTableName(String tablePrefix, TableId tableId) {
     return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()),
-                             getHBaseTableName(cConf, tableId));
+                             getHBaseTableName(tablePrefix, tableId));
   }
 
   public static TableId fromTableName(TableName tableName) {
-    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString()).getTableId();
+  }
+
+  public static String getHbaseNamespacePrefix(TableName tableName) {
+    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString())
+      .getTablePrefix();
   }
 }

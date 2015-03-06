@@ -53,20 +53,20 @@ public class HBase96TableUtil extends HBaseTableUtil {
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, HTable96NameConverter.toTableName(cConf, tableId));
+    return new HTable(conf, HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptor createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(HTable96NameConverter.toTableName(cConf, tableId));
+    return new HTableDescriptor(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableDescriptor(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.getTableDescriptor(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -105,28 +105,28 @@ public class HBase96TableUtil extends HBaseTableUtil {
   public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.disableTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.enableTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.tableExists(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.deleteTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -140,7 +140,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableRegions(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.getTableRegions(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override

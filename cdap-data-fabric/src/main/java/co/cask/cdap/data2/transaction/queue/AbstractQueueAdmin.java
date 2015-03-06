@@ -26,14 +26,14 @@ import co.cask.cdap.data2.util.TableId;
 public abstract class AbstractQueueAdmin implements QueueAdmin {
   protected final QueueConstants.QueueType type;
   protected final String unqualifiedTableNamePrefix;
-  private final String unqualifiedConfigTableNameSuffix;
+  // system.queue.config'
+  public static final String CONFIG_TABLE_NAME =
+    Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
 
   public AbstractQueueAdmin(QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scoped
     this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
-    // system.queue.config'
-    this.unqualifiedConfigTableNameSuffix = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
     this.type = type;
   }
 
@@ -62,7 +62,7 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   }
 
   public TableId getConfigTableId(String namespace) {
-    return TableId.from(namespace, unqualifiedConfigTableNameSuffix);
+    return TableId.from(namespace, CONFIG_TABLE_NAME);
   }
 
   /**

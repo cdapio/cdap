@@ -94,12 +94,12 @@ public abstract class HBaseTableUtil {
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
 
-  protected CConfiguration cConf;
   protected String tablePrefix;
 
   public void setCConf(CConfiguration cConf) {
-    this.cConf = cConf;
-    this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    if (cConf != null) {
+      this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    }
   }
 
   protected boolean isCDAPTable(String hTableName) {

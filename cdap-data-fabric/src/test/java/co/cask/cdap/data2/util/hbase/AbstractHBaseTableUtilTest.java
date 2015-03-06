@@ -169,11 +169,12 @@ public abstract class AbstractHBaseTableUtilTest {
   @Test
   public void testBackwardCompatibility() throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("cdap.default.my.dataset");
     create(tableId);
     Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
@@ -181,7 +182,7 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableId);
     Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
@@ -190,7 +191,7 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableId);
     Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);

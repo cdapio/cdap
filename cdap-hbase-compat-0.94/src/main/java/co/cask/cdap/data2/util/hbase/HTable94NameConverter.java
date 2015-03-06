@@ -28,17 +28,22 @@ import com.google.common.base.Preconditions;
 public class HTable94NameConverter extends HTableNameConverter {
   @Override
   public String getSysConfigTablePrefix(String hTableName) {
-    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+    return HBASE_NAMESPACE_PREFIX + "_" + Constants.SYSTEM_NAMESPACE + ".";
   }
 
   public static String toTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return toTableName(tablePrefix, tableId);
+  }
+
+  public static String toTableName(String tablePrefix, TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return getHBaseTableName(cConf, tableId);
+      return getHBaseTableName(tablePrefix, tableId);
     }
     return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()),
-                               getHBaseTableName(cConf, tableId));
+                               getHBaseTableName(tablePrefix, tableId));
   }
 
   // Assumptions made:
@@ -57,6 +62,10 @@ public class HTable94NameConverter extends HTableNameConverter {
       hBaseNamespace = parts[0];
       hBaseQualifier = parts[1];
     }
-    return HTableNameConverter.from(hBaseNamespace, hBaseQualifier);
+    return HTableNameConverter.from(hBaseNamespace, hBaseQualifier).getTableId();
+  }
+
+  public static String getHbaseNamespacePrefix(String hTableName) {
+    return null;
   }
 }
