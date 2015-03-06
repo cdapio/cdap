@@ -153,7 +153,7 @@ public class FileSetProperties {
   }
 
   /**
-   * @return the schema of the explore table.
+   * @return the properties for the explore format
    */
   public static Map<String, String> getExploreFormatProperties(Map<String, String> properties) {
     String format = getExploreFormat(properties);
