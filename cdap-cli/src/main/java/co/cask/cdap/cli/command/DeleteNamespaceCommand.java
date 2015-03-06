@@ -17,8 +17,10 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -32,9 +34,11 @@ import java.io.PrintStream;
 public class DeleteNamespaceCommand implements Command {
   private static final String SUCCESS_MSG = "Namespace '%s' deleted successfully.";
   private final NamespaceClient namespaceClient;
+  private final CLIConfig cliConfig;
 
   @Inject
-  public DeleteNamespaceCommand(NamespaceClient namespaceClient) {
+  public DeleteNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+    this.cliConfig = cliConfig;
     this.namespaceClient = namespaceClient;
   }
 
@@ -43,6 +47,11 @@ public class DeleteNamespaceCommand implements Command {
     Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
     namespaceClient.delete(namespaceId.getId());
     out.println(String.format(SUCCESS_MSG, namespaceId));
+    if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
+      cliConfig.getClientConfig().setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+      out.printf("Now using namespace '%s'", Constants.DEFAULT_NAMESPACE_ID.getId());
+      out.println();
+    }
   }
 
   @Override
