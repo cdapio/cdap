@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -62,16 +63,16 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   }
 
   @Override
-  protected LevelDBTable getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBTable(MY_CONTEXT, name, ConflictDetection.valueOf(level.name()),
-                            service, cConf);
+  protected LevelDBTable getTable(DatasetContext datasetContext, String name,
+                                  ConflictDetection level) throws IOException {
+    return new LevelDBTable(datasetContext, name, ConflictDetection.valueOf(level.name()), service, cConf);
   }
 
   @Override
-  protected LevelDBTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
-    DatasetSpecification spec =
-      new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
-    return new LevelDBTableAdmin(MY_CONTEXT, spec, service, cConf);
+  protected LevelDBTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
+                                            DatasetProperties ignored) throws IOException {
+    DatasetSpecification spec = new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
+    return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 
   @Test
@@ -82,7 +83,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
-      LevelDBTableAdmin admin = getTableAdmin(tableName, DatasetProperties.EMPTY);
+      LevelDBTableAdmin admin = getTableAdmin(CONTEXT1, tableName, DatasetProperties.EMPTY);
       admin.create();
       Assert.assertTrue(admin.exists());
     }

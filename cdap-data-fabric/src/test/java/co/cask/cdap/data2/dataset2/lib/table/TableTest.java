@@ -74,21 +74,25 @@ public abstract class TableTest<T extends Table> {
   static final byte[] L4 = Bytes.toBytes(4L);
   static final byte[] L5 = Bytes.toBytes(5L);
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final Id.Namespace NAMESPACE1 = Id.Namespace.from("ns1");
+  protected static final Id.Namespace NAMESPACE2 = Id.Namespace.from("ns2");
   protected static final String MY_TABLE = "myTable";
-  protected static final DatasetContext MY_CONTEXT = DatasetContext.from(NAMESPACE_ID.getId());
+  protected static final DatasetContext CONTEXT1 = DatasetContext.from(NAMESPACE1.getId());
+  protected static final DatasetContext CONTEXT2 = DatasetContext.from("ns2");
 
   protected TransactionSystemClient txClient;
 
-  protected abstract T getTable(String name, ConflictDetection conflictLevel) throws Exception;
-  protected abstract DatasetAdmin getTableAdmin(String name, DatasetProperties props) throws Exception;
+  protected abstract T getTable(DatasetContext datasetContext, String name,
+                                ConflictDetection conflictLevel) throws Exception;
+  protected abstract DatasetAdmin getTableAdmin(DatasetContext datasetContext, String name,
+                                                DatasetProperties props) throws Exception;
 
-  protected T getTable(String name) throws Exception {
-    return getTable(name, ConflictDetection.ROW);
+  protected T getTable(DatasetContext datasetContext, String name) throws Exception {
+    return getTable(datasetContext, name, ConflictDetection.ROW);
   }
 
-  protected DatasetAdmin getTableAdmin(String name) throws Exception {
-    return getTableAdmin(name, DatasetProperties.EMPTY);
+  protected DatasetAdmin getTableAdmin(DatasetContext datasetContext, String name) throws Exception {
+    return getTableAdmin(datasetContext, name, DatasetProperties.EMPTY);
   }
 
   @Before
@@ -106,7 +110,7 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testCreate() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     Assert.assertFalse(admin.exists());
     admin.create();
     Assert.assertTrue(admin.exists());
@@ -117,11 +121,11 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testBasicGetPutWithTx() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -134,7 +138,7 @@ public abstract class TableTest<T extends Table> {
 
       // start new tx (doesn't see changes of the tx1)
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify doesn't see changes of tx1
@@ -163,7 +167,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx3 and verify that changes of tx1 are not visible yet (even though they are flushed)
       Transaction tx3 = txClient.startShort();
-      Table myTable3 = getTable(MY_TABLE);
+      Table myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
       verify(a(), myTable3.get(R1, a(C1, C2)));
       verify(null, myTable3.get(R1, C1));
@@ -238,11 +242,11 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testBasicCompareAndSwapWithTx() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -272,14 +276,14 @@ public abstract class TableTest<T extends Table> {
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1 by trying to compareAndSwap
       // assuming current value is null
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       Assert.assertTrue(myTable2.compareAndSwap(R1, C1, null, V3));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
-      Table myTable3 = getTable(MY_TABLE);
+      Table myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
       Assert.assertTrue(myTable3.compareAndSwap(R1, C1, null, V2));
 
@@ -293,7 +297,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx4 and verify that changes of tx1 are now visible
       Transaction tx4 = txClient.startShort();
-      Table myTable4 = getTable(MY_TABLE);
+      Table myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
       verify(a(C1, V1, C2, V2), myTable4.get(R1, a(C1, C2)));
       verify(V1, myTable4.get(R1, C1));
@@ -340,12 +344,12 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testBasicIncrementWithTx() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     Table myTable1, myTable2, myTable3, myTable4;
     try {
       Transaction tx1 = txClient.startShort();
-      myTable1 = getTable(MY_TABLE);
+      myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
       verify(a(C1), lb(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
@@ -379,7 +383,7 @@ public abstract class TableTest<T extends Table> {
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1
       // assuming current value is null
-      myTable2 = getTable(MY_TABLE);
+      myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       verify(a(), myTable2.get(R1, a(C1, C2, C5)));
@@ -391,7 +395,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
-      myTable3 = getTable(MY_TABLE);
+      myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
       verify(a(), myTable3.get(R1, a(C1, C2, C5)));
       verify(null, myTable3.get(R1, C1));
@@ -410,7 +414,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx4 and verify that changes of tx1 are now visible
       Transaction tx4 = txClient.startShort();
-      myTable4 = getTable(MY_TABLE);
+      myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
       verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
       verify(a(C2, L2), myTable4.get(R1, a(C2)));
@@ -468,9 +472,9 @@ public abstract class TableTest<T extends Table> {
   public void testBasicIncrementWriteWithTxSmall() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(
       Table.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
-    DatasetAdmin admin = getTableAdmin(MY_TABLE, props);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
-    Table myTable = getTable(MY_TABLE);
+    Table myTable = getTable(CONTEXT1, MY_TABLE);
 
     // start 1st tx
     Transaction tx = txClient.startShort();
@@ -529,12 +533,12 @@ public abstract class TableTest<T extends Table> {
   public void testBasicIncrementWriteWithTx() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(
       Table.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
-    DatasetAdmin admin = getTableAdmin(MY_TABLE, props);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
     Table myTable1, myTable2, myTable3, myTable4;
     try {
       Transaction tx1 = txClient.startShort();
-      myTable1 = getTable(MY_TABLE);
+      myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
       myTable1.increment(R1, a(C1), la(-3L));
@@ -568,7 +572,7 @@ public abstract class TableTest<T extends Table> {
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1
       // assuming current value is null
-      myTable2 = getTable(MY_TABLE);
+      myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       verify(a(), myTable2.get(R1, a(C1, C2, C5)));
@@ -580,7 +584,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
-      myTable3 = getTable(MY_TABLE);
+      myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
       verify(a(), myTable3.get(R1, a(C1, C2, C5)));
       verify(null, myTable3.get(R1, C1));
@@ -599,7 +603,7 @@ public abstract class TableTest<T extends Table> {
 
       // start tx4 and verify that changes of tx1 are now visible
       Transaction tx4 = txClient.startShort();
-      myTable4 = getTable(MY_TABLE);
+      myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
       verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
       verify(a(C2, L2), myTable4.get(R1, a(C2)));
@@ -659,12 +663,12 @@ public abstract class TableTest<T extends Table> {
     // * delete column with put null value
     // * delete column with put byte[0] value
     // * delete row with delete
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       // write smth and commit
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2), a(V1, V2));
       myTable1.put(R2, a(C1, C2), a(V2, V3));
@@ -677,7 +681,7 @@ public abstract class TableTest<T extends Table> {
       // Now, we will test delete ops
       // start new tx2
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify tx2 sees changes of tx1
@@ -829,12 +833,12 @@ public abstract class TableTest<T extends Table> {
   @Test
   public void testBasicScanWithTx() throws Exception {
     // todo: make work with tx well (merge with buffer, conflicts) and add tests for that
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       // write r1...r5 and commit
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(V1));
       myTable1.put(R2, a(C2), a(V2));
@@ -848,7 +852,7 @@ public abstract class TableTest<T extends Table> {
       // Now, we will test scans
       // currently not testing races/conflicts/etc as this logic is not there for scans yet; so using one same tx
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded scan
@@ -909,11 +913,11 @@ public abstract class TableTest<T extends Table> {
   @Test
   public void testMultiGetWithTx() throws Exception {
     String testMultiGet = "testMultiGet";
-    DatasetAdmin admin = getTableAdmin(testMultiGet);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, testMultiGet);
     admin.create();
     try {
       Transaction tx = txClient.startShort();
-      Table table = getTable(testMultiGet);
+      Table table = getTable(CONTEXT1, testMultiGet);
       ((TransactionAware) table).startTx(tx);
       for (int i = 0; i < 100; i++) {
         table.put(new Put(Bytes.toBytes("r" + i)).add(C1, V1).add(C2, V2));
@@ -994,12 +998,12 @@ public abstract class TableTest<T extends Table> {
 
   @Test
   public void testScanAndDelete() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       //
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
 
       myTable1.put(Bytes.toBytes("1_09a"), a(C1), a(V1));
@@ -1059,12 +1063,12 @@ public abstract class TableTest<T extends Table> {
   @Test
   public void testBasicColumnRangeWithTx() throws Exception {
     // todo: test more tx logic (or add to get/put unit-test)
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       // write test data and commit
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2, C3, C4, C5), a(V1, V2, V3, V4, V5));
       myTable1.put(R2, a(C1), a(V2));
@@ -1074,7 +1078,7 @@ public abstract class TableTest<T extends Table> {
 
       // Now, we will test column range get
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded range
@@ -1135,10 +1139,10 @@ public abstract class TableTest<T extends Table> {
     String table2 = "table2";
     String table3 = "table3";
     String table4 = "table4";
-    getTableAdmin(table1).create();
-    getTableAdmin(table2).create();
-    getTableAdmin(table3).create();
-    getTableAdmin(table4).create();
+    getTableAdmin(CONTEXT1, table1).create();
+    getTableAdmin(CONTEXT1, table2).create();
+    getTableAdmin(CONTEXT1, table3).create();
+    getTableAdmin(CONTEXT1, table4).create();
 
     try {
       // We will be changing:
@@ -1151,11 +1155,11 @@ public abstract class TableTest<T extends Table> {
       Transaction tx3 = txClient.startShort();
 
       // Write data in tx1 and commit
-      Table table11 = getTable(table1);
+      Table table11 = getTable(CONTEXT1, table1);
       ((TransactionAware) table11).startTx(tx1);
       // write r1->c1,v1 but not commit
       table11.put(R1, a(C1), a(V1));
-      Table table21 = getTable(table2);
+      Table table21 = getTable(CONTEXT1, table2);
       ((TransactionAware) table21).startTx(tx1);
       // write r1->c1,v2 but not commit
       table21.put(R1, a(C1), a(V2));
@@ -1171,11 +1175,11 @@ public abstract class TableTest<T extends Table> {
       Assert.assertTrue(txClient.commit(tx1));
 
       // Write data in tx2 and check that cannot commit because of conflicts
-      Table table22 = getTable(table2);
+      Table table22 = getTable(CONTEXT1, table2);
       ((TransactionAware) table22).startTx(tx2);
       // write r1->c1,v1 but not commit
       table22.put(R1, a(C1), a(V2));
-      Table table32 = getTable(table3);
+      Table table32 = getTable(CONTEXT1, table3);
       ((TransactionAware) table32).startTx(tx2);
       // write r1->c1,v2 but not commit
       table32.put(R1, a(C1), a(V3));
@@ -1191,11 +1195,11 @@ public abstract class TableTest<T extends Table> {
       txClient.abort(tx2);
 
       // Write data in tx3 and check that can commit (no conflicts)
-      Table table33 = getTable(table3);
+      Table table33 = getTable(CONTEXT1, table3);
       ((TransactionAware) table33).startTx(tx3);
       // write r1->c1,v1 but not commit
       table33.put(R1, a(C1), a(V3));
-      Table table43 = getTable(table4);
+      Table table43 = getTable(CONTEXT1, table4);
       ((TransactionAware) table43).startTx(tx3);
       // write r1->c1,v2 but not commit
       table43.put(R1, a(C1), a(V4));
@@ -1211,10 +1215,10 @@ public abstract class TableTest<T extends Table> {
       Assert.assertTrue(txClient.commit(tx3));
 
     } finally {
-      getTableAdmin(table1).drop();
-      getTableAdmin(table2).drop();
-      getTableAdmin(table3).drop();
-      getTableAdmin(table4).drop();
+      getTableAdmin(CONTEXT1, table1).drop();
+      getTableAdmin(CONTEXT1, table2).drop();
+      getTableAdmin(CONTEXT1, table3).drop();
+      getTableAdmin(CONTEXT1, table4).drop();
     }
   }
 
@@ -1237,20 +1241,20 @@ public abstract class TableTest<T extends Table> {
     // we use tableX_Y format for variable names which means "tableX that is used in tx Y"
     String table1 = "table1";
     String table2 = "table2";
-    getTableAdmin(table1).create();
-    getTableAdmin(table2).create();
+    getTableAdmin(CONTEXT1, table1).create();
+    getTableAdmin(CONTEXT1, table2).create();
     try {
       // 1) Test conflicts when using different tables
 
       Transaction tx1 = txClient.startShort();
-      Table table11 = getTable(table1, level);
+      Table table11 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table11).startTx(tx1);
       // write r1->c1,v1 but not commit
       table11.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      Table table22 = getTable(table2, level);
+      Table table22 = getTable(CONTEXT1, table2, level);
       ((TransactionAware) table22).startTx(tx2);
 
       // change in tx2 same data but in different table
@@ -1258,7 +1262,7 @@ public abstract class TableTest<T extends Table> {
 
       // start new tx
       Transaction tx3 = txClient.startShort();
-      Table table13 = getTable(table1, level);
+      Table table13 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table13).startTx(tx3);
 
       // change in tx3 same data in same table as tx1
@@ -1283,14 +1287,14 @@ public abstract class TableTest<T extends Table> {
 
       // 2) Test conflicts when using different rows
       Transaction tx4 = txClient.startShort();
-      Table table14 = getTable(table1, level);
+      Table table14 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table14).startTx(tx4);
       // write r1->c1,v1 but not commit
       table14.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx5 = txClient.startShort();
-      Table table15 = getTable(table1, level);
+      Table table15 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table15).startTx(tx5);
 
       // change in tx5 same data but in different row
@@ -1298,7 +1302,7 @@ public abstract class TableTest<T extends Table> {
 
       // start new tx
       Transaction tx6 = txClient.startShort();
-      Table table16 = getTable(table1, level);
+      Table table16 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table16).startTx(tx6);
 
       // change in tx6 in same row as tx1
@@ -1323,14 +1327,14 @@ public abstract class TableTest<T extends Table> {
 
       // 3) Test conflicts when using different columns
       Transaction tx7 = txClient.startShort();
-      Table table17 = getTable(table1, level);
+      Table table17 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table17).startTx(tx7);
       // write r1->c1,v1 but not commit
       table17.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx8 = txClient.startShort();
-      Table table18 = getTable(table1, level);
+      Table table18 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table18).startTx(tx8);
 
       // change in tx8 same data but in different column
@@ -1338,7 +1342,7 @@ public abstract class TableTest<T extends Table> {
 
       // start new tx
       Transaction tx9 = txClient.startShort();
-      Table table19 = getTable(table1, level);
+      Table table19 = getTable(CONTEXT1, table1, level);
       ((TransactionAware) table19).startTx(tx9);
 
       // change in tx9 same column in same column as tx1
@@ -1370,19 +1374,19 @@ public abstract class TableTest<T extends Table> {
     } finally {
       // NOTE: we are doing our best to cleanup junk between tests to isolate errors, but we are not going to be
       //       crazy about it
-      getTableAdmin(table1).drop();
-      getTableAdmin(table2).drop();
+      getTableAdmin(CONTEXT1, table1).drop();
+      getTableAdmin(CONTEXT1, table2).drop();
     }
   }
 
   @Test
   public void testRollingBackPersistedChanges() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       // write and commit one row/column
       Transaction tx0 = txClient.startShort();
-      Table myTable0 = getTable(MY_TABLE);
+      Table myTable0 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable0).startTx(tx0);
       myTable0.put(R2, a(C2), a(V2));
       Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) myTable0).getTxChanges()));
@@ -1391,7 +1395,7 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable0).postTxCommit();
 
       Transaction tx1 = txClient.startShort();
-      Table myTable1 = getTable(MY_TABLE);
+      Table myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -1412,7 +1416,7 @@ public abstract class TableTest<T extends Table> {
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
@@ -1429,9 +1433,9 @@ public abstract class TableTest<T extends Table> {
   @Test
   public void testClientSurvivesTableReset() throws Exception {
     final String tableName = "survive";
-    DatasetAdmin admin = getTableAdmin(tableName);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName);
     admin.create();
-    Table table = getTable(tableName);
+    Table table = getTable(CONTEXT1, tableName);
 
     // write some values
     Transaction tx0 = txClient.startShort();
@@ -1456,7 +1460,7 @@ public abstract class TableTest<T extends Table> {
     txClient.abort(tx1); // only did read, safe to abort
 
     // create a new client and write another value
-    Table table2 = getTable(tableName);
+    Table table2 = getTable(CONTEXT1, tableName);
     Transaction tx2 = txClient.startShort();
     ((TransactionAware) table2).startTx(tx2);
     table2.put(R1, a(C2), a(V2));
