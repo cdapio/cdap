@@ -52,7 +52,8 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
     }
 
     if (responseCode < 200 || responseCode >= 300) {
-      throw new IOException(String.format("Writing to Stream %s did not succeed", stream));
+      throw new IOException(String.format("Writing to Stream %s did not succeed. Stream Service ResponseCode : %d",
+                                          stream, responseCode));
     }
   }
 }
