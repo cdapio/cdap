@@ -35,9 +35,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -120,13 +118,9 @@ public class MapReduceProgramRunnerTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator =
-      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceProgramRunnerTest.class.getClassLoader(), null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }

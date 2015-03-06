@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -107,7 +107,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   @Override
   @Test
   public void testConcurrentIncrement() throws Exception {
-    String testConcurrentIncrement = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentIncrement");
+    String testConcurrentIncrement = "testConcurrentIncrement";
     final MetricsTable table = getTable(testConcurrentIncrement);
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);

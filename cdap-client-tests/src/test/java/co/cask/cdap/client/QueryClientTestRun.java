@@ -70,21 +70,20 @@ public class QueryClientTestRun extends ClientTestBase {
     Thread.sleep(3000);
 
     Id.Namespace namespace = getClientConfig().getNamespace();
-    String instanceName = String.format("cdap.%s.%s", namespace, FakeApp.DS_NAME);
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, instanceName);
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
 
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
 
     exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from cdap_default_" + FakeApp.DS_NAME).get();
+      queryClient.execute("select * from " + FakeApp.DS_NAME).get();
       Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
     } catch (ExecutionException e) {
 
     }
 
     exploreClient.enableExploreDataset(datasetInstance).get();
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {

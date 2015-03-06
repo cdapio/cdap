@@ -124,6 +124,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // TODO: having central dataset management service will allow us to use table ids instead of names, which will
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
+    // Default uses the above scheme. Subclasses can change it by overriding the #getNameAsTxChangePrefix method
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
     this.buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
   }
@@ -138,6 +139,16 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @Override
   public String getTransactionAwareName() {
     return getClass().getSimpleName() + "(table = " + name + ")";
+  }
+
+  /**
+   * Generates a byte array to be used as the transaction change prefix.
+   * Allows implementations to override it so the change prefix more closely represents the underlying storage.
+   *
+   * @return transaction change prefix
+   */
+  public byte[] getNameAsTxChangePrefix() {
+    return this.nameAsTxChangePrefix;
   }
 
   /**
@@ -241,7 +252,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // we resolve conflicts on row level of individual table
     List<byte[]> changes = new ArrayList<byte[]>(buff.size());
     for (byte[] changedRow : buff.keySet()) {
-      changes.add(Bytes.add(nameAsTxChangePrefix, changedRow));
+      changes.add(Bytes.add(getNameAsTxChangePrefix(), changedRow));
     }
     return changes;
   }
@@ -261,7 +272,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       byte[] rowTxChange = Bytes.add(Bytes.toBytes(rowChange.getKey().length), rowChange.getKey());
 
       for (byte[] column : rowChange.getValue().keySet()) {
-        changes.add(Bytes.add(nameAsTxChangePrefix, rowTxChange, column));
+        changes.add(Bytes.add(getNameAsTxChangePrefix(), rowTxChange, column));
       }
     }
     return changes;

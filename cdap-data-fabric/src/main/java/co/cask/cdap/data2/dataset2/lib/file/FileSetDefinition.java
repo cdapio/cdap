@@ -72,13 +72,13 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> 
   @Override
   public FileAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                             ClassLoader classLoader) throws IOException {
-    return new FileAdmin(cConf, locationFactory, spec);
+    return new FileAdmin(datasetContext, cConf, locationFactory, spec);
   }
 
   @Override
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(cConf, spec.getName(), locationFactory, spec.getProperties(),
+    return new FileSetDataset(datasetContext, cConf, spec.getName(), locationFactory, spec.getProperties(),
                               arguments == null ? Collections.<String, String>emptyMap() : arguments,
                               classLoader);
   }
