@@ -1625,7 +1625,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       controller.addListener(new AbstractListener() {
 
         @Override
-        public void init(ProgramController.State state) {
+        public void init(ProgramController.State state, @Nullable Throwable cause) {
           store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
           if (state == ProgramController.State.COMPLETED) {
             completed();

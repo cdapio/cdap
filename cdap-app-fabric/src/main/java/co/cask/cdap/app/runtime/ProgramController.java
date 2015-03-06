@@ -22,6 +22,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -39,7 +40,7 @@ public interface ProgramController {
    *   |        |-----------------------|   |
    *   v        v                       |   |
    * ALIVE ---------------> COMPLETED   |   |
-   *   |   -> STOPPING ---> TERMINATED  |   |
+   *   |   -> STOPPING ---> KILLED      |   |
    *   |                                |   |
    *   |----> SUSPENDING -> SUSPENDED --|   |
    *                            |           |
@@ -109,6 +110,10 @@ public interface ProgramController {
     public ProgramRunStatus getRunStatus() {
       return runStatus;
     }
+
+    public boolean isDone() {
+      return this == COMPLETED || this == KILLED || this == ERROR;
+    }
   }
 
   RunId getRunId();
@@ -160,8 +165,9 @@ public interface ProgramController {
      * method in this interface is called.
      *
      * @param currentState The state of the program by the time when the listener is added.
+     * @param cause The cause of failure if the program failed by the time when the listener is added.
      */
-    void init(State currentState);
+    void init(State currentState, @Nullable Throwable cause);
 
     void suspending();
 

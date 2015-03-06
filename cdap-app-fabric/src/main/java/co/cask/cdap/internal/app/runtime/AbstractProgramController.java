@@ -136,6 +136,9 @@ public abstract class AbstractProgramController implements ProgramController {
     return result;
   }
 
+  /**
+   * Children call this method to signal the program is completed.
+   */
   protected void complete() {
     if (!state.compareAndSet(State.ALIVE, State.COMPLETED)) {
       LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
@@ -167,7 +170,7 @@ public abstract class AbstractProgramController implements ProgramController {
       return result;
     }
 
-    caller.init(state.get());
+    caller.init(state.get(), getFailureCause());
     return cancellable;
   }
 
@@ -263,9 +266,9 @@ public abstract class AbstractProgramController implements ProgramController {
   private final class MultiListenerCaller implements Listener {
 
     @Override
-    public void init(State currentState) {
+    public void init(State currentState, @Nullable Throwable cause) {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.init(currentState);
+        caller.init(currentState, cause);
       }
     }
 
@@ -342,8 +345,9 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void init(final State currentState) {
-      // The init state is being passed from constructor, hence ignoring the state passed to this method
+    public void init(final State currentState, @Nullable Throwable cause) {
+      // The init state is being passed from constructor, hence ignoring the state and failure cause
+      // passed to this method
       addTask(null);
     }
 
@@ -500,7 +504,7 @@ public abstract class AbstractProgramController implements ProgramController {
     @Override
     public void run() {
       if (initTask) {
-        listener.init(state);
+        listener.init(state, failureCause);
         return;
       }
 

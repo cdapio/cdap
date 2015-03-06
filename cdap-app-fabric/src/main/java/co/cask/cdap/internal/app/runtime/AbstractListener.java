@@ -18,13 +18,20 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
 
+import javax.annotation.Nullable;
+
 /**
  * Base implementation of ProgramController.Listener that does nothing on any its method invocation.
  */
 public abstract class AbstractListener implements ProgramController.Listener {
 
   @Override
-  public void init(ProgramController.State currentState) {
+  public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+    if (currentState == ProgramController.State.COMPLETED) {
+      completed();
+    } else if (currentState == ProgramController.State.ERROR) {
+      error(cause);
+    }
   }
 
   @Override

@@ -523,13 +523,6 @@ public class MapReduceProgramRunnerTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.COMPLETED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
       public void completed() {
         completion.countDown();
       }

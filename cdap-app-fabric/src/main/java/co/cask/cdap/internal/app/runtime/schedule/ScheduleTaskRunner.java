@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Task runner that runs a schedule.
@@ -132,7 +133,7 @@ public final class ScheduleTaskRunner {
 
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State state) {
+      public void init(ProgramController.State state, @Nullable Throwable cause) {
         store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
         if (state == ProgramController.State.COMPLETED) {
           completed();

@@ -117,16 +117,6 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State state) {
-        if (state == ProgramController.State.COMPLETED) {
-          completed();
-        }
-        if (state == ProgramController.State.ERROR) {
-          error(controller.getFailureCause());
-        }
-      }
-
-      @Override
       public void completed() {
         completion.set(context);
       }
