@@ -599,12 +599,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                                                       Map<String, String> properties) throws IllegalArgumentException {
 
     String tableName = getHiveTableName(datasetId.getId());
-    String serde = FileSetProperties.getSerDe(properties);
-    String inputFormat = FileSetProperties.getExploreInputFormat(properties);
-    String outputFormat = FileSetProperties.getExploreOutputFormat(properties);
-
-    Preconditions.checkArgument(serde != null && inputFormat != null && outputFormat != null,
-                                "All of SerDe, InputFormat and OutputFormat must be given in dataset properties");
 
     String partitioned;
     Location baseLocation;
@@ -616,34 +610,57 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       baseLocation = ((FileSet) dataset).getBaseLocation();
     }
 
-    String tblProperties = "";
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
     tableProperties.put(Constants.Explore.CDAP_NAME, datasetId.getId());
-    if (!tableProperties.isEmpty()) {
-      StringBuilder builder = new StringBuilder("TBLPROPERTIES (");
-      Joiner.on(", ").appendTo(builder, Iterables.transform(
-        tableProperties.entrySet(), new Function<Map.Entry<String, String>, String>() {
-          @Override
-          public String apply(Map.Entry<String, String> entry) {
-            return String.format("'%s'='%s'", entry.getKey(), entry.getValue().replaceAll("'", "\\'"));
-          }
-        }));
-      builder.append(")");
-      tblProperties = builder.toString();
+    StringBuilder builder = new StringBuilder();
+    Joiner.on(", ").appendTo(builder, Iterables.transform(
+      tableProperties.entrySet(), new Function<Map.Entry<String, String>, String>() {
+        @Override
+        public String apply(Map.Entry<String, String> entry) {
+          return String.format("'%s'='%s'", entry.getKey(), entry.getValue().replaceAll("'", "\\'"));
+        }
+      }));
+    String tblProperties = builder.toString();
+
+    String rowFormat;
+    String storedAs;
+    String tableSchema = "";
+    String format = FileSetProperties.getExploreFormat(properties);
+    if (format != null) {
+      // for text and csv, we know what to do
+      Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
+                                  "Only text and csv are supported as native formats");
+      String schema = FileSetProperties.getExploreSchema(properties);
+      Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
+      String delimiter = null;
+      if ("text".equals(format)) {
+        delimiter = FileSetProperties.getExploreFormatProperties(properties).get("delimiter");
+      } else if ("csv".equals(format)) {
+        delimiter = ",";
+      }
+      if (delimiter != null) {
+        rowFormat = String.format("DELIMITED FIELDS TERMINATED BY '%s'", delimiter);
+      } else {
+        rowFormat = "DELIMITED";
+      }
+      storedAs = "TEXTFILE";
+      tableSchema = String.format("(%s)", schema);
+
+    } else {
+      // format not given, look for serde, input format, etc.
+      String serde = FileSetProperties.getSerDe(properties);
+      String inputFormat = FileSetProperties.getExploreInputFormat(properties);
+      String outputFormat = FileSetProperties.getExploreOutputFormat(properties);
+
+      Preconditions.checkArgument(serde != null && inputFormat != null && outputFormat != null,
+                                  "All of SerDe, InputFormat and OutputFormat must be given in dataset properties");
+      rowFormat = String.format("SERDE '%s'", serde);
+      storedAs = String.format("INPUTFORMAT '%s' OUTPUTFORMAT '%s'", inputFormat, outputFormat);
     }
 
-    // CREATE EXTERNAL TABLE nn
-    //   [ PARTITIONED BY (field type, ...) ]
-    //   ROW FORMAT SERDE '<serde class>'
-    //   STORED AS INPUTFORMAT '<input format class>'
-    //             OUTPUTFORMAT '<output format class>'
-    //   LOCATION '<uri>'
-    //   TBLPROPERTIES ('avro.schema.literal'='...');
-
     return String.format(
-      "CREATE EXTERNAL TABLE IF NOT EXISTS %s %s ROW FORMAT SERDE '%s' " +
-        "STORED AS INPUTFORMAT '%s' OUTPUTFORMAT '%s' LOCATION '%s' %s",
-      tableName, partitioned, serde, inputFormat, outputFormat, baseLocation.toURI().toString(), tblProperties);
+      "CREATE EXTERNAL TABLE IF NOT EXISTS %s %s %s ROW FORMAT %s STORED AS %s LOCATION '%s' TBLPROPERTIES (%s)",
+      tableName, tableSchema, partitioned, rowFormat, storedAs, baseLocation.toURI().toString(), tblProperties);
   }
 
   private static String toHivePartitioning(Partitioning partitioning) {
