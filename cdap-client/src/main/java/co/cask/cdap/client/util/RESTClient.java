@@ -49,10 +49,8 @@ public class RESTClient {
 
   @Inject
   public RESTClient(ClientConfig clientConfig) {
-    this.listeners = Lists.newArrayList();
-    this.defaultConfig = clientConfig.getDefaultHttpConfig();
-    this.uploadConfig = clientConfig.getUploadHttpConfig();
-    this.unavailableRetryLimit = clientConfig.getUnavailableRetryLimit();
+    this(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig(),
+         clientConfig.getUnavailableRetryLimit());
   }
 
   public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int unavailableRetryLimit) {
