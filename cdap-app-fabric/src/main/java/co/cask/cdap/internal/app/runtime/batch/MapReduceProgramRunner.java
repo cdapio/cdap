@@ -136,9 +136,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, null, options.getUserArguments(),
                                 program.getApplicationSpecification().getDatasets().keySet(), spec,
-                                logicalStartTime,
-                                workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework, cConf);
+                                logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                datasetFramework);
 
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),

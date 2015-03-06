@@ -272,7 +272,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
 
     Set<File> hBaseTableDeps = ExploreServiceUtils.traceDependencies(
-      new HBaseTableUtilFactory().get().getClass().getCanonicalName(),
+      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(),
       bootstrapClassPaths, null);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order

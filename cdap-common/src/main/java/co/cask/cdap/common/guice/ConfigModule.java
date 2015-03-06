@@ -49,6 +49,7 @@ public final class ConfigModule extends AbstractModule {
   }
 
   public ConfigModule(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
+    CConfigurationUtil.verify(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
     this.sConf = sConf;
