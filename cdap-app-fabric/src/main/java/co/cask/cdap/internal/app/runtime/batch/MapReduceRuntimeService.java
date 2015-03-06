@@ -37,7 +37,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -85,6 +84,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 
 /**
  * Performs the actual execution of mapreduce job.
@@ -98,39 +98,37 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
 
-  // Name of configuration source if it is set programtically. This constant is not defined in Hadoop
-  private static final String PROGRAMMATIC_SOURCE = "programatically";
+  // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
+  private static final String PROGRAMMATIC_SOURCE = "programmatically";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final MapReduce mapReduce;
   private final MapReduceSpecification specification;
   private final Location programJarLocation;
-  private final BasicMapReduceContext context;
+  private final DynamicMapReduceContext context;
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
-  private final DatasetFramework datasetFramework;
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
   private volatile boolean stopRequested;
 
   MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
-                          MapReduce mapReduce, MapReduceSpecification specification, BasicMapReduceContext context,
+                          MapReduce mapReduce, MapReduceSpecification specification,
+                          DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          DatasetFramework datasetFramework) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
     this.specification = specification;
     this.programJarLocation = programJarLocation;
-    this.context = context;
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
-    this.datasetFramework = datasetFramework;
+    this.context = context;
   }
 
   @Override
@@ -175,7 +173,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Resources mapperResources = context.getMapperResources();
     Resources reducerResources = context.getReducerResources();
 
-    // this will determine how much memory and vcores the yarn container will run with
+    // this will determine how much memory and virtual cores the yarn container will run with
     if (mapperResources != null) {
       mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
       // Also set the Xmx to be smaller than the container memory.
@@ -323,7 +321,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Always execute in new daemon thread.
     return new Executor() {
       @Override
-      public void execute(final Runnable runnable) {
+      public void execute(@Nonnull final Runnable runnable) {
         final Thread t = new Thread(new Runnable() {
 
           @Override
@@ -398,24 +396,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   // before executing.
   private void runUserCodeInTx(TransactionExecutor.Procedure<MapReduceContext> userCode, String methodName) {
     // add datasets given in the application specification to the transaction context
-    TransactionContext txContext =
-      new TransactionContext(txClient, context.getDatasetInstantiator().getTransactionAware());
-    DynamicMapReduceContext mapReduceContextWithTX = null;
+    TransactionContext txContext = context.getTransactionContext();
     try {
       txContext.start();
       // this context allows the onFinish in user code to get datasets not mentioned in the application spec
       // it will make sure any txAwares created through the user code will get added to the txContext.
-      mapReduceContextWithTX = new DynamicMapReduceContext(context, datasetFramework, txContext, cConf);
-      userCode.apply(mapReduceContextWithTX);
+      userCode.apply(context);
       txContext.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit after running " + methodName + ". Aborting transaction.", txContext);
     } catch (Throwable t) {
       abortTransaction(t, "Exception occurred running " + methodName + ". Aborting transaction.", txContext);
-    } finally {
-      if (mapReduceContextWithTX != null) {
-        mapReduceContextWithTX.close();
-      }
     }
   }
 

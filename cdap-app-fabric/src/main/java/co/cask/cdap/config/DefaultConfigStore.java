@@ -24,11 +24,9 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -65,13 +63,11 @@ public class DefaultConfigStore implements ConfigStore {
   @Inject
   public DefaultConfigStore(CConfiguration cConf, final DatasetFramework datasetFramework,
                             TransactionExecutorFactory executorFactory) {
-    final DatasetFramework dsFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                                        new DefaultDatasetNamespace(cConf));
     txnl = Transactional.of(executorFactory, new Supplier<ConfigTable>() {
       @Override
       public ConfigTable get() {
         try {
-          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, configStoreDatasetInstanceId,
+          Table table = DatasetsUtil.getOrCreateDataset(datasetFramework, configStoreDatasetInstanceId,
                                                         "table", DatasetProperties.EMPTY,
                                                         DatasetDefinition.NO_ARGUMENTS, null);
           return new ConfigTable(table);

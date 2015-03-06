@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -49,28 +50,29 @@ import javax.annotation.Nullable;
  * An HBase metrics table client.
  */
 public class HBaseMetricsTable implements MetricsTable {
-  static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
-
   private final HTable hTable;
+  private final byte[] columnFamily;
 
-  public HBaseMetricsTable(String tableName, Configuration hConf, CConfiguration cConf,
-                           HBaseTableUtil tableUtil) throws IOException {
-    HTable hTable = tableUtil.createHTable(hConf, TableId.from(tableName));
+  public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
+                           Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
+    this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
   }
 
   @Override
   @Nullable
   public byte[] get(byte[] row, byte[] column) throws Exception {
     Get get = new Get(row);
-    get.addColumn(DATA_COLUMN_FAMILY, column);
+    get.addColumn(columnFamily, column);
     get.setMaxVersions(1);
     Result getResult = hTable.get(get);
     if (!getResult.isEmpty()) {
-      return getResult.getValue(DATA_COLUMN_FAMILY, column);
+      return getResult.getValue(columnFamily, column);
     }
     return null;
   }
@@ -81,7 +83,7 @@ public class HBaseMetricsTable implements MetricsTable {
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
       Put put = new Put(row.getKey());
       for (Map.Entry<byte[], Long> column : row.getValue().entrySet()) {
-        put.add(DATA_COLUMN_FAMILY, column.getKey(), Bytes.toBytes(column.getValue()));
+        put.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
       }
       puts.add(put);
     }
@@ -94,12 +96,12 @@ public class HBaseMetricsTable implements MetricsTable {
     if (newValue == null) {
       Delete delete = new Delete(row);
       // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
-      delete.deleteColumns(DATA_COLUMN_FAMILY, column);
-      return hTable.checkAndDelete(row, DATA_COLUMN_FAMILY, column, oldValue, delete);
+      delete.deleteColumns(columnFamily, column);
+      return hTable.checkAndDelete(row, columnFamily, column, oldValue, delete);
     } else {
       Put put = new Put(row);
-      put.add(DATA_COLUMN_FAMILY, column, newValue);
-      return hTable.checkAndPut(row, DATA_COLUMN_FAMILY, column, oldValue, put);
+      put.add(columnFamily, column, newValue);
+      return hTable.checkAndPut(row, columnFamily, column, oldValue, put);
     }
   }
 
@@ -126,7 +128,7 @@ public class HBaseMetricsTable implements MetricsTable {
       // note: we use default timestamp (current), which is fine because we know we collect metrics no more
       //       frequent than each second. We also rely on same metric value to be processed by same metric processor
       //       instance, so no conflicts are possible.
-      increment.add(DATA_COLUMN_FAMILY, column.getKey(), Bytes.toBytes(column.getValue()));
+      increment.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
     }
     return increment;
   }
@@ -161,10 +163,10 @@ public class HBaseMetricsTable implements MetricsTable {
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
     Increment increment = new Increment(row);
-    increment.addColumn(DATA_COLUMN_FAMILY, column, delta);
+    increment.addColumn(columnFamily, column, delta);
     try {
       Result result = hTable.increment(increment);
-      return Bytes.toLong(result.getValue(DATA_COLUMN_FAMILY, column));
+      return Bytes.toLong(result.getValue(columnFamily, column));
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -216,7 +218,7 @@ public class HBaseMetricsTable implements MetricsTable {
   public void delete(byte[] row, byte[][] columns) throws Exception {
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumns(DATA_COLUMN_FAMILY, column);
+      delete.deleteColumns(columnFamily, column);
     }
     hTable.delete(delete);
   }
@@ -248,7 +250,7 @@ public class HBaseMetricsTable implements MetricsTable {
         Delete delete = new Delete(rowKey);
         if (columns != null) {
           for (byte[] column : columns) {
-            delete.deleteColumns(DATA_COLUMN_FAMILY, column);
+            delete.deleteColumns(columnFamily, column);
           }
         }
         deletes.add(delete);
@@ -274,7 +276,7 @@ public class HBaseMetricsTable implements MetricsTable {
     Scan scan = new Scan();
     configureRangeScan(scan, startRow, stopRow, columns, filter);
     ResultScanner resultScanner = hTable.getScanner(scan);
-    return new HBaseScanner(resultScanner);
+    return new HBaseScanner(resultScanner, columnFamily);
   }
 
   private Scan configureRangeScan(Scan scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
@@ -290,10 +292,10 @@ public class HBaseMetricsTable implements MetricsTable {
     }
     if (columns != null) {
       for (byte[] column : columns) {
-        scan.addColumn(DATA_COLUMN_FAMILY, column);
+        scan.addColumn(columnFamily, column);
       }
     } else {
-      scan.addFamily(DATA_COLUMN_FAMILY);
+      scan.addFamily(columnFamily);
     }
     if (filter != null) {
       List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(filter.getFuzzyKeysData().size());
