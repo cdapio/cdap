@@ -25,6 +25,7 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.Updates;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -51,6 +52,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   /**
    * To be used in tests that do not need namespaces
    */
+  @VisibleForTesting
   public InMemoryMetricsTable(String name) {
     tableName = name;
   }

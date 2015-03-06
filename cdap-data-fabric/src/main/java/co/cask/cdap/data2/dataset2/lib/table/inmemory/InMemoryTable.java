@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.tephra.Transaction;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class InMemoryTable extends BufferingTable {
   /**
    * To be used in tests which do not need namespaces
    */
+  @VisibleForTesting
   public InMemoryTable(String name) {
     this(name, ConflictDetection.ROW);
   }
