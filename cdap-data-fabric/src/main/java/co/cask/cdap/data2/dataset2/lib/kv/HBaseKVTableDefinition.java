@@ -26,8 +26,8 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -71,7 +71,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, cConf, hConf);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf);
   }
 
   @Override
@@ -86,11 +86,10 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
-                             CConfiguration cConf, Configuration hConf) throws IOException {
+                             Configuration hConf) throws IOException {
       this.admin = new HBaseAdmin(hConf);
       this.tableUtil = tableUtil;
-      this.tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(),
-                                  tableName);
+      this.tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
     }
 
     @Override
@@ -104,23 +103,19 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
       columnDescriptor.setMaxVersions(1);
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);
+      HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
       tableDescriptor.addFamily(columnDescriptor);
       tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
     }
 
     @Override
     public void drop() throws IOException {
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
+      tableUtil.dropTable(admin, tableId);
     }
 
     @Override
     public void truncate() throws IOException {
-      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(tableId);
-      tableUtil.disableTable(admin, tableId);
-      tableUtil.deleteTable(admin, tableId);
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor);
+      tableUtil.truncateTable(admin, tableId);
     }
 
     @Override
@@ -143,9 +138,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     public KVTableImpl(DatasetContext datasetContext, String tableName, CConfiguration cConf, Configuration hConf,
                        HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(),
-                                     tableName);
-      this.table = this.tableUtil.getHTable(hConf, tableId);
+      TableId tableId = TableId.from(datasetContext.getNamespaceId(), tableName);
+      this.table = this.tableUtil.createHTable(hConf, tableId);
     }
 
     @Override

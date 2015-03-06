@@ -43,7 +43,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create()).get();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -54,7 +54,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testHBase.deleteTables(hBaseTableUtil.toHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     testHBase.stopHBase();
   }

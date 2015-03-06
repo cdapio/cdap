@@ -23,15 +23,13 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import com.google.common.base.Function;
@@ -77,12 +75,12 @@ public class HBaseTable extends BufferingTable {
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
-  public HBaseTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf,
-                    Configuration hConf, boolean enableReadlessIncrements) throws IOException {
+  public HBaseTable(DatasetContext datasetContext, String name, ConflictDetection level,
+                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
+                    boolean enableReadlessIncrements) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level, enableReadlessIncrements);
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    TableId tableId = TableId.from(cConf.get(Constants.Dataset.TABLE_PREFIX), datasetContext.getNamespaceId(), name);
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+    TableId tableId = TableId.from(datasetContext.getNamespaceId(), name);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
@@ -99,7 +97,7 @@ public class HBaseTable extends BufferingTable {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
                   .add("hTableName", hTableName)
-                  .toString();
+                  .add("nameAsTxChangePrefix", nameAsTxChangePrefix).toString();
   }
 
   @Override
