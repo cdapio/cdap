@@ -310,7 +310,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
-    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getConfigTableId(queueName);
+    TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
     String configTableName = tableUtil.createHTable(hConf, tableId).getTableDescriptor().getNameAsString();
     byte[] configTableNameBytes = Bytes.toBytes(configTableName);
     return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,

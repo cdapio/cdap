@@ -64,14 +64,14 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   // for testing only
   TableId getConfigTableId(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getConfigTableId(queueName);
+    return HBaseQueueAdmin.getConfigTableId(queueName);
   }
 
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HTable configTable = createHTable(admin.getConfigTableId(queueName));
+    HTable configTable = createHTable(HBaseQueueAdmin.getConfigTableId(queueName));
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
     HBaseConsumerState consumerState = stateStore.getState();
     return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),

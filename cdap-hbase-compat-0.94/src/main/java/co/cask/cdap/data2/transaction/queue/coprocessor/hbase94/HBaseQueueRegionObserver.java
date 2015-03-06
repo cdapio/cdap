@@ -16,7 +16,6 @@
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase94;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
@@ -86,7 +85,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
       conf = env.getConfiguration();
       String hbaseNamespacePrefix = HTable94NameConverter.getHbaseNamespacePrefix(hTableName);
-      TableId queueConfigTableId = AbstractQueueAdmin.getConfigTableId(namespaceId);
+      TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
       configTableNameBytes = Bytes.toBytes(HTable94NameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId));
       configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable94NameConverter());
     }

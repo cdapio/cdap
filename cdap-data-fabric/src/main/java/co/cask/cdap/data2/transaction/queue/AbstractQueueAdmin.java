@@ -26,9 +26,6 @@ import co.cask.cdap.data2.util.TableId;
 public abstract class AbstractQueueAdmin implements QueueAdmin {
   protected final QueueConstants.QueueType type;
   protected final String unqualifiedTableNamePrefix;
-  // system.queue.config'
-  private static final String CONFIG_TABLE_NAME =
-    Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
 
   public AbstractQueueAdmin(QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
@@ -55,14 +52,6 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     // last three parts are namespaceId (optional - in which case it will be the default namespace), appName and flow
     String[] parts = queueTableName.split("\\.");
     return parts[parts.length - 1];
-  }
-
-  public static  TableId getConfigTableId(QueueName queueName) {
-    return getConfigTableId(queueName.getFirstComponent());
-  }
-
-  public static TableId getConfigTableId(String namespace) {
-    return TableId.from(namespace, CONFIG_TABLE_NAME);
   }
 
   /**

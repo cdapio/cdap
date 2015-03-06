@@ -91,6 +91,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
     new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
+  // system.queue.config'
+  private static final String CONFIG_TABLE_NAME =
+    Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
 
   protected final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
@@ -119,6 +122,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     this.tableUtil = tableUtil;
     this.type = type;
     this.locationFactory = locationFactory;
+  }
+
+  public static TableId getConfigTableId(QueueName queueName) {
+    return getConfigTableId(queueName.getFirstComponent());
+  }
+
+  public static TableId getConfigTableId(String namespace) {
+    return TableId.from(namespace, CONFIG_TABLE_NAME);
   }
 
   protected final synchronized HBaseAdmin getHBaseAdmin() throws IOException {
