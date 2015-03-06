@@ -81,8 +81,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private NettyHttpService httpService;
-  private volatile boolean running;
-  private Thread runningThread = null;
+  private volatile Thread runningThread;
   private Map<String, WorkflowActionNode> status = Collections.synchronizedMap(
     new HashMap<String, WorkflowActionNode>());
 
@@ -115,7 +114,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       .build();
 
     httpService.startAndWait();
-    running = true;
     runningThread = Thread.currentThread();
   }
 
@@ -125,7 +123,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
-                                     InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+                             InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
 
     WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
@@ -167,6 +165,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Throwables.propagateIfInstanceOf(t.getCause(), InterruptedException.class);
       }
       Throwables.propagateIfPossible(t, Exception.class);
+      throw new RuntimeException(t);
     } finally {
       // Destroy the action.
       destroy(actionSpec, action);
@@ -185,7 +184,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           @Override
           public String call() throws Exception {
             Iterator<WorkflowNode> iterator = branch.iterator();
-            while (!Thread.currentThread().isInterrupted() && iterator.hasNext() && running) {
+            while (!Thread.currentThread().isInterrupted() && iterator.hasNext()) {
               executeNode(appSpec, iterator.next(), instantiator, classLoader);
             }
             return branch.toString();
@@ -235,12 +234,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     final ApplicationSpecification appSpec = program.getApplicationSpecification();
     final Iterator<WorkflowNode> iterator = workflowSpec.getNodes().iterator();
-    while (running && iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+    while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
       try {
         executeNode(appSpec, iterator.next(), instantiator, classLoader);
       } catch (Throwable t) {
         if (t instanceof InterruptedException) {
           LOG.warn("Workflow explicitly stopped. Treated as abort on error. {} {}", workflowSpec);
+          return;
         }
         Throwables.propagateIfInstanceOf(t, InterruptedException.class);
         Throwables.propagate(t);
@@ -248,13 +248,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
 
     LOG.info("Workflow execution succeeded for {}", workflowSpec);
-    running = false;
   }
 
   @Override
   protected void triggerShutdown() {
-    running = false;
-    runningThread.interrupt();
+    Thread t = runningThread;
+    runningThread = null;
+    t.interrupt();
   }
 
   /**

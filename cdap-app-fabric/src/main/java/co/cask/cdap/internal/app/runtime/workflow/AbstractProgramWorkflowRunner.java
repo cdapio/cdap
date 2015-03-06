@@ -117,17 +117,6 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     // Execute the program.
     final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
-
-      @Override
-      public void init(ProgramController.State state) {
-        if (state == ProgramController.State.STOPPED) {
-          stopped();
-        }
-        if (state == ProgramController.State.ERROR) {
-          error(controller.getFailureCause());
-        }
-      }
-
       @Override
       public void completed() {
         completion.set(context);
@@ -149,7 +138,11 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
       throw Throwables.propagate(cause);
     } catch (InterruptedException e) {
-      Futures.getUnchecked(controller.stop());
+      try {
+        Futures.getUnchecked(controller.stop());
+      } catch (Exception ex) {
+        // no-op
+      }
       throw e;
     }
   }

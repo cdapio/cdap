@@ -1657,9 +1657,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       controller.stop().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
-      if (type == ProgramType.WORKFLOW) {
-        return AppFabricServiceStatus.OK;
-      }
       LOG.warn(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }

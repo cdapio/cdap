@@ -813,7 +813,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Category(XSlowTests.class)
-  @Ignore
+  @Test
   public void testWorkflowForkApp() throws Exception {
     // Steps for the test
     // 1. Deploy the Workflow app containing fork node
@@ -866,19 +866,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = getWorkflowCurrentStatus(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, runId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "failed");
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "killed");
     scheduleHistoryRuns(1, runsUrl, 0);
+
 
     status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                   WORKFLOW_WITH_FORK, "start");
     Assert.assertEquals(200, status);
-    historyRuns = scheduleHistoryRuns(10, runsUrl, 0);
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "running");
+    historyRuns = scheduleHistoryRuns(60, runsUrl, 0);
+    Assert.assertTrue(historyRuns.size() == 1);
     runId = historyRuns.get(0).get("runid");
-
     currentUrl = String.format("apps/%s/workflows/%s/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, runId);
     versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     currentRunningProgramsExpected = 2;
-    checkCurrentRuns(30, versionedUrl, currentRunningProgramsExpected);
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
     scheduleHistoryRuns(180, runsUrl, 0);
