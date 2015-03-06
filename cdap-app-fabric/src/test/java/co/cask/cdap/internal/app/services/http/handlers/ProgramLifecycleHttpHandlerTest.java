@@ -729,29 +729,29 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
     // create app in default namespace so that v2 and v3 api can be tested in the same test
-    String DEFAULT_NAMESPACE = "default";
+    String defaultNamespace = "default";
     HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   DEFAULT_NAMESPACE);
+                                   defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
+    store.setProperties(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
                         CONCURRENT_WORKFLOW_NAME, propMap);
 
-    String runsUrl = getRunsUrl(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
+    String runsUrl = getRunsUrl(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
 
     List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
     // Two instances of the ConcurrentWorkflow should be RUNNING
     Assert.assertTrue(historyRuns.size() >= 2);
 
     // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW,
+    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                          CONCURRENT_WORKFLOW_NAME);
 
     for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW,
+      Assert.assertEquals(200, suspendSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                spec.getSchedule().getName()));
     }
 
@@ -764,7 +764,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("RUNNING", status.getState().toString());
     Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
 
-    response = getWorkflowCurrentStatus(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
                                                      historyRuns.get(0).get("runid"));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
@@ -772,7 +772,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("RUNNING", status.getState().toString());
     Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
 
-    response = getWorkflowCurrentStatus(DEFAULT_NAMESPACE, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
                                         historyRuns.get(1).get("runid"));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
@@ -782,7 +782,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // delete the application
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
-      .API_VERSION_3_TOKEN, DEFAULT_NAMESPACE);
+      .API_VERSION_3_TOKEN, defaultNamespace);
     deleteApplication(60, deleteUrl, 200);
   }
 
