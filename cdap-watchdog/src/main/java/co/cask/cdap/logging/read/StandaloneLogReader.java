@@ -18,15 +18,12 @@ package co.cask.cdap.logging.read;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +33,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,15 +61,13 @@ public class StandaloneLogReader implements LogReader {
   private final ExecutorService executor;
 
   @Inject
-  public StandaloneLogReader(CConfiguration cConf, DatasetFramework dsFramework,
-                             TransactionSystemClient txClient, LocalLocationFactory locationFactory) {
+  public StandaloneLogReader(CConfiguration cConf, FileMetaDataManager fileMetaDataManager) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 
     try {
       this.schema = new LogSchema().getAvroSchema();
-      this.fileMetaDataManager = new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf),
-                                                         txClient, locationFactory);
+      this.fileMetaDataManager = fileMetaDataManager;
 
     } catch (Exception e) {
       LOG.error("Got exception", e);

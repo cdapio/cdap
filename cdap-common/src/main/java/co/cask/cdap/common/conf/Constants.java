@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 public final class Constants {
 
   public static final String ARCHIVE_DIR = "archive";
+  public static final String ROOT_NAMESPACE = "root.namespace";
 
   /**
    * Global Service names.
@@ -177,6 +178,8 @@ public final class Constants {
 
     public static final String DATA_DIR = "dataset.data.dir";
     public static final String DEFAULT_DATA_DIR = "data";
+
+    public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
     /**
      * DatasetManager service configuration.
@@ -444,6 +447,13 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics collector.
+   */
+  public static final class MetricsCollector {
+    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
+  }
+
+  /**
    * Configurations for log saver.
    */
   public static final class LogSaver {
@@ -637,6 +647,7 @@ public final class Constants {
       public static final String STREAM_FEED_CATEGORY = "stream";
       public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
       public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
+      public static final String STREAM_SIZE_SCHEDULE_POLLING_DELAY = "stream.size.schedule.polling.delay";
     }
   }
 

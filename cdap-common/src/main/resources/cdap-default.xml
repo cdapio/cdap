@@ -236,6 +236,12 @@
     </property>
 
     <property>
+        <name>stream.size.schedule.polling.delay</name>
+        <value>600</value>
+        <description>Delay, in seconds, to poll a stream in a StreamSizeSchedule if no notification is received</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for Stream file</description>
@@ -941,6 +947,15 @@
             WARNING! - Enabling this option enables the deletion of all applications and data;
             NO RECOVERY IS POSSIBLE!
         </description>
+    </property>
+
+    <property>
+      <name>dataset.unchecked.upgrade</name>
+      <value>false</value>
+      <description>
+        By default, any changes made to existing datasets are not deployed when an app is redeployed.
+        Setting this value to true allows the dataset changes to be deployed upon app redeployment.
+      </description>
     </property>
 
     <!---

@@ -69,9 +69,14 @@ public class StreamClient {
   private final ClientConfig config;
 
   @Inject
+  public StreamClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public StreamClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.common.Bytes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
@@ -32,10 +33,10 @@ import java.io.OutputStream;
  * A helper to deal with Avro schema, records, serializations, etc.
  * This is in its own class because it uses Avro the Schema class, which would clash with our own Schema elsewhere.
  */
-public class AvroHelper {
+public class FileWriterHelper {
 
   /**
-   * Generate an Avro file of schema (key: String, value String) containing the records ("<prefix>i", "#i")
+   * Generate an Avro file of schema (key String, value String) containing the records ("<prefix>i", "#i")
    * for start <= i < end. The file is written using the passed-in output stream.
    */
   public static void generateAvroFile(OutputStream out, String prefix, int start, int end) throws IOException {
@@ -59,4 +60,21 @@ public class AvroHelper {
       Closeables.closeQuietly(out);
     }
   }
+
+  /**
+   * Generate a text file of schema (key String, value Int) containing the records ("<prefix>i", i)
+   * for start <= i < end, using the given delimiter. The file is written using the passed-in output stream.
+   */
+  public static void generateTextFile(OutputStream out, String delim, String prefix, int start, int end)
+    throws IOException {
+    try {
+      for (int i = start; i < end; i++) {
+        String line = String.format("%s%d%s%d\n", prefix, i, delim, i);
+        out.write(Bytes.toBytes(line));
+      }
+    } finally {
+      Closeables.closeQuietly(out);
+    }
+  }
+
 }

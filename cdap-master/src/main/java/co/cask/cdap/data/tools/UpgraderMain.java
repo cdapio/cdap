@@ -30,7 +30,6 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
@@ -40,7 +39,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
@@ -49,12 +47,11 @@ import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.app.store.DefaultStoreFactory;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -147,7 +144,10 @@ public class UpgraderMain {
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
-          bind(StoreFactory.class).to(DefaultStoreFactory.class);
+          install(new FactoryModuleBuilder()
+                    .implement(Store.class, DefaultStore.class)
+                    .build(StoreFactory.class)
+          );
           bind(ConfigStore.class).to(DefaultConfigStore.class);
         }
 
@@ -173,8 +173,8 @@ public class UpgraderMain {
         @Named("nonNamespacedStore")
         public Store getNonNamespacedStore(@Named("nonNamespacedDSFramework") DatasetFramework nonNamespacedFramework,
                                            CConfiguration cConf, LocationFactory locationFactory,
-                                           TransactionSystemClient txClient) {
-          return new DefaultStore(cConf, locationFactory, txClient, nonNamespacedFramework);
+                                           TransactionExecutorFactory txExecutorFactory) {
+          return new DefaultStore(cConf, locationFactory, txExecutorFactory, nonNamespacedFramework);
         }
       });
   }
@@ -194,7 +194,6 @@ public class UpgraderMain {
    * Stop services and
    */
   private void stop() {
-    LOG.info("Stopping Upgrade ...");
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
@@ -289,9 +288,7 @@ public class UpgraderMain {
   private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
                                                             DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory),
-                                     new DefaultDatasetNamespace(cConf));
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(datasetFramework);
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
@@ -340,7 +337,7 @@ public class UpgraderMain {
    */
   private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException {
-    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory);
+    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(nonNamespacedFramework);
     return nonNamespacedFramework;
   }
