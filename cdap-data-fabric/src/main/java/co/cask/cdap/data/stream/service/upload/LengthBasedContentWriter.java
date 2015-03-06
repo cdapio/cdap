@@ -96,7 +96,7 @@ final class LengthBasedContentWriter implements ContentWriter {
     bodySize += length;
     if (bodySize >= bufferThreshold) {
       fileContentWriter = fileContentWriterFactory.create(ImmutableMap.<String, String>of());
-      fileContentWriter.appendAll(bufferedContentWriter.getBufferedContent(), true);
+      fileContentWriter.appendAll(bufferedContentWriter.iterator(), true);
       bufferedContentWriter.cancel();
     }
   }

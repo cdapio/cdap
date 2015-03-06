@@ -32,9 +32,9 @@ public interface StreamWriter {
    * Write a string to a stream
    *
    * @param stream stream id
-   * @param data data to write
+   * @param data data to be written
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public void write(String stream, String data) throws IOException;
 
@@ -42,10 +42,10 @@ public interface StreamWriter {
    * Write a string to a stream with headers
    *
    * @param stream stream id
-   * @param data data to write
+   * @param data data to be written
    * @param headers headers for the data
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public void write(String stream, String data, Map<String, String> headers) throws IOException;
 
@@ -53,9 +53,9 @@ public interface StreamWriter {
    * Write a {@link ByteBuffer} to a stream
    *
    * @param stream stream id
-   * @param data {@link ByteBuffer}
+   * @param data {@link ByteBuffer} data to be written
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public void write(String stream, ByteBuffer data) throws IOException;
 
@@ -63,9 +63,9 @@ public interface StreamWriter {
    * Write a {@link StreamEventData} to a stream
    *
    * @param stream stream id
-   * @param data {@link StreamEventData}
+   * @param data {@link StreamEventData} data to be written
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public void write(String stream, StreamEventData data) throws IOException;
 
@@ -75,7 +75,7 @@ public interface StreamWriter {
    * @param file File
    * @param contentType content type
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public void writeFile(String stream, File file, String contentType) throws IOException;
 
@@ -83,9 +83,9 @@ public interface StreamWriter {
    * Write in batch using {@link StreamBatchWriter} to a stream
    * @param stream stream id
    * @param contentType content type
-   * @return {@link StreamBatchWriter}
+   * @return {@link StreamBatchWriter} provides a batch writer
    *
-   * @throws IOException if a network error occurred
+   * @throws IOException if an error occurred during write
    */
   public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException;
 }

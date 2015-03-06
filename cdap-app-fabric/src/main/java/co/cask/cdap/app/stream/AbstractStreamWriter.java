@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.stream;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
@@ -47,7 +48,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -61,7 +61,7 @@ public abstract class AbstractStreamWriter extends AbstractContext implements St
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStreamWriter.class);
 
-  protected String namespaceId;
+  protected final String namespaceId;
 
   public AbstractStreamWriter(Program program, RunId runId,
                               Arguments arguments,
@@ -83,20 +83,15 @@ public abstract class AbstractStreamWriter extends AbstractContext implements St
     Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new IOException("Stream Service Endpoint not found");
-    } else {
-      InetSocketAddress address = discoverable.getSocketAddress();
-      String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
-                                  Constants.Gateway.API_VERSION_3, namespaceId, stream);
-      if (batch) {
-        path = String.format("%s/batch", path);
-      }
-      try {
-        return new URL(path);
-      } catch (MalformedURLException e) {
-        LOG.error("Got exception while creating StreamURL", e);
-      }
     }
-    return null;
+
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
+                                Constants.Gateway.API_VERSION_3, namespaceId, stream);
+    if (batch) {
+      path = String.format("%s/batch", path);
+    }
+    return new URL(path);
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
@@ -122,9 +117,7 @@ public abstract class AbstractStreamWriter extends AbstractContext implements St
 
   @Override
   public void write(String stream, String data, Map<String, String> headers) throws IOException {
-    URL streamURL = getStreamURL(stream);
-    HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(Id.Stream.from(namespaceId, stream), request);
+    write(stream, ByteBuffer.wrap(Bytes.toBytes(data)), headers);
   }
 
   @Override

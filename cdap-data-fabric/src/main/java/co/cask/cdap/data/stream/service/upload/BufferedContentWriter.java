@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * A {@link ContentWriter} that buffer all events in memory and write to the actual stream writer when closed.
  */
-final class BufferedContentWriter implements ContentWriter {
+final class BufferedContentWriter implements ContentWriter, Iterable<ByteBuffer> {
 
   private final Id.Stream streamId;
   private final ConcurrentStreamWriter streamWriter;
@@ -74,7 +74,8 @@ final class BufferedContentWriter implements ContentWriter {
     // No-op
   }
 
-  Iterator<ByteBuffer> getBufferedContent() {
+  @Override
+  public Iterator<ByteBuffer> iterator() {
     return bodies.iterator();
   }
 
