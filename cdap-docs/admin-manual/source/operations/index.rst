@@ -33,10 +33,10 @@ Operations
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
 
-.. |runtime-arguments| replace:: **Runtime Arguments:**
-.. _runtime-arguments: runtime-arguments.html
+.. |preferences| replace:: **Preferences and Runtime Arguments:**
+.. _preferences: preferences.html
 
-- |runtime-arguments|_ Flows, Procedures, MapReduce programs, and Workflows can receive **runtime arguments:** 
+- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
