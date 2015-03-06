@@ -17,6 +17,11 @@
 package co.cask.cdap.examples.sports;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partitioning;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
  * An example that illustrates partitioned file sets at the example of sport result analytics.
@@ -25,5 +30,22 @@ public class SportsResults extends AbstractApplication {
 
   @Override
   public void configure() {
+    addService(new UploadService());
+
+    // create the time-partitioned file set, configure it to work with MapReduce and with Explore
+    createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      // properties for partitioning
+      .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
+        // properties for file set
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setInputProperty(TextOutputFormat.SEPERATOR, ",")
+        // properties for explore (to create a partitioned hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("csv")
+      .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      .build());
+
+
   }
 }
