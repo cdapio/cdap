@@ -272,7 +272,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
     try {
-      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      testCommandOutputContains(cli, "call procedure " +
+        qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME +
+        " 'customer bob'", "realbob");
     } finally {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");

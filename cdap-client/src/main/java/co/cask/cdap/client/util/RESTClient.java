@@ -70,20 +70,26 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
     throws IOException, UnauthorizedException, DisconnectedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(getAuthHeaders(accessToken))
+                     .build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes)
     throws IOException, UnauthorizedException, DisconnectedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(headers)
+                     .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
     throws IOException, UnauthorizedException, DisconnectedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(headers)
+                     .addHeaders(getAuthHeaders(accessToken))
                      .withBody(body).build(), allowedErrorCodes);
   }
 
