@@ -129,14 +129,17 @@ public class StreamSizeScheduler implements Scheduler {
     scheduleStore.initialize();
 
     // Reschedule the persisted schedules
-    synchronized (this) {
-      List<DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState> scheduleStates =
-        scheduleStore.list();
-      for (DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState scheduleState : scheduleStates) {
-        schedule(scheduleState.getProgramId(), scheduleState.getProgramType(), scheduleState.getStreamSizeSchedule(),
-                 scheduleState.isRunning(), scheduleState.getBaseRunSize(), scheduleState.getBaseRunTs(),
-                 scheduleState.getLastRunSize(), scheduleState.getLastRunTs(), false);
-      }
+    List<DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState> scheduleStates;
+    try {
+      scheduleStates = scheduleStore.list();
+    } catch (Throwable t) {
+      throw new SchedulerException("Error when listing stream size schedules from store", t);
+    }
+
+    for (DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState scheduleState : scheduleStates) {
+      schedule(scheduleState.getProgramId(), scheduleState.getProgramType(), scheduleState.getStreamSizeSchedule(),
+               scheduleState.isRunning(), scheduleState.getBaseRunSize(), scheduleState.getBaseRunTs(),
+               scheduleState.getLastRunSize(), scheduleState.getLastRunTs(), false);
     }
   }
 
@@ -509,11 +512,11 @@ public class StreamSizeScheduler implements Scheduler {
                                    StreamSizeSchedule streamSizeSchedule, boolean active,
                                    long basePollSize, long basePollTs, long lastRunSize, long lastRunTs,
                                    boolean persist) throws SchedulerException {
-      StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
       StreamSize streamSize;
       synchronized (this) {
-        StreamSizeScheduleTask previous = scheduleTasks.putIfAbsent(
-          AbstractSchedulerService.scheduleIdFor(programId, programType, streamSizeSchedule.getName()), newTask);
+        String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType,
+                                                                   streamSizeSchedule.getName());
+        StreamSizeScheduleTask previous = scheduleTasks.get(scheduleId);
         if (previous != null) {
           // We cannot replace an existing schedule - that functionality is not wanted - yet
           throw new SchedulerException("Tried to overwrite schedule " + streamSizeSchedule.getName());
@@ -528,12 +531,16 @@ public class StreamSizeScheduler implements Scheduler {
         }
 
         // Initialize the schedule task
+        StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
         if (basePollSize == -1 && basePollTs == -1) {
-          newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(), lastRunSize, lastRunTs,
-                                active, persist);
+          newTask.startSchedule(streamSize.getSize(), streamSize.getTimestamp(),
+                                lastRunSize, lastRunTs, active, persist);
         } else {
           newTask.startSchedule(basePollSize, basePollTs, lastRunSize, lastRunTs, active, persist);
         }
+
+        // We only modify the scheduleTasks if the persistence in startSchedule() did not throw any exception
+        scheduleTasks.put(scheduleId, newTask);
 
         if (active) {
           activeTasks.incrementAndGet();
@@ -547,7 +554,8 @@ public class StreamSizeScheduler implements Scheduler {
      * Suspend a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public synchronized void suspendScheduleTask(Id.Program programId, SchedulableProgramType programType,
-                                                 String scheduleName) throws ScheduleNotFoundException {
+                                                 String scheduleName)
+      throws ScheduleNotFoundException, SchedulerException {
       String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
       StreamSizeScheduleTask task = scheduleTasks.get(scheduleId);
       if (task == null) {
@@ -562,7 +570,8 @@ public class StreamSizeScheduler implements Scheduler {
      * Resume a scheduling task that is based on the data received by the stream referenced by {@code this} object.
      */
     public synchronized void resumeScheduleTask(Id.Program programId, SchedulableProgramType programType,
-                                                String scheduleName) throws ScheduleNotFoundException {
+                                                String scheduleName)
+      throws ScheduleNotFoundException, SchedulerException {
       final StreamSizeScheduleTask task;
       String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
       task = scheduleTasks.get(scheduleId);
@@ -590,7 +599,7 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public synchronized void updateScheduleTask(Id.Program program, SchedulableProgramType programType,
                                                 StreamSizeSchedule schedule)
-      throws ScheduleNotFoundException {
+      throws ScheduleNotFoundException, SchedulerException {
       String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, schedule.getName());
       final StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleId);
       if (scheduleTask == null) {
@@ -758,7 +767,7 @@ public class StreamSizeScheduler implements Scheduler {
      * @param persist {@code true} if this information should be persisted, {@code false} otherwise
      */
     public void startSchedule(long basePollSize, long basePollTs, long lastRunSize, long lastRunTs,
-                              boolean active, boolean persist) {
+                              boolean active, boolean persist) throws SchedulerException {
       LOG.debug("Starting schedule {} with basePollSize {}, basePollTs {}, active {}. Should be persisted: {}",
                 streamSizeSchedule.getName(), basePollSize, basePollTs, active, persist);
       this.basePollSize = basePollSize;
@@ -767,8 +776,13 @@ public class StreamSizeScheduler implements Scheduler {
       this.lastRunTs = lastRunTs;
       this.active.set(active);
       if (persist) {
-        scheduleStore.persist(programId, programType, streamSizeSchedule, basePollSize, basePollTs,
-                              lastRunSize, lastRunTs, active);
+        try {
+          scheduleStore.persist(programId, programType, streamSizeSchedule,
+                                basePollSize, basePollTs, lastRunSize, lastRunTs, active);
+        } catch (Throwable t) {
+          throw new SchedulerException("Error when persisting schedule " + streamSizeSchedule.getName() + "in store",
+                                       t);
+        }
       }
     }
 
@@ -809,6 +823,15 @@ public class StreamSizeScheduler implements Scheduler {
           argsBuilder.put(ProgramOptionConstants.PAST_RUN_DATA_SIZE, Long.toString(lastRunSize));
         }
 
+        try {
+          scheduleStore.updateBaseRun(programId, programType, streamSizeSchedule.getName(),
+                                      pollingInfo.getSize(), pollingInfo.getTimestamp());
+        } catch (Throwable t) {
+          LOG.error("Error when persisting new base information for schedule {} in store. Program will not be executed",
+                    streamSizeSchedule.getName(), t);
+          return;
+        }
+
         currentSchedule = streamSizeSchedule;
         basePollSize = pollingInfo.getSize();
         basePollTs = pollingInfo.getTimestamp();
@@ -818,25 +841,35 @@ public class StreamSizeScheduler implements Scheduler {
       try {
         LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
         taskRunner.run(programId, ProgramType.valueOf(programType.name()), new BasicArguments(argsBuilder.build()));
-        lastRunSize = pollingInfo.getSize();
-        lastRunTs = pollingInfo.getTimestamp();
-        scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(), lastRunSize, lastRunSize);
+        try {
+          scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
+                                      pollingInfo.getSize(), pollingInfo.getTimestamp());
+          lastRunSize = pollingInfo.getSize();
+          lastRunTs = pollingInfo.getTimestamp();
+        } catch (Throwable t) {
+          LOG.error("Error when persisting last run information for schedule {} in store",
+                    streamSizeSchedule.getName(), t);
+        }
       } catch (TaskExecutionException e) {
         // Note: in case of a failure, we don't reset the base information. We still act as if it was a success
         // and start counting again from the size of that failed run
         LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
       }
-
-      // Only persist the new run once we actually ran it
-      scheduleStore.updateBaseRun(programId, programType, streamSizeSchedule.getName(), basePollSize, basePollTs);
     }
 
     /**
      * @return true if we successfully suspended the schedule, false if it was already suspended
      */
-    public boolean suspend() {
+    public synchronized boolean suspend() throws SchedulerException {
       if (active.compareAndSet(true, false)) {
-        scheduleStore.suspend(programId, programType, streamSizeSchedule.getName());
+        try {
+          scheduleStore.suspend(programId, programType, streamSizeSchedule.getName());
+        } catch (Throwable t) {
+          // Roll back change
+          active.set(true);
+          throw new SchedulerException("Error when suspending schedule " + streamSizeSchedule.getName() + "in store",
+                                       t);
+        }
         return true;
       }
       return false;
@@ -845,10 +878,17 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * @return true if we successfully resumed the schedule, false if it was already active
      */
-    public boolean resume() {
+    public synchronized boolean resume() throws SchedulerException {
       if (active.compareAndSet(false, true)) {
-        scheduleStore.resume(programId, programType, streamSizeSchedule.getName());
-        return true;
+        try {
+          scheduleStore.resume(programId, programType, streamSizeSchedule.getName());
+          return true;
+        } catch (Throwable t) {
+          // Roll back change
+          active.set(false);
+          throw new SchedulerException("Error when resuming schedule " + streamSizeSchedule.getName() + "in store",
+                                       t);
+        }
       }
       return false;
     }
@@ -856,10 +896,15 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Replace the {@link StreamSizeSchedule} of this task.
      */
-    public synchronized void updateSchedule(StreamSizeSchedule schedule) {
+    public synchronized void updateSchedule(StreamSizeSchedule schedule) throws SchedulerException {
       if (!schedule.equals(streamSizeSchedule)) {
+        try {
+          scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);
+        } catch (Throwable t) {
+          throw new SchedulerException("Error when updating schedule " + streamSizeSchedule.getName() + "in store",
+                                       t);
+        }
         streamSizeSchedule = schedule;
-        scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);
       }
     }
 

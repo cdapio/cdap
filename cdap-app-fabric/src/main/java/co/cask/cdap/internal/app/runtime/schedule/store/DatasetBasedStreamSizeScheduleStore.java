@@ -27,6 +27,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -91,7 +92,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param running true if the schedule is running, false if it is suspended
    */
   public void persist(Id.Program programId, SchedulableProgramType programType, StreamSizeSchedule schedule,
-                      long baseRunSize, long baseRunTs, long lastRunSize, long lastRunTs, boolean running) {
+                      long baseRunSize, long baseRunTs, long lastRunSize, long lastRunTs, boolean running)
+    throws TransactionFailureException, InterruptedException {
     byte[][] columns = new byte[][] {
       SCHEDULE_COL, BASE_SIZE_COL, BASE_TS_COL, LAST_RUN_SIZE_COL, LAST_RUN_TS_COL, ACTIVE_COL
     };
@@ -113,7 +115,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void suspend(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
+  public void suspend(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
                 new byte[][]{ Bytes.toBytes(false) });
@@ -126,7 +129,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void resume(Id.Program programId, SchedulableProgramType programType, String scheduleName) {
+  public void resume(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+    throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
                 new byte[][]{ Bytes.toBytes(true) });
@@ -142,8 +146,9 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param newBaseRunTs new base timestamp
    */
   public void updateBaseRun(Id.Program programId, SchedulableProgramType programType, String scheduleName,
-                            long newBaseRunSize, long newBaseRunTs) {
-    updateTable(programId, programType, scheduleName,
+                            long newBaseRunSize, long newBaseRunTs)
+    throws TransactionFailureException, InterruptedException {
+      updateTable(programId, programType, scheduleName,
                 new byte[][]{ BASE_SIZE_COL, BASE_TS_COL },
                 new byte[][]{ Bytes.toBytes(newBaseRunSize), Bytes.toBytes(newBaseRunTs) });
   }
@@ -158,7 +163,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param newLastRunTs new last run timestamp
    */
   public void updateLastRun(Id.Program programId, SchedulableProgramType programType,
-                            String scheduleName, long newLastRunSize, long newLastRunTs) {
+                            String scheduleName, long newLastRunSize, long newLastRunTs)
+    throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ LAST_RUN_SIZE_COL, LAST_RUN_TS_COL },
                 new byte[][]{ Bytes.toBytes(newLastRunSize), Bytes.toBytes(newLastRunTs) });
@@ -173,7 +179,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param newSchedule new {@link StreamSizeSchedule} object
    */
   public void updateSchedule(Id.Program programId, SchedulableProgramType programType,
-                             String scheduleName, StreamSizeSchedule newSchedule) {
+                             String scheduleName, StreamSizeSchedule newSchedule)
+    throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ SCHEDULE_COL },
                 new byte[][]{ Bytes.toBytes(GSON.toJson(newSchedule)) });
@@ -205,73 +212,66 @@ public class DatasetBasedStreamSizeScheduleStore {
   /**
    * @return a list of all the schedules and their states present in the store
    */
-  public List<StreamSizeScheduleState> list() {
+  public List<StreamSizeScheduleState> list() throws InterruptedException, TransactionFailureException {
     final List<StreamSizeScheduleState> scheduleStates = Lists.newArrayList();
-    try {
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            byte[] startKey = Bytes.toBytes(KEY_PREFIX);
-            byte[] endKey = Bytes.stopKeyForPrefix(startKey);
-            Scanner scan = table.scan(startKey, endKey);
-            Row next;
-            while ((next = scan.next()) != null) {
-              byte[] scheduleBytes = next.get(SCHEDULE_COL);
-              byte[] baseSizeBytes = next.get(BASE_SIZE_COL);
-              byte[] baseTsBytes = next.get(BASE_TS_COL);
-              byte[] lastRunSizeBytes = next.get(LAST_RUN_SIZE_COL);
-              byte[] lastRunTsBytes = next.get(LAST_RUN_TS_COL);
-              byte[] activeBytes = next.get(ACTIVE_COL);
-              if (scheduleBytes == null || baseSizeBytes == null || baseTsBytes == null || lastRunSizeBytes == null ||
-                lastRunTsBytes == null || activeBytes == null) {
-                continue;
-              }
-
-              String rowKey = Bytes.toString(next.getRow());
-              String[] splits = rowKey.split(":");
-              if (splits.length != 6) {
-                continue;
-              }
-              Id.Program program = Id.Program.from(splits[1], splits[2], ProgramType.valueOf(splits[3]), splits[4]);
-              SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[3]);
-
-              StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);
-              long baseSize = Bytes.toLong(baseSizeBytes);
-              long baseTs = Bytes.toLong(baseTsBytes);
-              long lastRunSize = Bytes.toLong(lastRunSizeBytes);
-              long lastRunTs = Bytes.toLong(lastRunTsBytes);
-              boolean active = Bytes.toBoolean(activeBytes);
-              StreamSizeScheduleState scheduleState =
-                new StreamSizeScheduleState(program, programType, schedule, baseSize, baseTs,
-                                            lastRunSize, lastRunTs, active);
-              scheduleStates.add(scheduleState);
-              LOG.debug("StreamSizeSchedule found in store: {}", scheduleState);
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] startKey = Bytes.toBytes(KEY_PREFIX);
+          byte[] endKey = Bytes.stopKeyForPrefix(startKey);
+          Scanner scan = table.scan(startKey, endKey);
+          Row next;
+          while ((next = scan.next()) != null) {
+            byte[] scheduleBytes = next.get(SCHEDULE_COL);
+            byte[] baseSizeBytes = next.get(BASE_SIZE_COL);
+            byte[] baseTsBytes = next.get(BASE_TS_COL);
+            byte[] lastRunSizeBytes = next.get(LAST_RUN_SIZE_COL);
+            byte[] lastRunTsBytes = next.get(LAST_RUN_TS_COL);
+            byte[] activeBytes = next.get(ACTIVE_COL);
+            if (scheduleBytes == null || baseSizeBytes == null || baseTsBytes == null || lastRunSizeBytes == null ||
+              lastRunTsBytes == null || activeBytes == null) {
+              continue;
             }
+
+            String rowKey = Bytes.toString(next.getRow());
+            String[] splits = rowKey.split(":");
+            if (splits.length != 6) {
+              continue;
+            }
+            Id.Program program = Id.Program.from(splits[1], splits[2], ProgramType.valueOf(splits[3]), splits[4]);
+            SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[3]);
+
+            StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);
+            long baseSize = Bytes.toLong(baseSizeBytes);
+            long baseTs = Bytes.toLong(baseTsBytes);
+            long lastRunSize = Bytes.toLong(lastRunSizeBytes);
+            long lastRunTs = Bytes.toLong(lastRunTsBytes);
+            boolean active = Bytes.toBoolean(activeBytes);
+            StreamSizeScheduleState scheduleState =
+              new StreamSizeScheduleState(program, programType, schedule, baseSize, baseTs,
+                                          lastRunSize, lastRunTs, active);
+            scheduleStates.add(scheduleState);
+            LOG.debug("StreamSizeSchedule found in store: {}", scheduleState);
           }
-        });
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
-    }
+        }
+      });
     return scheduleStates;
   }
 
   private void updateTable(final Id.Program programId, final SchedulableProgramType programType,
-                           final String scheduleName, final byte[][] columns, final byte[][] values) {
-    try {
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                        getScheduleId(programId, programType, scheduleName)));
-            table.put(rowKey, columns, values);
-            LOG.debug("Updated schedule {} with columns {}, values {}", scheduleName, columns, values);
-          }
-        });
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
-    }
+                           final String scheduleName, final byte[][] columns, final byte[][] values)
+    throws InterruptedException, TransactionFailureException {
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
+                                                      getScheduleId(programId, programType, scheduleName)));
+          table.put(rowKey, columns, values);
+          LOG.debug("Updated schedule {} with columns {}, values {}", scheduleName, columns, values);
+        }
+      });
   }
 
   private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
