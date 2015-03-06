@@ -29,7 +29,7 @@ public interface StreamBatchWriter extends Closeable {
   /**
    * Each call to write will write data to the stream batch endpoint.
    *
-   * @param data {@link ByteBuffer}
+   * @param data {@link ByteBuffer} each data chunk that needs to be written
    * @throws IOException if an error occurred during the write to stream
    */
   void write(ByteBuffer data) throws IOException;
