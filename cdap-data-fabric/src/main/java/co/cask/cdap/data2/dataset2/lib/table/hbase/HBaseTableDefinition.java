@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -34,8 +33,7 @@ import java.util.Map;
 /**
  *
  */
-public class HBaseTableDefinition
-  extends AbstractDatasetDefinition<Table, HBaseTableAdmin> {
+public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBaseTableAdmin> {
 
   @Inject
   private Configuration hConf;
@@ -61,12 +59,7 @@ public class HBaseTableDefinition
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    ConflictDetection conflictDetection =
-      ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    // NOTE: ttl property is applied on server-side in CPs
-    // check if read-less increment operations are supported
-    boolean supportsIncrements = HBaseTableAdmin.supportsReadlessIncrements(spec);
-    return new HBaseTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
+    return new HBaseTable(spec, hConf);
   }
 
   @Override

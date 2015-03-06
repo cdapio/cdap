@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -64,24 +65,28 @@ public class HBaseTable extends BufferingTable {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTable.class);
 
   public static final String DELTA_WRITE = "d";
+
   private final HTable hTable;
   private final String hTableName;
+  private final byte[] columnFamily;
+  private final TransactionCodec txCodec;
 
   private Transaction tx;
 
-  private final TransactionCodec txCodec;
+  public HBaseTable(DatasetSpecification spec, Configuration hConf) throws IOException {
+    super(spec.getName(),
+          ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name())),
+          HBaseTableAdmin.supportsReadlessIncrements(spec));
 
-  public HBaseTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
-    throws IOException {
-    super(name, level, enableReadlessIncrements);
-    hTableName = HBaseTableUtil.getHBaseTableName(name);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    TableId tableId = TableId.from(name);
+    TableId tableId = TableId.from(spec.getName());
     HTable hTable = tableUtil.getHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
+    this.hTableName = Bytes.toStringBinary(hTable.getTableName());
+    this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
     this.txCodec = new TransactionCodec();
   }
 
@@ -89,7 +94,6 @@ public class HBaseTable extends BufferingTable {
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("hTable", hTable)
-                  .add("hTableName", hTableName)
                   .toString();
   }
 
@@ -104,23 +108,22 @@ public class HBaseTable extends BufferingTable {
     List<Get> hbaseGets = Lists.transform(gets, new Function<co.cask.cdap.api.dataset.table.Get, Get>() {
       @Nullable
       @Override
-      public Get apply(@Nullable co.cask.cdap.api.dataset.table.Get get) {
+      public Get apply(co.cask.cdap.api.dataset.table.Get get) {
         List<byte[]> cols = get.getColumns();
         return createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][]));
       }
     });
     try {
       Result[] results = hTable.get(hbaseGets);
-      List<Row> rows = Lists.transform(Arrays.asList(results), new Function<Result, Row>() {
+      return Lists.transform(Arrays.asList(results), new Function<Result, Row>() {
         @Nullable
         @Override
-        public Row apply(@Nullable Result result) {
-          Map<byte[], byte[]> familyMap = result.getFamilyMap(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+        public Row apply(Result result) {
+          Map<byte[], byte[]> familyMap = result.getFamilyMap(columnFamily);
           return new co.cask.cdap.api.dataset.table.Result(result.getRow(),
               familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
         }
       });
-      return rows;
     } catch (IOException ioe) {
       throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
     }
@@ -139,20 +142,20 @@ public class HBaseTable extends BufferingTable {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
-            incrementPut.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+            incrementPut.add(columnFamily, column.getKey(), tx.getWritePointer(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
-            put.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer(),
+            put.add(columnFamily, column.getKey(), tx.getWritePointer(),
                     wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             incrementPut = getIncrementalPut(incrementPut, row.getKey());
-            incrementPut.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(),
+            incrementPut.add(columnFamily, column.getKey(),
                              Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
-            put.add(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), ((PutValue) val).getValue());
+            put.add(columnFamily, column.getKey(), ((PutValue) val).getValue());
           }
         }
       }
@@ -190,9 +193,9 @@ public class HBaseTable extends BufferingTable {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          delete.deleteColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey(), tx.getWritePointer());
+          delete.deleteColumn(columnFamily, column.getKey(), tx.getWritePointer());
         } else {
-          delete.deleteColumns(HBaseTableAdmin.DATA_COLUMN_FAMILY, column.getKey());
+          delete.deleteColumns(columnFamily, column.getKey());
         }
       }
       deletes.add(delete);
@@ -217,7 +220,7 @@ public class HBaseTable extends BufferingTable {
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
     Scan scan = new Scan();
-    scan.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+    scan.addFamily(columnFamily);
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
     scan.setCacheBlocks(false);
@@ -233,18 +236,18 @@ public class HBaseTable extends BufferingTable {
     txCodec.addToOperation(scan, tx);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
-    return new HBaseScanner(resultScanner);
+    return new HBaseScanner(resultScanner, columnFamily);
   }
 
   private Get createGet(byte[] row, @Nullable byte[][] columns) {
     Get get = new Get(row);
-    get.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+    get.addFamily(columnFamily);
     if (columns != null && columns.length > 0) {
       for (byte[] column : columns) {
-        get.addColumn(HBaseTableAdmin.DATA_COLUMN_FAMILY, column);
+        get.addColumn(columnFamily, column);
       }
     } else {
-      get.addFamily(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+      get.addFamily(columnFamily);
     }
 
     try {
@@ -267,23 +270,23 @@ public class HBaseTable extends BufferingTable {
     if (tx == null) {
       get.setMaxVersions(1);
       Result result = hTable.get(get);
-      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(columnFamily);
     }
 
     txCodec.addToOperation(get, tx);
 
     Result result = hTable.get(get);
-    return getRowMap(result);
+    return getRowMap(result, columnFamily);
   }
 
-  static NavigableMap<byte[], byte[]> getRowMap(Result result) {
+  static NavigableMap<byte[], byte[]> getRowMap(Result result, byte[] columnFamily) {
     if (result.isEmpty()) {
       return EMPTY_ROW_MAP;
     }
 
     // note: server-side filters all everything apart latest visible for us, so we can flatten it here
     NavigableMap<byte[], NavigableMap<Long, byte[]>> versioned =
-      result.getMap().get(HBaseTableAdmin.DATA_COLUMN_FAMILY);
+      result.getMap().get(columnFamily);
 
     NavigableMap<byte[], byte[]> rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : versioned.entrySet()) {
