@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -326,7 +328,9 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
+    // todo : should support custom table-prefix
     TableId tableId = TableId.from(namespace, tableName);
-    return tableUtil.getTableStats(hAdmin).get(getTableNameAsString(tableId));
+    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(cConf, hAdmin);
+    return statsMap.get(tableId);
   }
 }

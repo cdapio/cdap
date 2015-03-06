@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase94.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase94.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
@@ -227,11 +229,12 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<String, HBaseTableUtil.TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, HBaseTableUtil.TableStats> getTableStats(CConfiguration conf,
+                                                               HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-
-    Map<String, TableStats> datasetStat = Maps.newHashMap();
+    String root = conf.get(Constants.Dataset.TABLE_PREFIX);
+    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
     for (ServerName serverName : clusterStatus.getServers()) {
@@ -239,11 +242,15 @@ public class HBase94TableUtil extends HBaseTableUtil {
 
       for (HServerLoad.RegionLoad regionLoad : regionsLoad.values()) {
         String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        if (!tableName.startsWith(root)) {
+          continue;
+        }
+
         TableStats stat = datasetStat.get(tableName);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          LOG.info("HBase Table Name is {}", tableName);
-          datasetStat.put(tableName, stat);
+          datasetStat.put(HTable94NameConverter.fromTableName(tableName), stat);
+
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
           stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());

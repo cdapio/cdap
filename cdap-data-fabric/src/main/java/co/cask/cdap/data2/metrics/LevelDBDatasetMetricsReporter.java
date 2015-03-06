@@ -16,18 +16,16 @@
 
 package co.cask.cdap.data2.metrics;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -53,7 +51,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   private final MetricsCollectionService metricsService;
   private final LevelDBTableService ldbService;
-  private final DatasetNamespace userDsNamespace;
+  private final CConfiguration conf;
   private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
@@ -65,7 +63,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf);
+    this.conf = conf;
     this.dsFramework = dsFramework;
   }
 
@@ -94,38 +92,52 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void reportStats() throws Exception {
-    Map<String, LevelDBTableService.TableStats> tableStats = ldbService.getTableStats();
+    Map<TableId, LevelDBTableService.TableStats> tableStats = ldbService.getTableStats();
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<String, LevelDBTableService.TableStats> datasetStat)
+  private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat)
     throws DatasetManagementException {
-    for (Map.Entry<String, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
-      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetInstance == null) {
-        // not a user dataset
+    for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
+      String namespace = statEntry.getKey().getNamespace().getId();
+      // emit metrics for only user datasets, tables in system namespace are ignored
+      if (namespace.equals("system")) {
         continue;
       }
+      String tableName = statEntry.getKey().getTableName();
 
-      Collection<DatasetSpecification> instances = dsFramework.getInstances(datasetInstance.getNamespace());
-      for (DatasetSpecification spec : instances) {
-        if (statEntry.getKey().startsWith(spec.getName())) {
-          datasetInstance = userDsNamespace.fromNamespaced(spec.getName());
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
+      for (DatasetSpecificationSummary spec : instances) {
+        // todo :  we are stripping cdap.{namespace} right now , this can be removed after namespace fixes
+        // and logic can be moved to DatasetSpecification
+        String dsName = stripRootPrefixAndNamespace(spec.getName());
+        if (tableName.startsWith(dsName)) {
+          // use the first part of the dataset name, would use history if dataset name is history.objects.kv
+          MetricsCollector collector =
+            metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                                        Constants.Metrics.Tag.DATASET, dsName));
+
+
+          int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
+          collector.gauge("dataset.size.mb", sizeInMb);
           break;
         }
       }
 
-      // use the first part of the dataset name, would use history if dataset name is history.objects.kv
-      MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                                                    Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
-
-      metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
-      // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.gauge("dataset.size.mb", 100);
     }
   }
+
+  private String stripRootPrefixAndNamespace(String dsName) {
+    // ignoring "cdap." and namespace at beginning
+    String rootPrefix = conf.get(Constants.Dataset.TABLE_PREFIX) + ".";
+    if (dsName.startsWith(rootPrefix)) {
+      dsName = dsName.substring(rootPrefix.length());
+      // remove namespace part
+      dsName = dsName.substring(dsName.indexOf(".") + 1);
+    }
+    return dsName;
+  }
+
 }

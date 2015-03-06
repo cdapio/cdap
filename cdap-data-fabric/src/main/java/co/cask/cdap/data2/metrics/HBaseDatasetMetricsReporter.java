@@ -20,14 +20,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -54,12 +51,13 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
 
   private final MetricsCollectionService metricsService;
   private final Configuration hConf;
+  private final CConfiguration conf;
   private final HBaseTableUtil hBaseTableUtil;
-  private final DatasetNamespace userDsNamespace;
   private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
   private HBaseAdmin hAdmin;
+
 
   @Inject
   public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
@@ -67,8 +65,8 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
+    this.conf = conf;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf);
     this.dsFramework = dsFramework;
   }
 
@@ -105,51 +103,52 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   }
 
   private void reportHBaseStats() throws IOException, DatasetManagementException {
-    Map<String, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
+    Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(conf, hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private static boolean isValidDatasetId(String datasetId) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9'))
-      .or(CharMatcher.is('.'))
-      .or(CharMatcher.is('$')).matchesAllOf(datasetId);
-  }
+  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) {
+    for (Map.Entry<TableId, HBaseTableUtil.TableStats> statEntry : tableStats.entrySet()) {
+      String namespace = statEntry.getKey().getNamespace().getId();
+      // emit metrics for only user datasets, namespaces in system and
+      // tableNames that doesn't start with user are ignored
+      if (namespace.equals("system") || !(statEntry.getKey().getTableName().startsWith("user"))) {
+        continue;
+      }
+      // for user tables, strip 'user.' prefix from tableName
+      String tableName = statEntry.getKey().getTableName();
+      tableName = tableName.substring(tableName.indexOf(".") + 1);
 
-  private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
-    // we use "0" as runId: it is required by metrics system to provide something at this point
-    for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
-      if (!isValidDatasetId(statEntry.getKey())) {
-        // todo: how to deal with hbase:meta dataset
-        continue;
-      }
-      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetInstance == null) {
-        // not a user dataset
-        continue;
-      }
       try {
-        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(datasetInstance.getNamespace());
+        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(statEntry.getKey().getNamespace());
         for (DatasetSpecificationSummary spec : instances) {
-          if (statEntry.getKey().startsWith(spec.getName())) {
-            datasetInstance = userDsNamespace.fromNamespaced(spec.getName());
+          // todo :  we are stripping cdap.{namespace} right now , this can be removed after namespace fixes
+          // and logic can be moved to DatasetSpecification
+          String dsName = stripRootPrefixAndNamespace(spec.getName());
+          if (tableName.startsWith(dsName)) {
+            MetricsCollector collector =
+              metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                                          Constants.Metrics.Tag.DATASET, dsName));
+            collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
             break;
           }
         }
       } catch (DatasetManagementException e) {
         // No op
       }
-      MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-                                                    Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
-
-      // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
     }
+  }
+
+  private String stripRootPrefixAndNamespace(String dsName) {
+    // ignoring "cdap." and namespace at beginning
+    String rootPrefix = conf.get(Constants.Dataset.TABLE_PREFIX) + ".";
+    if (dsName.startsWith(rootPrefix)) {
+      dsName = dsName.substring(rootPrefix.length());
+      // remove namespace part
+      dsName = dsName.substring(dsName.indexOf(".") + 1);
+    }
+    return dsName;
   }
 }
