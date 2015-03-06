@@ -22,9 +22,8 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -53,10 +52,9 @@ public class HBaseMetricsTable implements MetricsTable {
   private final HTable hTable;
   private final byte[] columnFamily;
 
-  public HBaseMetricsTable(DatasetSpecification spec, Configuration hConf) throws IOException {
-    String hTableName = HBaseTableUtil.getHBaseTableName(spec.getName());
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-    HTable hTable = tableUtil.getHTable(hConf, TableId.from(hTableName));
+  public HBaseMetricsTable(DatasetSpecification spec,
+                           Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    HTable hTable = tableUtil.createHTable(hConf, TableId.from(spec.getName()));
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);

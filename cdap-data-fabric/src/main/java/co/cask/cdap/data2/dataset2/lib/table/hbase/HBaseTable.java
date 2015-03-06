@@ -26,9 +26,8 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import com.google.common.base.Function;
@@ -67,25 +66,23 @@ public class HBaseTable extends BufferingTable {
   public static final String DELTA_WRITE = "d";
 
   private final HTable hTable;
-  private final String hTableName;
+  private final String tableName;
   private final byte[] columnFamily;
   private final TransactionCodec txCodec;
 
   private Transaction tx;
 
-  public HBaseTable(DatasetSpecification spec, Configuration hConf) throws IOException {
+  public HBaseTable(DatasetSpecification spec, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(spec.getName(),
           ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name())),
           HBaseTableAdmin.supportsReadlessIncrements(spec));
-
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
     TableId tableId = TableId.from(spec.getName());
-    HTable hTable = tableUtil.getHTable(hConf, tableId);
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
-    this.hTableName = Bytes.toStringBinary(hTable.getTableName());
+    this.tableName = Bytes.toStringBinary(hTable.getTableName());
     this.columnFamily = HBaseTableAdmin.getColumnFamily(spec);
     this.txCodec = new TransactionCodec();
   }
@@ -125,7 +122,7 @@ public class HBaseTable extends BufferingTable {
         }
       });
     } catch (IOException ioe) {
-      throw new DataSetException("Multi-get failed on table " + hTableName, ioe);
+      throw new DataSetException("Multi-get failed on table " + tableName, ioe);
     }
   }
 

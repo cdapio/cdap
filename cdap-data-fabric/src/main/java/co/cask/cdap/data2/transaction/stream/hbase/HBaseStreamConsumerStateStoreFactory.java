@@ -22,8 +22,8 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -55,7 +55,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     HBaseAdmin admin = new HBaseAdmin(hConf);
     if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
       try {
-        HTableDescriptor htd = tableUtil.getHTableDescriptor(streamStateStoreTableId);
+        HTableDescriptor htd = tableUtil.createHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);
@@ -68,7 +68,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
       }
     }
 
-    HTable hTable = tableUtil.getHTable(hConf, streamStateStoreTableId);
+    HTable hTable = tableUtil.createHTable(hConf, streamStateStoreTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
@@ -80,8 +80,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     try {
       TableId tableId = TableId.from(getTableName(namespace));
       if (tableUtil.tableExists(admin, tableId)) {
-        tableUtil.disableTable(admin, tableId);
-        tableUtil.deleteTable(admin, tableId);
+        tableUtil.dropTable(admin, tableId);
       }
     } finally {
       admin.close();
@@ -89,6 +88,6 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   }
 
   private String getTableName(Id.Namespace namespace) {
-    return HBaseTableUtil.getHBaseTableName(StreamUtils.getStateStoreTableName(namespace));
+    return StreamUtils.getStateStoreTableName(namespace);
   }
 }

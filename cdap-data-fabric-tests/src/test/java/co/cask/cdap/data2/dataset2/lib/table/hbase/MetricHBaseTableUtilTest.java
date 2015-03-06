@@ -24,9 +24,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.TableId;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -46,15 +46,16 @@ public class MetricHBaseTableUtilTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
-  private static HBaseTableUtil tableUtil;
+  private static HBaseTableUtil hBaseTableUtil;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
-    tableUtil = new HBaseTableUtilFactory().get();
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    cConf = CConfiguration.create();
+    hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
+    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @AfterClass
@@ -67,7 +68,7 @@ public class MetricHBaseTableUtilTest {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on
     HBaseMetricsTableDefinition definition =
       new HBaseMetricsTableDefinition("foo", testHBase.getConfiguration(), hBaseTableUtil,
-                                      new LocalLocationFactory(tmpFolder.newFolder()), CConfiguration.create());
+                                      new LocalLocationFactory(tmpFolder.newFolder()), cConf);
     DatasetSpecification spec = definition.configure("cdap.system.metricV2.8", DatasetProperties.EMPTY);
 
     DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Constants.SYSTEM_NAMESPACE), spec, null);
@@ -75,7 +76,7 @@ public class MetricHBaseTableUtilTest {
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
     HBaseAdmin hAdmin = testHBase.getHBaseAdmin();
-    HTableDescriptor desc = tableUtil.getHTableDescriptor(hAdmin, TableId.from(spec.getName()));
+    HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(spec.getName()));
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version

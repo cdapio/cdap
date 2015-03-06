@@ -43,7 +43,7 @@ public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBase
   private LocationFactory locationFactory;
   // todo: datasets should not depend on cdap configuration!
   @Inject
-  private CConfiguration conf;
+  private CConfiguration cConf;
 
   public HBaseTableDefinition(String name) {
     super(name);
@@ -59,12 +59,12 @@ public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBase
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseTable(spec, hConf);
+    return new HBaseTable(spec, hConf, hBaseTableUtil);
   }
 
   @Override
   public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                   ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
+    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }
