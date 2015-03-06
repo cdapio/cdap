@@ -62,13 +62,8 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   }
 
   @Override
-  protected final void doComplete() throws Exception {
+  protected final void doStop() throws Exception {
     twillController.stopAndWait();
-  }
-
-  @Override
-  protected final void doKill() throws Exception {
-    twillController.kill();
   }
 
   private TwillController.Listener createTwillListener() {
@@ -88,7 +83,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
           complete();
         } else {
           // Service was killed
-          kill();
+          stop();
         }
       }
 

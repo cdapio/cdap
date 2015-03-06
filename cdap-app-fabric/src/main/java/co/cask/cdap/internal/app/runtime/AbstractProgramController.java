@@ -112,7 +112,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final ListenableFuture<ProgramController> complete() {
+  public final ListenableFuture<ProgramController> stop() {
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
@@ -124,32 +124,7 @@ public abstract class AbstractProgramController implements ProgramController {
       public void run() {
         try {
           caller.stopping();
-          doComplete();
-          state.set(State.COMPLETED);
-          result.set(AbstractProgramController.this);
-          caller.completed();
-        } catch (Throwable t) {
-          error(t, result);
-        }
-      }
-    });
-    return result;
-  }
-
-  @Override
-  public final ListenableFuture<ProgramController> kill() {
-    if (!state.compareAndSet(State.STARTING, State.STOPPING)
-      && !state.compareAndSet(State.ALIVE, State.STOPPING)
-      && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
-      return Futures.immediateFailedFuture(new IllegalStateException("Stopping not allowed").fillInStackTrace());
-    }
-    final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.STOPPING).execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          caller.stopping();
-          doKill();
+          doStop();
           state.set(State.KILLED);
           result.set(AbstractProgramController.this);
           caller.killed();
@@ -159,6 +134,20 @@ public abstract class AbstractProgramController implements ProgramController {
       }
     });
     return result;
+  }
+
+  protected void complete() {
+    if (!state.compareAndSet(State.ALIVE, State.COMPLETED)) {
+      LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
+      return;
+    }
+    executor(State.COMPLETED).execute(new Runnable() {
+      @Override
+      public void run() {
+        state.set(State.COMPLETED);
+        caller.completed();
+      }
+    });
   }
 
   @Override
@@ -263,9 +252,7 @@ public abstract class AbstractProgramController implements ProgramController {
 
   protected abstract void doResume() throws Exception;
 
-  protected abstract void doComplete() throws Exception;
-
-  protected abstract void doKill() throws Exception;
+  protected abstract void doStop() throws Exception;
 
   protected abstract void doCommand(String name, Object value) throws Exception;
 

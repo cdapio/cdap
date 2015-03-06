@@ -112,7 +112,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     }
 
     @Override
-    protected void doComplete() throws Exception {
+    protected void doStop() throws Exception {
       LOG.info("Stopping Program : " + spec.getName());
       lock.lock();
       try {
@@ -121,7 +121,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
                               new Function<ProgramController, ListenableFuture<ProgramController>>() {
                                 @Override
                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                  return input.complete();
+                                  return input.stop();
                                 }
                               }
           )).get();
@@ -129,26 +129,6 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         lock.unlock();
       }
       LOG.info("Program stopped: " + spec.getName());
-    }
-
-    @Override
-    protected void doKill() throws Exception {
-      LOG.info("Killing Program : " + spec.getName());
-      lock.lock();
-      try {
-        Futures.successfulAsList(
-          Iterables.transform(components.values(),
-                              new Function<ProgramController, ListenableFuture<ProgramController>>() {
-                                @Override
-                                public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                  return input.kill();
-                                }
-                              }
-          )).get();
-      } finally {
-        lock.unlock();
-      }
-      LOG.info("Program killed: " + spec.getName());
     }
 
     @Override
@@ -188,7 +168,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       if (liveCount > newCount) {
         List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
         for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
-          futures.add(components.remove(runnableName, instanceId).kill());
+          futures.add(components.remove(runnableName, instanceId).stop());
         }
         Futures.allAsList(futures).get();
       }

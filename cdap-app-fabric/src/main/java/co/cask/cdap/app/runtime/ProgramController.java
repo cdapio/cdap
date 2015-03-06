@@ -121,9 +121,7 @@ public interface ProgramController {
 
   ListenableFuture<ProgramController> resume();
 
-  ListenableFuture<ProgramController> complete();
-
-  ListenableFuture<ProgramController> kill();
+  ListenableFuture<ProgramController> stop();
 
   /**
    * @return The current state of the program at the time when this method is called.

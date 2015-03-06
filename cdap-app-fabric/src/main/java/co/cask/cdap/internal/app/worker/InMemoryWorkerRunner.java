@@ -101,7 +101,7 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
                                                      new Function<ProgramController, ListenableFuture<?>>() {
                                                        @Override
                                                        public ListenableFuture<?> apply(ProgramController controller) {
-                                                         return controller.kill();
+                                                         return controller.stop();
                                                        }
                                                      })).get();
         throw Throwables.propagate(t);

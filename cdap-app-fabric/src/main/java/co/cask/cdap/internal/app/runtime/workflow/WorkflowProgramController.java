@@ -59,12 +59,7 @@ final class WorkflowProgramController extends AbstractProgramController {
   }
 
   @Override
-  protected void doComplete() throws Exception {
-    driver.stopAndWait();
-  }
-
-  @Override
-  protected void doKill() throws Exception {
+  protected void doStop() throws Exception {
     driver.stopAndWait();
   }
 
@@ -94,7 +89,7 @@ final class WorkflowProgramController extends AbstractProgramController {
           complete();
         } else {
           // service was terminated
-          kill();
+          stop();
         }
       }
 

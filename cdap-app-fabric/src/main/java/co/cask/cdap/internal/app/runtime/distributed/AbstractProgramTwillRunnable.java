@@ -230,11 +230,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
-      LOG.info("Killing runnable: {}", name);
-      controller.kill().get();
+      LOG.info("Stopping runnable: {}", name);
+      controller.stop().get();
       logAppenderInitializer.close();
     } catch (Exception e) {
-      LOG.error("Fail to kill: {}", e, e);
+      LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);
     }
   }

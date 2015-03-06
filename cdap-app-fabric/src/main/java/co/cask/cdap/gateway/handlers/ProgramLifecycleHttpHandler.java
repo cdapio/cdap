@@ -1703,7 +1703,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
       ProgramController controller = runtimeInfo.getController();
-      controller.kill().get();
+      controller.stop().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);

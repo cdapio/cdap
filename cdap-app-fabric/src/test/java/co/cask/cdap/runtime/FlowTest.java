@@ -128,7 +128,7 @@ public class FlowTest {
     Assert.assertTrue(urlConn.getResponseCode() == 200);
 
     for (ProgramController controller : controllers) {
-      controller.kill().get();
+      controller.stop().get();
     }
   }
 
@@ -213,7 +213,7 @@ public class FlowTest {
     Assert.assertTrue(trials < 10);
 
     for (ProgramController controller : controllers) {
-      controller.kill().get();
+      controller.stop().get();
     }
   }
 

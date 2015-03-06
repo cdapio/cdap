@@ -146,7 +146,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
         if (isRunning(runtimeInfo.getProgramId(), type)) {
-          futures.add(runtimeInfo.getController().kill());
+          futures.add(runtimeInfo.getController().stop());
         }
       }
     }
