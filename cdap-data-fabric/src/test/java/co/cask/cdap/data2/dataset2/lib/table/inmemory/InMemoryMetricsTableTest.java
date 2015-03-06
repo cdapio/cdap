@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -43,7 +45,8 @@ import org.junit.BeforeClass;
  */
 public class InMemoryMetricsTableTest extends MetricsTableTest {
 
-  private static final Id.DatasetModule metricsInMemoryModule = Id.DatasetModule.from(NAMESPACE_ID, "metrics-inmemory");
+  private static final Id.DatasetModule metricsInMemoryModule =
+    Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-inmemory");
 
   private static DatasetFramework dsFramework;
 
@@ -65,13 +68,14 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
         }
       });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class),
+                                               injector.getInstance(CConfiguration.class));
     dsFramework.addModule(metricsInMemoryModule, new InMemoryMetricsTableModule());
   }
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, name);
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
   }

@@ -20,11 +20,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
@@ -54,7 +52,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
-    this(new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf)), cConf);
+    this(dsFramework, cConf);
   }
 
   private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
@@ -79,9 +77,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                  MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-    DatasetProperties props = ttl > 0 ?
-      DatasetProperties.builder().add(Table.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
-    MetricsTable table = getOrCreateMetricsTable(tableName, props);
+    DatasetProperties.Builder props = DatasetProperties.builder();
+    // don't add TTL for MAX_RESOLUTION table. CDAP-1626
+    if (ttl > 0 && resolution != Integer.MAX_VALUE) {
+      props.add(Table.PROPERTY_TTL, ttl);
+    }
+    // for efficient counters
+    props.add(Table.PROPERTY_READLESS_INCREMENT, "true");
+
+    MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     LOG.info("FactTable created: {}", tableName);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }

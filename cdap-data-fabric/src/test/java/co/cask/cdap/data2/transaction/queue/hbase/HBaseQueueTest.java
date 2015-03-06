@@ -39,7 +39,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCach
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -127,10 +127,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
 
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
-
-    final Injector injector = Guice.createInjector(
+        final Injector injector = Guice.createInjector(
       dataFabricModule,
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -158,6 +155,13 @@ public abstract class HBaseQueueTest extends QueueTest {
       })
     );
 
+    //create HBase namespace
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+
+    ConfigurationTable configTable = new ConfigurationTable(hConf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
 
@@ -175,7 +179,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    tableUtil = new HBaseTableUtilFactory().get();
   }
 
   // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
@@ -214,7 +217,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.createHTable(Bytes.toBytes(tableName));
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -228,7 +231,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.createHTable(Bytes.toBytes(tableName));
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
@@ -286,8 +289,10 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  new HTableNameConverterFactory().get());
       cache.updateCache();
       Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
@@ -296,9 +301,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      byte[] configTableName = Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName));
+      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
+      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       // Either the config table doesn't exists, or the consumer config is empty for the given queue
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableName);
+      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                                                  new HTableNameConverterFactory().get());
       try {
         cache.updateCache();
         Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));

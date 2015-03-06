@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithMultipleScheduledWorkflows;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
@@ -51,6 +52,7 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -108,6 +110,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
   private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_STREAM_SCHEDULE_APP_NAME = "AppWithStreamSizeSchedule";
+  private static final String APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_STREAM_SCHEDULE_STREAM_NAME = "stream";
   private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
   private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
@@ -987,6 +992,122 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleStatusCheck(5, inValidNamespaceUrl, "NOT_FOUND");
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testStreamSizeSchedules() throws Exception {
+    // Steps for the test:
+    // 1. Deploy the app
+    // 2. Verify the schedules
+    // 3. Ingest data in the stream
+    // 4. Verify the history after waiting a while
+    // 5. Suspend the schedule
+    // 6. Ingest data in the stream
+    // 7. Verify there are no runs after the suspend by looking at the history
+    // 8. Resume the schedule
+    // 9. Verify there are runs after the resume by looking at the history
+
+    StringBuilder longStringBuilder = new StringBuilder();
+    for (int i = 0; i < 10000; i++) {
+      longStringBuilder.append("dddddddddd");
+    }
+    String longString = longStringBuilder.toString();
+
+    // deploy app with schedule in namespace 2
+    HttpResponse response = deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // get schedules
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                                         APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME);
+    Assert.assertEquals(2, schedules.size());
+    String scheduleName1 = schedules.get(0).getSchedule().getName();
+    String scheduleName2 = schedules.get(1).getSchedule().getName();
+    Assert.assertNotNull(scheduleName1);
+    Assert.assertFalse(scheduleName1.isEmpty());
+
+    // Change notification threshold for stream
+    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2,
+                                   APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                     "{'notification.threshold.mb': 1}");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
+                                   APP_WITH_STREAM_SCHEDULE_STREAM_NAME));
+    String json = EntityUtils.toString(response.getEntity());
+    StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
+    Assert.assertEquals(1, properties.getNotificationThresholdMB().intValue());
+
+    // Ingest over 1MB of data in stream
+    for (int i = 0; i < 12; ++i) {
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
+                                      APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                        longString);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+
+    TimeUnit.SECONDS.sleep(10);
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME,
+                                "completed");
+    scheduleHistoryRuns(5, runsUrl, 0);
+
+    //Check schedule status
+    String statusUrl1 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
+    String statusUrl2 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
+    scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
+    scheduleStatusCheck(5, statusUrl2, "SCHEDULED");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                             scheduleName1));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                             scheduleName2));
+    //check paused state
+    scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
+    scheduleStatusCheck(5, statusUrl2, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+
+    int workflowRuns = getRuns(runsUrl);
+
+    // Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    for (int i = 0; i < 12; ++i) {
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
+                                      APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                        longString);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+    TimeUnit.SECONDS.sleep(5);
+
+    int workflowRunsAfterSuspend = getRuns(runsUrl);
+    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                            scheduleName1));
+
+    scheduleHistoryRuns(5, runsUrl, workflowRunsAfterSuspend);
+
+    //check scheduled state
+    scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
+
+    //Check status of a non existing schedule
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
+    scheduleStatusCheck(5, invalid, "NOT_FOUND");
+
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+
+    //check paused state
+    scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
+
+    //Schedule operations using invalid namespace
+    String inValidNamespaceUrl = getStatusUrl(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
+    scheduleStatusCheck(5, inValidNamespaceUrl, "NOT_FOUND");
+    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
   }

@@ -52,7 +52,8 @@ For detailed information on an application that has been deployed in the namespa
 
   GET <base-url>/namespaces/<namespace-id>/apps/<app-id>
 
-The information will be returned in the body of the response.
+The information will be returned in the body of the response. It includes the name and description
+of the application, the streams and datasets it uses, and all of its programs.
 
 .. list-table::
    :widths: 20 80
@@ -216,7 +217,16 @@ with the arguments as a JSON string in the body::
   {"foo":"bar","this":"that"}
 
 CDAP will use these these runtime arguments only for this single invocation of the
-program. To save the runtime arguments so that CDAP will use them every time you start the program,
+program.
+
+.. topic::  **Note: Runtime Arguments RESTful API Deprecated**
+
+    As of *CDAP v2.8.0*, *Runtime Arguments RESTful API* have been deprecated, pending removal in a later version.
+    Replace all use of *Runtime Arguments RESTful API* with :ref:`Preferences RESTful API <http-restful-api-v3-preferences>`.
+    *Preferences RESTful API* will have feature-parity with *Runtime Arguments RESTful API* as of the version in which
+    *Runtime Arguments RESTful API* are removed.
+
+To save the runtime arguments so that CDAP will use them every time you start the program,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
   PUT <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -451,7 +461,7 @@ with the arguments as a JSON string in the body::
   { "instances" : <quantity> }
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
    * - Parameter
@@ -468,7 +478,7 @@ with the arguments as a JSON string in the body::
 Example
 .......
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Method

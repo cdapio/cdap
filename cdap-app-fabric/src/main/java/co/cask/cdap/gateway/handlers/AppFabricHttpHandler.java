@@ -25,9 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -129,7 +127,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = dsFramework;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricDataHttpHandler = appFabricDataHttpHandler;
@@ -201,9 +199,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/webapp/start")
   public void webappStart(final HttpRequest request, final HttpResponder responder,
                           @PathParam("app-id") final String appId) {
-    programLifecycleHttpHandler.runnableStartStop(request, responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                  ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
-                                                  "start");
+    programLifecycleHttpHandler.programStartStop(request, responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
+                                                 "start");
   }
 
 
@@ -214,9 +212,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/webapp/stop")
   public void webappStop(final HttpRequest request, final HttpResponder responder,
                          @PathParam("app-id") final String appId) {
-    programLifecycleHttpHandler.runnableStartStop(request, responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                  ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
-                                                  "stop");
+    programLifecycleHttpHandler.programStartStop(request, responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
+                                                 "stop");
   }
 
   /**
@@ -228,8 +226,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase());
-      runnableStatus(responder, id, ProgramType.WEBAPP);
+      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP,
+                                      ProgramType.WEBAPP.getPrettyName().toLowerCase());
+      programStatus(responder, id, ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable t) {
@@ -238,7 +237,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void runnableStatus(HttpResponder responder, Id.Program id, ProgramType type) {
+  private void programStatus(HttpResponder responder, Id.Program id, ProgramType type) {
     try {
       ProgramStatus status = programLifecycleHttpHandler.getProgramStatus(id, type);
       if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
@@ -301,44 +300,44 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Default it returns all.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
-  public void runnableHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") String appId,
-                              @PathParam("runnable-type") String runnableType,
-                              @PathParam("runnable-id") String runnableId,
-                              @QueryParam("status") String status,
-                              @QueryParam("start") String startTs,
-                              @QueryParam("end") String endTs,
-                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
-    programLifecycleHttpHandler.runnableHistory(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId,
-                                                status, startTs, endTs, resultLimit);
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs")
+  public void programHistory(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @QueryParam("status") String status,
+                             @QueryParam("start") String startTs,
+                             @QueryParam("end") String endTs,
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
+    programLifecycleHttpHandler.programHistory(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                               Constants.DEFAULT_NAMESPACE, appId, programType, programId,
+                                               status, startTs, endTs, resultLimit);
   }
 
   /**
-   * Get runnable runtime args.
+   * Get program runtime args.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
-  public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("runnable-type") final String runnableType,
-                                     @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.getRunnableRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                       Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("program-type") final String programType,
+                                    @PathParam("program-id") final String programId) {
+    programLifecycleHttpHandler.getProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                      Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
 
   /**
-   * Save runnable runtime args.
+   * Save program runtime args.
    */
   @PUT
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
-  public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("runnable-type") final String runnableType,
-                                      @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.saveRunnableRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                        Constants.DEFAULT_NAMESPACE, appId, runnableType, runnableId);
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("program-type") final String programType,
+                                     @PathParam("program-id") final String programId) {
+    programLifecycleHttpHandler.saveProgramRuntimeArgs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                       Constants.DEFAULT_NAMESPACE, appId, programType, programId);
   }
 
   /**
@@ -373,10 +372,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
         return;
       }
 
@@ -400,10 +399,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
         return;
       }
 
@@ -659,16 +658,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns specification of a runnable - flow.
+   * Returns specification of a program - flow.
    */
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}")
   public void flowSpecification(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("flow-id") String flowId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.FLOW.getCategoryName(), flowId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.FLOW.getCategoryName(), flowId);
   }
 
   /**
@@ -679,9 +678,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") String appId,
                                      @PathParam("procedure-id") String procId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.PROCEDURE.getCategoryName(), procId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.PROCEDURE.getCategoryName(), procId);
   }
 
   /**
@@ -692,9 +691,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id")final String mapreduceId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.MAPREDUCE.getCategoryName(), mapreduceId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.MAPREDUCE.getCategoryName(), mapreduceId);
   }
 
   /**
@@ -705,9 +704,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void sparkSpecification(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId,
                                  @PathParam("spark-id")final String sparkId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.SPARK.getCategoryName(), sparkId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.SPARK.getCategoryName(), sparkId);
   }
 
   /**
@@ -718,9 +717,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
   }
 
   @GET
@@ -728,9 +727,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("service-id") String serviceId) {
-    programLifecycleHttpHandler.runnableSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                      Constants.DEFAULT_NAMESPACE,
-                                                      appId, ProgramType.SERVICE.getCategoryName(), serviceId);
+    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                     Constants.DEFAULT_NAMESPACE,
+                                                     appId, ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 
   /**
@@ -872,8 +871,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId) {
-    appLifecycleHttpHandler.getAppInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                       Constants.DEFAULT_NAMESPACE, appId);
+    getAppRecords(responder, store, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**

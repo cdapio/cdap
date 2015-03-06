@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
@@ -29,11 +30,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -85,14 +84,14 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          datasetFramework, cConf, discoveryServiceClient);
+          datasetFramework, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
-    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf));
+    this.datasetFramework = datasetFramework;
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
@@ -175,6 +174,16 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     } catch (Exception e) {
       abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
     }
+  }
+
+  @Override
+  public void execute(final co.cask.cdap.api.service.TxRunnable runnable) {
+    execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+       runnable.run(context);
+      }
+    });
   }
 
   @Override

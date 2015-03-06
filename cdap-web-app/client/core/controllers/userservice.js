@@ -49,11 +49,6 @@ define(['core/controllers/services'], function (servicesController) {
       if (runnable && runnable.requested === input) {
         return; //no-op
       }
-      var isInvalid = C.Util.isInvalidNumInstances(inputStr);
-      if(isInvalid){
-        C.Modal.show('Error', isInvalid);
-        return;
-      }
 
       this.setInstances(service, runnable.id, input);
     },

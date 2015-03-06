@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,14 +20,11 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -45,8 +42,6 @@ public abstract class MetricsTableTest {
   private static final byte ONES = 0x7f;
 
   protected abstract MetricsTable getTable(String name) throws Exception;
-
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   protected static final byte[] A = Bytes.toBytes(1L);
   protected static final byte[] B = Bytes.toBytes(2L);
@@ -285,6 +280,27 @@ public abstract class MetricsTableTest {
     table.deleteAll(new byte[0]);
     // verify everything is gone by counting all entries in a scan
     Assert.assertEquals(0, countRange(table, null, null));
+  }
+
+  @Test
+  public void testDeleteIncrements() throws Exception {
+    // note: this is pretty important test case for tables with counters, e.g. metrics
+    MetricsTable table = getTable("testDeleteIncrements");
+    // delete increment and increment again
+    table.increment(A, ImmutableMap.of(B, 5L));
+    table.increment(A, ImmutableMap.of(B, 2L));
+    table.increment(P, ImmutableMap.of(Q, 15L));
+    table.increment(P, ImmutableMap.of(Q, 12L));
+    Assert.assertEquals(7L, Bytes.toLong(table.get(A, B)));
+    Assert.assertEquals(27L, Bytes.toLong(table.get(P, Q)));
+    table.delete(A, new byte[][]{B});
+    table.deleteAll(P);
+    Assert.assertNull(table.get(A, B));
+    Assert.assertNull(table.get(P, Q));
+    table.increment(A, ImmutableMap.of(B, 3L));
+    table.increment(P, ImmutableMap.of(Q, 13L));
+    Assert.assertEquals(3L, Bytes.toLong(table.get(A, B)));
+    Assert.assertEquals(13L, Bytes.toLong(table.get(P, Q)));
   }
 
   private static int countRange(MetricsTable table, Integer start, Integer stop) throws Exception {
