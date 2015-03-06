@@ -196,7 +196,6 @@ public class UpgraderMain {
    * Stop services and
    */
   private void stop() {
-    LOG.info("Stopping Upgrade ...");
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();

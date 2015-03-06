@@ -18,7 +18,6 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
@@ -33,6 +32,7 @@ import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
@@ -189,18 +189,19 @@ public class IntegrationTestBase {
     return deployApplication(applicationClz, new File[0]);
   }
 
-  private boolean isUserDataset(DatasetSpecification specification) {
+  private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
     return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
   }
 
   private void assertNoUserDatasets() throws Exception {
     DatasetClient datasetClient = getDatasetClient();
-    List<DatasetSpecification> datasets = datasetClient.list();
+    List<DatasetSpecificationSummary> datasets = datasetClient.list();
 
-    Iterable<DatasetSpecification> filteredDatasts = Iterables.filter(datasets, new Predicate<DatasetSpecification>() {
+    Iterable<DatasetSpecificationSummary> filteredDatasts = Iterables.filter(
+      datasets, new Predicate<DatasetSpecificationSummary>() {
       @Override
-      public boolean apply(@Nullable DatasetSpecification input) {
+      public boolean apply(@Nullable DatasetSpecificationSummary input) {
         if (input == null) {
           return true;
         }
@@ -209,11 +210,11 @@ public class IntegrationTestBase {
       }
     });
 
-    Iterable<String> filteredDatasetsNames = Iterables.transform(filteredDatasts,
-                                                                 new Function<DatasetSpecification, String>() {
+    Iterable<String> filteredDatasetsNames = Iterables.transform(
+      filteredDatasts, new Function<DatasetSpecificationSummary, String>() {
       @Nullable
       @Override
-      public String apply(@Nullable DatasetSpecification input) {
+      public String apply(@Nullable DatasetSpecificationSummary input) {
         if (input == null) {
           throw new IllegalStateException();
         }
