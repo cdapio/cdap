@@ -23,8 +23,10 @@ import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -34,6 +36,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,6 +48,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String ID_FIELD = "id";
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
+  private static final String PROPERTIES_FIELD = "properties";
   private static final String ID = "test";
   private static final String NAME = "display test";
   private static final String DESCRIPTION = "test description";
@@ -54,6 +58,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String METADATA_EMPTY_FIELDS = "{\"name\":\"\", \"description\":\"\"}";
   private static final String METADATA_INVALID_JSON = "invalid";
   private static final String INVALID_ID = "!nv@l*d/";
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private HttpResponse createNamespace(String id) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
@@ -74,6 +80,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse deleteNamespace(String name) throws Exception {
     return doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  private HttpResponse setProperties(String id, Map<String, String> properties) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
+                 GSON.toJson(properties));
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {
@@ -252,5 +263,36 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
       Assert.fail("Did not expect namespace '" + fooNamespace + "' to exist after deleting it.");
     } catch (NotFoundException expected) {
     }
+  }
+
+  @Test
+  public void testProperties() throws Exception {
+    // create with no metadata
+    HttpResponse response = createNamespace(ID);
+    assertResponseCode(200, response);
+    // verify
+    response = getNamespace(ID);
+    JsonObject namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
+    // cleanup
+    Map<String, String> properties = ImmutableMap.of("yarn.queue", "prod");
+    setProperties(ID, properties);
+    response = getNamespace(ID);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    namespace.get(PROPERTIES_FIELD).getAsJsonObject();
+    JsonObject object = namespace.get(PROPERTIES_FIELD).getAsJsonObject();
+
+    Map<String, String> returnedProperties = GSON.fromJson(namespace.get(PROPERTIES_FIELD).getAsJsonObject(),
+                                                           STRING_MAP_TYPE);
+    Assert.assertEquals(properties, returnedProperties);
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
+
+    response = deleteNamespace(ID);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

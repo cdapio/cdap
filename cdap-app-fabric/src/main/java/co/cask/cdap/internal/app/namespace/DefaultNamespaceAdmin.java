@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * {@link AbstractIdleService} for managing namespaces
@@ -180,5 +181,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // TODO: CDAP-870: Delete streams, queues, apps
 
     store.deleteNamespace(namespaceId);
+  }
+
+  public void updateProperties(Id.Namespace namespaceId, Map<String, String> properties) throws NotFoundException {
+    if (store.getNamespace(namespaceId) == null) {
+      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+    }
+    NamespaceMeta metadata = store.getNamespace(namespaceId);
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      metadata.setProperty(entry.getKey(), entry.getValue());
+    }
+    store.updateNamespace(metadata);
   }
 }

@@ -797,6 +797,21 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void updateNamespace(final NamespaceMeta metadata) {
+    Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        NamespaceMeta existing = input.apps.getNamespace(Id.Namespace.from(metadata.getId()));
+        if (existing != null) {
+          input.apps.createNamespace(metadata);
+        }
+        return null;
+      }
+    });
+  }
+
+  @Override
   @Nullable
   public NamespaceMeta getNamespace(final Id.Namespace id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");

@@ -27,6 +27,9 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -35,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -47,6 +52,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final NamespaceAdmin namespaceAdmin;
 
@@ -79,6 +86,19 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       LOG.error("Internal error while getting namespace '{}'", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+
+  @PUT
+  @Path("/namespaces/{namespace-id}/properties")
+  public void properties(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+    try {
+      Map<String, String> properties = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), STRING_MAP_TYPE);
+      namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), properties);
+      responder.sendString(HttpResponseStatus.OK, "Properties updated");
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
     }
   }
 
