@@ -80,7 +80,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
         // Draw the flowlet shape.
         renderer.shapes().flowlet = function(parent, bbox, node) {
           var instances = getInstances(node.elem.__data__); // No other way to get name from node.
-          var instaceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
+          var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
@@ -89,13 +89,13 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
 
           // Elements are positioned with respect to shapeSvg.
           parent.insert('circle')
-            .attr('cx', flowletCircleRadius - instaceCircleScaled)
+            .attr('cx', flowletCircleRadius - instanceCircleScaled)
             .attr('cy', -instanceBufferHeight)
-            .attr('r', instaceCircleScaled)
+            .attr('r', instanceCircleScaled)
             .attr('class', 'flow-shapes flowlet-instances');
 
           parent.insert('text')
-            .attr('x', flowletCircleRadius - instaceCircleScaled)
+            .attr('x', flowletCircleRadius - instanceCircleScaled)
             .attr('y', -instanceBufferHeight + metricCountPadding)
             .text(instances)
             .attr('class', 'flow-shapes flowlet-instance-count');
