@@ -89,6 +89,9 @@ A **Stream Size Schedule** will execute a Workflow every time the Stream it refe
 also defined in the
 `Schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createDataSchedule(java.lang.String,%20java.lang.String,%20co.cask.cdap.api.schedule.Source,%20java.lang.String,%20int)>`__.
 
+When a **Stream Size Schedule** is first created, during the deployment of an application, it will wait for the
+increment of data that it defined, starting from the current size of the Stream as given by the Metric system.
+
 These actions can be performed on a Schedule:
 
 - *Suspend*: Suspending a Schedule will prevent the Workflow from being executed again, in the event that the Stream
