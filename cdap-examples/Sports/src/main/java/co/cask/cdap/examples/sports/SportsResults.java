@@ -31,8 +31,9 @@ public class SportsResults extends AbstractApplication {
   @Override
   public void configure() {
     addService(new UploadService());
+    addMapReduce(new ScoreCounter());
 
-    // create the time-partitioned file set, configure it to work with MapReduce and with Explore
+    // create the results partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
@@ -46,6 +47,18 @@ public class SportsResults extends AbstractApplication {
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .build());
 
-
+    // create the aggregates partitioned file set, configure it to work with MapReduce and with Explore
+    createDataset("totals", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      // properties for partitioning
+      .setPartitioning(Partitioning.builder().addStringField("league").build())
+        // properties for file set
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setInputProperty(TextOutputFormat.SEPERATOR, ",")
+        // properties for explore (to create a partitioned hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("csv")
+      .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
+      .build());
   }
 }
