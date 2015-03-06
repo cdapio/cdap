@@ -41,8 +41,9 @@ import java.io.IOException;
  */
 public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
-  static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
+
   private static final Gson GSON = new Gson();
+  private static final byte[] DEFAULT_DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final DatasetSpecification spec;
   // todo: datasets should not depend on cdap configuration!
@@ -63,7 +64,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   public void create() throws IOException {
-    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor(getColumnFamily(spec));
 
     if (supportsReadlessIncrements(spec)) {
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
@@ -121,7 +122,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
+    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(getColumnFamily(spec));
 
     boolean needUpgrade = false;
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
@@ -219,6 +220,15 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
    */
   public static boolean isTransactional(DatasetSpecification spec) {
     return !"true".equalsIgnoreCase(spec.getProperty(Constants.Dataset.TABLE_TX_DISABLED));
+  }
+
+  /**
+   * Returns the column family as being set in the given specification.
+   * If it is not set, the {@link #DEFAULT_DATA_COLUMN_FAMILY} will be returned.
+   */
+  public static byte[] getColumnFamily(DatasetSpecification spec) {
+    String columnFamily = spec.getProperty(Table.PROPERTY_COLUMN_FAMILY);
+    return columnFamily == null ? DEFAULT_DATA_COLUMN_FAMILY : Bytes.toBytes(columnFamily);
   }
 
   /**
