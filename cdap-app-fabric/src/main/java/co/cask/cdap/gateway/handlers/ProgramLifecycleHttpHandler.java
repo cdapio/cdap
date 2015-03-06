@@ -997,13 +997,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**************************** Workflow/schedule APIs *****************************************************/
   @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/current")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
+                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
+                             @PathParam("run-id") String runId) {
 
     try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName,
+      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
                                        new WorkflowClient.Callback() {
                                          @Override
                                          public void handle(WorkflowClient.Status status) {
@@ -1355,57 +1356,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              HttpResponseStatus.NOT_FOUND.getCode());
       }
 
-      // For program type other than MapReduce
-      if (type != ProgramType.MAPREDUCE) {
-        return getProgramStatus(id, type, new StatusMap());
-      }
-
-      // must do it this way to allow anon function in workflow to modify status
-      // check that mapreduce exists
-      if (!appSpec.getMapReduce().containsKey(id.getId())) {
-        return new StatusMap(null, "Program: " + id.getId() + " not found", HttpResponseStatus.NOT_FOUND.getCode());
-      }
-
-      // See if the MapReduce is part of a workflow
-      String workflowName = getWorkflowName(id.getId());
-      if (workflowName == null) {
-        // Not from workflow, treat it as simple program status
-        return getProgramStatus(id, type, new StatusMap());
-      }
-
-      // MapReduce is part of a workflow. Query the status of the workflow instead
-      final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
-      workflowClient.getWorkflowStatus(id.getNamespaceId(), id.getApplicationId(),
-                                       workflowName, new WorkflowClient.Callback() {
-          @Override
-          public void handle(WorkflowClient.Status status) {
-            StatusMap result = new StatusMap();
-
-            if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-              result.setStatus("RUNNING");
-              result.setStatusCode(HttpResponseStatus.OK.getCode());
-            } else {
-              //mapreduce name might follow the same format even when its not part of the workflow.
-              try {
-                // getProgramStatus returns program status or http response status NOT_FOUND
-                getProgramStatus(id, type, result);
-              } catch (Exception e) {
-                LOG.error("Exception raised when getting program status for {} {}", id, type, e);
-                // error occurred so say internal server error
-                result.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
-                result.setError(e.getMessage());
-              }
-            }
-
-            // This would make all changes in the result statusMap available to the other thread that doing
-            // the take() call.
-            statusFuture.set(result);
-          }
-        }
-      );
-      // wait for status to come back in case we are polling mapreduce status in workflow
-      // status map contains either a status or an error
-      return Futures.getUnchecked(statusFuture);
+      return getProgramStatus(id, type, new StatusMap());
     } catch (Exception e) {
       LOG.error("Exception raised when getting program status for {} {}", id, type, e);
       return new StatusMap(null, "Failed to get program status", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
@@ -1553,7 +1504,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
                                              String appId, ProgramType programType, String programId,
                                              String action) {
-    if (programType == null || (programType == ProgramType.WORKFLOW && "stop".equals(action))) {
+    if (programType == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
@@ -1697,6 +1648,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       controller.stop().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
+      if (type == ProgramType.WORKFLOW) {
+        return AppFabricServiceStatus.OK;
+      }
       LOG.warn(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
