@@ -17,7 +17,6 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -25,8 +24,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -83,7 +83,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     // Upgrade all datasets in system namespace
     Id.Namespace systemNamespace = Constants.SYSTEM_NAMESPACE_ID;
-    for (DatasetSpecification spec : framework.getInstances(systemNamespace)) {
+    for (DatasetSpecificationSummary spec : framework.getInstances(systemNamespace)) {
       LOG.info("Upgrading dataset: {}, spec: {}", spec.getName(), spec.toString());
       DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(systemNamespace, spec.getName()), null);
       // we know admin is not null, since we are looping over existing datasets

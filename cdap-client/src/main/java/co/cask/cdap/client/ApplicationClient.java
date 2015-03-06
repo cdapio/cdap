@@ -56,9 +56,14 @@ public class ApplicationClient {
   private final ClientConfig config;
 
   @Inject
+  public ApplicationClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public ApplicationClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**

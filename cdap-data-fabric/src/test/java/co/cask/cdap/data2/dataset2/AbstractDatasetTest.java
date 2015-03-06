@@ -84,7 +84,7 @@ public class AbstractDatasetTest {
         injector.injectMembers(registry);
         return registry;
       }
-    });
+    }, cConf);
     framework.addModule(inMemory, new InMemoryTableModule());
     framework.addModule(core, new CoreDatasetsModule());
     framework.addModule(fileSet, new FileSetModule());

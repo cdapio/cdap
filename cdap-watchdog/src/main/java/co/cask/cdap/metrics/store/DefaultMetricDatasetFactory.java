@@ -20,11 +20,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -56,7 +54,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
-    this(new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf)), cConf);
+    this(dsFramework, cConf);
   }
 
   private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
