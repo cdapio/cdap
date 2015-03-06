@@ -27,7 +27,7 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   protected final QueueConstants.QueueType type;
   protected final String unqualifiedTableNamePrefix;
   // system.queue.config'
-  public static final String CONFIG_TABLE_NAME =
+  private static final String CONFIG_TABLE_NAME =
     Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
 
   public AbstractQueueAdmin(QueueConstants.QueueType type) {
@@ -57,11 +57,11 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     return parts[parts.length - 1];
   }
 
-  public TableId getConfigTableId(QueueName queueName) {
+  public static  TableId getConfigTableId(QueueName queueName) {
     return getConfigTableId(queueName.getFirstComponent());
   }
 
-  public TableId getConfigTableId(String namespace) {
+  public static TableId getConfigTableId(String namespace) {
     return TableId.from(namespace, CONFIG_TABLE_NAME);
   }
 

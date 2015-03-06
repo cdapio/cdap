@@ -86,7 +86,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
       conf = env.getConfiguration();
       String hbaseNamespacePrefix = HTable94NameConverter.getHbaseNamespacePrefix(hTableName);
-      TableId queueConfigTableId = TableId.from(namespaceId, AbstractQueueAdmin.CONFIG_TABLE_NAME);
+      TableId queueConfigTableId = AbstractQueueAdmin.getConfigTableId(namespaceId);
       configTableNameBytes = Bytes.toBytes(HTable94NameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId));
       configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable94NameConverter());
     }

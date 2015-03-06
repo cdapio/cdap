@@ -117,7 +117,9 @@ public abstract class HTableNameConverter {
     return PrefixedTableId.from(prefix, namespace, hTableName);
   }
 
-  // Used internal to HTableNameConverter, so that one parsing method can extract both the prefix and TableId.
+  /**
+   * Used internal to HTableNameConverter, so that one parsing method can extract both the prefix and TableId.
+   */
   protected static final class PrefixedTableId {
     String tablePrefix;
     TableId tableId;
