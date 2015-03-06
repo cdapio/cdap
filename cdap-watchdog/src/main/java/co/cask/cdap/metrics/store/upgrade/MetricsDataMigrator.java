@@ -124,8 +124,6 @@ public class MetricsDataMigrator {
 
   public MetricsDataMigrator(final CConfiguration cConf, final DatasetFramework dsFramework,
                              MetricDatasetFactory factory) {
-
-    System.out.println("Initializing Data Migration...");
     this.dsFramework = dsFramework;
     this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
@@ -135,7 +133,6 @@ public class MetricsDataMigrator {
   }
 
   public void migrateMetricsTables(Version cdapVersion) {
-    System.out.println("Migrating metrics data from CDAP - " + cdapVersion.name());
     if (cdapVersion == Version.VERSION_2_6_OR_LOWER) {
       migrateMetricsTableFromVersion26(cdapVersion);
     } else if (cdapVersion == Version.VERSION_2_7) {
@@ -144,7 +141,6 @@ public class MetricsDataMigrator {
       System.out.println("Unsupported version" + cdapVersion);
       return;
     }
-    System.out.println("Successfully Migrated metrics data from CDAP - " + cdapVersion.name());
   }
 
   private void migrateMetricsTableFromVersion26(Version version) {
@@ -285,7 +281,7 @@ public class MetricsDataMigrator {
     System.out.println("Migrating Metrics data from table : " + tableName);
     MetricsTable table = null;
     // for default namespace, we have to provide the complete table name.
-    tableName = "cdap.system." + tableName;
+    tableName = "system." + tableName;
     System.out.println("Complete Table Name is " + tableName);
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
@@ -301,7 +297,6 @@ public class MetricsDataMigrator {
     return table;
   }
 
-  // todo : use Enum instead of string comparison for the below methods
   private String getMetricNameBasedOnVersion(String metricName, Version version) {
     if (version == Version.VERSION_2_6_OR_LOWER) {
       return metricName;

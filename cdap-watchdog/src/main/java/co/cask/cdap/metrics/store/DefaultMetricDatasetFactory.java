@@ -134,17 +134,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by metrics system.
+   * Creates the metrics tables and kafka-meta table using the factory {@link DefaultMetricDatasetFactory}
    * <p/>
-   * It is primarily used by upgrade tool.
+   * It is primarily used by upgrade and data-migration tool.
    *
-   * @param datasetFramework framework to add types and datasets to
+   * @param factory : metrics dataset factory
    */
-  public static MetricDatasetFactory setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+  public static void setupDatasets(DefaultMetricDatasetFactory factory)
     throws IOException, DatasetManagementException {
-
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(datasetFramework, conf);
-
     // adding all fact tables
     factory.get(1);
     factory.get(60);
@@ -153,7 +150,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
-    return factory;
   }
 
   /**
@@ -165,10 +161,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    * @throws DatasetManagementException
    */
   public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
-                                 MetricHBaseTableUtil.Version version)
-    throws IOException, DatasetManagementException {
-    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework,
-                                                           setupDatasets(conf, datasetFramework));
+                                 MetricHBaseTableUtil.Version version) throws IOException, DatasetManagementException {
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+    setupDatasets(factory);
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework, factory);
     migrator.migrateMetricsTables(version);
   }
 
