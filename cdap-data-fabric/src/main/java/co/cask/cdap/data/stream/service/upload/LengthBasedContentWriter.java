@@ -64,13 +64,15 @@ final class LengthBasedContentWriter implements ContentWriter {
     if (fileContentWriter != null) {
       fileContentWriter.appendAll(bodies, immutable);
     } else {
-      long tempSize = 0;
       while (bodies.hasNext()) {
         ByteBuffer next = bodies.next();
-        tempSize += next.remaining();
+        int size = next.remaining();
         bufferedContentWriter.append(next, immutable);
+        if (updateWriter(size)) {
+          appendAll(bodies, immutable);
+          break;
+        }
       }
-      updateWriter(tempSize);
     }
   }
 
@@ -92,12 +94,14 @@ final class LengthBasedContentWriter implements ContentWriter {
     }
   }
 
-  private void updateWriter(long length) throws IOException {
+  private boolean updateWriter(long length) throws IOException {
     bodySize += length;
     if (bodySize >= bufferThreshold) {
       fileContentWriter = fileContentWriterFactory.create(ImmutableMap.<String, String>of());
       fileContentWriter.appendAll(bufferedContentWriter.iterator(), true);
       bufferedContentWriter.cancel();
+      return true;
     }
+    return false;
   }
 }

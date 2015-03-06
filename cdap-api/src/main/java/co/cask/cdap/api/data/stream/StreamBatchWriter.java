@@ -16,21 +16,12 @@
 
 package co.cask.cdap.api.data.stream;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 
 /**
  * Used to write to Stream in Batch mode. Once closed, a new {@link StreamBatchWriter} needs to be created to do
  * another set of batch writes.
  */
-public interface StreamBatchWriter extends Closeable {
+public interface StreamBatchWriter extends WritableByteChannel {
 
-  /**
-   * Each call to write will write data to the stream batch endpoint.
-   *
-   * @param data {@link ByteBuffer} each data chunk that needs to be written
-   * @throws IOException if an error occurred during the write to stream
-   */
-  void write(ByteBuffer data) throws IOException;
 }

@@ -29,7 +29,7 @@ import java.util.Map;
 public interface StreamWriter {
 
   /**
-   * Write a string to a stream
+   * Writes a string to a stream
    *
    * @param stream stream id
    * @param data data to be written
@@ -39,7 +39,7 @@ public interface StreamWriter {
   public void write(String stream, String data) throws IOException;
 
   /**
-   * Write a string to a stream with headers
+   * Writes a string to a stream with headers
    *
    * @param stream stream id
    * @param data data to be written
@@ -50,7 +50,7 @@ public interface StreamWriter {
   public void write(String stream, String data, Map<String, String> headers) throws IOException;
 
   /**
-   * Write a {@link ByteBuffer} to a stream
+   * Writes a {@link ByteBuffer} to a stream
    *
    * @param stream stream id
    * @param data {@link ByteBuffer} data to be written
@@ -60,7 +60,7 @@ public interface StreamWriter {
   public void write(String stream, ByteBuffer data) throws IOException;
 
   /**
-   * Write a {@link StreamEventData} to a stream
+   * Writes a {@link StreamEventData} to a stream
    *
    * @param stream stream id
    * @param data {@link StreamEventData} data to be written
@@ -70,7 +70,7 @@ public interface StreamWriter {
   public void write(String stream, StreamEventData data) throws IOException;
 
   /**
-   * Write a File to a stream in batch
+   * Writes a File to a stream in batch
    * @param stream stream id
    * @param file File
    * @param contentType content type
@@ -80,7 +80,7 @@ public interface StreamWriter {
   public void writeFile(String stream, File file, String contentType) throws IOException;
 
   /**
-   * Write in batch using {@link StreamBatchWriter} to a stream
+   * Writes in batch using {@link StreamBatchWriter} to a stream
    * @param stream stream id
    * @param contentType content type
    * @return {@link StreamBatchWriter} provides a batch writer

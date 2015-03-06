@@ -16,26 +16,23 @@
 
 package co.cask.cdap.app.stream;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,14 +48,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultStreamWriter implements StreamWriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamWriter.class);
-
   private final String namespaceId;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final EndpointStrategy endpointStrategy;
 
   public DefaultStreamWriter(String namespaceId, DiscoveryServiceClient discoveryServiceClient) {
     this.namespaceId = namespaceId;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -66,8 +63,7 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private URL getStreamURL(String stream, boolean batch) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.STREAMS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new IOException("Stream Service Endpoint not found");
     }
@@ -107,12 +103,12 @@ public class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void write(String stream, String data, Map<String, String> headers) throws IOException {
-    write(stream, ByteBuffer.wrap(Bytes.toBytes(data)), headers);
+    write(stream, Charsets.UTF_8.encode(data), headers);
   }
 
   @Override
   public void write(String stream, ByteBuffer data) throws IOException {
-    write(stream, data, Maps.<String, String>newHashMap());
+    write(stream, data, ImmutableMap.<String, String>of());
   }
 
   @Override

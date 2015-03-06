@@ -32,20 +32,30 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
   private final HttpURLConnection connection;
   private final Id.Stream stream;
+  private boolean open;
 
   public DefaultStreamBatchWriter(HttpURLConnection connection, Id.Stream stream) {
     this.connection = connection;
     this.stream = stream;
+    this.open = true;
   }
 
   @Override
-  public void write(ByteBuffer data) throws IOException {
+  public boolean isOpen() {
+    return open;
+  }
+
+  @Override
+  public int write(ByteBuffer data) throws IOException {
+    int size = data.remaining();
     ByteBuffers.writeToStream(data, connection.getOutputStream());
+    return size;
   }
 
   @Override
   public void close() throws IOException {
     connection.getOutputStream().close();
+    open = false;
     int responseCode = connection.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException(String.format("Stream %s not found", stream));
