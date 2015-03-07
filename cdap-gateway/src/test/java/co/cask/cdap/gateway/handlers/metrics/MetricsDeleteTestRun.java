@@ -57,7 +57,7 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/system/apps/WCount/flows";
+    String base = PREFIX + "/metrics/system/apps/WCount/flows";
     // make sure data is there
     Assert.assertEquals(6, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.processed"));
     Assert.assertEquals(5, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.out"));
@@ -83,7 +83,8 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
   public void testContextAndMetricDelete() throws Exception {
     // Insert some metrics
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WordCounter", "unique"));
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE,
+                                                       "WCount", "WordCounter", "unique"));
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
     collector.increment("store.ops", 7);
@@ -97,7 +98,7 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/system/apps/WCount/flows/WordCounter";
+    String base = PREFIX + "/metrics/system/apps/WCount/flows/WordCounter";
     // make sure data is there
     Assert.assertEquals(6, getMetricCount(base + "/flowlets/unique", "process.events.processed"));
     Assert.assertEquals(5, getMetricCount(base + "/flowlets/unique", "process.events.out"));
@@ -123,7 +124,8 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
   public void testMetricNoContextDelete() throws Exception {
     // Insert some metrics
     MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WordCounter", "unique"));
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE,
+                                                       "WCount", "WordCounter", "unique"));
     collector.increment("store.ops", 7);
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
@@ -131,7 +133,7 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/system";
+    String base = PREFIX + "/metrics/system";
     // make sure data is there
     Assert.assertEquals(7, getMetricCount(base, "store.ops"));
     Assert.assertEquals(6, getMetricCount(base, "process.events.processed"));
@@ -155,7 +157,7 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
       // strip metric name from end of resource since delete handler doesn't have that in the path
       resource = resource.substring(0, resource.lastIndexOf("/"));
       // test GET request fails with 404
-      HttpResponse response = doDelete("/v2/metrics" + resource);
+      HttpResponse response = doDelete(PREFIX + "/metrics" + resource);
       Assert.assertEquals("DELETE " + resource + " did not return 200 as expected.",
                           HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     }
@@ -169,6 +171,6 @@ public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
 
   @After
   public void clearMetrics() throws Exception {
-    doDelete("/v2/metrics");
+    doDelete(PREFIX + "/metrics");
   }
 }
