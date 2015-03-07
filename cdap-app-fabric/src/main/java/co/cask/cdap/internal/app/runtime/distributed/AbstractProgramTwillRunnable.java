@@ -250,20 +250,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
-
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED) {
-          stopped();
-        }
-        if (currentState == ProgramController.State.ERROR) {
-          error(controller.getFailureCause());
-        }
+      public void completed() {
+        state.set(ProgramController.State.COMPLETED);
       }
 
       @Override
-      public void stopped() {
-        state.set(ProgramController.State.STOPPED);
+      public void killed() {
+        state.set(ProgramController.State.KILLED);
       }
 
       @Override

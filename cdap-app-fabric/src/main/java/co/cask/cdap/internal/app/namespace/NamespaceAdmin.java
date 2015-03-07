@@ -18,12 +18,11 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Admin class for managing a namespace's lifecycle
@@ -71,4 +70,13 @@ public interface NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
   public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException, NamespaceCannotBeDeletedException;
+
+  /**
+   * Update namespace properties for a given namespace.
+   *
+   * @param namespaceId  the {@link Id.Namespace} of the namespace to be updated
+   * @param namespaceMeta namespacemeta to update
+   * @throws NotFoundException if the specified namespace is not found
+   */
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException;
 }

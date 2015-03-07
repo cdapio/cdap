@@ -50,10 +50,10 @@ public class WorkflowClient {
                                                configBuilder.build());
   }
 
-  public void getWorkflowStatus(String accountId, String appId, String workflowId,
+  public void getWorkflowStatus(String accountId, String appId, String workflowId, String runId,
                                 final Callback callback) throws IOException {
     // determine the service provider for the given path
-    String serviceName = String.format("workflow.%s.%s.%s", accountId, appId, workflowId);
+    String serviceName = String.format("workflow.%s.%s.%s.%s", accountId, appId, workflowId, runId);
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)).pick();
 
     if (discoverable == null) {

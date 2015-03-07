@@ -187,14 +187,7 @@ public class SparkProgramRunnerTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 

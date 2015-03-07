@@ -26,7 +26,6 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -138,7 +137,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    Job job = Job.getInstance(new Configuration(hConf));
+    final Job job = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = job.getConfiguration();
 
     // Prefer our job jar in the classpath
@@ -166,8 +165,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     job.getConfiguration().setClassLoader(classLoader);
     context.setJob(job);
 
-    // Call the user MapReduce for initialization
-    beforeSubmit();
+    // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
+    runUserCodeInTx(new TransactionExecutor.Subroutine() {
+      // Call the user MapReduce for initialization
+      @Override
+      public void apply() throws Exception {
+        beforeSubmit();
+
+        // set input/output datasets info
+        setInputDatasetIfNeeded(job);
+        setOutputDatasetIfNeeded(job);
+      }
+    }, "startUp()");
+
+    setOutputClassesIfNeeded(job);
+    setMapOutputClassesIfNeeded(job);
 
     // set resources for the job
     Resources mapperResources = context.getMapperResources();
@@ -186,13 +198,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
       setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
     }
-
-    // set input/output datasets info
-    setInputDatasetIfNeeded(job);
-    setOutputDatasetIfNeeded(job);
-
-    setOutputClassesIfNeeded(job);
-    setMapOutputClassesIfNeeded(job);
 
     // replace user's Mapper & Reducer's with our wrappers in job config
     MapperWrapper.wrap(job);
@@ -360,30 +365,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the {@link MapReduce#beforeSubmit(co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
-  private void beforeSubmit() throws TransactionFailureException, InterruptedException {
-    runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
-      @Override
-      public void apply(MapReduceContext mapReduceContext) throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
-        try {
-          mapReduce.beforeSubmit(mapReduceContext);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-    }, "beforeSubmit()");
+  private void beforeSubmit() throws Exception {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+    try {
+      mapReduce.beforeSubmit(context);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
-    runUserCodeInTx(new TransactionExecutor.Procedure<MapReduceContext>() {
+    runUserCodeInTx(new TransactionExecutor.Subroutine() {
       @Override
-      public void apply(MapReduceContext mapReduceContext) throws Exception {
+      public void apply() throws Exception {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.onFinish(succeeded, mapReduceContext);
+          mapReduce.onFinish(succeeded, context);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -391,17 +391,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }, "onFinish()");
   }
 
-  // since the user code may create new TransactionAwares, we need to do this ourselves instead
-  // of going through tephra's TransactionExecutor, since the executor requires that you know all the txAwares
-  // before executing.
-  private void runUserCodeInTx(TransactionExecutor.Procedure<MapReduceContext> userCode, String methodName) {
-    // add datasets given in the application specification to the transaction context
+  // instead of using Tephra's TransactionExecutor, we must implement the transaction lifecycle
+  // ourselves. This is because the user code may add new datasets through the dynamic mr context,
+  // which is not supported by the TransactionExecutor. Instead, we reuse the same txContext
+  // (which is managed by the mr context) for all transactions.
+  private void runUserCodeInTx(TransactionExecutor.Subroutine userCode, String methodName) {
     TransactionContext txContext = context.getTransactionContext();
     try {
       txContext.start();
-      // this context allows the onFinish in user code to get datasets not mentioned in the application spec
-      // it will make sure any txAwares created through the user code will get added to the txContext.
-      userCode.apply(context);
+      userCode.apply();
       txContext.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit after running " + methodName + ". Aborting transaction.", txContext);
