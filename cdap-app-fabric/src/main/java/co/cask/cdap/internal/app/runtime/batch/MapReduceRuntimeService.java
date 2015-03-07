@@ -391,11 +391,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }, "onFinish()");
   }
 
-  // since the user code may create new TransactionAwares, we need to do this ourselves instead
-  // of going through tephra's TransactionExecutor, since the executor requires that you know all the txAwares
-  // before executing.
+  // instead of using Tephra's TransactionExecutor, we must implement the transaction lifecycle
+  // ourselves. This is because the user code may add new datasets through the dynamic mr context,
+  // which is not supported by the TransactionExecutor. Instead, we reuse the same txContext
+  // (which is managed by the mr context) for all transactions.
   private void runUserCodeInTx(TransactionExecutor.Subroutine userCode, String methodName) {
-    // add datasets given in the application specification to the transaction context
     TransactionContext txContext = context.getTransactionContext();
     try {
       txContext.start();
