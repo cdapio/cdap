@@ -132,7 +132,6 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setConnectTimeout(15000);
     connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, contentType);
     connection.setDoOutput(true);
-    connection.setChunkedStreamingMode(0);
     connection.connect();
     return new DefaultStreamBatchWriter(connection, Id.Stream.from(namespaceId, stream));
   }

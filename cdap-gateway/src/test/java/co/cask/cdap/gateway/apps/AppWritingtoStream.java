@@ -58,7 +58,7 @@ public class AppWritingtoStream extends AbstractApplication {
   public static final String SERVICE = "srv";
   public static final String KEY = "key";
   public static final String ENDPOINT = "count";
-  public static final int VALUE = 10;
+  public static final int VALUE = 12;
 
   @Override
   public void configure() {
@@ -110,11 +110,16 @@ public class AppWritingtoStream extends AbstractApplication {
         streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 5\n")));
         streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 6\n")));
         streamBatchWriter.close();
+
+        streamBatchWriter = getContext().createBatchWriter(STREAM, "text/plain");
+        streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 7\n")));
+        streamBatchWriter.write(ByteBuffer.wrap(Bytes.toBytes("Event 8\n")));
+        streamBatchWriter.close();
       } catch (IOException e) {
         LOG.error(e.getMessage(), e);
       }
 
-      for (int i = 7; i < VALUE; i++) {
+      for (int i = 9; i < VALUE; i++) {
         try {
           getContext().write(STREAM, String.format("Event %d", i));
         } catch (IOException e) {
