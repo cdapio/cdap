@@ -86,6 +86,14 @@ public abstract class HTableNameConverter {
    */
   public abstract String getSysConfigTablePrefix(String hTableName);
 
+  /**
+   * Returns the {@link TableId} for the given hbase tablename
+   * Note: Sub-classes should override this method for their version specific implementation.
+   * @param hTableName the table name
+   * @return {@link TableId} for the table
+   */
+  public abstract TableId from(String hTableName);
+
   @VisibleForTesting
   protected static String toHBaseNamespace(Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
