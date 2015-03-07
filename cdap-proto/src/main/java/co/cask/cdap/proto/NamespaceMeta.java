@@ -63,7 +63,7 @@ public final class NamespaceMeta {
     private String id;
     private String name;
     private String description;
-    private String yarnQueueName;
+    private String schedulerQueueName;
 
     public Builder() {
      // No-Op
@@ -73,7 +73,7 @@ public final class NamespaceMeta {
       this.id =  meta.getId();
       this.name = meta.getName();
       this.description = meta.getDescription();
-      this.yarnQueueName = meta.getConfig().getSchedulerQueueName();
+      this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
     }
 
     public Builder setId(final String id) {
@@ -91,8 +91,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setYarnQueueName(final String yarnQueueName) {
-      this.yarnQueueName = yarnQueueName;
+    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+      this.schedulerQueueName = schedulerQueueName;
       return this;
     }
 
@@ -105,10 +105,10 @@ public final class NamespaceMeta {
         description = "";
       }
 
-      if (yarnQueueName == null) {
-        yarnQueueName = "";
+      if (schedulerQueueName == null) {
+        schedulerQueueName = "";
       }
-      return new NamespaceMeta(id, name, description, new NamespaceConfig(yarnQueueName));
+      return new NamespaceMeta(id, name, description, new NamespaceConfig(schedulerQueueName));
     }
   }
 

@@ -276,7 +276,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
-    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setYarnQueueName("prod").build();
+    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setSchedulerQueueName("prod").build();
     setProperties(ID, meta);
     response = getNamespace(ID);
     namespace = readGetResponse(response);
