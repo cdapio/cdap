@@ -192,7 +192,7 @@ public class OpenCloseDataSetTest {
     }
     Assert.assertNotNull(controller);
 
-    while (!controller.getState().equals(ProgramController.State.STOPPED)) {
+    while (!controller.getState().equals(ProgramController.State.COMPLETED)) {
       TimeUnit.MILLISECONDS.sleep(100);
     }
 

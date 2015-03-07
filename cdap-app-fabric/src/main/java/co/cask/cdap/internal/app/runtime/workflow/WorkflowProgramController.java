@@ -84,7 +84,13 @@ final class WorkflowProgramController extends AbstractProgramController {
         LOG.info("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
         cancelAnnounce.cancel();
         LOG.info("Service {} unregistered.", serviceName);
-        stop();
+        if (getState() != State.STOPPING) {
+          // service completed itself.
+          complete();
+        } else {
+          // service was terminated
+          stop();
+        }
       }
 
       @Override
