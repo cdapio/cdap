@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.admin')
         _cdapPath: '/namespaces/' + $scope.model.id,
         body: {
           id: $scope.model.id,
-          name: $scope.model.name,
+          name: $scope.model.name || $scope.model.id,
           description: $scope.model.description
         }
       })
