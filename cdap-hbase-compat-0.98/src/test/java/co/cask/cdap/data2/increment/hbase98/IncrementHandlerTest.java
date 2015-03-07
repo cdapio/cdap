@@ -19,6 +19,8 @@ package co.cask.cdap.data2.increment.hbase98;
 import co.cask.cdap.data2.increment.hbase.AbstractIncrementHandlerTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HTable98NameConverter;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -104,8 +106,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   }
 
   @Override
-  public void createTable(String tableName) throws Exception {
-    TableName table = TableName.valueOf(tableName);
+  public HTable createTable(TableId tableId) throws Exception {
+    TableName table = HTable98NameConverter.toTableName(cConf, tableId);
     HTableDescriptor tableDesc = new HTableDescriptor(table);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
@@ -113,19 +115,19 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitUntilTableAvailable(Bytes.toBytes(tableName), 5000);
+    testUtil.waitUntilTableAvailable(table.getName(), 5000);
+    return new HTable(conf, table);
   }
 
   @Override
-  public RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception {
-    TableName table = TableName.valueOf(tableName);
+  public RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception {
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     for (Map.Entry<String, String> prop : familyProperties.entrySet()) {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase98RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), table, columnDesc));
+        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   public static ColumnCell convertCell(Cell cell) {
