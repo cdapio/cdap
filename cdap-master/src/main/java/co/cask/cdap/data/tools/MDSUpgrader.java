@@ -233,7 +233,7 @@ public class MDSUpgrader extends AbstractUpgrader {
                                   curCompletedRunRecord.getStartTs());
           store.setStop(Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), programType,
                                         programId), curCompletedRunRecord.getPid(), curCompletedRunRecord.getStopTs(),
-                        getControllerStateByStatus(curCompletedRunRecord.getStatus()));
+                        curCompletedRunRecord.getStatus());
         }
         return null;
       }
@@ -282,27 +282,6 @@ public class MDSUpgrader extends AbstractUpgrader {
 
     return locationFactory.create(Constants.DEFAULT_NAMESPACE).append(
       cConf.get(Constants.AppFabric.OUTPUT_DIR)).append(appId).append(Constants.ARCHIVE_DIR).append(archiveFilename);
-  }
-
-  /**
-   * Gives the {@link ProgramController.State} for a given {@link ProgramRunStatus}
-   * Note: This will given the state as {@link ProgramController.State#STARTING} for {@link ProgramRunStatus#RUNNING}
-   * even though running has multiple mapping but that is fine in our case as we use this
-   * {@link ProgramController.State} to write the runRecordCompleted through {@link DefaultStore#setStop} which converts
-   * it back to {@link ProgramRunStatus#RUNNING}. So we don't really care about the temporary intermediate
-   * {@link ProgramController.State}
-   *
-   * @param status the status
-   * @return the state for the status or null if there is no defined state for the given status
-   */
-  @Nullable
-  private static ProgramController.State getControllerStateByStatus(ProgramRunStatus status) {
-    for (ProgramController.State state : ProgramController.State.values()) {
-      if (state.getRunStatus() == status) {
-        return state;
-      }
-    }
-    return null;
   }
 
   private static final class AppMDS implements Iterable<MetadataStoreDataset> {

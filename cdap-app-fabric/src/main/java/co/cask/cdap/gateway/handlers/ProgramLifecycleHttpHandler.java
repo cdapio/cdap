@@ -1590,14 +1590,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         public void completed () {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.COMPLETED);
+                        ProgramController.State.COMPLETED.getRunStatus());
         }
 
         @Override
         public void killed() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.KILLED);
+                        ProgramController.State.KILLED.getRunStatus());
         }
 
         @Override
@@ -1605,7 +1605,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR);
+                        ProgramController.State.ERROR.getRunStatus());
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
