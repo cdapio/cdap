@@ -57,11 +57,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
     GSON = builder.create();
   }
 
-  private static final String TYPE_APP_META = "appMeta";
-  private static final String TYPE_STREAM = "stream";
-  private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
-  private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  private static final String TYPE_PROGRAM_ARGS = "programArgs";
+  public static final String TYPE_APP_META = "appMeta";
+  public static final String TYPE_STREAM = "stream";
+  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
+  public static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
 

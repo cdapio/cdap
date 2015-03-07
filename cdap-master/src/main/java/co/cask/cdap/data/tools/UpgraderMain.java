@@ -153,7 +153,7 @@ public class UpgraderMain {
 
         @Provides
         @Singleton
-        @Named("namespacedDSFramework")
+        @Named("dsFramework")
         public DatasetFramework getNamespacedDSFramework(CConfiguration cConf,
                                                          DatasetDefinitionRegistryFactory registryFactory)
           throws IOException, DatasetManagementException {
@@ -162,16 +162,8 @@ public class UpgraderMain {
 
         @Provides
         @Singleton
-        @Named("nonNamespacedDSFramework")
-        public DatasetFramework getNonNamespacedDSFramework(DatasetDefinitionRegistryFactory registryFactory)
-          throws DatasetManagementException {
-          return createNonNamespaceDSFramework(registryFactory);
-        }
-
-        @Provides
-        @Singleton
-        @Named("nonNamespacedStore")
-        public Store getNonNamespacedStore(@Named("nonNamespacedDSFramework") DatasetFramework nonNamespacedFramework,
+        @Named("defaultStore")
+        public Store getNonNamespacedStore(@Named("dsFramework") DatasetFramework nonNamespacedFramework,
                                            CConfiguration cConf, LocationFactory locationFactory,
                                            TransactionExecutorFactory txExecutorFactory) {
           return new DefaultStore(cConf, locationFactory, txExecutorFactory, nonNamespacedFramework);
@@ -264,10 +256,13 @@ public class UpgraderMain {
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
-    LOG.info("Upgrading archives and files");
+    LOG.info("Upgrading application metadata ...");
+    MDSUpgrader mdsUpgrader = injector.getInstance(MDSUpgrader.class);
+    mdsUpgrader.upgrade();
+
+    LOG.info("Upgrading archives and files ...");
     ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
     archiveUpgrader.upgrade();
-
   }
 
   public static void main(String[] args) throws Exception {
@@ -333,23 +328,13 @@ public class UpgraderMain {
   }
 
   /**
-   * Creates a non-namespaced {@link DatasetFramework} to access existing datasets which are not namespaced
-   */
-  private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
-    throws DatasetManagementException {
-    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory, cConf);
-    addModules(nonNamespacedFramework);
-    return nonNamespacedFramework;
-  }
-
-  /**
    * gets the Store to access the app meta table
    *
    * @return {@link Store}
    */
   private Store getStore() {
     if (store == null) {
-      store = injector.getInstance(Key.get(Store.class, Names.named("nonNamespacedStore")));
+      store = injector.getInstance(Key.get(Store.class, Names.named("defaultStore")));
     }
     return store;
   }
