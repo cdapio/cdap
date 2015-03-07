@@ -282,7 +282,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
-    // Update Yarn queue.
+    // Update scheduler queue name.
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                                                            NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
