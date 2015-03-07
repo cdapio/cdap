@@ -31,6 +31,11 @@ public class HTable94NameConverter extends HTableNameConverter {
     return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
   }
 
+  @Override
+  public TableId from(String hTableName) {
+    return fromTableName(hTableName);
+  }
+
   public static String toTableName(CConfiguration cConf, TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility

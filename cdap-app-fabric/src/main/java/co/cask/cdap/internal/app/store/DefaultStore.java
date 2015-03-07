@@ -125,10 +125,14 @@ public class DefaultStore implements Store {
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by app mds.
+   *
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), appMetaDatasetInstanceId, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
+                            Constants.DEFAULT_NAMESPACE_ID, (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                 APP_META_TABLE))),
+                          DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -176,7 +180,6 @@ public class DefaultStore implements Store {
         return null;
       }
     });
-
 
 
     // todo: delete old history data

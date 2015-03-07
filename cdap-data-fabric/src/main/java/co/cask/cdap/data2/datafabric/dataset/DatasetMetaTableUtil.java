@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Joiner;
 
 import java.io.IOException;
 
@@ -35,7 +36,7 @@ public class DatasetMetaTableUtil {
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
   private static final Id.DatasetInstance metaTableInstanceId =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID,  META_TABLE_NAME);
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME);
   private static final Id.DatasetInstance instanceTableInstanceId =
     Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME);
 
@@ -63,12 +64,19 @@ public class DatasetMetaTableUtil {
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by dataset service mds.
+   *
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     addTypes(datasetFramework);
-    datasetFramework.addInstance(DatasetTypeMDS.class.getName(), metaTableInstanceId, DatasetProperties.EMPTY);
-    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), instanceTableInstanceId, DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
+                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                       META_TABLE_NAME)),
+                                 DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), Id.DatasetInstance.from(
+                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                       INSTANCE_TABLE_NAME)),
+                                 DatasetProperties.EMPTY);
   }
 
   private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
