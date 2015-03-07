@@ -68,8 +68,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -1985,26 +1983,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private BasicArguments getSystemArguments(String namespaceId) {
-    // Currently the system arguments that is passed to every program is the YARN queue name.
-    // The config in the namespace level overrides the config in cdap-site.
+    // Get Configs from Cconf
+    Map<String, String> systemConfigsFromCDAP = getSystemArgumentsFromCConf();
+    // Override the Configs from configs at namespace level.
+    return new BasicArguments(getNamespaceResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
+  }
 
-    // Yarn queue at CDAP level.
-    String yarnQueue = configuration.get(Constants.AppFabric.APP_YARN_QUEUE);
+  private Map<String, String> getSystemArgumentsFromCConf() {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    // Scheduler queue at CDAP level.
+    String schedulerQueue = configuration.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    if (schedulerQueue != null) {
+      builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
+    }
+
+    return builder.build();
+  }
+
+  private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : configs.entrySet()) {
+      builder.put(entry.getKey(), entry.getValue());
+    }
 
     NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
     Preconditions.checkNotNull(meta);
 
     NamespaceConfig config = meta.getConfig();
 
-    String namespaceLevelYarnQueue = config.getSchedulerQueueName();
-    yarnQueue = namespaceLevelYarnQueue != null && !namespaceLevelYarnQueue.isEmpty() ?
-                namespaceLevelYarnQueue : yarnQueue;
-
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    if (yarnQueue != null && !yarnQueue.isEmpty()) {
-      builder.put(Constants.AppFabric.APP_YARN_QUEUE, yarnQueue);
+    String schedulerQueue = config.getSchedulerQueueName();
+    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
+      builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
 
-    return  new BasicArguments(builder.build());
+    return builder.build();
+
   }
+
 }

@@ -99,7 +99,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File cConfFile;
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
-    final String yarnQueue = options.getArguments().getOption(Constants.AppFabric.APP_YARN_QUEUE);
+    final String yarnQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
     try {
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
@@ -131,7 +131,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           twillPreparer.enableDebugging();
         }
         // Add yarn queue name if defined
-//        String yarnQueue = cConf.get(Constants.AppFabric.APP_YARN_QUEUE);
+//        String yarnQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
         if (yarnQueue != null) {
           LOG.info("Setting YARN queue for app {} as {}", program.getId(), yarnQueue);
           twillPreparer.setSchedulerQueue(yarnQueue);
