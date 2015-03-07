@@ -154,8 +154,8 @@ public class UpgraderMain {
         @Provides
         @Singleton
         @Named("dsFramework")
-        public DatasetFramework getNamespacedDSFramework(CConfiguration cConf,
-                                                         DatasetDefinitionRegistryFactory registryFactory)
+        public DatasetFramework getDSFramework(CConfiguration cConf,
+                                               DatasetDefinitionRegistryFactory registryFactory)
           throws IOException, DatasetManagementException {
           return createRegisteredDatasetFramework(cConf, registryFactory);
         }
@@ -163,10 +163,10 @@ public class UpgraderMain {
         @Provides
         @Singleton
         @Named("defaultStore")
-        public Store getNonNamespacedStore(@Named("dsFramework") DatasetFramework nonNamespacedFramework,
-                                           CConfiguration cConf, LocationFactory locationFactory,
-                                           TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, txExecutorFactory, nonNamespacedFramework);
+        public Store getStore(@Named("dsFramework") DatasetFramework dsFramework,
+                              CConfiguration cConf, LocationFactory locationFactory,
+                              TransactionExecutorFactory txExecutorFactory) {
+          return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
         }
       });
   }
