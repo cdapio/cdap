@@ -92,7 +92,10 @@ public class ScoreCounter extends AbstractMapReduce {
     }
   }
 
-  private class ResultsMapper extends Mapper<LongWritable, Text, Text, GameStat> {
+  /**
+   * The Mapper emits a record with the team name, points scored, and points conceded, for both teams.
+   */
+  public static class ResultsMapper extends Mapper<LongWritable, Text, Text, GameStat> {
     @Override
     protected void map(LongWritable position, Text value, Context context)
       throws IOException, InterruptedException {
@@ -113,7 +116,10 @@ public class ScoreCounter extends AbstractMapReduce {
     }
   }
 
-  private class TeamCounter extends Reducer<Text, GameStat, Text, String> {
+  /**
+   *  The reducer counts all the different statistics.
+   */
+  public static class TeamCounter extends Reducer<Text, GameStat, Text, String> {
     @Override
     protected void reduce(Text key, Iterable<GameStat> values, Context context)
       throws IOException, InterruptedException {
@@ -133,10 +139,11 @@ public class ScoreCounter extends AbstractMapReduce {
     }
   }
 
-  class GameStat implements Writable {
+  private static class GameStat implements Writable {
     private int scored;
     private int conceded;
 
+    @SuppressWarnings("unused")
     public GameStat() { }
 
     public GameStat(int scored, int conceded) {
