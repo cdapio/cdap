@@ -39,7 +39,7 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
   public void testAllServices() throws Exception {
     deploy(AppWithServices.class);
 
-    HttpResponse response = doGet("/v2/services");
+    HttpResponse response = doGet(PREFIX + "/services");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Type typeToken = new TypeToken<List<ProgramRecord>>() { }.getType();
     List<ProgramRecord> programRecords = readResponse(response, typeToken);
@@ -52,7 +52,7 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     deploy(AppWithServices.class);
 
-    HttpResponse response = doGet("/v2/apps/AppWithServices/services");
+    HttpResponse response = doGet(PREFIX + "/apps/AppWithServices/services");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
@@ -64,7 +64,7 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("Service", returnedBody.get(0).get("type").getAsString());
 
     // Verify that a non-existent app returns a 404
-    response = doGet("/v2/apps/nonexistentAppName/services");
+    response = doGet(PREFIX + "/apps/nonexistentAppName/services");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
@@ -73,17 +73,17 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class);
 
     //Test invalid app name, invalid service name, and invalid runnable name:
-    HttpResponse response = doGet("/v2/apps/invalidApp/services/NoOpService/runnables/NoOpService/instances");
+    HttpResponse response = doGet(PREFIX + "/apps/invalidApp/services/NoOpService/runnables/NoOpService/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v2/apps/AppWithServices/services/InvalidService/runnables/NoOpService/instances");
+    response = doGet(PREFIX + "/apps/AppWithServices/services/InvalidService/runnables/NoOpService/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v2/apps/AppWithServices/services/NoOpService/runnables/InvalidRunnable/instances");
+    response = doGet(PREFIX + "/apps/AppWithServices/services/NoOpService/runnables/InvalidRunnable/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     //Set instances to numRequested, and then check with a get that the instances were indeed set.
-    String instancesUrl = "/v2/apps/AppWithServices/services/NoOpService/runnables/NoOpService/instances";
+    String instancesUrl = PREFIX + "/apps/AppWithServices/services/NoOpService/runnables/NoOpService/instances";
     String numRequested = "13";
 
     JsonObject jsonData = new JsonObject();

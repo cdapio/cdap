@@ -34,10 +34,14 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.test.TestConstants;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -86,6 +90,9 @@ public abstract class MetricsSuiteTestBase {
   public static boolean runBefore = true;
   public static boolean runAfter = true;
 
+  protected static final Id.Namespace TEST_NAMESPACE = TestConstants.TEST_NAMESPACE;
+  protected static final String PREFIX = TestConstants.URL_PREFIX;
+
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
@@ -124,6 +131,8 @@ public abstract class MetricsSuiteTestBase {
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
     injector = startMetricsService(conf);
+    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setId(TEST_NAMESPACE).build());
 
     StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
     store = storeFactory.create();

@@ -40,17 +40,18 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     //Set flow runtime arg threshold to 30
     JsonObject json = new JsonObject();
     json.addProperty("threshold", "30");
-    response = GatewayFastTestsSuite.doPut("/v2/apps/HighPassFilterApp/flows/FilterFlow/runtimeargs", json.toString());
+    response = GatewayFastTestsSuite.doPut(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/runtimeargs",
+                                           json.toString());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/start", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/procedures/Count/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     //Send two values - 25 and 35; Since threshold is 30, expected count is 1
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "25");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "25");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "35");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "35");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the procedure status. Make sure it is running before querying it
@@ -61,22 +62,23 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
 
     //Now modify the threshold to 50
     json.addProperty("threshold", "50");
-    response = GatewayFastTestsSuite.doPut("/v2/apps/HighPassFilterApp/flows/FilterFlow/runtimeargs", json.toString());
+    response = GatewayFastTestsSuite.doPut(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/runtimeargs",
+                                           json.toString());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     //Stop and start the flow and it should pick up the new threshold value; Verify that by sending 45 and 55
     //Then count should be 2
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
 
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "45");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "45");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "55");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "55");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
@@ -84,34 +86,35 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
 
     //Now stop the flow and update the threshold value during the start POST call to 100
     //Test it by sending 95 and 105 and the count should be 3
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
 
     json.addProperty("threshold", "100");
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", json.toString());
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/start",
+                                            json.toString());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "95");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "95");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "105");
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/streams/inputvalue", "105");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("3");
 
     //Stop all flows and procedures and reset the state of the cdap
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/stop", null);
+    response = GatewayFastTestsSuite.doPost(PREFIX + "/apps/HighPassFilterApp/procedures/Count/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Wait for program states. Make sure they are stopped before deletion
     waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
     waitState("procedures", "HighPassFilterApp", "Count", "STOPPED");
 
-    response = GatewayFastTestsSuite.doDelete("/v2/apps/HighPassFilterApp");
+    response = GatewayFastTestsSuite.doDelete(PREFIX + "/apps/HighPassFilterApp");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
   }
 
@@ -119,7 +122,7 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     int trials = 0;
     while (trials++ < 5) {
       HttpResponse response = GatewayFastTestsSuite.doPost(
-        "/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
+        PREFIX + "/apps/HighPassFilterApp/procedures/Count/methods/result", null);
       if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
         String count = EntityUtils.toString(response.getEntity());
         if (expected.equals(count)) {

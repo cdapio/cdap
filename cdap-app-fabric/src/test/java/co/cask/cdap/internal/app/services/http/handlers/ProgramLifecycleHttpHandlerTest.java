@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -755,7 +756,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                spec.getSchedule().getName()));
     }
 
-    String currentUrl = String.format("/v2/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
+    String currentUrl = String.format(PREFIX + "/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
                                       CONCURRENT_WORKFLOW_NAME);
 
     response = doGet(currentUrl);
@@ -1101,7 +1102,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    
+
     // start service in wrong namespace
     int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                     ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
