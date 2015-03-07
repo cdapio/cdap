@@ -26,6 +26,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -180,5 +181,29 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // TODO: CDAP-870: Delete streams, queues, apps
 
     store.deleteNamespace(namespaceId);
+  }
+
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException {
+    if (store.getNamespace(namespaceId) == null) {
+      throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
+    }
+    NamespaceMeta metadata = store.getNamespace(namespaceId);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
+
+    if (namespaceMeta.getDescription() != null) {
+      builder.setDescription(namespaceMeta.getDescription());
+    }
+
+    if (namespaceMeta.getName() != null) {
+      builder.setName(namespaceMeta.getName());
+    }
+
+    NamespaceConfig config = namespaceMeta.getConfig();
+
+    if (config != null && config.getSchedulerQueueName() != null && !config.getSchedulerQueueName().isEmpty()) {
+      builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    store.updateNamespace(builder.build());
   }
 }

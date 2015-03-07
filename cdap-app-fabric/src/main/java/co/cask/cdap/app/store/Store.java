@@ -322,6 +322,13 @@ public interface Store {
   NamespaceMeta createNamespace(NamespaceMeta metadata);
 
   /**
+   * Updates the namespace meta.
+   *
+   * @param metadata {@link NamespaceMeta} representing the namespace metadata
+   */
+  void updateNamespace(NamespaceMeta metadata);
+
+  /**
    * Retrieves a namespace from the namespace metadata store.
    *
    * @param id {@link Id.Namespace} of the requested namespace
