@@ -135,7 +135,7 @@ public class ScoreCounter extends AbstractMapReduce {
         scored += stat.getScored();
         conceded += stat.getConceded();
       }
-      context.write(key, String.format("%d,%d,%d,%d,%d", wins, losses, ties, scored, conceded));
+      context.write(key, String.format("%d,%d,%d,%d,%d", wins, ties, losses, scored, conceded));
     }
   }
 
