@@ -47,9 +47,7 @@ import javax.annotation.Nullable;
  *
  *
  * row_format
- *   : DELIMITED [FIELDS TERMINATED BY char [ESCAPED BY char]] [COLLECTION ITEMS TERMINATED BY char]
- *       [MAP KEYS TERMINATED BY char] [LINES TERMINATED BY char]
- *       [NULL DEFINED AS char]   -- (Note: Available in Hive 0.13 and later)
+ *   : DELIMITED [FIELDS TERMINATED BY char [ESCAPED BY char]]
  *   | SERDE serde_name [WITH SERDEPROPERTIES (property_name=property_value, property_name=property_value, ...)]
  *
  * file_format:
@@ -67,10 +65,10 @@ public class CreateStatementBuilder {
   private final String name;
   private final String hiveTableName;
   private String hiveSchema;
-  private Partitioning partitioning;
   private String location;
   private String tableComment;
   private String rowFormat;
+  private Partitioning partitioning;
   private Map<String, String> tableProperties;
 
   public CreateStatementBuilder(String name, String hiveTableName) {
