@@ -54,7 +54,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final QueueAdmin queueAdmin;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework namespacedFramework;
-  private static final Pattern USER_TABLE_PREFIX = Pattern.compile("cdap\\.user\\..*");
+  private static final Pattern USER_TABLE_PREFIX = Pattern.compile("^cdap\\.user\\..*");
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
