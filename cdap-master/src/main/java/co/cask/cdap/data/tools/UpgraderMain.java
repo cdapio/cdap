@@ -48,6 +48,7 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -168,6 +169,23 @@ public class UpgraderMain {
                               TransactionExecutorFactory txExecutorFactory) {
           return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
         }
+
+        @Provides
+        @Singleton
+        @Named("logSaverTableUtil")
+        public LogSaverTableUtil getLogSaverTableUtil(@Named("dsFramework") DatasetFramework dsFramework,
+                                                      CConfiguration cConf) {
+          return new LogSaverTableUtil(dsFramework, cConf);
+        }
+
+        @Provides
+        @Singleton
+        @Named("fileMetaDataManager")
+        public FileMetaDataManager getFileMetaDataManager(@Named("logSaverTableUtil") LogSaverTableUtil tableUtil,
+                                                          TransactionExecutorFactory txExecutorFactory,
+                                                          LocationFactory locationFactory) {
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory);
+        }
       });
   }
 
@@ -263,6 +281,10 @@ public class UpgraderMain {
     LOG.info("Upgrading archives and files ...");
     ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
     archiveUpgrader.upgrade();
+
+    LOG.info("Upgrading logs meta data ...");
+    LogUpgrader logUpgrader = injector.getInstance(LogUpgrader.class);
+    logUpgrader.upgrade();
   }
 
   public static void main(String[] args) throws Exception {
