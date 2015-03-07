@@ -58,7 +58,7 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
       if (!streamAdmin.exists(streamId)) {
         streamAdmin.create(streamId);
         if (enableExplore) {
-          exploreFacade.enableExploreStream(streamName);
+          exploreFacade.enableExploreStream(streamId);
         }
       }
     }

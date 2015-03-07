@@ -1,0 +1,35 @@
+<div class="row">
+  <div class="col-xs-3" ng-repeat="panel in panels">
+    <div class="panel panel-default">
+      <div class="panel-heading text-center">
+        <h4 class="panel-title"
+            ng-bind="panel.title"
+        ></h4>
+      </div>
+
+      <div class="panel-body">
+
+        <p class="text-center">
+          <span ng-hide="panel.useByteFilter">
+            {{panel.chart.lastValue}} {{panel.unit}}
+          </span>
+          <span ng-show="panel.useByteFilter">
+            {{panel.chart.lastValue | bytes}}{{panel.unit}}
+          </span>
+        </p>
+
+      </div>
+
+      <epoch-line
+        data-history="panel.chart.history"
+        data-stream="panel.chart.stream"
+        chart-height="200"
+        chart-ticks="{ time: 20 }"
+        chart-axes="['left', 'bottom']"
+      ></epoch-line>
+
+    </div>
+  </div>
+</div>
+
+

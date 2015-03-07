@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
@@ -70,7 +71,7 @@ public class ProcedureClient {
    */
   public String call(String appId, String procedureId, String methodId, Map<String, String> parameters)
     throws BadRequestException, NotFoundException, IOException, UnAuthorizedAccessTokenException {
-
+    VersionMigrationUtils.assertProcedureSupported(config);
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
 
@@ -94,6 +95,7 @@ public class ProcedureClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> list() throws IOException, UnAuthorizedAccessTokenException {
+    VersionMigrationUtils.assertProcedureSupported(config);
     URL url = config.resolveURL("procedures");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ProgramRecord>>() { }).getResponseObject();

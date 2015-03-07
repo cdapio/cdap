@@ -24,7 +24,6 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -67,7 +66,7 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
                                  TransactionContext transactionContext,
                                  CConfiguration cConf) {
     super(Id.Namespace.from(mapReduceContext.getNamespaceId()), transactionContext,
-          new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf, Namespace.USER)),
+          new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf)),
           mapReduceContext.getProgram().getClassLoader(), null, mapReduceContext.getRuntimeArguments());
     this.mapReduceContext = mapReduceContext;
     this.datasetsCache = CacheBuilder.newBuilder()

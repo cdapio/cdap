@@ -81,17 +81,21 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
                         ExploreFacade exploreFacade,
-                        Set<DatasetMetricsReporter> metricReporters) throws Exception {
+                        Set<DatasetMetricsReporter> metricReporters,
+                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, locationFactory, cConf);
     DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf);
+                                                                               opExecutorClient, exploreFacade);
     DatasetInstanceHandlerV2 datasetInstanceHandlerV2 = new DatasetInstanceHandlerV2(datasetInstanceHandler);
+    UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
+      new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler, datasetTypeHandlerV2,
-                                             datasetInstanceHandler, datasetInstanceHandlerV2));
+                                             datasetInstanceHandler, datasetInstanceHandlerV2,
+                                             underlyingSystemNamespaceHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

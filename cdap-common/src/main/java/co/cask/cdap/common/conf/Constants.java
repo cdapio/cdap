@@ -16,12 +16,16 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
+  public static final String ARCHIVE_DIR = "archive";
 
   /**
    * Global Service names.
@@ -124,7 +128,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
-    public static final String ARCHIVE_DIR = "archive";
   }
 
   /**
@@ -169,6 +172,11 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
+
+    // Table dataset property that defines whether table is transactional or not.
+    // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
+    // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
+    public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
 
     /**
      * DatasetManager service configuration.
@@ -298,7 +306,7 @@ public final class Constants {
      */
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
-    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String STREAM_HANDLER_NAME = "stream_rest";
     public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
@@ -399,6 +407,8 @@ public final class Constants {
 
       public static final String SERVICE = "srv";
       public static final String SERVICE_RUNNABLE = "srn";
+
+      public static final String WORKER = "wrk";
 
       public static final String FLOW = "fl";
       public static final String FLOWLET = "flt";
@@ -571,6 +581,7 @@ public final class Constants {
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 
     public static final String DATASET_NAME = "explore.dataset.name";
+    public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
@@ -693,10 +704,12 @@ public final class Constants {
    * Default namespace to be used by v2 APIs
    */
   public static final String DEFAULT_NAMESPACE = "default";
+  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
   /**
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
 
   /**
    * Constants related to external systems.

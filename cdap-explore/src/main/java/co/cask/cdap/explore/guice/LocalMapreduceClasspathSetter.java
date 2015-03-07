@@ -43,7 +43,7 @@ public class LocalMapreduceClasspathSetter {
   private final HiveConf hiveConf;
   private final String directory;
   private final List<String> hiveAuxJars;
-  private Set<String> hbaseProtocolJarPaths = new LinkedHashSet<String>();
+  private final Set<String> hbaseProtocolJarPaths = new LinkedHashSet<String>();
 
   public LocalMapreduceClasspathSetter(HiveConf hiveConf, String directory, List<String> hiveAuxJars) {
     this.hiveConf = hiveConf;

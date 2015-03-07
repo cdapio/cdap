@@ -20,14 +20,17 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.app.AdapterApp;
 import co.cask.cdap.cli.app.FakeApp;
+import co.cask.cdap.cli.app.FakeDataset;
 import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -55,11 +58,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
   private static CLIConfig cliConfig;
+  private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
@@ -112,7 +114,7 @@ public class CLIMainTest extends StandaloneTestBase {
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = new CLIMain(cliConfig);
+    cliMain = new CLIMain(cliConfig, CsvTableRenderer.class);
     cli = cliMain.getCLI();
 
     testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
@@ -214,6 +216,19 @@ public class CLIMainTest extends StandaloneTestBase {
     DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               "Successfully created dataset");
+    testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+
+    NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
+    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
+    cliConfig.setCurrentNamespace("bar");
+    // list of dataset instances is different in 'foo' namespace
+    testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+
+    // also can not create dataset instances if the type it depends on exists only in a different namespace.
+    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+                              "Error: dataset type '" + datasetType.getName() + "' was not found");
+
+    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
       testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
     } finally {
@@ -233,6 +248,29 @@ public class CLIMainTest extends StandaloneTestBase {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
     }
+  }
+
+  @Test
+  public void testProcedureInNonDefaultNamespace() throws Exception {
+    testCommandOutputContains(cli, "create namespace foo", "Namespace 'foo' created successfully");
+    testCommandOutputContains(cli, "use namespace foo", "Now using namespace 'foo'");
+
+    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
+
+    String expectedErrMsg = "Error: Procedure operations are only supported in the default namespace.";
+    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure status " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure live " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure instances " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure instances " + qualifiedProcedureId + " 2", expectedErrMsg);
+    testCommandOutputContains(cli, "set procedure runtimeargs " + qualifiedProcedureId + " key=1", expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure runtimeargs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "get procedure logs " + qualifiedProcedureId, expectedErrMsg);
+    testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+      + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", expectedErrMsg);
+    testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, expectedErrMsg);
+
+    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
   }
 
   @Test
@@ -256,7 +294,7 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsKV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started Service");
     try {
@@ -268,7 +306,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-      String runtimeArgs2KV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
       testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
@@ -295,7 +333,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
@@ -317,8 +354,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get namespace preferences default"), propMap);
-    testCommandOutputContains(cli, String.format("get namespace preferences invalid"), "not found");
+    testPreferencesOutput(cli, String.format("get namespace preferences"), propMap);
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
@@ -333,11 +369,22 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
     propMap.clear();
     propMap.put("key", "somevalue");
     testPreferencesOutput(cli, "get instance preferences", propMap);
+    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load namespace preferences " + file.getAbsolutePath() + " xml", "successful");
+    propMap.clear();
+    propMap.put("xml", "green");
+    testPreferencesOutput(cli, "get namespace preferences", propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
 
     //Try invalid Json
@@ -349,6 +396,17 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
+
+    //Try invalid xml
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " inv", "Unsupported");
   }
 
   @Test
@@ -521,17 +579,17 @@ public class CLIMainTest extends StandaloneTestBase {
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-    new AsciiTable<NamespaceMeta>(
-      new String[] {"id", "display_name", "description"},
-      expected,
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("id", "display_name", "description")
+      .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
         }
-      }
-    ).print(printStream);
+      }).build();
+    cliMain.getTableRenderer().render(printStream, table);
     final String expectedOutput = outputStream.toString();
+
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

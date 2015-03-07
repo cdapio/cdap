@@ -27,6 +27,9 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -35,6 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -47,6 +52,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final NamespaceAdmin namespaceAdmin;
 
@@ -82,6 +89,23 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+
+  @PUT
+  @Path("/namespaces/{namespace-id}/properties")
+  public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespaceId) {
+    try {
+      NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
+      namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), meta);
+      responder.sendString(HttpResponseStatus.OK, "Properties updated");
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
+    } catch (IOException e) {
+      LOG.error("Failed to read namespace metadata request body.", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
   @PUT
   @Path("/namespaces/{namespace-id}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
@@ -105,10 +129,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Cannot create namespace %s. '%s' and '%s' are reserved namespaces.",
-                                         namespaceId,
-                                         Constants.DEFAULT_NAMESPACE,
-                                         Constants.SYSTEM_NAMESPACE));
+                           String.format("Cannot delete the namespace '%s'. '%s' is a reserved namespace.",
+                                         namespaceId, namespaceId));
       return;
     }
 
@@ -147,10 +169,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
     if (isReserved(namespace)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("Cannot delete namespace '%s'. '%s' and '%s' are reserved namespaces.",
-                                         namespace,
-                                         Constants.DEFAULT_NAMESPACE,
-                                         Constants.SYSTEM_NAMESPACE));
+                           String.format("Cannot delete the namespace '%s'. '%s' is a reserved namespace.",
+                                         namespace, namespace));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -175,6 +195,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isReserved(String namespaceId) {
-    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId);
+    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId) ||
+      Constants.Logging.SYSTEM_NAME.equals(namespaceId);
   }
 }

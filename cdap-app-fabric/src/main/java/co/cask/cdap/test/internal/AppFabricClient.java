@@ -120,6 +120,17 @@ public class AppFabricClient {
     return json.get("status");
   }
 
+  public void setWorkerInstances(String appId, String workerId, int instances) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/worker/%s/instances", appId, workerId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    httpHandler.setWorkerInstances(request, responder, appId, workerId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
+  }
+
   public void setRunnableInstances(String applicationId, String serviceName, String runnableName, int instances) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
@@ -172,7 +183,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId, null, null , null, 100);
+    httpHandler.programHistory(request, responder, appId, "workflows", wflowId, null, null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });

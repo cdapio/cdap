@@ -20,9 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -36,6 +33,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
@@ -55,6 +53,7 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -341,10 +340,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (AdapterNotFoundException e) {
+    } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (InvalidAdapterOperationException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (SchedulerException e) {
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterId, action, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -374,8 +380,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       adapterService.removeAdapter(namespaceId, adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (AdapterNotFoundException e) {
+    } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (SchedulerException e) {
+      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
+                namespaceId, adapterName, "delete", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -479,7 +493,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     // note: cannot create an appId subdirectory under the namespace directory here because appId could be null here
     final Location archive =
-      namespaceHomeLocation.append(appFabricDir).append(Constants.AppFabric.ARCHIVE_DIR).append(archiveName);
+      namespaceHomeLocation.append(appFabricDir).append(Constants.ARCHIVE_DIR).append(archiveName);
 
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
@@ -509,10 +523,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       });
 
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, deploymentInfo).get();
-      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
-      setupSchedules(namespaceId, specification);
+      manager.deploy(id, appId, deploymentInfo).get();
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
       throw new Exception(e.getMessage());
@@ -538,33 +549,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         case SERVICE:
           stopProgramIfRunning(programId, type);
           break;
+        case WORKER:
+          stopProgramIfRunning(programId, type);
+          break;
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
-    }
-  }
-
-  private void deleteSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
-    // Delete the existing schedules.
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
-      Id.Program programId = Id.Program.from(namespaceId, specification.getName(), programInfo.getProgramName());
-      scheduler.deleteSchedules(programId, programInfo.getProgramType());
-    }
-  }
-
-  private void setupSchedules(String namespaceId, ApplicationSpecification specification) throws IOException {
-
-    deleteSchedules(namespaceId, specification);
-
-    // Add new schedules.
-    for (Map.Entry<String, ScheduleSpecification> entry : specification.getSchedules().entrySet()) {
-      ScheduleProgramInfo programInfo = entry.getValue().getProgram();
-      Id.Program programId = Id.Program.from(namespaceId, specification.getName(),
-                                             programInfo.getProgramName());
-      List<Schedule> scheduleList = Lists.newArrayList();
-      scheduleList.add(entry.getValue().getSchedule());
-      scheduler.schedule(programId, programInfo.getProgramType(), scheduleList);
+    } catch (SchedulerException e) {
+      throw new ExecutionException(e);
     }
   }
 

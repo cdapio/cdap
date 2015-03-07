@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.utils.Tasks;
@@ -71,7 +72,9 @@ public class ApplicationClient {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3("apps"),
                                                config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+    List<ApplicationRecord> result = ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
+    return result;
   }
 
   /**
@@ -193,7 +196,8 @@ public class ApplicationClient {
 
     Preconditions.checkArgument(programType.isListable());
 
-    URL url = config.resolveNamespacedURLV3(programType.getCategoryName());
+    String path = programType.getCategoryName();
+    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
@@ -213,7 +217,7 @@ public class ApplicationClient {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
-      if (programType.isListable()) {
+      if (programType.isListable() && VersionMigrationUtils.isProgramSupported(config, programType)) {
         List<ProgramRecord> programRecords = Lists.newArrayList();
         programRecords.addAll(listAllPrograms(programType));
         allPrograms.put(programType, programRecords);
@@ -237,7 +241,8 @@ public class ApplicationClient {
     throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
     Preconditions.checkArgument(programType.isListable());
 
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s", appId, programType.getCategoryName()));
+    String path = String.format("apps/%s/%s", appId, programType.getCategoryName());
+    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
@@ -265,7 +270,7 @@ public class ApplicationClient {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
-      if (programType.isListable()) {
+      if (programType.isListable() && VersionMigrationUtils.isProgramSupported(config, programType)) {
         List<ProgramRecord> programRecords = Lists.newArrayList();
         programRecords.addAll(listPrograms(appId, programType));
         allPrograms.put(programType, programRecords);

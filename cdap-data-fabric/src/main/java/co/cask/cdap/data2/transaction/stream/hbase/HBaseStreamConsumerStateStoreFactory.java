@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,16 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.TableId;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -40,61 +39,56 @@ import java.util.concurrent.TimeUnit;
  * Factory for creating {@link StreamConsumerStateStore} in HBase.
  */
 public final class HBaseStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
-
   private final Configuration hConf;
-  private final String storeTableName;
   private final HBaseTableUtil tableUtil;
-  private boolean tableCreated;
 
   @Inject
-  HBaseStreamConsumerStateStoreFactory(Configuration hConf, CConfiguration conf, HBaseTableUtil tableUtil) {
+  HBaseStreamConsumerStateStoreFactory(Configuration hConf, HBaseTableUtil tableUtil) {
     this.hConf = hConf;
-    this.storeTableName =
-      HBaseTableUtil.getHBaseTableName(new DefaultDatasetNamespace(conf, Namespace.SYSTEM)
-                                         .namespace((QueueConstants.STREAM_TABLE_PREFIX) + ".state.store"));
     this.tableUtil = tableUtil;
   }
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
-    byte[] tableName = Bytes.toBytes(storeTableName);
-
-    if (!tableCreated) {
-      HBaseAdmin admin = new HBaseAdmin(hConf);
+    Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
+    TableId streamStateStoreTableId = TableId.from(getTableName(namespace));
+    HBaseAdmin admin = new HBaseAdmin(hConf);
+    if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
       try {
-        HTableDescriptor htd = new HTableDescriptor(tableName);
+        HTableDescriptor htd = tableUtil.getHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);
         hcd.setMaxVersions(1);
 
-        tableUtil.createTableIfNotExists(admin, tableName, htd, null,
+        tableUtil.createTableIfNotExists(admin, streamStateStoreTableId, htd, null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
-        tableCreated = true;
       } finally {
         admin.close();
       }
     }
 
-    HTable hTable = new HTable(hConf, tableName);
+    HTable hTable = tableUtil.getHTable(hConf, streamStateStoreTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
 
   @Override
-  public synchronized void dropAll() throws IOException {
-    tableCreated = false;
+  public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
     HBaseAdmin admin = new HBaseAdmin(hConf);
     try {
-      byte[] tableName = Bytes.toBytes(storeTableName);
-
-      if (admin.tableExists(tableName)) {
-        admin.disableTable(tableName);
-        admin.deleteTable(tableName);
+      TableId tableId = TableId.from(getTableName(namespace));
+      if (tableUtil.tableExists(admin, tableId)) {
+        tableUtil.disableTable(admin, tableId);
+        tableUtil.deleteTable(admin, tableId);
       }
     } finally {
       admin.close();
     }
+  }
+
+  private String getTableName(Id.Namespace namespace) {
+    return HBaseTableUtil.getHBaseTableName(StreamUtils.getStateStoreTableName(namespace));
   }
 }

@@ -31,7 +31,7 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices();
+    initialize();
   }
 
   @Test
@@ -39,7 +39,7 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
     ExploreService exploreService = injector.getInstance(ExploreService.class);
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    exploreService.execute("show tables");
+    exploreService.execute(NAMESPACE_ID, "show tables");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,35 +15,25 @@
  */
 package co.cask.cdap.data2.transaction.queue.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueConsumer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
-import co.cask.cdap.hbase.wd.DistributedScanner;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Queue consumer for HBase.
@@ -60,10 +50,9 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   private final HTable hTable;
   private final HBaseConsumerStateStore stateStore;
+  private final byte[] queueRowPrefix;
+  private final HBaseQueueStrategy queueStrategy;
   private boolean closed;
-
-  // Executes distributed scans
-  private final ExecutorService scansExecutor;
 
   /**
    * Creates a HBaseQueue2Consumer.
@@ -73,25 +62,17 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
    * @param consumerState The persisted state of this consumer.
    * @param stateStore The store for persisting state for this consumer.
    */
-  HBaseQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
-                     HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
+  HBaseQueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                     HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
+                     HBaseQueueStrategy queueStrategy) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
-    super(consumerConfig, queueName);
+    super(cConf, consumerConfig, queueName);
     this.hTable = hTable;
-
-    // Using the "direct handoff" approach, new threads will only be created
-    // if it is necessary and will grow unbounded. This could be bad but in DistributedScanner
-    // we only create as many Runnables as there are buckets data is distributed to. It means
-    // it also scales when buckets amount changes.
-    this.scansExecutor = new ThreadPoolExecutor(1, 20,
-                                       60, TimeUnit.SECONDS,
-                                       new SynchronousQueue<Runnable>(),
-                                       Threads.newDaemonThreadFactory("queue-consumer-scan"));
-    ((ThreadPoolExecutor) this.scansExecutor).allowCoreThreadTimeOut(true);
-
     this.stateStore = stateStore;
-    byte[] startRow = consumerState.getStartRow();
+    this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
+    this.queueStrategy = queueStrategy;
 
+    byte[] startRow = consumerState.getStartRow();
     if (startRow != null && startRow.length > 0) {
       this.startRow = startRow;
     }
@@ -99,10 +80,9 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   protected boolean claimEntry(byte[] rowKey, byte[] claimedStateValue) throws IOException {
-    rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
-    Put put = new Put(rowKey);
+    Put put = new Put(queueStrategy.getActualRowKey(getConfig(), rowKey));
     put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, claimedStateValue);
-    return hTable.checkAndPut(rowKey, QueueEntryRow.COLUMN_FAMILY,
+    return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY,
                               stateColumnName, null, put);
   }
 
@@ -113,8 +93,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     }
     List<Put> puts = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
-      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
-      Put put = new Put(rowKey);
+      Put put = new Put(queueStrategy.getActualRowKey(getConfig(), rowKey));
       put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
     }
@@ -129,9 +108,8 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     }
     List<Row> ops = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
-      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
-      Delete delete = new Delete(rowKey);
-      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      Delete delete = new Delete(queueStrategy.getActualRowKey(getConfig(), rowKey));
+      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       ops.add(delete);
     }
     hTable.batch(ops);
@@ -140,15 +118,14 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
-    // Scan the table for queue entries.
     Scan scan = createScan(startRow, stopRow, numRows);
 
-    DequeueScanAttributes.setQueueRowPrefix(scan, getQueueName());
+    /** TODO: Remove when {@link DequeueScanAttributes#ATTR_QUEUE_ROW_PREFIX} is removed. It is for transition. **/
+    DequeueScanAttributes.setQueueRowPrefix(scan, queueRowPrefix);
     DequeueScanAttributes.set(scan, getConfig());
     DequeueScanAttributes.set(scan, transaction);
 
-    ResultScanner scanner = DistributedScanner.create(hTable, scan, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR, scansExecutor);
-    return new HBaseQueueScanner(scanner, numRows);
+    return queueStrategy.createScanner(getConfig(), hTable, scan, numRows);
   }
 
   @Override
@@ -159,7 +136,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     try {
       stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
     } finally {
-      scansExecutor.shutdownNow();
+      Closeables.closeQuietly(queueStrategy);
       hTable.close();
       closed = true;
     }
@@ -179,36 +156,4 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   }
 
   protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);
-
-  private class HBaseQueueScanner implements QueueScanner {
-    private final ResultScanner scanner;
-    private final LinkedList<Result> cached = Lists.newLinkedList();
-    private final int numRows;
-
-    public HBaseQueueScanner(ResultScanner scanner, int numRows) {
-      this.scanner = scanner;
-      this.numRows = numRows;
-    }
-
-    @Override
-    public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
-      while (true) {
-        if (cached.size() > 0) {
-          Result result = cached.removeFirst();
-          Map<byte[], byte[]> row = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-          return ImmutablePair.of(HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getOriginalKey(result.getRow()), row);
-        }
-        Result[] results = scanner.next(numRows);
-        if (results.length == 0) {
-          return null;
-        }
-        Collections.addAll(cached, results);
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      scanner.close();
-    }
-  }
 }

@@ -23,6 +23,10 @@ Tables, but defines its own interface. Examples include:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
+- The ``ObjectMappedTable`` uses a Table to store Java Objects by mapping object fields to
+  table columns. It can be explored through the use of ad-hoc SQL-like queries as described
+  in :ref:`ObjectMappedTable Exploration <object-mapped-table-exploration>`.
+
 See the :ref:`Javadocs <reference:javadocs>` for these classes and the :ref:`Examples <examples-index>`
 to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
 system Dataset.
@@ -106,7 +110,7 @@ a TTL (time-to-live) property, you can use::
 
   createDataset("frequentCustomers", KeyValueTable.class,
     DatasetProperties.builder()
-                     .add(OrderedTable.PROPERTY_TTL, "3600")      
+                     .add(Table.PROPERTY_TTL, "3600")      
                      .build());
 
 You can pass other properties, such as for 

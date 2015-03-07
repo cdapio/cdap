@@ -213,6 +213,22 @@ class DatasetServiceClient {
     }
   }
 
+  public void createNamespace() throws DatasetManagementException {
+    HttpResponse response = doPut("admin/create", GSON.toJson(namespaceId));
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to create namespace, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
+  public void deleteNamespace() throws DatasetManagementException {
+    HttpResponse response = doDelete("admin/delete");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to delete namespace, details: %s",
+                                                         getDetails(response)));
+    }
+  }
+
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(HttpMethod.GET, resource);
   }

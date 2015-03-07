@@ -1,0 +1,71 @@
+<section class="panel-group explore"
+     ng-controller="CdapDatasetExploreController"
+     ng-model="activePanel"
+     bs-collapse>
+
+  <div class="panel panel-default">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h4 class="panel-title">
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==0,
+                     'fa-chevron-down': activePanel===0}"
+          class="fa fa-fw"
+        ></span>Choose table
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+        <pre>{{tables | json}}</pre>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title" bs-collapse-toggle>
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==1,
+                     'fa-chevron-down': activePanel===1}"
+          class="fa fa-fw"
+        ></span>Write &amp; Execute SQL
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+        <p>
+          <textarea class="form-control">SELECT * from someTable;</textarea>
+        </p>
+        <div class="text-right">
+          <button class="btn btn-primary" type="button">
+            Execute
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title" bs-collapse-toggle>
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==2,
+                     'fa-chevron-down': activePanel===2}"
+          class="fa fa-fw"
+        ></span>View Queries
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+        proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </div>
+    </div>
+  </div>
+
+
+</section>

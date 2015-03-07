@@ -73,6 +73,11 @@ public enum ElementType {
           ArgumentName.FLOWLET,
           Capability.SCALE),
 
+  WORKER("Worker", "Workers", "worker", "workers",
+         ProgramType.WORKER, null, ArgumentName.WORKER,
+         Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
+         Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+
   PROCEDURE("Procedure", "Procedures", "procedure", "procedures",
             ProgramType.PROCEDURE, null,
             ArgumentName.PROCEDURE,
@@ -83,12 +88,12 @@ public enum ElementType {
           ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
-          Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+          Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
            ArgumentName.RUNNABLE,
-           Capability.SCALE, Capability.RUNS, Capability.LOGS),
+           Capability.SCALE, Capability.LOGS),
 
   MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,

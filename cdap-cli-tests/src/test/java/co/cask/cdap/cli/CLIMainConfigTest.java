@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.common.conf.CConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +29,7 @@ public class CLIMainConfigTest {
   @Test
   public void testDefaultCDAPHost() throws Exception {
     CLIConfig cliConfig = new CLIConfig(null);
-    CLIMain cliMain = new CLIMain(cliConfig);
+    CLIMain cliMain = new CLIMain(cliConfig, AltStyleTableRenderer.class);
     CConfiguration cConf = CConfiguration.create();
     String hostname = cConf.get(co.cask.cdap.common.conf.Constants.Router.ADDRESS);
     Assert.assertEquals(hostname, cliConfig.getHost());
@@ -38,7 +39,7 @@ public class CLIMainConfigTest {
   public void testCustomCDAPHost() throws Exception {
     System.setProperty(Constants.EV_HOSTNAME, "sdf");
     CLIConfig cliConfig = new CLIConfig("sdf");
-    CLIMain cliMain = new CLIMain(cliConfig);
+    CLIMain cliMain = new CLIMain(cliConfig, AltStyleTableRenderer.class);
     Assert.assertEquals("sdf", cliConfig.getHost());
     System.setProperty(Constants.EV_HOSTNAME, "");
   }
