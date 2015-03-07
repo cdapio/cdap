@@ -68,7 +68,7 @@ public class ArchiveUpgrader extends AbstractUpgrader {
   private void upgradeLogs() throws IOException {
     LOG.info("Upgrading log files ...");
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    renameLocation(locationFactory.create(logBaseDir).append(Constants.Logging.SYSTEM_NAME),
+    renameLocation(locationFactory.create(logBaseDir).append(Constants.CDAP_NAMESPACE),
                    locationFactory.create(Constants.SYSTEM_NAMESPACE)
                      .append(cConf.get(LoggingConfiguration.LOG_BASE_DIR)));
     //TODO: This developer string in 2.7 is default so we need to handle that here when we improvise on this tool for

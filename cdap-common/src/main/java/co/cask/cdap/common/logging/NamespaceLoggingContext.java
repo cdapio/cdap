@@ -23,11 +23,18 @@ public abstract class NamespaceLoggingContext extends AbstractLoggingContext {
   public static final String TAG_NAMESPACE_ID = ".namespaceId";
 
   /**
-   * Constructs AccountLoggingContext.
+   * Constructs NamespaceLoggingContext.
    * @param namespaceId namespace id
    */
   public NamespaceLoggingContext(final String namespaceId) {
     setSystemTag(TAG_NAMESPACE_ID, namespaceId);
+  }
+
+  @Override
+  public String getNamespacedLogBaseDir(String logBaseDir) {
+    // cannot just call #getLogPathFragment here, because if called on a subclass' object, that would return
+    // a wrong value
+    return String.format("%s/%s", getSystemTag(TAG_NAMESPACE_ID), logBaseDir);
   }
 
   @Override
@@ -36,7 +43,7 @@ public abstract class NamespaceLoggingContext extends AbstractLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s", getSystemTag(TAG_NAMESPACE_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/%s", getSystemTag(TAG_NAMESPACE_ID), logBaseDir);
   }
 }
