@@ -75,8 +75,8 @@ public interface NamespaceAdmin {
    * Update namespace properties for a given namespace.
    *
    * @param namespaceId  the {@link Id.Namespace} of the namespace to be updated
-   * @param properties  Map of properties to be updated
+   * @param namespaceMeta namespacemeta to update
    * @throws NotFoundException if the specified namespace is not found
    */
-  public void updateProperties(Id.Namespace namespaceId, Map<String, String> properties) throws NotFoundException;
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException;
 }

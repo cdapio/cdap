@@ -26,6 +26,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -36,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * {@link AbstractIdleService} for managing namespaces
@@ -183,14 +183,27 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     store.deleteNamespace(namespaceId);
   }
 
-  public void updateProperties(Id.Namespace namespaceId, Map<String, String> properties) throws NotFoundException {
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException {
     if (store.getNamespace(namespaceId) == null) {
       throw new NotFoundException(NAMESPACE_ELEMENT_TYPE, namespaceId.getId());
     }
     NamespaceMeta metadata = store.getNamespace(namespaceId);
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      metadata.setProperty(entry.getKey(), entry.getValue());
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
+
+    if (namespaceMeta.getDescription() != null) {
+      builder.setDescription(namespaceMeta.getDescription());
     }
-    store.updateNamespace(metadata);
+
+    if (namespaceMeta.getName() != null) {
+      builder.setName(namespaceMeta.getName());
+    }
+
+    NamespaceConfig config = namespaceMeta.getConfig();
+
+    if (config != null && config.getYarnQueue() != null && !config.getYarnQueue().isEmpty()) {
+      builder.setYarnQueueName(config.getYarnQueue());
+    }
+
+    store.updateNamespace(builder.build());
   }
 }

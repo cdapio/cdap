@@ -29,17 +29,17 @@ public final class NamespaceMeta {
   private final String id;
   private final String name;
   private final String description;
-  private Map<String, String> properties;
+  private NamespaceConfig config;
 
   private NamespaceMeta(String id, String name, String description) {
-    this(id, name, description, Maps.<String, String>newHashMap());
+    this(id, name, description, null);
   }
 
-  private NamespaceMeta(String id, String name, String description, Map<String, String> properties) {
+  private NamespaceMeta(String id, String name, String description, NamespaceConfig config) {
     this.id = id;
     this.name = name;
     this.description = description;
-    this.properties = properties;
+    this.config = config;
   }
 
   public String getId() {
@@ -54,17 +54,8 @@ public final class NamespaceMeta {
     return description;
   }
 
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  public String getProperty(String key) {
-    return properties.get(key);
-  }
-
-
-  public void setProperty(String key, String value) {
-    properties.put(key, value);
+  public NamespaceConfig getConfig() {
+    return config;
   }
 
 
@@ -75,7 +66,18 @@ public final class NamespaceMeta {
     private String id;
     private String name;
     private String description;
-    private Map<String, String> properties;
+    private String yarnQueueName;
+
+    public Builder() {
+     // No-Op
+    }
+
+    public Builder(NamespaceMeta meta) {
+      this.id =  meta.getId();
+      this.name = meta.getName();
+      this.description = meta.getDescription();
+      this.yarnQueueName = meta.getConfig().getYarnQueue();
+    }
 
     public Builder setId(final String id) {
       this.id = id;
@@ -92,8 +94,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setProperties(final Map<String, String> properties) {
-      this.properties = properties;
+    public Builder setYarnQueueName(final String yarnQueueName) {
+      this.yarnQueueName = yarnQueueName;
       return this;
     }
 
@@ -105,10 +107,11 @@ public final class NamespaceMeta {
       if (description == null) {
         description = "";
       }
-      if (properties == null) {
-        properties = Maps.newHashMap();
+
+      if (yarnQueueName == null) {
+        yarnQueueName = "";
       }
-      return new NamespaceMeta(id, name, description);
+      return new NamespaceMeta(id, name, description, new NamespaceConfig(yarnQueueName));
     }
   }
 
@@ -135,6 +138,7 @@ public final class NamespaceMeta {
       .add("id", id)
       .add("name", name)
       .add("description", description)
+      .add("config", getConfig())
       .toString();
   }
 }

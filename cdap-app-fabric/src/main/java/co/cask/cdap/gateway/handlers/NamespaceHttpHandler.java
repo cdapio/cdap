@@ -95,11 +95,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) {
     try {
-      Map<String, String> properties = GSON.fromJson(request.getContent().toString(Charsets.UTF_8), STRING_MAP_TYPE);
-      namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), properties);
+      NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
+      namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), meta);
       responder.sendString(HttpResponseStatus.OK, "Properties updated");
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
+    } catch (IOException e) {
+      LOG.error("Failed to read namespace metadata request body.", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
