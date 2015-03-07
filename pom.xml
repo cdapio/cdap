@@ -65,12 +65,7 @@
       <id>continuuity-public</id>
       <url>https://repository.continuuity.com/content/repositories/public</url>
     </repository>
-    <repository>
-      <id>twill-snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots</url>
-    </repository>
   </repositories>
-
 
   <distributionManagement>
     <repository>
