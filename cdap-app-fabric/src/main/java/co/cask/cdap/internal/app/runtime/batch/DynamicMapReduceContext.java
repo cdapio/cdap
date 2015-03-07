@@ -24,11 +24,9 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import com.google.common.cache.CacheBuilder;
@@ -66,8 +64,8 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
                                  TransactionContext transactionContext,
                                  CConfiguration cConf) {
     super(Id.Namespace.from(mapReduceContext.getNamespaceId()), transactionContext,
-          new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf)),
-          mapReduceContext.getProgram().getClassLoader(), null, mapReduceContext.getRuntimeArguments());
+          datasetFramework, mapReduceContext.getProgram().getClassLoader(), null,
+          mapReduceContext.getRuntimeArguments());
     this.mapReduceContext = mapReduceContext;
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {

@@ -17,6 +17,7 @@
 package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -49,15 +50,16 @@ public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<Stand
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("objects"), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("objects"), classLoader);
   }
 
   @Override
-  public StandaloneDataset getDataset(DatasetSpecification spec, Map<String, String> arguments,
-                                ClassLoader classLoader) throws IOException {
+  public StandaloneDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 
     return new StandaloneDataset(spec.getName(), table);
   }

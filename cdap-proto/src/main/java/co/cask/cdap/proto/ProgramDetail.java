@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
-
-import org.junit.Test;
+package co.cask.cdap.proto;
 
 /**
- *
+ * Represents a program in an HTTP response.
  */
-public class MainTest {
-  @Test
-  public void testInjector() throws Exception {
-    Main.main(new String[] {"help"});
-    // should not throw exception
+public class ProgramDetail {
+  private final ProgramType type;
+  private final String name;
+  private final String description;
+
+  public ProgramDetail(ProgramType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
+  }
+
+  public ProgramType getType() {
+    return type;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
   }
 }

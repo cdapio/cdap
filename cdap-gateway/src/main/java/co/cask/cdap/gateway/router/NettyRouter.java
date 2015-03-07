@@ -249,8 +249,7 @@ public class NettyRouter extends AbstractIdleService {
           }
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler",
-                           new HttpRequestHandler(clientBootstrap, serviceLookup,
-                                                  ImmutableList.<ProxyRule>of(new DatasetsProxyRule(configuration))));
+                           new HttpRequestHandler(clientBootstrap, serviceLookup, ImmutableList.<ProxyRule>of()));
           return pipeline;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,13 @@
 package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -32,9 +37,13 @@ public class FileAdmin implements DatasetAdmin {
 
   private final String basePath;
 
-  public FileAdmin(LocationFactory locationFactory, DatasetSpecification spec) {
+  public FileAdmin(DatasetContext datasetContext, CConfiguration cConf, LocationFactory locationFactory,
+                   DatasetSpecification spec) {
+    String namespace = datasetContext.getNamespaceId();
     this.locationFactory = locationFactory;
-    this.basePath = FileSetProperties.getBasePath(spec.getProperties());
+    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+    String basePath = FileSetProperties.getBasePath(spec.getProperties());
+    this.basePath = String.format("%s/%s/%s", namespace, dataDir, basePath);
   }
 
   @Override

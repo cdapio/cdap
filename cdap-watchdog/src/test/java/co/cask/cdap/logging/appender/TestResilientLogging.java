@@ -36,7 +36,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -46,7 +45,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -59,7 +57,6 @@ import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -125,11 +122,8 @@ public class TestResilientLogging {
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     DatasetOpExecutorService opExecutorService = injector.getInstance(DatasetOpExecutorService.class);
     opExecutorService.startAndWait();
-
-    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
 
     // Start the logging before starting the service.
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
@@ -180,8 +174,7 @@ public class TestResilientLogging {
 
     // Verify - we should have at least 5 events.
     LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logTail =
-      new StandaloneLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
+    StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER,
                        logCallback1);

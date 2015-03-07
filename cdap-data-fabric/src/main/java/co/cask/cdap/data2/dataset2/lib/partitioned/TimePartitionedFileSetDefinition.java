@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -58,17 +59,18 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
   }
 
   @Override
-  public PartitionedFileSet getDataset(DatasetSpecification spec,
-                                       Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
+  public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments);
 
-    FileSet fileset = filesetDef.getDataset(spec.getSpecification(FILESET_NAME), arguments, classLoader);
-    Table table = tableDef.getDataset(spec.getSpecification(PARTITION_TABLE_NAME), arguments, classLoader);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
+                                            classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
+                                      classLoader);
 
-    return new TimePartitionedFileSetDataset(spec.getName(), fileset, table, spec, arguments,
+    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments,
                                              getExploreProvider());
   }
 

@@ -39,7 +39,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -50,7 +49,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -197,7 +195,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private void createSystemHBaseNamespace() {
-    HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
+    HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
     try {
       HBaseAdmin admin = new HBaseAdmin(hConf);
       tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
@@ -289,7 +287,10 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    dsService.stopAndWait();
+    if (dsService != null) {
+      dsService.stopAndWait();
+    }
+
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
@@ -395,7 +396,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private TwillPreparer prepare(TwillPreparer preparer) {
-    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+    return preparer.withDependencies(baseInjector.getInstance(HBaseTableUtil.class).getClass())
       // TokenSecureStoreUpdater.update() ignores parameters
       .addSecureStore(secureStoreUpdater.update(null, null));
   }

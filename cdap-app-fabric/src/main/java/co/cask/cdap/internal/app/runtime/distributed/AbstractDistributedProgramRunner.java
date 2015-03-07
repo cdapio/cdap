@@ -137,7 +137,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           twillPreparer.setSchedulerQueue(yarnQueue);
         }
         TwillController twillController = twillPreparer
-          .withDependencies(new HBaseTableUtilFactory().get().getClass())
+          .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(

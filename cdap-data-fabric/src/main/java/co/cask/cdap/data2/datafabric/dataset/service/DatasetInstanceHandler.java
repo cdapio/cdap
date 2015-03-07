@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -28,10 +29,12 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -75,20 +79,32 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
+  private final boolean allowDatasetUncheckedUpgrade;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade) {
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
+    this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+  }
+
+  // the v2 version of the list API, which returns a collection of DatasetSpecification instead of
+  // a collection of DatasetSpecificationSummary
+  void v2list(HttpResponder responder, String namespaceId) {
+    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
   }
 
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
+    List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
+    for (DatasetSpecification spec : instanceManager.getAll(Id.Namespace.from(namespaceId))) {
+      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+    }
+    responder.sendJson(HttpResponseStatus.OK, datasetSummaries);
   }
 
   @GET
@@ -126,7 +142,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
              namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
 
     DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
-    if (existing != null) {
+    if (existing != null && !allowDatasetUncheckedUpgrade) {
       String message = String.format("Cannot create dataset %s.%s: instance with same name already exists %s",
                                      namespaceId, name, existing);
       LOG.info(message);

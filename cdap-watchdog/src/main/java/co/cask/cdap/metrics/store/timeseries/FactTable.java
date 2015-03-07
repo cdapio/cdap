@@ -32,11 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
-import java.util.SortedSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -47,6 +47,10 @@ import javax.annotation.Nullable;
 public final class FactTable {
   private static final Logger LOG = LoggerFactory.getLogger(FactTable.class);
   private static final int MAX_ROLL_TIME = 0xfffe;
+
+  // hard limits on some ops to stay on safe side
+  private static final int MAX_RECORDS_TO_SCAN_DURING_SEARCH = 10 * 1000 * 1000;
+  private static final int MAX_SCANS_DURING_SEARCH = 10 * 1000;
 
   private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
     @Override
@@ -123,7 +127,7 @@ public final class FactTable {
   private Scanner getScanner(FactScan scan) throws Exception {
     byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
     byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
-    byte[][] columns = null;
+    byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
       long timeBase = scan.getStartTs() / rollTime * rollTime;
@@ -135,7 +139,7 @@ public final class FactTable {
       }
     }
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow, false);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(scan, startRow);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
@@ -183,141 +187,176 @@ public final class FactTable {
     }
   }
 
-  /*
-   * Given the list of tag values, return sorted collection of tagValues that appear next to the given tagValues
-   * (on first position right after given ones) in any of the written facts in specified time range.
-   * @param tags - list of tags , we need to return the tags at the next position after these list of tags.
-   * @param startTs
-   * @param endTs
-   * @return Sorted collection of tags
+  /**
+   * Searches for first non-null valued tags in records that contain given list of tags and match given tag values in
+   * given time range. Returned tag values are those that are not defined in given tag values.
+   * @param allTagNames list of all tag names to be present in the record
+   * @param tagSlice tag values to filter by, {@code null} means any non-null value.
+   * @param startTs start of the time range, in seconds
+   * @param endTs end of the time range, in seconds
+   * @return {@link Set} of {@link TagValue}s
    * @throws Exception
    */
-  public Collection<TagValue> findNextAvailableTags(List<TagValue> tags, long startTs, long endTs) throws Exception {
-    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
-    //todo: pass a limit on number of tags returned
-    //todo: go over aggregations that match the given tags as first tags in the same order.
-    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
-    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
-    endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
-                                                         startRow, true);
-    Row rowResult;
-    int targetIndex = tags.size();
-    SortedSet<TagValue> result = Sets.newTreeSet(new Comparator<TagValue>() {
-      @Override
-      public int compare(TagValue t1, TagValue t2) {
-        int cmp = t1.getTagName().compareTo(t2.getTagName());
-        if (cmp != 0) {
-          return cmp;
-        }
-        if (t1.getValue() == null) {
-          if (t2.getValue() == null) {
-            return 0;
-          } else {
-            return -1;
-          }
-        }
-        if (t2.getValue() == null) {
-          return 1;
-        }
-        return t1.getValue().compareTo(t2.getValue());
-      }
-    });
+  // todo: pass a limit on number of tagValues returned
+  // todo: kinda not cool API when we expect null values in a map...
+  public Set<TagValue> findSingleTagValue(List<String> allTagNames, Map<String, String> tagSlice,
+                                          long startTs, long endTs) throws Exception {
+    // Algorithm, briefly:
+    // We scan in the records which have given allTagNames. We use tagSlice as a criteria for scan.
+    // If record from the scan has non-null values in the tags which are not specified in tagSlice, we use first of
+    // such tag as a value to return.
+    // When we find value to return, since we only fill a single tag, we are not interested in drilling down further
+    // and instead attempt to fast-forward (jump) to a record that has different value in that tag.
+    // Thus we find all results.
 
-    Scanner scanner = null;
+    List<TagValue> allTags = Lists.newArrayList();
+    List<TagValue> filledTags = Lists.newArrayList();
+    List<Integer> tagToFillIndexes = Lists.newArrayList();
+    for (int i = 0; i < allTagNames.size(); i++) {
+      String tagName = allTagNames.get(i);
+      if (!tagSlice.containsKey(tagName)) {
+        tagToFillIndexes.add(i);
+        allTags.add(new TagValue(tagName, null));
+      } else {
+        TagValue tagValue = new TagValue(tagName, tagSlice.get(tagName));
+        filledTags.add(tagValue);
+        allTags.add(tagValue);
+      }
+    }
+
+    // If provided tags contain all values filled in, there's nothing to look for
+    if (tagToFillIndexes.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    Set<TagValue> result = Sets.newHashSet();
+    int scans = 0;
+    int scannedRecords = 0;
+
+    // build a scan
+    byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
+    byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
+    endRow = Bytes.stopKeyForPrefix(endRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, allTags), startRow);
+    Scanner scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+    scans++;
     try {
-      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+      Row rowResult;
       while ((rowResult = scanner.next()) != null) {
+        scannedRecords++;
+        // todo: make configurable
+        if (scannedRecords > MAX_RECORDS_TO_SCAN_DURING_SEARCH) {
+          break;
+        }
         byte[] rowKey = rowResult.getRow();
-        // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
-        // we could match rows where (ts < startTs or ts > endTs) and the tags at beginning match,
-        // we will skip those rows
-        if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) ||
-          (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs)) {
+        // filter out columns by time range (scan configuration only filters whole rows)
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
           continue;
         }
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+          // we're done with scanner
+          break;
+        }
+
         List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
-        // if the timestamp is within query range and the tag-list matches, we add them to the result
-        if (startsWithTags(tags, tagValues)) {
-          //add item to result set and increment the start rowKey
-          if (tagValues.size() > targetIndex) {
-              result.add(tagValues.get(targetIndex));
+        // At this point, we know that the record is in right time range and its tags matches given.
+        // We try find first non-null valued tag in the record that was not in given tags: we use it to form
+        // next drill down suggestion
+        int filledIndex = -1;
+        for (int index : tagToFillIndexes) {
+          // todo: it may be not efficient, if tagValues is not array-backed list: i.e. if access by index is not fast
+          TagValue tagValue = tagValues.get(index);
+          if (tagValue.getValue() != null) {
+            result.add(tagValue);
+            filledIndex = index;
+            break;
           }
-          startRow = codec.getNextRowKey(rowResult.getRow(), tags.size());
+        }
+
+        // Ss soon as we find tag to fill, we are not interested into drilling down further (by contract, we fill
+        // single tag value). Thus, we try to jump to the record that has greater value in that tag.
+        // todo: fast-forwarding (jumping) should be done on server-side (CDAP-1421)
+        if (filledIndex >= 0) {
+          scanner.close();
+          scanner = null;
+          scans++;
+          if (scans > MAX_SCANS_DURING_SEARCH) {
+            break;
+          }
+          startRow = codec.getNextRowKey(rowResult.getRow(), filledIndex);
           scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
         }
       }
     } finally {
-      scanner.close();
+      if (scanner != null) {
+        scanner.close();
+      }
     }
+
+    LOG.trace("search for tags completed, scans performed: {}, scanned records: {}", scans, scannedRecords);
 
     return result;
   }
 
   /**
-   * Given a list of {@link co.cask.cdap.api.metrics.TagValue} and time range,
-   * return all measure names of the Facts that have given tagValues and are in the given time range.
-   * @param tags - list of tags to match, we return the measureNames that match this tags list.
-   * @param startTs
-   * @param endTs
-   * @return Sorted collection of measureNames
+   * Finds all measure names of the facts that match given {@link TagValue}s and time range.
+   * @param allTagNames list of all tag names to be present in the fact record
+   * @param tagSlice tag values to filter by, {@code null} means any non-null value.
+   * @param startTs start timestamp, in sec
+   * @param endTs end timestamp, in sec
+   * @return {@link Set} of measure names
    * @throws Exception
    */
-  public Collection<String> getMeasureNames(List<TagValue> tags, long startTs, long endTs) throws Exception {
-    //todo: push down this logic to server side to reduce RPC calls (CDAP-1421)
-    //todo: pass a limit on number of tags returned
-    byte[] startRow = codec.createStartRowKey(tags, null, startTs, true);
-    byte[] endRow = codec.createEndRowKey(tags, null, endTs, true);
+  // todo: pass a limit on number of measures returned
+  public Set<String> findMeasureNames(List<String> allTagNames, Map<String, String> tagSlice,
+                                      long startTs, long endTs) throws Exception {
+
+    List<TagValue> allTags = Lists.newArrayList();
+    for (String tagName : allTagNames) {
+      allTags.add(new TagValue(tagName, tagSlice.get(tagName)));
+    }
+
+    byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
+    byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, tags),
-                                                         startRow, true);
-    Row rowResult;
-    SortedSet<String> measureNames = Sets.newTreeSet();
-    Scanner scanner = null;
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, allTags), startRow);
+
+    Set<String> measureNames = Sets.newHashSet();
+    int scannedRecords = 0;
+    // todo: make configurable
+    Scanner scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
     try {
-      scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+      Row rowResult;
       while ((rowResult = scanner.next()) != null) {
+        scannedRecords++;
+        if (scannedRecords > MAX_RECORDS_TO_SCAN_DURING_SEARCH) {
+          break;
+        }
         byte[] rowKey = rowResult.getRow();
-        // since the timestamp filter is fuzzy and also the aggregate_key is at the begging of rowKey,
-        // we could match rows where (ts < startTs or ts > endTs) and the tags at beginning match,
-        // we will skip those rows
-        if ((codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) ||
-          (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs)) {
+        // filter out columns by time range (scan configuration only filters whole rows)
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
           continue;
         }
-        List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
-        // if the timestamp is within query range and the tag-list matches, we add them to the result
-        if (startsWithTags(tags, tagValues)) {
-          //add item to result set and increment the start rowKey
-          measureNames.add(codec.getMeasureName(rowResult.getRow()));
-          startRow = codec.getNextRowKey(rowResult.getRow(), tagValues.size());
-          scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+          // we're done with scanner
+          break;
         }
+        measureNames.add(codec.getMeasureName(rowResult.getRow()));
       }
     } finally {
       scanner.close();
     }
+
+    LOG.trace("search for metrics completed, scanned records: {}", scannedRecords);
+
     return measureNames;
   }
 
-  private boolean startsWithTags(List<TagValue> expected, List<TagValue> actual) {
-    if (actual.size() < expected.size()) {
-      return false;
-    }
-    for (int i = 0; i < expected.size(); i++) {
-      if (expected.get(i).getValue() != null && !expected.get(i).equals(actual.get(i))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @Nullable
-  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow, boolean anyAggGroup) {
+  private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
-    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName(),
-                                                   anyAggGroup);
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName());
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }

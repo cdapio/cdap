@@ -89,8 +89,10 @@ Building and Starting
 Running CDAP Applications
 ============================================
 
-.. include:: /../../developers-manual/build/_includes/building-apps-versioned.rst
-    :start-line: 9
+.. |example| replace:: FileSetExample
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 11
 
 Running the Example
 ===================
@@ -120,19 +122,18 @@ First we will upload a text file that we will use as input for the WordCount.
 This is done by making a REST call to the ``FileSetService``.
 A sample text file is included in the ``resources`` directory of the example::
 
-  curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
+  curl -v localhost:10000/v3/namespaces/default/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
     -XPUT --data-binary @resources/lines.txt
 
 Now we start the MapReduce program and configure it to use this file as its input, and to write its output to
 ``counts.out``::
 
-  curl -v localhost:10000/v2/apps/FileSetExample/mapreduce/WordCount/start \
-    -d '{ "dataset.lines.input.paths": "some.txt", \
-          "dataset.counts.output.path": "counts.out" }'
+  curl -v localhost:10000/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start \
+    -d '{ "dataset.lines.input.paths": "some.txt", "dataset.counts.output.path": "counts.out" }'
 
 Wait for the MapReduce program to finish, and you can download the results of the computation::
 
-  curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
+  curl -v localhost:10000/v3/namespaces/default/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
 
 Note that we have to download a part file that is under the output path that was specified for the MapReduce program.
 This is because in MapReduce, every reducer writes a separate part file into the output directory.

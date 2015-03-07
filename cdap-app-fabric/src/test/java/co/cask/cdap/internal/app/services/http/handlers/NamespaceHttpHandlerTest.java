@@ -276,16 +276,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
-    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setYarnQueueName("prod").build();
+    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setSchedulerQueueName("prod").build();
     setProperties(ID, meta);
     response = getNamespace(ID);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
-    // Update Yarn queue.
+    // Update scheduler queue name.
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                                                            NamespaceConfig.class);
-    Assert.assertEquals("prod", config.getYarnQueue());
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
@@ -303,7 +303,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // verify other properties set earlier has not changed.
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                            NamespaceConfig.class);
-    Assert.assertEquals("prod", config.getYarnQueue());
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
 
     // cleanup
     response = deleteNamespace(ID);

@@ -41,15 +41,13 @@ function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   # and then re-writes all the image links...
   guide_rewrite $1 cdap-bi-guide
+  guide_rewrite $1 cdap-flow-guide
   guide_rewrite $1 cdap-flume-guide
+  guide_rewrite $1 cdap-kafka-ingest-guide
   guide_rewrite $1 cdap-mapreduce-guide
   guide_rewrite $1 cdap-spark-guide
   guide_rewrite $1 cdap-timeseries-guide
   guide_rewrite $1 cdap-twitter-ingest-guide
-  guide_rewrite $1 cdap-flow-guide
-  
-  # Not yet completed
-  #  guide_rewrite $1 cdap-kafka-ingest-guide
 }
 
 run_command $1

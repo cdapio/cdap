@@ -39,11 +39,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
@@ -56,11 +54,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -105,34 +100,27 @@ public class DefaultStore implements Store {
   @Inject
   public DefaultStore(CConfiguration conf,
                       LocationFactory locationFactory,
-                      final TransactionSystemClient txClient,
+                      TransactionExecutorFactory txExecutorFactory,
                       DatasetFramework framework) {
 
     this.locationFactory = locationFactory;
     this.configuration = conf;
-    this.dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
+    this.dsFramework = framework;
 
-    txnl =
-      Transactional.of(
-        new TransactionExecutorFactory() {
-          @Override
-          public TransactionExecutor createExecutor(Iterable<TransactionAware> transactionAwares) {
-            return new DefaultTransactionExecutor(txClient, transactionAwares);
-          }},
-        new Supplier<AppMds>() {
-          @Override
-          public AppMds get() {
-            try {
-              Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
-                                                               DatasetProperties.EMPTY,
-                                                               DatasetDefinition.NO_ARGUMENTS, null);
-              return new AppMds(mdsTable);
-            } catch (Exception e) {
-              LOG.error("Failed to access app.meta table", e);
-              throw Throwables.propagate(e);
-            }
-          }
-        });
+    txnl = Transactional.of(txExecutorFactory, new Supplier<AppMds>() {
+      @Override
+      public AppMds get() {
+        try {
+          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
+                                                           DatasetProperties.EMPTY,
+                                                           DatasetDefinition.NO_ARGUMENTS, null);
+          return new AppMds(mdsTable);
+        } catch (Exception e) {
+          LOG.error("Failed to access app.meta table", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   /**
@@ -171,7 +159,7 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id.getNamespaceId(), id.getApplicationId(), id.getId(), pid, startTime);
+        mds.apps.recordProgramStart(id, pid, startTime);
         return null;
       }
     });
@@ -184,7 +172,7 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStop(id.getNamespaceId(), id.getApplicationId(), id.getId(), pid, endTime, state);
+        mds.apps.recordProgramStop(id, pid, endTime, state);
         return null;
       }
     });
@@ -200,8 +188,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(id.getNamespaceId(), id.getApplicationId(), id.getId(), status,
-                                startTime, endTime, limit);
+        return mds.apps.getRuns(id, status, startTime, endTime, limit);
       }
     });
   }
@@ -559,7 +546,7 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeProgramArgs(id.getNamespaceId(), id.getApplicationId(), id.getId(), arguments);
+        mds.apps.writeProgramArgs(id, arguments);
         return null;
       }
     });
@@ -570,7 +557,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Map<String, String>>() {
       @Override
       public Map<String, String> apply(AppMds mds) throws Exception {
-        ProgramArgs programArgs = mds.apps.getProgramArgs(id.getNamespaceId(), id.getApplicationId(), id.getId());
+        ProgramArgs programArgs = mds.apps.getProgramArgs(id);
         return programArgs == null ? Maps.<String, String>newHashMap() : programArgs.getArgs();
       }
     });

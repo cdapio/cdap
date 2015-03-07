@@ -25,9 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
 import co.cask.cdap.config.ConsoleSettingsStore;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -37,8 +35,10 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -129,7 +130,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration));
+    this.dsFramework = dsFramework;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.appFabricDataHttpHandler = appFabricDataHttpHandler;
@@ -228,7 +229,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase());
+      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP,
+                                      ProgramType.WEBAPP.getPrettyName().toLowerCase());
       programStatus(responder, id, ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -373,7 +375,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
@@ -400,7 +402,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
 
       if (!store.programExists(programId, ProgramType.PROCEDURE)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
@@ -791,8 +793,21 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/current")
   public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
-    programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                               Constants.DEFAULT_NAMESPACE, appId, workflowName);
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.WORKFLOW, workflowName);
+      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, Long.MIN_VALUE, Long.MAX_VALUE,
+                                                    100);
+      if (runRecordList.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      String runId = runRecordList.get(0).getPid();
+      programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                 Constants.DEFAULT_NAMESPACE, appId, workflowName, runId);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
@@ -872,8 +887,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") String appId) {
-    appLifecycleHttpHandler.getAppInfo(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                       Constants.DEFAULT_NAMESPACE, appId);
+    getAppRecords(responder, store, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**

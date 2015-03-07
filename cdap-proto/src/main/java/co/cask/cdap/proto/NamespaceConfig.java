@@ -24,21 +24,21 @@ import com.google.gson.annotations.SerializedName;
  */
 public class NamespaceConfig {
 
-  @SerializedName("yarn.queue.name")
-  private final String yarnQueue;
+  @SerializedName("scheduler.queue.name")
+  private final String schedulerQueueName;
 
-  public NamespaceConfig(String yarnQueue) {
-    this.yarnQueue = yarnQueue;
+  public NamespaceConfig(String schedulerQueueName) {
+    this.schedulerQueueName = schedulerQueueName;
   }
 
-  public String getYarnQueue() {
-    return yarnQueue;
+  public String getSchedulerQueueName() {
+    return schedulerQueueName;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-                  .add("yarn.queue.name", yarnQueue)
+                  .add("scheduler.queue.name", schedulerQueueName)
                   .toString();
   }
 }

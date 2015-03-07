@@ -21,14 +21,17 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test base for {@link co.cask.cdap.metrics.store.timeseries.FactTable}.
@@ -143,40 +146,54 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // verify the next tags search
-    Collection<TagValue> nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
-                                                                ts, ts + 1);
+    Collection<TagValue> nextTags =
+      table.findSingleTagValue(ImmutableList.of("tag1", "tag2", "tag3"), ImmutableMap.of("tag1", "value1"), ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2")), nextTags);
-    //assertTagValues(ImmutableList.of(new TagValue("tag2", "value2")), nextTags);
 
-    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1"),
-                                                            new TagValue("tag2", "value2")),
-                                           ts, ts + 3);
+    Map<String, String> slice = Maps.newHashMap();
+    slice.put("tag1", null);
+    nextTags = table.findSingleTagValue(ImmutableList.of("tag1", "tag2", "tag3"), slice, ts, ts + 1);
+    Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2")), nextTags);
+
+    nextTags = table.findSingleTagValue(ImmutableList.of("tag1", "tag2", "tag3"),
+                                        ImmutableMap.of("tag1", "value1", "tag2", "value2"), ts, ts + 3);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag3", "value3")), nextTags);
 
     // add new tag values
-    tagValues = ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag2", "value5"));
-    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
-                                        new TimeValue(ts, 10))));
+    tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
+                                 new TagValue("tag2", "value5"),
+                                 new TagValue("tag3", null));
+    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric", new TimeValue(ts, 10))));
 
-    tagValues = ImmutableList.of(new TagValue("tag1", "value1"), new TagValue("tag4", "value5"));
-    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric",
-                                        new TimeValue(ts, 10))));
+    tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
+                                 new TagValue("tag2", null),
+                                 new TagValue("tag3", "value3"));
+    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric", new TimeValue(ts, 10))));
 
-    nextTags = table.findNextAvailableTags(ImmutableList.of(new TagValue("tag1", "value1")),
-                                           ts, ts + 1);
+    nextTags = table.findSingleTagValue(ImmutableList.of("tag1", "tag2", "tag3"),
+                                        ImmutableMap.of("tag1", "value1"), ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of(new TagValue("tag2", "value2"),
-                                        new TagValue("tag2", "value5"), new TagValue("tag4", "value5")), nextTags);
+                                        new TagValue("tag2", "value5"),
+                                        new TagValue("tag3", "value3")), nextTags);
+
     // search for metric names given tags list and verify
 
-    Collection<String> metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1"),
-                                                                            new TagValue("tag2", "value2"),
-                                                                            new TagValue("tag3", "value3")),
-                                                           ts, ts + 1);
+    Collection<String> metricNames =
+      table.findMeasureNames(ImmutableList.of("tag1", "tag2", "tag3"),
+                             ImmutableMap.of("tag1", "value1", "tag2", "value2", "tag3", "value3"), ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of("metric2", "metric3"), metricNames);
 
-    metricNames = table.getMeasureNames(ImmutableList.of(new TagValue("tag1", "value1")), ts, ts + 1);
+    metricNames = table.findMeasureNames(ImmutableList.of("tag1", "tag2", "tag3"),
+                                         ImmutableMap.of("tag1", "value1"), ts, ts + 1);
     Assert.assertEquals(ImmutableSet.of("metric", "metric2", "metric3"), metricNames);
 
+    metricNames = table.findMeasureNames(ImmutableList.of("tag1", "tag2", "tag3"),
+                                         ImmutableMap.of("tag2", "value2"), ts, ts + 1);
+    Assert.assertEquals(ImmutableSet.of("metric2", "metric3"), metricNames);
+
+    metricNames = table.findMeasureNames(ImmutableList.of("tag1", "tag2", "tag3"),
+                                         slice, ts, ts + 1);
+    Assert.assertEquals(ImmutableSet.of("metric", "metric2", "metric3"), metricNames);
   }
 
   @Test

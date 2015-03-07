@@ -18,7 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
@@ -37,9 +37,14 @@ public class MetricsClient {
   private final ClientConfig config;
 
   @Inject
+  public MetricsClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public MetricsClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**
@@ -51,12 +56,12 @@ public class MetricsClient {
    * @param timeRange time range to query
    * @return value of the metric
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   // TODO: currently response from metrics endpoint is not "regular", so it's not easy to return an object from here
   // (e.g. metrics endpoint sometimes returns {"data":0} and other times returns {"data":[..]})
   public JsonObject getMetric(String scope, String context, String metric, String timeRange) throws IOException,
-    UnAuthorizedAccessTokenException {
+    UnauthorizedException {
     URL url = config.resolveURL(String.format("metrics/%s/%s/%s?%s", scope, context, metric, timeRange));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, JsonObject.class).getResponseObject();

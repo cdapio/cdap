@@ -128,18 +128,32 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public void recordProgramStart(String namespaceId, String appId, String programId, String pid, long startTs) {
-      write(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build(),
+  public void recordProgramStart(Id.Program program, String pid, long startTs) {
+      write(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED)
+              .add(program.getNamespaceId())
+              .add(program.getApplicationId())
+              .add(program.getType().name())
+              .add(program.getId())
+              .add(pid)
+              .build(),
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
-  public void recordProgramStop(String namespaceId, String appId, String programId,
-                                String pid, long stopTs, ProgramController.State endStatus) {
-    MDSKey key = new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId, pid).build();
+  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramController.State endStatus) {
+    MDSKey key = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .add(pid)
+      .build();
     RunRecord started = get(key, RunRecord.class);
     if (started == null) {
-      String msg = String.format("No meta for started run record for namespace %s app %s program %s pid %s exists",
-                                 namespaceId, appId, programId, pid);
+      String msg = String.format("No meta for started run record for namespace %s app %s program type %s " +
+                                 "program %s pid %s exists",
+                                 program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
+                                 program.getId(), pid);
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -147,39 +161,50 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(key);
 
     key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId)
+      .add(TYPE_RUN_RECORD_COMPLETED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
     write(key, new RunRecord(started, stopTs, endStatus.getRunStatus()));
   }
 
-  public List<RunRecord> getRuns(String namespaceId, String appId, String programId,
-                                 ProgramRunStatus status,
+  public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,
                                  long startTime, long endTime, int limit) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecord> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getActiveRuns(namespaceId, appId, programId, startTime, endTime, limit));
-      resultRecords.addAll(getHistoricalRuns(namespaceId, appId, programId, status, startTime, endTime, limit));
+      resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit));
+      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
-      return getActiveRuns(namespaceId, appId, programId, startTime, endTime, limit);
+      return getActiveRuns(program, startTime, endTime, limit);
     } else {
-      return getHistoricalRuns(namespaceId, appId, programId, status, startTime, endTime, limit);
+      return getHistoricalRuns(program, status, startTime, endTime, limit);
     }
   }
 
-  private List<RunRecord> getActiveRuns(String namespaceId, String appId, String programId,
-                                        final long startTime, final long endTime, int limit) {
-    MDSKey activeKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId, programId).build();
+  private List<RunRecord> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit) {
+    MDSKey activeKey = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .build();
     MDSKey start = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
     return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
   }
 
-  private List<RunRecord> getHistoricalRuns(String namespaceId, String appId, String programId,
-                                            ProgramRunStatus status,
+  private List<RunRecord> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit) {
-    MDSKey historyKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, programId).build();
+    MDSKey historyKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED,
+                                                 program.getNamespaceId(),
+                                                 program.getApplicationId(),
+                                                 program.getType().name(),
+                                                 program.getId()).build();
     MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
@@ -225,16 +250,33 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build());
   }
 
-  public void writeProgramArgs(String namespaceId, String appId, String programName, Map<String, String> args) {
-    write(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), new ProgramArgs(args));
+  public void writeProgramArgs(Id.Program program, Map<String, String> args) {
+    write(new MDSKey.Builder()
+            .add(TYPE_PROGRAM_ARGS)
+            .add(program.getNamespaceId())
+            .add(program.getApplicationId())
+            .add(program.getType().name())
+            .add(program.getId())
+            .build(), new ProgramArgs(args));
   }
 
-  public ProgramArgs getProgramArgs(String namespaceId, String appId, String programName) {
-    return get(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build(), ProgramArgs.class);
+  public ProgramArgs getProgramArgs(Id.Program program) {
+    return get(new MDSKey.Builder()
+                 .add(TYPE_PROGRAM_ARGS)
+                 .add(program.getNamespaceId())
+                 .add(program.getApplicationId())
+                 .add(program.getType().name())
+                 .add(program.getId())
+                 .build(), ProgramArgs.class);
   }
 
-  public void deleteProgramArgs(String namespaceId, String appId, String programName) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId, programName).build());
+  public void deleteProgramArgs(Id.Program program) {
+    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS)
+                .add(program.getNamespaceId())
+                .add(program.getApplicationId())
+                .add(program.getType().name())
+                .add(program.getId())
+                .build());
   }
 
   public void deleteProgramArgs(String namespaceId, String appId) {
