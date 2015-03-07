@@ -1996,7 +1996,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     NamespaceConfig config = meta.getConfig();
 
-    String namespaceLevelYarnQueue = config.getYarnQueue();
+    String namespaceLevelYarnQueue = config.getSchedulerQueueName();
     yarnQueue = namespaceLevelYarnQueue != null && !namespaceLevelYarnQueue.isEmpty() ?
                 namespaceLevelYarnQueue : yarnQueue;
 
