@@ -22,6 +22,7 @@ import co.cask.cdap.proto.Id;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 
@@ -31,11 +32,13 @@ import java.nio.ByteBuffer;
 public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
   private final HttpURLConnection connection;
+  private final OutputStream outputStream;
   private final Id.Stream stream;
   private boolean open;
 
-  public DefaultStreamBatchWriter(HttpURLConnection connection, Id.Stream stream) {
+  public DefaultStreamBatchWriter(HttpURLConnection connection, Id.Stream stream) throws IOException {
     this.connection = connection;
+    this.outputStream = connection.getOutputStream();
     this.stream = stream;
     this.open = true;
   }
@@ -48,7 +51,7 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
   @Override
   public int write(ByteBuffer data) throws IOException {
     int size = data.remaining();
-    ByteBuffers.writeToStream(data, connection.getOutputStream());
+    ByteBuffers.writeToStream(data, outputStream);
     return size;
   }
 
@@ -57,7 +60,7 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
     int responseCode;
     try {
       open = false;
-      connection.getOutputStream().close();
+      outputStream.close();
       responseCode = connection.getResponseCode();
     } finally {
       connection.disconnect();
