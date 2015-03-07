@@ -159,8 +159,8 @@ public class MDSUpgrader extends AbstractUpgrader {
    */
   private void handlePrograms(String appId, Set<String> programIds, ProgramType programType) {
     for (String programId : programIds) {
-      runRecordStartedHandler(appId, programId, programType);
-      runRecordCompletedHandler(appId, programId, programType);
+      handleRunRecordStarted(appId, programId, programType);
+      handleRunRecordCompleted(appId, programId, programType);
       handleProgramArgs(appId, programId, programType);
     }
   }
@@ -195,7 +195,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programId the program id of the program
    * @param programType the {@link ProgramType} of the program
    */
-  private void runRecordStartedHandler(final String appId, final String programId, final ProgramType programType) {
+  private void handleRunRecordStarted(final String appId, final String programId, final ProgramType programType) {
     final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, DEVELOPER_ACCOUNT,
                                                        appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
@@ -218,7 +218,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programId the program id of the program
    * @param programType the {@link ProgramType} of the program
    */
-  private void runRecordCompletedHandler(final String appId, final String programId, final ProgramType programType) {
+  private void handleRunRecordCompleted(final String appId, final String programId, final ProgramType programType) {
 
     final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, DEVELOPER_ACCOUNT,
                                                        appId, programId).build();
@@ -292,7 +292,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * it back to {@link ProgramRunStatus#RUNNING}. So we don't really care about the temporary intermediate
    * {@link ProgramController.State}
    *
-   * @param status : the status
+   * @param status the status
    * @return the state for the status or null if there is no defined state for the given status
    */
   @Nullable
