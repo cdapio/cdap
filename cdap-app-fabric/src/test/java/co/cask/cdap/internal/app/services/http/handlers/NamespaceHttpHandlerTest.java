@@ -223,10 +223,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testNamespaceClient() throws Exception {
     // tests the NamespaceClient's ability to interact with Namespace service/handlers.
     AbstractNamespaceClient namespaceClient = getInjector().getInstance(AbstractNamespaceClient.class);
-    // test setup creates two namespaces in @BeforeClass
+    // test setup creates three namespaces in @BeforeClass
     List<NamespaceMeta> namespaces = namespaceClient.list();
-    Assert.assertEquals(2, namespaces.size());
-    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(TEST_NAMESPACE_META1, TEST_NAMESPACE_META2);
+    Assert.assertEquals(3, namespaces.size());
+    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(TEST_NAMESPACE_META, TEST_NAMESPACE_META1,
+                                                            TEST_NAMESPACE_META2);
     Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
 
     NamespaceMeta namespaceMeta = namespaceClient.get(TEST_NAMESPACE1);

@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -728,51 +729,52 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
-    // create app in default namespace so that v2 and v3 api can be tested in the same test
-    String defaultNamespace = "default";
-    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   defaultNamespace);
+    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
+    store.setProperties(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
                         CONCURRENT_WORKFLOW_NAME, propMap);
 
-    String runsUrl = getRunsUrl(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
+    String runsUrl = getRunsUrl(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW,
+                                CONCURRENT_WORKFLOW_NAME, "running");
 
     List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
     // Two instances of the ConcurrentWorkflow should be RUNNING
     Assert.assertTrue(historyRuns.size() >= 2);
 
     // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW,
                                                          CONCURRENT_WORKFLOW_NAME);
 
     for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
+      Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW,
                                                spec.getSchedule().getName()));
     }
 
-    String currentUrl = String.format("/v2/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
+    String currentUrl = String.format(PREFIX + "/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
                                       CONCURRENT_WORKFLOW_NAME);
 
     response = doGet(currentUrl);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     WorkflowStatus status = GSON.fromJson(json, WorkflowStatus.class);
     Assert.assertEquals("RUNNING", status.getState().toString());
     Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
 
-    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
-                                                     historyRuns.get(0).get("runid"));
+    response = getWorkflowCurrentStatus(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW,
+                                        CONCURRENT_WORKFLOW_NAME,
+                                        historyRuns.get(0).get("runid"));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     status = GSON.fromJson(json, WorkflowStatus.class);
     Assert.assertEquals("RUNNING", status.getState().toString());
     Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
 
-    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+    response = getWorkflowCurrentStatus(TEST_NAMESPACE.getId(), APP_WITH_CONCURRENT_WORKFLOW,
+                                        CONCURRENT_WORKFLOW_NAME,
                                         historyRuns.get(1).get("runid"));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
@@ -782,7 +784,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // delete the application
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
-      .API_VERSION_3_TOKEN, defaultNamespace);
+      .API_VERSION_3_TOKEN, TEST_NAMESPACE.getId());
     deleteApplication(60, deleteUrl, 200);
   }
 
@@ -1101,7 +1103,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    
+
     // start service in wrong namespace
     int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                     ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");
