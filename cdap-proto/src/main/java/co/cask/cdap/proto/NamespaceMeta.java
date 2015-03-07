@@ -18,9 +18,6 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-
-import java.util.Map;
 
 /**
  * Represents metadata for namespaces
@@ -76,7 +73,7 @@ public final class NamespaceMeta {
       this.id =  meta.getId();
       this.name = meta.getName();
       this.description = meta.getDescription();
-      this.yarnQueueName = meta.getConfig().getYarnQueue();
+      this.yarnQueueName = meta.getConfig().getSchedulerQueueName();
     }
 
     public Builder setId(final String id) {

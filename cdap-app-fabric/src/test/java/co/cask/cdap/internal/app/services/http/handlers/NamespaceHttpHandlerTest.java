@@ -285,7 +285,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // Update Yarn queue.
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                                                            NamespaceConfig.class);
-    Assert.assertEquals("prod", config.getYarnQueue());
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
@@ -303,7 +303,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // verify other properties set earlier has not changed.
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                            NamespaceConfig.class);
-    Assert.assertEquals("prod", config.getYarnQueue());
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
 
     // cleanup
     response = deleteNamespace(ID);

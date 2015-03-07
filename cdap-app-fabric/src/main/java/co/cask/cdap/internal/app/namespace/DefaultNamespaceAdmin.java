@@ -200,8 +200,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     NamespaceConfig config = namespaceMeta.getConfig();
 
-    if (config != null && config.getYarnQueue() != null && !config.getYarnQueue().isEmpty()) {
-      builder.setYarnQueueName(config.getYarnQueue());
+    if (config != null && config.getSchedulerQueueName() != null && !config.getSchedulerQueueName().isEmpty()) {
+      builder.setYarnQueueName(config.getSchedulerQueueName());
     }
 
     store.updateNamespace(builder.build());
