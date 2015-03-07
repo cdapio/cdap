@@ -52,6 +52,8 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
@@ -1615,7 +1617,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
+        runtimeService.run(program, new SimpleProgramOptions(id.getId(), getSystemArguments(id.getNamespaceId()),
+                                                             userArguments, debug));
 
       final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
@@ -2026,5 +2029,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } finally {
       client.close();
     }
+  }
+
+  private BasicArguments getSystemArguments(String namespaceId) {
+    // Currently the system arguments that is passed to every program is the YARN queue name.
+    // The config in the namespace level overrides the config in cdap-site.
+
+    // Yarn queue at CDAP level.
+    String yarnQueue = configuration.get(Constants.AppFabric.APP_YARN_QUEUE);
+
+    NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
+    Preconditions.checkNotNull(meta);
+
+    NamespaceConfig config = meta.getConfig();
+
+    String namespaceLevelYarnQueue = config.getYarnQueue();
+    yarnQueue = namespaceLevelYarnQueue != null && !namespaceLevelYarnQueue.isEmpty() ?
+                namespaceLevelYarnQueue : yarnQueue;
+
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    if (yarnQueue != null && !yarnQueue.isEmpty()) {
+      builder.put(Constants.AppFabric.APP_YARN_QUEUE, yarnQueue);
+    }
+
+    return  new BasicArguments(builder.build());
   }
 }
