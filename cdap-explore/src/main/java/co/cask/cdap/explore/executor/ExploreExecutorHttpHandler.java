@@ -116,7 +116,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocation);
+      LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocation.toURI());
       String createStatement;
       try {
         createStatement = generateStreamCreateStatement(streamId, streamLocation,
