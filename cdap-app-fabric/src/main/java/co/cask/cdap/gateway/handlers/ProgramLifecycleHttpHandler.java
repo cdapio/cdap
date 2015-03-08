@@ -2004,13 +2004,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    Map<String, String> resolvedConfigs = Maps.newHashMap();
-    for (Map.Entry<String, String> entry : configs.entrySet()) {
-      resolvedConfigs.put(entry.getKey(), entry.getValue());
-    }
+    Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
 
     NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
-    Preconditions.checkNotNull(meta);
+    Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
 
     NamespaceConfig config = meta.getConfig();
     // The only config currently as system arguments is Scheduler queue.

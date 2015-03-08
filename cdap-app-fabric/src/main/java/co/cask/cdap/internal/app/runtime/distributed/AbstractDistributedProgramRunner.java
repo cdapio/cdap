@@ -102,7 +102,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
     try {
-
       if (schedulerQueueName != null) {
         hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueueName);
       }
