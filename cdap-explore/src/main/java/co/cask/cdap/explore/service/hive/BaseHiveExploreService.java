@@ -155,9 +155,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    File previewsDir, StreamAdmin streamAdmin) {
-
-
-
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
