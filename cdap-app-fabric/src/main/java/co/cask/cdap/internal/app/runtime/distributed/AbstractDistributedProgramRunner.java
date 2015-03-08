@@ -99,14 +99,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File cConfFile;
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
-    final String yarnQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
     try {
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      if (yarnQueue != null) {
-        hConf.set("mapreduce.job.queuename", yarnQueue);
+      if (schedulerQueueName != null) {
+        hConf.set("mapreduce.job.queuename", schedulerQueueName);
       }
       hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
@@ -130,11 +130,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled.", program.getId());
           twillPreparer.enableDebugging();
         }
-        // Add yarn queue name if defined
-//        String yarnQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-        if (yarnQueue != null) {
-          LOG.info("Setting YARN queue for app {} as {}", program.getId(), yarnQueue);
-          twillPreparer.setSchedulerQueue(yarnQueue);
+        // Add scheduler queue name if defined
+        if (schedulerQueueName != null) {
+          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+          twillPreparer.setSchedulerQueue(schedulerQueueName);
         }
         TwillController twillController = twillPreparer
           .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())

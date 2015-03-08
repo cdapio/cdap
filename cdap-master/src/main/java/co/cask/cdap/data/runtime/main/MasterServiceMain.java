@@ -551,7 +551,7 @@ public class MasterServiceMain extends DaemonMain {
     // Add yarn queue name if defined
     String queueName = cConf.get(Constants.Service.SCHEDULER_QUEUE);
     if (queueName != null) {
-      LOG.info("Setting YARN queue to {} for master services", queueName);
+      LOG.info("Setting scheduler queue to {} for master services", queueName);
       preparer.setSchedulerQueue(queueName);
     }
 

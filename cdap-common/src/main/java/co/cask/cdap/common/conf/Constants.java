@@ -46,7 +46,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
-    /** YARN queue name to submit the master service app. */
+    /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "cdap.services.scheduler.queue";
   }
 
