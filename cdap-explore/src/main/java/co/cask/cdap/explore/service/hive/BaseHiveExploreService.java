@@ -162,6 +162,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
       hiveConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+      LOG.info("Setting scheduler queue name to {}", schedulerQueue);
     }
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
@@ -198,7 +199,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    HiveConf conf = new HiveConf();
+    HiveConf conf = new HiveConf(hiveConf);
     // Read delegation token if security is enabled.
     if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
