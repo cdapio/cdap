@@ -168,6 +168,13 @@ public final class Constants {
   }
 
   /**
+   * MapReduce.
+   */
+  public static final class MapReduce {
+    public static final String MAP_REDUCE_JOB_QUEUE_NAME = "mapreduce.job.queuename";
+  }
+
+  /**
    * Datasets.
    */
   public static final class Dataset {

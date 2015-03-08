@@ -102,12 +102,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
     try {
+
+      if (schedulerQueueName != null) {
+        hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueueName);
+      }
+
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      if (schedulerQueueName != null) {
-        hConf.set("mapreduce.job.queuename", schedulerQueueName);
-      }
       hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
       programDir = Files.createTempDir();

@@ -155,9 +155,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    File previewsDir, StreamAdmin streamAdmin) {
+
+
+
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
+    String schedulerQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
+      hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+      hiveConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+    }
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
