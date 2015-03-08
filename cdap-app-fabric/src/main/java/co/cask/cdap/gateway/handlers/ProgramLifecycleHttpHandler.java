@@ -68,6 +68,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -1990,20 +1991,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private Map<String, String> getSystemArgumentsFromCConf() {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
+    Map<String, String> configs = Maps.newHashMap();
+
     // The only config currently as system arguments is Scheduler queue.
     String schedulerQueue = configuration.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     if (schedulerQueue != null) {
-      builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
+      configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
 
-    return builder.build();
+    return configs;
   }
 
   private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    Map<String, String> resolvedConfigs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : configs.entrySet()) {
-      builder.put(entry.getKey(), entry.getValue());
+      resolvedConfigs.put(entry.getKey(), entry.getValue());
     }
 
     NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
@@ -2013,10 +2016,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // The only config currently as system arguments is Scheduler queue.
     String schedulerQueue = config.getSchedulerQueueName();
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
+      resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
 
-    return builder.build();
+    return resolvedConfigs;
 
   }
 
