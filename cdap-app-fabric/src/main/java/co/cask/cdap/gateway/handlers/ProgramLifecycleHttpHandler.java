@@ -1991,7 +1991,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private Map<String, String> getSystemArgumentsFromCConf() {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    // Scheduler queue at CDAP level.
+    // The only config currently as system arguments is Scheduler queue.
     String schedulerQueue = configuration.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     if (schedulerQueue != null) {
       builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
@@ -2010,7 +2010,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Preconditions.checkNotNull(meta);
 
     NamespaceConfig config = meta.getConfig();
-
+    // The only config currently as system arguments is Scheduler queue.
     String schedulerQueue = config.getSchedulerQueueName();
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
