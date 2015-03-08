@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -30,12 +30,12 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.ProgramArgs;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutor;
@@ -45,6 +45,8 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
@@ -58,7 +60,6 @@ import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Upgraded the Meta Data for applications
@@ -70,6 +71,13 @@ public class MDSUpgrader extends AbstractUpgrader {
   private final CConfiguration cConf;
   private final Store store;
   private final Set<String> appStreams;
+  private static final Gson GSON;
+
+  static {
+    GsonBuilder builder = new GsonBuilder();
+    ApplicationSpecificationAdapter.addTypeAdapters(builder);
+    GSON = builder.create();
+  }
 
   @Inject
   private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
@@ -87,7 +95,7 @@ public class MDSUpgrader extends AbstractUpgrader {
                                                             Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE)),
                                                         "table", DatasetProperties.EMPTY,
                                                         DatasetDefinition.NO_ARGUMENTS, null);
-          return new AppMDS(new MetadataStoreDataset(table));
+          return new AppMDS(new AppMetadataStoreDataset(table));
         } catch (Exception e) {
           LOG.error("Failed to access {} table", Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
                                                                      DefaultStore.APP_META_TABLE), e);
@@ -294,6 +302,21 @@ public class MDSUpgrader extends AbstractUpgrader {
     @Override
     public Iterator<MetadataStoreDataset> iterator() {
       return Iterators.singletonIterator(mds);
+    }
+  }
+
+  /**
+   * Extends {@link MetadataStoreDataset} to provide a custom {@link Gson} which has adapters for
+   * {@link ApplicationSpecification} needed for deserialization.
+   */
+  private static class AppMetadataStoreDataset extends MetadataStoreDataset {
+    public AppMetadataStoreDataset(Table table) {
+      super(table);
+    }
+
+    @Override
+    protected <T> T deserialize(byte[] serialized, Class<T> classOfT) {
+      return GSON.fromJson(Bytes.toString(serialized), classOfT);
     }
   }
 }
