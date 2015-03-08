@@ -76,7 +76,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
     exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from " + FakeApp.DS_NAME).get();
+      queryClient.execute("select * from dataset_" + FakeApp.DS_NAME).get();
       Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
     } catch (ExecutionException e) {
 
@@ -88,7 +88,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
   private void executeBasicQuery(String instanceName) throws Exception {
     // Hive replaces the periods with underscores
-    String query = "select * from " + instanceName.replace(".", "_");
+    String query = "select * from dataset_" + instanceName.replace(".", "_");
     ExploreExecutionResult executionResult = queryClient.execute(query).get();
     Assert.assertNotNull(executionResult.getResultSchema());
     List<QueryResult> results = Lists.newArrayList(executionResult);

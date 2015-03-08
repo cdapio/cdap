@@ -38,6 +38,7 @@ import org.junit.experimental.categories.Category;
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+  private static final String otherTableHiveName = getDatasetHiveName(otherTable);
 
   @BeforeClass
   public static void start() throws Exception {
@@ -74,13 +75,13 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "my_table", "TABLE", "CDAP Dataset")),
+                              "", "default", MY_TABLE_HIVE_NAME, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
+                              "", "default", otherTableHiveName, "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
-    future = getExploreClient().tables(null, null, "other%", null);
+    future = getExploreClient().tables(null, null, "dataset_other%", null);
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable."),
@@ -91,7 +92,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
+                              "", "default", otherTableHiveName, "TABLE", "CDAP Dataset")))
     );
   }
 
@@ -278,23 +279,23 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "my_table", "key", 12, "STRING",
+                              null, "default", MY_TABLE_HIVE_NAME, "key", 12, "STRING",
                               2147483647, null, null, null, 1,
                               "from deserializer", null, null, null, null, 1,
                               "YES", null, null, null, null, "NO")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "my_table", "value", 2002,
+                              null, "default", MY_TABLE_HIVE_NAME, "value", 2002,
                               "struct<name:string,ints:array<int>>", null, null,
                               null, null, 1, "from deserializer", null, null,
                               null, null, 2, "YES", null, null, null, null,
                               "NO")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "other_table", "key", 12, "STRING",
+                              null, "default", otherTableHiveName, "key", 12, "STRING",
                               2147483647, null, null, null, 1,
                               "from deserializer", null, null, null, null, 1,
                               "YES", null, null, null, null, "NO")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "other_table", "value", 2002,
+                              null, "default", otherTableHiveName, "value", 2002,
                               "struct<name:string,ints:array<int>>", null, null,
                               null, null, 1, "from deserializer", null, null,
                               null, null, 2, "YES", null, null, null, null,

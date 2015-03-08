@@ -102,6 +102,8 @@ public class ExploreExecutorService extends AbstractIdleService {
       }
     });
 
+    // TODO: figure out how to run explore service in upgrade tool and remove from start up
+    exploreService.upgrade();
     LOG.info("{} started successfully on {}", ExploreExecutorService.class.getSimpleName(),
              httpService.getBindAddress());
   }

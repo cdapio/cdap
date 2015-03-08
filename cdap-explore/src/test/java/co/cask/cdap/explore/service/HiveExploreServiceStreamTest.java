@@ -257,7 +257,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   private static String getTableName(String streamName) {
-    return String.format("cdap_stream_%s_%s", NAMESPACE_ID, streamName);
+    return "stream_" + streamName;
   }
 
   private byte[] createAvroEvent(org.apache.avro.Schema schema, Object... values) throws IOException {

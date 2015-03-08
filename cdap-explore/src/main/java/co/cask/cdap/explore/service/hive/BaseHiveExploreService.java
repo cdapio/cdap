@@ -16,13 +16,16 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.ExploreTableService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
@@ -44,6 +47,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -127,7 +131,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
@@ -140,6 +143,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
   private final ScheduledExecutorService metastoreClientsExecutorService;
+  private final StreamAdmin streamAdmin;
+  private final DatasetFramework datasetFramework;
+  private final ExploreTableService exploreTableService;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -153,15 +159,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   CConfiguration cConf, Configuration hConf,
                                    File previewsDir, StreamAdmin streamAdmin) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.hiveConf = hiveConf;
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+    this.datasetFramework = datasetFramework;
+    this.streamAdmin = streamAdmin;
+    this.exploreTableService = new ExploreTableService(this, datasetFramework);
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -664,6 +672,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException {
+    return execute(getHiveDatabase(namespace.getId()), statement);
+  }
+
+  // visible solely for upgrades and upgrade tests,
+  // where we want to use the old default database and not a cdap database
+  @VisibleForTesting
+  public QueryHandle execute(String database, String statement) throws ExploreException, SQLException {
     startAndWait();
 
     try {
@@ -671,7 +686,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
-        String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
         SessionState.get().setCurrentDatabase(database);
 
@@ -957,6 +971,139 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
     Collections.sort(result);
     return result;
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    // all old CDAP tables used to be in the default database
+    LOG.info("Checking for tables that need upgrade...");
+    List<TableNameInfo> tables = getTables("default");
+    for (TableNameInfo tableNameInfo : tables) {
+      String tableName = tableNameInfo.getTableName();
+      TableInfo tableInfo = getTableInfo(tableNameInfo.getDatabaseName(), tableName);
+      if (!requiresUpgrade(tableInfo)) {
+        continue;
+      }
+
+      String storageHandler = tableInfo.getParameters().get("storage_handler");
+      if (StreamStorageHandler.class.getName().equals(storageHandler)) {
+        LOG.info("Upgrading stream table {}", tableName);
+        upgradeStreamTable(tableInfo);
+      } else if (DatasetStorageHandler.class.getName().equals(storageHandler)) {
+        LOG.info("Upgrading record scannable dataset table {}.", tableName);
+        upgradeRecordScannableTable(tableInfo);
+      } else {
+        LOG.info("Upgrading file set table {}.", tableName);
+        // handle filesets differently since they can have partitions, and dropping the table will remove all partitions
+        upgradeFilesetTable(tableInfo);
+      }
+    }
+  }
+
+  private void upgradeFilesetTable(TableInfo tableInfo) throws Exception {
+    // for partitioned filesets, we will alter the table so that partitions are not lost.
+    // this only works because the "default" database is used both now and before for the CDAP default namespace.
+    // this also only works because these are native Hive tables (they don't use a storage handler).
+    // Non-native tables cannot be altered.
+    // TODO: enabling a dataset with partitions should add those partitions automatically
+    String oldName = tableInfo.getTableName();
+    String newName = "dataset_" + oldName.substring("cdap_".length(), oldName.length());
+    QueryHandle renameHandle = execute("default", String.format("ALTER TABLE %s RENAME TO %s", oldName, newName));
+    QueryStatus status = waitForCompletion(renameHandle);
+    // if rename failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException(String.format("Failed to rename table from %s to %s.", oldName, newName));
+    }
+
+    // add version to the table properties. cdap name is already present since these were introduced in 2.7
+    Map<String, String> tblProperties = tableInfo.getParameters();
+    String cdapName = tblProperties.get(Constants.Explore.CDAP_NAME);
+    QueryHandle propertyHandle = execute("default", String.format(
+      "ALTER TABLE %s SET TBLPROPERTIES ('%s'='%s', '%s'='%s')",
+      newName, Constants.Explore.CDAP_NAME, cdapName,
+      Constants.Explore.CDAP_VERSION, ProjectInfo.getVersion().toString()));
+    status = waitForCompletion(propertyHandle);
+    // if set properties failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException(String.format("Failed to set table properties for %s.", newName));
+    }
+  }
+
+  private void upgradeRecordScannableTable(TableInfo tableInfo) throws Exception {
+    // get the dataset name from the serde properties.
+    Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
+    String datasetName = serdeProperties.get(Constants.Explore.DATASET_NAME);
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, datasetName);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
+
+    // if there are no partitions, we can just disable then enable.
+    LOG.info("Enabling exploration on dataset {}", datasetID);
+    QueryHandle enableHandle = exploreTableService.enableDataset(datasetID, spec);
+    // wait until enable is done
+    QueryStatus status = waitForCompletion(enableHandle);
+    // if enable failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to enable exploration of dataset " + datasetID);
+    }
+
+    // safe to disable old table now
+    String oldTable = tableInfo.getTableName();
+    LOG.info("Disabling old dataset table {}", oldTable);
+    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + oldTable);
+    // make sure disable finished
+    status = waitForCompletion(disableHandle);
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to disable old Hive table " + oldTable);
+    }
+  }
+
+  private void upgradeStreamTable(TableInfo tableInfo) throws Exception {
+    // get the stream name from the serde properties.
+    Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
+    String streamName = serdeProperties.get(Constants.Explore.STREAM_NAME);
+    Id.Stream streamID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, streamName);
+
+    // enable the table in the default namespace
+    LOG.info("Enabling exploration on stream {}", streamID);
+    QueryHandle enableHandle = exploreTableService.enableStream(streamID, streamAdmin.getConfig(streamID));
+    // wait til enable is done
+    QueryStatus status = waitForCompletion(enableHandle);
+    // if enable failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to enable exploration of stream " + streamID);
+    }
+
+    // safe to disable old table now
+    // run the query explicitly since the old code doesn't exist
+    LOG.info("Disabling exploration on old table for stream {}", streamID);
+    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + streamName);
+
+    // make sure disable finished
+    status = waitForCompletion(disableHandle);
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to disable old Hive table " + streamName);
+    }
+  }
+
+  private QueryStatus waitForCompletion(QueryHandle handle) throws HandleNotFoundException, SQLException,
+    ExploreException, InterruptedException {
+    QueryStatus status = getStatus(handle);
+    while (!status.getStatus().isDone()) {
+      TimeUnit.SECONDS.sleep(1);
+      status = getStatus(handle);
+    }
+    return status;
+  }
+
+  private boolean requiresUpgrade(TableInfo tableInfo) {
+    // if this is a cdap dataset.
+    if (tableInfo.isBackedByDataset()) {
+      String cdapVersion = tableInfo.getParameters().get(Constants.Explore.CDAP_VERSION);
+      // for now, good enough to check if it contains the version or not.
+      // In the future we can actually do version comparison with ProjectInfo.Version
+      return cdapVersion == null;
+    }
+    return false;
   }
 
   void closeInternal(QueryHandle handle, OperationInfo opInfo)
