@@ -43,7 +43,7 @@ public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsu
   private final CConfiguration cConf;
 
   @Inject
-  LevelDBStreamConsumerStateStoreFactory(LevelDBTableService tableService, CConfiguration cConf) {
+  LevelDBStreamConsumerStateStoreFactory(CConfiguration cConf, LevelDBTableService tableService) {
     this.tableService = tableService;
     this.cConf = cConf;
   }

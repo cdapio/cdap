@@ -36,7 +36,6 @@ import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -146,11 +145,11 @@ public class HBase96TableUtil extends HBaseTableUtil {
   @Override
   public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
-    TableName[] tableNames =
-      admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespaceId));
-    for (TableName tableName : tableNames) {
-      if (isCDAPTable(tableName.getNameAsString())) {
-        tableIds.add(HTable96NameConverter.fromTableName(tableName));
+    HTableDescriptor[] hTableDescriptors =
+      admin.listTableDescriptorsByNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespaceId));
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(HTable96NameConverter.fromTableName(hTableDescriptor.getTableName()));
       }
     }
     return tableIds;
@@ -159,10 +158,10 @@ public class HBase96TableUtil extends HBaseTableUtil {
   @Override
   public List<TableId> listTables(HBaseAdmin admin) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
-    TableName[] tableNames = admin.listTableNames();
-    for (TableName tableName : tableNames) {
-      if (isCDAPTable(tableName.getNameAsString())) {
-        tableIds.add(HTable96NameConverter.fromTableName(tableName));
+    HTableDescriptor[] hTableDescriptors = admin.listTables();
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(HTable96NameConverter.fromTableName(hTableDescriptor.getTableName()));
       }
     }
     return tableIds;

@@ -41,7 +41,7 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Inject
   public LevelDBStreamAdmin(CConfiguration conf, LevelDBTableService service) {
-    super(conf, service, QueueConstants.QueueType.STREAM);
+    super(service, QueueConstants.QueueType.STREAM);
   }
 
   @Override

@@ -45,11 +45,10 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   @Inject
   public LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service) {
-    this(conf, service, QUEUE);
+    this(service, QUEUE);
   }
 
-  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service,
-                              QueueConstants.QueueType type) {
+  protected LevelDBQueueAdmin(LevelDBTableService service, QueueConstants.QueueType type) {
     super(type);
     this.service = service;
   }
@@ -138,7 +137,7 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    dropAllTablesWithPrefix(String.format("%s.%s", namespaceId, unqualifiedTableNamePrefix));
+    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId, unqualifiedTableNamePrefix));
   }
 
   @Override

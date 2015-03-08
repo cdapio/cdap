@@ -140,8 +140,8 @@ public class HBase94TableUtil extends HBaseTableUtil {
     List<TableId> tableIds = Lists.newArrayList();
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
-      String hTableName = hTableDescriptor.getNameAsString();
-      if (isCDAPTable(hTableName)) {
+      if (isCDAPTable(hTableDescriptor)) {
+        String hTableName = hTableDescriptor.getNameAsString();
         tableIds.add(HTable94NameConverter.fromTableName(hTableName));
       }
     }

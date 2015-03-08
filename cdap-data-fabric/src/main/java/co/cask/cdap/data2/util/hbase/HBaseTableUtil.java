@@ -102,7 +102,8 @@ public abstract class HBaseTableUtil {
     }
   }
 
-  protected boolean isCDAPTable(String hTableName) {
+  protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
+    String hTableName = hTableDescriptor.getNameAsString();
     return hTableName.startsWith(tablePrefix + ".") || hTableName.startsWith(tablePrefix + "_");
   }
 

@@ -177,9 +177,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   boolean exists(QueueName queueName) throws IOException {
-    HBaseAdmin admin = getHBaseAdmin();
-    return tableUtil.tableExists(admin, getDataTableId(queueName)) &&
-      tableUtil.tableExists(admin, getConfigTableId(queueName));
+    return tableUtil.tableExists(getHBaseAdmin(), getDataTableId(queueName)) &&
+      tableUtil.tableExists(getHBaseAdmin(), getConfigTableId(queueName));
   }
 
   @Override
@@ -206,8 +205,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private void truncate(TableId tableId) throws IOException {
-    HBaseAdmin admin = getHBaseAdmin();
-    if (tableUtil.tableExists(admin, tableId)) {
+    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
       tableUtil.truncateTable(getHBaseAdmin(), tableId);
     }
   }
@@ -223,7 +221,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     // all queues for a flow are in one table
-    drop(getHBaseAdmin(), getDataTableId(namespaceId, app, flow));
+    drop(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
     deleteConsumerConfigurations(namespaceId, app, flow);
   }
@@ -233,7 +231,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
-      drop(getHBaseAdmin(), getDataTableId(queueName));
+      drop(getDataTableId(queueName));
     } else {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
     }
@@ -241,9 +239,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     deleteConsumerConfigurations(queueName);
   }
 
-  private void drop(HBaseAdmin admin, TableId tableId) throws IOException {
-    if (tableUtil.tableExists(admin, tableId)) {
-      tableUtil.dropTable(admin, tableId);
+  private void drop(TableId tableId) throws IOException {
+    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
+      tableUtil.dropTable(getHBaseAdmin(), tableId);
     }
   }
 
@@ -271,10 +269,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   private void deleteConsumerConfigurationsForPrefix(String tableNamePrefix, TableId configTableId)
     throws IOException {
     // table is created lazily, possible it may not exist yet.
-    HBaseAdmin admin = getHBaseAdmin();
-    if (tableUtil.tableExists(admin, configTableId)) {
+    if (tableUtil.tableExists(getHBaseAdmin(), configTableId)) {
       // we need to delete the row for this queue name from the config table
-      HTable hTable = tableUtil.createHTable(admin.getConfiguration(), configTableId);
+      HTable hTable = tableUtil.createHTable(getHBaseAdmin().getConfiguration(), configTableId);
       try {
         byte[] prefix = Bytes.toBytes(tableNamePrefix);
         byte[] stop = Arrays.copyOf(prefix, prefix.length);
@@ -362,10 +359,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    String trueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
-    tableUtil.deleteAllInNamespace(admin, Id.Namespace.from(namespaceId), trueTableNamePrefix);
+    String queueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
+    tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), queueTableNamePrefix);
 
-    drop(getHBaseAdmin(), getConfigTableId(namespaceId));
+    drop(getConfigTableId(namespaceId));
   }
 
   @Override
