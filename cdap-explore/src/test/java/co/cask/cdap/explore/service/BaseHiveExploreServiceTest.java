@@ -103,10 +103,15 @@ public class BaseHiveExploreServiceTest {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  // TODO: When datasets are namespaced, we should add tests for multiple, non-default namespaces.
   protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("default");
+  protected static final Id.Namespace OTHER_NAMESPACE_ID = Id.Namespace.from("other");
+  protected static final String NAMESPACE_DATABASE = "default";
+  protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
   protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+  protected static final Id.DatasetModule OTHER_KEY_STRUCT_VALUE =
+    Id.DatasetModule.from(OTHER_NAMESPACE_ID, "keyStructValue");
+  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "my_table");
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
@@ -168,6 +173,7 @@ public class BaseHiveExploreServiceTest {
     locationFactory = injector.getInstance(LocationFactory.class);
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
     Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
+    Locations.mkdirsIfNotExists(locationFactory.create(OTHER_NAMESPACE_ID.getId()));
   }
 
   @AfterClass
@@ -177,6 +183,7 @@ public class BaseHiveExploreServiceTest {
     }
 
     Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
+    Locations.deleteQuietly(locationFactory.create(OTHER_NAMESPACE_ID.getId()), true);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     exploreClient.close();

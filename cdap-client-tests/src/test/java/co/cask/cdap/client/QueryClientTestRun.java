@@ -21,10 +21,12 @@ import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.XSlowTests;
@@ -44,9 +46,13 @@ import java.util.concurrent.ExecutionException;
 public class QueryClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private QueryClient queryClient;
+  private QueryClient queryClientOtherNamespace;
+  private NamespaceClient namespaceClient;
   private ProgramClient programClient;
   private StreamClient streamClient;
   private ExploreClient exploreClient;
+
+  private Id.Namespace otherNamespace = Id.Namespace.from("otherNamespace");
 
   @Before
   public void setUp() throws Throwable {
@@ -60,10 +66,17 @@ public class QueryClientTestRun extends ClientTestBase {
     exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
                                                   connectionConfig.getPort(),
                                                   accessToken);
+    namespaceClient = new NamespaceClient(clientConfig);
+    queryClientOtherNamespace = new QueryClient(new ClientConfig.Builder()
+                                                  .setHostname(HOSTNAME)
+                                                  .setPort(PORT)
+                                                  .setNamespace(otherNamespace)
+                                                  .build());
   }
 
   @Test
   public void testAll() throws Exception {
+    namespaceClient.create(new NamespaceMeta.Builder().setId(otherNamespace).build());
     appClient.deploy(createAppJarFile(FakeApp.class));
     programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
@@ -87,6 +100,10 @@ public class QueryClientTestRun extends ClientTestBase {
 
     exploreClient.enableExploreDataset(datasetInstance).get();
     executeBasicQuery(FakeApp.DS_NAME);
+
+    ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
+    List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
+    Assert.assertEquals(0, otherNamespaceTables.size());
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {

@@ -31,6 +31,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Tests explore metadata endpoints.
  */
@@ -38,23 +42,34 @@ import org.junit.experimental.categories.Category;
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+  private static final Id.DatasetInstance namespacedOtherTable =
+    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "other_table");
 
   @BeforeClass
   public static void start() throws Exception {
     initialize();
 
+    waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", otherTable, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", OTHER_MY_TABLE, DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", namespacedOtherTable, DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void stop() throws Exception {
+    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
+
     datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteInstance(otherTable);
+    datasetFramework.deleteInstance(OTHER_MY_TABLE);
+    datasetFramework.deleteInstance(namespacedOtherTable);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
+    datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
   }
 
   @Test
@@ -74,9 +89,13 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "my_table", "TABLE", "CDAP Dataset")),
+                              "", OTHER_NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
+                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", NAMESPACE_ID.getId(), "my_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", NAMESPACE_ID.getId(), "other_table", "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
@@ -91,7 +110,28 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
+                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
+
+    );
+
+    // Pattern on database
+    future = getExploreClient().tables(null, OTHER_NAMESPACE_ID.getId(), "%", null);
+    assertStatementResult(future, true,
+                          Lists.newArrayList(
+                            new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable."),
+                            new ColumnDesc("TABLE_SCHEM", "STRING", 2, "Schema name."),
+                            new ColumnDesc("TABLE_NAME", "STRING", 3, "Table name."),
+                            new ColumnDesc("TABLE_TYPE", "STRING", 4,
+                                           "The table type, e.g. \"TABLE\", \"VIEW\", etc."),
+                            new ColumnDesc("REMARKS", "STRING", 5, "Comments about the table.")
+                          ),
+                          Lists.newArrayList(
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", OTHER_NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
     );
   }
 
@@ -110,13 +150,33 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public void testGetSchemas() throws Exception {
     ListenableFuture<ExploreExecutionResult> future;
 
+    future = getExploreClient().schemas(null, null);
+    assertStatementResult(future, true,
+                          Lists.newArrayList(
+                            new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
+                            new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
+                          ),
+                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                                             new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")))
+    );
+
     future = getExploreClient().schemas(null, NAMESPACE_ID.getId());
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("default", ""))));
+                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")))
+    );
+
+    future = getExploreClient().schemas(null, OTHER_NAMESPACE_ID.getId());
+    assertStatementResult(future, true,
+                          Lists.newArrayList(
+                            new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
+                            new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
+                          ),
+                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")))
+    );
   }
 
   @Test
@@ -237,69 +297,83 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testGetColumns() throws Exception {
-    ListenableFuture<ExploreExecutionResult> future = getExploreClient().columns(null, null, "%", "%");
-    assertStatementResult(future, true,
-                          Lists.newArrayList(
-                            new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable"),
-                            new ColumnDesc("TABLE_SCHEM", "STRING", 2, "Schema name"),
-                            new ColumnDesc("TABLE_NAME", "STRING", 3, "Table name"),
-                            new ColumnDesc("COLUMN_NAME", "STRING", 4, "Column name"),
-                            new ColumnDesc("DATA_TYPE", "INT", 5, "SQL type from java.sql.Types"),
-                            new ColumnDesc("TYPE_NAME", "STRING", 6, "Data source dependent type name, " +
-                              "for a UDT the type name is fully qualified"),
-                            new ColumnDesc("COLUMN_SIZE", "INT", 7, "Column size. For char or date types" +
-                              " this is the maximum number of characters, for numeric or decimal" +
-                              " types this is precision."),
-                            new ColumnDesc("BUFFER_LENGTH", "TINYINT", 8, "Unused"),
-                            new ColumnDesc("DECIMAL_DIGITS", "INT", 9, "The number of fractional digits"),
-                            new ColumnDesc("NUM_PREC_RADIX", "INT", 10, "Radix (typically either 10 or 2)"),
-                            new ColumnDesc("NULLABLE", "INT", 11, "Is NULL allowed"),
-                            new ColumnDesc("REMARKS", "STRING", 12, "Comment describing column (may be null)"),
-                            new ColumnDesc("COLUMN_DEF", "STRING", 13, "Default value (may be null)"),
-                            new ColumnDesc("SQL_DATA_TYPE", "INT", 14, "Unused"),
-                            new ColumnDesc("SQL_DATETIME_SUB", "INT", 15, "Unused"),
-                            new ColumnDesc("CHAR_OCTET_LENGTH", "INT", 16,
-                                           "For char types the maximum number of bytes in the column"),
-                            new ColumnDesc("ORDINAL_POSITION", "INT", 17, "Index of column in table (starting at 1)"),
-                            new ColumnDesc("IS_NULLABLE", "STRING", 18, "\"NO\" means column definitely does not " +
-                              "allow NULL values; \"YES\" means the column might allow NULL values. " +
-                              "An empty string means nobody knows."),
-                            new ColumnDesc("SCOPE_CATALOG", "STRING", 19, "Catalog of table that is the scope " +
-                              "of a reference attribute (null if DATA_TYPE isn't REF)"),
-                            new ColumnDesc("SCOPE_SCHEMA", "STRING", 20, "Schema of table that is the scope of a " +
-                              "reference attribute (null if the DATA_TYPE isn't REF)"),
-                            new ColumnDesc("SCOPE_TABLE", "STRING", 21, "Table name that this the scope " +
-                              "of a reference attribure (null if the DATA_TYPE isn't REF)"),
-                            new ColumnDesc("SOURCE_DATA_TYPE", "SMALLINT", 22, "Source type of a distinct type " +
-                              "or user-generated Ref type, SQL type from java.sql.Types " +
-                              "(null if DATA_TYPE isn't DISTINCT or user-generated REF)"),
-                            new ColumnDesc("IS_AUTO_INCREMENT", "STRING", 23,
-                                           "Indicates whether this column is auto incremented.")
-                          ),
-                          Lists.newArrayList(
-                            new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "my_table", "key", 12, "STRING",
-                              2147483647, null, null, null, 1,
-                              "from deserializer", null, null, null, null, 1,
-                              "YES", null, null, null, null, "NO")),
-                            new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "my_table", "value", 2002,
-                              "struct<name:string,ints:array<int>>", null, null,
-                              null, null, 1, "from deserializer", null, null,
-                              null, null, 2, "YES", null, null, null, null,
-                              "NO")),
-                            new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "other_table", "key", 12, "STRING",
-                              2147483647, null, null, null, 1,
-                              "from deserializer", null, null, null, null, 1,
-                              "YES", null, null, null, null, "NO")),
-                            new QueryResult(Lists.<Object>newArrayList(
-                              null, "default", "other_table", "value", 2002,
-                              "struct<name:string,ints:array<int>>", null, null,
-                              null, null, 1, "from deserializer", null, null,
-                              null, null, 2, "YES", null, null, null, null,
-                              "NO")))
+    ArrayList<ColumnDesc> expectedColumnDescs = Lists.newArrayList(
+      new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable"),
+      new ColumnDesc("TABLE_SCHEM", "STRING", 2, "Schema name"),
+      new ColumnDesc("TABLE_NAME", "STRING", 3, "Table name"),
+      new ColumnDesc("COLUMN_NAME", "STRING", 4, "Column name"),
+      new ColumnDesc("DATA_TYPE", "INT", 5, "SQL type from java.sql.Types"),
+      new ColumnDesc("TYPE_NAME", "STRING", 6, "Data source dependent type name, " +
+        "for a UDT the type name is fully qualified"),
+      new ColumnDesc("COLUMN_SIZE", "INT", 7, "Column size. For char or date types" +
+        " this is the maximum number of characters, for numeric or decimal" +
+        " types this is precision."),
+      new ColumnDesc("BUFFER_LENGTH", "TINYINT", 8, "Unused"),
+      new ColumnDesc("DECIMAL_DIGITS", "INT", 9, "The number of fractional digits"),
+      new ColumnDesc("NUM_PREC_RADIX", "INT", 10, "Radix (typically either 10 or 2)"),
+      new ColumnDesc("NULLABLE", "INT", 11, "Is NULL allowed"),
+      new ColumnDesc("REMARKS", "STRING", 12, "Comment describing column (may be null)"),
+      new ColumnDesc("COLUMN_DEF", "STRING", 13, "Default value (may be null)"),
+      new ColumnDesc("SQL_DATA_TYPE", "INT", 14, "Unused"),
+      new ColumnDesc("SQL_DATETIME_SUB", "INT", 15, "Unused"),
+      new ColumnDesc("CHAR_OCTET_LENGTH", "INT", 16,
+                     "For char types the maximum number of bytes in the column"),
+      new ColumnDesc("ORDINAL_POSITION", "INT", 17, "Index of column in table (starting at 1)"),
+      new ColumnDesc("IS_NULLABLE", "STRING", 18, "\"NO\" means column definitely does not " +
+        "allow NULL values; \"YES\" means the column might allow NULL values. " +
+        "An empty string means nobody knows."),
+      new ColumnDesc("SCOPE_CATALOG", "STRING", 19, "Catalog of table that is the scope " +
+        "of a reference attribute (null if DATA_TYPE isn't REF)"),
+      new ColumnDesc("SCOPE_SCHEMA", "STRING", 20, "Schema of table that is the scope of a " +
+        "reference attribute (null if the DATA_TYPE isn't REF)"),
+      new ColumnDesc("SCOPE_TABLE", "STRING", 21, "Table name that this the scope " +
+        "of a reference attribure (null if the DATA_TYPE isn't REF)"),
+      new ColumnDesc("SOURCE_DATA_TYPE", "SMALLINT", 22, "Source type of a distinct type " +
+        "or user-generated Ref type, SQL type from java.sql.Types " +
+        "(null if DATA_TYPE isn't DISTINCT or user-generated REF)"),
+      new ColumnDesc("IS_AUTO_INCREMENT", "STRING", 23,
+                     "Indicates whether this column is auto incremented.")
     );
+
+    // Get all columns
+    ListenableFuture<ExploreExecutionResult> future = getExploreClient().columns(null, null, "%", "%");
+    List<QueryResult> expectedColumns = Lists.newArrayList(getExpectedColumns(OTHER_NAMESPACE_DATABASE));
+    expectedColumns.addAll(getExpectedColumns(NAMESPACE_DATABASE));
+    assertStatementResult(future, true,
+                          expectedColumnDescs, expectedColumns);
+
+    // Get all columns in a namespace
+    future = getExploreClient().columns(null, OTHER_NAMESPACE_ID.getId(), "%", "%");
+    assertStatementResult(future, true,
+                          expectedColumnDescs,
+                          getExpectedColumns(OTHER_NAMESPACE_DATABASE)
+    );
+  }
+
+  private List<QueryResult> getExpectedColumns(String database) {
+    return Lists.newArrayList(
+      new QueryResult(Lists.<Object>newArrayList(
+        null, database, "my_table", "key", 12, "STRING",
+        2147483647, null, null, null, 1,
+        "from deserializer", null, null, null, null, 1,
+        "YES", null, null, null, null, "NO")),
+      new QueryResult(Lists.<Object>newArrayList(
+        null, database, "my_table", "value", 2002,
+        "struct<name:string,ints:array<int>>", null, null,
+        null, null, 1, "from deserializer", null, null,
+        null, null, 2, "YES", null, null, null, null,
+        "NO")),
+      new QueryResult(Lists.<Object>newArrayList(
+        null, database, "other_table", "key", 12, "STRING",
+        2147483647, null, null, null, 1,
+        "from deserializer", null, null, null, null, 1,
+        "YES", null, null, null, null, "NO")),
+      new QueryResult(Lists.<Object>newArrayList(
+        null, database, "other_table", "value", 2002,
+        "struct<name:string,ints:array<int>>", null, null,
+        null, null, 1, "from deserializer", null, null,
+        null, null, 2, "YES", null, null, null, null,
+        "NO")));
   }
 
   @Test

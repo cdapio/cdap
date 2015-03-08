@@ -37,6 +37,8 @@ import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -51,11 +53,18 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
   private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
   private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
+  private static final Id.DatasetModule otherKvTable = Id.DatasetModule.from(OTHER_NAMESPACE_ID, "kvTable");
+  private static final Id.DatasetInstance otherSimpleTable =
+    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "simple_table");
 
   @BeforeClass
   public static void start() throws Exception {
     initialize();
+
+    waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
+
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 
   private static void initKeyValueTable(Id.DatasetInstance datasetInstanceId, boolean addData) throws Exception {
@@ -91,7 +100,9 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
+    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
+    datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
   }
 
   @Test
@@ -332,14 +343,13 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       exploreClient.submit(NAMESPACE_ID, "insert into table simple_table select * from test").get().close();
 
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, "select * from simple_table").get();
-      Assert.assertEquals(ImmutableList.of(1, "one"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(2, "two"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(3, "three"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(4, "four"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(5, "five"), result.next().getColumns());
-      Assert.assertFalse(result.hasNext());
-      result.close();
+      assertSelectAll(NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
+        ImmutableList.<Object>of(1, "one"),
+        ImmutableList.<Object>of(2, "two"),
+        ImmutableList.<Object>of(3, "three"),
+        ImmutableList.<Object>of(4, "four"),
+        ImmutableList.<Object>of(5, "five")
+      ));
 
     } finally {
       exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get().close();
@@ -375,16 +385,91 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       exploreClient.submit(NAMESPACE_ID, "insert into table test select * from simple_table").get().close();
 
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, "select * from test").get();
-      Assert.assertEquals(ImmutableList.of(10, "ten"), result.next().getColumns());
-      Assert.assertFalse(result.hasNext());
-      result.close();
+      assertSelectAll(NAMESPACE_ID, "test", ImmutableList.<List<Object>>of(
+        ImmutableList.<Object>of(10, "ten")
+      ));
 
     } finally {
       exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get().close();
       datasetFramework.deleteInstance(simpleTable);
       datasetFramework.deleteModule(kvTable);
     }
+  }
+
+  @Test
+  public void writeFromAnotherNamespace() throws Exception {
+    datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", simpleTable, DatasetProperties.EMPTY);
+
+    datasetFramework.addModule(otherKvTable, new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", otherSimpleTable, DatasetProperties.EMPTY);
+
+    try {
+
+      ExploreExecutionResult result = exploreClient.submit(OTHER_NAMESPACE_ID, "select * from simple_table").get();
+      Assert.assertFalse(result.hasNext());
+
+      // Accessing dataset instance to perform data operations
+      KeyValueTableDefinition.KeyValueTable table =
+        datasetFramework.getDataset(simpleTable, DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+
+      Transaction tx = transactionManager.startShort(100);
+      table.startTx(tx);
+
+      table.put(1, "one");
+
+      Assert.assertTrue(table.commitTx());
+      transactionManager.canCommit(tx, table.getTxChanges());
+      transactionManager.commit(tx);
+      table.postTxCommit();
+
+      exploreClient.submit(OTHER_NAMESPACE_ID,
+                           "insert into table simple_table select * from default.simple_table").get().close();
+
+      assertSelectAll(NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
+        ImmutableList.<Object>of(1, "one")
+      ));
+
+      // Write into otherSimpleTable and assert that it doesn't show up in queries over simpleTable
+      table = datasetFramework.getDataset(otherSimpleTable, DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+
+      tx = transactionManager.startShort(100);
+      table.startTx(tx);
+
+      table.put(2, "two");
+
+      Assert.assertTrue(table.commitTx());
+      transactionManager.canCommit(tx, table.getTxChanges());
+      transactionManager.commit(tx);
+      table.postTxCommit();
+
+      assertSelectAll(OTHER_NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
+        ImmutableList.<Object>of(1, "one"),
+        ImmutableList.<Object>of(2, "two")
+      ));
+
+      assertSelectAll(NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
+        ImmutableList.<Object>of(1, "one")
+      ));
+
+    } finally {
+      datasetFramework.deleteInstance(simpleTable);
+      datasetFramework.deleteInstance(otherSimpleTable);
+      datasetFramework.deleteModule(kvTable);
+      datasetFramework.deleteModule(otherKvTable);
+    }
+  }
+
+  private void assertSelectAll(Id.Namespace namespace, String table,
+                               List<List<Object>> expectedResults) throws Exception {
+    ExploreExecutionResult result = exploreClient.submit(namespace, "select * from " + table).get();
+    for (List<Object> expectedResult : expectedResults) {
+      Assert.assertEquals(expectedResult, result.next().getColumns());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   // TODO test insert overwrite table: overwrite is the same as into
