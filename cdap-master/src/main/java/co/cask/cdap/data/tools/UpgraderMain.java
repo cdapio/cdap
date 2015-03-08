@@ -85,7 +85,7 @@ public class UpgraderMain {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private Store store;
-
+  private FileMetaDataManager fileMetaDataManager;
   private final Injector injector;
 
   /**
@@ -182,9 +182,10 @@ public class UpgraderMain {
         @Singleton
         @Named("fileMetaDataManager")
         public FileMetaDataManager getFileMetaDataManager(@Named("logSaverTableUtil") LogSaverTableUtil tableUtil,
+                                                          @Named("dsFramework") DatasetFramework dsFramework,
                                                           TransactionExecutorFactory txExecutorFactory,
                                                           LocationFactory locationFactory) {
-          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory);
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework);
         }
       });
   }
@@ -283,8 +284,7 @@ public class UpgraderMain {
     archiveUpgrader.upgrade();
 
     LOG.info("Upgrading logs meta data ...");
-    LogUpgrader logUpgrader = injector.getInstance(LogUpgrader.class);
-    logUpgrader.upgrade();
+    getFileMetaDataManager().upgrade();
   }
 
   public static void main(String[] args) throws Exception {
@@ -359,5 +359,18 @@ public class UpgraderMain {
       store = injector.getInstance(Key.get(Store.class, Names.named("defaultStore")));
     }
     return store;
+  }
+
+  /**
+   * gets the {@link FileMetaDataManager} to update log meta
+   *
+   * @return {@link FileMetaDataManager}
+   */
+  private FileMetaDataManager getFileMetaDataManager() {
+    if (fileMetaDataManager == null) {
+      fileMetaDataManager = injector.getInstance(Key.get(FileMetaDataManager.class,
+                                                         Names.named("fileMetaDataManager")));
+    }
+    return fileMetaDataManager;
   }
 }
