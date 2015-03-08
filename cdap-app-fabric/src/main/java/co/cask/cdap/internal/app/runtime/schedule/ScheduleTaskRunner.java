@@ -147,7 +147,7 @@ public final class ScheduleTaskRunner {
       public void completed() {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.COMPLETED);
+                      ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -157,7 +157,7 @@ public final class ScheduleTaskRunner {
       public void error(Throwable cause) {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.ERROR);
+                      ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);

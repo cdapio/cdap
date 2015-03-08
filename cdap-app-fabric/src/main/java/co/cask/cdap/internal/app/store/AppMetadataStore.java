@@ -57,11 +57,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
     GSON = builder.create();
   }
 
-  private static final String TYPE_APP_META = "appMeta";
-  private static final String TYPE_STREAM = "stream";
-  private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
-  private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  private static final String TYPE_PROGRAM_ARGS = "programArgs";
+  public static final String TYPE_APP_META = "appMeta";
+  public static final String TYPE_STREAM = "stream";
+  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
+  public static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
 
@@ -139,7 +139,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
-  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramController.State endStatus) {
+  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -168,7 +168,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
-    write(key, new RunRecord(started, stopTs, endStatus.getRunStatus()));
+    write(key, new RunRecord(started, stopTs, runStatus));
   }
 
   public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,

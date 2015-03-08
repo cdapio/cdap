@@ -170,13 +170,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
-    Preconditions.checkArgument(state != null, "End state of program run should be defined");
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStop(id, pid, endTime, state);
+        mds.apps.recordProgramStop(id, pid, endTime, runStatus);
         return null;
       }
     });

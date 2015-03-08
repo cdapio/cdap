@@ -71,9 +71,9 @@ public interface Store {
    * @param id      id of program
    * @param pid     run id
    * @param endTime end timestamp
-   * @param state   State of program
+   * @param runStatus   {@link ProgramRunStatus} of program run
    */
-  void setStop(Id.Program id, String pid, long endTime, ProgramController.State state);
+  void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.

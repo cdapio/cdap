@@ -59,7 +59,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          @Named("namespacedDSFramework") DatasetFramework namespacedFramework) {
+                          @Named("dsFramework") DatasetFramework dsFramework) {
 
     super(locationFactory);
     this.cConf = cConf;
@@ -67,7 +67,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.locationFactory = locationFactory;
     this.queueAdmin = queueAdmin;
     this.hBaseTableUtil = hBaseTableUtil;
-    this.namespacedFramework = namespacedFramework;
+    this.namespacedFramework = dsFramework;
   }
 
   @Override
