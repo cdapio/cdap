@@ -62,17 +62,19 @@ public final class FileMetaDataManager {
   private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
   private static final String DEVELOPER_STRING = "developer";
-  private static final Set<String> OTHERS = Sets.newHashSet("logs", Constants.SYSTEM_NAMESPACE,
-                                                            Constants.DEFAULT_NAMESPACE);
+
   private final TransactionExecutorFactory txExecutorFactory;
 
   private final LocationFactory locationFactory;
+
+  private final DatasetFramework dsFramework;
 
   private final Transactional<DatasetContext<Table>, Table> mds;
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             LocationFactory locationFactory) {
+                             LocationFactory locationFactory, DatasetFramework dsFramework) {
+    this.dsFramework = dsFramework;
     this.txExecutorFactory = txExecutorFactory;
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
@@ -92,8 +94,8 @@ public final class FileMetaDataManager {
    * Persists meta data associated with a log file.
    *
    * @param loggingContext logging context containing the meta data.
-   * @param startTimeMs    start log time associated with the file.
-   * @param location       log file.
+   * @param startTimeMs start log time associated with the file.
+   * @param location log file.
    */
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
@@ -105,8 +107,8 @@ public final class FileMetaDataManager {
    * Persists meta data associated with a log file.
    *
    * @param logPartition partition name that is used to group log messages
-   * @param startTimeMs  start log time associated with the file.
-   * @param location     log file.
+   * @param startTimeMs start log time associated with the file.
+   * @param location log file.
    */
   private void writeMetaData(final String logPartition,
                              final long startTimeMs,
@@ -223,11 +225,11 @@ public final class FileMetaDataManager {
 
   /**
    * Upgrades the log meta table
-   * Note: Currently this supports upgrade from 2.6 to 2.8 and does upgrade for namepspaces
+   * Note: Currently this supports upgrade from 2.6 to 2.8 and does upgrade for namespaces
    *
    * @throws Exception
    */
-  public void upgrade(final DatasetFramework dsFramework) throws Exception {
+  public void upgrade() throws Exception {
     final Transactional<DatasetContext<Table>, Table> oldLogMDS;
     // get the old log meta data store from the default namespace
     oldLogMDS = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
@@ -297,7 +299,7 @@ public final class FileMetaDataManager {
   /**
    * Creates a new path depending on the old log file path
    *
-   * @param key         the key for this log meta entry
+   * @param key the key for this log meta entry
    * @param oldLocation the old log {@link Location}
    * @return the {@link Location}
    * @throws IOException
@@ -326,7 +328,7 @@ public final class FileMetaDataManager {
   /**
    * Strips different parts from the old log location and creates a new one
    *
-   * @param location  the old log {@link Location}
+   * @param location the old log {@link Location}
    * @param namespace the namespace which will be added to the new log location
    * @return the log {@link Location}
    * @throws IOException
