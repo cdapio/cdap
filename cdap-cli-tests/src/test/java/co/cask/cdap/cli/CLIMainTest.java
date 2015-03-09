@@ -18,13 +18,6 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.cli.app.AdapterApp;
-import co.cask.cdap.cli.app.FakeApp;
-import co.cask.cdap.cli.app.FakeDataset;
-import co.cask.cdap.cli.app.FakeFlow;
-import co.cask.cdap.cli.app.FakeProcedure;
-import co.cask.cdap.cli.app.FakeSpark;
-import co.cask.cdap.cli.app.PrefixedEchoHandler;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
@@ -33,6 +26,14 @@ import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.AdapterApp;
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeDataset;
+import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.FakeProcedure;
+import co.cask.cdap.client.app.FakeSpark;
+import co.cask.cdap.client.app.FakeWorkflow;
+import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -235,6 +236,18 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully send stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
+  }
+
+  @Test
+  public void testSchedule() throws Exception {
+    String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
+    String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
+    testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
   }
 
   @Test
