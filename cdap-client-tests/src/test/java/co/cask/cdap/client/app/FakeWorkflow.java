@@ -14,18 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.client.app;
 
-import co.cask.cdap.test.ProcedureClient;
-import com.google.inject.assistedinject.Assisted;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
- * This interface is using Guice assisted inject to create instance of {@link co.cask.cdap.test.ProcedureClient}.
- * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
+ *
  */
-@Deprecated
-public interface ProcedureClientFactory {
+public class FakeWorkflow implements Workflow {
 
-  ProcedureClient create(@Assisted("accountId") String accountId, @Assisted("applicationId") String applicationId,
-                         @Assisted("procedureName") String procedureName);
+  public static final String NAME = "FakeWorkflow";
+
+  @Override
+  public void configure(WorkflowConfigurer configurer) {
+    configurer.setName(NAME);
+    configurer.addAction(new AbstractWorkflowAction() {
+      @Override
+      public void run() {
+        // NO-OP
+      }
+    });
+  }
 }

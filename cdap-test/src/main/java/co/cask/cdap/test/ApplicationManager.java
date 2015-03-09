@@ -82,7 +82,7 @@ public interface ApplicationManager {
    * @param procedureName Name of the procedure to start.
    * @param arguments Arguments to be passed while starting a procedure.
    * @return A {@link ProcedureManager} for controlling the started procedure.
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
   ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
@@ -101,8 +101,11 @@ public interface ApplicationManager {
    * @param dataSetName Name of the dataset to retrieve.
    * @param <T> Type of the dataset.
    * @return A {@link DataSetManager} instance.
+   * @deprecated As of version 2.8.0, replaced by
+   *             {@link TestManager#getDataset(co.cask.cdap.proto.Id.Namespace, String)}
    */
-  <T> DataSetManager<T> getDataSet(String dataSetName);
+  @Deprecated
+  <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception;
 
   /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.

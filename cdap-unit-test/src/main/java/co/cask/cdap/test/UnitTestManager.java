@@ -24,14 +24,15 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricClient;
-import co.cask.cdap.test.internal.ApplicationManagerFactory;
-import co.cask.cdap.test.internal.DefaultId;
+import co.cask.cdap.test.internal.LocalApplicationManager;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -39,10 +40,8 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.inject.Injector;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,19 +55,25 @@ import java.util.HashMap;
  */
 public class UnitTestManager implements TestManager {
 
-  private final Injector injector;
   private final AppFabricClient appFabricClient;
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryClient;
 
-  public UnitTestManager(Injector injector, AppFabricClient appFabricClient, DatasetFramework datasetFramework,
+  public UnitTestManager(AppFabricClient appFabricClient, DatasetFramework datasetFramework,
                          TransactionSystemClient txSystemClient, DiscoveryServiceClient discoveryClient) {
-    this.injector = injector;
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryClient = discoveryClient;
+  }
+
+  private ClientConfig getLocalClientConfig() {
+    CConfiguration configuration = CConfiguration.create();
+    return new ClientConfig.Builder()
+      .setHostname(configuration.get(Constants.Router.ADDRESS))
+      .setPort(configuration.getInt(Constants.Router.ROUTER_PORT))
+      .build();
   }
 
   /**
@@ -80,7 +85,8 @@ public class UnitTestManager implements TestManager {
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
   @Override
-  public ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+  public ApplicationManager deployApplication(Id.Namespace namespace,
+                                              Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
@@ -90,12 +96,9 @@ public class UnitTestManager implements TestManager {
       app.configure(configurer, new ApplicationContext());
       ApplicationSpecification appSpec = configurer.createSpecification();
 
-      Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
-      ApplicationManager manager = injector.getInstance(ApplicationManagerFactory.class)
-        .create(DefaultId.NAMESPACE.getId(), appSpec.getName(),
-                deployedJar, appSpec);
-      return manager;
-
+      appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
+      return new LocalApplicationManager(Id.Application.from(namespace, appSpec.getName()),
+                                         getLocalClientConfig(), datasetFramework, txSystemClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -114,28 +117,28 @@ public class UnitTestManager implements TestManager {
 
   @Beta
   @Override
-  public final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
+  public final void deployDatasetModule(Id.Namespace namespace,
+                                        String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    //TODO: Expose namespaces later. Hardcoding to default right now.
-    datasetFramework.addModule(Id.DatasetModule.from(DefaultId.NAMESPACE, moduleName), datasetModule.newInstance());
+    datasetFramework.addModule(Id.DatasetModule.from(namespace, moduleName), datasetModule.newInstance());
   }
 
   @Beta
   @Override
-  public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
+  public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                             String datasetTypeName, String datasetInstanceName,
                                                              DatasetProperties props) throws Exception {
-    //TODO: Expose namespaces later. Hardcoding to default right now.
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
     return datasetFramework.getAdmin(datasetInstanceId, null);
   }
 
   @Beta
   @Override
-  public final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+  public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                             String datasetTypeName,
                                                              String datasetInstanceName) throws Exception {
-    //TODO: Expose namespaces later. Hardcoding to default right now.
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceId, DatasetProperties.EMPTY);
     return datasetFramework.getAdmin(datasetInstanceId, null);
   }
@@ -147,9 +150,10 @@ public class UnitTestManager implements TestManager {
    * @throws Exception
    */
   @Beta
-  public final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
+  @Override
+  public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
     //TODO: Expose namespaces later. Hardcoding to default right now.
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(DefaultId.NAMESPACE, datasetInstanceName);
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
     @SuppressWarnings("unchecked")
     final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {
@@ -189,8 +193,8 @@ public class UnitTestManager implements TestManager {
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   @Beta
-  public final Connection getQueryClient() throws Exception {
-
+  @Override
+  public final Connection getQueryClient(Id.Namespace namespace) throws Exception {
     // this makes sure the Explore JDBC driver is loaded
     Class.forName(ExploreDriver.class.getName());
 
@@ -206,7 +210,7 @@ public class UnitTestManager implements TestManager {
     int port = address.getPort();
 
     String connectString = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
-                                         Constants.DEFAULT_NAMESPACE);
+                                         namespace.getId());
 
     return DriverManager.getConnection(connectString);
   }

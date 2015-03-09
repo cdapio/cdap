@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
@@ -33,7 +34,6 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
@@ -216,7 +216,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
-  public void testApp() throws InterruptedException, IOException, TimeoutException {
+  public void testApp() throws Exception {
     testApp(WordCountApp.class, "text");
   }
 
@@ -331,9 +331,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
-                                         int expectedCount, int expectedTotalCount) {
-    DataSetManager<KeyValueTable> datasetManager = applicationManager
-      .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+                                         int expectedCount, int expectedTotalCount) throws Exception {
+    DataSetManager<KeyValueTable> datasetManager = getDataset(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
@@ -358,7 +357,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithWorker() throws Exception {
-    ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
+    ApplicationManager applicationManager = deployApplication(AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
     TimeUnit.MILLISECONDS.sleep(200);
@@ -518,8 +517,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<? extends Application> app, String streamName)
-    throws IOException, TimeoutException, InterruptedException {
+  private void testApp(Class<? extends Application> app, String streamName) throws Exception {
 
     ApplicationManager applicationManager = deployApplication(app);
     applicationManager.startFlow("WordCountFlow");
@@ -572,8 +570,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // The stream MR only consume the body, not the header.
     Assert.assertEquals(3 * 100L, totalCount);
 
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
-      applicationManager.getDataSet("mydataset");
+    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
@@ -610,19 +607,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testAppRedeployKeepsData() {
+  public void testAppRedeployKeepsData() throws Exception {
     ApplicationManager appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
+    DataSetManager<Table> myTableManager = getDataset("my_table");
     myTableManager.get().put(new Put("key1", "column1", "value1"));
     myTableManager.flush();
 
     // Changes should be visible to other instances of datasets
-    DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
+    DataSetManager<Table> myTableManager2 = getDataset("my_table");
     Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Even after redeploy of an app: changes should be visible to other instances of datasets
     appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
+    DataSetManager<Table> myTableManager3 = getDataset("my_table");
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Calling commit again (to test we can call it multiple times)
@@ -634,7 +631,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
 
   @Test(timeout = 60000L)
-  public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
+  public void testFlowletInitAndSetInstances() throws Exception {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
@@ -661,7 +658,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     flowManager.stop();
 
-    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+    DataSetManager<Table> dataSetManager = getDataset("conf");
     Table confTable = dataSetManager.get();
 
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));

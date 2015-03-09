@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap.api.metrics;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
  * Provides access to metrics about running processors.
  */
 public interface RuntimeMetrics {
+
   /**
    * @return number of inputs read
    */
