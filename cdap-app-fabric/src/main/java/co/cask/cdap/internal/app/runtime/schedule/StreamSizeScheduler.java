@@ -458,9 +458,11 @@ public class StreamSizeScheduler implements Scheduler {
             // TODO instead of relying on expected size to retry polling, use notification timestamp VS
             // metric timestamp [CDAP-1676]
             if (estimate != null && !estimateReached && pollRetry.decrementAndGet() >= 0) {
-              pollBookingExecutor.schedule(this, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
+              pollBookingExecutor.schedule(this, Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                           TimeUnit.SECONDS);
             } else if (estimate != null && !estimateReached) {
-              LOG.debug("Polling estimate {} was not reached for stream {} after {} retries", estimate, streamId.getName(), POLLING_AFTER_NOTIFICATION_RETRY);
+              LOG.debug("Polling estimate {} was not reached for stream {} after {} retries",
+                        estimate, streamId.getName(), POLLING_AFTER_NOTIFICATION_RETRY);
             }
           } catch (IOException e) {
             LOG.error("Could not poll stream {}", streamId.getName(), e);
