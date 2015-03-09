@@ -125,10 +125,14 @@ public class DefaultStore implements Store {
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by app mds.
+   *
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), appMetaDatasetInstanceId, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
+                            Constants.DEFAULT_NAMESPACE_ID, (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                 APP_META_TABLE))),
+                          DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -166,17 +170,16 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
-    Preconditions.checkArgument(state != null, "End state of program run should be defined");
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStop(id, pid, endTime, state);
+        mds.apps.recordProgramStop(id, pid, endTime, runStatus);
         return null;
       }
     });
-
 
 
     // todo: delete old history data
@@ -778,6 +781,21 @@ public class DefaultStore implements Store {
           return existing;
         }
         input.apps.createNamespace(metadata);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void updateNamespace(final NamespaceMeta metadata) {
+    Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        NamespaceMeta existing = input.apps.getNamespace(Id.Namespace.from(metadata.getId()));
+        if (existing != null) {
+          input.apps.createNamespace(metadata);
+        }
         return null;
       }
     });

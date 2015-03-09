@@ -49,7 +49,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -62,16 +61,16 @@ import javax.annotation.Nullable;
 
 
 /**
- * Command line tool for data migration.
+ * Command line tool to migrate data between different versions of CDAP.
+ * Usually used along with upgrade tool{@link UpgraderMain}
  */
 public class DataMigration {
   private static final String KEEP_OLD_METRICS_TABLES = "--keep-old-metrics-tables";
+
   /**
    * Set of Action available in this tool.
    */
   private enum Action {
-    // NOTE : Metrics migration is not required for CDAP to work after upgrade,
-    // some may opt not to migrate data as it may take a while. Hence, it is extracted as separate command/step
     METRICS("Migrate metrics data, to preserve old table data use option --keep-old-metrics-tables"),
     HELP("Show this help.");
 
@@ -188,11 +187,13 @@ public class DataMigration {
       truncateV2Tables(cConf, hConf);
       // migrate metrics data
       DefaultMetricDatasetFactory.migrateData(injector.getInstance(CConfiguration.class), framework, version);
-      System.out.println ("Keep Old Table Flag is : " + keepOldTables);
       // delete old-metrics table identified by version, unless keepOldTables flag is true
       if (!keepOldTables) {
         cleanUpOldTables(cConf, hConf, version);
       }
+      System.out.println("Successfully Migrated Metrics Data from " + version.name());
+    } else {
+      System.out.println("Did not find compatible CDAP Version to migrate Metrics data from");
     }
   }
 

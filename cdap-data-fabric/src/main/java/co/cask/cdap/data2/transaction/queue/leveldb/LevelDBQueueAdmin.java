@@ -21,6 +21,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.data2.util.TableId;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -44,12 +45,11 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   @Inject
   public LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service) {
-    this(conf, service, QUEUE);
+    this(service, QUEUE);
   }
 
-  protected LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service,
-                              QueueConstants.QueueType type) {
-    super(conf, type);
+  protected LevelDBQueueAdmin(LevelDBTableService service, QueueConstants.QueueType type) {
+    super(type);
     this.service = service;
   }
 
@@ -136,13 +136,8 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // No-op
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
-    dropAllTablesWithPrefix(String.format("%s.", getTableNamePrefix(namespaceId)));
+    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId, unqualifiedTableNamePrefix));
   }
 
   @Override
@@ -168,5 +163,16 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
         service.dropTable(tableName);
       }
     }
+  }
+
+  public String getActualTableName(QueueName queueName) {
+    return getTableNameForFlow(queueName.getFirstComponent(),
+                               queueName.getSecondComponent(),
+                               queueName.getThirdComponent());
+  }
+
+  protected String getTableNameForFlow(String namespaceId, String app, String flow) {
+    TableId tableId = getDataTableId(namespaceId, app, flow);
+    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
   }
 }
