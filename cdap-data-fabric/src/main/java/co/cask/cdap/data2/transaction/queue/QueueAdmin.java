@@ -67,39 +67,31 @@ public interface QueueAdmin {
   void upgrade() throws Exception;
 
   /**
-   * @param name entity name
-   * @return true if entity with given name exists, otherwise false
+   * @param queueName Name of the queue
+   * @return true if queue with given name exists, otherwise false
    * @throws Exception if check fails
    */
-  boolean exists(String name) throws Exception;
+  boolean exists(QueueName queueName) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
    * @throws Exception if creation fails
    */
-  void create(String name) throws Exception;
+  void create(QueueName queueName) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
    * @param props additional properties
    * @throws Exception if creation fails
    */
-  void create(String name, @Nullable Properties props) throws Exception;
+  void create(QueueName queueName, @Nullable Properties props) throws Exception;
 
   /**
-   * Wipes out entity data.
-   * @param name entity name
+   * Wipes out queue data.
+   * @param queueName Name of the queue
    * @throws Exception if cleanup fails
    */
-  void truncate(String name) throws Exception;
-
-  /**
-   * Deletes entity from the system completely.
-   * @param name entity name
-   * @throws Exception if deletion fails
-   */
-  void drop(String name) throws Exception;
-
+  void truncate(QueueName queueName) throws Exception;
 }
