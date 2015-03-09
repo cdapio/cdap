@@ -88,6 +88,7 @@ public class ScoreCounter extends AbstractMapReduce {
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
+      // TODO: this should be done by the output committer of the partitioned file set's output format (CDAP-1227)
       outputFileSet.addPartition(outputKey, outputPath);
     }
   }
@@ -139,6 +140,9 @@ public class ScoreCounter extends AbstractMapReduce {
     }
   }
 
+  /**
+   * Private writable helper class used between mappers and reducers.
+   */
   private static class GameStat implements Writable {
     private int scored;
     private int conceded;
