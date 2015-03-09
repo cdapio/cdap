@@ -172,20 +172,13 @@ public class FactCodec {
   }
 
   public byte[] createFuzzyRowMask(List<TagValue> tagValues, String measureName) {
-    return createFuzzyRowMask(tagValues, measureName, false);
-  }
-
-  public byte[] createFuzzyRowMask(List<TagValue> tagValues, String measureName, boolean anyAggGroup) {
     // See createRowKey for row format info
     byte[] mask = new byte[VERSION.length + (tagValues.size() + 2) * entityTable.getIdSize() + Bytes.SIZEOF_INT];
     int offset = writeVersion(mask);
 
     // agg group encoded is always provided for fuzzy row filter
-    if (anyAggGroup) {
-      offset = writeEncodedFuzzyMask(mask, offset);
-    } else {
-      offset = writeEncodedFixedMask(mask, offset);
-    }
+    offset = writeEncodedFixedMask(mask, offset);
+
     // time is defined by start/stop keys when scanning - we never include it in fuzzy filter
     offset = writeFuzzyMask(mask, offset, Bytes.SIZEOF_INT);
 

@@ -128,7 +128,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       //active size should be 1
       historyStatusWithRetry(url, 1);
       // completed runs size should be 1
-      url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
+      url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
       historyStatusWithRetry(url, 1);
 
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
@@ -369,6 +369,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals("RUNNING", getWebappStatus("WordCountApp"));
     Assert.assertEquals(200, doPost("/v2/apps/WordCountApp/webapp/stop", null).getStatusLine().getStatusCode());
+    TimeUnit.SECONDS.sleep(2);
     Assert.assertEquals("STOPPED", getWebappStatus("WordCountApp"));
 
     // Stop the flow and check its status
@@ -647,8 +648,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
       o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertEquals(1, o.size());
-      Set<String> expectedStreams = ImmutableSet.of("text");
+      Assert.assertEquals(2, o.size());
+      Set<String> expectedStreams = ImmutableSet.of("text", "stream");
       for (Map<String, String> stream : o) {
         Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
         Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
@@ -1120,7 +1121,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState(runnableType, appId, runnableId, "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
     waitState(runnableType, appId, runnableId, "STOPPED");
-    String url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
+    String url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
     // verify the run by checking if history has one entry
     historyStatusWithRetry(url, 1);
 

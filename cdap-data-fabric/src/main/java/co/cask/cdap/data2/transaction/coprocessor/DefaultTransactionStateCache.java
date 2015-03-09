@@ -39,11 +39,11 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
   private static final SnapshotCodecV1 codecV1 = null;
   private static final SnapshotCodecV2 codecV2 = null;
 
-  private String tableNamespace;
+  private String sysConfigTablePrefix;
   private ConfigurationTable configTable;
 
-  public DefaultTransactionStateCache(String tableNamespace) {
-    this.tableNamespace = tableNamespace;
+  public DefaultTransactionStateCache(String sysConfigTablePrefix) {
+    this.sysConfigTablePrefix = sysConfigTablePrefix;
   }
 
   @Override
@@ -54,7 +54,7 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
 
   @Override
   protected Configuration getSnapshotConfiguration() throws IOException {
-    CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+    CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, sysConfigTablePrefix);
     Configuration txConf = HBaseConfiguration.create();
     CConfigurationUtil.copyTxProperties(cConf, txConf);
     return txConf;

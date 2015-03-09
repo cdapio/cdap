@@ -94,7 +94,7 @@ Glossary
       for *Ubuntu 12* and *CentOS 6*.
 
    Hadoop
-      Refers to the `Apache™ Hadoop® <http://hadoop.apache.org>`__ project, which describes
+      Refers to the `Apache Hadoop® <http://hadoop.apache.org>`__ project, which describes
       itself as:
 
       *"The Apache Hadoop software library is a framework that allows for the distributed
@@ -122,14 +122,13 @@ Glossary
       Refers to the `Apache Avro™ <http://avro.apache.org>`__ project, which is a
       data serialization system that provides rich data structures and a compact, fast, binary data format.
 
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:
-
-.. Apache |(TM)| Hadoop |(R)|
-.. Apache™ Hadoop®
+   Namespace
+      A namespace is a physical grouping of application, data and its metadata in CDAP.
+      Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
+      application or data (referred to here as an “entity”) can exist independently in
+      multiple namespaces at the same time. The data and metadata of an entity is stored
+      independent of another instance of the same entity in a different namespace. The
+      primary motivation for namespaces in CDAP is to achieve application and data
+      isolation.
+  
 

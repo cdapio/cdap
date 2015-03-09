@@ -25,7 +25,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
@@ -42,10 +43,9 @@ import javax.annotation.Nullable;
  */
 public class GenerateCLIDocsTableCommand extends HelpCommand {
 
-  public GenerateCLIDocsTableCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
-    super(commands);
+  public GenerateCLIDocsTableCommand(CommandSet commands) {
+    super(Suppliers.<Iterable<CommandSet<Command>>>ofInstance(ImmutableList.<CommandSet<Command>>of(commands)));
   }
-
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {

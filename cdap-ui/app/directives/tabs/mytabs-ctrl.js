@@ -14,7 +14,7 @@ angular.module(PKG.name + '.commons')
       });
     });
 
-    $scope.$on('$stateChangeSuccess', function (event, state) {
+    function checkTabParam (event, state) {
       var tab = $scope.tabs
         .map(function(t) {
           return t.state;
@@ -25,7 +25,8 @@ angular.module(PKG.name + '.commons')
         tab = 0;
       }
       $scope.tabs.activeTab = tab;
-    });
-    // FIXME: For some weird reason it doesn't default to the first tab.
-    $scope.tabs.activeTab = 0;
+    }
+
+    $scope.$on('$stateChangeSuccess', checkTabParam);
+    checkTabParam();
   });

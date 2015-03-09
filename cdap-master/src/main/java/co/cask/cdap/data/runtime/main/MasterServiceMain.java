@@ -38,7 +38,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -62,6 +62,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.ElectionHandler;
@@ -84,6 +87,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -185,8 +189,24 @@ public class MasterServiceMain extends DaemonMain {
     exploreClient = baseInjector.getInstance(ExploreClient.class);
     secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
 
+    // this should probably be done in NamespaceService#init()
+    createSystemHBaseNamespace();
     checkTransactionRequirements();
     checkExploreRequirements();
+  }
+
+  private void createSystemHBaseNamespace() {
+    HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
+    try {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+    } catch (MasterNotRunningException e) {
+      Throwables.propagate(e);
+    } catch (ZooKeeperConnectionException e) {
+      Throwables.propagate(e);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
   }
 
   /**
@@ -268,7 +288,10 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    dsService.stopAndWait();
+    if (dsService != null) {
+      dsService.stopAndWait();
+    }
+
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
@@ -374,7 +397,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private TwillPreparer prepare(TwillPreparer preparer) {
-    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+    return preparer.withDependencies(baseInjector.getInstance(HBaseTableUtil.class).getClass())
       // TokenSecureStoreUpdater.update() ignores parameters
       .addSecureStore(secureStoreUpdater.update(null, null));
   }
@@ -526,17 +549,37 @@ public class MasterServiceMain extends DaemonMain {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
 
-    // Add system logback file to the preparer
-    URL logbackUrl = getClass().getResource("/logback.xml");
-    if (logbackUrl == null) {
-      LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
-    } else {
+    URL containerLogbackURL = getClass().getResource("/logback-container.xml");
+    if (containerLogbackURL != null) {
       try {
-        preparer.withResources(logbackUrl.toURI());
+        File tempDir = Files.createTempDir();
+        tempDir.deleteOnExit();
+        File file = new File(tempDir.getPath(), "logback.xml");
+
+        Files.copy(new File(containerLogbackURL.toURI()), file);
+        URI copiedLogbackURI = file.toURI();
+        preparer.withResources(copiedLogbackURI);
+      } catch (IOException e) {
+        LOG.error("Got exception while copying logback-container.xml", e);
       } catch (URISyntaxException e) {
-        LOG.error("Got exception while getting URI for logback.xml - {}", logbackUrl);
+        LOG.error("Got exception while getting URI for logback-container.xml - {}", containerLogbackURL, e);
+      }
+    } else {
+      // Default to system logback if the container logback is not found.
+      LOG.debug("Could not load logback specific for containers. Defaulting to system logback.");
+
+      containerLogbackURL = getClass().getResource("/logback.xml");
+      if (containerLogbackURL == null) {
+        LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
+      } else {
+        try {
+          preparer.withResources(containerLogbackURL.toURI());
+        } catch (URISyntaxException e) {
+          LOG.error("Got exception while getting URI for logback.xml - {}", containerLogbackURL, e);
+        }
       }
     }
+
     preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }

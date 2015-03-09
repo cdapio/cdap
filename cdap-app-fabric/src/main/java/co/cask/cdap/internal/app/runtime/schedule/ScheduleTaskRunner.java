@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Task runner that runs a schedule.
@@ -67,9 +68,9 @@ public final class ScheduleTaskRunner {
    * @param programId Program Id
    * @param programType Program type.
    * @param arguments Arguments that would be supplied as system runtime arguments for the program.
-   * @throws JobExecutionException If fails to execute the program.
+   * @throws TaskExecutionException If fails to execute the program.
    */
-  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws JobExecutionException {
+  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws TaskExecutionException {
     Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
@@ -98,7 +99,7 @@ public final class ScheduleTaskRunner {
         }
       }
     } catch (Throwable t) {
-      throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
+      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
     executeAndBlock(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
@@ -122,7 +123,7 @@ public final class ScheduleTaskRunner {
   /**
    * Executes a program and block until it is completed.
    */
-  private void executeAndBlock(final Program program, ProgramOptions options) throws JobExecutionException {
+  private void executeAndBlock(final Program program, ProgramOptions options) throws TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
     final ProgramController controller = runtimeInfo.getController();
@@ -132,10 +133,10 @@ public final class ScheduleTaskRunner {
 
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State state) {
+      public void init(ProgramController.State state, @Nullable Throwable cause) {
         store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-        if (state == ProgramController.State.STOPPED) {
-          stopped();
+        if (state == ProgramController.State.COMPLETED) {
+          completed();
         }
         if (state == ProgramController.State.ERROR) {
           error(controller.getFailureCause());
@@ -143,10 +144,10 @@ public final class ScheduleTaskRunner {
       }
 
       @Override
-      public void stopped() {
+      public void completed() {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.STOPPED);
+                      ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -156,7 +157,7 @@ public final class ScheduleTaskRunner {
       public void error(Throwable cause) {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.ERROR);
+                      ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
@@ -168,7 +169,7 @@ public final class ScheduleTaskRunner {
     try {
       latch.await();
     } catch (InterruptedException e) {
-      throw new JobExecutionException(e, false);
+      throw new TaskExecutionException(e, false);
     }
   }
 }

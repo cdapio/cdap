@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.data')
       });
 
     dataSrc.request({
-      _cdapNsPath: '/datasets'
+      _cdapNsPath: '/data/datasets'
     })
       .then(function(res) {
         $scope.dataList = res

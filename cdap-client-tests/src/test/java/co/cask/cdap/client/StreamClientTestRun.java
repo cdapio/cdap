@@ -20,14 +20,19 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.StreamNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,12 +52,17 @@ import java.util.concurrent.TimeUnit;
 public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
 
+  private NamespaceClient namespaceClient;
   private StreamClient streamClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+    namespaceClient = new NamespaceClient(clientConfig);
+    namespaceClient.create(new NamespaceMeta.Builder().setId(namespaceId).build());
+    clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }
 
@@ -84,7 +94,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testStreamEvents() throws IOException, BadRequestException,
-    StreamNotFoundException, UnAuthorizedAccessTokenException {
+    StreamNotFoundException, UnauthorizedException {
 
     String streamId = "testEvents";
 
@@ -167,13 +177,22 @@ public class StreamClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testSendFile() throws Exception {
+  public void testSendSmallFile() throws Exception {
+    testSendFile(50);
+  }
+
+  @Test
+  public void testSendLargeFile() throws Exception {
+    testSendFile(500000);
+  }
+
+
+  private void testSendFile(int msgCount) throws Exception {
     String streamId = "testSendFile";
 
     streamClient.create(streamId);
 
-    // Generate 50 lines of events
-    int msgCount = 50;
+    // Generate msgCount lines of events
     StringWriter writer = new StringWriter();
     for (int i = 0; i < msgCount; i++) {
       writer.write("Event " + i);
@@ -182,7 +201,7 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.sendBatch(streamId, "text/plain",
                            ByteStreams.newInputStreamSupplier(writer.toString().getBytes(Charsets.UTF_8)));
 
-    // Reads the 50 events back
+    // Reads the msgCount events back
     List<StreamEvent> events = Lists.newArrayList();
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 
@@ -193,5 +212,11 @@ public class StreamClientTestRun extends ClientTestBase {
       Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
       Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
     }
+  }
+
+  @After
+  public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
+    namespaceClient.delete(namespaceId.getId());
+    clientConfig.setNamespace(namespaceId);
   }
 }

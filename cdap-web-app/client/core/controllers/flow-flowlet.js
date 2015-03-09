@@ -214,11 +214,6 @@ define([], function () {
       if (this.get('model') && this.get('model').instances === input) {
         return; //no-op
       }
-      var isInvalid = C.Util.isInvalidNumInstances(inputStr);
-      if(isInvalid){
-        C.Modal.show('Error', isInvalid);
-        return;
-      }
 
 
 			var self = this;

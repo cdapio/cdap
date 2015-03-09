@@ -48,7 +48,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         // For in memory stream, nothing to cleanup
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
-        bind(StreamService.class).to(NoopStreamService.class).in(Scopes.SINGLETON);
+        bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -104,30 +104,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
     @Override
     protected void doStop() {
       notifyStopped();
-    }
-  }
-
-  private static final class NoopStreamService extends AbstractIdleService implements StreamService {
-
-    private StreamCoordinatorClient coordinatorClient;
-
-    @Inject(optional = true)
-    public void setCoordinatorClient(StreamCoordinatorClient coordinatorClient) {
-      this.coordinatorClient = coordinatorClient;
-    }
-
-    @Override
-    protected void startUp() throws Exception {
-      if (coordinatorClient != null) {
-        coordinatorClient.startAndWait();
-      }
-    }
-
-    @Override
-    protected void shutDown() throws Exception {
-      if (coordinatorClient != null) {
-        coordinatorClient.stopAndWait();
-      }
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.data2.dataset2.lib.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -58,43 +58,36 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
   };
 
-  protected final String tableName;
+  protected final TableId tableId;
   protected final Configuration hConf;
   protected final HBaseTableUtil tableUtil;
 
   private HBaseAdmin admin;
 
-  protected AbstractHBaseDataSetAdmin(String name, Configuration hConf, HBaseTableUtil tableUtil) {
-    this.tableName = name;
+  protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, HBaseTableUtil tableUtil) {
+    this.tableId = tableId;
     this.hConf = hConf;
     this.tableUtil = tableUtil;
   }
 
   @Override
   public void upgrade() throws IOException {
-    // todo: do we need HBaseTableUtil.getHBaseTableName
-    upgradeTable(HBaseTableUtil.getHBaseTableName(tableName));
+    upgradeTable(tableId);
   }
 
   @Override
   public boolean exists() throws IOException {
-    return getAdmin().tableExists(tableName);
+    return tableUtil.tableExists(getAdmin(), tableId);
   }
 
   @Override
   public void truncate() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    HTableDescriptor tableDescriptor = getAdmin().getTableDescriptor(tableName);
-    getAdmin().disableTable(tableName);
-    getAdmin().deleteTable(tableName);
-    getAdmin().createTable(tableDescriptor);
+    tableUtil.truncateTable(getAdmin(), tableId);
   }
 
   @Override
   public void drop() throws IOException {
-    byte[] tableName = Bytes.toBytes(this.tableName);
-    getAdmin().disableTable(tableName);
-    getAdmin().deleteTable(tableName);
+    tableUtil.dropTable(getAdmin(), tableId);
   }
 
   @Override
@@ -107,13 +100,11 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   /**
    * Performs upgrade on a given HBase table.
    *
-   * @param tableNameStr The HBase table name that upgrade will be performed on.
+   * @param tableId {@link TableId} for the HBase table that upgrade will be performed on.
    * @throws IOException If upgrade failed.
    */
-  protected void upgradeTable(String tableNameStr) throws IOException {
-    byte[] tableName = Bytes.toBytes(tableNameStr);
-
-    HTableDescriptor tableDescriptor = getAdmin().getTableDescriptor(tableName);
+  protected void upgradeTable(TableId tableId) throws IOException {
+    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
 
     // Upgrade any table properties if necessary
     boolean needUpgrade = upgradeTable(tableDescriptor);
@@ -124,7 +115,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If the table has greater than or same version, no need to upgrade.
       LOG.info("Table '{}' was upgraded with same or newer version '{}'. Current version is '{}'",
-               tableNameStr, version, ProjectInfo.getVersion());
+               tableId, version, ProjectInfo.getVersion());
       return;
     }
 
@@ -161,27 +152,27 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     if (!needUpgrade) {
-      LOG.info("No upgrade needed for table '{}'", tableNameStr);
+      LOG.info("No upgrade needed for table '{}'", tableId);
       return;
     }
 
     setVersion(tableDescriptor);
 
-    LOG.info("Upgrading table '{}'...", tableNameStr);
+    LOG.info("Upgrading table '{}'...", tableId);
     boolean enableTable = false;
     try {
-      getAdmin().disableTable(tableName);
+      tableUtil.disableTable(getAdmin(), tableId);
       enableTable = true;
     } catch (TableNotEnabledException e) {
-      LOG.debug("Table '{}' not enabled when try to disable it.", tableNameStr);
+      LOG.debug("Table '{}' not enabled when try to disable it.", tableId);
     }
 
-    getAdmin().modifyTable(tableName, tableDescriptor);
+    tableUtil.modifyTable(getAdmin(), tableDescriptor);
     if (enableTable) {
-      getAdmin().enableTable(tableName);
+      tableUtil.enableTable(getAdmin(), tableId);
     }
 
-    LOG.info("Table '{}' upgrade completed.", tableNameStr);
+    LOG.info("Table '{}' upgrade completed.", tableId);
   }
 
   public static void setVersion(HTableDescriptor tableDescriptor) {
@@ -190,7 +181,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   public static ProjectInfo.Version getVersion(HTableDescriptor tableDescriptor) {
     String value = tableDescriptor.getValue(CDAP_VERSION);
-    return value == null ? null : new ProjectInfo.Version(value);
+    return new ProjectInfo.Version(value);
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,

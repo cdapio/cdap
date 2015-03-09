@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -51,14 +52,15 @@ public class KeyValueTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("kv"), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("kv"), classLoader);
   }
 
   @Override
-  public KeyValueTable getDataset(DatasetSpecification spec,
+  public KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                   Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("kv"), arguments, classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("kv"), arguments, classLoader);
     return new KeyValueTable(spec.getName(), table);
   }
 }
