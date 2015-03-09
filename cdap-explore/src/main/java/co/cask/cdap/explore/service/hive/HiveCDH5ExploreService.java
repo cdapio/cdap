@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -50,8 +51,9 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
   protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    StreamAdmin streamAdmin,
-                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin);
+                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                                   Store store) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin, store);
   }
 
   @Override

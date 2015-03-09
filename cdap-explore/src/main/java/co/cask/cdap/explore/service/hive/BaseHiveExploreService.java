@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -36,6 +37,8 @@ import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -86,6 +89,7 @@ import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import parquet.Preconditions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -129,6 +133,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
+  private final Store store;
+  private final String schedulerQueueFromCconf;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -154,16 +160,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   File previewsDir, StreamAdmin streamAdmin) {
+                                   File previewsDir, StreamAdmin streamAdmin, Store store) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
-    String schedulerQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
-      hiveConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
-      LOG.info("Setting scheduler queue name to {}", schedulerQueue);
-    }
+    this.store = store;
+    schedulerQueueFromCconf = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -224,7 +226,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private IMetaStoreClient getMetaStoreClient() throws ExploreException {
     if (metastoreClientLocal.get() == null) {
       try {
-        IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
+          IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
         Supplier<IMetaStoreClient> supplier = Suppliers.ofInstance(client);
         metastoreClientLocal.set(supplier);
 
@@ -678,6 +680,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         String database = getHiveDatabase(namespace.getId());
+        String schedulerQueue = getNamespaceResolvedSchedulerQueue(namespace);
+        if (schedulerQueue != null) {
+          sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+          LOG.info("Setting scheduler queue to {}", schedulerQueue);
+        }
         // Switch database to the one being passed in.
         SessionState.get().setCurrentDatabase(database);
 
@@ -1153,6 +1160,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return tColumnValue.getStringVal().getValue();
     }
     throw new ExploreException("Unknown column value encountered: " + tColumnValue);
+  }
+
+  private String getNamespaceResolvedSchedulerQueue(Id.Namespace namespaceId) {
+    NamespaceMeta meta = store.getNamespace(namespaceId);
+    Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
+
+    NamespaceConfig config = meta.getConfig();
+
+    return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : schedulerQueueFromCconf;
   }
 
   /**
