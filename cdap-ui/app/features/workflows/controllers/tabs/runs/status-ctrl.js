@@ -4,7 +4,6 @@ angular.module(PKG.name + '.feature.workflows')
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
     $scope.moment = amMoment;
-    $scope.moment.changeLocale('en');
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
