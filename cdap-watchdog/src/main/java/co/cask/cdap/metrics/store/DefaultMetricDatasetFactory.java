@@ -20,16 +20,16 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -54,7 +54,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
-    this(new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf)), cConf);
+    this(dsFramework, cConf);
   }
 
   private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
@@ -107,7 +107,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
-
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
@@ -135,17 +134,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by metrics system.
+   * Creates the metrics tables and kafka-meta table using the factory {@link DefaultMetricDatasetFactory}
    * <p/>
-   * It is primarily used by upgrade tool.
+   * It is primarily used by upgrade and data-migration tool.
    *
-   * @param datasetFramework framework to add types and datasets to
+   * @param factory : metrics dataset factory
    */
-  public static void setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+  public static void setupDatasets(DefaultMetricDatasetFactory factory)
     throws IOException, DatasetManagementException {
-
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(datasetFramework, conf);
-
     // adding all fact tables
     factory.get(1);
     factory.get(60);
@@ -154,6 +150,22 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
+  }
+
+  /**
+   * Migrates metrics data from version 2.7 and older to 2.8
+   * @param conf configuration
+   * @param datasetFramework framework to add types and datasets to
+   * @param version - version we are migrating the data from
+   * @throws IOException
+   * @throws DatasetManagementException
+   */
+  public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
+                                 MetricHBaseTableUtil.Version version) throws IOException, DatasetManagementException {
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+    setupDatasets(factory);
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework, factory);
+    migrator.migrateMetricsTables(version);
   }
 
   private int getRollTime(int resolution) {

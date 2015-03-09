@@ -193,7 +193,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
 
@@ -211,6 +211,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
+    testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
+                              "Successfully set notification threshold of Stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");

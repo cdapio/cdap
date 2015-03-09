@@ -14,20 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.queue;
+package co.cask.cdap.api.data.stream;
 
-import org.junit.Assert;
-import org.junit.Test;
+import java.nio.channels.WritableByteChannel;
 
-public class QueueUtilsTest {
+/**
+ * Used to write to Stream in Batch mode. Once closed, a new {@link StreamBatchWriter} needs to be created to do
+ * another set of batch writes.
+ */
+public interface StreamBatchWriter extends WritableByteChannel {
 
-  @Test
-  public void test() {
-    Assert.assertEquals("cdap.fooNamespace.system.queue.config",
-                        QueueUtils.determineQueueConfigTableName("cdap.fooNamespace.system.queue.fooApp.fooFlow"));
-
-    Assert.assertEquals("cdap.default.system.queue.config",
-                        QueueUtils.determineQueueConfigTableName("cdap.default.system.queue.fooApp.fooFlow"));
-
-  }
 }
