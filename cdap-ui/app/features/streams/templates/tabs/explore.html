@@ -10,18 +10,58 @@
           ng-class="{'fa-chevron-right': activePanel!==0,
                      'fa-chevron-down': activePanel===0}"
           class="fa fa-fw"
-        ></span>Latest events
+        ></span>View Data
       </h4>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
+
+        <form ng-submit="doEventSearch()">
+          <div class="row">
+            <div class="col-xs-4">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsFrom">
+                  From
+                  <span class="fa fa-calendar"></span>
+                </label>
+                <input type="number" class="form-control" id="exploreEventsFrom" ng-model="eventSearch.startMs" />
+              </div>
+            </div>
+            <div class="col-xs-4">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsTo">
+                  To
+                  <span class="fa fa-calendar"></span>
+                </label>
+                <input type="number" class="form-control" id="exploreEventsTo" ng-model="eventSearch.endMs" />
+              </div>
+            </div>
+            <div class="col-xs-2">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsLimit">Limit</label>
+                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="eventSearch.limit" min="1" max="100" />
+              </div>
+            </div>
+            <div class="col-xs-2">
+              <button class="btn btn-default btn-block" type="submit">
+                <span class="fa fa-search"></span>
+                Find events
+              </button>
+            </div>
+          </div>
+        </form>
+
+
         <ul class="list-unstyled">
-          <li ng-repeat="event in events | orderBy:'-timestamp' | limitTo:10">
-            <small>{{event.timestamp | amTimeAgo}}</small>
-            <code>{{event.body}}</code>
+          <li ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
+            <div>
+              <small class="text-muted pull-right">{{event.timestamp | amTimeAgo}}</small>
+              <em>{{event.timestamp}}</em>
+            </div>
+            <pre>{{event.body | json}}</pre>
           </li>
         </ul>
-        <p ng-hide="events.length">
+        <p ng-hide="eventSearch.results.length">
           (no events)
         </p>
       </div>
