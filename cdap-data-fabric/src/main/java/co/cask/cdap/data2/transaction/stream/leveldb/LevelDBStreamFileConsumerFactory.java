@@ -20,6 +20,7 @@ import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -30,6 +31,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.util.TableId;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -59,11 +61,12 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
 
 
   @Override
-  protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+  protected StreamConsumer create(TableId tableId, StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                   StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
+    String tableName = fromTableId(tableId);
     tableService.ensureTableExists(tableName);
 
     LevelDBTableCore tableCore = new LevelDBTableCore(tableName, tableService);
@@ -74,8 +77,12 @@ public final class LevelDBStreamFileConsumerFactory extends AbstractStreamFileCo
   }
 
   @Override
-  protected void dropTable(String tableName) throws IOException {
-    tableService.dropTable(tableName);
+  protected void dropTable(TableId tableId) throws IOException {
+    tableService.dropTable(fromTableId(tableId));
+  }
+
+  private String fromTableId(TableId tableId) {
+    return PrefixedNamespaces.namespace(cConf, tableId.getNamespace().getId(), tableId.getTableName());
   }
 
   private Object getDBLock(String name) {
