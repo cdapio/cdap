@@ -319,7 +319,8 @@ public class UpgraderMain {
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
 
     // metrics data
-    DefaultMetricDatasetFactory.setupDatasets(cConf, datasetFramework);
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
+    DefaultMetricDatasetFactory.setupDatasets(factory);
 
     return datasetFramework;
   }
