@@ -33,6 +33,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
@@ -180,13 +181,24 @@ public class IntegrationTestBase {
     return new DatasetClient(getClientConfig());
   }
 
+  protected ApplicationManager deployApplication(Id.Namespace namespace,
+                                                 Class<? extends Application> applicationClz,
+                                                 File...bundleEmbeddedJars) throws IOException {
+    return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
+  }
+
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return getTestManager().deployApplication(applicationClz, bundleEmbeddedJars);
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+  }
+
+  protected ApplicationManager deployApplication(Id.Namespace namespace,
+                                                 Class<? extends Application> applicationClz) throws IOException {
+    return deployApplication(namespace, applicationClz, new File[0]);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(applicationClz, new File[0]);
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, new File[0]);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
