@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Task runner that runs a schedule.
@@ -133,10 +134,10 @@ public final class ScheduleTaskRunner {
 
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State state) {
+      public void init(ProgramController.State state, @Nullable Throwable cause) {
         store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-        if (state == ProgramController.State.STOPPED) {
-          stopped();
+        if (state == ProgramController.State.COMPLETED) {
+          completed();
         }
         if (state == ProgramController.State.ERROR) {
           error(controller.getFailureCause());
@@ -144,10 +145,10 @@ public final class ScheduleTaskRunner {
       }
 
       @Override
-      public void stopped() {
+      public void completed() {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.STOPPED);
+                      ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -157,7 +158,7 @@ public final class ScheduleTaskRunner {
       public void error(Throwable cause) {
         store.setStop(programId, runId,
                       TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.ERROR);
+                      ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);

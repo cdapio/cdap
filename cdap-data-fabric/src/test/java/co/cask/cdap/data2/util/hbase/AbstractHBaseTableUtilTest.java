@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -167,28 +169,29 @@ public abstract class AbstractHBaseTableUtilTest {
   @Test
   public void testBackwardCompatibility() throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    TableId tableId = TableId.from("cdap.default.my.dataset");
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    TableId tableId = TableId.from("default", "my.dataset");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
-    tableId = TableId.from("cdap.default.system.queue.config");
+    tableId = TableId.from("default", "system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
-    tableId = TableId.from("cdap.myspace.could.be.any.table.name");
+    tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tableId.getNamespace()));
+    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
-                        HTableNameConverter.getHBaseTableName(cConf, tableId));
+                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
@@ -196,19 +199,52 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
+  public void testListAllInNamespace() throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
+                                                        TableId.from("foo", "other.table"),
+                                                        TableId.from("foo", "some.table2"));
+    createNamespace("foo");
+    for (TableId tableId : fooNamespaceTableIds) {
+      create(tableId);
+    }
+
+    createNamespace("foobar");
+    TableId tableIdInOtherNamespace = TableId.from("foobar", "my.dataset");
+    create(tableIdInOtherNamespace);
+
+
+    Set<TableId> retrievedTableIds =
+      ImmutableSet.copyOf(tableUtil.listTablesInNamespace(hAdmin, Id.Namespace.from("foo")));
+    Assert.assertEquals(fooNamespaceTableIds, retrievedTableIds);
+
+    Set<TableId> allTableIds =
+      ImmutableSet.<TableId>builder().addAll(fooNamespaceTableIds).add(tableIdInOtherNamespace).build();
+    Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foo"));
+    Assert.assertEquals(1, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("foobar");
+  }
+
+  @Test
   public void testDropAllInDefaultNamespace() throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    TableId tableId = TableId.from("cdap.default.some.table1");
+    TableId tableId = TableId.from("default", "some.table1");
     create(tableId);
 
-    tableId = TableId.from("cdap.default.other.table");
+    tableId = TableId.from("default", "other.table");
     create(tableId);
 
-    tableId = TableId.from("cdap.default.some.table2");
+    tableId = TableId.from("default", "some.table2");
     create(tableId);
 
     createNamespace("default2");
-    TableId tableIdInOtherNamespace = TableId.from("cdap.default2.my.dataset");
+    TableId tableIdInOtherNamespace = TableId.from("default2", "my.dataset");
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
@@ -225,16 +261,16 @@ public abstract class AbstractHBaseTableUtilTest {
     HBaseTableUtil tableUtil = getTableUtil();
     createNamespace("foonamespace");
     createNamespace("barnamespace");
-    TableId tableId = TableId.from("cdap.foonamespace.some.table1");
+    TableId tableId = TableId.from("foonamespace", "some.table1");
     create(tableId);
 
-    TableId tableIdWithOtherPrefix = TableId.from("cdap.foonamespace.other.table");
+    TableId tableIdWithOtherPrefix = TableId.from("foonamespace", "other.table");
     create(tableIdWithOtherPrefix);
 
-    tableId = TableId.from("cdap.foonamespace.some.table2");
+    tableId = TableId.from("foonamespace", "some.table2");
     create(tableId);
 
-    TableId tableIdInOtherNamespace = TableId.from("cdap.default.some.table1");
+    TableId tableIdInOtherNamespace = TableId.from("default", "some.table1");
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);

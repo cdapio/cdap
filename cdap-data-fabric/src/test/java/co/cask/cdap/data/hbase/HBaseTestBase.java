@@ -20,12 +20,10 @@ import com.google.common.base.Function;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * A base class that can be used to easily run a test within an embedded
@@ -47,11 +45,6 @@ public abstract class HBaseTestBase {
 
   public HBaseAdmin getHBaseAdmin() throws IOException {
     return new HBaseAdmin(getConfiguration());
-  }
-
-  // TODO: This method should be removed in favor of HBaseTableUtil#createHTable. Currently only used in Queue Tests
-  public HTable createHTable(byte[] tableName) throws IOException {
-    return new HTable(getConfiguration(), tableName);
   }
 
   public String getZkConnectionString() {

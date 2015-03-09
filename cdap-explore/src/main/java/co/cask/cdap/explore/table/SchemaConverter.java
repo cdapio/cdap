@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.schema;
+package co.cask.cdap.explore.table;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;

@@ -42,9 +42,13 @@ public class TableId {
   }
 
   public static TableId from(String namespace, String tableName) {
+    return from(Id.Namespace.from(namespace), tableName);
+  }
+
+  public static TableId from(Id.Namespace namespaceId, String tableName) {
     Preconditions.checkArgument(tableName != null, "Table name should not be null.");
     // Id.Namespace already checks for non-null namespace
-    return new TableId(Id.Namespace.from(namespace), tableName);
+    return new TableId(namespaceId, tableName);
   }
 
   /**
