@@ -103,7 +103,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
                                         instanceId, instanceCount, serviceAnnouncer,
                                         metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                        txClient, discoveryServiceClient, cConf);
+                                        txClient, discoveryServiceClient);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());

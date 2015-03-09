@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -24,7 +25,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
@@ -63,7 +63,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                          Set<String> datasets,
                          final MetricsCollector metricsCollector,
                          DatasetFramework dsFramework,
-                         CConfiguration conf,
                          DiscoveryServiceClient discoveryServiceClient) {
     super(program);
     this.program = program;
@@ -72,7 +71,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     this.discoveryServiceClient = discoveryServiceClient;
 
     this.programMetrics = metricsCollector;
-    this.dsInstantiator = new DatasetInstantiator(Id.Namespace.from(namespaceId), dsFramework, conf,
+    this.dsInstantiator = new DatasetInstantiator(Id.Namespace.from(namespaceId), dsFramework,
                                                   program.getClassLoader(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
@@ -99,6 +98,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+    return getDataset(name, RuntimeArguments.NO_ARGUMENTS);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
     try {
       @SuppressWarnings("unchecked")
@@ -111,13 +116,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     }
     // if execution gets here, then dataset was null
     throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
-    // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    return getDataset(name);
   }
 
   public String getNamespaceId() {

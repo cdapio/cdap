@@ -18,6 +18,8 @@ package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
@@ -33,7 +35,9 @@ import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.logging.KafkaTestBase;
@@ -60,6 +64,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -82,6 +90,7 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -129,8 +138,12 @@ public class LogSaverTest extends KafkaTestBase {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(), cConf));
+          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+            .annotatedWith(Names.named("defaultDatasetModules")).toInstance(Maps.<String, DatasetModule>newHashMap());
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         }
       });
 

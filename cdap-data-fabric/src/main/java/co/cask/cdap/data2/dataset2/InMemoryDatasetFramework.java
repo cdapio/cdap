@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -35,6 +36,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
@@ -179,6 +181,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+    LOG.info("Dataset Specification name {} and properties {}", spec.getName(), spec.getProperties());
     def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
     instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
     LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
@@ -203,8 +206,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) {
-    return Collections.unmodifiableCollection(instances.row(namespaceId).values());
+  public synchronized Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) {
+    // don't expect this to be called a lot.
+    // might be better to maintain this collection separately and just return it, but seems like its not worth it.
+    Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
+    ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
+    for (DatasetSpecification spec : specs) {
+      specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+    }
+    return specSummaries.build();
   }
 
   @Nullable

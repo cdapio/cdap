@@ -19,6 +19,8 @@ package co.cask.cdap.data2.increment.hbase94;
 import co.cask.cdap.data2.increment.hbase.AbstractIncrementHandlerTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -105,18 +107,19 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   }
 
   @Override
-  public RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception {
+  public RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception {
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     for (Map.Entry<String, String> prop : familyProperties.entrySet()) {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase94RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), tableName, columnDesc));
+        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   @Override
-  public void createTable(String tableName) throws Exception {
+  public HTable createTable(TableId tableId) throws Exception {
+    String tableName = HTable94NameConverter.toTableName(cConf, tableId);
     HTableDescriptor tableDesc = new HTableDescriptor(tableName);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
@@ -125,6 +128,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     testUtil.getHBaseAdmin().createTable(tableDesc);
     testUtil.waitUntilTableAvailable(Bytes.toBytes(tableName), 5000);
+    return new HTable(conf, tableName);
   }
 
   public static ColumnCell convertCell(KeyValue cell) {

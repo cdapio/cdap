@@ -16,13 +16,44 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
+import org.apache.hadoop.hbase.TableName;
 
 /**
  * Utility methods for dealing with HBase table name conversions in HBase 0.98.
  */
 public class HTable98NameConverter extends HTableNameConverter {
-  public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ":";
+  @Override
+  public String getSysConfigTablePrefix(String hTableName) {
+    return getHbaseNamespacePrefix(TableName.valueOf(hTableName)) + "_" + Constants.SYSTEM_NAMESPACE + ":";
+  }
+
+  @Override
+  public TableId from(String hTableName) {
+    return fromTableName(TableName.valueOf(hTableName));
+  }
+
+  public static TableName toTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return toTableName(tablePrefix, tableId);
+  }
+
+  public static TableName toTableName(String tablePrefix, TableId tableId) {
+    return TableName.valueOf(toHBaseNamespace(tablePrefix, tableId.getNamespace()),
+                             getHBaseTableName(tablePrefix, tableId));
+  }
+
+  public static TableId fromTableName(TableName tableName) {
+    return prefixedTableIdFromTableName(tableName).getTableId();
+  }
+
+  public static String getHbaseNamespacePrefix(TableName tableName) {
+    return prefixedTableIdFromTableName(tableName).getTablePrefix();
+  }
+
+  private static PrefixedTableId prefixedTableIdFromTableName(TableName tableName) {
+    return HTableNameConverter.from(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
   }
 }

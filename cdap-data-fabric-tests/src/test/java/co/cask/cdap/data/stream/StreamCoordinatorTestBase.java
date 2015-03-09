@@ -136,7 +136,7 @@ public abstract class StreamCoordinatorTestBase {
       t.start();
     }
 
-    Assert.assertTrue(completeLatch.await(20, TimeUnit.SECONDS));
+    Assert.assertTrue(completeLatch.await(60, TimeUnit.SECONDS));
 
     // Check the last threshold and ttl are correct. We don't check if the listener gets every update as it's
     // possible that it doesn't see every updates, but only the latest value (that's what ZK watch guarantees).

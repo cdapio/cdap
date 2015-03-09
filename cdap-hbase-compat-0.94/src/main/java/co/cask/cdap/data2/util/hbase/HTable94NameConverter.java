@@ -16,13 +16,65 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 
 /**
  * Utility methods for dealing with HBase table name conversions in HBase 0.94.
  */
 public class HTable94NameConverter extends HTableNameConverter {
-  public String getSysConfigTablePrefix(String tableName) {
-    return HBaseTableUtil.HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+  @Override
+  public String getSysConfigTablePrefix(String hTableName) {
+    return getHbaseNamespacePrefix(hTableName) + "_" + Constants.SYSTEM_NAMESPACE + ".";
+  }
+
+  @Override
+  public TableId from(String hTableName) {
+    return fromTableName(hTableName);
+  }
+
+  public static String toTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return toTableName(tablePrefix, tableId);
+  }
+
+  public static String toTableName(String tablePrefix, TableId tableId) {
+    Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
+    // backward compatibility
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+      return getHBaseTableName(tablePrefix, tableId);
+    }
+    return Joiner.on(".").join(toHBaseNamespace(tablePrefix, tableId.getNamespace()),
+                               getHBaseTableName(tablePrefix, tableId));
+  }
+
+  public static TableId fromTableName(String hTableName) {
+    return prefixedTableIdFromTableName(hTableName).getTableId();
+  }
+
+  public static String getHbaseNamespacePrefix(String hTableName) {
+    return prefixedTableIdFromTableName(hTableName).getTablePrefix();
+  }
+
+  // Assumptions made:
+  // 1) root prefix can not have '.' or '_'.
+  // 2) namespace can not have '.'
+  private static PrefixedTableId prefixedTableIdFromTableName(String hTableName) {
+    Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
+    String[] parts = hTableName.split("\\.", 2);
+    String hBaseNamespace;
+    String hBaseQualifier;
+
+    if (!parts[0].contains("_")) {
+      hBaseNamespace = Constants.DEFAULT_NAMESPACE;
+      hBaseQualifier = hTableName;
+    } else {
+      hBaseNamespace = parts[0];
+      hBaseQualifier = parts[1];
+    }
+    return HTableNameConverter.from(hBaseNamespace, hBaseQualifier);
   }
 }
