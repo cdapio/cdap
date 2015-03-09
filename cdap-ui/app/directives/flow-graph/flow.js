@@ -33,7 +33,6 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
       scope.render = function () {
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
-
         var instanceMap = {};
         var labelMap = {};
 
