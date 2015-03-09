@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -35,9 +34,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -56,6 +53,7 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -64,6 +62,7 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -111,7 +110,7 @@ public class MapReduceProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws IOException {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
@@ -120,15 +119,14 @@ public class MapReduceProgramRunnerTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator =
-      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceProgramRunnerTest.class.getClassLoader(), null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
+
+    // this seems to be needed to be able to use custom datasets (that get deployed to that dir).
+    injector.getInstance(LocationFactory.class).create("default").mkdirs();
   }
 
   @AfterClass
@@ -142,6 +140,18 @@ public class MapReduceProgramRunnerTest {
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
+  }
+
+  /**
+   * Tests that beforeSubmit() and getSplits() are called in the same transaction,
+   * and with the same instance of the input dataset.
+   */
+  @Test
+  public void testTransactionHandling() throws Exception {
+    final ApplicationWithPrograms app = AppFabricTestHelper.
+      deployApplicationWithManager(AppWithTxAware.class, TEMP_FOLDER_SUPPLIER);
+    runProgram(app, AppWithTxAware.PedanticMapReduce.class,
+               new BasicArguments(ImmutableMap.of("outputPath", TEMP_FOLDER_SUPPLIER.get().getPath() + "/output")));
   }
 
   @Test
@@ -524,14 +534,7 @@ public class MapReduceProgramRunnerTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 

@@ -17,13 +17,12 @@
 package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -64,6 +63,7 @@ public final class FileSetDataset implements FileSet {
   /**
    * Constructor.
    *
+   * @param datasetContext the context for the dataset
    * @param cConf the CDAP configuration
    * @param name name of the dataset
    * @param locationFactory the location factory
@@ -71,19 +71,20 @@ public final class FileSetDataset implements FileSet {
    * @param runtimeArguments the runtime arguments
    * @param classLoader the class loader to instantiate the input and output format class
    */
-  public FileSetDataset(CConfiguration cConf, String name, LocationFactory locationFactory,
+  public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf, String name,
+                        LocationFactory locationFactory,
                         @Nonnull Map<String, String> properties,
                         @Nonnull Map<String, String> runtimeArguments,
                         @Nullable ClassLoader classLoader) throws IOException {
 
+    Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(name, "Dataset name must not be null");
     Preconditions.checkArgument(!name.isEmpty(), "Dataset name must not be empty");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
     Preconditions.checkNotNull(properties, "Dataset properties must not be null");
     Preconditions.checkNotNull(FileSetProperties.getBasePath(properties), "Base path must not be null");
 
-    DatasetNamespace dsNamespace = new DefaultDatasetNamespace(cConf);
-    String namespaceId = dsNamespace.fromNamespaced(name).getNamespaceId();
+    String namespaceId = datasetContext.getNamespaceId();
     this.properties = properties;
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
     String basePath = FileSetProperties.getBasePath(properties);

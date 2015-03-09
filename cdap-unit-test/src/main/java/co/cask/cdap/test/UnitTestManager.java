@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricClient;
+import co.cask.cdap.test.internal.LocalApplicationManager;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;

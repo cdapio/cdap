@@ -287,7 +287,10 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    dsService.stopAndWait();
+    if (dsService != null) {
+      dsService.stopAndWait();
+    }
+
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }

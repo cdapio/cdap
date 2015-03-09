@@ -64,6 +64,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
     Injector injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
         bind(Configuration.class).toInstance(testHBase.getConfiguration());
         bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }

@@ -14,11 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap.test.internal;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;

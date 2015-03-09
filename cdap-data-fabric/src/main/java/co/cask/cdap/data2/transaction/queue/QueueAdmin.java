@@ -102,11 +102,4 @@ public interface QueueAdmin {
    */
   void drop(String name) throws Exception;
 
-  /**
-   * Performs update of entity.
-   *
-   * @param name Name of the entity to update
-   * @throws Exception if update fails
-   */
-  void upgrade(String name, Properties properties) throws Exception;
 }
