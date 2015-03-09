@@ -908,8 +908,8 @@ public class StreamSizeScheduler implements Scheduler {
         return;
       }
 
-      StreamSizeSchedule currentSchedule;
-      ImmutableMap.Builder<String, String> argsBuilder = ImmutableMap.builder();
+      final StreamSizeSchedule currentSchedule;
+      final ImmutableMap.Builder<String, String> argsBuilder = ImmutableMap.builder();
       synchronized (this) {
         if (pollingInfo.getSize() - basePollSize < toBytes(streamSizeSchedule.getDataTriggerMB())) {
           return;
@@ -940,38 +940,24 @@ public class StreamSizeScheduler implements Scheduler {
         basePollTs = pollingInfo.getTimestamp();
       }
 
-      ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore,
-                                                             taskExecutorService);
-      long previousLastRunSize = lastRunSize;
-      long previousLastRunTs = lastRunTs;
+      final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore,
+                                                                   taskExecutorService);
       try {
-        try {
-          scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
-                                      pollingInfo.getSize(), pollingInfo.getTimestamp());
-          lastRunSize = pollingInfo.getSize();
-          lastRunTs = pollingInfo.getTimestamp();
-        } catch (Throwable t) {
-          LOG.error("Error when persisting last run information for schedule {} in store",
-                    streamSizeSchedule.getName(), t);
-          return;
-        }
-        // The taskRunner.run() call will wait for the program to be run entirely, and can't be wrapped in
-        // the transaction used in scheduleStore.updateLastRun
-        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-        taskRunner.run(programId, ProgramType.valueOf(programType.name()), new BasicArguments(argsBuilder.build()));
-      } catch (TaskExecutionException e) {
-        // Note: in case of a failure, we don't reset the base information,
-        // but we reset the last scheduled run info
-        LOG.error("Execution exception while running streamSizeSchedule {}", currentSchedule.getName(), e);
-        try {
-          scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
-                                      previousLastRunSize, previousLastRunTs);
-          lastRunSize = previousLastRunSize;
-          lastRunTs = previousLastRunTs;
-        } catch (Throwable t) {
-          LOG.error("Error when rolling back last run information for schedule {} in store",
-                    streamSizeSchedule.getName(), t);
-        }
+        scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
+                                    pollingInfo.getSize(), pollingInfo.getTimestamp(),
+                                    new DatasetBasedStreamSizeScheduleStore.TransactionMethod() {
+                                      @Override
+                                      public void execute() throws Exception {
+                                        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
+                                        taskRunner.run(programId, ProgramType.valueOf(programType.name()),
+                                                       new BasicArguments(argsBuilder.build()));
+                                      }
+                                    });
+        lastRunSize = pollingInfo.getSize();
+        lastRunTs = pollingInfo.getTimestamp();
+      } catch (Throwable t) {
+        LOG.error("Error when persisting last run information for schedule {} in store",
+                  streamSizeSchedule.getName(), t);
       }
     }
 

@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Persists {@link StreamSizeSchedule} schedule information into datasets.
@@ -102,7 +103,7 @@ public class DatasetBasedStreamSizeScheduleStore {
       Bytes.toBytes(lastRunTs),
       Bytes.toBytes(running)
     };
-    updateTable(programId, programType, schedule.getName(), columns, values);
+    updateTable(programId, programType, schedule.getName(), columns, values, null);
   }
 
   /**
@@ -116,7 +117,8 @@ public class DatasetBasedStreamSizeScheduleStore {
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
-                new byte[][]{ Bytes.toBytes(false) });
+                new byte[][]{ Bytes.toBytes(false) },
+                null);
   }
 
   /**
@@ -130,7 +132,8 @@ public class DatasetBasedStreamSizeScheduleStore {
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
-                new byte[][]{ Bytes.toBytes(true) });
+                new byte[][]{ Bytes.toBytes(true) },
+                null);
   }
 
   /**
@@ -147,7 +150,8 @@ public class DatasetBasedStreamSizeScheduleStore {
     throws TransactionFailureException, InterruptedException {
       updateTable(programId, programType, scheduleName,
                 new byte[][]{ BASE_SIZE_COL, BASE_TS_COL },
-                new byte[][]{ Bytes.toBytes(newBaseRunSize), Bytes.toBytes(newBaseRunTs) });
+                new byte[][]{ Bytes.toBytes(newBaseRunSize), Bytes.toBytes(newBaseRunTs) },
+                null);
   }
 
   /**
@@ -158,13 +162,17 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param scheduleName name of the schedule
    * @param newLastRunSize new last run size
    * @param newLastRunTs new last run timestamp
+   * @param txMethod method to execute in the same transaction that will change the lastRun information,
+   *                 before it is done
    */
   public void updateLastRun(Id.Program programId, SchedulableProgramType programType,
-                            String scheduleName, long newLastRunSize, long newLastRunTs)
+                            String scheduleName, long newLastRunSize, long newLastRunTs,
+                            TransactionMethod txMethod)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ LAST_RUN_SIZE_COL, LAST_RUN_TS_COL },
-                new byte[][]{ Bytes.toBytes(newLastRunSize), Bytes.toBytes(newLastRunTs) });
+                new byte[][]{ Bytes.toBytes(newLastRunSize), Bytes.toBytes(newLastRunTs) },
+                txMethod);
   }
 
   /**
@@ -180,7 +188,8 @@ public class DatasetBasedStreamSizeScheduleStore {
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ SCHEDULE_COL },
-                new byte[][]{ Bytes.toBytes(GSON.toJson(newSchedule)) });
+                new byte[][]{ Bytes.toBytes(GSON.toJson(newSchedule)) },
+                null);
   }
 
   /**
@@ -255,12 +264,16 @@ public class DatasetBasedStreamSizeScheduleStore {
   }
 
   private void updateTable(final Id.Program programId, final SchedulableProgramType programType,
-                           final String scheduleName, final byte[][] columns, final byte[][] values)
+                           final String scheduleName, final byte[][] columns, final byte[][] values,
+                           @Nullable final TransactionMethod txMethod)
     throws InterruptedException, TransactionFailureException {
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
+          if (txMethod != null) {
+            txMethod.execute();
+          }
           byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
                                                       AbstractSchedulerService.scheduleIdFor(programId, programType,
                                                                                              scheduleName)));
@@ -270,4 +283,16 @@ public class DatasetBasedStreamSizeScheduleStore {
       });
   }
 
+  /**
+   * The {@link #execute} method of this interface is made to be run during a transaction.
+   */
+  public interface TransactionMethod {
+
+    /**
+     * Method to execute.
+     *
+     * @throws Exception
+     */
+    void execute() throws Exception;
+  }
 }
