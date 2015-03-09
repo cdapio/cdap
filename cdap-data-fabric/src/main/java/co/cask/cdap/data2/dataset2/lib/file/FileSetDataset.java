@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -65,36 +66,44 @@ public final class FileSetDataset implements FileSet {
    *
    * @param datasetContext the context for the dataset
    * @param cConf the CDAP configuration
-   * @param name name of the dataset
+   * @param spec the dataset specification
    * @param locationFactory the location factory
-   * @param properties the dataset's properties from the spec
    * @param runtimeArguments the runtime arguments
    * @param classLoader the class loader to instantiate the input and output format class
    */
-  public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf, String name,
+  public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
+                        DatasetSpecification spec,
                         LocationFactory locationFactory,
-                        @Nonnull Map<String, String> properties,
                         @Nonnull Map<String, String> runtimeArguments,
                         @Nullable ClassLoader classLoader) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
-    Preconditions.checkNotNull(name, "Dataset name must not be null");
-    Preconditions.checkArgument(!name.isEmpty(), "Dataset name must not be empty");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
-    Preconditions.checkNotNull(properties, "Dataset properties must not be null");
-    Preconditions.checkNotNull(FileSetProperties.getBasePath(properties), "Base path must not be null");
 
     String namespaceId = datasetContext.getNamespaceId();
-    this.properties = properties;
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String basePath = FileSetProperties.getBasePath(properties);
+    String basePath = determineBasePath(spec);
     this.baseLocation = locationFactory.create(namespaceId).append(dataDir).append(basePath);
+    this.properties = spec.getProperties();
     this.runtimeArguments = runtimeArguments;
     this.classLoader = classLoader;
     this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
     this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
+  }
+
+  /**
+   * If the properties do not contain a base path, generate one from the dataset name.
+   * This is package visible, because FileSetAdmin needs it, too.
+   * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
+   */
+  static String determineBasePath(DatasetSpecification spec) {
+    String basePath = FileSetProperties.getBasePath(spec.getProperties());
+    if (basePath == null) {
+      basePath = spec.getName().replace('.', '/');
+    }
+    return basePath;
   }
 
   private Location determineOutputLocation() {
