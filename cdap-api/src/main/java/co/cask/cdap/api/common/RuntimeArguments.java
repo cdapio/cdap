@@ -16,12 +16,18 @@
 
 package co.cask.cdap.api.common;
 
+import co.cask.cdap.api.schedule.Schedule;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility class to convert String array to Map<String, String>.
@@ -140,4 +146,130 @@ public final class RuntimeArguments {
     return result;
   }
 
+  private static final Pattern DATE_PATTERN = Pattern.compile("\\$\\{([^\\{\\}]+)\\}");
+
+  private static final Pattern OFFSET_PATTERN = Pattern.compile(":\\$\\{(.*)\\}$");
+
+  /**
+   * Resolves the {@link Schedule} arguments based on the rules specified in the argument values and
+   * logical start time of the {@link Schedule}. Rules specified in the property values must be enclosed
+   * by "${" and "}" and should conform to the patterns specified by {@link SimpleDateFormat}.
+   *
+   * e.g. Consider following properties are specified for the {@link Schedule}
+   * <p>
+   *   input.file=purchase_data_${MMddyyyy}_${Ha}.input
+   *   output.file=purchase_data_${dEyyyy}.output
+   * </p>
+   *
+   * When {@link Schedule} triggers at logical start time say '1422957600' (February 3, 2015 at 2:00:00 AM),
+   * the rules in the {@link Schedule} arguments will get evaluated and following properties will be passed to
+   * the triggered program.
+   * <p>
+   *   input.file=purchase_data_02032015_2AM.input
+   *   output.file=purchase_data_3Tue2015.output
+   * </p>
+   *
+   * If you want to resolve the rules against the time other than the logical start time of the {@link Schedule},
+   * then offset can be provided in the rules. Offset should be provided at the end of the property value and is
+   * enclosed by ":{" and "}".
+   *
+   * e.g. Consider the following property specified for the {@link Schedule}
+   * <p>
+   *   input.file=purchase_data.${MMM dd HH:mm:ss}.input:${-30s,-15m,-2h,3d}
+   * </p>
+   *
+   * The offsets specified for the above property are -30s(30 seconds prior to the logical start time), -15m(15 minutes
+   * prior to the logical start time), -2h(2 hours prior to the logical start time) and 3d (3 days after the logical
+   * start time).
+   *
+   * When {@link Schedule} triggers at logical start time say '1422957600', the rule will get evaluated for each offset
+   * and comma separated values for them will be passed to the triggered program.
+   * <p>
+   *   input.file=purchase_data.Feb 03 01:59:30.input,purchase_data.Feb 03 01:45:00.input,
+   *              purchase_data.Feb 03 00:00:00.input,purchase_data.Feb 06 02:00:00.input
+   * </p>
+   *
+   * @param arguments the arguments for the Schedule
+   * @param logicalStartTime the logical start time for the Schedule in seconds
+   * @return the map of resolved Schedule properties
+   */
+  public static Map<String, String> resolveScheduleArguments(Map<String, String> arguments, long logicalStartTime) {
+    Map<String, String> result = Maps.newHashMap();
+
+    for (Map.Entry<String, String> entry : arguments.entrySet()) {
+      result.put(entry.getKey(), getResolvedArgument(entry.getValue(), logicalStartTime));
+    }
+    return result;
+  }
+
+  private static String getResolvedArgument(String argumentValue, long logicalStartTime) {
+    List<Long> timeOffsets = Lists.newArrayList();
+
+    // Extract the offsets from the argument value and store all offsets in the timeOffsets list
+    String argumentWithoutOffset = extractOffsets(argumentValue, timeOffsets, logicalStartTime);
+    StringBuffer result = new StringBuffer();
+
+    // Resolve the rule for each offset
+    for (int i = 0; i < timeOffsets.size(); i++) {
+      Matcher datePatternMatcher = DATE_PATTERN.matcher(argumentWithoutOffset);
+      while (datePatternMatcher.find()) {
+        datePatternMatcher.appendReplacement(result, getReplacement(datePatternMatcher.group(1), timeOffsets.get(i)));
+      }
+      datePatternMatcher.appendTail(result);
+      if (result.toString().equals(argumentWithoutOffset) && timeOffsets.size() > 1) {
+        throw new IllegalArgumentException("Rules are missing for the property " + argumentValue);
+      }
+      // Add ',' at the end of each resolved value
+      if (i != timeOffsets.size() - 1) {
+        result.append(",");
+      }
+    }
+    return result.toString();
+  }
+
+  private static String extractOffsets(String argumentValue, List<Long> timeOffsets, long logicalStartTime) {
+    timeOffsets.add(logicalStartTime);
+    StringBuffer sb = new StringBuffer();
+    Matcher offsetMatcher = OFFSET_PATTERN.matcher(argumentValue);
+    if (offsetMatcher.find()) {
+      // Offset is specified in the argument value
+      String offsetString = offsetMatcher.group(1);
+      // Split the ',' separated offset string into individual offsets.
+      for (String offset : offsetString.split(",")) {
+        try {
+          // Offset ends with offset unit - 's', 'm', 'h' or 'd'. Find the time component and offset unit component
+          // from the offset.
+          Long offsetValue = Long.valueOf(offset.substring(0, offset.length() - 1).trim());
+          if (offset.endsWith("s")) {
+            timeOffsets.add(logicalStartTime + offsetValue);
+          } else if (offset.endsWith("m")) {
+            timeOffsets.add(logicalStartTime + offsetValue * 60);
+          } else if (offset.endsWith("h")) {
+            timeOffsets.add(logicalStartTime + offsetValue * 3600);
+          } else if (offset.endsWith("d")) {
+            timeOffsets.add(logicalStartTime + offsetValue * 24 * 3600);
+          } else {
+            // Invalid offset unit specified. Log the error.
+            throw new IllegalArgumentException("Offset for the property must end with 's', 'm', 'h' or 'd'."
+                                                 + "Invalid offset specified for the Schedule property "
+                                                 + argumentValue);
+          }
+        } catch (NumberFormatException ex) {
+          throw new IllegalArgumentException("Invalid offset specified for the Schedule property " + argumentValue
+                                               + " Reason: " + ex.getCause());
+        }
+      }
+      offsetMatcher.appendReplacement(sb, "");
+    } else {
+      // Offset is not specified
+      sb.append(argumentValue);
+    }
+    return sb.toString();
+  }
+
+  private static String getReplacement(String format, long time) {
+    SimpleDateFormat formatter = new SimpleDateFormat(format);
+    // convert time in seconds into milliseconds before formatting
+    return formatter.format(time * 1000);
+  }
 }

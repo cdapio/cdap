@@ -59,6 +59,65 @@ public class RuntimeArgumentsTest {
   }
 
   @Test
+  public void testScheduleArguments() {
+    Map<String, String> testMap = Maps.newHashMap();
+    long time = 1422957600;
+    testMap.put("SimpleProperty", "Some simple property without any rules");
+    testMap.put("SingleDatePatternProperty", "purchase_data_${dEyyyy}.output");
+    testMap.put("MultiDatePatternProperty", "purchase_data_${MMddyyyy}_${Ha}.input");
+    testMap.put("DatePatternWithOffsets", "purchase_data.${MMM dd HH:mm:ss}.input:${-30s, -15m, -4h, 3d}");
+    Map<String, String> result = RuntimeArguments.resolveScheduleArguments(testMap, time);
+    Assert.assertEquals(4, result.size());
+    Assert.assertEquals("Some simple property without any rules", result.get("SimpleProperty"));
+    Assert.assertEquals("purchase_data_3Tue2015.output", result.get("SingleDatePatternProperty"));
+    Assert.assertEquals("purchase_data_02032015_2AM.input", result.get("MultiDatePatternProperty"));
+    Assert.assertEquals("purchase_data.Feb 03 02:00:00.input,purchase_data.Feb 03 01:59:30.input,"
+                      + "purchase_data.Feb 03 01:45:00.input,purchase_data.Feb 02 22:00:00.input,"
+                      + "purchase_data.Feb 06 02:00:00.input", result.get("DatePatternWithOffsets"));
+
+
+    testMap = Maps.newHashMap();
+    testMap.put("InvalidOffset", "purchase_data.${MMM dd HH:mm:ss}.input:${-30s, -15m, -4h, 3x}");
+    try {
+      result = RuntimeArguments.resolveScheduleArguments(testMap, time);
+      Assert.fail("Code execution should not reach here.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertTrue(ex.getMessage().contains("Offset for the property must end with 's', 'm', 'h' or 'd'.Invalid" +
+                                                   " offset specified for the Schedule property " +
+                                                   "purchase_data.${MMM dd HH:mm:ss}.input:${-30s, -15m, -4h, 3x}"));
+    }
+
+    testMap = Maps.newHashMap();
+    testMap.put("InvalidPattern", "purchase_data.${GibberishValue}.input");
+    try {
+      result = RuntimeArguments.resolveScheduleArguments(testMap, time);
+      Assert.fail("Code execution should not reach here.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertTrue(ex.getMessage().contains("Illegal pattern character"));
+    }
+
+    testMap = Maps.newHashMap();
+    testMap.put("NothingToResolve", "purchase_data.input:${-30s, -15m, -4h, 3d}");
+    try {
+      result = RuntimeArguments.resolveScheduleArguments(testMap, time);
+      Assert.fail("Code execution should not reach here.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertTrue(ex.getMessage().contains("Rules are missing for the property purchase_data.input:${-30s," +
+                                                   " -15m, -4h, 3d}"));
+    }
+
+    testMap = Maps.newHashMap();
+    testMap.put("oneKey", "oneValue");
+    testMap.put("secondKey", "secondValue");
+    testMap.put("thirdKey", "thirdValue");
+    result = RuntimeArguments.resolveScheduleArguments(testMap, time);
+    Assert.assertEquals(4, result.size());
+    Assert.assertEquals("oneValue", result.get("oneKey"));
+    Assert.assertEquals("secondValue", result.get("secondKey"));
+    Assert.assertEquals("thirdValue", result.get("thirdKey"));
+  }
+
+  @Test
   public void testScopedArguments() {
     Map<String, String> runtimeArguments = Maps.newHashMap();
 

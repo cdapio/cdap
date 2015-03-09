@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -81,7 +82,8 @@ public final class ScheduleTaskRunner {
       ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
       Preconditions.checkNotNull(spec, "Schedule not found");
 
-      userArgs.putAll(spec.getProperties());
+      long logicalStartTime = Long.valueOf(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME));
+      userArgs.putAll(RuntimeArguments.resolveScheduleArguments(spec.getProperties(), logicalStartTime));
 
       Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),
                                                         programId.getApplicationId(), programType.getCategoryName(),
