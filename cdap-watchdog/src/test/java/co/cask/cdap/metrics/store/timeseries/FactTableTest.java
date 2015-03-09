@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Test base for {@link co.cask.cdap.metrics.store.timeseries.FactTable}.
@@ -196,6 +197,85 @@ public class FactTableTest {
     Assert.assertEquals(ImmutableSet.of("metric", "metric2", "metric3"), metricNames);
   }
 
+  @Test
+  public void testSearch() throws Exception {
+    InMemoryTableService.create("SearchEntityTable");
+    InMemoryTableService.create("SearchDataTable");
+    int resolution = Integer.MAX_VALUE;
+    int rollTimebaseInterval = 2;
+
+    FactTable table = new FactTable(new InMemoryMetricsTable("SearchDataTable"),
+                                    new EntityTable(new InMemoryMetricsTable("SearchEntityTable")),
+                                    resolution, rollTimebaseInterval);
+
+    // aligned to start of resolution bucket
+    // "/1000" because time is expected to be in seconds
+    long ts = ((System.currentTimeMillis() / 1000) / resolution) * resolution;
+    List<String> aggregationList = ImmutableList.of("tag1", "tag2", "tag3", "tag4");
+
+    for (int i = 0; i < 2; i++) {
+        writeInc(table, "metric-a" + i, ts  + i,  i,
+                 "tag1", "value1", "tag2", "value2", "tag3", "value3", "tag4", "value4");
+        writeInc(table, "metric-b" + i, ts  + i,  i,
+                 "tag1", "value2", "tag2", "value2", "tag3", "x3", "tag4", "x4");
+        writeInc(table, "metric-c" + i, ts  + i,  i,
+                 "tag1", "value2", "tag2", "value2", "tag3", null, "tag4", "y4");
+        writeInc(table, "metric-d" + i, ts + i,  i,
+                 "tag1", "value1", "tag2", "value3", "tag3", "y3", "tag4", null);
+    }
+
+    Map<String, String> slice = Maps.newHashMap();
+    slice.put("tag1", "value2");
+    slice.put("tag2", "value2");
+    slice.put("tag3", null);
+    // verify search tags
+    testTagSearch(table, aggregationList, ImmutableMap.of("tag2", "value2"),
+                  ImmutableSet.of(new TagValue("tag1", "value1"), new TagValue("tag1", "value2")));
+
+    testTagSearch(table, aggregationList, ImmutableMap.of("tag1", "value1"),
+                  ImmutableSet.of(new TagValue("tag2", "value2"), new TagValue("tag2", "value3")));
+
+    testTagSearch(table, aggregationList, ImmutableMap.<String, String>of(),
+                  ImmutableSet.of(new TagValue("tag1", "value1"), new TagValue("tag1", "value2")));
+
+    testTagSearch(table, aggregationList, ImmutableMap.of("tag1", "value2", "tag2", "value2"),
+                  ImmutableSet.of(new TagValue("tag3", "x3"), new TagValue("tag4", "y4")));
+
+    testTagSearch(table, aggregationList, slice,
+                  ImmutableSet.of(new TagValue("tag4", "x4"), new TagValue("tag4", "y4")));
+
+    testTagSearch(table, aggregationList, ImmutableMap.of("tag1", "value2", "tag2", "value3", "tag3", "y3"),
+                  ImmutableSet.<TagValue>of());
+
+    // verify search metrics
+
+    testMetricNamesSearch(table, aggregationList, ImmutableMap.of("tag1", "value1", "tag2", "value2", "tag3", "value3"),
+                          ImmutableSet.<String>of("metric-a0", "metric-a1"));
+
+    testMetricNamesSearch(table, aggregationList, ImmutableMap.of("tag2", "value2"),
+                          ImmutableSet.<String>of("metric-a0", "metric-a1", "metric-b0", "metric-b1",
+                                                  "metric-c0", "metric-c1"));
+
+    testMetricNamesSearch(table, aggregationList, slice, ImmutableSet.of("metric-b0", "metric-b1",
+                                                  "metric-c0", "metric-c1"));
+
+  }
+
+  private void testMetricNamesSearch(FactTable table, List<String> aggregationList ,
+                                     Map<String, String> sliceBy,
+                                     ImmutableSet<String> expectedResuls) throws Exception {
+    Collection<String> metricNames =
+      table.findMeasureNames(aggregationList , sliceBy, 0, 1);
+    Assert.assertEquals(expectedResuls, metricNames);
+  }
+
+  private void testTagSearch(FactTable table, List<String> aggregation, Map<String, String> sliceBy,
+                             Set<TagValue> expectedResult) throws Exception {
+    // using 0, 1 as start and endTs as resolution is INT_MAX
+    Collection<TagValue> nextTags =
+      table.findSingleTagValue(aggregation, sliceBy, 0 , 1);
+    Assert.assertEquals(expectedResult, nextTags);
+  }
   @Test
   public void testQuery() throws Exception {
     InMemoryTableService.create("QueryEntityTable");
