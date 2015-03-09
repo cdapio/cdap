@@ -197,7 +197,7 @@ public class DataMigration {
     }
   }
 
-  private void truncateV2Tables(CConfiguration cConf, Configuration hConf) {
+  private void truncateV2Tables(CConfiguration cConf, Configuration hConf) throws Exception {
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
     String v2EntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                           MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
@@ -207,21 +207,16 @@ public class DataMigration {
                                              MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
     v2MetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
       Id.Namespace.from(Constants.SYSTEM_NAMESPACE), v2MetricsTablePrefix));
-    HBaseAdmin hAdmin;
-    try {
-      hAdmin = new HBaseAdmin(hConf);
-      for (HTableDescriptor desc : hAdmin.listTables()) {
-        if (desc.getNameAsString().equals(v2EntityTableName) ||
-          desc.getNameAsString().startsWith(v2MetricsTablePrefix)) {
-          System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
-          //disable the table
-          hAdmin.disableTable(desc.getName());
-          //delete the table
-          hAdmin.deleteTable(desc.getName());
-        }
+    HBaseAdmin hAdmin = new HBaseAdmin(hConf);
+    for (HTableDescriptor desc : hAdmin.listTables()) {
+      if (desc.getNameAsString().equals(v2EntityTableName) ||
+        desc.getNameAsString().startsWith(v2MetricsTablePrefix)) {
+        System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
+        //disable the table
+        hAdmin.disableTable(desc.getName());
+        //delete the table
+        hAdmin.deleteTable(desc.getName());
       }
-    } catch (Exception e) {
-      System.out.println("Unable to truncate desitation tables : " + e);
     }
   }
 
@@ -262,7 +257,7 @@ public class DataMigration {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println("Exception while deleting old tables: " + e);
     }
   }
 
