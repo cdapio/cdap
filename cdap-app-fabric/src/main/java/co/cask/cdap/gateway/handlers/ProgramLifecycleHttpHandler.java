@@ -66,8 +66,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -1097,16 +1095,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     getServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
   }
 
-  /**
-   * Return the number of instances for the given runnable of a service.
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
-  public void getServiceInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId,
-                                  @PathParam("runnable-name") String runnableName) {
+  void getServiceInstances(HttpRequest request, HttpResponder responder,
+                           String namespaceId, String appId, String serviceId, String runnableName) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1158,16 +1148,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
   }
 
-  /**
-   * Set instances.
-   */
-  @PUT
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
-  public void setServiceInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId,
-                                  @PathParam("runnable-name") String runnableName) {
+  void setServiceInstances(HttpRequest request, HttpResponder responder,
+                           String namespaceId, String appId, String serviceId, String runnableName) {
 
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
@@ -1392,7 +1374,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           } else {
             // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
         } else {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
@@ -1405,7 +1387,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           if (webappLoc != null && webappLoc.exists()) {
             // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           } else {
             // webapp doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
@@ -1504,7 +1486,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
                                              String appId, ProgramType programType, String programId,
                                              String action) {
-    if (programType == null || (programType == ProgramType.WORKFLOW && "stop".equals(action))) {
+    if (programType == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
@@ -1576,10 +1558,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       controller.addListener(new AbstractListener() {
 
         @Override
-        public void init(ProgramController.State state) {
+        public void init(ProgramController.State state, @Nullable Throwable cause) {
           store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.STOPPED) {
-            stopped();
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
           }
           if (state == ProgramController.State.ERROR) {
             error(controller.getFailureCause());
@@ -1587,10 +1569,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
 
         @Override
-        public void stopped() {
+        public void completed () {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.STOPPED);
+                        ProgramController.State.COMPLETED.getRunStatus());
+        }
+
+        @Override
+        public void killed() {
+          store.setStop(id, runId,
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.KILLED.getRunStatus());
         }
 
         @Override
@@ -1598,9 +1587,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR);
+                        ProgramController.State.ERROR.getRunStatus());
         }
       }, Threads.SAME_THREAD_EXECUTOR);
+
 
       return AppFabricServiceStatus.OK;
     } catch (DatasetInstantiationException e) {
@@ -1629,7 +1619,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramStatus status = getProgramStatus(identifier, type);
         if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-        } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
+        } else if (ProgramController.State.COMPLETED.toString().equals(status.getStatus())
+          || ProgramController.State.KILLED.toString().equals(status.getStatus())) {
           return AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
         } else {
           return AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;

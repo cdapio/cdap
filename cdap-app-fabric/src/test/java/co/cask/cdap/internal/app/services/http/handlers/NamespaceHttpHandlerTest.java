@@ -21,10 +21,12 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -45,6 +47,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String ID_FIELD = "id";
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
+  private static final String CONFIG_FIELD = "config";
   private static final String ID = "test";
   private static final String NAME = "display test";
   private static final String DESCRIPTION = "test description";
@@ -54,6 +57,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String METADATA_EMPTY_FIELDS = "{\"name\":\"\", \"description\":\"\"}";
   private static final String METADATA_INVALID_JSON = "invalid";
   private static final String INVALID_ID = "!nv@l*d/";
+  private static final Gson GSON = new Gson();
 
   private HttpResponse createNamespace(String id) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
@@ -74,6 +78,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse deleteNamespace(String name) throws Exception {
     return doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  private HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
+                 GSON.toJson(meta));
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {
@@ -253,5 +262,52 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
       Assert.fail("Did not expect namespace '" + fooNamespace + "' to exist after deleting it.");
     } catch (NotFoundException expected) {
     }
+  }
+
+  @Test
+  public void testProperties() throws Exception {
+    // create with no metadata
+    HttpResponse response = createNamespace(ID);
+    assertResponseCode(200, response);
+    // verify
+    response = getNamespace(ID);
+    JsonObject namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
+
+    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setSchedulerQueueName("prod").build();
+    setProperties(ID, meta);
+    response = getNamespace(ID);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+
+    // Update scheduler queue name.
+    NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
+                                                           NamespaceConfig.class);
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
+
+    // Update description
+    meta = new NamespaceMeta.Builder().setId(ID).setDescription("new fancy description").build();
+    setProperties(ID, meta);
+    response = getNamespace(ID);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+
+    //verify that the description has changed
+    Assert.assertEquals("new fancy description", namespace.get(DESCRIPTION_FIELD).getAsString());
+    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+
+    // verify other properties set earlier has not changed.
+    config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
+                           NamespaceConfig.class);
+    Assert.assertEquals("prod", config.getSchedulerQueueName());
+
+    // cleanup
+    response = deleteNamespace(ID);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

@@ -193,7 +193,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
 

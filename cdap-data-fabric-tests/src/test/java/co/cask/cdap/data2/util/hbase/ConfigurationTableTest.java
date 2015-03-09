@@ -57,13 +57,11 @@ public class ConfigurationTableTest {
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    String expectedNamespace = cConf.get(Constants.Dataset.TABLE_PREFIX);
-
     ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     String configTableQualifier = "configuration";
-    TableId configTableId = TableId.from(String.format("%s.system.%s", expectedNamespace, configTableQualifier));
+    TableId configTableId = TableId.from(Constants.SYSTEM_NAMESPACE_ID, configTableQualifier);
     String configTableName = tableUtil.createHTableDescriptor(configTableId).getNameAsString();
     // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
     String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());

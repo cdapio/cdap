@@ -17,13 +17,17 @@
 package co.cask.cdap.internal.app.worker;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.stream.StreamBatchWriter;
+import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -53,7 +57,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +81,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
   private final Program program;
   private final Map<String, String> runtimeArgs;
+  private final StreamWriter streamWriter;
 
   public BasicWorkerContext(WorkerSpecification spec, Program program, RunId runId, int instanceId,
                             int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
@@ -95,6 +102,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
+    this.streamWriter = new DefaultStreamWriter(program.getNamespaceId(), getDiscoveryServiceClient());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
@@ -205,5 +213,35 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       LOG.error("Failed to abort transaction.", e1);
       throw Throwables.propagate(e1);
     }
+  }
+
+  @Override
+  public void write(String stream, String data) throws IOException {
+    streamWriter.write(stream, data);
+  }
+
+  @Override
+  public void write(String stream, String data, Map<String, String> headers) throws IOException {
+    streamWriter.write(stream, data, headers);
+  }
+
+  @Override
+  public void write(String stream, ByteBuffer data) throws IOException {
+    streamWriter.write(stream, data);
+  }
+
+  @Override
+  public void write(String stream, StreamEventData data) throws IOException {
+    streamWriter.write(stream, data);
+  }
+
+  @Override
+  public void writeFile(String stream, File file, String contentType) throws IOException {
+    streamWriter.writeFile(stream, file, contentType);
+  }
+
+  @Override
+  public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException {
+    return streamWriter.createBatchWriter(stream, contentType);
   }
 }

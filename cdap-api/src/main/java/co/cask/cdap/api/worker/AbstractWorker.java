@@ -39,6 +39,14 @@ public abstract class AbstractWorker implements Worker {
   }
 
   /**
+   * Set the name of the {@link Worker}
+   * @param name the name of the worker
+   */
+  protected void setName(String name) {
+    configurer.setName(name);
+  }
+
+  /**
    * Set description of the {@link Worker}.
    * @param description the description
    */
