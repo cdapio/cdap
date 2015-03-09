@@ -20,14 +20,19 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,12 +52,17 @@ import java.util.concurrent.TimeUnit;
 public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
 
+  private NamespaceClient namespaceClient;
   private StreamClient streamClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+    namespaceClient = new NamespaceClient(clientConfig);
+    namespaceClient.create(new NamespaceMeta.Builder().setId(namespaceId).build());
+    clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }
 
@@ -202,5 +212,11 @@ public class StreamClientTestRun extends ClientTestBase {
       Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
       Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
     }
+  }
+
+  @After
+  public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
+    namespaceClient.delete(namespaceId.getId());
+    clientConfig.setNamespace(namespaceId);
   }
 }
