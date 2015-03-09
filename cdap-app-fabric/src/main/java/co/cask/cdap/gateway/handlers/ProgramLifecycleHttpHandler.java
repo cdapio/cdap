@@ -2004,7 +2004,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    Map<String, String> resolvedConfigs = Maps.newHashMap();
+    Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
 
     NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
     Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
@@ -2014,10 +2014,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String schedulerQueue = config.getSchedulerQueueName();
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    } else if (configs.containsKey(Constants.AppFabric.APP_SCHEDULER_QUEUE)) {
-      resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE,
-                          configs.get(Constants.AppFabric.APP_SCHEDULER_QUEUE));
-
     }
     return resolvedConfigs;
 
