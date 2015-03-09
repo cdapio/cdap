@@ -28,12 +28,12 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.Version;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -123,9 +123,7 @@ public class MetricsDataMigrator {
   private final String metricsTableName;
 
   public MetricsDataMigrator(final CConfiguration cConf, final DatasetFramework dsFramework,
-                             DefaultMetricDatasetFactory factory) {
-
-    System.out.println("Initializing Data Migration...");
+                             MetricDatasetFactory factory) {
     this.dsFramework = dsFramework;
     this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
@@ -135,15 +133,13 @@ public class MetricsDataMigrator {
   }
 
   public void migrateMetricsTables(Version cdapVersion) {
-    if (cdapVersion.getVersion().equals("2.6")) {
+    if (cdapVersion == Version.VERSION_2_6_OR_LOWER) {
       migrateMetricsTableFromVersion26(cdapVersion);
-      System.out.println("Migrating metrics data from CDAP-2.6 to CDAP-2.8");
-    } else if (cdapVersion.getVersion().equals("2.7")) {
+    } else if (cdapVersion == Version.VERSION_2_7) {
       migrateMetricsTableFromVersion27(cdapVersion);
-      System.out.println("Migrating metrics data from CDAP-2.7 to CDAP-2.8");
     } else {
-      System.out.println("Metrics data migration supports migrating data of 2.7.x " +
-                           "and earlier version to 2.8.x version");
+      System.out.println("Unsupported version" + cdapVersion);
+      return;
     }
   }
 
@@ -158,13 +154,13 @@ public class MetricsDataMigrator {
   }
 
   private void migrateMetricsTableFromVersion27(Version version) {
-    EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(
-      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME, DatasetProperties.EMPTY));
+    EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(entityTableName, DatasetProperties.EMPTY));
     MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
     migrateMetricsData(entityTable, metricsTable, null, version);
   }
 
-  private void migrateMetricsData(EntityTable entityTable, MetricsTable metricsTable, String scope, Version version) {
+  private void migrateMetricsData(EntityTable entityTable, MetricsTable metricsTable, String scope,
+                                  Version version) {
     MetricsEntityCodec codec = getEntityCodec(entityTable);
     int idSize = getIdSize(version);
     Row row;
@@ -186,6 +182,7 @@ public class MetricsDataMigrator {
         rowCount++;
         printStatus(rowCount);
       }
+      System.out.println("Migrated " + rowCount + " records.");
     } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
       // no-op
@@ -194,7 +191,7 @@ public class MetricsDataMigrator {
 
   private void printStatus(long rowCount) {
     if (rowCount % 10000 == 0) {
-      System.out.println("Migrated " + rowCount + " records...");
+      System.out.println("Migrated " + rowCount + " records.");
     }
   }
 
@@ -252,7 +249,7 @@ public class MetricsDataMigrator {
         return;
       }
     } else {
-      System.out.println(String.format("Unexpected metric context %s...", context));
+      System.out.println(String.format("Unexpected metric context %s.", context));
     }
     LOG.trace("Adding metrics - tagMap : {} - context : {} - metricName : {} and tagKey : {}", tagMap, context,
               metricName, tagKey);
@@ -281,10 +278,13 @@ public class MetricsDataMigrator {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
-    System.out.println("Migrating Metrics data from table" + tableName);
+    System.out.println("Migrating Metrics data from table : " + tableName);
     MetricsTable table = null;
+    // for default namespace, we have to provide the complete table name.
+    tableName = "system." + tableName;
+    System.out.println("Complete Table Name is " + tableName);
     // metrics tables are in the system namespace
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
@@ -297,9 +297,8 @@ public class MetricsDataMigrator {
     return table;
   }
 
-  // todo : use Enum instead of string comparison for the below methods
   private String getMetricNameBasedOnVersion(String metricName, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_2_6_OR_LOWER) {
       return metricName;
     } else {
       // metric name has scope prefix, lets remove the scope prefix and return
@@ -308,7 +307,7 @@ public class MetricsDataMigrator {
   }
 
   private int getIdSize(Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_2_6_OR_LOWER) {
       // we use 2 bytes in 2.6
       return 2;
     } else {
@@ -317,7 +316,7 @@ public class MetricsDataMigrator {
     }
   }
   private String getContextBasedOnVersion(String context, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_2_6_OR_LOWER) {
       return context;
     } else {
       // skip namespace - some metrics are emitted in system namespace though they have app-name, dataset name, etc
@@ -327,7 +326,7 @@ public class MetricsDataMigrator {
   }
 
   private String getScopeBasedOnVersion(String scope, String metricName, Version version) {
-    if (version.getVersion().equals("2.6")) {
+    if (version == Version.VERSION_2_6_OR_LOWER) {
       return scope;
     } else {
       // metric name has scope prefix, lets split that

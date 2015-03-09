@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -30,16 +31,20 @@ public class HBase98TableUtilTest extends AbstractHBaseTableUtilTest {
 
   @Override
   protected HBaseTableUtil getTableUtil() {
-    return new HBase98TableUtil();
+    HBase98TableUtil hBaseTableUtil = new HBase98TableUtil();
+    hBaseTableUtil.setCConf(cConf);
+    return hBaseTableUtil;
   }
 
   @Override
   protected String getTableNameAsString(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "TableId should not be null.");
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return tableId.getTableName();
+      return HTableNameConverter.getHBaseTableName(tablePrefix, tableId);
     }
-    return Joiner.on(':').join(getTableUtil().toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
+    return Joiner.on(':').join(HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()),
+                               HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
   }
 
   @Override

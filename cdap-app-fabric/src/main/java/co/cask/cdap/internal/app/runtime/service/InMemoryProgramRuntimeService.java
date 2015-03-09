@@ -77,9 +77,20 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
       Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
       RuntimeInfo info = super.run(bundleJarProgram, options);
-      info.getController().addListener(new AbstractListener() {
+      final ProgramController controller = info.getController();
+      controller.addListener(new AbstractListener() {
+
         @Override
-        public void stopped() {
+        public void killed() {
+          try {
+            FileUtils.deleteDirectory(destinationUnpackedJarDir);
+          } catch (IOException e) {
+            LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
+          }
+        }
+
+        @Override
+        public void completed() {
           try {
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {

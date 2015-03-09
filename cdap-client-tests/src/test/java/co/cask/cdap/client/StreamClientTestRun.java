@@ -167,13 +167,22 @@ public class StreamClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testSendFile() throws Exception {
+  public void testSendSmallFile() throws Exception {
+    testSendFile(50);
+  }
+
+  @Test
+  public void testSendLargeFile() throws Exception {
+    testSendFile(500000);
+  }
+
+
+  private void testSendFile(int msgCount) throws Exception {
     String streamId = "testSendFile";
 
     streamClient.create(streamId);
 
-    // Generate 50 lines of events
-    int msgCount = 50;
+    // Generate msgCount lines of events
     StringWriter writer = new StringWriter();
     for (int i = 0; i < msgCount; i++) {
       writer.write("Event " + i);
@@ -182,7 +191,7 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.sendBatch(streamId, "text/plain",
                            ByteStreams.newInputStreamSupplier(writer.toString().getBytes(Charsets.UTF_8)));
 
-    // Reads the 50 events back
+    // Reads the msgCount events back
     List<StreamEvent> events = Lists.newArrayList();
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 

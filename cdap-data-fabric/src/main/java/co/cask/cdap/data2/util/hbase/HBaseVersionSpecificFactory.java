@@ -50,7 +50,7 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
     return instance;
   }
 
-  private T createInstance(String className) throws ClassNotFoundException {
+  protected T createInstance(String className) throws ClassNotFoundException {
     Class clz = Class.forName(className);
     return (T) Instances.newInstance(clz);
   }
