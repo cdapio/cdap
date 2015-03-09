@@ -58,7 +58,6 @@ describe('myNamespace', function() {
     // define the promise resolution method before calling "getList"
     var result;
     var promise = myNamespace.getList(true).then(function(res) {
-      console.log('Executing the then of the promise.');
       result = res;
     });
 
