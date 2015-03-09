@@ -16,6 +16,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -23,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -30,6 +32,7 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
@@ -50,6 +53,7 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -132,6 +136,10 @@ public class UpgraderMain {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
+      new TwillModule(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

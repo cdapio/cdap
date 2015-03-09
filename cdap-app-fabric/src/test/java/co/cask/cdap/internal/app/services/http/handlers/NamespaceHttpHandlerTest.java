@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,21 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppWithDataset;
+import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithStreamSizeSchedule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -30,6 +38,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -57,6 +67,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String METADATA_EMPTY_FIELDS = "{\"name\":\"\", \"description\":\"\"}";
   private static final String METADATA_INVALID_JSON = "invalid";
   private static final String INVALID_ID = "!nv@l*d/";
+  private static final String OTHER_ID = "test1";
   private static final Gson GSON = new Gson();
 
   private HttpResponse createNamespace(String id) throws Exception {
@@ -77,7 +88,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse deleteNamespace(String name) throws Exception {
-    return doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  private HttpResponse deleteNamespaceData(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
   }
 
   private HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
@@ -160,10 +175,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(400, response);
     response = createNamespace(METADATA_VALID, Constants.SYSTEM_NAMESPACE);
     assertResponseCode(400, response);
+    // we allow deleting the contents in default namespace. However, the namespace itself should never be deleted
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, "AppWithDataSet");
     response = deleteNamespace(Constants.DEFAULT_NAMESPACE);
-    assertResponseCode(403, response);
+    assertResponseCode(200, response);
+    response = getNamespace(Constants.DEFAULT_NAMESPACE);
+    Assert.assertEquals(0, getAppList(Constants.DEFAULT_NAMESPACE).size());
+    assertResponseCode(200, response);
+    // there is no system namespace
     response = deleteNamespace(Constants.SYSTEM_NAMESPACE);
-    assertResponseCode(403, response);
+    assertResponseCode(404, response);
   }
 
   @Test
@@ -222,10 +243,89 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testDeleteMissingNamespace() throws Exception {
+  public void testDeleteAll() throws Exception {
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     // test deleting non-existent namespace
-    HttpResponse response = deleteNamespace("doesnotexist");
-    assertResponseCode(404, response);
+    assertResponseCode(404, deleteNamespace("doesnotexist"));
+    assertResponseCode(200, createNamespace(ID));
+    assertResponseCode(200, getNamespace(ID));
+    assertResponseCode(200, createNamespace(OTHER_ID));
+    assertResponseCode(200, getNamespace(OTHER_ID));
+
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    Location nsLocation = locationFactory.create(ID);
+    Assert.assertTrue(nsLocation.exists());
+
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+    StreamAdmin streamAdmin = getInjector().getInstance(StreamAdmin.class);
+
+    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
+    deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_ID);
+
+    Id.DatasetInstance myDataset = Id.DatasetInstance.from(ID, "myds");
+    Id.Stream myStream = Id.Stream.from(OTHER_ID, "stream");
+
+    Assert.assertTrue(dsFramework.hasInstance(myDataset));
+    Assert.assertTrue(streamAdmin.exists(myStream));
+    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
+    // because unrecoverable reset is disabled
+    assertResponseCode(403, deleteNamespace(ID));
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
+    // because service is running
+    assertResponseCode(403, deleteNamespace(ID));
+    Assert.assertTrue(nsLocation.exists());
+    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    // delete should work now
+    assertResponseCode(200, deleteNamespace(ID));
+    Assert.assertFalse(nsLocation.exists());
+    Assert.assertFalse(dsFramework.hasInstance(myDataset));
+    Assert.assertTrue(streamAdmin.exists(myStream));
+    assertResponseCode(200, deleteNamespace(OTHER_ID));
+    Assert.assertFalse(streamAdmin.exists(myStream));
+  }
+
+  @Test
+  public void testDeleteDatasetsOnly() throws Exception {
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    // test deleting non-existent namespace
+    assertResponseCode(200, createNamespace(ID));
+    assertResponseCode(200, getNamespace(ID));
+
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    Location nsLocation = locationFactory.create(ID);
+    Assert.assertTrue(nsLocation.exists());
+
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+
+    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
+
+    Id.DatasetInstance myDataset = Id.DatasetInstance.from(ID, "myds");
+
+    Assert.assertTrue(dsFramework.hasInstance(myDataset));
+    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
+    // because reset is not enabled
+    assertResponseCode(403, deleteNamespaceData(ID));
+    Assert.assertTrue(nsLocation.exists());
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
+    // because service is running
+    assertResponseCode(403, deleteNamespace(ID));
+    Assert.assertTrue(nsLocation.exists());
+    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    assertResponseCode(200, deleteNamespaceData(ID));
+    Assert.assertTrue(nsLocation.exists());
+    Assert.assertTrue(getAppList(ID).size() == 2);
+    Assert.assertTrue(getAppDetails(ID, "AppWithServices").get("name").getAsString().equals("AppWithServices"));
+    Assert.assertTrue(getAppDetails(ID, "AppWithDataSet").get("name").getAsString().equals("AppWithDataSet"));
+    assertResponseCode(200, getNamespace(ID));
+    Assert.assertFalse(dsFramework.hasInstance(myDataset));
+    assertResponseCode(200, deleteNamespace(ID));
+    assertResponseCode(404, getNamespace(ID));
   }
 
   @Test
