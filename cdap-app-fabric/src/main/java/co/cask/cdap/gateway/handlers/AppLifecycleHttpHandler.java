@@ -609,7 +609,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //Check if any App associated with this namespace is running
     final Id.Namespace accId = Id.Namespace.from(identifier.getId());
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().getNamespace().equals(accId);
@@ -630,7 +630,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().equals(appId);
@@ -799,32 +799,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId());
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
-  }
-
-  /**
-   * Check if any program that satisfy the given {@link Predicate} is running.
-   * Protected only to support v2 APIs
-   *
-   * @param predicate Get call on each running {@link Id.Program}.
-   * @param types Types of program to check
-   * returns True if a program is running as defined by the predicate.
-   */
-  protected boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
-    for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
-        ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState.isDone()) {
-          continue;
-        }
-        Id.Program programId = entry.getValue().getProgramId();
-        if (predicate.apply(programId)) {
-          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
-                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
