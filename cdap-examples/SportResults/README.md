@@ -9,8 +9,9 @@ Features introduced: Partitioned file sets, MapReduce with runtime arguments, Ad
   (National Football League).
 - Results are uploaded into the file set using a service.
 - The results can be explored using ad-hoc SQL queries.
-- A MapReduce program reads all results for a league and aggregates total counts across all seasons, and writes
-  these to another partitioned table that is partitioned only by league.
+- A MapReduce program that reads game results for a sports league and
+  aggregates total counts such as games won and lost, points scored and conceded, across all
+  seasons, and writes the results to a partitioned file set that is partitioned by league.
 - The totals can also be queried using ad-hoc SQL.
 
 For more information on running CDAP examples, see
