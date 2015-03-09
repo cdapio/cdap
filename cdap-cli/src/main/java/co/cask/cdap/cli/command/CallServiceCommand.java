@@ -43,6 +43,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -86,16 +87,30 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
     path = path.startsWith("/") ? path.substring(1) : path;
     String headers = arguments.get(ArgumentName.HEADERS.toString(), "");
-    String body = arguments.get(ArgumentName.HTTP_BODY.toString(), "");
+    String bodyString = arguments.get(ArgumentName.HTTP_BODY.toString(), "");
+    String bodyFile = arguments.get(ArgumentName.LOCAL_FILE_PATH.toString(), "");
+    if (!bodyString.isEmpty() && !bodyFile.isEmpty()) {
+      String message = String.format("Please provide either [body <%s>] or [body:file <%s>], " +
+                                       "but not both", ArgumentName.HTTP_BODY.toString(),
+                                     ArgumentName.LOCAL_FILE_PATH.toString());
+      throw new CommandInputError(this, message);
+    }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
     URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);
-    if (!body.isEmpty() && httpMethod != HttpMethod.GET) {
-      builder.withBody(body);
+    if (httpMethod == HttpMethod.GET && (!bodyFile.isEmpty() || !bodyString.isEmpty())) {
+      throw new UnsupportedOperationException("Sending body in a GET request is not supported");
     }
+
+    if (!bodyFile.isEmpty()) {
+      builder.withBody(new File(bodyFile));
+    } else if (!bodyString.isEmpty()) {
+      builder.withBody(bodyString);
+    }
+
     HttpResponse response = restClient.execute(builder.build(), clientConfig.getAccessToken());
 
     Table table = Table.builder()
@@ -114,16 +129,20 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getPattern() {
-    return String.format("call service <%s> <%s> <%s> [headers <%s>] [body <%s>]",
+    return String.format("call service <%s> <%s> <%s> [headers <%s>] [body <%s>] [body:file <%s>]",
                          ArgumentName.SERVICE, ArgumentName.HTTP_METHOD,
-                         ArgumentName.ENDPOINT, ArgumentName.HEADERS, ArgumentName.HTTP_BODY);
+                         ArgumentName.ENDPOINT, ArgumentName.HEADERS, ArgumentName.HTTP_BODY,
+                         ArgumentName.LOCAL_FILE_PATH);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Calls a %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"" +
-                         " and the <%s> is a String.", ElementType.SERVICE.getPrettyName(),
-                         ArgumentName.HEADERS, ArgumentName.HTTP_BODY);
+    return String.format("Calls a %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"." +
+                         " The request body may be provided either as a string or a file." +
+                         " To provide the body as a string, use \"body <%s>\"." +
+                         " To provide the body as a file, use \"body:file <%s>\".",
+                         ElementType.SERVICE.getPrettyName(),
+                         ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }
 
   /**

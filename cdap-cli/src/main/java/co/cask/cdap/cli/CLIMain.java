@@ -282,6 +282,7 @@ public class CLIMain {
               bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
               bind(CConfiguration.class).toInstance(CConfiguration.create());
               bind(TableRenderer.class).to(AltStyleTableRenderer.class);
+              bind(RESTClient.class).toInstance(new RESTClient(cliConfig.getClientConfig()));
             }
           }
         );
