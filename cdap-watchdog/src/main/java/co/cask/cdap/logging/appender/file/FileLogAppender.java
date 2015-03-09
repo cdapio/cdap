@@ -31,7 +31,6 @@ import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.logging.write.LogWriteEvent;
 import co.cask.cdap.logging.write.SimpleLogFileWriter;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -70,6 +69,7 @@ public class FileLogAppender extends LogAppender {
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
+  private final DatasetFramework dsFramework;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -86,6 +86,7 @@ public class FileLogAppender extends LogAppender {
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
+    this.dsFramework = dsFramework;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
@@ -131,7 +132,7 @@ public class FileLogAppender extends LogAppender {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
                                                                         txExecutorFactory,
-                                                                        locationFactory);
+                                                                        locationFactory, dsFramework);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
                                                          logSchema,

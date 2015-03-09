@@ -64,7 +64,8 @@ public abstract class AbstractNamespaceClient {
 
   public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
     UnauthorizedException {
-    HttpResponse response = execute(HttpRequest.delete(resolve(String.format("namespaces/%s", namespaceId))).build());
+    URL url = resolve(String.format("unrecoverable/namespaces/%s", namespaceId));
+    HttpResponse response = execute(HttpRequest.delete(url).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {

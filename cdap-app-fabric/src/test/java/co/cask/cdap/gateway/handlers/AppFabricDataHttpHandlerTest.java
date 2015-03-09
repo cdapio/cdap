@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithMR;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.WordCountApp;
