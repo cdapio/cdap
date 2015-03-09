@@ -148,7 +148,7 @@ function makeApp (authAddress, cdapConfig) {
 
   // any other path, serve index.html
   app.all('*', [
-    //httpIndexLogger,
+    httpIndexLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/index.html');
     }
