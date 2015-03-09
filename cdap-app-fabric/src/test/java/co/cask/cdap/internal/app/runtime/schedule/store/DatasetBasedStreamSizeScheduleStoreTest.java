@@ -105,7 +105,7 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
                         scheduleStore.list());
 
     // Update schedule last run info
-    scheduleStore.updateLastRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, 100L, 10000L);
+    scheduleStore.updateLastRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, 100L, 10000L, null);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 100L, 10000L, false
