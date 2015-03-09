@@ -46,6 +46,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Cancellable;
@@ -99,6 +101,8 @@ public class StreamSizeScheduler implements Scheduler {
   // Scheduled executor used to poll stream at regular intervals, by querying the metric system
   private ScheduledExecutorService streamPollingExecutor;
 
+  private ListeningExecutorService taskExecutorService;
+
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
                              StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
@@ -123,6 +127,8 @@ public class StreamSizeScheduler implements Scheduler {
                                                              Threads.createDaemonThreadFactory("stream-polling-%d"));
     pollBookingExecutor = Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("polling-booking-executor"));
+    taskExecutorService = MoreExecutors.listeningDecorator(
+      Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("stream-schedule-task")));
 
     store = storeFactory.create();
 
@@ -934,7 +940,8 @@ public class StreamSizeScheduler implements Scheduler {
         basePollTs = pollingInfo.getTimestamp();
       }
 
-      ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
+      ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore,
+                                                             taskExecutorService);
       long previousLastRunSize = lastRunSize;
       long previousLastRunTs = lastRunTs;
       try {
