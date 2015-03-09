@@ -137,7 +137,8 @@ public class ExploreTableService {
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    */
   public QueryHandle enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
-    throws IllegalArgumentException, ExploreException, SQLException, UnsupportedTypeException, DatasetNotFoundException {
+    throws IllegalArgumentException, ExploreException, SQLException,
+    UnsupportedTypeException, DatasetNotFoundException {
 
     String datasetName = datasetID.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(
