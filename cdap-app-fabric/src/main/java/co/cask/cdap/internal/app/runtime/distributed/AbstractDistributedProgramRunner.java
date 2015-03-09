@@ -104,6 +104,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     try {
       if (schedulerQueueName != null) {
         hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueueName);
+        LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.

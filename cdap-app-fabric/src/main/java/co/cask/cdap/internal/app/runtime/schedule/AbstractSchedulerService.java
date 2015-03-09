@@ -23,6 +23,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
@@ -59,8 +60,9 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier,
                                   StreamSizeScheduler streamSizeScheduler,
                                   StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
-                                  PreferencesStore preferencesStore) {
-    this.timeScheduler = new TimeScheduler(schedulerSupplier, storeFactory, programRuntimeService, preferencesStore);
+                                  PreferencesStore preferencesStore, CConfiguration cConf) {
+    this.timeScheduler = new TimeScheduler(schedulerSupplier, storeFactory, programRuntimeService,
+                                           preferencesStore, cConf);
     this.streamSizeScheduler = streamSizeScheduler;
     this.storeFactory = storeFactory;
   }

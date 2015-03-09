@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -56,14 +57,16 @@ final class TimeScheduler implements Scheduler {
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
+  private final CConfiguration cConf;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.storeFactory = storeFactory;
     this.programRuntimeService = programRuntimeService;
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
+    this.cConf = cConf;
   }
 
   void start() throws SchedulerException {
@@ -290,7 +293,7 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
+          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore, cConf);
         } else {
           try {
             return jobClass.newInstance();

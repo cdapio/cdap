@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -160,11 +161,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   File previewsDir, StreamAdmin streamAdmin, Store store) {
+                                   File previewsDir, StreamAdmin streamAdmin, StoreFactory storeFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
-    this.store = store;
+    this.store = storeFactory.create();
     schedulerQueueFromCconf = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
@@ -310,7 +311,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
-    
+
     // Close all resources associated with instantiated Datasets
     DatasetAccessor.closeAllQueries();
   }
@@ -675,7 +676,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
 
     try {
-      Map<String, String> sessionConf = startSession();
+      Map<String, String> sessionConf = startSession(namespace);
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
@@ -684,6 +685,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         if (schedulerQueue != null) {
           sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
           LOG.info("Setting scheduler queue to {}", schedulerQueue);
+        } else {
+          LOG.info("scheduler queue not set");
         }
         // Switch database to the one being passed in.
         SessionState.get().setCurrentDatabase(database);
@@ -1015,7 +1018,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
-    
+
     Transaction tx = startTransaction();
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
@@ -1023,6 +1026,27 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     return sessionConf;
   }
+
+  protected Map<String, String> startSession(Id.Namespace namespace) throws IOException {
+    Map<String, String> sessionConf = Maps.newHashMap();
+
+    QueryHandle queryHandle = QueryHandle.generate();
+    sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
+
+    String schedulerQueue = getNamespaceResolvedSchedulerQueue(namespace);
+    if (schedulerQueue != null) {
+      sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+    }
+
+    Transaction tx = startTransaction();
+    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
+    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
+    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
+
+    return sessionConf;
+  }
+
+
 
   /**
    * Returns {@link OperationHandle} associated with Explore {@link QueryHandle}.
@@ -1167,6 +1191,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
 
     NamespaceConfig config = meta.getConfig();
+    LOG.info("Namespace config scheduler name {}", config.getSchedulerQueueName());
 
     return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : schedulerQueueFromCconf;
   }

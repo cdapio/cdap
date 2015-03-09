@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;

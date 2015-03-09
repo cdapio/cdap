@@ -19,10 +19,14 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -46,9 +50,14 @@ public class DefaultSchedulerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
+    private final CConfiguration cConf;
+    private final Store store;
 
-    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
+                 CConfiguration cConf) {
       taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
+      this.store = store;
+      this.cConf = cConf;
     }
 
     @Override
@@ -60,24 +69,42 @@ public class DefaultSchedulerService {
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 5);
 
-      String accountId = parts[0];
+      String namespaceId = parts[0];
       String applicationId = parts[1];
       ProgramType programType = ProgramType.valueOf(parts[2]);
       String programId = parts[3];
       String scheduleName = parts[4];
 
       LOG.debug("Schedule execute {}", key);
-      Arguments args = new BasicArguments(ImmutableMap.of(
-        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
-        ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()),
-        ProgramOptionConstants.SCHEDULE_NAME, scheduleName
-      ));
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
+      builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
+      builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
+      builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
+      String schedulerQueue = getNamespaceResolvedScheduleQueue(namespaceId);
+      if (schedulerQueue != null) {
+        builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
+      }
+
+      Arguments args = new BasicArguments(builder.build());
 
       try {
-        taskRunner.run(Id.Program.from(accountId, applicationId, programType, programId), programType, args);
+        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType, args);
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       }
+    }
+
+    private String getNamespaceResolvedScheduleQueue(String namespace) {
+
+      NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespace));
+      Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
+
+      NamespaceConfig config = meta.getConfig();
+      // The only config currently as system arguments is Scheduler queue.
+      String schedulerQueue = config.getSchedulerQueueName();
+
+      return schedulerQueue != null ? schedulerQueue : cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     }
   }
 }
