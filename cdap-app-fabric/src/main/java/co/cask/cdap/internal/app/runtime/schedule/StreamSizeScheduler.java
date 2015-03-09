@@ -166,15 +166,20 @@ public class StreamSizeScheduler implements Scheduler {
         // We should never enter this, but if we do, we still want the other schedule tasks to be handled
         LOG.error("Could not schedule task '{}' from persistent store", scheduleState, e);
       }
+    }
 
-      for (StreamSubscriber streamSubscriber : streamSubscribers.values()) {
-        try {
-          StreamSize streamSize = streamSubscriber.pollOnce();
-          streamSubscriber.sendPollingInfoToActiveTasks(streamSize);
-        } catch (IOException e) {
-          // Failing to poll should not make this init fail
-          LOG.warn("Could not poll size for stream '{}'", streamSubscriber.getStreamId(), e);
-        }
+    // Poll all the Streams for active tasks
+    for (StreamSubscriber streamSubscriber : streamSubscribers.values()) {
+      if (streamSubscriber.getActiveTasksCount() <= 0) {
+        continue;
+      }
+
+      try {
+        StreamSize streamSize = streamSubscriber.pollOnce();
+        streamSubscriber.sendPollingInfoToActiveTasks(streamSize);
+      } catch (IOException e) {
+        // Failing to poll should not make this init fail
+        LOG.warn("Could not poll size for stream '{}'", streamSubscriber.getStreamId(), e);
       }
     }
   }
@@ -489,6 +494,13 @@ public class StreamSizeScheduler implements Scheduler {
       if (poll) {
         pollAfterNotification(notification, estimate);
       }
+    }
+
+    /**
+     * @return number of active schedule tasks for this {@link StreamSubscriber}
+     */
+    public int getActiveTasksCount() {
+      return activeTasks.get();
     }
 
     /**
