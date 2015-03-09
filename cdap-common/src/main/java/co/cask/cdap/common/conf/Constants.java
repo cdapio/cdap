@@ -611,6 +611,7 @@ public final class Constants {
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
+    public static final String CDAP_VERSION = "cdap.version";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
