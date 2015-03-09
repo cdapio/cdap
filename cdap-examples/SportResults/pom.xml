@@ -24,12 +24,12 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>Sports</artifactId>
-  <name>Sports Results Analytics</name>
+  <artifactId>SportResults</artifactId>
+  <name>Sport Results Analytics</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.examples.sports.SportsResults</app.main.class>
+    <app.main.class>co.cask.cdap.examples.sportresults.SportResults</app.main.class>
   </properties>
 
   <dependencies>

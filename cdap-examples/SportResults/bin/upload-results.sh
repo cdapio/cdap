@@ -40,6 +40,7 @@ function usage() {
   echo "    --file      The file to upload. Defaults to resources/<league>-<season>.csv"
   echo "    --league    The league the results are from"
   echo "    --season    The season the results are for"
+  echo "    --verbose   Print more verbose information"
   echo "    --help      This help message"
   echo ""
 }
@@ -70,7 +71,7 @@ if [ "x$file" = "x" ]; then
 fi
 
 if ! [ -f "$file" ]; then
-  echo "File $file does not exist or is not a plain file."
+  echo "File $file does not exist or is not a regular file."
   exit 1;
 fi
 
@@ -82,7 +83,7 @@ if [ $verbose = "true" ]; then
 fi
 
 status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT --data-binary @$file \
-    http://$gateway:10000/v3/namespaces/default/apps/SportsResults/services/UploadService/methods/leagues/$league/seasons/$season`
+    http://$gateway:10000/v3/namespaces/default/apps/SportResults/services/UploadService/methods/leagues/$league/seasons/$season`
 if [ $status -ne 200 ]; then
   echo "Failed to send data."
   if [ $status == 401 ]; then

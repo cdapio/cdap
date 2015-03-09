@@ -1,14 +1,15 @@
 # Sports example
 
-Example application that illustrates PartitionedFileSet datasets using sports results.
+Example application that illustrates PartitionedFileSet datasets using sport results.
 
-Features introduced: Partitioned file sets, MapReduce with runtime arguments, Ad-hoh queries over file sets.
+Features introduced: Partitioned file sets, MapReduce with runtime arguments, Ad-hoc queries over file sets.
 
-- Uses a partitioned file set to store game results. It is partitioned by league and season, and ech partition
-  is a file containing the results of one league for ine season, for example the 2014 season of the NFL.
+- Uses a partitioned file set to store game results. It is partitioned by league and season, and each partition
+  is a file containing the results in one league for a season; for example, the 2014 season of the NFL
+  (National Football League).
 - Results are uploaded into the file set using a service.
 - The results can be explored using ad-hoc SQL queries.
-- A MapReduce program reads all results for one league and aggregates total counts across all seasons, and writes
+- A MapReduce program reads all results for a league and aggregates total counts across all seasons, and writes
   these to another partitioned table that is partitioned only by league.
 - The totals can also be queried using ad-hoc SQL.
 

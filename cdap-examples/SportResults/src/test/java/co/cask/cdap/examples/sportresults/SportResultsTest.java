@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sports;
+package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -39,9 +39,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests the well functioning of the Sports app.
+ * Tests the functioning and completeness of the Sports app.
  */
-public class SportsResultsTest extends TestBase {
+public class SportResultsTest extends TestBase {
 
   private static final String FANTASY_2014 =
     "2014/1/3,My Team,Your Team,24,17\n" +
@@ -57,7 +57,7 @@ public class SportsResultsTest extends TestBase {
   public void testPartitionedCounting() throws Exception {
 
     // deploy the application and start the upload service
-    ApplicationManager appManager = getTestManager().deployApplication(SportsResults.class);
+    ApplicationManager appManager = getTestManager().deployApplication(SportResults.class);
     ServiceManager serviceManager = appManager.startService("UploadService");
     serviceManager.waitForStatus(true);
 

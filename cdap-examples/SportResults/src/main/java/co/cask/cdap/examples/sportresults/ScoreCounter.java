@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sports;
+package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -67,14 +67,14 @@ public class ScoreCounter extends AbstractMapReduce {
     String league = context.getRuntimeArguments().get("league");
     Preconditions.checkNotNull(league);
 
-    // configure the input to read all season for the league
+    // Configure the input to read all seasons for the league
     Map<String, String> inputArgs = Maps.newHashMap();
     PartitionedFileSetArguments.setInputPartitionFilter(
       inputArgs, PartitionFilter.builder().addValueCondition("league", league).build());
     PartitionedFileSet input = context.getDataset("results", inputArgs);
     context.setInput("results", input);
 
-    // each run writes its output to a partition for the league
+    // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();
     outputKey = PartitionKey.builder().addStringField("league", league).build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
@@ -88,7 +88,7 @@ public class ScoreCounter extends AbstractMapReduce {
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
-      // TODO: this should be done by the output committer of the partitioned file set's output format (CDAP-1227)
+      // TODO: This should be done by the output committer of the partitioned file set's output format (CDAP-1227)
       outputFileSet.addPartition(outputKey, outputPath);
     }
   }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sports;
+package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -38,14 +38,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * A service for uploading sports result for a given league and season.
+ * A service for uploading sport results for a given league and season.
  */
 public class UploadService extends AbstractService {
 
   @Override
   protected void configure() {
     setName("UploadService");
-    setDescription("A service for uploading sports result for a given league and season.");
+    setDescription("A service for uploading sport results for a given league and season.");
     setInstances(1);
     addHandler(new UploadHandler());
   }
