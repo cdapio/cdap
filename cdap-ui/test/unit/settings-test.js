@@ -30,7 +30,7 @@ describe('mySettings', function(){
 
   // actual testing follows
   it('has the expected endpoint', function() {
-    expect(mySettings.endpoint).toEqual('/configuration/consolesettings');
+    expect(mySettings.endpoint).toEqual('/configuration/user');
   });
 
 
