@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -29,8 +31,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -197,7 +197,8 @@ public class DatasetBasedStreamSizeScheduleStore {
         @Override
         public void apply() throws Exception {
           byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                      getScheduleId(programId, programType, scheduleName)));
+                                                      AbstractSchedulerService.scheduleIdFor(programId, programType,
+                                                                                             scheduleName)));
           table.delete(rowKey);
         }
       });
@@ -261,120 +262,12 @@ public class DatasetBasedStreamSizeScheduleStore {
         @Override
         public void apply() throws Exception {
           byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                      getScheduleId(programId, programType, scheduleName)));
+                                                      AbstractSchedulerService.scheduleIdFor(programId, programType,
+                                                                                             scheduleName)));
           table.put(rowKey, columns, values);
           LOG.debug("Updated schedule {} with columns {}, values {}", scheduleName, columns, values);
         }
       });
-  }
-
-  private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    return String.format("%s:%s", getProgramScheduleId(program, programType), scheduleName);
-  }
-
-  private String getProgramScheduleId(Id.Program program, SchedulableProgramType programType) {
-    return String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
-                         programType.name(), program.getId());
-  }
-
-  /**
-   * POJO containing a {@link StreamSizeSchedule} and its state.
-   */
-  public static class StreamSizeScheduleState {
-    private final Id.Program programId;
-    private final SchedulableProgramType programType;
-    private final StreamSizeSchedule streamSizeSchedule;
-    private final long baseRunSize;
-    private final long baseRunTs;
-    private final long lastRunSize;
-    private final long lastRunTs;
-    private final boolean running;
-
-    @VisibleForTesting
-    StreamSizeScheduleState(Id.Program programId, SchedulableProgramType programType,
-                            StreamSizeSchedule streamSizeSchedule, long baseRunSize, long baseRunTs,
-                            long lastRunSize, long lastRunTs, boolean running) {
-      this.programId = programId;
-      this.programType = programType;
-      this.streamSizeSchedule = streamSizeSchedule;
-      this.baseRunSize = baseRunSize;
-      this.baseRunTs = baseRunTs;
-      this.lastRunSize = lastRunSize;
-      this.lastRunTs = lastRunTs;
-      this.running = running;
-    }
-
-    public Id.Program getProgramId() {
-      return programId;
-    }
-
-    public SchedulableProgramType getProgramType() {
-      return programType;
-    }
-
-    public StreamSizeSchedule getStreamSizeSchedule() {
-      return streamSizeSchedule;
-    }
-
-    public long getBaseRunSize() {
-      return baseRunSize;
-    }
-
-    public long getBaseRunTs() {
-      return baseRunTs;
-    }
-
-    public long getLastRunSize() {
-      return lastRunSize;
-    }
-
-    public long getLastRunTs() {
-      return lastRunTs;
-    }
-
-    public boolean isRunning() {
-      return running;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("programId", programId)
-        .add("programType", programType)
-        .add("streamSizeSchedule", streamSizeSchedule)
-        .add("baseRunSize", baseRunSize)
-        .add("baseRunTs", baseRunTs)
-        .add("lastRunSize", lastRunSize)
-        .add("lastRunTs", lastRunTs)
-        .add("running", running)
-        .toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      StreamSizeScheduleState that = (StreamSizeScheduleState) o;
-      return Objects.equal(programId, that.programId) &&
-        Objects.equal(programType, that.programType) &&
-        Objects.equal(streamSizeSchedule, that.streamSizeSchedule) &&
-        Objects.equal(baseRunSize, that.baseRunSize) &&
-        Objects.equal(baseRunTs, that.baseRunTs) &&
-        Objects.equal(lastRunSize, that.lastRunSize) &&
-        Objects.equal(lastRunTs, that.lastRunTs) &&
-        Objects.equal(running, that.running);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(programId, programType, streamSizeSchedule, baseRunSize,
-                              baseRunTs, lastRunSize, lastRunTs, running);
-    }
   }
 
 }

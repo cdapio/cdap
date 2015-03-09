@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -58,10 +59,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
 
     // List all schedules
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, true
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, false
                           )
                         ),
@@ -70,10 +71,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Suspend a schedule and check that this is reflected
     scheduleStore.suspend(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, false
                           )
                         ),
@@ -82,10 +83,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Resume a schedule and check that this is reflected
     scheduleStore.resume(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, true
                           )
                         ),
@@ -94,10 +95,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Update schedule base count info
     scheduleStore.updateBaseRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2, 10000L, 100L);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
@@ -106,10 +107,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Update schedule last run info
     scheduleStore.updateLastRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, 100L, 10000L);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 100L, 10000L, false
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
@@ -118,10 +119,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Update schedule object
     scheduleStore.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, STREAM_SCHEDULE_2);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 0L, 0L, 100L, 10000L, false
                           ),
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
@@ -130,13 +131,13 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     // Delete schedules
     scheduleStore.delete(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
     Assert.assertEquals(ImmutableList.of(
-                          new DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState(
+                          new StreamSizeScheduleState(
                             PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
     scheduleStore.delete(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    Assert.assertEquals(ImmutableList.<DatasetBasedStreamSizeScheduleStore.StreamSizeScheduleState>of(),
+    Assert.assertEquals(ImmutableList.<StreamSizeScheduleState>of(),
                         scheduleStore.list());
   }
 }
