@@ -66,7 +66,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     reads.add("contexts", readContexts);
     expected.add(reads);
 
-    HttpResponse response = doGet("/v2/metrics/available/apps/WCount");
+    HttpResponse response = doGet(PREFIX + "/metrics/available/apps/WCount");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -92,7 +92,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     expected.add(expectedReads);
     expected.add(expectedWrites());
 
-    HttpResponse response = doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
+    HttpResponse response = doGet(PREFIX + "/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",
@@ -106,7 +106,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMalformedPathReturns404() throws Exception {
-    String base = "/v2/metrics/available";
+    String base = PREFIX + "/metrics/available";
     String[] resources = {
       base + "/apps/WordCount/flow/WordCounter",
       base + "/apps/WordCount/flows/WordCounter/flowlets",
@@ -120,7 +120,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
   }
 
   private static void setupMetrics() throws Exception {
-    HttpResponse response = doDelete("/v2/metrics");
+    HttpResponse response = doDelete(PREFIX + "/metrics");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // discovery in v2 APIs returns only user metrics

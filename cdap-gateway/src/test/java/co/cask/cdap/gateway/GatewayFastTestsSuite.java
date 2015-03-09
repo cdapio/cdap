@@ -18,11 +18,13 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.ProcedureHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import co.cask.cdap.gateway.run.StreamWriterTestRun;
+import co.cask.cdap.internal.app.namespace.NamespaceCannotBeCreatedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -198,9 +200,9 @@ public class GatewayFastTestsSuite {
 
     HttpEntityEnclosingRequestBase request;
     if (appName == null) {
-      request = getPost("/v2/apps");
+      request = getPost(GatewayTestBase.PREFIX + "/apps");
     } else {
-      request = getPut("/v2/apps/" + appName);
+      request = getPut(GatewayTestBase.PREFIX + "/apps/" + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
@@ -209,11 +211,10 @@ public class GatewayFastTestsSuite {
   }
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws IOException, AlreadyExistsException, NamespaceCannotBeCreatedException {
     GatewayTestBase.beforeClass();
     GatewayTestBase.runBefore = false;
     GatewayTestBase.runAfter = false;
-
   }
 
   @AfterClass

@@ -40,6 +40,7 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.internal.test.TestConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -76,6 +77,10 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class DFSStreamHeartbeatsTest {
+
+  protected static final Id.Namespace TEST_NAMESPACE = TestConstants.TEST_NAMESPACE;
+  protected static final String PREFIX = TestConstants.URL_PREFIX;
+
   private static final byte[] TWO_BYTES = new byte[] { 'a', 'b' };
 
   private static String hostname;
@@ -157,8 +162,8 @@ public class DFSStreamHeartbeatsTest {
     zkServer.stopAndWait();
   }
 
-  private HttpURLConnection openURL(String location, HttpMethod method) throws IOException {
-    URL url = new URL(location);
+  private HttpURLConnection openURL(HttpMethod method, String format, Object... args) throws IOException {
+    URL url = new URL(String.format("http://%s:%d%s/", hostname, port, PREFIX) + String.format(format, args));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
     return urlConn;
@@ -168,16 +173,15 @@ public class DFSStreamHeartbeatsTest {
   public void streamPublishesHeartbeatTest() throws Exception {
     final int entries = 10;
     final String streamName = "test_stream";
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, streamName);
     // Create a new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName),
-                                        HttpMethod.PUT);
+    HttpURLConnection urlConn = openURL(HttpMethod.PUT, "streams/%s", streamName);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
+      urlConn = openURL(HttpMethod.POST, "streams/%s", streamName);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);

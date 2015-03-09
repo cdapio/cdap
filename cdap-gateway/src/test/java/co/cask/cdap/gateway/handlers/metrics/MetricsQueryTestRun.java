@@ -109,7 +109,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     // Query for queue length
-    HttpPost post = getPost("/v2/metrics");
+    HttpPost post = getPost(PREFIX + "/metrics");
     post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
     post.setEntity(new StringEntity(
       "[\"/system/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
@@ -250,7 +250,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runnableRequest =
       "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/run-id/" + runId1 + "/run-id/" +
         runId2 + "rid_metric_invalid?aggregate=true";
-    HttpResponse response = doGet("/v2/metrics" + runnableRequest);
+    HttpResponse response = doGet(PREFIX + "/metrics" + runnableRequest);
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
   }
 
@@ -290,7 +290,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runnableRequest =
       "/user/apps/WordCount/service/InvalidService/runnables/CountRunnable/reads?aggregate=true";
 
-    HttpResponse response = doGet("/v2/metrics" + runnableRequest);
+    HttpResponse response = doGet(PREFIX + "/metrics" + runnableRequest);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("GET " + runnableRequest + " did not return 404 status.",
@@ -306,7 +306,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   }
 
   private static void testSingleMetricWithGet(String resource, int value) throws Exception {
-    HttpResponse response = doGet("/v2/metrics" + resource);
+    HttpResponse response = doGet(PREFIX + "/metrics" + resource);
     Assert.assertEquals("GET " + resource + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
@@ -315,7 +315,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   }
 
   private static void testSingleMetricWithPost(String resource, int value) throws Exception {
-    HttpPost post = getPost("/v2/metrics");
+    HttpPost post = getPost(PREFIX + "/metrics");
     post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
     post.setEntity(new StringEntity("[\"" + resource + "\"]"));
     HttpResponse response = doPost(post);
@@ -368,7 +368,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     for (String resource : validResources) {
-      HttpResponse response = doGet("/v2/metrics" + resource);
+      HttpResponse response = doGet(PREFIX + "/metrics" + resource);
       Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
       try {
         Assert.assertEquals("GET " + resource + " did not return 200 status.",
@@ -396,11 +396,11 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   public void testMalformedPathReturns404() throws Exception {
     for (String resource : malformedResources) {
       // test GET request fails with 404
-      HttpResponse response = doGet("/v2/metrics" + resource);
+      HttpResponse response = doGet(PREFIX + "/metrics" + resource);
       Assert.assertEquals("GET " + resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
       // test POST also fails, but with 400
-      HttpPost post = getPost("/v2/metrics");
+      HttpPost post = getPost(PREFIX + "/metrics");
       post.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
       post.setEntity(new StringEntity("[\"" + resource + "\"]"));
       response = doPost(post);

@@ -69,7 +69,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     long clientError = getMetricValue(path, "response.client-error");
 
     // Get info of non-existent stream
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/streams/metrics-hook-test-non-existent-stream/info");
+    HttpResponse response = GatewayFastTestsSuite.doGet(PREFIX + "/streams/metrics-hook-test-non-existent-stream/info");
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     // received and clientError should have increased by one, successful should be the same
@@ -95,9 +95,8 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     Assert.assertEquals(expected, metrics);
   }
 
-  // todo: use v3 apis
   private static long getMetricValue(String contextPath, String metricName) throws Exception {
-    HttpResponse response = doGet("/v2/metrics" + contextPath + "/" + metricName + "?aggregate=true");
+    HttpResponse response = doGet(PREFIX + "/metrics" + contextPath + "/" + metricName + "?aggregate=true");
     Assert.assertEquals("GET " + contextPath + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);

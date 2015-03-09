@@ -27,7 +27,9 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.test.TestConstants;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -105,6 +107,9 @@ public abstract class AppFabricTestBase {
   protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
     .setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
+  protected static final Id.Namespace TEST_NAMESPACE = TestConstants.TEST_NAMESPACE;
+  protected static final NamespaceMeta TEST_NAMESPACE_META = TestConstants.TEST_NAMESPACE_META;
+  protected static final String PREFIX = TestConstants.URL_PREFIX;
 
   private static final String hostname = "127.0.0.1";
 
@@ -359,6 +364,14 @@ public abstract class AppFabricTestBase {
       jarOut.close();
     }
 
+    if (apiVersion == null) {
+      apiVersion = Constants.Gateway.API_VERSION_3_TOKEN;
+    }
+
+    if (namespace == null) {
+      namespace = TEST_NAMESPACE.getId();
+    }
+
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     if (appName == null) {
@@ -375,9 +388,13 @@ public abstract class AppFabricTestBase {
   protected static String getVersionedAPIPath(String nonVersionedApiPath, @Nullable String version,
                                               @Nullable String namespace) {
     StringBuilder versionedApiBuilder = new StringBuilder("/");
-    // if not specified, treat v2 as the version, so existing tests do not need any updates.
+
     if (version == null) {
-      version = Constants.Gateway.API_VERSION_2_TOKEN;
+      version = Constants.Gateway.API_VERSION_3_TOKEN;
+    }
+
+    if (Constants.Gateway.API_VERSION_3.equals(version) && namespace == null) {
+      namespace = TEST_NAMESPACE.getId();
     }
 
     if (Constants.Gateway.API_VERSION_2_TOKEN.equals(version)) {
@@ -503,6 +520,10 @@ public abstract class AppFabricTestBase {
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE),
+                     GSON.toJson(TEST_NAMESPACE_META2));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
   private static void deleteNamespaces() throws Exception {
@@ -511,6 +532,8 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
                                       TEST_NAMESPACE2));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

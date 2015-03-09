@@ -18,6 +18,7 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
@@ -34,11 +35,16 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceCannotBeCreatedException;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.test.TestConstants;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -78,6 +84,10 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO: refactor this test. It is complete mess
 public abstract class GatewayTestBase {
+
+  protected static final Id.Namespace TEST_NAMESPACE = TestConstants.TEST_NAMESPACE;
+  protected static final String PREFIX = TestConstants.URL_PREFIX;
+
   private static final Gson GSON = new Gson();
 
   private static final String API_KEY = "SampleTestApiKey";
@@ -105,7 +115,7 @@ public abstract class GatewayTestBase {
   public static boolean runAfter = true;
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws IOException, AlreadyExistsException, NamespaceCannotBeCreatedException {
     if (!runBefore) {
       return;
     }
@@ -116,6 +126,8 @@ public abstract class GatewayTestBase {
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);
+    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setId(TEST_NAMESPACE).build());
   }
 
   @AfterClass
@@ -229,7 +241,7 @@ public abstract class GatewayTestBase {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v2/apps/%s/%s/%s/status",
+      HttpResponse response = GatewayFastTestsSuite.doGet(String.format(PREFIX + "/apps/%s/%s/%s/status",
                                                                         appId, runnableType, runnableId));
       JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
       if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
