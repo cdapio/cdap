@@ -16,15 +16,18 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
@@ -1001,42 +1004,49 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   private void upgradeFilesetTable(TableInfo tableInfo) throws Exception {
-    // for partitioned filesets, we will alter the table so that partitions are not lost.
-    // this only works because the "default" database is used both now and before for the CDAP default namespace.
-    // this also only works because these are native Hive tables (they don't use a storage handler).
-    // Non-native tables cannot be altered.
-    // TODO: enabling a dataset with partitions should add those partitions automatically
-    String oldName = tableInfo.getTableName();
-    String newName = "dataset_" + oldName.substring("cdap_".length(), oldName.length());
-    QueryHandle renameHandle = execute("default", String.format("ALTER TABLE %s RENAME TO %s", oldName, newName));
-    QueryStatus status = waitForCompletion(renameHandle);
-    // if rename failed, stop
-    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-      throw new ExploreException(String.format("Failed to rename table from %s to %s.", oldName, newName));
-    }
+    // these were only available starting from CDAP 2.7, which has the cdap name in table properties
+    String dsName = tableInfo.getParameters().get(Constants.Explore.CDAP_NAME);
+    // except the name was always prefixed by cdap.user.<name>
+    dsName = dsName.substring("cdap.user.".length(), dsName.length());
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
 
-    // add version to the table properties. cdap name is already present since these were introduced in 2.7
-    Map<String, String> tblProperties = tableInfo.getParameters();
-    String cdapName = tblProperties.get(Constants.Explore.CDAP_NAME);
-    QueryHandle propertyHandle = execute("default", String.format(
-      "ALTER TABLE %s SET TBLPROPERTIES ('%s'='%s', '%s'='%s')",
-      newName, Constants.Explore.CDAP_NAME, cdapName,
-      Constants.Explore.CDAP_VERSION, ProjectInfo.getVersion().toString()));
-    status = waitForCompletion(propertyHandle);
-    // if set properties failed, stop
-    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-      throw new ExploreException(String.format("Failed to set table properties for %s.", newName));
+    // enable the new table
+    enableDataset(datasetID, spec);
+
+    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
+    // if this is a time partitioned file set, we need to add all partitions
+    if (dataset instanceof TimePartitionedFileSet) {
+      TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
+      Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
+      if (!partitions.isEmpty()) {
+        QueryHandle handle = exploreTableService.addPartitions(datasetID, tpfs.getPartitions(null));
+        QueryStatus status = waitForCompletion(handle);
+        // if add partitions failed, stop
+        if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+          throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+        }
+      }
     }
+    // now it is safe to drop the old table
+    dropTable(tableInfo.getTableName());
   }
 
   private void upgradeRecordScannableTable(TableInfo tableInfo) throws Exception {
     // get the dataset name from the serde properties.
     Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
     String datasetName = serdeProperties.get(Constants.Explore.DATASET_NAME);
+    // except the name was always prefixed by cdap.user.<name>
+    datasetName = datasetName.substring("cdap.user.".length(), datasetName.length());
     Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, datasetName);
     DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
 
-    // if there are no partitions, we can just disable then enable.
+    // if there are no partitions, we can just enable the new table and drop the old one.
+    enableDataset(datasetID, spec);
+    dropTable(tableInfo.getTableName());
+  }
+
+  private void enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec) throws Exception {
     LOG.info("Enabling exploration on dataset {}", datasetID);
     QueryHandle enableHandle = exploreTableService.enableDataset(datasetID, spec);
     // wait until enable is done
@@ -1045,15 +1055,15 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
       throw new ExploreException("Failed to enable exploration of dataset " + datasetID);
     }
+  }
 
-    // safe to disable old table now
-    String oldTable = tableInfo.getTableName();
-    LOG.info("Disabling old dataset table {}", oldTable);
-    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + oldTable);
+  private void dropTable(String tableName) throws Exception {
+    LOG.info("Dropping old upgraded table {}", tableName);
+    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + tableName);
     // make sure disable finished
-    status = waitForCompletion(disableHandle);
+    QueryStatus status = waitForCompletion(disableHandle);
     if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-      throw new ExploreException("Failed to disable old Hive table " + oldTable);
+      throw new ExploreException("Failed to disable old Hive table " + tableName);
     }
   }
 
@@ -1074,15 +1084,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     // safe to disable old table now
-    // run the query explicitly since the old code doesn't exist
-    LOG.info("Disabling exploration on old table for stream {}", streamID);
-    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + streamName);
-
-    // make sure disable finished
-    status = waitForCompletion(disableHandle);
-    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-      throw new ExploreException("Failed to disable old Hive table " + streamName);
-    }
+    dropTable(tableInfo.getTableName());
   }
 
   private QueryStatus waitForCompletion(QueryHandle handle) throws HandleNotFoundException, SQLException,

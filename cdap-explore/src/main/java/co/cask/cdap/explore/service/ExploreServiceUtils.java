@@ -16,14 +16,20 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -380,5 +386,37 @@ public class ExploreServiceUtils {
     }
 
     return newHiveConfFile;
+  }
+
+  public static Dataset instantiateDataset(DatasetFramework datasetFramework, Id.DatasetInstance datasetID)
+    throws DatasetNotFoundException, DatasetInstantiationException {
+    try {
+      Dataset dataset = datasetFramework.getDataset(datasetID, DatasetDefinition.NO_ARGUMENTS, null);
+      if (dataset == null) {
+        throw new DatasetNotFoundException("Dataset " + datasetID + " not found.");
+      }
+      return dataset;
+    } catch (Exception e) {
+      String className = isClassNotFoundException(e);
+      if (className == null) {
+        throw new DatasetInstantiationException(e.getMessage());
+      }
+      String errMsg = String.format(
+        "Cannot load dataset %s because class %s cannot be found. This is probably because class %s is a " +
+          "type parameter of dataset %s that is not present in the dataset's jar file. See the developer " +
+          "guide for more information.", datasetID, className, className, datasetID);
+      LOG.info(errMsg);
+      throw new DatasetInstantiationException(errMsg);
+    }
+  }
+
+  private static String isClassNotFoundException(Throwable e) {
+    if (e instanceof ClassNotFoundException) {
+      return e.getMessage();
+    }
+    if (e.getCause() != null) {
+      return isClassNotFoundException(e.getCause());
+    }
+    return null;
   }
 }

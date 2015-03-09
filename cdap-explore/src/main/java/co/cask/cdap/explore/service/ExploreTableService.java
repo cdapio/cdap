@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -30,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -134,9 +134,10 @@ public class ExploreTableService {
    * @throws UnsupportedTypeException if the schema of the dataset is not compatible with Hive
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
+   * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    */
   public QueryHandle enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
-    throws IllegalArgumentException, ExploreException, SQLException, UnsupportedTypeException {
+    throws IllegalArgumentException, ExploreException, SQLException, UnsupportedTypeException, DatasetNotFoundException {
 
     String datasetName = datasetID.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(
@@ -173,17 +174,7 @@ public class ExploreTableService {
       }
     }
 
-    Dataset dataset;
-    try {
-      dataset = instantiateDataset(datasetID);
-      if (dataset == null) {
-        // This is not an error: whether the dataset is explorable may not be known where this call originates from.
-        return QueryHandle.NO_OP;
-      }
-    } catch (Exception e) {
-      throw new ExploreException("Exception instantiating dataset " + datasetID, e);
-    }
-
+    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
     // To be enabled for explore, a dataset must either be RecordScannable/Writable,
     // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
     if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
@@ -211,9 +202,10 @@ public class ExploreTableService {
    * @return the query handle for disabling the dataset
    * @throws ExploreException if there was an exception dropping the table
    * @throws SQLException if there was a problem with the drop table statement
+   * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    */
   public QueryHandle disableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
-    throws ExploreException, SQLException {
+    throws ExploreException, SQLException, DatasetNotFoundException {
     LOG.debug("Disabling explore for dataset instance {}", datasetID);
 
     String tableName = getDatasetTableName(datasetID);
@@ -234,15 +226,7 @@ public class ExploreTableService {
       return exploreService.execute(datasetID.getNamespace(), deleteStatement);
     }
 
-    Dataset dataset;
-    try {
-      dataset = instantiateDataset(datasetID);
-      if (dataset == null) {
-        return QueryHandle.NO_OP;
-      }
-    } catch (Exception e) {
-      throw new ExploreException("Exception instantiating dataset " + datasetID, e);
-    }
+    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
 
     if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
       deleteStatement = generateDeleteStatement(tableName);
@@ -267,7 +251,7 @@ public class ExploreTableService {
    * @param datasetID the ID of the dataset to add a partition to
    * @param partitionKey the partition key to add
    * @param fsPath the path of the partition
-   * @return the query handle for disabling the dataset
+   * @return the query handle for adding the partition the dataset
    * @throws ExploreException if there was an exception adding the partition
    * @throws SQLException if there was a problem with the add partition statement
    */
@@ -282,12 +266,44 @@ public class ExploreTableService {
     return exploreService.execute(datasetID.getNamespace(), addPartitionStatement);
   }
 
+
+  /**
+   * Adds multiple partitions to the Hive table for the given dataset.
+   *
+   * @param datasetID the ID of the dataset to add partitions to
+   * @param partitions a map of partition key to partition path
+   * @return the query handle for adding partitions to the dataset
+   * @throws ExploreException if there was an exception adding the partition
+   * @throws SQLException if there was a problem with the add partition statement
+   */
+  public QueryHandle addPartitions(Id.DatasetInstance datasetID,
+                                   Map<PartitionKey, String> partitions) throws ExploreException, SQLException {
+    if (partitions.isEmpty()) {
+      return QueryHandle.NO_OP;
+    }
+    StringBuilder statement = new StringBuilder()
+      .append("ALTER TABLE ")
+      .append(getDatasetTableName(datasetID))
+      .append(" ADD");
+    for (Map.Entry<PartitionKey, String> partitionEntry : partitions.entrySet()) {
+      statement.append(" PARTITION")
+        .append(generateHivePartitionKey(partitionEntry.getKey()))
+        .append(" LOCATION '")
+        .append(partitionEntry.getValue())
+        .append("'");
+    }
+
+    LOG.debug("Adding partitions for dataset {}", datasetID);
+
+    return exploreService.execute(datasetID.getNamespace(), statement.toString());
+  }
+
   /**
    * Drop a partition from the Hive table for the given dataset.
    *
    * @param datasetID the ID of the dataset to drop the partition from
    * @param partitionKey the partition key to drop
-   * @return the query handle for disabling the dataset
+   * @return the query handle for dropping the partition from the dataset
    * @throws ExploreException if there was an exception dropping the partition
    * @throws SQLException if there was a problem with the drop partition statement
    */
@@ -301,35 +317,6 @@ public class ExploreTableService {
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetID, dropPartitionStatement);
 
     return exploreService.execute(datasetID.getNamespace(), dropPartitionStatement);
-  }
-
-  Dataset instantiateDataset(Id.DatasetInstance datasetID) throws Exception {
-    try {
-      Dataset dataset = datasetFramework.getDataset(datasetID, DatasetDefinition.NO_ARGUMENTS, null);
-      if (dataset == null) {
-        throw new IllegalArgumentException("Cannot load dataset " + datasetID);
-      }
-      return dataset;
-    } catch (Exception e) {
-      String className = isClassNotFoundException(e);
-      if (className == null) {
-        throw e;
-      }
-      LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
-                 "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                 "guide for more information.", datasetID, className, className, datasetID);
-      return null;
-    }
-  }
-
-  private String isClassNotFoundException(Throwable e) {
-    if (e instanceof ClassNotFoundException) {
-      return e.getMessage();
-    }
-    if (e.getCause() != null) {
-      return isClassNotFoundException(e.getCause());
-    }
-    return null;
   }
 
   private String getStreamTableName(Id.Stream streamId) {
@@ -347,7 +334,7 @@ public class ExploreTableService {
   }
 
   private String generateFileSetCreateStatement(Id.DatasetInstance datasetID, Dataset dataset,
-                                                      Map<String, String> properties) throws IllegalArgumentException {
+                                                Map<String, String> properties) throws IllegalArgumentException {
 
     String tableName = getDatasetTableName(datasetID);
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
