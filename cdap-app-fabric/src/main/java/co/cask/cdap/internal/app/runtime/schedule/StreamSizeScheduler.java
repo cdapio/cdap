@@ -128,8 +128,12 @@ public class StreamSizeScheduler implements Scheduler {
     for (StreamSubscriber subscriber : streamSubscribers.values()) {
       subscriber.stopAndWait();
     }
-    pollBookingExecutor.shutdownNow();
-    streamPollingExecutor.shutdownNow();
+    if (pollBookingExecutor != null) {
+      pollBookingExecutor.shutdownNow();
+    }
+    if (streamPollingExecutor != null) {
+      streamPollingExecutor.shutdownNow();
+    }
   }
 
   @Override
