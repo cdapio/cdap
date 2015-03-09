@@ -813,7 +813,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (ProgramType type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
         ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
+        if (programState.isDone()) {
           continue;
         }
         Id.Program programId = entry.getValue().getProgramId();

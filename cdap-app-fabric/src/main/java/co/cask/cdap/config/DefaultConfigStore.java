@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -80,7 +81,10 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(Table.class.getName(), configStoreDatasetInstanceId, DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
+                              Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                  Constants.ConfigStore.CONFIG_TABLE)),
+                            DatasetProperties.EMPTY);
   }
 
   @Override
