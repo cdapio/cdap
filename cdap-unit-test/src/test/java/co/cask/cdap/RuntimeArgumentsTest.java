@@ -111,7 +111,7 @@ public class RuntimeArgumentsTest {
     testMap.put("secondKey", "secondValue");
     testMap.put("thirdKey", "thirdValue");
     result = RuntimeArguments.resolveScheduleArguments(testMap, time);
-    Assert.assertEquals(4, result.size());
+    Assert.assertEquals(3, result.size());
     Assert.assertEquals("oneValue", result.get("oneKey"));
     Assert.assertEquals("secondValue", result.get("secondKey"));
     Assert.assertEquals("thirdValue", result.get("thirdKey"));

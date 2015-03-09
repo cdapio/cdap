@@ -19,10 +19,10 @@ package co.cask.cdap.api.common;
 import co.cask.cdap.api.schedule.Schedule;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -203,7 +203,7 @@ public final class RuntimeArguments {
   }
 
   private static String getResolvedArgument(String argumentValue, long logicalStartTime) {
-    List<Long> timeOffsets = Lists.newArrayList();
+    List<Long> timeOffsets = new ArrayList<Long>();
 
     // Extract the offsets from the argument value and store all offsets in the timeOffsets list
     String argumentWithoutOffset = extractOffsets(argumentValue, timeOffsets, logicalStartTime);
