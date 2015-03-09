@@ -23,7 +23,7 @@ var PING_INTERVAL = 1000,
 function AuthAddress () {
   this.enabled = false;
   this.addresses = [];
-};
+}
 
 
 /**
@@ -47,7 +47,9 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
   function pingAttempt () {
     attempts++;
     if (attempts > PING_MAX_RETRIES) {
-      console.error('Exceeded max attempts ' + PING_MAX_RETRIES + ' calling secure endpoint.');
+      console.error('Exceeded max attempts (' + PING_MAX_RETRIES + ') calling secure endpoint.');
+      console.error('Proxy server closed');
+
       deferred.reject();
     } else {
       console.log('Calling security endpoint: ', url, ' attempt ', attempts);
