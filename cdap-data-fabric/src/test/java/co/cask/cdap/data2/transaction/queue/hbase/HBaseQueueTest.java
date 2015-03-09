@@ -214,8 +214,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
     TableId tableId = admin.getDataTableId(queueName);
-    if (!admin.exists(queueName.toString())) {
-      admin.create(queueName.toString());
+    if (!admin.exists(queueName)) {
+      admin.create(queueName);
     }
     HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     Assert.assertEquals("Failed for " + admin.getClass().getName(),

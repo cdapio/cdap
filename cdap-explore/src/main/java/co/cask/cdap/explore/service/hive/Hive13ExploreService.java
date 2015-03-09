@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,10 +50,9 @@ public class Hive13ExploreService extends BaseHiveExploreService {
 
   @Inject
   public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                              StreamAdmin streamAdmin,
+                              CConfiguration cConf, Configuration hConf, StreamAdmin streamAdmin,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin);
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
