@@ -28,7 +28,7 @@ import com.google.common.base.Preconditions;
 public class HTable94NameConverter extends HTableNameConverter {
   @Override
   public String getSysConfigTablePrefix(String hTableName) {
-    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+    return getHbaseNamespacePrefix(hTableName) + "_" + Constants.SYSTEM_NAMESPACE + ".";
   }
 
   @Override
@@ -37,19 +37,32 @@ public class HTable94NameConverter extends HTableNameConverter {
   }
 
   public static String toTableName(CConfiguration cConf, TableId tableId) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return toTableName(tablePrefix, tableId);
+  }
+
+  public static String toTableName(String tablePrefix, TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return getHBaseTableName(cConf, tableId);
+      return getHBaseTableName(tablePrefix, tableId);
     }
-    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()),
-                               getHBaseTableName(cConf, tableId));
+    return Joiner.on(".").join(toHBaseNamespace(tablePrefix, tableId.getNamespace()),
+                               getHBaseTableName(tablePrefix, tableId));
+  }
+
+  public static TableId fromTableName(String hTableName) {
+    return prefixedTableIdFromTableName(hTableName).getTableId();
+  }
+
+  public static String getHbaseNamespacePrefix(String hTableName) {
+    return prefixedTableIdFromTableName(hTableName).getTablePrefix();
   }
 
   // Assumptions made:
   // 1) root prefix can not have '.' or '_'.
   // 2) namespace can not have '.'
-  public static TableId fromTableName(String hTableName) {
+  private static PrefixedTableId prefixedTableIdFromTableName(String hTableName) {
     Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
     String[] parts = hTableName.split("\\.", 2);
     String hBaseNamespace;

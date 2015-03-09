@@ -18,11 +18,11 @@ package co.cask.cdap.data2.transaction.queue.coprocessor.hbase96;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.cdap.data2.transaction.queue.QueueUtils;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,7 +69,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
       HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
-      String tableName = tableDesc.getNameAsString();
+      String hTableName = tableDesc.getNameAsString();
 
       String prefixBytes = tableDesc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES);
       try {
@@ -82,13 +82,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
       }
 
-      namespaceId = HBaseQueueAdmin.getNamespaceId(tableName);
-      appName = HBaseQueueAdmin.getApplicationName(tableName);
-      flowName = HBaseQueueAdmin.getFlowName(tableName);
+      namespaceId = HTable96NameConverter.fromTableName(tableDesc.getTableName()).getNamespace().getId();
+      appName = HBaseQueueAdmin.getApplicationName(hTableName);
+      flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       conf = env.getConfiguration();
-      String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
-      configTableNameBytes = Bytes.toBytes(configTableName);
+      String hbaseNamespacePrefix = HTable96NameConverter.getHbaseNamespacePrefix(tableDesc.getTableName());
+      TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
+      configTableNameBytes = HTable96NameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
       configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable96NameConverter());
     }
   }
