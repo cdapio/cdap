@@ -140,7 +140,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     } catch (InterruptedException e) {
       try {
         Futures.getUnchecked(controller.stop());
-      } catch (Exception ex) {
+      } catch (Throwable t) {
         // no-op
       }
       throw e;

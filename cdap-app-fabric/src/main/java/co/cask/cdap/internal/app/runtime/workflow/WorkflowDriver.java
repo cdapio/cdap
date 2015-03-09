@@ -165,7 +165,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Throwables.propagateIfInstanceOf(t.getCause(), InterruptedException.class);
       }
       Throwables.propagateIfPossible(t, Exception.class);
-      throw new RuntimeException(t);
+      throw Throwables.propagate(t);
     } finally {
       // Destroy the action.
       destroy(actionSpec, action);
