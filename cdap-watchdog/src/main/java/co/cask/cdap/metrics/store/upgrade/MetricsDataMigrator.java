@@ -147,8 +147,9 @@ public class MetricsDataMigrator {
     for (String scope : scopes) {
       EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(String.format("%s.%s", scope, entityTableName),
                                                                         DatasetProperties.EMPTY));
-      MetricsTable metricsTable = getOrCreateMetricsTable(String.format("%s.%s", scope, metricsTableName),
-                                                          DatasetProperties.EMPTY);
+      String scopedMetricsTableName = String.format("%s.%s", scope, metricsTableName);
+      MetricsTable metricsTable = getOrCreateMetricsTable(scopedMetricsTableName, DatasetProperties.EMPTY);
+      System.out.println("Migrating Metrics Data from table : " + scopedMetricsTableName);
       migrateMetricsData(entityTable, metricsTable, scope, version);
     }
   }
@@ -156,6 +157,7 @@ public class MetricsDataMigrator {
   private void migrateMetricsTableFromVersion27(Version version) {
     EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(entityTableName, DatasetProperties.EMPTY));
     MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
+    System.out.println("Migrating Metrics Data from table : " + metricsTableName);
     migrateMetricsData(entityTable, metricsTable, null, version);
   }
 
@@ -182,7 +184,7 @@ public class MetricsDataMigrator {
         rowCount++;
         printStatus(rowCount);
       }
-      System.out.println("Migrated " + rowCount + " records.");
+      System.out.println("Migrated " + rowCount + " records");
     } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
       // no-op
@@ -278,11 +280,9 @@ public class MetricsDataMigrator {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
-    System.out.println("Migrating Metrics data from table : " + tableName);
     MetricsTable table = null;
     // for default namespace, we have to provide the complete table name.
     tableName = "system." + tableName;
-    System.out.println("Complete Table Name is " + tableName);
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
     try {

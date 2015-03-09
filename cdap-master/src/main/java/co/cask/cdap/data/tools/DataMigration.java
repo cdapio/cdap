@@ -49,6 +49,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -187,41 +188,43 @@ public class DataMigration {
       truncateV2Tables(cConf, hConf);
       // migrate metrics data
       DefaultMetricDatasetFactory.migrateData(injector.getInstance(CConfiguration.class), framework, version);
-      System.out.println ("Keep Old Table Flag is" + keepOldTables);
+      System.out.println ("Keep Old Table Flag is : " + keepOldTables);
       // delete old-metrics table identified by version, unless keepOldTables flag is true
       if (!keepOldTables) {
-        cleanUpOldTables(cConf, version);
+        cleanUpOldTables(cConf, hConf, version);
       }
     }
   }
 
   private void truncateV2Tables(CConfiguration cConf, Configuration hConf) {
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
     String v2EntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                           MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-    v2EntityTableName = addNamespace(defaultDatasetNamespace, v2EntityTableName);
+    v2EntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(
+      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), v2EntityTableName));
     String v2MetricsTablePrefix =  cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                              MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
-    v2MetricsTablePrefix = addNamespace(defaultDatasetNamespace, v2MetricsTablePrefix);
-    HBaseAdmin hAdmin = null;
+    v2MetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
+      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), v2MetricsTablePrefix));
+    HBaseAdmin hAdmin;
     try {
       hAdmin = new HBaseAdmin(hConf);
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (desc.getNameAsString().equals(v2EntityTableName) ||
           desc.getNameAsString().startsWith(v2MetricsTablePrefix)) {
           System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
-          // disable the table
-          //hAdmin.disableTable(desc.getName());
-          // delete the table
-          //hAdmin.deleteTable(desc.getName());
+          //disable the table
+          hAdmin.disableTable(desc.getName());
+          //delete the table
+          hAdmin.deleteTable(desc.getName());
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println("Unable to truncate desitation tables : " + e);
     }
   }
 
-  private void cleanUpOldTables(CConfiguration cConf, Version version) {
+  private void cleanUpOldTables(CConfiguration cConf, Configuration hConf, Version version) {
     Set<String> tablesToDelete = Sets.newHashSet();
     DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
 
@@ -242,7 +245,7 @@ public class DataMigration {
     }
 
     System.out.println("Deleting Tables : " + tablesToDelete);
-    //deleteTables(hConf, tablesToDelete);
+    deleteTables(hConf, tablesToDelete);
   }
 
   private void deleteTables(Configuration hConf, Set<String> tablesToDelete) {
@@ -278,6 +281,9 @@ public class DataMigration {
     }
   }
 
+  private String getTableName(String rootPrefix, Id.DatasetInstance instance) {
+    return  rootPrefix + instance.getNamespaceId() + ":" + instance.getId();
+  }
   private String addNamespace(DatasetNamespace dsNamespace, String tableName) {
     return addNamespace(dsNamespace, null , tableName);
   }
