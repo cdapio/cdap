@@ -25,7 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 
 /**
- * A Abstract Forwarding Program for {@link Workflow}. 
+ * A Abstract Forwarding Program for {@link Workflow}.
  * Programs which wants to run in {@link Workflow} should extend this to turn the Workflow
  * Program into a required program. For example see {@link WorkflowSparkProgram} or {@link WorkflowMapReduceProgram}
  */
@@ -53,7 +53,7 @@ public abstract class AbstractWorkflowProgram extends ForwardingProgram {
 
   @Override
   public Id.Program getId() {
-    return Id.Program.from(getNamespaceId(), getApplicationId(), getName());
+    return Id.Program.from(getNamespaceId(), getApplicationId(), getType(), getName());
   }
 
   @Override

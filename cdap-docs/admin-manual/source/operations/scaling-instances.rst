@@ -24,8 +24,8 @@ Scaling Flowlets
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-  PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  GET /v3/namespaces/default/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+  PUT /v3/namespaces/default/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -40,12 +40,12 @@ Where:
 Example: Find out the number of instances of the Flowlet *saver* in
 the Flow *WhoFlow* of the application *HelloWorld*::
 
-  GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
+  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
 Example: Change the number of instances of the Flowlet *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-  PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
+  PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
 with the arguments as a JSON string in the body::
 
@@ -60,8 +60,8 @@ Scaling Procedures
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET /v2/apps/<app-id>/procedures/<procedure-id>/instances
-  PUT /v2/apps/<app-id>/procedures/<procedure-id>/instances
+  GET /v3/namespaces/default/apps/<app-id>/procedures/<procedure-id>/instances
+  PUT /v3/namespaces/default/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -75,12 +75,12 @@ Where:
 Example: Find out the number of instances of the Procedure *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-  GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
 Example: Change the number of instances of the Procedure *saver*
 in the Flow *WhoFlow* of the application *HelloWorld*::
 
-  PUT /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+  PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
 with the arguments as a JSON string in the body::
 
@@ -93,8 +93,8 @@ Scaling Services
 In a similar way to `Scaling Flowlets`_, you can query or change the number of handler instances of a Service
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET /v2/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-  PUT /v2/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET /v3/namespaces/default/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  PUT /v3/namespaces/default/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -111,12 +111,12 @@ Where:
 Example: Find out the number of handler instances of the Service *RetrieveCounts*
 of the application *WordCount*::
 
-  GET /v2/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
+  GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
 
 Example: Change the number of handler instances of the Service *RetrieveCounts*
 of the application *WordCount*::
 
-  PUT /v2/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
+  PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
 
 with the arguments as a JSON string in the body::
 
@@ -124,6 +124,6 @@ with the arguments as a JSON string in the body::
   
 Example using the :ref:`CDAP Standalone SDK<standalone-index>` and ``curl`` (reformatted to fit)::
 
-  curl -w '\n' -XPUT -v 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
+  curl -vw'\n' -XPUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
     -d '{ "instances" : 2 }'
 

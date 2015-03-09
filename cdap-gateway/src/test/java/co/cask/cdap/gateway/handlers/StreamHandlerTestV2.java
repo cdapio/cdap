@@ -28,4 +28,14 @@ public class StreamHandlerTestV2 extends StreamHandlerTest {
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v2/%s", path)).toURL();
   }
+
+  @Override
+  protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
+    return createURL(String.format("streams/%s/info", streamName));
+  }
+
+  @Override
+  protected URL createPropertiesURL(String streamName) throws URISyntaxException, MalformedURLException {
+    return createURL(String.format("streams/%s/config", streamName));
+  }
 }

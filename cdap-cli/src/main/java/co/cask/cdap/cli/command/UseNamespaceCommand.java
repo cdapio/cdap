@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -44,9 +45,9 @@ public class UseNamespaceCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String namespace = arguments.get(ArgumentName.NAMESPACE_ID.toString());
+    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
     // Check if namespace exists; throws exception if namespace doesn't exist.
-    namespaceClient.get(namespace);
+    namespaceClient.get(namespace.getId());
     cliConfig.setCurrentNamespace(namespace);
     output.printf("Now using namespace '%s'\n", namespace);
   }

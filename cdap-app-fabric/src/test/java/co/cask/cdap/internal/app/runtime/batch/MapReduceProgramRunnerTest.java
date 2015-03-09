@@ -35,14 +35,13 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -119,13 +118,9 @@ public class MapReduceProgramRunnerTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator =
-      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceProgramRunnerTest.class.getClassLoader(), null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceProgramRunnerTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }
@@ -138,7 +133,7 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }

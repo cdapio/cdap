@@ -38,7 +38,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -62,6 +62,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.ElectionHandler;
@@ -185,8 +188,24 @@ public class MasterServiceMain extends DaemonMain {
     exploreClient = baseInjector.getInstance(ExploreClient.class);
     secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
 
+    // this should probably be done in NamespaceService#init()
+    createSystemHBaseNamespace();
     checkTransactionRequirements();
     checkExploreRequirements();
+  }
+
+  private void createSystemHBaseNamespace() {
+    HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
+    try {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+    } catch (MasterNotRunningException e) {
+      Throwables.propagate(e);
+    } catch (ZooKeeperConnectionException e) {
+      Throwables.propagate(e);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
   }
 
   /**
@@ -268,7 +287,10 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    dsService.stopAndWait();
+    if (dsService != null) {
+      dsService.stopAndWait();
+    }
+
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
@@ -374,7 +396,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private TwillPreparer prepare(TwillPreparer preparer) {
-    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+    return preparer.withDependencies(baseInjector.getInstance(HBaseTableUtil.class).getClass())
       // TokenSecureStoreUpdater.update() ignores parameters
       .addSecureStore(secureStoreUpdater.update(null, null));
   }

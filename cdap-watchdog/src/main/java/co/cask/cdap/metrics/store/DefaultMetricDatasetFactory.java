@@ -20,13 +20,11 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
@@ -56,7 +54,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
-    this(new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf)), cConf);
+    this(dsFramework, cConf);
   }
 
   private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
@@ -81,9 +79,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                  MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-    DatasetProperties props = ttl > 0 ?
-      DatasetProperties.builder().add(Table.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
-    MetricsTable table = getOrCreateMetricsTable(tableName, props);
+    DatasetProperties.Builder props = DatasetProperties.builder();
+    // don't add TTL for MAX_RESOLUTION table. CDAP-1626
+    if (ttl > 0 && resolution != Integer.MAX_VALUE) {
+      props.add(Table.PROPERTY_TTL, ttl);
+    }
+    // for efficient counters
+    props.add(Table.PROPERTY_READLESS_INCREMENT, "true");
+
+    MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     LOG.info("FactTable created: {}", tableName);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
@@ -103,7 +107,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
-
     MetricsTable table = null;
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, tableName);
@@ -131,17 +134,14 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by metrics system.
+   * Creates the metrics tables and kafka-meta table using the factory {@link DefaultMetricDatasetFactory}
    * <p/>
-   * It is primarily used by upgrade tool.
+   * It is primarily used by upgrade and data-migration tool.
    *
-   * @param datasetFramework framework to add types and datasets to
+   * @param factory : metrics dataset factory
    */
-  public static MetricDatasetFactory setupDatasets(CConfiguration conf, DatasetFramework datasetFramework)
+  public static void setupDatasets(DefaultMetricDatasetFactory factory)
     throws IOException, DatasetManagementException {
-
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(datasetFramework, conf);
-
     // adding all fact tables
     factory.get(1);
     factory.get(60);
@@ -150,22 +150,21 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
-    return factory;
   }
 
   /**
    * Migrates metrics data from version 2.7 and older to 2.8
-   * @param conf
-   * @param datasetFramework
-   * @param version - version we migrate the data from
+   * @param conf configuration
+   * @param datasetFramework framework to add types and datasets to
+   * @param version - version we are migrating the data from
    * @throws IOException
    * @throws DatasetManagementException
    */
-  public static void migrateMetricsData(CConfiguration conf, DatasetFramework datasetFramework,
-                                        ProjectInfo.Version version)
-    throws IOException, DatasetManagementException {
-    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework,
-                                                           setupDatasets(conf, datasetFramework));
+  public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
+                                 MetricHBaseTableUtil.Version version) throws IOException, DatasetManagementException {
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+    setupDatasets(factory);
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework, factory);
     migrator.migrateMetricsTables(version);
   }
 
