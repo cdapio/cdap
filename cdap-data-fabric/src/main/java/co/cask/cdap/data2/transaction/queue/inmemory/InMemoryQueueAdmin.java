@@ -69,11 +69,6 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // no-op
-  }
-
-  @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
   }
