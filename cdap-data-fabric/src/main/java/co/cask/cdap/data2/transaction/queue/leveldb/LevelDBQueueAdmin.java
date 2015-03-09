@@ -27,7 +27,6 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 
@@ -72,9 +71,9 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public boolean exists(@SuppressWarnings("unused") String name) {
+  public boolean exists(QueueName queueName) {
     try {
-      String actualTableName = getActualTableName(QueueName.from(URI.create(name)));
+      String actualTableName = getActualTableName(queueName);
       service.getTable(actualTableName);
       return true;
     } catch (Exception e) {
@@ -83,30 +82,25 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void create(String name) throws Exception {
-    create(QueueName.from(URI.create(name)));
-  }
-
   public void create(QueueName queueName) throws Exception {
     String actualTableName = getActualTableName(queueName);
     service.ensureTableExists(actualTableName);
   }
 
   @Override
-  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
-    create(name);
+  public void create(QueueName queueName, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(queueName);
   }
 
   @Override
-  public void truncate(String name) throws Exception {
-    QueueName queueName = QueueName.from(URI.create(name));
+  public void truncate(QueueName queueName) throws Exception {
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {
       String actualTableName = getActualTableName(queueName);
       service.dropTable(actualTableName);
       service.ensureTableExists(actualTableName);
     } else {
-      LOG.warn("truncate({}) on LevelDB queue table has no effect.", name);
+      LOG.warn("truncate({}) on LevelDB queue table has no effect.", queueName);
     }
   }
 
@@ -123,15 +117,14 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
     service.dropTable(tableName);
   }
 
-  @Override
-  public void drop(String name) throws Exception {
-    QueueName queueName = QueueName.from(URI.create(name));
+  // Only used by LevelDBStreamAdmin
+  void drop(QueueName queueName) throws Exception {
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
       String actualTableName = getActualTableName(queueName);
       service.dropTable(actualTableName);
     } else {
-      LOG.warn("drop({}) on LevelDB queue table has no effect.", name);
+      LOG.warn("drop({}) on LevelDB queue table has no effect.", queueName);
     }
   }
 
