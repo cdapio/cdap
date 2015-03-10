@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
@@ -143,19 +144,21 @@ public class IntegrationTestBase {
   protected static ClientConfig getClientConfig() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     if (INSTANCE_URI.isEmpty()) {
-      builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        StandaloneContainer.DEFAULT_CONNECTION_URI.toString()));
     } else {
-      builder.setUri(URI.create(INSTANCE_URI));
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        URI.create(INSTANCE_URI).toString()));
     }
 
     if (!ACCESS_TOKEN.isEmpty()) {
       builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
     }
 
-    builder.setDefaultConnectTimeoutMs(120000);
-    builder.setDefaultReadTimeoutMs(120000);
-    builder.setUploadConnectTimeoutMs(0);
-    builder.setUploadConnectTimeoutMs(0);
+    builder.setDefaultConnectTimeout(120000);
+    builder.setDefaultReadTimeout(120000);
+    builder.setUploadConnectTimeout(0);
+    builder.setUploadConnectTimeout(0);
 
     return builder.build();
   }

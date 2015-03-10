@@ -48,7 +48,7 @@ public class UseNamespaceCommand extends AbstractAuthCommand {
     Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
     // Check if namespace exists; throws exception if namespace doesn't exist.
     namespaceClient.get(namespace.getId());
-    cliConfig.setCurrentNamespace(namespace);
+    cliConfig.getClientConfig().setNamespace(namespace);
     output.printf("Now using namespace '%s'\n", namespace);
   }
 

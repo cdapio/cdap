@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -274,7 +275,12 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), "some");
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId input) {
+        return input.getTableName().startsWith("some");
+      }
+    });
     Assert.assertEquals(2, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);

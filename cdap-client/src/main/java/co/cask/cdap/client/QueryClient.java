@@ -40,14 +40,14 @@ public class QueryClient {
     Supplier<String> hostname = new Supplier<String>() {
       @Override
       public String get() {
-        return config.getHostname();
+        return config.getConnectionConfig().getHostname();
       }
     };
 
     Supplier<Integer> port = new Supplier<Integer>() {
       @Override
       public Integer get() {
-        return config.getPort();
+        return config.getConnectionConfig().getPort();
       }
     };
 
@@ -74,6 +74,6 @@ public class QueryClient {
    *         network error occurs, if the query is malformed, or if the query is cancelled.
    */
   public ListenableFuture<ExploreExecutionResult> execute(String query) {
-    return exploreClient.submit(config.getNamespace(), query);
+    return exploreClient.submit(config.getConnectionConfig().getNamespace(), query);
   }
 }

@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -128,10 +127,10 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     // the next tables will call initialize on DatasetStorageHandler...
     // TODO: find out why the above is true
     waitForCompletion(Lists.newArrayList(
-      ((BaseHiveExploreService) exploreService).execute("default", createNonCDAP),
-      ((BaseHiveExploreService) exploreService).execute("default", createOldFileset),
-      ((BaseHiveExploreService) exploreService).execute("default", createOldRecordScannable),
-      ((BaseHiveExploreService) exploreService).execute("default", createOldStream)
+      exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createNonCDAP),
+      exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldFileset),
+      exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldRecordScannable),
+      exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldStream)
     ));
 
     exploreService.upgrade();

@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -77,6 +80,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -135,7 +139,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
+  private final Store store;
+  private final SchedulerQueueResolver schedulerQueueResolver;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -163,10 +170,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, StreamAdmin streamAdmin) {
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   File previewsDir, StreamAdmin streamAdmin, StoreFactory storeFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.hiveConf = hiveConf;
+    this.store = storeFactory.create();
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -314,7 +324,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
-    
+
     // Close all resources associated with instantiated Datasets
     DatasetAccessor.closeAllQueries();
   }
@@ -684,26 +694,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   @Override
   public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException {
-    return execute(getHiveDatabase(namespace.getId()), statement);
-  }
-
-  // visible solely for upgrades and upgrade tests,
-  // where we want to use the old default database and not a cdap database
-  @VisibleForTesting
-  public QueryHandle execute(String database, String statement) throws ExploreException, SQLException {
     startAndWait();
 
     try {
-      Map<String, String> sessionConf = startSession();
+      Map<String, String> sessionConf = startSession(namespace);
+      // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = openSession(sessionConf);
-
       try {
         // Switch database to the one being passed in.
-        SessionState.get().setCurrentDatabase(database);
+        SessionState.get().setCurrentDatabase(namespace.getId());
 
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf,
-                                               statement, database);
+                                               statement, namespace.getId());
         LOG.trace("Executing statement: {} with handle {}", statement, handle);
         return handle;
       } catch (Throwable e) {
@@ -1068,7 +1071,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private void dropTable(String tableName) throws Exception {
     LOG.info("Dropping old upgraded table {}", tableName);
-    QueryHandle disableHandle = execute("default", "DROP TABLE IF EXISTS " + tableName);
+    QueryHandle disableHandle = execute(Constants.DEFAULT_NAMESPACE_ID, "DROP TABLE IF EXISTS " + tableName);
     // make sure disable finished
     QueryStatus status = waitForCompletion(disableHandle);
     if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
@@ -1167,11 +1170,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws IOException
    */
   protected Map<String, String> startSession() throws IOException {
+    return startSession(null);
+  }
+
+  protected Map<String, String> startSession(Id.Namespace namespace) throws IOException {
     Map<String, String> sessionConf = Maps.newHashMap();
 
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
-    
+
+    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
+                                              : schedulerQueueResolver.getDefaultQueue();
+
+    if (schedulerQueue != null) {
+      sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);
+    }
+
     Transaction tx = startTransaction();
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
@@ -1179,6 +1193,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     return sessionConf;
   }
+
+
 
   /**
    * Returns {@link OperationHandle} associated with Explore {@link QueryHandle}.
