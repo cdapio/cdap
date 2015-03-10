@@ -115,7 +115,7 @@ public abstract class HTableNameConverter {
       return new PrefixedTableId(prefix, namespace, qualifier);
     }
 
-    // If HBase namespace is used, namespace is something like 'cdap_userNS'
+    // If non-default HBase namespace is used, namespace is something like 'cdap_userNS'
     String[] parts = namespace.split("_");
     Preconditions.checkArgument(parts.length == 2,
                                 String.format("expected hbase namespace to have a '_': %s", namespace));
