@@ -82,8 +82,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private NettyHttpService httpService;
   private volatile Thread runningThread;
-  private Map<String, WorkflowActionNode> status = Collections.synchronizedMap(
-    new HashMap<String, WorkflowActionNode>());
+  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
@@ -161,9 +160,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       }
     } catch (Throwable t) {
       LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
-      if (t.getCause() != null) {
-        Throwables.propagateIfInstanceOf(t.getCause(), InterruptedException.class);
-      }
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
@@ -174,8 +170,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
-                                   final InstantiatorFactory instantiator,
-                                   final ClassLoader classLoader) throws Exception {
+                           final InstantiatorFactory instantiator, final ClassLoader classLoader) throws Exception {
     ExecutorService executorService = Executors.newFixedThreadPool(fork.getBranches().size());
     CompletionService<String> completionService = new ExecutorCompletionService<String>(executorService);
     try {
@@ -193,16 +188,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       }
 
       for (int i = 0; i < fork.getBranches().size(); i++) {
-        Future<String> f = completionService.take();
         try {
+          Future<String> f = completionService.take();
           String branchInfo = f.get();
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
-        } catch (ExecutionException ex) {
-          LOG.info("Exception occurred in the execution of the fork node {}", fork);
-          throw ex;
+        } catch (Throwable t) {
+          Throwable rootCause = Throwables.getRootCause(t);
+          if (rootCause instanceof ExecutionException) {
+            LOG.error("Exception occurred in the execution of the fork node {}", fork);
+            throw (ExecutionException) t;
+          }
+          if (rootCause instanceof InterruptedException) {
+            LOG.error("Workflow execution aborted.");
+            break;
+          }
+          Throwables.propagateIfPossible(t, Exception.class);
+          throw Throwables.propagate(t);
         }
       }
-
     } finally {
       executorService.shutdownNow();
       executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -234,15 +237,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     final ApplicationSpecification appSpec = program.getApplicationSpecification();
     final Iterator<WorkflowNode> iterator = workflowSpec.getNodes().iterator();
-    while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+    while (iterator.hasNext() && runningThread != null) {
       try {
         executeNode(appSpec, iterator.next(), instantiator, classLoader);
       } catch (Throwable t) {
-        if (t instanceof InterruptedException) {
-          LOG.warn("Workflow explicitly stopped. Treated as abort on error. {} {}", workflowSpec);
-          return;
-        }
-        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
         Throwables.propagate(t);
       }
     }

@@ -123,6 +123,11 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
 
       @Override
+      public void killed() {
+        completion.set(context);
+      }
+
+      @Override
       public void error(Throwable cause) {
         completion.setException(cause);
       }
@@ -143,7 +148,9 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       } catch (Throwable t) {
         // no-op
       }
-      throw e;
+      // reset the interrupt
+      Thread.currentThread().interrupt();
+      return null;
     }
   }
 }
