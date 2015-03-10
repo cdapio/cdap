@@ -99,10 +99,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
 
     for (HTableDescriptor desc : hAdmin.listTables(USER_TABLE_PREFIX)) {
-      String tableName = desc.getNameAsString();
       HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
-      TableId tableId = hTableNameConverter.from(tableName);
-      LOG.info("Upgrading hbase table: {}, desc: {}", tableName, desc);
+      TableId tableId = hTableNameConverter.from(desc);
+      LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
 
       final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
       final boolean transactional = HBaseTableAdmin.isTransactional(desc);
@@ -129,7 +128,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
         }
       };
       admin.upgrade();
-      LOG.info("Upgraded hbase table: {}", tableName);
+      LOG.info("Upgraded hbase table: {}", tableId);
     }
   }
 }

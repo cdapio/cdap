@@ -35,11 +35,13 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -61,6 +63,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -311,10 +314,12 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
-    String configTableName = tableUtil.createHTable(hConf, tableId).getTableDescriptor().getNameAsString();
+    HTableDescriptor htd = tableUtil.createHTable(hConf, tableId).getTableDescriptor();
+    String configTableName = htd.getNameAsString();
     byte[] configTableNameBytes = Bytes.toBytes(configTableName);
-    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                           new HTableNameConverterFactory().get());
+    HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
+    CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
+    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes, cConfReader);
   }
 
   @AfterClass
