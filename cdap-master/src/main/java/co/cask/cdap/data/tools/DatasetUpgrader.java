@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDSUpgrader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
@@ -57,12 +58,14 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final DatasetFramework dsFramework;
   private static final Pattern USER_TABLE_PREFIX = Pattern.compile("^cdap\\.user\\..*");
   private final DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader;
+  private final DatasetTypeMDSUpgrader datasetTypeMDSUpgrader;
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
                           @Named("dsFramework") final DatasetFramework dsFramework,
-                          DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader) {
+                          DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
+                          DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
     super(locationFactory);
     this.cConf = cConf;
@@ -72,6 +75,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.datasetInstanceMDSUpgrader = datasetInstanceMDSUpgrader;
+    this.datasetTypeMDSUpgrader = datasetTypeMDSUpgrader;
 
 
   }
@@ -86,6 +90,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     // Upgrade all queue and stream tables.
     queueAdmin.upgrade();
+
+    // Upgrade the datasets meta meta table
+    datasetTypeMDSUpgrader.upgrade();
 
     // Upgrade the datasets instance meta table
     datasetInstanceMDSUpgrader.upgrade();
