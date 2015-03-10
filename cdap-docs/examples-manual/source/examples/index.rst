@@ -21,6 +21,7 @@ Examples
    Purchase <purchase>
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
+   Sport Results <sport-results>
    Stream Conversion <stream-conversion>
    User Profiles <user-profiles>
    Web Analytics <web-analytics>
@@ -58,6 +59,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Spark Page Rank<spark-page-rank>`
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
+  * - :doc:`Sport Results<sport-results>`
+    - An application that illustrates the use of partitioned file sets.
+    - It loads game results into a file set partitioned by league and season, and processes them with MapReduce.
   * - :doc:`Stream Conversion<stream-conversion>`
     - An application that demonstrates the use of time-partitioned File sets.
       It periodically converts a Stream into partitions of a File set, which can be read by SQL queries.

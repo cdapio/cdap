@@ -37,11 +37,11 @@ public class SportResults extends AbstractApplication {
     createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
-        // properties for file set
+      // properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setInputProperty(TextOutputFormat.SEPERATOR, ",")
-        // Properties for Explore (to create a partitioned Hive table)
+      // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
@@ -51,11 +51,11 @@ public class SportResults extends AbstractApplication {
     createDataset("totals", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").build())
-        // properties for file set
+      // properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setInputProperty(TextOutputFormat.SEPERATOR, ",")
-        // properties for Explore (to create a partitioned Hive table)
+      // properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
       .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
