@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.runtime.scheduler.ScheduleQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -38,8 +39,6 @@ import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
@@ -90,7 +89,6 @@ import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import parquet.Preconditions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -135,7 +133,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
   private final Store store;
-  private final String schedulerQueueFromCconf;
+  private final ScheduleQueueResolver scheduleQueueResolver;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -166,7 +164,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.store = storeFactory.create();
-    schedulerQueueFromCconf = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    this.scheduleQueueResolver = new ScheduleQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -1016,8 +1014,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? getNamespaceResolvedSchedulerQueue(namespace) :
-                                                schedulerQueueFromCconf;
+    String schedulerQueue = namespace != null ? scheduleQueueResolver.getNamespaceResolvedSchedulerQueue(namespace)
+                                              : scheduleQueueResolver.getSchedulerQueueFromCConf();
 
     if (schedulerQueue != null) {
       sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
@@ -1169,16 +1167,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return tColumnValue.getStringVal().getValue();
     }
     throw new ExploreException("Unknown column value encountered: " + tColumnValue);
-  }
-
-  private String getNamespaceResolvedSchedulerQueue(Id.Namespace namespaceId) {
-    NamespaceMeta meta = store.getNamespace(namespaceId);
-    Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
-
-    NamespaceConfig config = meta.getConfig();
-    LOG.info("Namespace config scheduler name {}", config.getSchedulerQueueName());
-
-    return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : schedulerQueueFromCconf;
   }
 
   /**

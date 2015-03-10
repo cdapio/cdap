@@ -30,6 +30,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.scheduler.ScheduleQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -160,6 +161,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
+  private final ScheduleQueueResolver scheduleQueueResolver;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -220,6 +222,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamAdmin = streamAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
+    this.scheduleQueueResolver = new ScheduleQueueResolver(configuration, store);
   }
 
   /**
@@ -1988,7 +1991,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Map<String, String> configs = Maps.newHashMap();
 
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = configuration.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    String schedulerQueue = scheduleQueueResolver.getSchedulerQueueFromCConf();
     if (schedulerQueue != null) {
       configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
@@ -1998,18 +2001,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
     Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
-
-    NamespaceMeta meta = store.getNamespace(Id.Namespace.from(namespaceId));
-    Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
-
-    NamespaceConfig config = meta.getConfig();
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = config.getSchedulerQueueName();
+    String schedulerQueue = scheduleQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
     return resolvedConfigs;
-
   }
-
 }
