@@ -100,11 +100,11 @@ public class ApplicationClientTestRun extends ClientTestBase {
     verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
     verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
 
-    verifyProgramRecords(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
-    verifyProgramRecords(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
-    verifyProgramRecords(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
-    verifyProgramRecords(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
-    verifyProgramRecords(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+    verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
+    verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
+    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
+    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
+    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
 
     verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
 

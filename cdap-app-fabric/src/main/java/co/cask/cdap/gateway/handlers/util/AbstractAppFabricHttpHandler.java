@@ -202,7 +202,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       }
 
       for (ApplicationSpecification appSpec : specList) {
-        appRecords.add(makeAppRecord(appSpec));
+        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getDescription()));
       }
 
       if (appId == null) {
@@ -330,7 +330,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   protected static ProgramRecord makeProgramRecord(String appId, ProgramSpecification spec, ProgramType type) {
-    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
+    return new ProgramRecord(type, appId, spec.getName(), spec.getDescription());
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
@@ -351,7 +351,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return null;
   }
 
-  protected void getLiveInfo(HttpRequest request, HttpResponder responder, String namespaceId,
+  protected void getLiveInfo(HttpResponder responder, String namespaceId,
                              final String appId, final String programId, ProgramType type,
                              ProgramRuntimeService runtimeService) {
     try {
@@ -370,7 +370,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
    */
   protected boolean respondIfElementNotFound(Throwable t, HttpResponder responder) {
     return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND, responder,
-                                "Could not find element.", null);
+                                "Could not find element.");
   }
 
   private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type, HttpResponseStatus status,
@@ -384,7 +384,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   // TODO: refactor
-  protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
+  protected final void dataList(HttpResponder responder, Store store, DatasetFramework dsFramework,
                                 Data type, String namespaceId, String name, String appId) {
     try {
       if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
@@ -422,7 +422,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
                                Id.Namespace namespace, Data type, String name) {
     if (type == Data.DATASET) {
       DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
-      return dsSpec == null ? "" : GSON.toJson(makeDataSetRecord(name, dsSpec.getType()));
+      return dsSpec == null ? "" : GSON.toJson(new DatasetRecord(name, dsSpec.getType()));
     } else if (type == Data.STREAM) {
       StreamSpecification spec = store.getStream(namespace, name);
       return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -436,7 +436,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(namespace);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
       for (DatasetSpecificationSummary instance : instances) {
-        result.add(makeDataSetRecord(instance.getName(), instance.getType()));
+        result.add(new DatasetRecord(instance.getName(), instance.getType()));
       }
       return GSON.toJson(result);
     } else if (type == Data.STREAM) {
@@ -466,7 +466,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
         if (dsSpec != null) {
           typeName = dsSpec.getType();
         }
-        result.add(makeDataSetRecord(dsName, typeName));
+        result.add(new DatasetRecord(dsName, typeName));
       }
       return GSON.toJson(result);
     }
@@ -532,7 +532,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return result;
   }
 
-  protected final void programListByDataAccess(HttpRequest request, HttpResponder responder,
+  protected final void programListByDataAccess(HttpResponder responder,
                                                Store store, DatasetFramework dsFramework,
                                                ProgramType type, Data data, String namespaceId, String name) {
     try {
@@ -628,16 +628,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   /* -----------------  helpers to return Json consistently -------------- */
 
-  protected static final DatasetRecord makeDataSetRecord(String name, String classname) {
-    return new DatasetRecord("Dataset", name, name, classname);
+  protected static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
+    return new StreamRecord(name, GSON.toJson(specification));
   }
-
-  protected static final StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
-    return new StreamRecord("Stream", name, name, GSON.toJson(specification));
-  }
-
-  protected static final ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
-    return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
-  }
-
 }

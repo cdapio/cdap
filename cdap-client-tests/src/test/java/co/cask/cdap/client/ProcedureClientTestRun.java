@@ -59,7 +59,7 @@ public class ProcedureClientTestRun extends ClientTestBase {
     appClient.deploy(jarFile);
 
     // check procedure list
-    verifyProgramRecords(FakeApp.PROCEDURES, procedureClient.list());
+    verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
 
     // start procedure
     programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);

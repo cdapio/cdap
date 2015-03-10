@@ -880,7 +880,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Live-info not supported for program type '%s'", programCategory));
       return;
     }
-    getLiveInfo(request, responder, namespaceId, appId, programId, ProgramType.valueOfCategoryName(programCategory),
+    getLiveInfo(responder, namespaceId, appId, programId, ProgramType.valueOfCategoryName(programCategory),
                 runtimeService);
   }
 
@@ -1133,7 +1133,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
       for (ProgramRecord flow : flows) {
         String appId = flow.getApp();
-        String flowId = flow.getId();
+        String flowId = flow.getName();
         Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
         ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
         if (!"STOPPED".equals(status.getStatus())) {

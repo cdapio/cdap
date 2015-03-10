@@ -115,10 +115,10 @@ public class IntegrationTestBase {
     if (streamRecords.size() > 0) {
       for (StreamRecord streamRecord : streamRecords) {
         try {
-          streamClient.truncate(streamRecord.getId());
+          streamClient.truncate(streamRecord.getName());
         } catch (Exception e) {
           Assert.fail("All existing streams must be truncated" +
-                      " - failed to truncate stream '" + streamRecord.getId() + "'");
+                      " - failed to truncate stream '" + streamRecord.getName() + "'");
         }
       }
     }
@@ -232,7 +232,7 @@ public class IntegrationTestBase {
     List<ApplicationRecord> applicationRecords = applicationClient.list();
     List<String> applicationIds = Lists.newArrayList();
     for (ApplicationRecord applicationRecord : applicationRecords) {
-      applicationIds.add(applicationRecord.getId());
+      applicationIds.add(applicationRecord.getName());
     }
 
     Assert.assertEquals("Must have no deployed apps, but found the following apps: "
@@ -242,7 +242,7 @@ public class IntegrationTestBase {
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+      Assert.assertTrue(expected.contains(actualProgramRecord.getName()));
     }
   }
 

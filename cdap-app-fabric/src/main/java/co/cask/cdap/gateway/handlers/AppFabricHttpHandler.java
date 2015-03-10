@@ -629,8 +629,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("procedure-id") String procedureId) {
-    getLiveInfo(request, responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE,
-                runtimeService);
+    getLiveInfo(responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
   }
 
   @GET
@@ -960,7 +959,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}")
   public void getStreamSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("stream-id") final String streamId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
+    dataList(responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
   }
 
   /**
@@ -991,8 +990,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    appFabricDataHttpHandler.getDatasetSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                     Constants.DEFAULT_NAMESPACE, datasetId);
+    appFabricDataHttpHandler.getDatasetSpecification(responder, Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**

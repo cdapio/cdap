@@ -58,7 +58,7 @@ public class ProgramClientTestRun extends ClientTestBase {
 
     // start, scale, and stop procedure
     LOG.info("Fetching procedure list");
-    verifyProgramRecords(FakeApp.PROCEDURES, procedureClient.list());
+    verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
 
     LOG.info("Fetching runtime args");
     Map<String, String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,

@@ -301,7 +301,7 @@ public class RemoteApplicationManager implements ApplicationManager {
       for (ProgramRecord programRecord : applicationClient.listPrograms(applicationId)) {
         // have to do a check, since some program types (mapreduce, spark) could stop by themselves earlier,
         // and appFabricServer.stop will throw error when you stop something that is not running.
-        ProgramId id = new ProgramId(programRecord.getApp(), programRecord.getId(), programRecord.getType());
+        ProgramId id = new ProgramId(programRecord.getApp(), programRecord.getName(), programRecord.getType());
         if (isRunning(id)) {
           programClient.stop(id.getApplicationId(), id.getRunnableType(), id.getRunnableId());
         }
