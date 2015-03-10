@@ -22,6 +22,7 @@ import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.proto.ProgramDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -87,7 +88,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
     // check program list
     LOG.info("Checking program list for app");
-    Map<ProgramType, List<ProgramRecord>> programs = appClient.listPrograms(FakeApp.NAME);
+    Map<ProgramType, List<ProgramDetail>> programs = appClient.listProgramsByType(FakeApp.NAME);
     verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
     verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
     verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
@@ -100,13 +101,13 @@ public class ApplicationClientTestRun extends ClientTestBase {
     verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
     verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
 
-    verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
-    verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
-    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
-    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
-    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+    verifyProgramRecords(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
+    verifyProgramRecords(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
+    verifyProgramRecords(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
+    verifyProgramRecords(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
+    verifyProgramRecords(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
 
-    verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
+    verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
 
     // delete app
     LOG.info("Deleting app");

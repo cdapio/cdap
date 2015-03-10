@@ -21,6 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.ProgramDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -56,15 +57,22 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     return clientConfig;
   }
 
-  protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
+  protected void verifyProgramNames(List<String> expected, List<ProgramDetail> actual) {
     Assert.assertEquals(expected.size(), actual.size());
-    for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+    for (ProgramDetail actualProgram : actual) {
+      Assert.assertTrue(expected.contains(actualProgram.getName()));
     }
   }
 
-  protected void verifyProgramNames(List<String> expected, Map<ProgramType, List<ProgramRecord>> actual) {
-    verifyProgramNames(expected, convert(actual));
+  protected void verifyProgramRecords(List<String> expected, List<ProgramRecord> actual) {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (ProgramRecord actualProgram : actual) {
+      Assert.assertTrue(expected.contains(actualProgram.getName()));
+    }
+  }
+
+  protected void verifyProgramRecords(List<String> expected, Map<ProgramType, List<ProgramRecord>> map) {
+    verifyProgramRecords(expected, convert(map));
   }
 
   private List<ProgramRecord> convert(Map<ProgramType, List<ProgramRecord>> map) {

@@ -102,7 +102,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   /**
-   * Constructs an new instance. Parameters are binded by Guice.
+   * Constructs an new instance. Parameters are bound by Guice.
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -485,9 +485,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    *   "requested": 3},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Runnable": Flowlet1 not found"}]
-   *
-   * @param request
-   * @param responder
    */
   @POST
   @Path("/instances")
@@ -517,9 +514,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
    * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
    * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
-   *
-   * @param request
-   * @param responder
    */
   @POST
   @Path("/status")
@@ -887,8 +881,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getFlowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                              Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.FLOW.getCategoryName());
   }
 
   /**
@@ -898,9 +891,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.PROCEDURE.getCategoryName());
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**
@@ -910,8 +901,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getMapreduceByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.MAPREDUCE.getCategoryName());
+  }
+
+  /**
+   * Returns a list of spark jobs associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/services")
+  public void getServicesByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.SERVICE.getCategoryName());
   }
 
   /**
@@ -921,8 +921,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getSparkByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                              Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.SPARK.getCategoryName());
   }
 
   /**
@@ -932,8 +931,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getWorkflowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.WORKFLOW.getCategoryName());
   }
 
   /**
@@ -942,8 +940,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workers")
   public void getWorkersByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getWorkersByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.WORKER.getCategoryName());
   }
 
   /**
@@ -1050,7 +1047,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove preferences stored at instance level
       preferencesStore.deleteProperties();
 
-      // remove all data in consolesettings
+      // remove all data in console settings
       consoleSettingsStore.delete();
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
@@ -1090,4 +1087,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
   }
+
+  protected void getProgramsByApp(HttpResponder responder, String namespaceId, String appId, String programCategory) {
+    ProgramType type = getProgramType(programCategory);
+    if (type == null) {
+      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
+                                                                                programCategory));
+      return;
+    }
+    programList(responder, namespaceId, type, appId, store);
+  }
+
+
 }

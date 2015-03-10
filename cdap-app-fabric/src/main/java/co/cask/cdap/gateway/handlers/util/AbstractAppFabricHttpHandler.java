@@ -24,7 +24,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -277,6 +276,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       String errorMessage = String.format("Could not retrieve application spec for application id '%s', reason: %s",
                                           appId.toString(), throwable.getMessage());
       throw new Exception(errorMessage, throwable);
+    }
+  }
+
+  @Nullable
+  protected ProgramType getProgramType(String programType) {
+    try {
+      return ProgramType.valueOfCategoryName(programType);
+    } catch (Exception e) {
+      return null;
     }
   }
 
