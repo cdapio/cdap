@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.commandset;
 
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
@@ -27,6 +28,8 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ScheduleClient;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -199,7 +202,8 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       String scheduleId = programIdParts[1];
       List<ScheduleSpecification> list = scheduleClient.list(appId, scheduleId);
       Table table = Table.builder()
-        .setHeader("application", "program", "program type", "name", "description", "properties")
+        .setHeader("application", "program", "program type", "name", "type", "description", "properties",
+                   "runtime args")
         .setRows(list, new RowMaker<ScheduleSpecification>() {
           @Override
           public List<?> makeRow(ScheduleSpecification object) {
@@ -207,11 +211,30 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
                                       object.getProgram().getProgramName(),
                                       object.getProgram().getProgramType().name(),
                                       object.getSchedule().getName(),
+                                      getScheduleType(object.getSchedule()),
                                       object.getSchedule().getDescription(),
+                                      getScheduleProperties(object.getSchedule()),
                                       GSON.toJson(object.getProperties()));
           }
         }).build();
       tableRenderer.render(printStream, table);
+    }
+
+    private String getScheduleType(Schedule schedule) {
+      return schedule.getClass().getName();
+    }
+
+    private String getScheduleProperties(Schedule schedule) {
+      if (schedule instanceof TimeSchedule) {
+        TimeSchedule timeSchedule = (TimeSchedule) schedule;
+        return String.format("cron entry: %s", timeSchedule.getCronEntry());
+      } else if (schedule instanceof StreamSizeSchedule) {
+        StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+        return String.format("stream: %s trigger MB: %d",
+                             streamSizeSchedule.getStreamName(), streamSizeSchedule.getDataTriggerMB());
+      } else {
+        return "";
+      }
     }
 
     @Override
