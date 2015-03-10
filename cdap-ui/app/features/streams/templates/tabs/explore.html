@@ -19,22 +19,17 @@
         <form ng-submit="doEventSearch()">
           <div class="row">
             <div class="col-xs-4">
-              <div class="input-group">
-                <label class="input-group-addon" for="exploreEventsFrom">
-                  From
-                  <span class="fa fa-calendar"></span>
-                </label>
-                <input type="number" class="form-control" id="exploreEventsFrom" ng-model="eventSearch.startMs" />
-              </div>
+              <my-timestamp-picker
+                data-label="From:"
+                ng-model="eventSearch.startMs"
+              ></my-timestamp-picker>
+
             </div>
             <div class="col-xs-4">
-              <div class="input-group">
-                <label class="input-group-addon" for="exploreEventsTo">
-                  To
-                  <span class="fa fa-calendar"></span>
-                </label>
-                <input type="number" class="form-control" id="exploreEventsTo" ng-model="eventSearch.endMs" />
-              </div>
+              <my-timestamp-picker
+                data-label="To:"
+                ng-model="eventSearch.endMs"
+              ></my-timestamp-picker>
             </div>
             <div class="col-xs-2">
               <div class="input-group">
