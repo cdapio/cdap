@@ -37,7 +37,6 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -139,14 +138,14 @@ public class MetricsDataMigrator {
     this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
     this.metricsTableNamePrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                      UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
+                                            UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
     this.metricsTableName = metricsTableNamePrefix + ".agg";
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
     this.cConf = cConf;
     this.hConf = hConf;
   }
 
-  public void migrateMetricsTables(Version cdapVersion, boolean keepOldData) throws Exception {
+  public void migrateMetricsTables(Version cdapVersion, boolean keepOldData) throws DataMigrationException {
     if (cdapVersion == Version.VERSION_2_6_OR_LOWER) {
       migrateMetricsTableFromVersion26(cdapVersion);
     } else if (cdapVersion == Version.VERSION_2_7) {
@@ -161,7 +160,7 @@ public class MetricsDataMigrator {
     }
   }
 
-  private void migrateMetricsTableFromVersion26(Version version) {
+  private void migrateMetricsTableFromVersion26(Version version) throws DataMigrationException {
     for (String scope : scopes) {
       EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(String.format("%s.%s", scope, entityTableName),
                                                                         DatasetProperties.EMPTY));
@@ -172,7 +171,7 @@ public class MetricsDataMigrator {
     }
   }
 
-  public void cleanUpOldTables(Version version) {
+  public void cleanUpOldTables(Version version) throws DataMigrationException {
     Set<String> tablesToDelete = Sets.newHashSet();
     DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
 
@@ -196,7 +195,7 @@ public class MetricsDataMigrator {
     deleteTables(hConf, tablesToDelete);
   }
 
-  private void deleteTables(Configuration hConf, Set<String> tablesToDelete) {
+  private void deleteTables(Configuration hConf, Set<String> tablesToDelete) throws DataMigrationException {
     HBaseAdmin hAdmin = null;
     try {
       hAdmin = new HBaseAdmin(hConf);
@@ -209,7 +208,8 @@ public class MetricsDataMigrator {
         }
       }
     } catch (Exception e) {
-      System.out.println("Exception while deleting old tables: " + e);
+      LOG.error("Exception while trying to delete old metrics tables", e);
+      throw new DataMigrationException("Failed deleting old metrics tables");
     }
   }
 
@@ -233,7 +233,7 @@ public class MetricsDataMigrator {
     }
   }
 
-  private void migrateMetricsTableFromVersion27(Version version) {
+  private void migrateMetricsTableFromVersion27(Version version) throws DataMigrationException {
     EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(entityTableName, DatasetProperties.EMPTY));
     MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
     System.out.println("Migrating Metrics Data from table : " + metricsTableName);
@@ -264,10 +264,10 @@ public class MetricsDataMigrator {
         printStatus(rowCount);
       }
       System.out.println("Migrated " + rowCount + " records");
-    } catch (Exception e) {
+   } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
-      // no-op
-    }
+      //no-op
+   }
   }
 
   private void printStatus(long rowCount) {
@@ -358,7 +358,8 @@ public class MetricsDataMigrator {
     aggMetricStore.add(new MetricValue(tags, metricName, timeStamp, value, counter));
   }
 
-  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty)
+    throws DataMigrationException {
     MetricsTable table = null;
     // for default namespace, we have to provide the complete table name.
     tableName = "system." + tableName;
@@ -368,15 +369,18 @@ public class MetricsDataMigrator {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
     } catch (DatasetManagementException e) {
-      LOG.error("Cannot access or create table {}.", tableName);
+      String msg = String.format("Cannot access or create table %s.", tableName);
+      LOG.error(msg);
+      throw new DataMigrationException(msg);
     } catch (IOException e) {
-      LOG.error("Exception while creating table {}.", tableName, e);
-      throw Throwables.propagate(e);
+      String msg = String.format("Exception while creating table %s", tableName);
+      LOG.error(msg, e);
+      throw new DataMigrationException(msg);
     }
     return table;
   }
 
-  public void cleanupDestinationTables() {
+  public void cleanupDestinationTables() throws DataMigrationException {
     System.out.println("Cleaning up destination tables");
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
     String destEntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
@@ -400,7 +404,8 @@ public class MetricsDataMigrator {
         }
       }
     } catch (Exception e) {
-      System.out.println("Exception during cleanup of destination tables " + e);
+      LOG.error("Exception during cleanup of destination tables " + e);
+      throw new DataMigrationException("Failed Cleaning up destination tables");
     }
   }
 

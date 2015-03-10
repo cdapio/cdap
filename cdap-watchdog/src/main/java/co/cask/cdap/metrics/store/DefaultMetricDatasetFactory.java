@@ -29,6 +29,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
@@ -160,17 +161,22 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    * @param datasetFramework framework to add types and datasets to
    * @param version - version we are migrating the data from
    * @param keepOldData - boolean flag to specify if we have to keep old metrics data
-   * @throws IOException
-   * @throws DatasetManagementException
+   * @throws DataMigrationException
    */
   public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
-                                 MetricHBaseTableUtil.Version version, boolean keepOldData)
-    throws Exception {
+                                 MetricHBaseTableUtil.Version version,
+                                 boolean keepOldData) throws DataMigrationException {
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
     MetricsDataMigrator migrator = new MetricsDataMigrator(conf, hConf, datasetFramework, factory);
     // delete existing destination tables
     migrator.cleanupDestinationTables();
-    setupDatasets(factory);
+    try {
+      setupDatasets(factory);
+    } catch (Exception e) {
+      String msg = "Exception creating destination tables";
+      LOG.error(msg, e);
+      throw new DataMigrationException(msg);
+    }
     migrator.migrateMetricsTables(version, keepOldData);
   }
 

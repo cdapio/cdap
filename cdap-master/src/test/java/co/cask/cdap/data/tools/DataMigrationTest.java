@@ -15,32 +15,20 @@
  */
 package co.cask.cdap.data.tools;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Data migration parsing tests
+ * Data migration tests
  */
 public class DataMigrationTest {
 
   @Test
   public void testArgumentsParsing() throws Exception {
-    // in testMigrationParse, we emit logs if there are any issues with arguments and
-    // no message is emitted if the arguments are valid
-    AtomicBoolean logs = resetLogging();
-    // valid case
-    DataMigration.testMigrationParse(new String[] {"metrics", "--keep-old-metrics-data"});
-    Assert.assertFalse(resetLogging().get());
-
+    // in testMigrationParse, we return false if there are any issues with arguments and true if the arguments are valid
     List<String[]> validArgumentList = ImmutableList.of(new String[] {"metrics", "--keep-old-metrics-data"},
                                                         new String[] {"metrics"},
                                                         new String[] {"help"});
@@ -48,40 +36,13 @@ public class DataMigrationTest {
     List<String[]> invalidArgumentList = ImmutableList.of(new String[] {"metrics", "--keep-all-data"},
                                                           new String[] {"metrics", "-1", "-2", "-3"}
                                                           );
-
-    // no logs on valid cases
+    // valid cases
     for (String[] arguments : validArgumentList) {
-      logs = resetLogging();
-      DataMigration.testMigrationParse(arguments);
-      Assert.assertFalse(logs.get());
+      Assert.assertTrue(DataMigration.testMigrationParse(arguments));
     }
-
-    // logs with invalid cases
+    // invalid cases
     for (String[] arguments : invalidArgumentList) {
-      logs = resetLogging();
-      DataMigration.testMigrationParse(arguments);
-      Assert.assertTrue(logs.get());
+      Assert.assertFalse(DataMigration.testMigrationParse(arguments));
     }
-
-  }
-
-  private AtomicBoolean resetLogging() {
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    final AtomicBoolean logMessageReceived = new AtomicBoolean(false);
-
-    if (loggerFactory instanceof LoggerContext) {
-      LoggerContext loggerContext = (LoggerContext) loggerFactory;
-
-      AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
-        @Override
-        protected void append(ILoggingEvent eventObject) {
-          logMessageReceived.set(true);
-        }
-      };
-      loggerContext.getLogger(DataMigration.class).addAppender(appender);
-      appender.setContext(loggerContext);
-      appender.start();
-    }
-    return logMessageReceived;
   }
 }
