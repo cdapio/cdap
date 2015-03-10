@@ -16,7 +16,7 @@
 
 package co.cask.cdap.explore.service.hive;
 
-import co.cask.cdap.app.runtime.scheduler.ScheduleQueueResolver;
+import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -134,7 +134,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
   private final Store store;
-  private final ScheduleQueueResolver scheduleQueueResolver;
+  private final SchedulerQueueResolver schedulerQueueResolver;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -165,7 +165,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.store = storeFactory.create();
-    this.scheduleQueueResolver = new ScheduleQueueResolver(cConf, store);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
@@ -1034,8 +1034,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? scheduleQueueResolver.getNamespaceResolvedSchedulerQueue(namespace)
-                                              : scheduleQueueResolver.getSchedulerQueueFromCConf();
+    String schedulerQueue = namespace != null ? schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(namespace)
+                                              : schedulerQueueResolver.getSchedulerQueueFromCConf();
 
     if (schedulerQueue != null) {
       sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);

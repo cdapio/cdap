@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.scheduler.ScheduleQueueResolver;
+import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -52,13 +52,13 @@ public class DefaultSchedulerService {
     private final ScheduleTaskRunner taskRunner;
     private final CConfiguration cConf;
     private final Store store;
-    private final ScheduleQueueResolver scheduleQueueResolver;
+    private final SchedulerQueueResolver schedulerQueueResolver;
 
     ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
                  CConfiguration cConf, ListeningExecutorService taskExecutor) {
       this.store = store;
       this.cConf = cConf;
-      this.scheduleQueueResolver = new ScheduleQueueResolver(cConf, store);
+      this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
       taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore, taskExecutor);
     }
 
@@ -83,7 +83,7 @@ public class DefaultSchedulerService {
       builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
-      String schedulerQueue = scheduleQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
+      String schedulerQueue = schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
       if (schedulerQueue != null) {
         builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
       }

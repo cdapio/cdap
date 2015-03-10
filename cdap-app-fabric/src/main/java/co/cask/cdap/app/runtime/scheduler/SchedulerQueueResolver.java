@@ -30,11 +30,11 @@ import javax.annotation.Nullable;
 /**
  * Helper class to resolve scheduler queue name.
  */
-public class ScheduleQueueResolver {
+public class SchedulerQueueResolver {
   private final String schedulerQueueFromCConf;
   private final Store store;
 
-  public ScheduleQueueResolver(CConfiguration cConf, Store store) {
+  public SchedulerQueueResolver(CConfiguration cConf, Store store) {
     this.schedulerQueueFromCConf = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     this.store = store;
   }

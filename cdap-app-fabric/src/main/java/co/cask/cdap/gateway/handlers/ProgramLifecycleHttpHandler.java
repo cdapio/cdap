@@ -30,7 +30,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.scheduler.ScheduleQueueResolver;
+import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -53,8 +53,6 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
@@ -161,7 +159,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Scheduler scheduler;
 
   private final PreferencesStore preferencesStore;
-  private final ScheduleQueueResolver scheduleQueueResolver;
+  private final SchedulerQueueResolver schedulerQueueResolver;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -222,7 +220,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.streamAdmin = streamAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.scheduleQueueResolver = new ScheduleQueueResolver(configuration, store);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
   }
 
   /**
@@ -1991,7 +1989,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Map<String, String> configs = Maps.newHashMap();
 
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = scheduleQueueResolver.getSchedulerQueueFromCConf();
+    String schedulerQueue = schedulerQueueResolver.getSchedulerQueueFromCConf();
     if (schedulerQueue != null) {
       configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
@@ -2002,7 +2000,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
     Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = scheduleQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
+    String schedulerQueue = schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
