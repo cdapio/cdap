@@ -52,7 +52,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,12 +86,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Before
   public void setUp() throws Exception {
     createNamespace(testSpace);
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    deleteNamespace(testSpace);
-    super.afterTest();
   }
 
   @Test
@@ -419,7 +412,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(testSpace.getId(),
+                                                                   AppWithServices.APP_NAME,
                                                                    AppWithServices.SERVICE_NAME);
     serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
     Assert.assertEquals(3, serviceMetrics.getInput());
@@ -545,7 +539,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
+                                                                   "WordCountApp",
                                                                    "WordCountFlow",
                                                                    "CountByField");
     flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
@@ -565,7 +560,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
-    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
+    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics(testSpace.getId(), "WordCountApp",
+                                                                       "WordFrequency");
     procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, procedureMetrics.getException());
 
@@ -794,7 +790,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     FlowManager flowManager = appManager.startFlow("BasicFlow");
 
     // Wait for at least 10 records being generated
-    RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
+    RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "ClassLoaderTestApp",
+                                                                "BasicFlow", "Sink");
     flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
     flowManager.stop();
 
