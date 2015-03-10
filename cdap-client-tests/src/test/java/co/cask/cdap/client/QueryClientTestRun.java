@@ -62,28 +62,36 @@ public class QueryClientTestRun extends ClientTestBase {
   @Test
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
-    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
-    streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
 
-    Thread.sleep(3000);
-
-    Id.Namespace namespace = getClientConfig().getNamespace();
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
-
-    executeBasicQuery(FakeApp.DS_NAME);
-
-    exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from " + FakeApp.DS_NAME).get();
-      Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
-    } catch (ExecutionException e) {
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
+      streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
 
+      Thread.sleep(3000);
+
+      Id.Namespace namespace = getClientConfig().getNamespace();
+      Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
+
+      executeBasicQuery(FakeApp.DS_NAME);
+
+      exploreClient.disableExploreDataset(datasetInstance).get();
+      try {
+        queryClient.execute("select * from " + FakeApp.DS_NAME).get();
+        Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
+      } catch (ExecutionException e) {
+
+      }
+
+      exploreClient.enableExploreDataset(datasetInstance).get();
+      executeBasicQuery(FakeApp.DS_NAME);
+
+      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+    } finally {
+      appClient.delete(FakeApp.NAME);
     }
-
-    exploreClient.enableExploreDataset(datasetInstance).get();
-    executeBasicQuery(FakeApp.DS_NAME);
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {

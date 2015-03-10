@@ -85,56 +85,60 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
     Assert.assertEquals(1, appClient.list().size());
 
-    // check program list
-    LOG.info("Checking program list for app");
-    Map<ProgramType, List<ProgramRecord>> programs = appClient.listPrograms(FakeApp.NAME);
-    verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
-    verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
-    verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
-    verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
-    verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
+    try {
+      // check program list
+      LOG.info("Checking program list for app");
+      Map<ProgramType, List<ProgramRecord>> programs = appClient.listPrograms(FakeApp.NAME);
+      verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
+      verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
+      verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
 
-    verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
-    verifyProgramNames(FakeApp.PROCEDURES, appClient.listPrograms(FakeApp.NAME, ProgramType.PROCEDURE));
-    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
-    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
-    verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
+      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
+      verifyProgramNames(FakeApp.PROCEDURES, appClient.listPrograms(FakeApp.NAME, ProgramType.PROCEDURE));
+      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
 
-    verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
-    verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
-    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
-    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
-    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
+      verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
+      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
 
-    verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
-
-    // delete app
-    LOG.info("Deleting app");
-    appClient.delete(FakeApp.NAME);
-    appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
-    Assert.assertEquals(0, appClient.list().size());
+      verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
+    } finally {
+      // delete app
+      LOG.info("Deleting app");
+      appClient.delete(FakeApp.NAME);
+      appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(0, appClient.list().size());
+    }
   }
 
   @Test
   public void testDeleteAll() throws Exception {
     Assert.assertEquals(0, appClient.list().size());
 
-    // deploy first app
-    LOG.info("Deploying first app");
-    appClient.deploy(createAppJarFile(FakeApp.class));
-    appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
-    Assert.assertEquals(1, appClient.list().size());
+    try {
+      // deploy first app
+      LOG.info("Deploying first app");
+      appClient.deploy(createAppJarFile(FakeApp.class));
+      appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(1, appClient.list().size());
 
-    // deploy second app
-    LOG.info("Deploying second app");
-    appClient.deploy(createAppJarFile(AppReturnsArgs.class));
-    appClient.waitForDeployed(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
-    Assert.assertEquals(2, appClient.list().size());
+      // deploy second app
+      LOG.info("Deploying second app");
+      appClient.deploy(createAppJarFile(AppReturnsArgs.class));
+      appClient.waitForDeployed(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(2, appClient.list().size());
+    } finally {
+      appClient.deleteAll();
+      appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
+      appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
 
-    appClient.deleteAll();
-    appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
-    appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
-
-    Assert.assertEquals(0, appClient.list().size());
+      Assert.assertEquals(0, appClient.list().size());
+    }
   }
 }
