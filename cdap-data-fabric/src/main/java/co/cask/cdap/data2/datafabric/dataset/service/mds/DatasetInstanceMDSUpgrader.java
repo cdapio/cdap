@@ -20,7 +20,11 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,22 +39,31 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Upgrades Dataset instances MDS
  */
 public final class DatasetInstanceMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceMDSUpgrader.class);
+  private final LocationFactory locationFactory;
+  private final CConfiguration cConf;
   private final Transactional<UpgradeMDSStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
+
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                     @Named("dsFramework") final DatasetFramework dsFramework) {
-
+                                     @Named("dsFramework") final DatasetFramework dsFramework,
+                                     LocationFactory locationFactory, CConfiguration cConf) {
+    this.locationFactory = locationFactory;
+    this.cConf = cConf;
     this.datasetInstanceMds = Transactional.of(executorFactory,
        new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
          @Override
@@ -93,12 +106,38 @@ public final class DatasetInstanceMDSUpgrader {
           LOG.info("Migrating Dataset Spec: {}", dsSpec);
           Id.Namespace namespace = namespaceFromDatasetName(dsSpec.getName());
           DatasetSpecification migratedDsSpec = migrateDatasetSpec(dsSpec);
-          LOG.info("Writing new Dataset Spec: {}", migratedDsSpec);
+          LOG.info("Writing new dataset Spec: {}", migratedDsSpec);
           newMds.write(namespace, migratedDsSpec);
         }
         return null;
       }
     });
+  }
+
+  /**
+   * Checks if the the given dataset spec is of a {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the dataset
+   * @return a boolean which is true if its a {@link FileSet} else false
+   * @throws IOException
+   */
+  private boolean isFileSet(DatasetSpecification dsSpec) throws IOException {
+    String dsType = dsSpec.getType();
+    return (FileSet.class.getName().equals(dsType) || "fileSet".equals(dsType));
+  }
+
+  /**
+   * Upgrades the {@link FileSet} by moving the base path under namespaced directory
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the {@link FileSet} to be upgraded
+   * @throws IOException
+   */
+  private void upgradeFileSet(DatasetSpecification dsSpec) throws IOException {
+    String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
+    Location oldLocation = locationFactory.create(basePath);
+    Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
+      .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
+    renameLocation(oldLocation, newlocation);
   }
 
   /**
@@ -118,7 +157,7 @@ public final class DatasetInstanceMDSUpgrader {
     return Id.DatasetInstance.from(parts[1], parts[2]);
   }
 
-  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
+  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) throws IOException {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
     DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
@@ -128,6 +167,9 @@ public final class DatasetInstanceMDSUpgrader {
       DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
       LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
       builder.datasets(migratedEmbeddedSpec);
+    }
+    if (isFileSet(oldSpec)) {
+      upgradeFileSet(oldSpec);
     }
     return builder.build();
   }
@@ -143,6 +185,33 @@ public final class DatasetInstanceMDSUpgrader {
     } else {
       throw new IllegalArgumentException(String.format("Expected Dataset namespace to be either 'system' or 'user': %s",
                                                        dsId));
+    }
+  }
+  /**
+   * Renames the old location to new location if old location exists and the new one does not
+   *
+   * @param oldLocation the old {@link Location}
+   * @param newLocation the new {@link Location}
+   * @return new location if and only if the file or directory is successfully moved; null otherwise.
+   * @throws IOException
+   */
+  @Nullable
+  protected Location renameLocation(Location oldLocation, Location newLocation) throws IOException {
+    // if the newLocation does not exists or the oldLocation does we try to rename. If either one of them is false then
+    // the underlying call to renameTo will throw IOException which we propagate.
+    if (!newLocation.exists() || oldLocation.exists()) {
+      Locations.getParent(newLocation).mkdirs();
+      try {
+        return oldLocation.renameTo(newLocation);
+      } catch (IOException ioe) {
+        newLocation.delete();
+        LOG.warn("Failed to rename {} to {}", oldLocation, newLocation);
+        throw ioe;
+      }
+    } else {
+      LOG.debug("New location {} already exists and old location {} does not exists. The location might already be " +
+                  "updated.", newLocation, oldLocation);
+      return null;
     }
   }
 }
