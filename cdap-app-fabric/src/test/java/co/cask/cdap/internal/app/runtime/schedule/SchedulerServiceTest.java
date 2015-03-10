@@ -47,12 +47,12 @@ public class SchedulerServiceTest {
   public static Store store;
   public static LocationFactory locationFactory;
 
-  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Namespace namespace = new Id.Namespace("notdefault");
+  private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(account, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
   private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule timeSchedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
   private static final Schedule dataSchedule1 =
@@ -75,7 +75,7 @@ public class SchedulerServiceTest {
 
   @Test
   public void testSchedulesAcrossNamespace() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
+    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
     schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
@@ -106,7 +106,7 @@ public class SchedulerServiceTest {
 
   @Test
   public void testSimpleSchedulerLifecycle() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
+    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
     schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));

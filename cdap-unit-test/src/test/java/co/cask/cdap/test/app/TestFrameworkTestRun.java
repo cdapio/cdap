@@ -92,6 +92,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @After
   public void tearDown() throws Exception {
     deleteNamespace(testSpace);
+    super.afterTest();
   }
 
   @Test

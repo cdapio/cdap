@@ -96,7 +96,8 @@ public class UnitTestManager implements TestManager {
       app.configure(configurer, new ApplicationContext());
       ApplicationSpecification appSpec = configurer.createSpecification();
 
-      Location deployedJar = appFabricClient.deployApplication(appSpec.getName(), applicationClz, bundleEmbeddedJars);
+      Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
+                                                               applicationClz, bundleEmbeddedJars);
       return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar, appSpec);
 
     } catch (Exception e) {
