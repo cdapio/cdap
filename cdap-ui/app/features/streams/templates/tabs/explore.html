@@ -51,7 +51,7 @@
           <li ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
             <div>
               <small class="text-muted pull-right">{{event.timestamp | amTimeAgo}}</small>
-              <em>{{event.timestamp}}</em>
+              <em>{{event.timestamp | amDateFormat: 'MMMM Do YYYY, h:mm:ss a'}}</em>
             </div>
             <pre>{{event.body | json}}</pre>
           </li>
