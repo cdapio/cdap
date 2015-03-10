@@ -28,8 +28,9 @@ namespaces include:
 The first version of namespaces was introduced in :ref:`CDAP v2.8.0 <release-notes>`, and
 is part of the :ref:`HTTP RESTful API v3 <http-restful-api-v3>`.
 
-Namespace Rules
-===============
+
+Namespace Components
+====================
 
 A Namespace consists of a namespace identifier (the namespace ID), a display name, and a description.
 
@@ -37,12 +38,16 @@ Namespace IDs are composed from a limited set of characters; they are restricted
 letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
 on the length of a namespace ID nor on the number of namespaces.
 
-The namespace IDs ``default`` and ``system`` are reserved. The ``default``
+The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 
-Namespaces: Independent and Non-hierarchal
-------------------------------------------
+Once created, these namespace properties (ID, display name, description) cannot be altered. 
+The only method for changing them is to delete the namespace and recreate it.
+
+
+Independent and Non-hierarchal
+==============================
 
 Namespaces are flat, with no hierarchy inside them. (Namespaces are not allowed inside
 another namespace.)
@@ -54,27 +59,18 @@ Similarly, moving applications or data from one namespace to another is not poss
 Quota management based on namespaces is also not possible.
 
 
-Identifying Entities
---------------------
+Identifying Entities in a Namespace
+====================================
 The ID of an entity in a namespace is composed of a combination of the namespace ID plus
 the entity ID, since an entity cannot exist independently of a namespace.
 
-Once created, namespace properties (ID, display name, description) cannot be altered. 
-The only method for changing them is to delete the namespace and recreate it.
-
-Namespace IDs have a limited set of characters allowed; they are restricted to letters (a-z,
-A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
-on the length of a namespace ID nor on the number of namespaces.
-
-The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``
-namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
-be deleted.
 
 Using Namespaces
-----------------
+==============================
 The best practices with using namespaces would be to create desired namespaces and use
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
 undertaken.
+
 
 .. rubric::  Examples of Using Namespaces
 
