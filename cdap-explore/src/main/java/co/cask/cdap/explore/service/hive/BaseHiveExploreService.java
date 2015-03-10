@@ -54,7 +54,6 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -701,12 +700,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = openSession(sessionConf);
       try {
+        String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
-        SessionState.get().setCurrentDatabase(namespace.getId());
+        SessionState.get().setCurrentDatabase(database);
 
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf,
-                                               statement, namespace.getId());
+                                               statement, database);
         LOG.trace("Executing statement: {} with handle {}", statement, handle);
         return handle;
       } catch (Throwable e) {
