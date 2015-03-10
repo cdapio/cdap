@@ -19,30 +19,27 @@ package co.cask.cdap.data2.dataset2.lib.file;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
 /**
- * Administration for file datasets.
+ * Administration for file sets.
  */
-public class FileAdmin implements DatasetAdmin {
+public class FileSetAdmin implements DatasetAdmin {
 
   private final LocationFactory locationFactory;
 
   private final String basePath;
 
-  public FileAdmin(DatasetContext datasetContext, CConfiguration cConf, LocationFactory locationFactory,
-                   DatasetSpecification spec) {
+  public FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
+                      LocationFactory locationFactory, DatasetSpecification spec) {
     String namespace = datasetContext.getNamespaceId();
     this.locationFactory = locationFactory;
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String basePath = FileSetProperties.getBasePath(spec.getProperties());
+    String basePath = FileSetDataset.determineBasePath(spec);
     this.basePath = String.format("%s/%s/%s", namespace, dataDir, basePath);
   }
 

@@ -31,6 +31,7 @@ import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -61,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -172,42 +172,43 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
-    return exists(QueueName.from(URI.create(name)));
-  }
-
-  boolean exists(QueueName queueName) throws IOException {
+  public boolean exists(QueueName queueName) throws IOException {
     return tableUtil.tableExists(getHBaseAdmin(), getDataTableId(queueName)) &&
       tableUtil.tableExists(getHBaseAdmin(), getConfigTableId(queueName));
   }
 
   @Override
-  public void create(String name, Properties props) throws Exception {
-    create(QueueName.from(URI.create(name)), props);
+  public void create(QueueName queueName) throws IOException {
+    create(queueName, new Properties());
   }
 
   @Override
-  public void create(String name) throws Exception {
-    create(name, new Properties());
+  public void create(QueueName queueName, Properties properties) throws IOException {
+    // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
+    // not accessible by the queue region coprocessor for doing eviction.
+
+    // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
+    createConfigTable(queueName);
+
+    TableId tableId = getDataTableId(queueName);
+    DatasetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
+    try {
+      dsAdmin.create();
+    } finally {
+      dsAdmin.close();
+    }
   }
 
   @Override
-  public void truncate(String name) throws Exception {
-    QueueName queueName = QueueName.from(URI.create(name));
+  public void truncate(QueueName queueName) throws Exception {
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {
       truncate(getDataTableId(queueName));
     } else {
-      LOG.warn("truncate({}) on HBase queue table has no effect.", name);
+      LOG.warn("truncate({}) on HBase queue table has no effect.", queueName);
     }
     // we can delete the config for this queue in any case.
     deleteConsumerConfigurations(queueName);
-  }
-
-  private void truncate(TableId tableId) throws IOException {
-    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
-      tableUtil.truncateTable(getHBaseAdmin(), tableId);
-    }
   }
 
   @Override
@@ -227,16 +228,41 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void drop(String name) throws Exception {
-    QueueName queueName = QueueName.from(URI.create(name));
+  public void upgrade() throws Exception {
+    // For each table managed by this admin, perform an upgrade
+    List<TableId> tableIds = tableUtil.listTables(getHBaseAdmin());
+    for (TableId tableId : tableIds) {
+      // It's important to skip config table enabled.
+      if (isDataTable(tableId)) {
+        LOG.info(String.format("Upgrading queue table: %s", tableId));
+        Properties properties = new Properties();
+        HTableDescriptor desc = tableUtil.getHTableDescriptor(getHBaseAdmin(), tableId);
+        if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
+          // It's the old queue table. Set the property prefix bytes to SALT_BYTES
+          properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(HBaseQueueAdmin.SALT_BYTES));
+        }
+        upgrade(tableId, properties);
+        LOG.info(String.format("Upgraded queue table: %s", tableId));
+      }
+    }
+  }
+
+  // Only used by HBaseStreamAdmin
+  void drop(QueueName queueName) throws Exception {
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
       drop(getDataTableId(queueName));
     } else {
-      LOG.warn("drop({}) on HBase queue table has no effect.", name);
+      LOG.warn("drop({}) on HBase queue table has no effect.", queueName);
     }
     // we can delete the config for this queue in any case.
     deleteConsumerConfigurations(queueName);
+  }
+
+  private void truncate(TableId tableId) throws IOException {
+    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
+      tableUtil.truncateTable(getHBaseAdmin(), tableId);
+    }
   }
 
   private void drop(TableId tableId) throws IOException {
@@ -304,37 +330,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  /**
-   * Creates the HBase table for the given queue with empty properties.
-   *
-   * @see #create(QueueName, Properties)
-   */
-  public void create(QueueName queueName) throws IOException {
-    create(queueName, new Properties());
-  }
-
-  /**
-   * Creates the HBase table for th given queue and set the given properties into the table descriptor.
-   *
-   * @param queueName Name of the queue.
-   * @param properties Set of properties to store in the table.
-   */
-  public void create(QueueName queueName, Properties properties) throws IOException {
-    // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
-    // not accessible by the queue region coprocessor for doing eviction.
-
-    // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    createConfigTable(queueName);
-
-    TableId tableId = getDataTableId(queueName);
-    DatasetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, tableUtil, properties);
-    try {
-      dsAdmin.create();
-    } finally {
-      dsAdmin.close();
-    }
-  }
-
   private void createConfigTable(QueueName queueName) throws IOException {
     TableId tableId = getConfigTableId(queueName);
     HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
@@ -359,10 +354,18 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    String queueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
-    tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), queueTableNamePrefix);
+    // It's important to keep config table enabled while disabling and dropping  queue tables.
+    final String queueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
+    final TableId configTableId = getConfigTableId(namespaceId);
+    tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId tableId) {
+        // It's a bit hacky here since we know how the Dataset system names table
+        return (tableId.getTableName().startsWith(queueTableNamePrefix)) && !tableId.equals(configTableId);
+      }
+    });
 
-    drop(getConfigTableId(namespaceId));
+    drop(configTableId);
   }
 
   @Override
@@ -471,26 +474,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
     } finally {
       hTable.close();
-    }
-  }
-
-  @Override
-  public void upgrade() throws Exception {
-    // For each table managed by this admin, perform an upgrade
-    List<TableId> tableIds = tableUtil.listTables(getHBaseAdmin());
-    for (TableId tableId : tableIds) {
-      // It's important to skip config table enabled.
-      if (isDataTable(tableId)) {
-        LOG.info(String.format("Upgrading queue table: %s", tableId));
-        Properties properties = new Properties();
-        HTableDescriptor desc = tableUtil.getHTableDescriptor(getHBaseAdmin(), tableId);
-        if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
-          // It's the old queue table. Set the property prefix bytes to SALT_BYTES
-          properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(HBaseQueueAdmin.SALT_BYTES));
-        }
-        upgrade(tableId, properties);
-        LOG.info(String.format("Upgraded queue table: %s", tableId));
-      }
     }
   }
 

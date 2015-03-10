@@ -16,8 +16,12 @@
 
 package co.cask.cdap.client.common;
 
+import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -41,14 +45,14 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class ClientTestBase extends StandaloneTestBase {
   protected static final boolean START_LOCAL_STANDALONE = true;
-  protected static final String HOSTNAME = "localhost";
-  protected static final int PORT = 10000;
 
   protected ClientConfig clientConfig;
 
   @Before
   public void setUp() throws Throwable {
-    clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(
+      StandaloneContainer.DEFAULT_CONNECTION_URI.toString());
+    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
   }
 
   @Override

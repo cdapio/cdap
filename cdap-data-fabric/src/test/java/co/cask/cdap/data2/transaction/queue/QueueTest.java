@@ -424,19 +424,14 @@ public abstract class QueueTest {
     QueueName yourQueue2 = QueueName.fromFlowlet(NAMESPACE_ID1.getId(),
                                                  "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
 
-    String myQueueName1 = myQueue1.toString();
-    String myQueueName2 = myQueue2.toString();
-    String yourQueueName1 = yourQueue1.toString();
-    String yourQueueName2 = yourQueue2.toString();
-
-    queueAdmin.create(myQueueName1);
-    queueAdmin.create(myQueueName2);
-    queueAdmin.create(yourQueueName1);
-    queueAdmin.create(yourQueueName2);
+    queueAdmin.create(myQueue1);
+    queueAdmin.create(myQueue2);
+    queueAdmin.create(yourQueue1);
+    queueAdmin.create(yourQueue2);
 
     // verify that queues got created
-    Assert.assertTrue(queueAdmin.exists(myQueueName1) && queueAdmin.exists(myQueueName2) &&
-                        queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+    Assert.assertTrue(queueAdmin.exists(myQueue1) && queueAdmin.exists(myQueue2) &&
+                        queueAdmin.exists(yourQueue1) && queueAdmin.exists(yourQueue2));
 
     // create some consumer configurations for all queues
     configureGroups(myQueue1, ImmutableMap.of(0L, 1, 1L, 1));
@@ -451,12 +446,12 @@ public abstract class QueueTest {
     queueAdmin.dropAllInNamespace(NAMESPACE_ID.getId());
 
     // verify queues in NAMESPACE_ID are dropped
-    Assert.assertFalse(queueAdmin.exists(myQueueName1) || queueAdmin.exists(myQueueName2));
+    Assert.assertFalse(queueAdmin.exists(myQueue1) || queueAdmin.exists(myQueue2));
     // also verify that consumer config of all queues in 'myspace' is deleted
     verifyConsumerConfigIsDeleted(myQueue1, myQueue2);
 
     // but the ones in NAMESPACE_ID1 still exist
-    Assert.assertTrue(queueAdmin.exists(yourQueueName1) && queueAdmin.exists(yourQueueName2));
+    Assert.assertTrue(queueAdmin.exists(yourQueue1) && queueAdmin.exists(yourQueue2));
     // consumer config for queues in 'namespace1' should also still exist
     verifyConsumerConfigExists(yourQueue1, yourQueue2);
 
@@ -464,7 +459,7 @@ public abstract class QueueTest {
     queueAdmin.dropAllInNamespace(NAMESPACE_ID1.getId());
 
     // verify queues in NAMESPACE_ID are dropped
-    Assert.assertFalse(queueAdmin.exists(yourQueueName1) || queueAdmin.exists(yourQueueName2));
+    Assert.assertFalse(queueAdmin.exists(yourQueue1) || queueAdmin.exists(yourQueue2));
     // verify that the consumer config of all queues in 'namespace1' is deleted
     verifyConsumerConfigIsDeleted(yourQueue1, yourQueue2);
   }
@@ -530,14 +525,14 @@ public abstract class QueueTest {
 
     if (doDrop) {
       // verify that only flow2's queues still exist
-      Assert.assertFalse(queueAdmin.exists(queueName1.toString()));
-      Assert.assertFalse(queueAdmin.exists(queueName2.toString()));
-      Assert.assertTrue(queueAdmin.exists(queueName3.toString()));
+      Assert.assertFalse(queueAdmin.exists(queueName1));
+      Assert.assertFalse(queueAdmin.exists(queueName2));
+      Assert.assertTrue(queueAdmin.exists(queueName3));
     } else {
       // verify all queues still exist
-      Assert.assertTrue(queueAdmin.exists(queueName1.toString()));
-      Assert.assertTrue(queueAdmin.exists(queueName2.toString()));
-      Assert.assertTrue(queueAdmin.exists(queueName3.toString()));
+      Assert.assertTrue(queueAdmin.exists(queueName1));
+      Assert.assertTrue(queueAdmin.exists(queueName2));
+      Assert.assertTrue(queueAdmin.exists(queueName3));
     }
     // verify the consumer config was deleted
     verifyConsumerConfigIsDeleted(queueName1, queueName2);

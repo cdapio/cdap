@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
@@ -28,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -48,12 +48,11 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   @Before
   public void setup() {
-    ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setHostname(HOSTNAME).setPort(PORT);
-    namespaceClient = new NamespaceClient(builder.build());
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
+  @Ignore
   public void testNamespaces() throws Exception {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();

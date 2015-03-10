@@ -1,7 +1,9 @@
 <h3>Add Namespace</h3>
 <form class="form-horizontal"
       role="form"
+      name="namespaceCreateForm"
       ng-submit="submitHandler()"
+      no-validate
 >
 
   <div class="form-group">
@@ -12,6 +14,7 @@
              ng-model="model.id"
              class="form-control"
              placeholder="ID"
+             required
       >
     </div>
   </div>
@@ -24,6 +27,7 @@
              ng-model="model.name"
              class="form-control"
              placeholder="Name"
+             required
       >
     </div>
   </div>
@@ -69,7 +73,7 @@
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <a ui-sref="admin.overview" class="btn btn-default">Cancel</a>
-      <button type="submit" class="btn btn-primary">Create</button>
+      <button ng-disabled="namespaceCreateForm.$invalid" type="submit" class="btn btn-primary">Create</button>
     </div>
   </div>
 
