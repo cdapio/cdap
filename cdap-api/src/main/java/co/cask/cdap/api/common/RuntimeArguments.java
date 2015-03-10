@@ -151,44 +151,70 @@ public final class RuntimeArguments {
   private static final Pattern OFFSET_PATTERN = Pattern.compile(":\\$\\{(.*)\\}$");
 
   /**
+   * <p>
    * Resolves the {@link Schedule} arguments based on the rules specified in the argument values and
    * logical start time of the {@link Schedule}. Rules specified in the property values must be enclosed
    * by "${" and "}" and should conform to the patterns specified by {@link SimpleDateFormat}.
-   *
-   * Example: these properties are specified for a {@link Schedule}:
-   * <p>
-   *   input.file=purchase_data_${MMddyyyy}_${Ha}.input
-   *   output.file=purchase_data_${dEyyyy}.output
    * </p>
    *
+   * <p>
+   * Example: these properties are specified for a {@link Schedule}:
+   * </p>
+   *
+   * <pre>
+   *   <code>
+   *      input.file=purchase_data_${MMddyyyy}_${Ha}.input
+   *      output.file=purchase_data_${dEyyyy}.output
+   *   </code>
+   * </pre>
+   *
+   * <p>
    * If the {@link Schedule} triggers at a logical start time of '1422957600' (February 3, 2015 at 2:00:00 AM),
    * the rules in the {@link Schedule} arguments will be evaluated and these properties will be passed to
    * the triggered program:
-   * <p>
-   *   input.file=purchase_data_02032015_2AM.input
-   *   output.file=purchase_data_3Tue2015.output
    * </p>
    *
+   * <pre>
+   *   <code>
+   *      input.file=purchase_data_02032015_2AM.input
+   *      output.file=purchase_data_3Tue2015.output
+   *   </code>
+   * </pre>
+   *
+   * <p>
    * To resolve the rules against a time other than the logical start time of the {@link Schedule},
    * provide an offset in the rules. The offset should be provided at the end of the property value,
    * enclosed by ":{" and "}".
-   *
-   * Example: this property is specified for a {@link Schedule}:
-   * <p>
-   *   input.file=purchase_data.${MMM dd HH:mm:ss}.input:${-30s,-15m,-2h,3d}
    * </p>
    *
+   * <p>
+   * Example: this property is specified for a {@link Schedule}:
+   * </p>
+   *
+   * <pre>
+   *   <code>
+   *      input.file=purchase_data.${MMM dd HH:mm:ss}.input:${-30s,-15m,-2h,3d}
+   *   </code>
+   * </pre>
+   *
+   * <p>
    * The offsets specified for the above property are -30s (30 seconds prior to the logical start time), -15m
    * (15 minutes prior to the logical start time), -2h (2 hours prior to the logical start time) and 3d (3 days
    * after the logical start time).
+   * </p>
    *
+   * <p>
    * If the {@link Schedule} triggers at a logical start time of '1422957600' (February 3, 2015 at 2:00:00 AM),
    * the rule will be evaluated for each offset and comma-separated values for each will be passed to the triggered
    * program:
-   * <p>
-   *   input.file=purchase_data.Feb 03 01:59:30.input,purchase_data.Feb 03 01:45:00.input,
-   *              purchase_data.Feb 03 00:00:00.input,purchase_data.Feb 06 02:00:00.input
    * </p>
+   *
+   * <pre>
+   *   <code>
+   *      input.file=purchase_data.Feb 03 01:59:30.input,purchase_data.Feb 03 01:45:00.input,
+   *                 purchase_data.Feb 03 00:00:00.input,purchase_data.Feb 06 02:00:00.input
+   *   </code>
+   * </pre>
    *
    * @param arguments the arguments for the Schedule
    * @param logicalStartTime the logical start time for the Schedule in seconds
