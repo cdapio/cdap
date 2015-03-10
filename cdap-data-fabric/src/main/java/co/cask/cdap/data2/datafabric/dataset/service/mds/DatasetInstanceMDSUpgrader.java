@@ -59,16 +59,23 @@ public final class DatasetInstanceMDSUpgrader {
          public UpgradeMdsStores<DatasetInstanceMDS> get() {
            String dsName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
            Id.DatasetInstance datasetId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
+           DatasetInstanceMDS oldMds;
+           DatasetInstanceMDS newMds;
            try {
-             DatasetInstanceMDS oldMds =
+             oldMds =
                DatasetsUtil.getOrCreateDataset(dsFramework, datasetId, DatasetInstanceMDS.class.getName(),
                                                DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
-             DatasetInstanceMDS newMds = new DatasetMetaTableUtil(dsFramework).getInstanceMetaTable();
-             return new UpgradeMdsStores<DatasetInstanceMDS>(oldMds, newMds);
            } catch (Exception e) {
-             LOG.error("Failed to access table: {}", datasetId, e);
+             LOG.error("Failed to access table of Dataset: {}", datasetId, e);
              throw Throwables.propagate(e);
            }
+           try {
+             newMds = new DatasetMetaTableUtil(dsFramework).getInstanceMetaTable();
+           } catch (Exception e) {
+             LOG.error("Failed to access Datasets instances meta table.");
+             throw Throwables.propagate(e);
+           }
+           return new UpgradeMdsStores<DatasetInstanceMDS>(oldMds, newMds);
          }
        });
   }
@@ -76,18 +83,19 @@ public final class DatasetInstanceMDSUpgrader {
   public void upgrade() throws Exception {
     // Moves dataset instance meta entries into new table (in system namespace)
     // Also updates the spec's name ('cdap.user.foo' -> 'foo')
-    LOG.info("Upgrading dataset instance mds.");
+    LOG.info("Upgrading Dataset instance mds.");
     datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMdsStores<DatasetInstanceMDS>, Void>() {
       @Override
       public Void apply(UpgradeMdsStores<DatasetInstanceMDS> ctx) throws Exception {
         MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
         DatasetInstanceMDS newMds = ctx.getNewMds();
         List<DatasetSpecification> dsSpecs = ctx.getOldMds().list(key, DatasetSpecification.class);
+        LOG.info("Upgrading {} Dataset Specifications", dsSpecs.size());
         for (DatasetSpecification dsSpec: dsSpecs) {
-          LOG.info("Migrating dataset Spec: {}", dsSpec);
+          LOG.info("Migrating Dataset Spec: {}", dsSpec);
           Id.Namespace namespace = namespaceFromDatasetName(dsSpec.getName());
           DatasetSpecification migratedDsSpec = migrateDatasetSpec(dsSpec);
-          LOG.info("Writing new dataset Spec: {}", migratedDsSpec);
+          LOG.info("Writing new Dataset Spec: {}", migratedDsSpec);
           newMds.write(namespace, migratedDsSpec);
         }
         return null;
@@ -127,7 +135,7 @@ public final class DatasetInstanceMDSUpgrader {
     } else if ("user".equals(namespace)) {
       return Constants.DEFAULT_NAMESPACE_ID;
     } else {
-      throw new IllegalArgumentException(String.format("Expected dataset namespace to be either 'system' or 'user': %s",
+      throw new IllegalArgumentException(String.format("Expected Dataset namespace to be either 'system' or 'user': %s",
                                                        dsId));
     }
   }
