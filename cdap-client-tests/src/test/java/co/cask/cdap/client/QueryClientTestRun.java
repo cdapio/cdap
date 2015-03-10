@@ -20,8 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
@@ -67,11 +67,9 @@ public class QueryClientTestRun extends ClientTestBase {
                                                   connectionConfig.getPort(),
                                                   accessToken);
     namespaceClient = new NamespaceClient(clientConfig);
-    queryClientOtherNamespace = new QueryClient(new ClientConfig.Builder()
-                                                  .setHostname(HOSTNAME)
-                                                  .setPort(PORT)
-                                                  .setNamespace(otherNamespace)
-                                                  .build());
+    ClientConfig config = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    config.setNamespace(otherNamespace);
+    queryClientOtherNamespace = new QueryClient(config);
   }
 
   @Test

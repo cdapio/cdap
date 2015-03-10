@@ -103,9 +103,10 @@ public class BaseHiveExploreServiceTest {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("default");
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("namespace");
   protected static final Id.Namespace OTHER_NAMESPACE_ID = Id.Namespace.from("other");
-  protected static final String NAMESPACE_DATABASE = "default";
+  protected static final String DEFAULT_DATABASE = "default";
+  protected static final String NAMESPACE_DATABASE = "cdap_namespace";
   protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
   protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
@@ -174,12 +175,20 @@ public class BaseHiveExploreServiceTest {
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
     Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
     Locations.mkdirsIfNotExists(locationFactory.create(OTHER_NAMESPACE_ID.getId()));
+
+    waitForCompletionStatus(exploreService.createNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @AfterClass
   public static void stopServices() throws Exception {
     if (!runAfter) {
       return;
+    }
+
+    // Some tests (for example HiveExploreServiceStopTestRun) stop the ExploreService on their own. In that case
+    // the test is responsible for deleting this namespace.
+    if (exploreService.isRunning()) {
+      waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     }
 
     Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
@@ -258,17 +267,18 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(String streamName) throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(streamName);
+  protected static void createStream(String namespace, String streamName) throws IOException {
+    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
     urlConn.setRequestMethod(HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
-  protected static void setStreamProperties(String streamName, StreamProperties properties) throws IOException {
+  protected static void setStreamProperties(String namespace, String streamName,
+                                            StreamProperties properties) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s/config",
-                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s/properties",
+                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(HttpMethod.PUT);
     urlConn.setDoOutput(true);
@@ -277,13 +287,13 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  protected static void sendStreamEvent(String streamName, byte[] body) throws IOException {
-    sendStreamEvent(streamName, Collections.<String, String>emptyMap(), body);
+  protected static void sendStreamEvent(String namespace, String streamName, byte[] body) throws IOException {
+    sendStreamEvent(namespace, streamName, Collections.<String, String>emptyMap(), body);
   }
 
-  protected static void sendStreamEvent(String streamName, Map<String, String> headers, byte[] body)
+  protected static void sendStreamEvent(String namespace, String streamName, Map<String, String> headers, byte[] body)
     throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(streamName);
+    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
     urlConn.setRequestMethod(HttpMethod.POST);
     urlConn.setDoOutput(true);
     for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -296,10 +306,10 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  private static HttpURLConnection openStreamConnection(String streamName) throws IOException {
+  private static HttpURLConnection openStreamConnection(String namespace, String streamName) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s",
-                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
+                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
     return (HttpURLConnection) url.openConnection();
   }
 

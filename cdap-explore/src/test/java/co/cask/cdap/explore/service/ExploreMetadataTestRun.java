@@ -62,14 +62,14 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-
     datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteInstance(otherTable);
     datasetFramework.deleteInstance(OTHER_MY_TABLE);
     datasetFramework.deleteInstance(namespacedOtherTable);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
+
+    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @Test
@@ -89,13 +89,13 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
+                              "", NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
+                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                            new QueryResult(Lists.<Object>newArrayList(
                               "", OTHER_NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
-                            new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_ID.getId(), "my_table", "TABLE", "CDAP Dataset")),
-                            new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_ID.getId(), "other_table", "TABLE", "CDAP Dataset")))
+                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
@@ -110,9 +110,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
+                             "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
 
     );
 
@@ -156,8 +156,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                                             new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")))
+                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
+                                             new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                                             new QueryResult(Lists.<Object>newArrayList(DEFAULT_DATABASE, "")))
     );
 
     future = getExploreClient().schemas(null, NAMESPACE_ID.getId());
@@ -337,8 +338,8 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
     // Get all columns
     ListenableFuture<ExploreExecutionResult> future = getExploreClient().columns(null, null, "%", "%");
-    List<QueryResult> expectedColumns = Lists.newArrayList(getExpectedColumns(OTHER_NAMESPACE_DATABASE));
-    expectedColumns.addAll(getExpectedColumns(NAMESPACE_DATABASE));
+    List<QueryResult> expectedColumns = Lists.newArrayList(getExpectedColumns(NAMESPACE_DATABASE));
+    expectedColumns.addAll(getExpectedColumns(OTHER_NAMESPACE_DATABASE));
     assertStatementResult(future, true,
                           expectedColumnDescs, expectedColumns);
 

@@ -109,12 +109,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-
     datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteInstance(OTHER_MY_TABLE);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
+
+    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @Test
@@ -148,9 +148,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(null);
-    Assert.assertEquals(ImmutableList.of(new TableNameInfo(OTHER_NAMESPACE_DATABASE, "my_table"),
-                                         new TableNameInfo(NAMESPACE_DATABASE, "my_table"),
-                                         new TableNameInfo(NAMESPACE_DATABASE, "test")),
+    Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, "my_table"),
+                                         new TableNameInfo(NAMESPACE_DATABASE, "test"),
+                                         new TableNameInfo(OTHER_NAMESPACE_DATABASE, "my_table")),
                         tables);
 
     tables = exploreService.getTables(NAMESPACE_ID.getId());
@@ -354,6 +354,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     // verify the ordering
     Assert.assertTrue(Ordering.natural().reverse().isOrdered(timestamps));
 
+    exploreClient.submit(testNamespace1, "drop table if exists my_table").get();
     exploreClient.removeNamespace(testNamespace1).get();
     exploreClient.removeNamespace(testNamespace2).get();
   }
@@ -418,7 +419,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public void getDatasetSchemaTest() throws Exception {
     TableInfo tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "my_table");
     Assert.assertEquals(new TableInfo(
-                          "my_table", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          "my_table", NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
@@ -439,7 +440,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
     tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "my_table");
     Assert.assertEquals(new TableInfo(
-                          "my_table", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          "my_table", NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
@@ -475,9 +476,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     // Get info of a Hive table
     exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
-    tableInfo = exploreService.getTableInfo(null, "test");
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "test");
     Assert.assertEquals(new TableInfo(
-                          "test", NAMESPACE_ID.getId(), System.getProperty("user.name"),
+                          "test", NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.<TableInfo.ColumnInfo>of(),
                           tableInfo.getParameters(),
@@ -498,9 +499,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                          "CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
                            "ip STRING COMMENT \"IP Address of the User\") COMMENT \"This is the page view table\" " +
                            "PARTITIONED BY(dt STRING, country STRING) STORED AS SEQUENCEFILE").get();
-    tableInfo = exploreService.getTableInfo(null, "page_view");
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "page_view");
     Assert.assertEquals(new TableInfo(
-                          "page_view", NAMESPACE_ID.getId(),
+                          "page_view", NAMESPACE_DATABASE,
                           System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
                           ImmutableList.of(
                             new TableInfo.ColumnInfo("dt", "string", null),
@@ -539,7 +540,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
     InetSocketAddress addr = discoverable.getSocketAddress();
-    String serviceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort());
+    String serviceUrl = String.format("%s%s:%d?namespace=%s",
+                                      Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort(),
+                                      NAMESPACE_ID.getId());
 
     Connection connection = DriverManager.getConnection(serviceUrl);
     PreparedStatement stmt;
@@ -678,6 +681,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
                           ImmutableList.of(
+                            new QueryResult(Lists.<Object>newArrayList("cdap_namespace", "")),
                             new QueryResult(Lists.<Object>newArrayList("cdap_other", "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
 
@@ -690,6 +694,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
                           ImmutableList.of(
+                            new QueryResult(Lists.<Object>newArrayList("cdap_namespace", "")),
                             new QueryResult(Lists.<Object>newArrayList("cdap_other", "")),
                             new QueryResult(Lists.<Object>newArrayList("cdap_test", "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
@@ -703,6 +708,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")),
                           ImmutableList.of(
+                            new QueryResult(Lists.<Object>newArrayList("cdap_namespace", "")),
                             new QueryResult(Lists.<Object>newArrayList("cdap_other", "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
 

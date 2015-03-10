@@ -668,7 +668,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = openSession(sessionConf);
 
       String database = getHiveDatabase(namespace.getId());
-      String statement = String.format("DROP DATABASE %s CASCADE", database);
+      String statement = String.format("DROP DATABASE %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
       LOG.info("Deleting database {} with handle {}", database, handle);

@@ -35,6 +35,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests exploration of object mapped tables.

@@ -425,7 +425,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.postTxCommit();
 
       exploreClient.submit(OTHER_NAMESPACE_ID,
-                           "insert into table simple_table select * from default.simple_table").get().close();
+                           "insert into table simple_table select * from cdap_namespace.simple_table").get().close();
 
       assertSelectAll(NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
         ImmutableList.<Object>of(1, "one")
