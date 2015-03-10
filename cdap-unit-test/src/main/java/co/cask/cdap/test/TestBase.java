@@ -363,6 +363,16 @@ public class TestBase {
   }
 
   /**
+   * Deletes a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().deleteNamespace(namespace);
+  }
+
+  /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
