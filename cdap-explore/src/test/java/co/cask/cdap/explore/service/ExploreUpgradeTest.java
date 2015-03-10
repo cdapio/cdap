@@ -89,7 +89,6 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     TransactionAware txTpfs = (TransactionAware) tpfs;
     txTpfs.startTx(tx1);
     tpfs.addPartition(0L, "epoch");
-    tpfs.addPartition(86400000L, "nextday");
     Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
     txTpfs.commitTx();
     transactionManager.canCommit(tx1, txTpfs.getTxChanges());
