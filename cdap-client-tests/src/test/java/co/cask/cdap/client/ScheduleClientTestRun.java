@@ -36,14 +36,16 @@ import java.util.List;
  */
 @Category(XSlowTests.class)
 public class ScheduleClientTestRun extends ClientTestBase {
+
   private ScheduleClient scheduleClient;
   private ProgramClient programClient;
+  private ApplicationClient appClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
 
-    ApplicationClient appClient = new ApplicationClient(clientConfig);
+    appClient = new ApplicationClient(clientConfig);
     scheduleClient = new ScheduleClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
 
@@ -56,6 +58,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
   public void tearDown() throws Throwable {
     programClient.stop(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    appClient.delete(FakeApp.NAME);
   }
 
   @Test
