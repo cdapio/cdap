@@ -20,7 +20,7 @@ import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -29,7 +29,6 @@ import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -41,9 +40,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * Configuration for the CDAP CLI.
@@ -58,7 +57,6 @@ public class CLIConfig {
   private final String version;
 
   private List<ConnectionChangeListener> connectionChangeListeners;
-  private ConnectionInfo connectionInfo;
 
   /**
    * @param clientConfig client configuration
@@ -78,57 +76,47 @@ public class CLIConfig {
     return clientConfig.getNamespace();
   }
 
-  public void setCurrentNamespace(Id.Namespace currentNamespace) {
-    clientConfig.setNamespace(currentNamespace);
+  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
+    clientConfig.setConnectionConfig(connectionConfig);
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig);
+      listener.onConnectionChanged(connectionConfig);
     }
   }
 
-  public void tryConnect(ConnectionInfo connectionInfo, PrintStream output, boolean debug) throws Exception {
-    this.connectionInfo = connectionInfo;
+  public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
     try {
-      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, debug);
-      checkConnection(clientConfig, connectionInfo, accessToken);
-      setHostname(connectionInfo.getHostname());
-      setPort(connectionInfo.getPort());
-      setCurrentNamespace(connectionInfo.getNamespace());
-      setSSLEnabled(connectionInfo.isSSLEnabled());
-      setAccessToken(accessToken);
-
-      output.printf("Successfully connected CDAP instance at %s:%d\n",
-                    connectionInfo.getHostname(), connectionInfo.getPort());
+      AccessToken accessToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
+      checkConnection(clientConfig, connectionConfig, accessToken);
+      setConnectionConfig(connectionConfig);
+      output.printf("Successfully connected CDAP instance at %s", connectionConfig.getURI().toString());
+      output.println();
     } catch (IOException e) {
-      throw new IOException(String.format("Host %s on port %d could not be reached: %s",
-                                          connectionInfo.getHostname(), connectionInfo.getPort(),
-                                          e.getMessage()));
+      throw new IOException(String.format("CDAP instance at '%s' could not be reached: %s",
+                                          connectionConfig.getURI().toString(), e.getMessage()), e);
     }
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
-    if (connectionInfo != null) {
-      setAccessToken(getNewAccessToken(connectionInfo, output, false));
-    }
+    AccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output, false);
+    clientConfig.setAccessToken(newAccessToken);
   }
 
   private void checkConnection(ClientConfig baseClientConfig,
-                               ConnectionInfo connectionInfo,
+                               ConnectionConfig connectionInfo,
                                AccessToken accessToken) throws IOException, UnauthorizedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
-      .setHostname(connectionInfo.getHostname())
-      .setPort(connectionInfo.getPort())
-      .setSSLEnabled(connectionInfo.isSSLEnabled())
+      .setConnectionConfig(connectionInfo)
       .setAccessToken(accessToken)
       .build();
     MetaClient metaClient = new MetaClient(clientConfig);
     metaClient.ping();
   }
 
-  private boolean isAuthenticationEnabled(ConnectionInfo connectionInfo) throws IOException {
+  private boolean isAuthenticationEnabled(ConnectionConfig connectionInfo) throws IOException {
     return getAuthenticationClient(connectionInfo).isAuthEnabled();
   }
 
-  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo,
+  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionConfig connectionInfo,
                                          PrintStream output, boolean debug) throws IOException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
@@ -146,13 +134,14 @@ public class CLIConfig {
     return getNewAccessToken(connectionInfo, output, debug);
   }
 
-  private AccessToken getNewAccessToken(ConnectionInfo connectionInfo, PrintStream output,
+  private AccessToken getNewAccessToken(ConnectionConfig connectionInfo, PrintStream output,
                                         boolean debug) throws IOException {
 
     AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
 
     Properties properties = new Properties();
-    properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME, String.valueOf(isVerifySSLCert()));
+    properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME,
+                   String.valueOf(clientConfig.isVerifySSLCert()));
 
     // obtain new access token via manual user input
     output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
@@ -180,7 +169,7 @@ public class CLIConfig {
     return accessToken;
   }
 
-  private AuthenticationClient getAuthenticationClient(ConnectionInfo connectionInfo) {
+  private AuthenticationClient getAuthenticationClient(ConnectionConfig connectionInfo) {
     AuthenticationClient authenticationClient = new BasicAuthenticationClient();
     authenticationClient.setConnectionInfo(connectionInfo.getHostname(), connectionInfo.getPort(),
                                            connectionInfo.isSSLEnabled());
@@ -241,45 +230,8 @@ public class CLIConfig {
     return clientConfig;
   }
 
-  public String getHost() {
-    return clientConfig.getHostname();
-  }
-
-  public URI getURI() {
-    return clientConfig.getBaseURI();
-  }
-
-  public boolean isVerifySSLCert() {
-    return clientConfig.isVerifySSLCert();
-  }
-
   public String getVersion() {
     return version;
-  }
-
-  public void setHostname(String hostname) {
-    clientConfig.setHostname(hostname);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig);
-    }
-  }
-
-  public void setPort(int port) {
-    clientConfig.setPort(port);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig);
-    }
-  }
-
-  public void setSSLEnabled(boolean sslEnabled) {
-    clientConfig.setSSLEnabled(sslEnabled);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig);
-    }
-  }
-
-  public void setAccessToken(AccessToken accessToken) {
-    clientConfig.setAccessToken(accessToken);
   }
 
   public void addHostnameChangeListener(ConnectionChangeListener listener) {
@@ -290,79 +242,6 @@ public class CLIConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(ClientConfig clientConfig);
-  }
-
-  /**
-   * Connection information to a CDAP instance.
-   */
-  public static final class ConnectionInfo {
-
-    private final String hostname;
-    private final int port;
-    private final boolean sslEnabled;
-    private final Id.Namespace namespace;
-
-    public ConnectionInfo(String hostname, int port, boolean sslEnabled, Id.Namespace namespace) {
-      this.hostname = hostname;
-      this.port = port;
-      this.sslEnabled = sslEnabled;
-      this.namespace = namespace;
-    }
-
-    public ConnectionInfo(String hostname, int port, boolean sslEnabled) {
-      this(hostname, port, sslEnabled, Constants.DEFAULT_NAMESPACE_ID);
-    }
-
-    public static ConnectionInfo of(ClientConfig clientConfig) {
-      return new ConnectionInfo(clientConfig.getHostname(), clientConfig.getPort(), clientConfig.isSSLEnabled(),
-                                clientConfig.getNamespace());
-    }
-
-    public Id.Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getHostname() {
-      return hostname;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    public boolean isSSLEnabled() {
-      return sslEnabled;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(hostname, port, sslEnabled, namespace);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      final ConnectionInfo other = (ConnectionInfo) obj;
-      return Objects.equal(this.hostname, other.hostname) &&
-        Objects.equal(this.port, other.port) &&
-        Objects.equal(this.sslEnabled, other.sslEnabled) &&
-        Objects.equal(this.namespace, other.namespace);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("hostname", hostname)
-        .add("port", port)
-        .add("sslEnabled", sslEnabled)
-        .add("namespace", namespace)
-        .toString();
-    }
+    void onConnectionChanged(ConnectionConfig connectionConfig);
   }
 }

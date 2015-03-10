@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright © 2015 Cask Data, Inc.
+    
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+    
+  http://www.apache.org/licenses/LICENSE-2.0
+    
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
+<!--
+  Logback used by containers that run in YARN eg. Flows, MR, Explore
+-->
+<configuration>
+
+  <!--
+    Disabling some chatty loggers.
+  -->
+  <logger name="org.apache.commons.beanutils" level="ERROR"/>
+  <logger name="org.apache.zookeeper.server" level="ERROR"/>
+  <logger name="org.apache.zookeeper" level="ERROR"/>
+  <logger name="com.ning" level="WARN"/>
+  <logger name="org.apache.hadoop" level="WARN"/>
+  <logger name="org.apache.hive" level="WARN"/>
+  <logger name="org.quartz.core" level="WARN"/>
+  <logger name="co.cask.cdap" level="INFO"/>
+  <!-- Redirected stdout and stderr of Hive operations -->
+  <logger name="Explore.stdout" level="INFO"/>
+  <logger name="Explore.stderr" level="INFO"/>
+
+    <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <!-- LOG_DIRS is the environment variable set by YARN for container logs -->
+      <file>${LOG_DIRS}/program.log</file>
+      <encoder>
+        <pattern>%d{ISO8601} - %-5p [%t:%logger{1}@%L] - %m%n</pattern>
+      </encoder>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- Daily rollover at midnight-->
+        <fileNamePattern>${LOG_DIRS}/program.%d.log</fileNamePattern>
+
+        <!-- Keep 2 weeks of history -->
+        <maxHistory>14</maxHistory>
+      </rollingPolicy>
+    </appender>
+
+  <root level="ERROR">
+    <appender-ref ref="Rolling"/>
+  </root>
+
+</configuration>
+

@@ -13,21 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.client.exception;
 
-package co.cask.cdap.data2.transaction.queue;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-public class QueueUtilsTest {
-
-  @Test
-  public void test() {
-    Assert.assertEquals("cdap.fooNamespace.system.queue.config",
-                        QueueUtils.determineQueueConfigTableName("cdap.fooNamespace.system.queue.fooApp.fooFlow"));
-
-    Assert.assertEquals("cdap.default.system.queue.config",
-                        QueueUtils.determineQueueConfigTableName("cdap.default.system.queue.fooApp.fooFlow"));
-
-  }
+/**
+ * Thrown when the client is not connected, but a request was attempted.
+ */
+public class DisconnectedException extends RuntimeException {
 }

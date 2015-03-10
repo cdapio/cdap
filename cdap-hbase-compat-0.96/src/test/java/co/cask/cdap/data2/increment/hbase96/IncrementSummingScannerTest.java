@@ -16,8 +16,12 @@
 
 package co.cask.cdap.data2.increment.hbase96;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
 import co.cask.cdap.data2.util.hbase.MockRegionServerServices;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -60,12 +64,14 @@ public class IncrementSummingScannerTest {
   private static final byte[] TRUE = Bytes.toBytes(true);
   private static HBaseTestingUtility testUtil;
   private static Configuration conf;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     testUtil = new HBaseTestingUtility();
     testUtil.startMiniCluster();
     conf = testUtil.getConfiguration();
+    cConf = CConfiguration.create();
   }
 
   @AfterClass
@@ -75,10 +81,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanning() throws Exception {
-    TableName tableName = TableName.valueOf("TestIncrementSummingScanner");
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
       
@@ -215,10 +221,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testFlushAndCompact() throws Exception {
-    TableName tableName = TableName.valueOf("TestFlushAndCompact");
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
 
@@ -308,10 +314,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanningWithBatchAndUVB() throws Exception {
-    TableName tableName = TableName.valueOf("TestIncrementSummingScannerWithUpperVisibilityBound");
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScannerWithUpperVisibilityBound");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
 
@@ -420,11 +426,13 @@ public class IncrementSummingScannerTest {
     assertFalse(hasMore);
   }
 
-  private HRegion createRegion(TableName tableName, byte[] family) throws Exception {
-    return createRegion(conf, tableName, new HColumnDescriptor(family));
+  private HRegion createRegion(TableId tableId, byte[] family) throws Exception {
+    return createRegion(conf, cConf, tableId, new HColumnDescriptor(family));
   }
 
-  static HRegion createRegion(Configuration hConf, TableName tableName, HColumnDescriptor cfd) throws Exception {
+  static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
+                              HColumnDescriptor cfd) throws Exception {
+    TableName tableName = HTable96NameConverter.toTableName(cConf, tableId);
     HTableDescriptor htd = new HTableDescriptor(tableName);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
@@ -438,6 +446,6 @@ public class IncrementSummingScannerTest {
     HRegionInfo regionInfo = new HRegionInfo(tableName);
     HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
     return new HRegion(regionFS, hLog, hConf, htd,
-                                 new MockRegionServerServices(hConf, null));
+                       new MockRegionServerServices(hConf, null));
   }
 }

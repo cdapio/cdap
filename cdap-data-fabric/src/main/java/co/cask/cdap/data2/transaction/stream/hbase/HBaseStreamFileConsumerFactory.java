@@ -66,12 +66,11 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   }
 
   @Override
-  protected StreamConsumer create(String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+  protected StreamConsumer create(TableId tableId, StreamConfig streamConfig, ConsumerConfig consumerConfig,
                                   StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
-    TableId tableId = TableId.from(tableName);
     HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
@@ -93,9 +92,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   }
 
   @Override
-  protected void dropTable(String tableName) throws IOException {
+  protected void dropTable(TableId tableId) throws IOException {
     HBaseAdmin admin = getAdmin();
-    TableId tableId = TableId.from(tableName);
     if (tableUtil.tableExists(admin, tableId)) {
       tableUtil.dropTable(admin, tableId);
     }

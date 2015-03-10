@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
@@ -28,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -48,15 +48,12 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   @Before
   public void setup() {
-    ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setHostname(HOSTNAME).setPort(PORT);
-    namespaceClient = new NamespaceClient(builder.build());
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
-  public void testNamespaces() throws IOException, UnauthorizedException, CannotBeDeletedException,
-    NotFoundException, AlreadyExistsException, BadRequestException {
-
+  @Ignore
+  public void testNamespaces() throws Exception {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();
 
@@ -69,6 +66,8 @@ public class NamespaceClientTestRun extends ClientTestBase {
     verifyDoesNotExist(DOES_NOT_EXIST);
     verifyReservedCreate();
     verifyReservedDelete();
+    // include default namespace
+    initialNamespaceCount++;
 
     // create a valid namespace
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
@@ -146,16 +145,15 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void verifyReservedDelete() throws NotFoundException, IOException, UnauthorizedException {
-    try {
-      namespaceClient.delete(DEFAULT.getId());
-      Assert.fail(String.format("Must not delete '%s' namespace", DEFAULT));
-    } catch (CannotBeDeletedException e) {
-    }
+  private void verifyReservedDelete() throws Exception {
+    // For the purposes of NamespaceClientTestRun, deleting default namespace has no effect.
+    // Its lifecycle is already tested in NamespaceHttpHandlerTest
+    namespaceClient.delete(DEFAULT.getId());
+    namespaceClient.get(DEFAULT.getId());
     try {
       namespaceClient.delete(SYSTEM.getId());
-      Assert.fail(String.format("Must not delete '%s' namespace", SYSTEM));
-    } catch (CannotBeDeletedException e) {
+      Assert.fail(String.format("'%s' namespace must not exist", SYSTEM));
+    } catch (NotFoundException e) {
     }
   }
 }

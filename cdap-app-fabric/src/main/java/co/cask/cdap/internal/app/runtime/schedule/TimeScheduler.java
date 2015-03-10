@@ -29,6 +29,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -43,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
@@ -56,6 +60,7 @@ final class TimeScheduler implements Scheduler {
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
+  private ListeningExecutorService taskExecutorService;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
                 ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
@@ -68,6 +73,8 @@ final class TimeScheduler implements Scheduler {
 
   void start() throws SchedulerException {
     try {
+      taskExecutorService = MoreExecutors.listeningDecorator(
+        Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
       scheduler.start();
@@ -80,6 +87,9 @@ final class TimeScheduler implements Scheduler {
     try {
       if (scheduler != null) {
         scheduler.shutdown();
+      }
+      if (taskExecutorService != null) {
+        taskExecutorService.shutdownNow();
       }
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
@@ -290,7 +300,8 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
+          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore,
+                                                          taskExecutorService);
         } else {
           try {
             return jobClass.newInstance();

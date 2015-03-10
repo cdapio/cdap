@@ -1,0 +1,35 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog lrg-modal">
+    <div class="modal-content" ng-controller="FlowStreamDetailController">
+
+      <form name="injectStreamForm" class="form"
+          ng-submit="doInject($event)"
+          novalidate>
+
+        <div class="modal-header">
+          <button type="button" class="close" ng-click="$hide()">&times;</button>
+          <h4 class="modal-title stream-title">{{streamId}}</h4>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="form-group">
+            <div class="col-xs-9">
+            	<textarea class="flow-injector-input" placeholder="Events injected here will be consumed by all attached programs." ng-model="userInput" ng-keyup="$event.keyCode == 13 ? doInject($event) : null"></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer text-right">
+          <button type="submit"
+            ng-disabled="injectStreamForm.$invalid"
+            class="btn btn-primary"
+          >Inject</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
