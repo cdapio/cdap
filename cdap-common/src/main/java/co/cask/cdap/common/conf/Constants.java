@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 public final class Constants {
 
   public static final String ARCHIVE_DIR = "archive";
+  public static final String ROOT_NAMESPACE = "root.namespace";
 
   /**
    * Global Service names.
@@ -174,6 +175,11 @@ public final class Constants {
     // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
     // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
     public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
+
+    public static final String DATA_DIR = "dataset.data.dir";
+    public static final String DEFAULT_DATA_DIR = "data";
+
+    public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
     /**
      * DatasetManager service configuration.
@@ -441,6 +447,13 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics collector.
+   */
+  public static final class MetricsCollector {
+    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
+  }
+
+  /**
    * Configurations for log saver.
    */
   public static final class LogSaver {
@@ -588,6 +601,7 @@ public final class Constants {
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
+    public static final String CDAP_VERSION = "cdap.version";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
@@ -702,6 +716,8 @@ public final class Constants {
    * Default namespace to be used by v2 APIs
    */
   public static final String DEFAULT_NAMESPACE = "default";
+  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+
   /**
    * 'system' reserved namespace name
    */

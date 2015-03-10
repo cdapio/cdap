@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,10 +48,10 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.description = description;
     this.inputDataSet = inputDataSet;
     this.outputDataSet = outputDataSet;
-    this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
+    this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
   }
 
   @Override
@@ -106,5 +106,20 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   @Override
   public Resources getReducerResources() {
     return reducerResources;
+  }
+
+  private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {
+    ImmutableSet.Builder<String> builder = new ImmutableSet.Builder<String>();
+    builder.addAll(dataSets);
+
+    if (inputDataSet != null && !inputDataSet.isEmpty()) {
+      builder.add(inputDataSet);
+    }
+
+    if (outputDataSet != null && !outputDataSet.isEmpty()) {
+      builder.add(outputDataSet);
+    }
+
+    return builder.build();
   }
 }

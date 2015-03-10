@@ -75,10 +75,10 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testCreateAddDrop() throws Exception {
 
     final String datasetName = "files";
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final Id.DatasetInstance datasetInstanceId =
+      DATASET_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, datasetName));
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
-    final String tableName = datasetName; // in this test context, the hive table name is the same as the dataset name
+    final String tableName = datasetInstanceId.getId().replaceAll("\\.", "_");
 
     // create a time partitioned file set
     datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
@@ -102,20 +102,20 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     Assert.assertNotNull(fileSet);
 
     // add a file
-    AvroHelper.generateAvroFile(fileSet.getLocation("file1").getOutputStream(), "a", 0, 3);
+    FileWriterHelper.generateAvroFile(fileSet.getLocation("file1").getOutputStream(), "a", 0, 3);
 
     // verify that we can query the key-values in the file with Hive
     runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName, true,
                Lists.newArrayList(
-                 new ColumnDesc("files.key", "STRING", 1, null),
-                 new ColumnDesc("files.value", "STRING", 2, null)),
+                 new ColumnDesc(tableName + ".key", "STRING", 1, null),
+                 new ColumnDesc(tableName + ".value", "STRING", 2, null)),
                Lists.newArrayList(
                  new QueryResult(Lists.<Object>newArrayList("a0", "#0")),
                  new QueryResult(Lists.<Object>newArrayList("a1", "#1")),
                  new QueryResult(Lists.<Object>newArrayList("a2", "#2"))));
 
     // add another file
-    AvroHelper.generateAvroFile(fileSet.getLocation("file2").getOutputStream(), "b", 3, 5);
+    FileWriterHelper.generateAvroFile(fileSet.getLocation("file2").getOutputStream(), "b", 3, 5);
 
     // verify that we can query the key-values in the file with Hive
     runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + tableName, true,
@@ -136,7 +136,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testPartitionedFileSet() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parted");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replace(".", "_");
+    final String tableName = datasetName.replaceAll("\\.", "_");
 
     // create a time partitioned file set
     datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, PartitionedFileSetProperties.builder()
@@ -171,10 +171,10 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     Location locationX2 = fileSet.getLocation("fileX2/nn");
     Location locationY2 = fileSet.getLocation("fileY2/nn");
 
-    AvroHelper.generateAvroFile(locationX1.getOutputStream(), "x", 1, 2);
-    AvroHelper.generateAvroFile(locationY1.getOutputStream(), "y", 1, 2);
-    AvroHelper.generateAvroFile(locationX2.getOutputStream(), "x", 2, 3);
-    AvroHelper.generateAvroFile(locationY2.getOutputStream(), "y", 2, 3);
+    FileWriterHelper.generateAvroFile(locationX1.getOutputStream(), "x", 1, 2);
+    FileWriterHelper.generateAvroFile(locationY1.getOutputStream(), "y", 1, 2);
+    FileWriterHelper.generateAvroFile(locationX2.getOutputStream(), "x", 2, 3);
+    FileWriterHelper.generateAvroFile(locationY2.getOutputStream(), "y", 2, 3);
 
     PartitionKey keyX1 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 1).build();
     PartitionKey keyY1 = PartitionKey.builder().addStringField("str", "y").addIntField("num", 1).build();
@@ -247,10 +247,81 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   }
 
   @Test
+  public void testPartitionedTextFile() throws Exception {
+    testPartitionedTextFile("csv", "csv", null, ",");
+    testPartitionedTextFile("null", "text", null, "\1"); // default used by Hive if not delimiter given
+    testPartitionedTextFile("comma", "text", ",", ",");
+    testPartitionedTextFile("blank", "text", " ", " ");
+  }
+
+  // this tests mainly the support for different text formats. Other features (partitioning etc.) are tested above.
+  private void testPartitionedTextFile(String name, String format, String delim, String fileDelim) throws Exception {
+    final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, name);
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final String tableName = datasetName.replaceAll("\\.", "_");
+    // create a time partitioned file set
+    PartitionedFileSetProperties.Builder builder = (PartitionedFileSetProperties.Builder)
+      PartitionedFileSetProperties.builder()
+        .setPartitioning(Partitioning.builder().addIntField("number").build())
+          // properties for file set
+        .setBasePath("/" + name)
+          // properties for partitioned hive table
+        .setEnableExploreOnCreate(true)
+        .setExploreSchema("key STRING, value INT")
+        .setExploreFormat(format);
+    if (delim != null) {
+      builder.setExploreFormatProperty("delimiter", delim);
+    }
+    datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, builder.build());
+
+    // verify that the hive table was created for this file set
+    runCommand(NAMESPACE_ID, "show tables", true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
+
+    // Accessing dataset instance to perform data operations
+    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
+                                                                 null);
+    Assert.assertNotNull(partitioned);
+    FileSet fileSet = partitioned.getEmbeddedFileSet();
+
+    // add a partitions. Beware that Hive expects a partition to be a directory, so we create a dir with one file
+    Location location1 = fileSet.getLocation("file1/nn");
+    FileWriterHelper.generateTextFile(location1.getOutputStream(), fileDelim, "x", 1, 2);
+    PartitionKey key1 = PartitionKey.builder().addIntField("number", 1).build();
+    addPartition(partitioned, key1, "file1");
+
+    // verify that the partitions were added to Hive
+    runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
+               Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("number=1"))));
+
+    // verify that we can query the key-values in the file with Hive
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " ORDER BY key", true,
+               Lists.newArrayList(
+                 new ColumnDesc(tableName + ".key", "STRING", 1, null),
+                 new ColumnDesc(tableName + ".value", "INT", 2, null),
+                 new ColumnDesc(tableName + ".number", "INT", 3, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("x1", 1, 1))));
+
+    // drop a partition and query again
+    dropPartition(partitioned, key1);
+
+    // drop the dataset
+    datasetFramework.deleteInstance(datasetInstanceId);
+
+    // verify the Hive table is gone
+    runCommand(NAMESPACE_ID, "show tables", false,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Collections.<QueryResult>emptyList());
+  }
+
+  @Test
   public void testTimePartitionedFileSet() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parts");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replace(".", "_");
+    final String tableName = datasetName.replaceAll("\\.", "_");
 
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
@@ -283,9 +354,9 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     Location location2 = tpfs.getEmbeddedFileSet().getLocation("file2/nn");
     Location location3 = tpfs.getEmbeddedFileSet().getLocation("file3/nn");
 
-    AvroHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
-    AvroHelper.generateAvroFile(location2.getOutputStream(), "y", 2, 3);
-    AvroHelper.generateAvroFile(location3.getOutputStream(), "x", 3, 4);
+    FileWriterHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
+    FileWriterHelper.generateAvroFile(location2.getOutputStream(), "y", 2, 3);
+    FileWriterHelper.generateAvroFile(location3.getOutputStream(), "x", 3, 4);
 
     addTimePartition(tpfs, time1, "file1");
     addTimePartition(tpfs, time2, "file2");
@@ -368,7 +439,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testTimePartitionedFileSetBackwardsCompatibility() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "backward");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replace(".", "_");
+    final String tableName = datasetName.replaceAll("\\.", "_");
 
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
@@ -405,9 +476,9 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     Location location2 = tpfs.getEmbeddedFileSet().getLocation("file2/nn");
     Location location3 = tpfs.getEmbeddedFileSet().getLocation("file3/nn");
 
-    AvroHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
-    AvroHelper.generateAvroFile(location2.getOutputStream(), "x", 2, 3);
-    AvroHelper.generateAvroFile(location3.getOutputStream(), "x", 3, 4);
+    FileWriterHelper.generateAvroFile(location1.getOutputStream(), "x", 1, 2);
+    FileWriterHelper.generateAvroFile(location2.getOutputStream(), "x", 2, 3);
+    FileWriterHelper.generateAvroFile(location3.getOutputStream(), "x", 3, 4);
 
     addLegacyTimePartition(tpfs, time1, "file1");
     addLegacyTimePartition(tpfs, time3, "file3");

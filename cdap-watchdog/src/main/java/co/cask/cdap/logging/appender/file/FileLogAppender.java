@@ -30,7 +30,7 @@ import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.logging.write.LogWriteEvent;
 import co.cask.cdap.logging.write.SimpleLogFileWriter;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +59,7 @@ public class FileLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "FileLogAppender";
 
   private final LogSaverTableUtil tableUtil;
-  private final TransactionSystemClient txClient;
+  private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
   private final Location logBaseDir;
   private final int syncIntervalBytes;
@@ -69,6 +69,7 @@ public class FileLogAppender extends LogAppender {
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
+  private final DatasetFramework dsFramework;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -78,13 +79,14 @@ public class FileLogAppender extends LogAppender {
   @Inject
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
-                         TransactionSystemClient txClient,
+                         TransactionExecutorFactory txExecutorFactory,
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
 
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
-    this.txClient = txClient;
+    this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
+    this.dsFramework = dsFramework;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
@@ -129,8 +131,8 @@ public class FileLogAppender extends LogAppender {
     try {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
-                                                                        txClient,
-                                                                        locationFactory);
+                                                                        txExecutorFactory,
+                                                                        locationFactory, dsFramework);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
                                                          logSchema,

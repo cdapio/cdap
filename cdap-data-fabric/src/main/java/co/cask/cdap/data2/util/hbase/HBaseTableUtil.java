@@ -17,7 +17,10 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -34,6 +37,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -49,10 +53,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -64,6 +67,7 @@ import javax.annotation.Nullable;
  * Common utilities for dealing with HBase.
  */
 public abstract class HBaseTableUtil {
+
   /**
    * Represents the compression types supported for HBase tables.
    */
@@ -89,41 +93,41 @@ public abstract class HBaseTableUtil {
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
-  public static String getHBaseTableName(String tableName) {
-    return encodeTableName(tableName);
+
+  protected String tablePrefix;
+
+  public void setCConf(CConfiguration cConf) {
+    if (cConf != null) {
+      this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    }
   }
 
-  private static String encodeTableName(String tableName) {
-    try {
-      return URLEncoder.encode(tableName, "ASCII");
-    } catch (UnsupportedEncodingException e) {
-      // this can never happen - we know that ASCII is a supported character set!
-      LOG.error("Error encoding table name '" + tableName + "'", e);
-      throw new RuntimeException(e);
-    }
+  protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
+    String hTableName = hTableDescriptor.getNameAsString();
+    return hTableName.startsWith(tablePrefix + ".") || hTableName.startsWith(tablePrefix + "_");
   }
 
   /**
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
    * create the table.
    * @param admin the hbase admin
-   * @param tableName the name of the table
+   * @param tableId the {@link TableId} for the table to create
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public void createTableIfNotExists(HBaseAdmin admin, String tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
                                      HTableDescriptor tableDescriptor) throws IOException {
-    createTableIfNotExists(admin, Bytes.toBytes(tableName), tableDescriptor, null);
+    createTableIfNotExists(admin, tableId, tableDescriptor, null);
   }
 
   /**
    * Creates a hbase table if it does not exists. Same as calling
-   * {@link #createTableIfNotExists(HBaseAdmin, byte[], HTableDescriptor, byte[][], long, TimeUnit)}
+   * {@link #createTableIfNotExists(HBaseAdmin, TableId, HTableDescriptor, byte[][], long, TimeUnit)}
    * with timeout = {@link #MAX_CREATE_TABLE_WAIT} milliseconds.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
                                      HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys) throws IOException {
-    createTableIfNotExists(admin, tableName, tableDescriptor, splitKeys,
+    createTableIfNotExists(admin, tableId, tableDescriptor, splitKeys,
                            MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
 
@@ -131,32 +135,30 @@ public abstract class HBaseTableUtil {
    * Create a hbase table if it does not exist. Deals with race conditions when two clients concurrently attempt to
    * create the table.
    * @param admin the hbase admin
-   * @param tableName the name of the table
+   * @param tableId {@link TableId} representing the table
    * @param tableDescriptor hbase table descriptor for the new table
    * @param timeout Maximum time to wait for table creation.
    * @param timeoutUnit The TimeUnit for timeout.
    */
-  public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, TableId tableId,
                                      HTableDescriptor tableDescriptor,
                                      @Nullable byte[][] splitKeys,
                                      long timeout, TimeUnit timeoutUnit) throws IOException {
-    if (admin.tableExists(tableName)) {
+    if (tableExists(admin, tableId)) {
       return;
     }
     setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
 
-    String tableNameString = Bytes.toString(tableName);
-
     try {
-      LOG.info("Creating table '{}'", tableNameString);
+      LOG.info("Creating table '{}'", tableId);
       // HBaseAdmin.createTable can handle null splitKeys.
       admin.createTable(tableDescriptor, splitKeys);
-      LOG.info("Table created '{}'", tableNameString);
+      LOG.info("Table created '{}'", tableId);
       return;
     } catch (TableExistsException e) {
       // table may exist because someone else is creating it at the same
       // time. But it may not be available yet, and opening it might fail.
-      LOG.info("Failed to create table '{}'. {}.", tableNameString, e.getMessage(), e);
+      LOG.info("Failed to create table '{}'. {}.", tableId, e.getMessage(), e);
     }
 
     // Wait for table to materialize
@@ -166,8 +168,8 @@ public abstract class HBaseTableUtil {
       long sleepTime = timeoutUnit.toNanos(timeout) / 10;
       sleepTime = sleepTime <= 0 ? 1 : sleepTime;
       do {
-        if (admin.tableExists(tableName)) {
-          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableName);
+        if (tableExists(admin, tableId)) {
+          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableId);
           return;
         } else {
           TimeUnit.NANOSECONDS.sleep(sleepTime);
@@ -176,9 +178,8 @@ public abstract class HBaseTableUtil {
     } catch (InterruptedException e) {
       LOG.warn("Sleeping thread interrupted.");
     }
-    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableName, MAX_CREATE_TABLE_WAIT);
+    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableId, MAX_CREATE_TABLE_WAIT);
   }
-
 
   // This is a workaround for unit-tests which should run even if compression is not supported
   // todo: this should be addressed on a general level: CDAP may use HBase cluster (or multiple at a time some of)
@@ -320,11 +321,11 @@ public abstract class HBaseTableUtil {
           throw new IOException("Fails to create directory: " + jarDir.toURI());
         }
         Files.copy(jarFile, new OutputSupplier<OutputStream>() {
-        @Override
-        public OutputStream getOutput() throws IOException {
-          return targetPath.getOutputStream();
-        }
-      });
+          @Override
+          public OutputStream getOutput() throws IOException {
+            return targetPath.getOutputStream();
+          }
+        });
         return targetPath;
       } finally {
         jarFile.delete();
@@ -388,17 +389,6 @@ public abstract class HBaseTableUtil {
     return info;
   }
 
-  protected String toHBaseNamespace(Id.Namespace namespace) {
-    return "cdap_" + namespace.getId();
-  }
-
-  /**
-   * Returns if the current version of HBase supports namespaces
-   *
-   * @return true if namespaces are supported, false otherwise
-   */
-  public abstract boolean namespacesSupported();
-
   /**
    * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
    *
@@ -406,15 +396,24 @@ public abstract class HBaseTableUtil {
    * @param tableId the {@link TableId} to create an {@link HTable} for
    * @return an {@link HTable} for the tableName in the namespace
    */
-  public abstract HTable getHTable(Configuration conf, TableId tableId) throws IOException;
+  public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
 
   /**
    * Creates a new {@link HTableDescriptor} which may contain an HBase namespace depending on the HBase version
    *
    * @param tableId the {@link TableId} to create an {@link HTableDescriptor} for
-   * @return an {@link HTableDescriptor} for the tableName in the namespace
+   * @return an {@link HTableDescriptor} for the table
    */
-  public abstract HTableDescriptor getHTableDescriptor(TableId tableId);
+  public abstract HTableDescriptor createHTableDescriptor(TableId tableId);
+
+  /**
+   * Constructs a {@link HTableDescriptor} which may contain an HBase namespace for an existing table
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId the {@link TableId} to construct an {@link HTableDescriptor} for
+   * @return an {@link HTableDescriptor} for the table
+   * @throws IOException
+   */
+  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
 
   /**
    * Checks if an HBase namespace already exists
@@ -446,12 +445,123 @@ public abstract class HBaseTableUtil {
   public abstract void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
 
   /**
-   * Returns the fully qualified table name containing namespace
+   * Disable an HBase table
    *
-   * @param tableId the identifier for the table containing namespace and table name
-   * @return the fully qualified table name containing namespace
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId {@link TableId} for the specified table
+   * @throws IOException
    */
-  public abstract String getTableNameWithNamespace(TableId tableId);
+  public abstract void disableTable(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Enable an HBase table
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public abstract void enableTable(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Check if an HBase table exists
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Delete an HBase table
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public abstract void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Modify an HBase table
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableDescriptor the modified {@link HTableDescriptor}
+   * @throws IOException
+   */
+  public abstract void modifyTable(HBaseAdmin admin, HTableDescriptor tableDescriptor) throws IOException;
+
+  /**
+   * Returns a list of {@link HRegionInfo} for the specified {@link TableId}
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId {@link TableId} for the specified table
+   * @return a list of {@link HRegionInfo} for the specified {@link TableId}
+   * @throws IOException
+   */
+  public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
+
+  /**
+   * Deletes all tables in the specified namespace, that begin with a particular prefix.
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being deleted
+   * @param tablePrefix pattern that is matched against a table name to check for deletion
+   * @throws IOException
+   */
+  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
+    for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
+      if (tableId.getTableName().startsWith(tablePrefix)) {
+        dropTable(admin, tableId);
+      }
+    }
+  }
+
+  /**
+   * Deletes all tables in the specified namespace
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being deleted
+   * @throws IOException
+   */
+  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    deleteAllInNamespace(admin, namespaceId, "");
+  }
+
+  /**
+   * Lists all tables in the specified namespace
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being requested
+   */
+  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException;
+
+  /**
+   * Lists all tables
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   */
+  public abstract List<TableId> listTables(HBaseAdmin admin) throws IOException;
+
+  /**
+   * Disables and deletes a table.
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public void dropTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    disableTable(admin, tableId);
+    deleteTable(admin, tableId);
+  }
+
+  /**
+   * Truncates a table
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @throws IOException
+   */
+  public void truncateTable(HBaseAdmin admin, TableId tableId) throws IOException {
+    HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
+    dropTable(admin, tableId);
+    createTableIfNotExists(admin, tableId, tableDescriptor);
+  }
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 
@@ -468,6 +578,7 @@ public abstract class HBaseTableUtil {
 
   /**
    * Collects HBase table stats
+   * //TODO: Explore the possiblitity of returning a {@code Map<TableId, TableStats>}
    * @param admin instance of {@link HBaseAdmin} to communicate with HBase
    * @return map of table name -> table stats
    * @throws IOException

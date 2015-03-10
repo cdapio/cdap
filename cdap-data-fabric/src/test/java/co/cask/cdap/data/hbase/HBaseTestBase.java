@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,33 +16,14 @@
 
 package co.cask.cdap.data.hbase;
 
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * A base class that can be used to easily run a test within an embedded
@@ -50,16 +31,13 @@ import java.util.Random;
  *
  * To use, simply extend this class and create your tests like normal.  From
  * within your tests, you can access the underlying HBase cluster through
- * {@link #getConfiguration()}, {@link #getHBaseAdmin()}, and
- * {@link #getHTable(byte[])}.
- *
+ * {@link #getConfiguration()}, {@link #getHBaseAdmin()}
  * Alternatively, you can call the {@link #startHBase()} and {@link #stopHBase()}
  * methods directly from within your own BeforeClass/AfterClass methods.
  *
  * Note:  This test is somewhat heavy-weight and takes 10-20 seconds to startup.
  */
 public abstract class HBaseTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
 
   // Accessors for test implementations
 
@@ -68,12 +46,6 @@ public abstract class HBaseTestBase {
   public HBaseAdmin getHBaseAdmin() throws IOException {
     return new HBaseAdmin(getConfiguration());
   }
-
-  public HTable getHTable(byte [] tableName) throws IOException {
-    return new HTable(getConfiguration(), tableName);
-  }
-
-  // Temporary directories
 
   public String getZkConnectionString() {
     return "localhost:" + getZKClientPort();

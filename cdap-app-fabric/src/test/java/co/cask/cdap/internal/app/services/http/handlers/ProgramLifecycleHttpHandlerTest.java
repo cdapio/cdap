@@ -30,7 +30,9 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.workflow.WorkflowStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.config.PreferencesStore;
@@ -42,6 +44,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Instances;
@@ -88,7 +91,9 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
+
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
@@ -119,6 +124,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW = "OneWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
+  private static final String STOPPED = "STOPPED";
 
   @Category(XSlowTests.class)
   @Test
@@ -128,7 +134,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // flow is stopped initially
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                                           WORDCOUNT_FLOW_NAME));
 
@@ -137,14 +143,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                   ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "random"));
 
     // flow is still stopped
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                                           WORDCOUNT_FLOW_NAME));
 
     // start flow in the wrong namespace and verify that it does not start
     Assert.assertEquals(404, getRunnableStartStop(TEST_NAMESPACE2, WORDCOUNT_APP_NAME,
                                                   ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                                           WORDCOUNT_FLOW_NAME));
 
@@ -158,21 +164,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
                                                   ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "stop"));
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
-              ProgramController.State.STOPPED.toString());
+              STOPPED);
 
     // deploy another app in a different namespace and verify
     response = deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // mapreduce is stopped initially
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE.getCategoryName(),
                                           DUMMY_RUNNABLE_ID));
 
     // start mapreduce in the wrong namespace and verify it does not start
     Assert.assertEquals(404, getRunnableStartStop(TEST_NAMESPACE1, DUMMY_APP_ID,
                                                   ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID, "start"));
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE.getCategoryName(),
                                           DUMMY_RUNNABLE_ID));
 
@@ -186,14 +192,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, DUMMY_APP_ID,
                                                   ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID, "stop"));
     waitState(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE.getCategoryName(), DUMMY_RUNNABLE_ID,
-              ProgramController.State.STOPPED.toString());
+              STOPPED);
 
     // deploy an app containing a workflow
     response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // workflow is stopped initially
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID,
                                           ProgramType.WORKFLOW.getCategoryName(), SLEEP_WORKFLOW_RUNNABLE_ID));
 
@@ -201,7 +207,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getRunnableStartStop(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID,
                                                   ProgramType.WORKFLOW.getCategoryName(), SLEEP_WORKFLOW_RUNNABLE_ID,
                                                   "start"));
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+    Assert.assertEquals(STOPPED,
                         getRunnableStatus(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID,
                                           ProgramType.WORKFLOW.getCategoryName(), SLEEP_WORKFLOW_RUNNABLE_ID));
 
@@ -214,7 +220,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // workflow will stop itself
     waitState(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
-              SLEEP_WORKFLOW_RUNNABLE_ID, ProgramController.State.STOPPED.toString());
+              SLEEP_WORKFLOW_RUNNABLE_ID, STOPPED);
 
     // cleanup
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
@@ -259,7 +265,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                 SLEEP_WORKFLOW_RUNNABLE_ID, ProgramRunStatus.RUNNING.toString());
       // workflow stops by itself after actions are done
       waitState(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
-                SLEEP_WORKFLOW_RUNNABLE_ID, ProgramController.State.STOPPED.toString());
+                SLEEP_WORKFLOW_RUNNABLE_ID, STOPPED);
 
       // second run
       Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW
@@ -268,7 +274,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                 SLEEP_WORKFLOW_RUNNABLE_ID, ProgramRunStatus.RUNNING.toString());
       // workflow stops by itself after actions are done
       waitState(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW.getCategoryName(),
-                SLEEP_WORKFLOW_RUNNABLE_ID, ProgramController.State.STOPPED.toString());
+                SLEEP_WORKFLOW_RUNNABLE_ID, STOPPED);
 
       String url = String.format("apps/%s/%s/%s/runs?status=completed", SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW
         .getCategoryName(), SLEEP_WORKFLOW_RUNNABLE_ID);
@@ -335,7 +341,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("Program not found", returnedBody.get(0).get("error").getAsString());
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), returnedBody.get(1).get("status").getAsString());
+    Assert.assertEquals(STOPPED, returnedBody.get(1).get("status").getAsString());
 
 
     // test valid cases for namespace1
@@ -360,7 +366,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
     Assert.assertEquals(ProgramRunStatus.RUNNING.toString(), returnedBody.get(0).get("status").getAsString());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), returnedBody.get(1).get("status").getAsString());
+    Assert.assertEquals(STOPPED, returnedBody.get(1).get("status").getAsString());
 
     // start the service
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE
@@ -376,12 +382,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
       .getCategoryName(), WORDCOUNT_FLOW_NAME, "stop"));
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
-              ProgramController.State.STOPPED.toString());
+              STOPPED);
     // stop the service
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE
       .getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "stop"));
     waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
-              APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
+              APP_WITH_SERVICES_SERVICE_NAME, STOPPED);
 
 
     // try posting a status request with namespace2 for apps in namespace1
@@ -489,9 +495,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                          APP_WITH_SERVICES_SERVICE_NAME, "stop");
 
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
-              ProgramController.State.STOPPED.toString());
+              STOPPED);
     waitState(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(),
-              APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
+              APP_WITH_SERVICES_SERVICE_NAME, STOPPED);
   }
 
   /**
@@ -723,33 +729,61 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
-    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    // create app in default namespace so that v2 and v3 api can be tested in the same test
+    String defaultNamespace = "default";
+    HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
+    store.setProperties(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
                         CONCURRENT_WORKFLOW_NAME, propMap);
 
-    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
+    String runsUrl = getRunsUrl(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME, "running");
 
     List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 1);
     // Two instances of the ConcurrentWorkflow should be RUNNING
     Assert.assertTrue(historyRuns.size() >= 2);
 
     // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
+    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                          CONCURRENT_WORKFLOW_NAME);
 
     for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_CONCURRENT_WORKFLOW,
+      Assert.assertEquals(200, suspendSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
                                                spec.getSchedule().getName()));
     }
 
+    String currentUrl = String.format("/v2/apps/%s/workflows/%s/current", APP_WITH_CONCURRENT_WORKFLOW,
+                                      CONCURRENT_WORKFLOW_NAME);
+
+    response = doGet(currentUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    WorkflowStatus status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+                                                     historyRuns.get(0).get("runid"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
+    response = getWorkflowCurrentStatus(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, CONCURRENT_WORKFLOW_NAME,
+                                        historyRuns.get(1).get("runid"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    status = GSON.fromJson(json, WorkflowStatus.class);
+    Assert.assertEquals("RUNNING", status.getState().toString());
+    Assert.assertEquals("SleepAction", status.getCurrentAction().getName());
+
     // delete the application
     String deleteUrl = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
-      .API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+      .API_VERSION_3_TOKEN, defaultNamespace);
     deleteApplication(60, deleteUrl, 200);
   }
 
@@ -926,11 +960,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // deploy app with schedule in namespace 2
     HttpResponse response = deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   Constants.DEFAULT_NAMESPACE);
+                                   TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                                          APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME);
     Assert.assertEquals(2, schedules.size());
     String scheduleName1 = schedules.get(0).getSchedule().getName();
@@ -939,12 +973,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertFalse(scheduleName1.isEmpty());
 
     // Change notification threshold for stream
-    response = doPut(String.format("/v3/namespaces/%s/streams/%s/config", Constants.DEFAULT_NAMESPACE,
+    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                      "{'notification.threshold.mb': 1}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet(String.format("/v3/namespaces/%s/streams/%s/info", Constants.DEFAULT_NAMESPACE,
+    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                    APP_WITH_STREAM_SCHEDULE_STREAM_NAME));
     String json = EntityUtils.toString(response.getEntity());
     StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
@@ -952,27 +986,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Ingest over 1MB of data in stream
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", Constants.DEFAULT_NAMESPACE,
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                       APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     TimeUnit.SECONDS.sleep(10);
-    String runsUrl = getRunsUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                 APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME,
                                 "completed");
     scheduleHistoryRuns(5, runsUrl, 0);
 
     //Check schedule status
-    String statusUrl1 = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
-    String statusUrl2 = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
+    String statusUrl1 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
+    String statusUrl2 = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
     scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
     scheduleStatusCheck(5, statusUrl2, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                              scheduleName1));
-    Assert.assertEquals(200, suspendSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                              scheduleName2));
     //check paused state
     scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
@@ -984,7 +1018,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", Constants.DEFAULT_NAMESPACE,
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
                                       APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -994,7 +1028,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsUrl);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
                                             scheduleName1));
 
     scheduleHistoryRuns(5, runsUrl, workflowRunsAfterSuspend);
@@ -1003,10 +1037,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     scheduleStatusCheck(5, statusUrl1, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String invalid = getStatusUrl(Constants.DEFAULT_NAMESPACE, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
+    String invalid = getStatusUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule("default", APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
 
     //check paused state
     scheduleStatusCheck(5, statusUrl1, "SUSPENDED");
@@ -1223,10 +1257,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return response;
   }
 
-  private int getWorkflowCurrentStatus(String namespace, String app, String workflow) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/current", app, workflow);
+  private HttpResponse getWorkflowCurrentStatus(String namespace, String app, String workflow,
+                                                String runId) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", app, workflow, runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    return doGet(versionedUrl).getStatusLine().getStatusCode();
+    return doGet(versionedUrl);
   }
 
   private Long getNextScheduledRunTime(String namespace, String app, String workflow, String schedule)
@@ -1417,7 +1452,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<JsonObject> returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
     for (JsonObject obj : returnedBody) {
       Assert.assertEquals(200, obj.get("statusCode").getAsInt());
-      Assert.assertEquals(ProgramController.State.STOPPED.toString(), obj.get("status").getAsString());
+      Assert.assertEquals(STOPPED, obj.get("status").getAsString());
     }
   }
 
@@ -1449,7 +1484,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "start"));
       waitState(namespace, appId, runnableType, runnableId, ProgramRunStatus.RUNNING.toString());
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "stop"));
-      waitState(namespace, appId, runnableType, runnableId, ProgramController.State.STOPPED.toString());
+      waitState(namespace, appId, runnableType, runnableId, STOPPED);
 
       // second run
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "start"));
@@ -1459,11 +1494,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       //active size should be 1
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
       // completed runs size should be 1
-      url = String.format("apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
+      url = String.format("apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "stop"));
-      waitState(namespace, appId, runnableType, runnableId, ProgramController.State.STOPPED.toString());
+      waitState(namespace, appId, runnableType, runnableId, STOPPED);
 
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 

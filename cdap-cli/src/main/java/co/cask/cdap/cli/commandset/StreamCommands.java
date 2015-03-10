@@ -26,6 +26,7 @@ import co.cask.cdap.cli.command.ListStreamsCommand;
 import co.cask.cdap.cli.command.LoadStreamCommand;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetStreamFormatCommand;
+import co.cask.cdap.cli.command.SetStreamNotificationThresholdCommand;
 import co.cask.cdap.cli.command.SetStreamPropertiesCommand;
 import co.cask.cdap.cli.command.SetStreamTTLCommand;
 import co.cask.cdap.cli.command.TruncateStreamCommand;
@@ -50,6 +51,7 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
         .add(injector.getInstance(ListStreamsCommand.class))
         .add(injector.getInstance(SetStreamTTLCommand.class))
         .add(injector.getInstance(SetStreamFormatCommand.class))
+        .add(injector.getInstance(SetStreamNotificationThresholdCommand.class))
         .add(injector.getInstance(SetStreamPropertiesCommand.class))
         .add(injector.getInstance(TruncateStreamCommand.class))
         .add(injector.getInstance(SendStreamEventCommand.class))

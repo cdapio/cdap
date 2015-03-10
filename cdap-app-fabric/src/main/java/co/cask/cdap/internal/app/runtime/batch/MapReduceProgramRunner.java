@@ -55,7 +55,6 @@ import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import javax.annotation.Nullable;
 
@@ -133,12 +132,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
-    final BasicMapReduceContext context =
-      new BasicMapReduceContext(program, null, runId, null, options.getUserArguments(),
-                                program.getApplicationSpecification().getDatasets().keySet(), spec,
-                                logicalStartTime,
-                                workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework, cConf);
+    final DynamicMapReduceContext context =
+      new DynamicMapReduceContext(program, null, runId, null,
+                                  options.getUserArguments(), spec,
+                                  logicalStartTime, workflowBatch,
+                                  discoveryServiceClient, metricsCollectionService,
+                                  txSystemClient, datasetFramework);
 
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
@@ -151,7 +150,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
-                                                                        streamAdmin, txSystemClient, datasetFramework);
+                                                                        streamAdmin, txSystemClient);
     ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
     LOG.info("Starting MapReduce Job: {}", context.toString());
