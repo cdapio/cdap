@@ -208,6 +208,10 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
          * Handles node click and sends to flowlet page.
          */
         function handleNodeClick(nodeId) {
+          // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
+          if ($state.includes('**.workflows.**')) {
+            return;
+          }
           handleHideTip(nodeId);
           var instance = instanceMap[nodeId];
           if (instance.type === 'STREAM') {
