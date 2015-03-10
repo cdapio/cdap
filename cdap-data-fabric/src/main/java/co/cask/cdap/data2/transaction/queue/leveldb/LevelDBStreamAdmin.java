@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
@@ -40,14 +41,15 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Inject
   public LevelDBStreamAdmin(CConfiguration conf, LevelDBTableService service) {
-    super(conf, service, QueueConstants.QueueType.STREAM);
+    super(service, QueueConstants.QueueType.STREAM);
   }
 
   @Override
-  public String getActualTableName(QueueName queueName) {
+  public TableId getDataTableId(QueueName queueName) {
+    // tableName = system.stream.<stream name>
     if (queueName.isStream()) {
-      // <cdap namespace>.<namespace>.system.stream.<stream name>
-      return getTableNamePrefix(queueName.getFirstComponent()) + "." + queueName.getSecondComponent();
+      String tableName = unqualifiedTableNamePrefix + "." + queueName.getSecondComponent();
+      return TableId.from(queueName.getFirstComponent(), tableName);
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -95,33 +97,29 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
     throw new UnsupportedOperationException("Not yet supported");
   }
 
-  private String fromStream(Id.Stream streamId) {
-    return QueueName.fromStream(streamId).toURI().toString();
-  }
-
   @Override
   public boolean exists(Id.Stream streamId) throws Exception {
-    return exists(fromStream(streamId));
+    return exists(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId) throws Exception {
-    create(fromStream(streamId));
+    create(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
-    create(fromStream(streamId), props);
+    create(QueueName.fromStream(streamId), props);
   }
 
   @Override
   public void truncate(Id.Stream streamId) throws Exception {
-    truncate(fromStream(streamId));
+    truncate(QueueName.fromStream(streamId));
   }
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
-    drop(fromStream(streamId));
+    drop(QueueName.fromStream(streamId));
   }
 
 }

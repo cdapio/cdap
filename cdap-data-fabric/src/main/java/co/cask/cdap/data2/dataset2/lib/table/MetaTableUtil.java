@@ -24,7 +24,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
+
+import java.io.IOException;
 
 /**
  * Common utility for managing system metadata tables needed by various services.
@@ -40,13 +43,13 @@ public abstract class MetaTableUtil {
     this.dsFramework = framework;
   }
 
-  public Table getMetaTable() throws Exception {
+  public Table getMetaTable() throws IOException, DatasetManagementException {
     Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 
-  public void upgrade() throws Exception {
+  public void upgrade() throws IOException, DatasetManagementException {
     DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName()), null);
     if (admin != null) {
       admin.upgrade();

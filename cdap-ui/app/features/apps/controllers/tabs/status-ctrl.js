@@ -1,32 +1,27 @@
 angular.module(PKG.name + '.feature.apps')
   .controller('CdapAppDetailStatusController', function($state, $scope, $stateParams, MyDataSource) {
+    var basePath = '/apps/' + $stateParams.appId;
+
+    $scope.programs = [];
+    var datasrc = new MyDataSource($scope);
     var programTypes = [
           'flows',
           'services',
           'mapreduce',
           'workflows'
-        ],
-        basePath = '/apps/' + $stateParams.appId;
+        ];
+    datasrc.request({
+      _cdapNsPath: basePath
+    })
+      .then(function(res) {
+        res.programs.forEach(function(prog) {
+          prog.type_plural = prog.type +
+            ((['Mapreduce', 'Spark'].indexOf(prog.type) === -1) ? 's': '');
 
-    $scope.programs = [];
-    var datasrc = new MyDataSource($scope);
-
-    programTypes.forEach(function(program) {
-      datasrc.request(
-        {
-          _cdapNsPath: basePath + '/' + program
-        },
-        function(res) {
-          res.forEach(function(program) {
-            program.type_plural = program.type + ((['Mapreduce', 'Spark'].indexOf(program.type) === -1) ? 's': '');
-          });
-          $scope.programs = $scope.programs.concat(res);
-          res.forEach(function(prog) {
-            fetchStatus(program, prog.id);
-          });
-        }
-      );
-    });
+          fetchStatus(prog.type_plural.toLowerCase(), prog.name);
+        });
+        $scope.programs = res.programs;
+      });
 
     // FIXME: Not DRY. Almost same thing done in ProgramsListController
     function fetchStatus(program, programId) {
@@ -37,7 +32,7 @@ angular.module(PKG.name + '.feature.apps')
         },
         function (res) {
           var program = $scope.programs.filter(function(item) {
-            return item.id === programId;
+            return item.name === programId;
           });
           program[0].status = res.status;
         }
