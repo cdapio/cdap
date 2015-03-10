@@ -24,7 +24,6 @@ import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.ProgramDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
@@ -232,7 +231,6 @@ public class ApplicationClient {
     return allPrograms.build();
   }
 
-
   /**
    * Lists programs of some type belonging to an application.
    *
@@ -243,12 +241,12 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramDetail> listPrograms(String appId, final ProgramType programType)
+  public List<ProgramRecord> listPrograms(String appId, final ProgramType programType)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
     Preconditions.checkArgument(programType.isListable());
 
-    List<ProgramDetail> programs = Lists.newArrayList();
-    for (ProgramDetail program : listPrograms(appId)) {
+    List<ProgramRecord> programs = Lists.newArrayList();
+    for (ProgramRecord program : listPrograms(appId)) {
       if (programType.equals(program.getType())) {
         programs.add(program);
       }
@@ -265,14 +263,14 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public Map<ProgramType, List<ProgramDetail>> listProgramsByType(String appId)
+  public Map<ProgramType, List<ProgramRecord>> listProgramsByType(String appId)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
 
-    Map<ProgramType, List<ProgramDetail>> result = Maps.newHashMap();
+    Map<ProgramType, List<ProgramRecord>> result = Maps.newHashMap();
     for (ProgramType type : ProgramType.values()) {
-      result.put(type, Lists.<ProgramDetail>newArrayList());
+      result.put(type, Lists.<ProgramRecord>newArrayList());
     }
-    for (ProgramDetail program : listPrograms(appId)) {
+    for (ProgramRecord program : listPrograms(appId)) {
       result.get(program.getType()).add(program);
     }
     return result;
@@ -287,7 +285,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramDetail> listPrograms(String appId)
+  public List<ProgramRecord> listPrograms(String appId)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
 
     String path = String.format("apps/%s", appId);

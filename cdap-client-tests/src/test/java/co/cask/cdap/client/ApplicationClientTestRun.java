@@ -22,7 +22,6 @@ import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
-import co.cask.cdap.proto.ProgramDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -88,7 +87,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
     // check program list
     LOG.info("Checking program list for app");
-    Map<ProgramType, List<ProgramDetail>> programs = appClient.listProgramsByType(FakeApp.NAME);
+    Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(FakeApp.NAME);
     verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
     verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
     verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
