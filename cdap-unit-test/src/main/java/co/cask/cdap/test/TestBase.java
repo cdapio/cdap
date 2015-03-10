@@ -65,6 +65,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -74,6 +75,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -140,6 +142,7 @@ public class TestBase {
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   private static TestManager testManager;
+  private static NamespaceAdmin namespaceAdmin;
 
   private static TestManager getTestManager() {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
@@ -270,8 +273,8 @@ public class TestBase {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
-    testManager = new UnitTestManager(appFabricClient, datasetFramework, txSystemClient, discoveryClient,
-                                      injector.getInstance(ApplicationManagerFactory.class));
+    testManager = injector.getInstance(UnitTestManager.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
   }
@@ -347,6 +350,16 @@ public class TestBase {
         cleanDir(file);
       }
     }
+  }
+
+  /**
+   * Creates a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void createNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setId(namespace).build());
   }
 
   /**

@@ -21,6 +21,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ProcedureManager;
 import com.google.common.base.Throwables;
@@ -44,7 +45,12 @@ public class RemoteProcedureManager implements ProcedureManager {
   }
 
   private ClientConfig getClientConfig() {
-    return new ClientConfig.Builder(clientConfig).setNamespace(procedure.getNamespace()).build();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(procedure.getNamespace())
+      .build();
+    return new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(connectionConfig)
+      .build();
   }
 
   private ProgramClient getProgramClient() {
@@ -84,7 +90,12 @@ public class RemoteProcedureManager implements ProcedureManager {
     }
 
     private ClientConfig getClientConfig() {
-      return new ClientConfig.Builder(clientConfig).setNamespace(procedure.getNamespace()).build();
+      ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+        .setNamespace(procedure.getNamespace())
+        .build();
+      return new ClientConfig.Builder(clientConfig)
+        .setConnectionConfig(connectionConfig)
+        .build();
     }
 
     private ProcedureClient getProcedureClient() {

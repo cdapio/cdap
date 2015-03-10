@@ -21,6 +21,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.AbstractServiceManager;
@@ -45,7 +46,12 @@ public class RemoteServiceManager extends AbstractServiceManager {
   }
 
   private ClientConfig getClientConfig() {
-    return new ClientConfig.Builder(clientConfig).setNamespace(serviceId.getNamespace()).build();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(serviceId.getNamespace())
+      .build();
+    return new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(connectionConfig)
+      .build();
   }
 
   private ProgramClient getProgramClient() {

@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 
 import java.io.File;
 import java.sql.Connection;
@@ -104,4 +105,20 @@ public interface TestManager {
    */
   @Beta
   Connection getQueryClient(Id.Namespace namespace) throws Exception;
+
+  /**
+   * Creates a namespace.
+   *
+   * @param namespaceMeta the namespace to create
+   * @throws Exception
+   */
+  void createNamespace(NamespaceMeta namespaceMeta) throws Exception;
+
+  /**
+   * Deletes a namespace.
+   *
+   * @param namespace the namespace to delete
+   * @throws Exception
+   */
+  void deleteNamespace(Id.Namespace namespace) throws Exception;
 }

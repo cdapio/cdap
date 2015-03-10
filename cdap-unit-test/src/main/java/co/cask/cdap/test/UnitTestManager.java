@@ -28,7 +28,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.tephra.TransactionAware;
@@ -38,6 +40,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -59,15 +62,18 @@ public class UnitTestManager implements TestManager {
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryClient;
   private final ApplicationManagerFactory appManagerFactory;
+  private final NamespaceAdmin namespaceAdmin;
 
+  @Inject
   public UnitTestManager(AppFabricClient appFabricClient, DatasetFramework datasetFramework,
                          TransactionSystemClient txSystemClient, DiscoveryServiceClient discoveryClient,
-                         ApplicationManagerFactory appManagerFactory) {
+                         ApplicationManagerFactory appManagerFactory, NamespaceAdmin namespaceAdmin) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryClient = discoveryClient;
     this.appManagerFactory = appManagerFactory;
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   /**
@@ -207,6 +213,16 @@ public class UnitTestManager implements TestManager {
                                          namespace.getId());
 
     return DriverManager.getConnection(connectString);
+  }
+
+  @Override
+  public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
+    namespaceAdmin.createNamespace(namespaceMeta);
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespace) throws Exception {
+    namespaceAdmin.deleteNamespace(namespace);
   }
 
 }

@@ -24,9 +24,11 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import com.google.common.base.Throwables;
@@ -50,6 +52,7 @@ public class IntegrationTestManager implements TestManager {
   private final ClientConfig clientConfig;
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
+  private final NamespaceClient namespaceClient;
 
   public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
@@ -57,6 +60,7 @@ public class IntegrationTestManager implements TestManager {
     this.metaClient = new MetaClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
+    this.namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Override
@@ -116,6 +120,16 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public Connection getQueryClient(Id.Namespace namespace) throws Exception {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
+    namespaceClient.create(namespaceMeta);
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespace) throws Exception {
+    namespaceClient.delete(namespace.getId());
   }
 
   private File createAppJarFile(Class<?> cls, File[] bundleEmbeddedJars) throws IOException {
