@@ -19,7 +19,6 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.test.WorkerManager;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +35,11 @@ public class DefaultWorkerManager implements WorkerManager {
 
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
+  private final String namespace;
 
-  public DefaultWorkerManager(String accountId, DefaultApplicationManager.ProgramId programId,
-                              AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
-                              DefaultApplicationManager applicationManager) {
+  public DefaultWorkerManager(String namespace, DefaultApplicationManager.ProgramId programId,
+                              AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
+    this.namespace = namespace;
     this.programId = programId;
     this.appId = programId.getApplicationId();
     this.workerId = programId.getRunnableId();
@@ -51,7 +51,7 @@ public class DefaultWorkerManager implements WorkerManager {
   public void setRunnableInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(appId, workerId, instances);
+      appFabricClient.setWorkerInstances(namespace, appId, workerId, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
