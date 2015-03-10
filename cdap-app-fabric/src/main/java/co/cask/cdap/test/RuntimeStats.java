@@ -28,6 +28,7 @@ import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -58,7 +60,7 @@ public final class RuntimeStats implements MetricsConstants {
 
   public static RuntimeMetrics getMapReduceMetrics(String applicationId, String mapReduceId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.MAPREDUCE, mapReduceId);
-    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, MAPREDUCE_EXCEPTIONS);
+    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, null);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
@@ -93,7 +95,7 @@ public final class RuntimeStats implements MetricsConstants {
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
-                                           final String exceptionName) {
+                                           @Nullable final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
@@ -107,6 +109,7 @@ public final class RuntimeStats implements MetricsConstants {
 
       @Override
       public long getException() {
+        Preconditions.checkArgument(exceptionName != null, "exception count not supported");
         return getTotalCounter(context, exceptionName);
       }
 

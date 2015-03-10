@@ -79,7 +79,7 @@ public class MetricsClient implements MetricsConstants {
   }
 
   public RuntimeMetrics getMapReduceMetrics(Id.Program id) {
-    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, MAPREDUCE_EXCEPTIONS);
+    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, null);
   }
 
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {

@@ -21,9 +21,8 @@ package co.cask.cdap.common.metrics;
  */
 public interface MetricsConstants {
 
-  public static final String MAPREDUCE_INPUT = "system.process.tuples.read";
-  public static final String MAPREDUCE_PROCESSED = "system.process.events.processed";
-  public static final String MAPREDUCE_EXCEPTIONS = "system.process.errors";
+  public static final String MAPREDUCE_INPUT = "process.entries.in";
+  public static final String MAPREDUCE_PROCESSED = "process.entries.out";
 
   public static final String FLOWLET_INPUT = "system.process.tuples.read";
   public static final String FLOWLET_PROCESSED = "system.process.events.processed";
