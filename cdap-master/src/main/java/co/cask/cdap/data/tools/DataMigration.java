@@ -25,7 +25,6 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -42,8 +41,6 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.UpgradeMetricsConstants;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -53,10 +50,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 
@@ -65,13 +62,15 @@ import javax.annotation.Nullable;
  * Usually used along with upgrade tool{@link UpgraderMain}
  */
 public class DataMigration {
-  private static final String KEEP_OLD_METRICS_TABLES = "--keep-old-metrics-tables";
-
+  private static final String KEEP_OLD_METRICS_DATA = "--keep-old-metrics-data";
+  private static final Logger LOG = LoggerFactory.getLogger(DataMigration.class);
+  private static boolean isTest = false;
+  private boolean keepOldMetricsData = false;
   /**
    * Set of Action available in this tool.
    */
   private enum Action {
-    METRICS("Migrate metrics data, to preserve old table data use option --keep-old-metrics-tables"),
+    METRICS("Migrate metrics data, to preserve old table data use option " + KEEP_OLD_METRICS_DATA),
     HELP("Show this help.");
 
     private final String description;
@@ -96,8 +95,28 @@ public class DataMigration {
 
     Action action = parseAction(args[0]);
     if (action == null) {
-      System.out.println(String.format("Unsupported action : %s", args[0]));
+      printMessage(String.format("Unsupported action : %s", args[0]));
       printHelp(true);
+      return;
+    }
+
+    if (action.equals(Action.METRICS)) {
+      if (args.length > 2) {
+        printMessage("invalid number of arguments");
+        printHelp(true);
+        return;
+      } else if (args.length == 2) {
+        if (parseArgument(args[1])) {
+          keepOldMetricsData = true;
+        } else {
+          printMessage("invalid argument, expected argument " + KEEP_OLD_METRICS_DATA);
+          printHelp(true);
+          return;
+        }
+      }
+    }
+    if (isTest) {
+      // return if we are only testing parsing.
       return;
     }
 
@@ -121,11 +140,7 @@ public class DataMigration {
 
       switch (action) {
         case METRICS:
-          boolean keepOldTable = false;
-          if (args.length == 2) {
-            keepOldTable = parseArgument(args[1]);
-          }
-          migrateMetricsData(injector, keepOldTable);
+          migrateMetricsData(injector, keepOldMetricsData);
           break;
         case HELP:
           printHelp();
@@ -138,8 +153,16 @@ public class DataMigration {
     }
   }
 
+  private void printMessage(String msg) {
+    if (isTest) {
+      LOG.warn(msg);
+    } else {
+      System.out.println(msg);
+    }
+  }
+
   private boolean parseArgument(String arg) {
-    if (arg != null && arg.equals(KEEP_OLD_METRICS_TABLES)) {
+    if (arg != null && arg.equals(KEEP_OLD_METRICS_DATA)) {
       return true;
     }
     return false;
@@ -169,7 +192,6 @@ public class DataMigration {
     }
   }
 
-
   private void migrateMetricsData(Injector injector, boolean keepOldTables) throws Exception {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     Configuration hConf = injector.getInstance(Configuration.class);
@@ -177,115 +199,18 @@ public class DataMigration {
     System.out.println("Starting metrics data migration");
     // find version to migrate
     MetricHBaseTableUtil metricHBaseTableUtil = new MetricHBaseTableUtil(injector.getInstance(HBaseTableUtil.class));
-    Version version = findMetricsTableVersion(injector.getInstance(CConfiguration.class),
-                                              injector.getInstance(Configuration.class), metricHBaseTableUtil);
+    Version version = findMetricsTableVersion(cConf, hConf, metricHBaseTableUtil);
 
     if (version != null) {
       System.out.println("Migrating Metrics Data from " + version.name());
       DatasetFramework framework = createRegisteredDatasetFramework(injector);
-      // perform sanity check - truncate 2.8 tables data
-      truncateV2Tables(cConf, hConf);
+
       // migrate metrics data
-      DefaultMetricDatasetFactory.migrateData(injector.getInstance(CConfiguration.class), framework, version);
-      // delete old-metrics table identified by version, unless keepOldTables flag is true
-      if (!keepOldTables) {
-        cleanUpOldTables(cConf, hConf, version);
-      }
+      DefaultMetricDatasetFactory.migrateData(cConf, hConf, framework, version, keepOldTables);
       System.out.println("Successfully Migrated Metrics Data from " + version.name());
     } else {
       System.out.println("Did not find compatible CDAP Version to migrate Metrics data from");
     }
-  }
-
-  private void truncateV2Tables(CConfiguration cConf, Configuration hConf) throws Exception {
-    String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
-    String v2EntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                          MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-    v2EntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(
-      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), v2EntityTableName));
-    String v2MetricsTablePrefix =  cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                             MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
-    v2MetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
-      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), v2MetricsTablePrefix));
-    HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-    for (HTableDescriptor desc : hAdmin.listTables()) {
-      if (desc.getNameAsString().equals(v2EntityTableName) ||
-        desc.getNameAsString().startsWith(v2MetricsTablePrefix)) {
-        System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
-        //disable the table
-        hAdmin.disableTable(desc.getName());
-        //delete the table
-        hAdmin.deleteTable(desc.getName());
-      }
-    }
-  }
-
-  private void cleanUpOldTables(CConfiguration cConf, Configuration hConf, Version version) {
-    Set<String> tablesToDelete = Sets.newHashSet();
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-
-    // add kafka meta table to deleteList
-    tablesToDelete.add(addNamespace(defaultDatasetNamespace, cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                                       MetricsConstants.DEFAULT_KAFKA_META_TABLE)));
-
-    if (version == Version.VERSION_2_6_OR_LOWER) {
-      List<String> scopes = ImmutableList.of("system", "user");
-      // add user and system - entity tables , aggregates table and time series table to the list
-      for (String scope : scopes) {
-        addTableNamesToDelete(tablesToDelete, cConf, scope, ImmutableList.of(1));
-      }
-    }
-
-    if (version == Version.VERSION_2_7) {
-      addTableNamesToDelete(tablesToDelete, cConf, null, ImmutableList.of(1, 60, 3600));
-    }
-
-    System.out.println("Deleting Tables : " + tablesToDelete);
-    deleteTables(hConf, tablesToDelete);
-  }
-
-  private void deleteTables(Configuration hConf, Set<String> tablesToDelete) {
-    HBaseAdmin hAdmin = null;
-    try {
-      hAdmin = new HBaseAdmin(hConf);
-      for (HTableDescriptor desc : hAdmin.listTables()) {
-        if (tablesToDelete.contains(desc.getNameAsString())) {
-          // disable the table
-          hAdmin.disableTable(desc.getName());
-          // delete the table
-          hAdmin.deleteTable(desc.getName());
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("Exception while deleting old tables: " + e);
-    }
-  }
-
-  private void addTableNamesToDelete(Set<String> tablesToDelete, CConfiguration cConf,
-                                     String scope, List<Integer> resolutions) {
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, cConf.get(
-      MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME, UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME)));
-    String tableNamePrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                       UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
-    // add aggregates table
-    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, tableNamePrefix + ".agg"));
-
-    // add timeseries tables
-    for (int resolution : resolutions) {
-      tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, tableNamePrefix + ".ts." + resolution));
-    }
-  }
-
-  private String getTableName(String rootPrefix, Id.DatasetInstance instance) {
-    return  rootPrefix + instance.getNamespaceId() + ":" + instance.getId();
-  }
-  private String addNamespace(DatasetNamespace dsNamespace, String tableName) {
-    return addNamespace(dsNamespace, null , tableName);
-  }
-  private String addNamespace(DatasetNamespace dsNamespace, String scope, String tableName) {
-    tableName = scope == null ? tableName : scope + "." + tableName;
-    return dsNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName);
   }
 
   @Nullable
@@ -309,10 +234,10 @@ public class DataMigration {
                                                                     tableName26);
     String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
                                                                     tableName27);
-    HBaseAdmin hAdmin = null;
+
     Version version = null;
     try {
-      hAdmin = new HBaseAdmin(hConf);
+      HBaseAdmin  hAdmin = new HBaseAdmin(hConf);
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (desc.getNameAsString().equals(metricsEntityTable27)) {
           System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
@@ -347,6 +272,11 @@ public class DataMigration {
   }
 
   public static void main(String[] args) throws Exception {
+    new DataMigration().doMain(args);
+  }
+
+  public static void testMigrationParse(String[] args) throws Exception {
+    isTest = true;
     new DataMigration().doMain(args);
   }
 

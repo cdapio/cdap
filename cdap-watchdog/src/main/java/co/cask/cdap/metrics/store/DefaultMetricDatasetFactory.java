@@ -35,6 +35,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,18 +155,23 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   /**
    * Migrates metrics data from version 2.7 and older to 2.8
-   * @param conf configuration
+   * @param conf CConfiguration
+   * @param hConf Configuration
    * @param datasetFramework framework to add types and datasets to
    * @param version - version we are migrating the data from
+   * @param keepOldData - boolean flag to specify if we have to keep old metrics data
    * @throws IOException
    * @throws DatasetManagementException
    */
-  public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
-                                 MetricHBaseTableUtil.Version version) throws IOException, DatasetManagementException {
+  public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
+                                 MetricHBaseTableUtil.Version version, boolean keepOldData)
+    throws Exception {
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, hConf, datasetFramework, factory);
+    // delete existing destination tables
+    migrator.cleanupDestinationTables();
     setupDatasets(factory);
-    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework, factory);
-    migrator.migrateMetricsTables(version);
+    migrator.migrateMetricsTables(version, keepOldData);
   }
 
   private int getRollTime(int resolution) {
