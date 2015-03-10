@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -54,6 +55,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
   }
 
   @Test
+  @Ignore
   public void testNamespaces() throws Exception {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();

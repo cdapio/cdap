@@ -33,11 +33,10 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
       scope.render = function () {
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
-
         var instanceMap = {};
         var labelMap = {};
 
-        var bytesFilter = $filter('bytes');
+        var numberFilter = $filter('myNumber');
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
@@ -108,7 +107,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
           parent.insert('text')
             .attr('x', - flowletCircleRadius)
             .attr('y', metricCountPadding)
-            .text(bytesFilter(scope.model.metrics[labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
             .attr('class', 'flow5shapes flowlet-event-count');
 
           node.intersect = function(point) {
@@ -137,7 +136,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
           // Elements are positioned with respect to shapeSvg.
           var width = shapeSvg.node().getBBox().width;
           var circleXPos = -1 * width/2;
-         
+
           parent.append('circle')
             .attr('cx', circleXPos)
             .attr('r', metricCircleRadius)
@@ -146,7 +145,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
           parent.append('text')
             .attr('x', circleXPos)
             .attr('y', metricCountPadding)
-            .text(bytesFilter(scope.model.metrics[labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -209,6 +208,10 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
          * Handles node click and sends to flowlet page.
          */
         function handleNodeClick(nodeId) {
+          // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
+          if ($state.includes('**.workflows.**')) {
+            return;
+          }
           handleHideTip(nodeId);
           var instance = instanceMap[nodeId];
           if (instance.type === 'STREAM') {
@@ -216,7 +219,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
           } else {
             $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
           }
-          
+
         }
 
         /**
