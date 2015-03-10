@@ -17,6 +17,7 @@
 language: ruby
 rvm:
   - 1.9.3
+  - 2.1.4
 cache: bundler
 sudo: false
 bundler_args: --jobs 7 --without docs integration
