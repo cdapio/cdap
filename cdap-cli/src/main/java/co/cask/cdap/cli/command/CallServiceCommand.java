@@ -24,6 +24,7 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
+import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.cli.util.table.TableRenderer;
@@ -62,16 +63,18 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
   private final RESTClient restClient;
   private final ServiceClient serviceClient;
   private final TableRenderer tableRenderer;
+  private final FilePathResolver filePathResolver;
 
   @Inject
   public CallServiceCommand(ClientConfig clientConfig, RESTClient restClient,
                             ServiceClient serviceClient, CLIConfig cliConfig,
-                            TableRenderer tableRenderer) {
+                            TableRenderer tableRenderer, FilePathResolver filePathResolver) {
     super(cliConfig);
     this.clientConfig = clientConfig;
     this.restClient = restClient;
     this.serviceClient = serviceClient;
     this.tableRenderer = tableRenderer;
+    this.filePathResolver = filePathResolver;
   }
 
   @Override
@@ -96,7 +99,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
       throw new CommandInputError(this, message);
     }
 
-    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
+    }.getType());
     URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
@@ -106,7 +110,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     if (!bodyFile.isEmpty()) {
-      builder.withBody(new File(bodyFile));
+      builder.withBody(filePathResolver.resolvePathToFile(bodyFile));
     } else if (!bodyString.isEmpty()) {
       builder.withBody(bodyString);
     }
