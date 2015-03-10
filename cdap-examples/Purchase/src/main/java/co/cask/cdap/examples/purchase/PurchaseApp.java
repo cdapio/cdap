@@ -71,7 +71,7 @@ public class PurchaseApp extends AbstractApplication {
     // Schedule the workflow based on the data coming in the purchaseStream stream
     scheduleWorkflow(
       Schedules.createDataSchedule("DataSchedule",
-                                   "Schedule execution when 1MB of data is ingested in the purchaseStream",
+                                   "Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
                                    Schedules.Source.STREAM, "purchaseStream", 1),
       "PurchaseHistoryWorkflow"
     );
