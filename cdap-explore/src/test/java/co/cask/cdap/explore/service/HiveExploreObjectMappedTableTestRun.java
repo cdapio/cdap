@@ -115,7 +115,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
       new ColumnDesc(MY_TABLE_HIVE_NAME + ".longfield", "BIGINT", 6, null),
       new ColumnDesc(MY_TABLE_HIVE_NAME + ".stringfield", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * " + MY_TABLE_HIVE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_HIVE_NAME).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -143,7 +143,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @Test
   public void testSelect() throws Exception {
-    runCommand(NAMESPACE_ID, "select intfield, stringfield from my_table where row_key='123'",
+    runCommand(NAMESPACE_ID, "select intfield, stringfield from " + MY_TABLE_HIVE_NAME + " where row_key='123'",
                true,
                Lists.newArrayList(new ColumnDesc("intfield", "INT", 1, null),
                                   new ColumnDesc("stringfield", "STRING", 2, null)),
