@@ -1979,17 +1979,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private BasicArguments getSystemArguments(String namespaceId) {
     // Get Configs from Cconf
-    Map<String, String> systemConfigsFromCDAP = getSystemArgumentsFromCConf();
+    Map<String, String> systemConfigsFromCDAP = getDefaultSystemArguments();
     // Override the Configs from configs at namespace level.
-    return new BasicArguments(getNamespaceResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
+    return new BasicArguments(getResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
   }
 
-  private Map<String, String> getSystemArgumentsFromCConf() {
+  // Get default system arguments from Cconfiguration.
+  private Map<String, String> getDefaultSystemArguments() {
 
     Map<String, String> configs = Maps.newHashMap();
 
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getSchedulerQueueFromCConf();
+    String schedulerQueue = schedulerQueueResolver.getDefaultQueue();
     if (schedulerQueue != null) {
       configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }
@@ -1997,10 +1998,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return configs;
   }
 
-  private Map<String, String> getNamespaceResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
+  // Get system arguments resolved at namespace level, fall back to default
+  private Map<String, String> getResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
     Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
     // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
+    String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
     }

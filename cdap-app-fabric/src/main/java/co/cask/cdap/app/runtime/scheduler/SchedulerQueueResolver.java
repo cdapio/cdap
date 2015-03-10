@@ -31,23 +31,36 @@ import javax.annotation.Nullable;
  * Helper class to resolve scheduler queue name.
  */
 public class SchedulerQueueResolver {
-  private final String schedulerQueueFromCConf;
+  private final String defaultQueue;
   private final Store store;
 
+  /**
+   * Construct SchedulerQueueResolver with CConfiguration and Store.
+   */
   public SchedulerQueueResolver(CConfiguration cConf, Store store) {
-    this.schedulerQueueFromCConf = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     this.store = store;
   }
 
-  public String getSchedulerQueueFromCConf() {
-    return schedulerQueueFromCConf;
+  /**
+   * @return default Queue that comes from CConfiguration.
+   */
+  public String getDefaultQueue() {
+    return defaultQueue;
   }
 
-  public String getNamespaceResolvedSchedulerQueue(Id.Namespace namespaceId) {
+  /**
+   * Get queue at namespace level if it is empty returns the default queue.
+   *
+   * @param namespaceId NamespaceId
+   * @return schedule queue at namespace level or default queue.
+   */
+  @Nullable
+  public String getQueue(Id.Namespace namespaceId) {
     NamespaceMeta meta = store.getNamespace(namespaceId);
     Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
 
     NamespaceConfig config = meta.getConfig();
-    return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : schedulerQueueFromCConf;
+    return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : getDefaultQueue();
   }
 }

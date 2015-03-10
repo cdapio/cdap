@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -106,7 +107,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
     try {
       if (schedulerQueueName != null) {
-        hConf.set(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueueName);
+        hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 

@@ -83,7 +83,7 @@ public class DefaultSchedulerService {
       builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
-      String schedulerQueue = schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(Id.Namespace.from(namespaceId));
+      String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
       if (schedulerQueue != null) {
         builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
       }

@@ -73,6 +73,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -1034,11 +1035,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? schedulerQueueResolver.getNamespaceResolvedSchedulerQueue(namespace)
-                                              : schedulerQueueResolver.getSchedulerQueueFromCConf();
+    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
+                                              : schedulerQueueResolver.getDefaultQueue();
 
     if (schedulerQueue != null) {
-      sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
+      sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);
     }
 
     Transaction tx = startTransaction();
