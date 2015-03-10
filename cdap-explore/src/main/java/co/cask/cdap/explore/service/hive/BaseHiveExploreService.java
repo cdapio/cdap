@@ -202,7 +202,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    HiveConf conf = new HiveConf(hiveConf);
+    HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
     if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
@@ -227,7 +227,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private IMetaStoreClient getMetaStoreClient() throws ExploreException {
     if (metastoreClientLocal.get() == null) {
       try {
-          IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
+        IMetaStoreClient client = new HiveMetaStoreClient(getHiveConf());
         Supplier<IMetaStoreClient> supplier = Suppliers.ofInstance(client);
         metastoreClientLocal.set(supplier);
 
@@ -681,13 +681,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
         String database = getHiveDatabase(namespace.getId());
-        String schedulerQueue = getNamespaceResolvedSchedulerQueue(namespace);
-        if (schedulerQueue != null) {
-          sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
-          LOG.info("Setting scheduler queue to {}", schedulerQueue);
-        } else {
-          LOG.info("scheduler queue not set");
-        }
         // Switch database to the one being passed in.
         SessionState.get().setCurrentDatabase(database);
 
@@ -1014,17 +1007,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @throws IOException
    */
   protected Map<String, String> startSession() throws IOException {
-    Map<String, String> sessionConf = Maps.newHashMap();
-
-    QueryHandle queryHandle = QueryHandle.generate();
-    sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
-
-    Transaction tx = startTransaction();
-    ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
-    ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
-
-    return sessionConf;
+    return startSession(null);
   }
 
   protected Map<String, String> startSession(Id.Namespace namespace) throws IOException {
@@ -1033,7 +1016,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = getNamespaceResolvedSchedulerQueue(namespace);
+    String schedulerQueue = namespace != null ? getNamespaceResolvedSchedulerQueue(namespace) :
+                                                schedulerQueueFromCconf;
+
     if (schedulerQueue != null) {
       sessionConf.put(Constants.MapReduce.MAP_REDUCE_JOB_QUEUE_NAME, schedulerQueue);
     }
