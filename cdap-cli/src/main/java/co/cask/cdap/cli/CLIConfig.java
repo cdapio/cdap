@@ -96,7 +96,7 @@ public class CLIConfig {
       setSSLEnabled(connectionInfo.isSSLEnabled());
       setAccessToken(accessToken);
 
-      output.printf("Successfully connected CDAP instance at %s:%d\n",
+      output.printf("Successfully connected to CDAP instance at %s:%d\n",
                     connectionInfo.getHostname(), connectionInfo.getPort());
     } catch (IOException e) {
       throw new IOException(String.format("Host %s on port %d could not be reached: %s",
