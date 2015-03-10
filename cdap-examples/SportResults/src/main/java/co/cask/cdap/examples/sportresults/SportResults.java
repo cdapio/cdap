@@ -33,11 +33,11 @@ public class SportResults extends AbstractApplication {
     addService(new UploadService());
     addMapReduce(new ScoreCounter());
 
-    // create the "results" partitioned file set, configure it to work with MapReduce and with Explore
+    // Create the "results" partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // properties for partitioning
+      // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
-      // properties for file set
+      // Properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setInputProperty(TextOutputFormat.SEPERATOR, ",")
@@ -47,15 +47,15 @@ public class SportResults extends AbstractApplication {
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .build());
 
-    // create the aggregates partitioned file set, configure it to work with MapReduce and with Explore
+    // Create the aggregates partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("totals", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
-      // properties for partitioning
+      // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").build())
-      // properties for file set
+      // Properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setInputProperty(TextOutputFormat.SEPERATOR, ",")
-      // properties for Explore (to create a partitioned Hive table)
+      // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
       .setExploreSchema("team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT")
