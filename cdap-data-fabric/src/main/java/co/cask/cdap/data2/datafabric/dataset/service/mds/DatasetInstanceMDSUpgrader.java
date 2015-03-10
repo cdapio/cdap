@@ -17,9 +17,11 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -29,15 +31,20 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -102,13 +109,66 @@ public final class DatasetInstanceMDSUpgrader {
   }
 
   /**
+   * Gets the {@link DatasetSpecification} of all the {@link FileSet} from the {@link DatasetInstanceMDS} table
+   *
+   * @return A list of {@link DatasetSpecification} of all the {@link FileSet}
+   * @throws TransactionFailureException
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  public List<DatasetSpecification> getFileSetsSpecs() throws TransactionFailureException,
+    InterruptedException, IOException {
+    return datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>,
+      List<DatasetSpecification>>() {
+      @Override
+      public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
+        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
+        List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
+        for (DatasetSpecification dsSpec : dsSpecs) {
+          fileSetSpecs.addAll(findFileSetsInEmbeddedDS(dsSpec));
+        }
+        return fileSetSpecs;
+      }
+    });
+  }
+
+  /**
+   * Recursively search the embedded datasets of a {@link Dataset} which is not a {@link FileSet} for {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of a {@link Dataset} which should be searched for {@link FileSet}
+   * @return A list of {@link DatasetSpecification} of {@link FileSet}
+   */
+  private List<DatasetSpecification> findFileSetsInEmbeddedDS(DatasetSpecification dsSpec) {
+    if (isFileSet(dsSpec)) {
+      return ImmutableList.of(dsSpec);
+    }
+    ArrayList<DatasetSpecification> dsSpecs = Lists.newArrayList();
+    for (DatasetSpecification embeddedDsSpec : dsSpec.getSpecifications().values()) {
+      dsSpecs.addAll(findFileSetsInEmbeddedDS(embeddedDsSpec));
+    }
+    return dsSpecs;
+  }
+
+  /**
+   * Checks if the the given dataset spec is of a {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the dataset
+   * @return a boolean which is true if its a {@link FileSet} else false
+   */
+  public boolean isFileSet(DatasetSpecification dsSpec) {
+    String dsType = dsSpec.getType();
+    return (FileSet.class.getName().equals(dsType) || "fileSet".equals(dsType));
+  }
+
+  /**
    * Construct a {@link Id.DatasetInstance} from a pre-2.8.0 CDAP Dataset name
    *
    * @param datasetName the dataset/table name to construct the {@link Id.DatasetInstance} from
    * @return the {@link Id.DatasetInstance} object for the specified dataset/table name
    */
   private static Id.DatasetInstance from(String datasetName) {
-    Preconditions.checkArgument(datasetName != null, "Dataset name should not be null");
+    Preconditions.checkNotNull(datasetName, "Dataset name should not be null");
     // Dataset/Table name is expected to be in the format <table-prefix>.<namespace>.<name>
     String invalidFormatError = String.format("Invalid format for dataset '%s'. " +
                                                 "Expected - <table-prefix>.<namespace>.<dataset-name>", datasetName);
