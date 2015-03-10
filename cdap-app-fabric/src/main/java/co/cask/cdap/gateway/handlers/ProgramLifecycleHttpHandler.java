@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -817,45 +816,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                               "oldInstances", String.valueOf(oldInstances))).get();
         }
       }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Changes input stream for a flowlet connection.
-   */
-  @PUT
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
-  public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
-                                            @PathParam("namespace-id") String namespaceId,
-                                            @PathParam("app-id") String appId,
-                                            @PathParam("flow-id") String flowId,
-                                            @PathParam("flowlet-id") String flowletId,
-                                            @PathParam("stream-id") String streamId) throws IOException {
-    try {
-      Map<String, String> arguments = decodeArguments(request);
-      String oldStreamId = arguments.get("oldStreamId");
-      if (oldStreamId == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
-        return;
-      }
-
-      StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
-      if (stream == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream specified with streamId param does not exist");
-        return;
-      }
-
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
-      store.changeFlowletSteamConnection(programId, flowletId, oldStreamId, streamId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
