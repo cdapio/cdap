@@ -66,7 +66,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") String appId,
                            @PathParam("service-id") String serviceId,
                            @PathParam("runnable-name") String runnableName) {
-    programLifecycleHttpHandler.getServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    programLifecycleHttpHandler.getServiceInstances(responder,
                                                     Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
   }
 

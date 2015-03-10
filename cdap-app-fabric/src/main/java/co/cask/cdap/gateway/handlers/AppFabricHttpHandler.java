@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
@@ -51,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -540,13 +542,37 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
   public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
+                                            @PathParam("namespace-id") String namespaceId,
                                             @PathParam("app-id") String appId,
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
                                             @PathParam("stream-id") String streamId) throws IOException {
-    programLifecycleHttpHandler.changeFlowletStreamConnection(RESTMigrationUtils.rewriteV2RequestToV3(request),
-                                                              responder, Constants.DEFAULT_NAMESPACE,
-                                                              appId, flowId, flowletId, streamId);
+    try {
+      Map<String, String> arguments = decodeArguments(request);
+      String oldStreamId = arguments.get("oldStreamId");
+      if (oldStreamId == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
+        return;
+      }
+
+      StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
+      if (stream == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream specified with streamId param does not exist");
+        return;
+      }
+
+      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
+      store.changeFlowletSteamConnection(programId, flowletId, oldStreamId, streamId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
