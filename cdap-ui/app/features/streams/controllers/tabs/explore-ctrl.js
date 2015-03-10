@@ -31,5 +31,19 @@ angular.module(PKG.name + '.feature.streams')
 
       $scope.doEventSearch();
 
+
+      $scope.query = 'SELECT * from history LIMIT 5';
+
+      $scope.execute = function() {
+        dataSrc
+          .request({
+            _cdapNsPath: '/data/explore/queries',
+            method: 'POST',
+            body: {
+              query: $scope.query
+            }
+          });
+      };
+
     }
   );

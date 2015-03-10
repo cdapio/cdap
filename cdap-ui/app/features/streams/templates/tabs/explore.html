@@ -78,10 +78,10 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
         <p>
-          <textarea class="form-control" disabled>SELECT * from someTable;</textarea>
+          <textarea class="form-control" ng-model="query"></textarea>
         </p>
         <div class="text-right">
-          <button class="btn btn-primary" type="button" disabled>
+          <button class="btn btn-primary" type="button" ng-click="execute()">
             Execute
           </button>
         </div>
