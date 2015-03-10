@@ -313,7 +313,7 @@ public class DistributedStreamService extends AbstractStreamService {
       try {
         return notificationService.subscribe(heartbeatsFeed, new NotificationHandler<StreamWriterHeartbeat>() {
           @Override
-          public Type getNotificationFeedType() {
+          public Type getNotificationType() {
             return StreamWriterHeartbeat.class;
           }
 
