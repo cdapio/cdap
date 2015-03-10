@@ -96,9 +96,9 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
 
     // remove existing tables. will replace with manually created old-style tables
     waitForCompletion(Lists.newArrayList(
-      exploreTableService.disableStream(Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "purchases")),
-      exploreTableService.disableDataset(kvID, datasetFramework.getDatasetSpec(kvID)),
-      exploreTableService.disableDataset(filesetID, datasetFramework.getDatasetSpec(filesetID))));
+      exploreTableManager.disableStream(Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "purchases")),
+      exploreTableManager.disableDataset(kvID, datasetFramework.getDatasetSpec(kvID)),
+      exploreTableManager.disableDataset(filesetID, datasetFramework.getDatasetSpec(filesetID))));
 
     String createOldStream = "CREATE EXTERNAL TABLE IF NOT EXISTS cdap_stream_purchases " +
       "(ts bigint, headers map<string, string>, body string) COMMENT 'CDAP Stream' " +

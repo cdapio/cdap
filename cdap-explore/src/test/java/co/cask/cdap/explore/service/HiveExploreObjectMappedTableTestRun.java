@@ -85,7 +85,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
   @Test
   public void testSchema() throws Exception {
-    runCommand(NAMESPACE_ID, "describe my_table",
+    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_HIVE_NAME,
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -107,15 +107,15 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
   @Test
   public void testSelectStar() throws Exception {
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
-      new ColumnDesc("my_table.row_key", "STRING", 1, null),
-      new ColumnDesc("my_table.bytearrayfield", "BINARY", 2, null),
-      new ColumnDesc("my_table.doublefield", "DOUBLE", 3, null),
-      new ColumnDesc("my_table.floatfield", "FLOAT", 4, null),
-      new ColumnDesc("my_table.intfield", "INT", 5, null),
-      new ColumnDesc("my_table.longfield", "BIGINT", 6, null),
-      new ColumnDesc("my_table.stringfield", "STRING", 7, null)
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".row_key", "STRING", 1, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".bytearrayfield", "BINARY", 2, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".doublefield", "DOUBLE", 3, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".floatfield", "FLOAT", 4, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".intfield", "INT", 5, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".longfield", "BIGINT", 6, null),
+      new ColumnDesc(MY_TABLE_HIVE_NAME + ".stringfield", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from my_table").get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * " + MY_TABLE_HIVE_NAME).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();

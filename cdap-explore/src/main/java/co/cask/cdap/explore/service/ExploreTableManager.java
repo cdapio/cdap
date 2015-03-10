@@ -56,16 +56,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Executes disabling and enabling of datasets and streams.
+ * Executes disabling and enabling of datasets and streams and adding and dropping of partitions.
  */
-public class ExploreTableService {
-  private static final Logger LOG = LoggerFactory.getLogger(ExploreTableService.class);
+public class ExploreTableManager {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
 
   @Inject
-  public ExploreTableService(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreTableManager(ExploreService exploreService, DatasetFramework datasetFramework) {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
   }
@@ -135,10 +135,11 @@ public class ExploreTableService {
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
+   * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
   public QueryHandle enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
     throws IllegalArgumentException, ExploreException, SQLException,
-    UnsupportedTypeException, DatasetNotFoundException {
+    UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
     String datasetName = datasetID.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(
@@ -162,7 +163,7 @@ public class ExploreTableService {
       }
       try {
         Schema schema = Schema.parseJson(schemaStr);
-        createStatement = new CreateStatementBuilder(datasetName, getHiveTableName(datasetName))
+        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
           .setSchema(schema)
           .setTableComment("CDAP Dataset")
           .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
@@ -176,6 +177,7 @@ public class ExploreTableService {
     }
 
     Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
+
     // To be enabled for explore, a dataset must either be RecordScannable/Writable,
     // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
     if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
@@ -204,9 +206,10 @@ public class ExploreTableService {
    * @throws ExploreException if there was an exception dropping the table
    * @throws SQLException if there was a problem with the drop table statement
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
+   * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
   public QueryHandle disableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
-    throws ExploreException, SQLException, DatasetNotFoundException {
+    throws ExploreException, SQLException, DatasetNotFoundException, ClassNotFoundException {
     LOG.debug("Disabling explore for dataset instance {}", datasetID);
 
     String tableName = getDatasetTableName(datasetID);
@@ -321,14 +324,14 @@ public class ExploreTableService {
   }
 
   private String getStreamTableName(Id.Stream streamId) {
-    return getHiveTableName(String.format("stream_%s", streamId.getName()));
+    return cleanHiveTableName(String.format("stream_%s", streamId.getName()));
   }
 
   private String getDatasetTableName(Id.DatasetInstance datasetID) {
-    return getHiveTableName(String.format("dataset_%s", datasetID.getId()));
+    return cleanHiveTableName(String.format("dataset_%s", datasetID.getId()));
   }
 
-  private String getHiveTableName(String name) {
+  private String cleanHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
     // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
     return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
@@ -384,7 +387,7 @@ public class ExploreTableService {
   }
 
   private String generateDeleteStatement(String name) {
-    return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
+    return String.format("DROP TABLE IF EXISTS %s", cleanHiveTableName(name));
   }
 
   private String generateHivePartitionKey(PartitionKey key) {

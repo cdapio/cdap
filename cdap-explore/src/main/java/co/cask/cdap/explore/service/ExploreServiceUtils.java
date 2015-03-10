@@ -57,6 +57,7 @@ import java.net.URLClassLoader;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Utility class for the explore service.
@@ -389,7 +390,7 @@ public class ExploreServiceUtils {
   }
 
   public static Dataset instantiateDataset(DatasetFramework datasetFramework, Id.DatasetInstance datasetID)
-    throws DatasetNotFoundException, DatasetInstantiationException {
+    throws DatasetNotFoundException, DatasetInstantiationException, ClassNotFoundException {
     try {
       Dataset dataset = datasetFramework.getDataset(datasetID, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
@@ -406,10 +407,12 @@ public class ExploreServiceUtils {
           "type parameter of dataset %s that is not present in the dataset's jar file. See the developer " +
           "guide for more information.", datasetID, className, className, datasetID);
       LOG.info(errMsg);
-      throw new DatasetInstantiationException(errMsg);
+      // throw a class not found...
+      throw new ClassNotFoundException(errMsg);
     }
   }
 
+  @Nullable
   private static String isClassNotFoundException(Throwable e) {
     if (e instanceof ClassNotFoundException) {
       return e.getMessage();

@@ -18,19 +18,20 @@ package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreTableService;
+import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
@@ -63,15 +64,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
   private static final Gson GSON = new Gson();
 
-  private final ExploreTableService exploreTableService;
+  private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreTableService exploreTableService,
+  public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
                                     StreamAdmin streamAdmin) {
-    this.exploreTableService = exploreTableService;
+    this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
   }
@@ -96,7 +97,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableService.enableStream(streamId, streamConfig);
+      QueryHandle handle = exploreTableManager.enableStream(streamId, streamConfig);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -125,7 +126,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableService.disableStream(streamId);
+      QueryHandle handle = exploreTableManager.disableStream(streamId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -156,7 +157,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableService.enableDataset(datasetID, datasetSpec);
+      QueryHandle handle = exploreTableManager.enableDataset(datasetID, datasetSpec);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -199,7 +200,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableService.disableDataset(datasetID, spec);
+      QueryHandle handle = exploreTableManager.disableDataset(datasetID, spec);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -213,12 +214,21 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("datasets/{dataset}/partitions")
   public void addPartition(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
+    Dataset dataset;
     try {
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
-      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
-      if (dataset == null) {
-        return; // response sent by instantiateDataset()
-      }
+      dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetInstanceId);
+    } catch (DatasetNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+      return;
+    } catch (ClassNotFoundException e) {
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return;
+    }
+
+    try {
       if (!(dataset instanceof PartitionedFileSet)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
         return;
@@ -245,7 +255,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableService.addPartition(datasetInstanceId, partitionKey, fsPath);
+      QueryHandle handle = exploreTableManager.addPartition(datasetInstanceId, partitionKey, fsPath);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -262,12 +272,21 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void dropPartition(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("dataset") String datasetName) {
+    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
+    Dataset dataset;
     try {
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
-      Dataset dataset = instantiateDataset(datasetInstanceId, responder);
-      if (dataset == null) {
-        return; // response sent by instantiateDataset()
-      }
+      dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetInstanceId);
+    } catch (DatasetNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+      return;
+    } catch (ClassNotFoundException e) {
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+      return;
+    }
+
+    try {
       if (!(dataset instanceof PartitionedFileSet)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
         return;
@@ -289,7 +308,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableService.dropPartition(datasetInstanceId, partitionKey);
+      QueryHandle handle = exploreTableManager.dropPartition(datasetInstanceId, partitionKey);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -297,39 +316,5 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-  }
-
-  private Dataset instantiateDataset(Id.DatasetInstance datasetInstanceId, HttpResponder responder) throws Exception {
-    Dataset dataset;
-    try {
-      dataset = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
-    } catch (Exception e) {
-      String className = isClassNotFoundException(e);
-      if (className == null) {
-        throw e;
-      }
-      LOG.info("Cannot load dataset {} because class {} cannot be found. This is probably because class {} is a " +
-                 "type parameter of dataset {} that is not present in the dataset's jar file. See the developer " +
-                 "guide for more information.", datasetInstanceId, className, className, datasetInstanceId);
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-      return null;
-    }
-    if (dataset == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
-      return null;
-    }
-    return dataset;
-  }
-
-  private String isClassNotFoundException(Throwable e) {
-    if (e instanceof ClassNotFoundException) {
-      return e.getMessage();
-    }
-    if (e.getCause() != null) {
-      return isClassNotFoundException(e.getCause());
-    }
-    return null;
   }
 }

@@ -119,7 +119,7 @@ public class BaseHiveExploreServiceTest {
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
   protected static LocationFactory locationFactory;
-  protected static ExploreTableService exploreTableService;
+  protected static ExploreTableManager exploreTableManager;
 
   protected static Injector injector;
 
@@ -163,7 +163,7 @@ public class BaseHiveExploreServiceTest {
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
 
-    exploreTableService = injector.getInstance(ExploreTableService.class);
+    exploreTableManager = injector.getInstance(ExploreTableManager.class);
 
     locationFactory = injector.getInstance(LocationFactory.class);
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
