@@ -18,8 +18,7 @@ package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.api.schedule.Schedules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -59,8 +58,9 @@ public class FakeApp extends AbstractApplication {
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
     addWorkflow(new FakeWorkflow());
-    scheduleWorkflow(new TimeSchedule(SCHEDULE_NAME, "", "0 0 1 1 *"), FakeWorkflow.NAME);
-    scheduleWorkflow(new StreamSizeSchedule(STREAM_SCHEDULE_NAME, "", STREAM_NAME, 10000), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", "0 0 1 1 *"), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.createDataSchedule(STREAM_SCHEDULE_NAME, "", Schedules.Source.STREAM,
+                                                  STREAM_NAME, 10000), FakeWorkflow.NAME);
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }
