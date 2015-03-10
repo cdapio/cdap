@@ -31,6 +31,7 @@ import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -353,10 +354,18 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-    String queueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
-    tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), queueTableNamePrefix);
+    // It's important to keep config table enabled while disabling and dropping  queue tables.
+    final String queueTableNamePrefix = String.format("%s.", unqualifiedTableNamePrefix);
+    final TableId configTableId = getConfigTableId(namespaceId);
+    tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId tableId) {
+        // It's a bit hacky here since we know how the Dataset system names table
+        return (tableId.getTableName().startsWith(queueTableNamePrefix)) && !tableId.equals(configTableId);
+      }
+    });
 
-    drop(getConfigTableId(namespaceId));
+    drop(configTableId);
   }
 
   @Override
