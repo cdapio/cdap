@@ -542,7 +542,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/connections/{stream-id}")
   public void changeFlowletStreamConnection(HttpRequest request, HttpResponder responder,
-                                            @PathParam("namespace-id") String namespaceId,
                                             @PathParam("app-id") String appId,
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
@@ -555,13 +554,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      StreamSpecification stream = store.getStream(Id.Namespace.from(namespaceId), streamId);
+      StreamSpecification stream = store.getStream(Constants.DEFAULT_NAMESPACE_ID, streamId);
       if (stream == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream specified with streamId param does not exist");
         return;
       }
 
-      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
+      Id.Program programId = Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, ProgramType.FLOW, flowId);
       store.changeFlowletSteamConnection(programId, flowletId, oldStreamId, streamId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
