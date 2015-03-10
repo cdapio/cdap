@@ -62,13 +62,13 @@ public class NamespaceClientTestRun extends ClientTestBase {
       Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaces.get(0).getId());
     } else {
       Assert.assertEquals(0, namespaces.size());
+      // include default namespace
+      initialNamespaceCount++;
     }
 
     verifyDoesNotExist(DOES_NOT_EXIST);
     verifyReservedCreate();
     verifyReservedDelete();
-    // include default namespace
-    initialNamespaceCount++;
 
     // create a valid namespace
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
