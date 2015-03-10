@@ -30,7 +30,7 @@ Let's look at some of these components, and then run the Application and see the
 The SportResults Application
 ----------------------------
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by the class ``SportResults``:
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
@@ -39,23 +39,22 @@ of the Application are tied together by the class ``SportResults``:
 
 The ``configure()`` method creates the two PartitionedFileSet datasets used in this example.
 
-   - Both datasets use CSV as the format: For MapReduce, they use the TextInputFormat and TextOutputFormat
-     with "," as the field separator, and for Explore they use the ``csv`` format.
-   - The first dataset (``results``) is partitioned by league and season. Each record represents
-     a single game with a date, a winning and a losing team, and the winner's and the loser's points, for example::
+- Both datasets use CSV as the format: For MapReduce, they use the TextInputFormat and TextOutputFormat
+  with "," as the field separator, and for Explore they use the ``csv`` format.
+- The first dataset (``results``) is partitioned by league and season. Each record represents
+  a single game with a date, a winning and a losing team, and the winner's and the loser's points, for example::
 
        2011/9/5,Dallas Cowboys,New York Giants,24,17
        2011/9/9,Philadelphia Eagles,Cleveland Browns,17,16
        2011/9/9,New England Patriots,Tennessee Titans,34,13
 
-     We have included some sample data in the ``resources`` directory.
+  We have included some sample data in the ``resources`` directory.
+- The ``totals`` dataset stores aggregates across all seasons and thus has the league as its single
+  partitioning field. Each record has, for an individual team, the total number of games won and lost
+  and the total number of points scored and conceded.
 
-   - The ``totals`` dataset stores aggregates across all seasons and therefore has the league as its single
-     partitioning field. Each record represents the total number of games won and lost, and the total number
-     of points scored and conceded, by a team.
-
-We will use the ``UploadService`` to upload files into the ``results`` dataset, then compute the ``totals``
-aggregates using MapReduce, and we will explore both datasets using SQL.
+We will use the ``UploadService`` to upload the sample data files into the ``results`` dataset,
+then compute the ``totals`` aggregates using MapReduce, and we will explore both datasets using SQL.
 
 UploadService
 -------------
@@ -69,14 +68,14 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 Let's take a closer look at the upload method:
 
-   - It first creates a partition key and a relative file path from the league and season
-     received as path parameters in the request URL.
-   - It then uses the ``getLocation()`` of the embedded file set of the ``results`` dataset to obtain the location
-     for writing the file, and opens an output stream for that location to write the file contents.
-     ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
-     you can read more about its interface in the Apache Twill
-     `Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
-   - Finally, it registers the written file as a new partition in the dataset.
+- It first creates a partition key and a relative file path from the league and season
+  received as path parameters in the request URL.
+- It then uses the ``getLocation()`` of the embedded file set of the ``results`` dataset to obtain the location
+  for writing the file, and opens an output stream for that location to write the file contents.
+  ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
+  you can read more about its interface in the `Apache Twill
+  Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
+- Finally, it registers the written file as a new partition in the dataset.
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
@@ -88,11 +87,11 @@ MapReduce over File Partitions
 ``ScoreCounter`` is a simple MapReduce that reads from the ``results`` PartitionedFileSet and writes to
 the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the MapReduce program for this:
 
-   - It reads the league that it is supposed to process from the runtime arguments.
-   - It constructs a partition filter for the input using the league as the only condition, and instantiates
-     the ``results`` dataset with arguments that contain this filter.
-   - It constructs an output partition key for the new partition, and instantiates the ``totals`` dataset
-     with arguments that specify this partition key.
+- It reads the league that it is supposed to process from the runtime arguments.
+- It constructs a partition filter for the input using the league as the only condition, and instantiates
+  the ``results`` dataset with arguments that contain this filter.
+- It constructs an output partition key for the new partition, and instantiates the ``totals`` dataset
+  with arguments specifying that partition key.
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
@@ -122,7 +121,7 @@ Building and Starting
 Running CDAP Applications
 =========================
 
-.. |example| replace:: FileSetExample
+.. |example| replace:: SportResults
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
@@ -152,7 +151,7 @@ Once the application is deployed:
 Uploading Game Results
 ----------------------
 
-First we will upload some CSV files into the ``results`` dataset. For example, to upload the results
+First, we will upload some CSV files into the ``results`` dataset. For example, to upload the results
 for the 2012 season of the NFL::
 
   cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
@@ -173,13 +172,13 @@ Exploring with Ad-hoc SQL
 -------------------------
 
 Both of the partitioned file sets are registered as external tables in Hive and can be explored with SQL. To
-see the existing partitions of a dataset, use the ``show partitions`` query:
+see the existing partitions of a dataset, use the ``show partitions`` query::
 
   cdap-cli.sh execute \"show partitions results\"
 
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
-FL seasons (that have been uploaded), and for all seasons of all sport leagues::
+seasons (that have been uploaded), and for all seasons of all sport leagues::
 
   cdap-cli.sh execute "\"select * from results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
   cdap-cli.sh execute "\"select * from results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""

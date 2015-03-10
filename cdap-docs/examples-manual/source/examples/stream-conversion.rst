@@ -30,7 +30,7 @@ Let's look at some of these components, and then run the Application and see the
 The Stream Conversion Application
 ---------------------------------
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by the class ``StreamConversionApp``:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
