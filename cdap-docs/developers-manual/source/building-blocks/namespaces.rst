@@ -42,9 +42,6 @@ The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``defa
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.
 
-Once created, these namespace properties (ID, display name, description) cannot be altered. 
-The only method for changing them is to delete the namespace and recreate it.
-
 
 Independent and Non-hierarchal
 ==============================
@@ -71,6 +68,10 @@ The best practices with using namespaces would be to create desired namespaces a
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
 undertaken.
 
+Once a namespace has been created, you can edit its display name and description, either 
+by using a :ref:`RESTful API <http-restful-api-namespace>` or the 
+:ref:`Command Line Interface <cli>`.
+
 
 .. rubric::  Examples of Using Namespaces
 
@@ -79,4 +80,3 @@ undertaken.
   
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the
   namespace you are currently using; the command prompt displays it as a visual reminder.
-
