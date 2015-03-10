@@ -16,10 +16,12 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractServiceManager;
+import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -43,7 +45,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
-  private final String accountId;
+  private final String namespace;
   private final String applicationId;
   private final String serviceName;
 
@@ -51,11 +53,11 @@ public class DefaultServiceManager extends AbstractServiceManager {
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
 
-  public DefaultServiceManager(String accountId, DefaultApplicationManager.ProgramId serviceId,
+  public DefaultServiceManager(String namespace, DefaultApplicationManager.ProgramId serviceId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager) {
     this.serviceId = serviceId;
-    this.accountId = accountId;
+    this.namespace = namespace;
     this.applicationId = serviceId.getApplicationId();
     this.serviceName = serviceId.getRunnableId();
 
@@ -111,9 +113,14 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceName);
+    String discoveryName = String.format("service.%s.%s.%s", namespace, applicationId, serviceName);
     ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
     return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
+  }
+
+  @Override
+  public RuntimeMetrics getMetrics() {
+    return RuntimeStats.getServiceMetrics(namespace, applicationId, serviceName);
   }
 
   @Nullable
@@ -124,7 +131,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/",
                                 address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, accountId, applicationId, serviceName);
+                                Constants.Gateway.API_VERSION_3, namespace, applicationId, serviceName);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

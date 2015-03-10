@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
- * Instance of this class is for managing a running {@link co.cask.cdap.api.procedure.Procedure Procedure}.
+ *
  */
-public interface ProcedureManager {
+public class FakeWorkflow implements Workflow {
 
-  /**
-   * Stops the running procedure.
-   */
-  void stop();
+  public static final String NAME = "FakeWorkflow";
 
-  /**
-   * @return the Procedure metrics.
-   */
-  RuntimeMetrics getMetrics();
-
-  /**
-   * @return A {@link ProcedureClient} for issuing queries to the running procedure.
-   */
-  ProcedureClient getClient();
+  @Override
+  public void configure(WorkflowConfigurer configurer) {
+    configurer.setName(NAME);
+    configurer.addAction(new AbstractWorkflowAction() {
+      @Override
+      public void run() {
+        // NO-OP
+      }
+    });
+  }
 }

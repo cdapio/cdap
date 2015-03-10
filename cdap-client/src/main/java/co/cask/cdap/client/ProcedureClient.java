@@ -76,6 +76,24 @@ public class ProcedureClient {
    */
   public String call(String appId, String procedureId, String methodId, Map<String, String> parameters)
     throws BadRequestException, NotFoundException, IOException, UnauthorizedException {
+    return new String(callRaw(appId, procedureId, methodId, parameters), Charsets.UTF_8);
+  }
+
+  /**
+   * Calls a procedure's method.
+   *
+   * @param appId ID of the application that the procedure belongs to
+   * @param procedureId ID of the procedure
+   * @param methodId ID of the method belonging to the procedure
+   * @param parameters parameters to pass with the procedure call
+   * @return result of the procedure call
+   * @throws BadRequestException if the input was bad
+   * @throws NotFoundException if the application, procedure, or method could not be found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public byte[] callRaw(String appId, String procedureId, String methodId, Map<String, String> parameters)
+    throws BadRequestException, NotFoundException, IOException, UnauthorizedException {
     VersionMigrationUtils.assertProcedureSupported(config);
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
@@ -89,7 +107,7 @@ public class ProcedureClient {
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or procedure or method", appId + "/" + procedureId + "/" + methodId);
     }
-    return new String(response.getResponseBody(), Charsets.UTF_8);
+    return response.getResponseBody();
   }
 
   /**
