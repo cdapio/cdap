@@ -34,9 +34,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -114,13 +112,9 @@ public class MapReduceWithPartitionedTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator =
-      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceWithPartitionedTest.class.getClassLoader(), null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceWithPartitionedTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }
@@ -377,14 +371,7 @@ public class MapReduceWithPartitionedTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,9 +31,11 @@ import java.util.Map;
 public class HBaseScanner implements Scanner {
 
   private final ResultScanner scanner;
+  private final byte[] columnFamily;
 
-  public HBaseScanner(ResultScanner scanner) {
+  public HBaseScanner(ResultScanner scanner, byte[] columnFamily) {
     this.scanner = scanner;
+    this.columnFamily = columnFamily;
   }
 
   @Override
@@ -51,7 +53,7 @@ public class HBaseScanner implements Scanner {
           break;
         }
 
-        Map<byte[], byte[]> rowMap = HBaseTable.getRowMap(result);
+        Map<byte[], byte[]> rowMap = HBaseTable.getRowMap(result, columnFamily);
         if (rowMap.size() > 0) {
           return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap);
         }

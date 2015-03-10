@@ -110,7 +110,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
       Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
       for (DatasetSpecificationSummary spec : instances) {
-        // todo :  we are stripping cdap.{namespace} right now , this can be removed after namespace fixes
+        // todo :  we are stripping rootPrefix.{namespace} right now , this can be removed after namespace fixes
         // and logic can be moved to DatasetSpecification
         String dsName = stripRootPrefixAndNamespace(spec.getName());
         if (tableName.startsWith(dsName)) {

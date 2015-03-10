@@ -17,9 +17,13 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,13 +37,17 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
+import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -88,28 +96,35 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
-    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE1);
+    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE2);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE1);
+    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE2);
+    hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE1);
+    hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE2);
     testHBase.stopHBase();
   }
 
   @Override
-  protected BufferingTable getTable(String name, ConflictDetection conflictLevel) throws Exception {
+  protected BufferingTable getTable(DatasetContext datasetContext, String name,
+                                    ConflictDetection conflictLevel) throws Exception {
     // ttl=-1 means "keep data forever"
-    return
-      new HBaseTable(name, ConflictDetection.valueOf(conflictLevel.name()), testHBase.getConfiguration(),
-                     hBaseTableUtil, true);
+    DatasetSpecification spec = DatasetSpecification.builder(name, "foo")
+      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
+      .property(Table.PROPERTY_CONFLICT_LEVEL, conflictLevel.name())
+      .build();
+    return new HBaseTable(datasetContext, spec, cConf, testHBase.getConfiguration(), hBaseTableUtil);
   }
 
   @Override
-  protected HBaseTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
+  protected HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
+                                          DatasetProperties props) throws IOException {
     DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
-    return new HBaseTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
+    return new HBaseTableAdmin(datasetContext, spec, testHBase.getConfiguration(), hBaseTableUtil,
                                cConf, new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
@@ -118,12 +133,14 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
     int ttl = 1000;
-    String ttlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "ttl");
-    String noTtlTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "nottl");
+    String ttlTable = "ttl";
+    String noTtlTable = "nottl";
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
-    getTableAdmin(ttlTable, props).create();
-    HBaseTable table = new HBaseTable(ttlTable, ConflictDetection.ROW, testHBase.getConfiguration(),
-                                      hBaseTableUtil, false);
+    getTableAdmin(CONTEXT1, ttlTable, props).create();
+    DatasetSpecification ttlTableSpec = DatasetSpecification.builder(ttlTable, HBaseTable.class.getName())
+      .properties(props.getProperties())
+      .build();
+    HBaseTable table = new HBaseTable(CONTEXT1, ttlTableSpec, cConf, testHBase.getConfiguration(), hBaseTableUtil);
 
     DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
     Transaction tx = txSystemClient.startShort();
@@ -151,9 +168,11 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // test a table with no TTL
     DatasetProperties props2 = DatasetProperties.builder()
       .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
-    getTableAdmin(noTtlTable, props2).create();
-    HBaseTable table2 = new HBaseTable(noTtlTable, ConflictDetection.ROW, testHBase.getConfiguration(),
-                                       hBaseTableUtil, false);
+    getTableAdmin(CONTEXT1, noTtlTable, props2).create();
+    DatasetSpecification noTtlTableSpec = DatasetSpecification.builder(noTtlTable, HBaseTable.class.getName())
+      .properties(props2.getProperties())
+      .build();
+    HBaseTable table2 = new HBaseTable(CONTEXT1, noTtlTableSpec, cConf, testHBase.getConfiguration(), hBaseTableUtil);
 
     tx = txSystemClient.startShort();
     table2.startTx(tx);
@@ -178,12 +197,13 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public void testPreSplit() throws Exception {
     byte[][] splits = new byte[][] {Bytes.toBytes("a"), Bytes.toBytes("b"), Bytes.toBytes("c")};
     DatasetProperties props = DatasetProperties.builder().add("hbase.splits", new Gson().toJson(splits)).build();
-    String presplittedTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "presplitted");
-    getTableAdmin(presplittedTable, props).create();
+    String presplittedTable = "presplitted";
+    getTableAdmin(CONTEXT1, presplittedTable, props).create();
 
     HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
     try {
-      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(presplittedTable));
+      List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(NAMESPACE1.getId(),
+                                                                                          presplittedTable));
       // note: first region starts at very first row key, so we have one extra to the splits count
       Assert.assertEquals(4, regions.size());
       Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
@@ -197,17 +217,17 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   @Test
   public void testEnableIncrements() throws Exception {
     // setup a table with increments disabled and with it enabled
-    String disableTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-disable");
-    String enabledTableName = DS_NAMESPACE.namespace(NAMESPACE_ID, "incr-enable");
-    TableId disabledTableId = TableId.from(disableTableName);
-    TableId enabledTableId = TableId.from(enabledTableName);
-    HBaseTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
+    String disableTableName = "incr-disable";
+    String enabledTableName = "incr-enable";
+    TableId disabledTableId = TableId.from(NAMESPACE1.getId(), disableTableName);
+    TableId enabledTableId = TableId.from(NAMESPACE1.getId(), enabledTableName);
+    HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
     HBaseAdmin admin = testHBase.getHBaseAdmin();
 
     DatasetProperties props =
       DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
-    HBaseTableAdmin enabledAdmin = getTableAdmin(enabledTableName, props);
+    HBaseTableAdmin enabledAdmin = getTableAdmin(CONTEXT1, enabledTableName, props);
     enabledAdmin.create();
 
     try {
@@ -224,7 +244,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
         admin.close();
       }
 
-      BufferingTable table = getTable(enabledTableName, ConflictDetection.COLUMN);
+      BufferingTable table = getTable(CONTEXT1, enabledTableName, ConflictDetection.COLUMN);
       byte[] row = Bytes.toBytes("row1");
       byte[] col = Bytes.toBytes("col1");
       DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
@@ -265,6 +285,44 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       disabledAdmin.drop();
       enabledAdmin.drop();
     }
+  }
+
+  @Test
+  public void testColumnFamily() throws Exception {
+    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
+    HBaseTableDefinition tableDefinition = new HBaseTableDefinition("foo");
+    String tableName = "testcf";
+    DatasetSpecification spec = tableDefinition.configure(tableName, props);
+
+    DatasetAdmin admin = new HBaseTableAdmin(CONTEXT1, spec, testHBase.getConfiguration(), hBaseTableUtil,
+                                             CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
+    admin.create();
+    final HBaseTable table = new HBaseTable(CONTEXT1, spec, cConf, testHBase.getConfiguration(), hBaseTableUtil);
+
+    TransactionSystemClient txClient = new DetachedTxSystemClient();
+    TransactionExecutor executor = new DefaultTransactionExecutor(txClient, table);
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        table.put(new Put("row", "column", "testValue"));
+      }
+    });
+
+    final HBaseTable table2 = new HBaseTable(CONTEXT1, spec, cConf, testHBase.getConfiguration(), hBaseTableUtil);
+    executor = new DefaultTransactionExecutor(txClient, table2);
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals("testValue", table2.get(new Get("row", "column")).getString("column"));
+      }
+    });
+
+    // Verify the column family name
+    HTableDescriptor htd = hBaseTableUtil.getHTableDescriptor(testHBase.getHBaseAdmin(),
+                                                              TableId.from(CONTEXT1.getNamespaceId(), tableName));
+    HColumnDescriptor hcd = htd.getFamily(Bytes.toBytes("t"));
+    Assert.assertNotNull(hcd);
+    Assert.assertEquals("t", hcd.getNameAsString());
   }
 
   private static byte[] b(String s) {

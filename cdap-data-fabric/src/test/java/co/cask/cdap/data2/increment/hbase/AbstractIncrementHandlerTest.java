@@ -16,9 +16,13 @@
 
 package co.cask.cdap.data2.increment.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -56,6 +60,7 @@ public abstract class AbstractIncrementHandlerTest {
 
   protected static HBaseTestBase testUtil;
   protected static Configuration conf;
+  protected static CConfiguration cConf;
 
   protected long ts = 1;
 
@@ -64,6 +69,7 @@ public abstract class AbstractIncrementHandlerTest {
     testUtil = new HBaseTestFactory().get();
     testUtil.startHBase();
     conf = testUtil.getConfiguration();
+    cConf = CConfiguration.create();
   }
 
   @AfterClass
@@ -73,10 +79,10 @@ public abstract class AbstractIncrementHandlerTest {
 
   @Test
   public void testIncrements() throws Exception {
-    String tableName = "incrementTest";
-    createTable("incrementTest");
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "incrementTest");
+    createTable(tableId);
 
-    HTable table = new HTable(conf, tableName);
+    HTable table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId);
     try {
       byte[] colA = Bytes.toBytes("a");
       byte[] row1 = Bytes.toBytes("row1");
@@ -129,11 +135,10 @@ public abstract class AbstractIncrementHandlerTest {
   public void testIncrementsCompaction() throws Exception {
     // In this test we verify that squashing delta-increments during flush or compaction works as designed.
 
-    String tableName = "incrementCompactTest";
-    byte[] tableBytes = Bytes.toBytes(tableName);
-    createTable(tableName);
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "incrementCompactTest");
 
-    HTable table = new HTable(conf, tableName);
+    HTable table = createTable(tableId);
+    byte[] tableBytes = table.getTableName();
     try {
       byte[] colA = Bytes.toBytes("a");
       byte[] row1 = Bytes.toBytes("row1");
@@ -206,8 +211,10 @@ public abstract class AbstractIncrementHandlerTest {
 
   @Test
   public void testIncrementsCompactionUnlimBound() throws Exception {
-    RegionWrapper region = createRegion("testIncrementsCompactionsUnlimBound", ImmutableMap.<String, String>builder()
-        .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build());
+    RegionWrapper region =
+      createRegion(TableId.from(Constants.DEFAULT_NAMESPACE, "testIncrementsCompactionsUnlimBound"),
+                   ImmutableMap.<String, String>builder()
+                     .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build());
 
     try {
       region.initialize();
@@ -244,12 +251,11 @@ public abstract class AbstractIncrementHandlerTest {
   public void testNonTransactionalMixed() throws Exception {
     // test mix of increment, put and delete operations
 
-    String tableName = "testNonTransactionalMixed";
-    createTable(tableName);
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "testNonTransactionalMixed");
+    HTable table = createTable(tableId);
 
     byte[] row1 = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
-    HTable table = new HTable(conf, tableName);
     try {
       // perform 100 increments on a column
       for (int i = 0; i < 100; i++) {
@@ -333,9 +339,11 @@ public abstract class AbstractIncrementHandlerTest {
    */
   @Test
   public void testNonTransactionalTTL() throws Exception {
-    RegionWrapper region = createRegion("testNonTransactionalTTL", ImmutableMap.<String, String>builder()
-        .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false")
-        .put(TxConstants.PROPERTY_TTL, "50").build());
+    RegionWrapper region = createRegion(TableId.from(Constants.DEFAULT_NAMESPACE, "testNonTransactionalTTL"),
+                                        ImmutableMap.<String, String>builder()
+                                          .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false")
+                                          .put(TxConstants.PROPERTY_TTL, "50")
+                                          .build());
 
     byte[] row = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
@@ -495,9 +503,9 @@ public abstract class AbstractIncrementHandlerTest {
 
   public abstract void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception;
 
-  public abstract RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception;
+  public abstract RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception;
 
-  public abstract void createTable(String tableName) throws Exception;
+  public abstract HTable createTable(TableId tableId) throws Exception;
 
   public static class ColumnCell {
     private final byte[] row;

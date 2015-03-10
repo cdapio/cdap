@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegion
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -36,7 +37,6 @@ import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -56,20 +56,20 @@ public class HBase96TableUtil extends HBaseTableUtil {
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, HTable96NameConverter.toTableName(cConf, tableId));
+    return new HTable(conf, HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptor createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(HTable96NameConverter.toTableName(cConf, tableId));
+    return new HTableDescriptor(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableDescriptor(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.getTableDescriptor(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -77,7 +77,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
-      admin.getNamespaceDescriptor(HTableNameConverter.toHBaseNamespace(namespace));
+      admin.getNamespaceDescriptor(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace));
       return true;
     } catch (NamespaceNotFoundException e) {
       return false;
@@ -90,7 +90,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (!hasNamespace(admin, namespace)) {
       NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(HTableNameConverter.toHBaseNamespace(namespace)).build();
+        NamespaceDescriptor.create(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace)).build();
       admin.createNamespace(namespaceDescriptor);
     }
   }
@@ -100,7 +100,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(HTableNameConverter.toHBaseNamespace(namespace));
+      admin.deleteNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespace));
     }
   }
 
@@ -108,28 +108,28 @@ public class HBase96TableUtil extends HBaseTableUtil {
   public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.disableTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.enableTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.tableExists(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(HTable96NameConverter.toTableName(cConf, tableId));
+    admin.deleteTable(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -143,19 +143,32 @@ public class HBase96TableUtil extends HBaseTableUtil {
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableRegions(HTable96NameConverter.toTableName(cConf, tableId));
+    return admin.getTableRegions(HTable96NameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
-  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
-    TableName[] hTableNames = admin.listTableNamesByNamespace(HTableNameConverter.toHBaseNamespace(namespaceId));
-    for (TableName hTableName : hTableNames) {
-      String tableName = HTable96NameConverter.fromTableName(hTableName).getTableName();
-      if (tableName.startsWith(tablePrefix)) {
-        admin.disableTable(hTableName);
-        admin.deleteTable(hTableName);
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    HTableDescriptor[] hTableDescriptors =
+      admin.listTableDescriptorsByNamespace(HTableNameConverter.toHBaseNamespace(tablePrefix, namespaceId));
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(HTable96NameConverter.fromTableName(hTableDescriptor.getTableName()));
       }
     }
+    return tableIds;
+  }
+
+  @Override
+  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    HTableDescriptor[] hTableDescriptors = admin.listTables();
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(HTable96NameConverter.fromTableName(hTableDescriptor.getTableName()));
+      }
+    }
+    return tableIds;
   }
 
   @Override

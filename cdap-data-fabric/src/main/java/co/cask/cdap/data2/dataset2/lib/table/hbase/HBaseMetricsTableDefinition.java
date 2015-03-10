@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
 
   // for unit-test purposes only
   HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
-                                     LocationFactory locationFactory, CConfiguration cConf) {
+                              LocationFactory locationFactory, CConfiguration cConf) {
     super(name);
     this.hConf = hConf;
     this.hBaseTableUtil = hBaseTableUtil;
@@ -63,8 +63,8 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
-      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .properties(properties.getProperties())
+      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .build();
   }
 
@@ -72,12 +72,12 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseMetricsTable(spec.getName(), hConf, cConf, hBaseTableUtil);
+    return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil);
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, cConf, locationFactory);
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }

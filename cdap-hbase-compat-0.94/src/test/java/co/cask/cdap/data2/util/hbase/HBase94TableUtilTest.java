@@ -39,11 +39,12 @@ public class HBase94TableUtilTest extends AbstractHBaseTableUtilTest {
   @Override
   protected String getTableNameAsString(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "TableId should not be null.");
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return HTableNameConverter.getHBaseTableName(cConf, tableId);
+      return HTableNameConverter.getHBaseTableName(tablePrefix, tableId);
     }
-    return Joiner.on(".").join(HTableNameConverter.toHBaseNamespace(tableId.getNamespace()),
-                               HTableNameConverter.getHBaseTableName(cConf, tableId));
+    return Joiner.on(".").join(HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()),
+                               HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
   }
 
   @Override

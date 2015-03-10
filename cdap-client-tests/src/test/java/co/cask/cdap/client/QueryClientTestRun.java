@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
@@ -55,7 +56,9 @@ public class QueryClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
-    exploreClient = new FixedAddressExploreClient(clientConfig.getHostname(), clientConfig.getPort(),
+    ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+    exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
+                                                  connectionConfig.getPort(),
                                                   accessToken);
   }
 
@@ -70,21 +73,20 @@ public class QueryClientTestRun extends ClientTestBase {
     Thread.sleep(3000);
 
     Id.Namespace namespace = getClientConfig().getNamespace();
-    String instanceName = String.format("cdap.%s.%s", namespace, FakeApp.DS_NAME);
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, instanceName);
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
 
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
 
     exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from cdap_default_" + FakeApp.DS_NAME).get();
+      queryClient.execute("select * from " + FakeApp.DS_NAME).get();
       Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
     } catch (ExecutionException e) {
 
     }
 
     exploreClient.enableExploreDataset(datasetInstance).get();
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {

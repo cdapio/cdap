@@ -18,11 +18,14 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -93,10 +96,17 @@ public abstract class HBaseTableUtil {
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
 
-  protected CConfiguration cConf;
+  protected String tablePrefix;
 
   public void setCConf(CConfiguration cConf) {
-    this.cConf = cConf;
+    if (cConf != null) {
+      this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    }
+  }
+
+  protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
+    String hTableName = hTableDescriptor.getNameAsString();
+    return hTableName.startsWith(tablePrefix + ".") || hTableName.startsWith(tablePrefix + "_");
   }
 
   /**
@@ -313,11 +323,11 @@ public abstract class HBaseTableUtil {
           throw new IOException("Fails to create directory: " + jarDir.toURI());
         }
         Files.copy(jarFile, new OutputSupplier<OutputStream>() {
-        @Override
-        public OutputStream getOutput() throws IOException {
-          return targetPath.getOutputStream();
-        }
-      });
+          @Override
+          public OutputStream getOutput() throws IOException {
+            return targetPath.getOutputStream();
+          }
+        });
         return targetPath;
       } finally {
         jarFile.delete();
@@ -492,26 +502,46 @@ public abstract class HBaseTableUtil {
   public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
 
   /**
-   * Deletes all tables in the specified namespace, that begin with a particular prefix.
+   * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespaceId namespace for which the tables are being requested
-   * @param tablePrefix pattern that is matched against a table name to check for deletion
+   * @param namespaceId namespace for which the tables are being deleted
+   * @param predicate The {@link Predicate} to decide whether to drop a table or not
    * @throws IOException
    */
-  public abstract void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId,
-                                            String tablePrefix) throws IOException;
+  public void deleteAllInNamespace(HBaseAdmin admin,
+                                   Id.Namespace namespaceId, Predicate<TableId> predicate) throws IOException {
+    for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
+      if (predicate.apply(tableId)) {
+        dropTable(admin, tableId);
+      }
+    }
+  }
 
   /**
    * Deletes all tables in the specified namespace
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespaceId namespace for which the tables are being requested
+   * @param namespaceId namespace for which the tables are being deleted
    * @throws IOException
    */
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
-    deleteAllInNamespace(admin, namespaceId, "");
+    deleteAllInNamespace(admin, namespaceId, Predicates.<TableId>alwaysTrue());
   }
+
+  /**
+   * Lists all tables in the specified namespace
+   *
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   * @param namespaceId namespace for which the tables are being requested
+   */
+  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException;
+
+  /**
+   * Lists all tables
+   * @param admin the {@link HBaseAdmin} to use to communicate with HBase
+   */
+  public abstract List<TableId> listTables(HBaseAdmin admin) throws IOException;
 
   /**
    * Disables and deletes a table.
