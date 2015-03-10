@@ -15,12 +15,21 @@
  */
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
@@ -30,26 +39,38 @@ import java.io.IOException;
  * Factory for creating {@link StreamConsumerStateStore} in level db.
  */
 public final class LevelDBStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
-
   private final LevelDBTableService tableService;
+  private final CConfiguration cConf;
 
   @Inject
-  LevelDBStreamConsumerStateStoreFactory(LevelDBTableService tableService) {
+  LevelDBStreamConsumerStateStoreFactory(CConfiguration cConf, LevelDBTableService tableService) {
     this.tableService = tableService;
+    this.cConf = cConf;
   }
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
-    String tableName = StreamUtils.getStateStoreTableName(namespace);
-    tableService.ensureTableExists(tableName);
-    LevelDBTableCore coreTable = new LevelDBTableCore(tableName, tableService);
+    TableId tableId = StreamUtils.getStateStoreTableId(namespace);
+
+    getLevelDBTableAdmin(tableId).create();
+    String levelDBTableName =
+      PrefixedNamespaces.namespace(cConf, tableId.getNamespace().getId(), tableId.getTableName());
+    LevelDBTableCore coreTable = new LevelDBTableCore(levelDBTableName, tableService);
     return new LevelDBStreamConsumerStateStore(streamConfig, coreTable);
   }
 
   @Override
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
-    String tableName = StreamUtils.getStateStoreTableName(namespace);
-    tableService.dropTable(tableName);
+    TableId tableId = StreamUtils.getStateStoreTableId(namespace);
+    getLevelDBTableAdmin(tableId).drop();
+  }
+
+  private LevelDBTableAdmin getLevelDBTableAdmin(TableId tableId) throws IOException {
+    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
+    LevelDBTableDefinition tableDefinition = new LevelDBTableDefinition("tableDefinition");
+    DatasetSpecification spec = tableDefinition.configure(tableId.getTableName(), props);
+
+    return new LevelDBTableAdmin(DatasetContext.from(tableId.getNamespace().getId()), spec, tableService, cConf);
   }
 }

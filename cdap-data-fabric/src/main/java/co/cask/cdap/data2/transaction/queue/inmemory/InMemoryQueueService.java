@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 @Singleton
 public final class InMemoryQueueService {
 
-  private final ConcurrentMap<String, InMemoryQueue> queues;
+  private final ConcurrentMap<QueueName, InMemoryQueue> queues;
 
   /**
    * Package visible constructor so that instance of this class can only be created through Guice.
@@ -45,11 +45,10 @@ public final class InMemoryQueueService {
   }
 
   InMemoryQueue getQueue(QueueName queueName) {
-    String name = queueName.toString();
-    InMemoryQueue queue = queues.get(name);
+    InMemoryQueue queue = queues.get(queueName);
     if (queue == null) {
       queue = new InMemoryQueue();
-      InMemoryQueue existing = queues.putIfAbsent(name, queue);
+      InMemoryQueue existing = queues.putIfAbsent(queueName, queue);
       if (existing != null) {
         queue = existing;
       }
@@ -57,8 +56,9 @@ public final class InMemoryQueueService {
     return queue;
   }
 
+  @SuppressWarnings("unused")
   public void dumpInfo(PrintStream out) {
-    for (String qname : queues.keySet()) {
+    for (QueueName qname : queues.keySet()) {
       out.println("Queue '" + qname + "': size is " + queues.get(qname).getSize());
     }
   }
@@ -69,19 +69,20 @@ public final class InMemoryQueueService {
    * @param prefix if non-null, drops only queues with a name that begins with this prefix.
    */
   private void resetAllQueuesOrStreams(boolean clearStreams, @Nullable String prefix) {
-    List<String> toRemove = Lists.newArrayListWithCapacity(queues.size());
-    for (String queueName : queues.keySet()) {
-      if ((clearStreams && QueueName.isStream(queueName)) || (!clearStreams && QueueName.isQueue(queueName))) {
-        if (prefix == null ||  queueName.startsWith(prefix)) {
+    List<QueueName> toRemove = Lists.newArrayListWithCapacity(queues.size());
+    for (QueueName queueName : queues.keySet()) {
+      if ((clearStreams && queueName.isStream()) || (!clearStreams && queueName.isQueue())) {
+        if (prefix == null ||  queueName.toString().startsWith(prefix)) {
           toRemove.add(queueName);
         }
       }
     }
-    for (String queueName : toRemove) {
+    for (QueueName queueName : toRemove) {
       queues.remove(queueName);
     }
   }
 
+  @SuppressWarnings("unused")
   public void resetQueues() {
     resetAllQueuesOrStreams(false, null);
   }
@@ -90,6 +91,7 @@ public final class InMemoryQueueService {
     resetAllQueuesOrStreams(false, prefix);
   }
 
+  @SuppressWarnings("unused")
   public void resetStreams() {
     resetAllQueuesOrStreams(true, null);
   }
@@ -98,11 +100,11 @@ public final class InMemoryQueueService {
     resetAllQueuesOrStreams(true, prefix);
   }
 
-  public boolean exists(String queueName) {
+  public boolean exists(QueueName queueName) {
     return queues.containsKey(queueName);
   }
 
-  public void truncate(String queueName) {
+  public void truncate(QueueName queueName) {
     InMemoryQueue queue = queues.get(queueName);
     if (queue != null) {
       queue.clear();
@@ -114,14 +116,14 @@ public final class InMemoryQueueService {
    * @param prefix the prefix to match.
    */
   public void truncateAllWithPrefix(@Nonnull String prefix) {
-    for (String queueName : queues.keySet()) {
-      if (queueName.startsWith(prefix)) {
+    for (QueueName queueName : queues.keySet()) {
+      if (queueName.toString().startsWith(prefix)) {
         truncate(queueName);
       }
     }
   }
 
-  public void drop(String queueName) {
+  public void drop(QueueName queueName) {
     queues.remove(queueName);
   }
 }
