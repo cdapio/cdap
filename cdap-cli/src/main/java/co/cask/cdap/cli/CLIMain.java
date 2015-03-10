@@ -24,6 +24,8 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -150,12 +152,8 @@ public class CLIMain {
     this.tableRenderer = tableRenderer;
     if (autoconnect) {
       try {
-        CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(uri);
+        ConnectionConfig connectionInfo = instanceURIParser.parse(uri);
         cliConfig.tryConnect(connectionInfo, output, debug);
-        cliConfig.getClientConfig().setHostname(connectionInfo.getHostname());
-        cliConfig.getClientConfig().setPort(connectionInfo.getPort());
-        cliConfig.getClientConfig().setSSLEnabled(connectionInfo.isSSLEnabled());
-        cliConfig.getClientConfig().setNamespace(connectionInfo.getNamespace());
       } catch (Exception e) {
         if (debug) {
           e.printStackTrace(output);
@@ -180,6 +178,8 @@ public class CLIMain {
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
+        } else if (e instanceof DisconnectedException) {
+          cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else {
           output.println("Error: " + e.getMessage());
         }
@@ -193,11 +193,11 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(endpointSupplier);
 
-    updateCLIPrompt(cliConfig.getClientConfig());
+    updateCLIPrompt(cliConfig.getClientConfig().getConnectionConfig());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(ClientConfig clientConfig) {
-        updateCLIPrompt(clientConfig);
+      public void onConnectionChanged(ConnectionConfig connectionConfig) {
+        updateCLIPrompt(connectionConfig);
       }
     });
   }
@@ -226,10 +226,14 @@ public class CLIMain {
     }
   }
 
-  private void updateCLIPrompt(ClientConfig clientConfig) {
-    URI baseURI = clientConfig.getBaseURI();
-    URI uri = baseURI.resolve("/" + clientConfig.getNamespace());
-    cli.getReader().setPrompt("cdap (" + uri + ")> ");
+  private void updateCLIPrompt(ConnectionConfig connectionConfig) {
+    try {
+      URI baseURI = connectionConfig.getURI();
+      URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+      cli.getReader().setPrompt("cdap (" + uri + ")> ");
+    } catch (DisconnectedException e) {
+      cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
+    }
   }
 
   public TableRenderer getTableRenderer() {
@@ -267,7 +271,10 @@ public class CLIMain {
       String[] commandArgs = command.getArgs();
 
       try {
-        ClientConfig clientConfig = new ClientConfig.Builder().setVerifySSLCert(verifySSL).build();
+        ClientConfig clientConfig = new ClientConfig.Builder()
+          .setConnectionConfig(null)
+          .setVerifySSLCert(verifySSL)
+          .build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig);
         Injector injector = Guice.createInjector(
           new AbstractModule() {

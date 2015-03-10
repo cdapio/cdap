@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
@@ -55,7 +56,9 @@ public class QueryClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
-    exploreClient = new FixedAddressExploreClient(clientConfig.getHostname(), clientConfig.getPort(),
+    ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+    exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
+                                                  connectionConfig.getPort(),
                                                   accessToken);
   }
 
