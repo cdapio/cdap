@@ -29,6 +29,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -54,11 +55,11 @@ public class DefaultSchedulerService {
     private final ScheduleQueueResolver scheduleQueueResolver;
 
     ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
-                 CConfiguration cConf) {
-      taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore);
+                 CConfiguration cConf, ListeningExecutorService taskExecutor) {
       this.store = store;
       this.cConf = cConf;
       this.scheduleQueueResolver = new ScheduleQueueResolver(cConf, store);
+      taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore, taskExecutor);
     }
 
     @Override
@@ -90,9 +91,11 @@ public class DefaultSchedulerService {
       Arguments args = new BasicArguments(builder.build());
 
       try {
-        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType, args);
+        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType, args).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
+      } catch (Throwable t) {
+        throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
     }
   }

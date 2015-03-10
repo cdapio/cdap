@@ -34,14 +34,17 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.twill.common.Threads;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -56,26 +59,31 @@ public final class ScheduleTaskRunner {
   private final ProgramRuntimeService runtimeService;
   private final Store store;
   private final PreferencesStore preferencesStore;
+  private final ListeningExecutorService executorService;
 
-  public ScheduleTaskRunner(Store store, ProgramRuntimeService runtimeService, PreferencesStore preferencesStore) {
+  public ScheduleTaskRunner(Store store, ProgramRuntimeService runtimeService, PreferencesStore preferencesStore,
+                            ListeningExecutorService taskExecutor) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.preferencesStore = preferencesStore;
+    this.executorService = taskExecutor;
   }
 
   /**
-   * Executes the giving program and block until its completion.
+   * Executes the giving program without blocking until its completion.
    *
    * @param programId Program Id
    * @param programType Program type.
    * @param arguments Arguments that would be supplied as system runtime arguments for the program.
+   * @return a {@link ListenableFuture} object that completes when the program completes
    * @throws TaskExecutionException If fails to execute the program.
    */
-  public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws TaskExecutionException {
+  public ListenableFuture<?> run(Id.Program programId, ProgramType programType, Arguments arguments)
+    throws TaskExecutionException {
     Map<String, String> userArgs = Maps.newHashMap();
     Program program;
     try {
-      program =  store.loadProgram(programId, ProgramType.WORKFLOW);
+      program = store.loadProgram(programId, ProgramType.WORKFLOW);
       Preconditions.checkNotNull(program, "Program not found");
 
       String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
@@ -96,14 +104,15 @@ public final class ScheduleTaskRunner {
       if (!runMultipleProgramInstances) {
         ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
         if (existingRuntimeInfo != null) {
-          throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
+          throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
         }
       }
     } catch (Throwable t) {
+      Throwables.propagateIfInstanceOf(t, TaskExecutionException.class);
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
-    executeAndBlock(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
+    return execute(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
   }
 
   /**
@@ -122,9 +131,12 @@ public final class ScheduleTaskRunner {
   }
 
   /**
-   * Executes a program and block until it is completed.
+   * Executes a program without blocking until its completion.
+   *
+   * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private void executeAndBlock(final Program program, ProgramOptions options) throws TaskExecutionException {
+  private ListenableFuture<?> execute(final Program program, ProgramOptions options)
+    throws TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
     final ProgramController controller = runtimeInfo.getController();
@@ -167,10 +179,12 @@ public final class ScheduleTaskRunner {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      throw new TaskExecutionException(e, false);
-    }
+    return executorService.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        latch.await();
+        return null;
+      }
+    });
   }
 }

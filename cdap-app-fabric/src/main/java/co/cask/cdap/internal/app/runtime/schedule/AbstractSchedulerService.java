@@ -208,11 +208,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
   }
 
-  protected static String scheduleIdFor(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+  public static String scheduleIdFor(Id.Program program, SchedulableProgramType programType, String scheduleName) {
     return String.format("%s:%s", programIdFor(program, programType), scheduleName);
   }
 
-  protected static String programIdFor(Id.Program program, SchedulableProgramType programType) {
+  public static String programIdFor(Id.Program program, SchedulableProgramType programType) {
     return String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
                          programType.name(), program.getId());
   }
