@@ -89,7 +89,6 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     TransactionAware txTpfs = (TransactionAware) tpfs;
     txTpfs.startTx(tx1);
     tpfs.addPartition(0L, "epoch");
-    tpfs.addPartition(86400000L, "nextday");
     Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
     txTpfs.commitTx();
     transactionManager.canCommit(tx1, txTpfs.getTxChanges());
@@ -149,13 +148,10 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
 
     // check partition was added to tpfs dataset
     Iterator<PartitionKey> partitionKeyIter = partitions.keySet().iterator();
-    String expected1 = stringify(partitionKeyIter.next());
-    String expected2 = stringify(partitionKeyIter.next());
+    String expected = stringify(partitionKeyIter.next());
     runCommand(Constants.DEFAULT_NAMESPACE_ID, "show partitions dataset_myfiles", true,
                Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList(expected1)),
-                 new QueryResult(Lists.<Object>newArrayList(expected2)))
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(expected)))
     );
 
 
