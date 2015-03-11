@@ -380,7 +380,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
     // If table does not exist, nothing to be done
     try {
-      exploreService.getTableInfo(null, getHiveTableName(datasetId.getId()));
+      exploreService.getTableInfo(datasetId.getNamespaceId(), getHiveTableName(datasetId.getId()));
     } catch (TableNotFoundException e) {
       // Ignore exception, since this means table was not found.
       JsonObject json = new JsonObject();
