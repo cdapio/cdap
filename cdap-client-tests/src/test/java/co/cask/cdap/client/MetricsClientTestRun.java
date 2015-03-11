@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.metrics.MetricsContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
@@ -60,13 +62,13 @@ public class MetricsClientTestRun extends ClientTestBase {
     programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     streamClient.sendEvent(FakeApp.STREAM_NAME, "hello world");
 
-    // TODO: remove arbitrary sleep
-    TimeUnit.SECONDS.sleep(5);
-
     Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
     Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
     String flowlet = FakeFlow.FLOWLET_NAME;
 
+    RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics(programId.getNamespaceId(),
+                                                            programId.getApplicationId(), programId.getId());
+    metrics.waitForProcessed(1, 15, TimeUnit.SECONDS);
     MetricQueryResult result = metricsClient.query(MetricsContext.forFlowlet(programId, flowlet),
                                                    MetricsConstants.FLOWLET_INPUT, null);
     Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
