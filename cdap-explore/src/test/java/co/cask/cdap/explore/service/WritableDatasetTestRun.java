@@ -52,14 +52,14 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   private static final Id.DatasetModule writableKeyStructValueTable =
     Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
 
-  private static final String simpleTableName = "simple_table";
-  private static final String otherSimpleTableName = "simple_table";
-  private static final String extendedTableName = "extended_table";
-  private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, extendedTableName);
-  private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, simpleTableName);
+  private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
+  private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
   private static final Id.DatasetModule otherKvTable = Id.DatasetModule.from(OTHER_NAMESPACE_ID, "kvTable");
   private static final Id.DatasetInstance otherSimpleTable =
-    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, otherSimpleTableName);
+    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "simple_table");
+  private static final String simpleTableName = getDatasetHiveName(simpleTable);
+  private static final String otherSimpleTableName = getDatasetHiveName(otherSimpleTable);
+  private static final String extendedTableName = getDatasetHiveName(extendedTable);
 
   @BeforeClass
   public static void start() throws Exception {
@@ -160,12 +160,12 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       initKeyValueTable(myTable1, true);
       initKeyValueTable(myTable2, true);
 
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, "select * from dot_table").get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, "select * from dataset_dot_table").get();
 
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from hyphen_table").get();
+      result = exploreClient.submit(NAMESPACE_ID, "select * from dataset_hyphen_table").get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
@@ -210,7 +210,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       ExploreExecutionResult result = future.get();
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from my_table").get();
+      result = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       Assert.assertEquals("10_2", result.next().getColumns().get(0).toString());
       Assert.assertEquals("2", result.next().getColumns().get(0).toString());
@@ -235,6 +235,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void writeIntoNonScannableDataset() throws Exception {
     Id.DatasetInstance writableTable = Id.DatasetInstance.from(NAMESPACE_ID, "writable_table");
+    String writableTableName = getDatasetHiveName(writableTable);
     datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
     datasetFramework.addInstance("keyExtendedStructValueTable", extendedTable, DatasetProperties.EMPTY);
@@ -264,7 +265,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       transactionManager.commit(tx1);
       table.postTxCommit();
 
-      String query = "insert into table writable_table select key,value from " + extendedTableName;
+      String query = "insert into table " + writableTableName + " select key,value from " + extendedTableName;
       ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID, query);
       ExploreExecutionResult result = future.get();
       result.close();
@@ -296,29 +297,34 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_1");
     Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_2");
     Id.DatasetInstance myTable3 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_3");
+    String myTable1HiveName = getDatasetHiveName(myTable1);
+    String myTable2HiveName = getDatasetHiveName(myTable2);
+    String myTable3HiveName = getDatasetHiveName(myTable3);
     try {
       initKeyValueTable(MY_TABLE, true);
       initKeyValueTable(myTable1, false);
       initKeyValueTable(myTable2, false);
       initKeyValueTable(myTable3, false);
-      String query = String.format("from %s insert into table my_table_1 select * where key='1' " +
-                                     "insert into table my_table_2 select * where key='2'" +
-                                     "insert into table my_table_3 select *", MY_TABLE_NAME);
-      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID, query);
+      ListenableFuture<ExploreExecutionResult> future =
+        exploreClient.submit(NAMESPACE_ID, String.format("from %s insert into table %s select * where key='1' " +
+                                                           "insert into table %s select * where key='2' " +
+                                                           "insert into table %s select *",
+                                                         MY_TABLE_NAME, myTable1HiveName,
+                                                         myTable2HiveName, myTable3HiveName));
       ExploreExecutionResult result = future.get();
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from my_table_2").get();
+      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable2HiveName).get();
       Assert.assertEquals("2_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from my_table_1").get();
+      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable1HiveName).get();
       Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from my_table_3").get();
+      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable3HiveName).get();
       Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
       Assert.assertEquals("2_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
@@ -347,9 +353,10 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
                            "LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
                              "' INTO TABLE test").get().close();
 
-      exploreClient.submit(NAMESPACE_ID, "insert into table simple_table select * from test").get().close();
+      exploreClient.submit(NAMESPACE_ID,
+                           "insert into table " + simpleTableName + " select * from test").get().close();
 
-      assertSelectAll(NAMESPACE_ID, "simple_table", ImmutableList.<List<Object>>of(
+      assertSelectAll(NAMESPACE_ID, simpleTableName, ImmutableList.<List<Object>>of(
         ImmutableList.<Object>of(1, "one"),
         ImmutableList.<Object>of(2, "two"),
         ImmutableList.<Object>of(3, "three"),

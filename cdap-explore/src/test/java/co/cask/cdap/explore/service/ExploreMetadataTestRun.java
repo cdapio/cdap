@@ -41,11 +41,11 @@ import java.util.concurrent.TimeUnit;
 @Category(SlowTests.class)
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
-  private static final String otherTableName = "other_table";
-  private static final String namespacedOtherTableName = "other_table";
-  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, otherTableName);
+  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+  private static final String otherTableName = getDatasetHiveName(otherTable);
   private static final Id.DatasetInstance namespacedOtherTable =
-    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, namespacedOtherTableName);
+    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "other_table");
+  private static final String namespacedOtherTableName = getDatasetHiveName(namespacedOtherTable);
 
   @BeforeClass
   public static void start() throws Exception {
@@ -101,7 +101,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
     );
 
     // Pattern on table name
-    future = getExploreClient().tables(null, null, "other%", null);
+    future = getExploreClient().tables(null, null, "dataset_other%", null);
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable."),
@@ -361,13 +361,13 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
         "from deserializer", null, null, null, null, 1,
         "YES", null, null, null, null, "NO")),
       new QueryResult(Lists.<Object>newArrayList(
-        null, database, "my_table", "value", 2002,
+        null, database, MY_TABLE_NAME, "value", 2002,
         "struct<name:string,ints:array<int>>", null, null,
         null, null, 1, "from deserializer", null, null,
         null, null, 2, "YES", null, null, null, null,
         "NO")),
       new QueryResult(Lists.<Object>newArrayList(
-        null, database, "other_table", "key", 12, "STRING",
+        null, database, otherTableName, "key", 12, "STRING",
         2147483647, null, null, null, 1,
         "from deserializer", null, null, null, null, 1,
         "YES", null, null, null, null, "NO")),

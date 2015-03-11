@@ -284,4 +284,11 @@ public interface Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+
+  /**
+   * Upgrades Explore if needed. This method must be implemented in an idempotent way.
+   *
+   * @throws Exception if there was an exception during the upgrade
+   */
+  public void upgrade() throws Exception;
 }
