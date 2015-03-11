@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
 /**
  * Upgrades {@link DatasetTypeMDS}
  */
-public final class DatasetTypeMDSUpgrader {
+public final class DatasetTypeMDSUpgrader extends AbstractMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeMDSUpgrader.class);
   // lists of datasets type modules which existed earlier but does not anymore existed in 2.6 and removed in 2.8
   private static final Set<String> REMOVED_DATASET_MODULES = Sets.newHashSet(
@@ -127,6 +127,7 @@ public final class DatasetTypeMDSUpgrader {
    * @throws InterruptedException
    * @throws IOException
    */
+  @Override
   public void upgrade() throws Exception {
     DatasetTypeMDS oldMds = getOldDatasetTypeMDS();
     if (oldMds != null) {
@@ -215,7 +216,6 @@ public final class DatasetTypeMDSUpgrader {
     return locationFactory.create(namespace).append(datasets).append(datasetClassname).append(archive)
       .append(jarFilename);
   }
-
 
   /**
    * Renames the old location to new location if old location exists and the new one does not
