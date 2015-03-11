@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.gson.JsonDeserializationContext;

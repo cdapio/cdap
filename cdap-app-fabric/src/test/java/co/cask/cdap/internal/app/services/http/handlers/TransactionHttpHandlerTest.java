@@ -19,14 +19,24 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for Transaction handlers.
  */
 public class TransactionHttpHandlerTest extends AppFabricTestBase {
+
+  private static final Type STRING_INT_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
 
   /**
    * Tests invalidating a transaction.
@@ -53,5 +63,89 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
   public void testResetTxManagerState() throws Exception {
     HttpResponse response = doPost("/v3/transactions/state");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+  
+  @Test
+  public void testTruncateInvalidTx() throws Exception {
+    TransactionSystemClient txClient = getTxClient();
+    // Reset state, and assert no invalid transactions are present
+    txClient.resetState();
+    Assert.assertEquals(0, txClient.getInvalidSize());
+    
+    // Start few transactions and invalidate them
+    Transaction tx1 = txClient.startShort();
+    Transaction tx2 = txClient.startLong();
+    Transaction tx3 = txClient.startLong();
+    
+    Assert.assertTrue(txClient.invalidate(tx1.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx2.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx3.getWritePointer()));
+    
+    Assert.assertEquals(3, txClient.getInvalidSize());
+    
+    // Remove tx1 and tx3 from invalid list
+    HttpResponse response = 
+      doPost("/v3/transactions/invalid/remove/ids",
+             GSON.toJson(ImmutableMap.of("ids", ImmutableSet.of(tx1.getWritePointer(), tx3.getWritePointer()))));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    
+    Assert.assertEquals(1, txClient.getInvalidSize());
+  }
+
+  @Test
+  public void testTruncateInvalidTxBefore() throws Exception {
+    TransactionSystemClient txClient = getTxClient();
+    // Reset state, and assert no invalid transactions are present
+    txClient.resetState();
+    Assert.assertEquals(0, txClient.getInvalidSize());
+
+    // Start few transactions and invalidate them
+    Transaction tx1 = txClient.startShort();
+    Transaction tx2 = txClient.startLong();
+    // Sleep so that transaction ids get generated a millisecond apart for assertion
+    // TEPHRA-63 should eliminate the need to sleep
+    TimeUnit.MILLISECONDS.sleep(1);
+    long beforeTx3 = System.currentTimeMillis();
+    Transaction tx3 = txClient.startLong();
+
+    Assert.assertTrue(txClient.invalidate(tx1.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx2.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx3.getWritePointer()));
+
+    Assert.assertEquals(3, txClient.getInvalidSize());
+
+    // Remove all transactions in invalid list beforeTx3
+    HttpResponse response =
+      doPost("/v3/transactions/invalid/remove/until",
+             GSON.toJson(ImmutableMap.of("time", beforeTx3)));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(1, txClient.getInvalidSize());
+  }
+
+  @Test
+  public void testGetInvalidSize() throws Exception {
+    TransactionSystemClient txClient = getTxClient();
+    // Reset state, and assert no invalid transactions are present
+    txClient.resetState();
+    Assert.assertEquals(0, txClient.getInvalidSize());
+
+    // Start few transactions and invalidate them
+    Transaction tx1 = txClient.startShort();
+    Transaction tx2 = txClient.startLong();
+    Transaction tx3 = txClient.startLong();
+
+    Assert.assertTrue(txClient.invalidate(tx1.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx2.getWritePointer()));
+    Assert.assertTrue(txClient.invalidate(tx3.getWritePointer()));
+
+    Assert.assertEquals(3, txClient.getInvalidSize());
+
+    // Assert through REST API
+    HttpResponse response = doGet("/v3/transactions/invalid/size");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, Integer> resultMap = GSON.fromJson(EntityUtils.toString(response.getEntity()), STRING_INT_TYPE);
+    Assert.assertNotNull(resultMap);
+    Assert.assertEquals(3, (int) resultMap.get("size"));
   }
 }

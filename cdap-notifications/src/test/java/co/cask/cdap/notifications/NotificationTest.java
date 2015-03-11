@@ -145,7 +145,7 @@ public abstract class NotificationTest {
 
       Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<String>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return String.class;
         }
 
@@ -204,7 +204,7 @@ public abstract class NotificationTest {
       // Try subscribing to a feed before creating it
       notificationService.subscribe(FEED1, new NotificationHandler<String>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return String.class;
         }
 
@@ -232,7 +232,7 @@ public abstract class NotificationTest {
         private int received = 0;
 
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return String.class;
         }
 
@@ -302,7 +302,7 @@ public abstract class NotificationTest {
 
         Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<String>() {
           @Override
-          public Type getNotificationFeedType() {
+          public Type getNotificationType() {
             return String.class;
           }
 
@@ -357,7 +357,7 @@ public abstract class NotificationTest {
 
       Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<SimpleNotification>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return SimpleNotification.class;
         }
 
@@ -430,7 +430,7 @@ public abstract class NotificationTest {
       List<Cancellable> cancellables = Lists.newArrayList();
       cancellables.add(notificationService.subscribe(FEED1, new NotificationHandler<SimpleNotification>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return SimpleNotification.class;
         }
 
@@ -449,7 +449,7 @@ public abstract class NotificationTest {
 
       cancellables.add(notificationService.subscribe(FEED2, new NotificationHandler<String>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return String.class;
         }
 
@@ -535,7 +535,7 @@ public abstract class NotificationTest {
 
       Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<String>() {
         @Override
-        public Type getNotificationFeedType() {
+        public Type getNotificationType() {
           return String.class;
         }
 

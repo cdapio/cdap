@@ -16,6 +16,10 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -26,6 +30,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
 import co.cask.cdap.explore.service.MetaDataInfo;
@@ -147,6 +153,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
   private final ScheduledExecutorService metastoreClientsExecutorService;
+  private final StreamAdmin streamAdmin;
+  private final DatasetFramework datasetFramework;
+  private final ExploreTableManager exploreTableManager;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -171,6 +180,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+    this.datasetFramework = datasetFramework;
+    this.streamAdmin = streamAdmin;
+    this.exploreTableManager = new ExploreTableManager(this, datasetFramework);
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -644,11 +656,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
 
+      String database = getHiveDatabase(namespace.getId());
       // "IF NOT EXISTS" so that this operation is idempotent.
-      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", getHiveDatabase(namespace.getId()));
+      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
-      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, namespaceId);
-      LOG.trace("Creating database {} with handle {}", namespaceId, handle);
+      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
+      LOG.info("Creating database {} with handle {}", namespaceId, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -670,7 +683,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       String statement = String.format("DROP DATABASE %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
-      LOG.trace("Creating database {} with handle {}", database, handle);
+      LOG.info("Deleting database {} with handle {}", database, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -943,7 +956,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     List<QueryInfo> result = Lists.newArrayList();
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(namespace.getId())) {
+        if (entry.getValue().getNamespace().equals(getHiveDatabase(namespace.getId()))) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -959,7 +972,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     for (Map.Entry<QueryHandle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(namespace.getId())) {
+        if (entry.getValue().getNamespace().equals(getHiveDatabase(namespace.getId()))) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -974,6 +987,138 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
     Collections.sort(result);
     return result;
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    // all old CDAP tables used to be in the default database
+    LOG.info("Checking for tables that need upgrade...");
+    List<TableNameInfo> tables = getTables("default");
+    for (TableNameInfo tableNameInfo : tables) {
+      String tableName = tableNameInfo.getTableName();
+      TableInfo tableInfo = getTableInfo(tableNameInfo.getDatabaseName(), tableName);
+      if (!requiresUpgrade(tableInfo)) {
+        continue;
+      }
+
+      String storageHandler = tableInfo.getParameters().get("storage_handler");
+      if (StreamStorageHandler.class.getName().equals(storageHandler)) {
+        LOG.info("Upgrading stream table {}", tableName);
+        upgradeStreamTable(tableInfo);
+      } else if (DatasetStorageHandler.class.getName().equals(storageHandler)) {
+        LOG.info("Upgrading record scannable dataset table {}.", tableName);
+        upgradeRecordScannableTable(tableInfo);
+      } else {
+        LOG.info("Upgrading file set table {}.", tableName);
+        // handle filesets differently since they can have partitions, and dropping the table will remove all partitions
+        upgradeFilesetTable(tableInfo);
+      }
+    }
+  }
+
+  private void upgradeFilesetTable(TableInfo tableInfo) throws Exception {
+    // these were only available starting from CDAP 2.7, which has the cdap name in table properties
+    String dsName = tableInfo.getParameters().get(Constants.Explore.CDAP_NAME);
+    // except the name was always prefixed by cdap.user.<name>
+    dsName = dsName.substring("cdap.user.".length(), dsName.length());
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
+
+    // enable the new table
+    enableDataset(datasetID, spec);
+
+    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
+    // if this is a time partitioned file set, we need to add all partitions
+    if (dataset instanceof TimePartitionedFileSet) {
+      TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
+      Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
+      if (!partitions.isEmpty()) {
+        QueryHandle handle = exploreTableManager.addPartitions(datasetID, tpfs.getPartitions(null));
+        QueryStatus status = waitForCompletion(handle);
+        // if add partitions failed, stop
+        if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+          throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+        }
+      }
+    }
+    // now it is safe to drop the old table
+    dropTable(tableInfo.getTableName());
+  }
+
+  private void upgradeRecordScannableTable(TableInfo tableInfo) throws Exception {
+    // get the dataset name from the serde properties.
+    Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
+    String datasetName = serdeProperties.get(Constants.Explore.DATASET_NAME);
+    // except the name was always prefixed by cdap.user.<name>
+    datasetName = datasetName.substring("cdap.user.".length(), datasetName.length());
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, datasetName);
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
+
+    // if there are no partitions, we can just enable the new table and drop the old one.
+    enableDataset(datasetID, spec);
+    dropTable(tableInfo.getTableName());
+  }
+
+  private void enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec) throws Exception {
+    LOG.info("Enabling exploration on dataset {}", datasetID);
+    QueryHandle enableHandle = exploreTableManager.enableDataset(datasetID, spec);
+    // wait until enable is done
+    QueryStatus status = waitForCompletion(enableHandle);
+    // if enable failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to enable exploration of dataset " + datasetID);
+    }
+  }
+
+  private void dropTable(String tableName) throws Exception {
+    LOG.info("Dropping old upgraded table {}", tableName);
+    QueryHandle disableHandle = execute(Constants.DEFAULT_NAMESPACE_ID, "DROP TABLE IF EXISTS " + tableName);
+    // make sure disable finished
+    QueryStatus status = waitForCompletion(disableHandle);
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to disable old Hive table " + tableName);
+    }
+  }
+
+  private void upgradeStreamTable(TableInfo tableInfo) throws Exception {
+    // get the stream name from the serde properties.
+    Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
+    String streamName = serdeProperties.get(Constants.Explore.STREAM_NAME);
+    Id.Stream streamID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, streamName);
+
+    // enable the table in the default namespace
+    LOG.info("Enabling exploration on stream {}", streamID);
+    QueryHandle enableHandle = exploreTableManager.enableStream(streamID, streamAdmin.getConfig(streamID));
+    // wait til enable is done
+    QueryStatus status = waitForCompletion(enableHandle);
+    // if enable failed, stop
+    if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+      throw new ExploreException("Failed to enable exploration of stream " + streamID);
+    }
+
+    // safe to disable old table now
+    dropTable(tableInfo.getTableName());
+  }
+
+  private QueryStatus waitForCompletion(QueryHandle handle) throws HandleNotFoundException, SQLException,
+    ExploreException, InterruptedException {
+    QueryStatus status = getStatus(handle);
+    while (!status.getStatus().isDone()) {
+      TimeUnit.SECONDS.sleep(1);
+      status = getStatus(handle);
+    }
+    return status;
+  }
+
+  private boolean requiresUpgrade(TableInfo tableInfo) {
+    // if this is a cdap dataset.
+    if (tableInfo.isBackedByDataset()) {
+      String cdapVersion = tableInfo.getParameters().get(Constants.Explore.CDAP_VERSION);
+      // for now, good enough to check if it contains the version or not.
+      // In the future we can actually do version comparison with ProjectInfo.Version
+      return cdapVersion == null;
+    }
+    return false;
   }
 
   void closeInternal(QueryHandle handle, OperationInfo opInfo)
@@ -1016,7 +1161,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (namespace == null) {
       return null;
     }
-    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("cdap_%s", namespace);
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("%s_%s", tablePrefix, namespace);
   }
 
   /**

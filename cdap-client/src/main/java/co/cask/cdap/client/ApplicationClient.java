@@ -22,6 +22,7 @@ import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -33,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.File;
@@ -77,9 +79,7 @@ public class ApplicationClient {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3("apps"),
                                                config.getAccessToken());
-    List<ApplicationRecord> result = ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
-    }).getResponseObject();
-    return result;
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
   /**
@@ -231,7 +231,6 @@ public class ApplicationClient {
     return allPrograms.build();
   }
 
-
   /**
    * Lists programs of some type belonging to an application.
    *
@@ -246,23 +245,17 @@ public class ApplicationClient {
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
     Preconditions.checkArgument(programType.isListable());
 
-    String path = String.format("apps/%s/%s", appId, programType.getCategoryName());
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
-    HttpRequest request = HttpRequest.get(url).build();
-
-    ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
-      new TypeToken<List<ProgramRecord>>() { });
-
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
+    List<ProgramRecord> programs = Lists.newArrayList();
+    for (ProgramRecord program : listPrograms(appId)) {
+      if (programType.equals(program.getType())) {
+        programs.add(program);
+      }
     }
-
-    return response.getResponseObject();
+    return programs;
   }
 
   /**
-   * Lists programs belonging to an application.
+   * Lists programs of some type belonging to an application.
    *
    * @param appId ID of the application
    * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
@@ -270,17 +263,43 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public Map<ProgramType, List<ProgramRecord>> listPrograms(String appId)
+  public Map<ProgramType, List<ProgramRecord>> listProgramsByType(String appId)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
 
-    ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
-    for (ProgramType programType : ProgramType.values()) {
-      if (programType.isListable() && VersionMigrationUtils.isProgramSupported(config, programType)) {
-        List<ProgramRecord> programRecords = Lists.newArrayList();
-        programRecords.addAll(listPrograms(appId, programType));
-        allPrograms.put(programType, programRecords);
-      }
+    Map<ProgramType, List<ProgramRecord>> result = Maps.newHashMap();
+    for (ProgramType type : ProgramType.values()) {
+      result.put(type, Lists.<ProgramRecord>newArrayList());
     }
-    return allPrograms.build();
+    for (ProgramRecord program : listPrograms(appId)) {
+      result.get(program.getType()).add(program);
+    }
+    return result;
+  }
+
+  /**
+   * Lists programs belonging to an application.
+   *
+   * @param appId ID of the application
+   * @return List of all {@link ProgramRecord}s
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ProgramRecord> listPrograms(String appId)
+    throws ApplicationNotFoundException, IOException, UnauthorizedException {
+
+    String path = String.format("apps/%s", appId);
+    URL url = config.resolveNamespacedURLV3(path);
+    HttpRequest request = HttpRequest.get(url).build();
+
+    ObjectResponse<ApplicationDetail> response = ObjectResponse.fromJsonBody(
+      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
+      new TypeToken<ApplicationDetail>() { });
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(appId);
+    }
+
+    return response.getResponseObject().getPrograms();
   }
 }

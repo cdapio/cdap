@@ -21,7 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.MockRegionServerServices;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -33,7 +34,6 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -432,18 +432,20 @@ public class IncrementSummingScannerTest {
 
   static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
                               HColumnDescriptor cfd) throws Exception {
-    TableName tableName = HTable96NameConverter.toTableName(cConf, tableId);
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
-    Path tablePath = new Path("/tmp/" + tableName.getNameAsString());
-    Path hlogPath = new Path("/tmp/hlog-" + tableName.getNameAsString());
+
+    String tableName = htd.getNameAsString();
+    Path tablePath = new Path("/tmp/" + tableName);
+    Path hlogPath = new Path("/tmp/hlog-" + tableName);
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
-    HLog hLog = HLogFactory.createHLog(fs, hlogPath, tableName.getNameAsString(), hConf);
-    HRegionInfo regionInfo = new HRegionInfo(tableName);
+    HLog hLog = HLogFactory.createHLog(fs, hlogPath, tableName, hConf);
+    HRegionInfo regionInfo = new HRegionInfo(htd.getTableName());
     HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
     return new HRegion(regionFS, hLog, hConf, htd,
                        new MockRegionServerServices(hConf, null));
