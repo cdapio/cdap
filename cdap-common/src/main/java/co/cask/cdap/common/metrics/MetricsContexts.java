@@ -25,7 +25,10 @@ import java.util.Map;
 /**
  * Provides ways to obtain the context for certain metrics.
  */
-public class MetricsContext {
+public final class MetricsContexts {
+
+  private MetricsContexts() {
+  }
 
   public static Map<String, String> forMapReduce(Id.Program id) {
     return ImmutableMap.of(

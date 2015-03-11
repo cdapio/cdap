@@ -16,12 +16,15 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Provides access to metrics about running processors.
  */
+@Beta
 public interface RuntimeMetrics {
 
   /**

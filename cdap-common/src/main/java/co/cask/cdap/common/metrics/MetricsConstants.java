@@ -19,7 +19,10 @@ package co.cask.cdap.common.metrics;
 /**
  * Constants for metrics.
  */
-public interface MetricsConstants {
+public final class MetricsConstants {
+
+  private MetricsConstants() {
+  }
 
   public static final String MAPREDUCE_INPUT = "process.entries.in";
   public static final String MAPREDUCE_PROCESSED = "process.entries.out";

@@ -21,7 +21,7 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsConstants;
-import co.cask.cdap.common.metrics.MetricsContext;
+import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.ProgramType;
@@ -66,7 +66,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
     String flowlet = FakeFlow.FLOWLET_NAME;
 
-    MetricQueryResult result = metricsClient.query(MetricsContext.forFlowlet(programId, flowlet),
+    MetricQueryResult result = metricsClient.query(MetricsContexts.forFlowlet(programId, flowlet),
                                                    MetricsConstants.FLOWLET_INPUT, null);
     Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 

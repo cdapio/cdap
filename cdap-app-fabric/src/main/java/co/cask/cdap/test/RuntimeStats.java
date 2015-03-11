@@ -25,7 +25,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsConstants;
-import co.cask.cdap.common.metrics.MetricsContext;
+import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.clearspring.analytics.util.Preconditions;
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public final class RuntimeStats implements MetricsConstants {
+public final class RuntimeStats {
 
   // ugly attempt to suport existing APIs
   // todo: non-thread safe? or fine as long as in-memory datasets underneath are used?
@@ -60,22 +60,29 @@ public final class RuntimeStats implements MetricsConstants {
 
   public static RuntimeMetrics getMapReduceMetrics(String applicationId, String mapReduceId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.MAPREDUCE, mapReduceId);
-    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, null);
+    return getMetrics(MetricsContexts.forMapReduce(id),
+                      MetricsConstants.MAPREDUCE_INPUT, MetricsConstants.MAPREDUCE_PROCESSED, null);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.FLOW, flowId);
-    return getMetrics(MetricsContext.forFlowlet(id, flowletId), FLOWLET_INPUT, FLOWLET_PROCESSED, FLOWLET_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
+                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
+                      MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.PROCEDURE, procedureId);
-    return getMetrics(MetricsContext.forProcedure(id), PROCEDURE_INPUT, PROCEDURE_PROCESSED, PROCEDURE_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forProcedure(id),
+                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
+                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.SERVICE, serviceId);
-    return getMetrics(MetricsContext.forService(id), SERVICE_INPUT, SERVICE_PROCESSED, SERVICE_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forService(id),
+                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
+                      MetricsConstants.SERVICE_EXCEPTIONS);
   }
 
   @Deprecated
