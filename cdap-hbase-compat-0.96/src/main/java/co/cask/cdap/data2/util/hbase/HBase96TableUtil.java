@@ -41,8 +41,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,7 +50,6 @@ import java.util.Map;
  *
  */
 public class HBase96TableUtil extends HBaseTableUtil {
-  private static final Logger LOG = LoggerFactory.getLogger(HBase96TableUtil.class);
 
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
