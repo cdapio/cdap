@@ -26,6 +26,11 @@ public class StreamRecord {
   private String name;
   private String specification;
 
+  public StreamRecord(String name, String specification) {
+    this("Stream", name, name, specification);
+  }
+
+  @Deprecated
   public StreamRecord(String type, String id, String name, String specification) {
     this.type = type;
     this.id = id;
@@ -37,6 +42,7 @@ public class StreamRecord {
     return type;
   }
 
+  @Deprecated
   public String getId() {
     return id;
   }
