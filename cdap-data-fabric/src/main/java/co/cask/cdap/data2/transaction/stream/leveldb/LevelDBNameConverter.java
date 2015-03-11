@@ -30,9 +30,11 @@ import java.util.List;
 public class LevelDBNameConverter {
   public static TableId from(String levelDBTableName) {
     Preconditions.checkArgument(levelDBTableName != null, "Table name should not be null.");
-
-    List<String> tableNameParts = Lists.newArrayList(levelDBTableName.split("\\."));
-    Preconditions.checkArgument(tableNameParts.size() > 2, "Missing table-prefix, namespace or tableName");
-    return TableId.from(tableNameParts.get(1), Joiner.on(".").join(tableNameParts.subList(2, tableNameParts.size())));
+    // remove table-prefix
+    String[] tablePrefixSplit = levelDBTableName.split("_");
+    Preconditions.checkArgument(tablePrefixSplit.length > 1, "Missing table-prefix");
+    List<String> tableNameParts = Lists.newArrayList(tablePrefixSplit[1].split("\\."));
+    Preconditions.checkArgument(tableNameParts.size() > 1, "Missing namespace or tableName");
+    return TableId.from(tableNameParts.get(0), Joiner.on(".").join(tableNameParts.subList(1, tableNameParts.size())));
   }
 }
