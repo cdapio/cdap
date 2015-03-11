@@ -52,7 +52,7 @@
           <li ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
             <div>
               <small class="text-muted pull-right">{{event.timestamp | amTimeAgo}}</small>
-              <em>{{event.timestamp | amDateFormat: 'MMMM Do YYYY, h:mm:ss a'}}</em>
+              <em>{{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}</em>
             </div>
             <pre>{{event.body | json}}</pre>
           </li>
@@ -102,12 +102,37 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-        proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+        <!-- Left Panel -->
+        <div class="col-xs-6">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Start</th>
+                <th>Status</th>
+                <th>SQL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="query in queries">
+                <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
+                <td>{{ query.status }}</td>
+                <td>{{ query.statement }}</td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="col-xs-6">
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+          quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+          consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+          cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+          proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        </div>
       </div>
     </div>
   </div>
