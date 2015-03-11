@@ -38,6 +38,9 @@ public class FakeSpark extends AbstractSpark {
     setMainClass(FakeSparkProgram.class);
   }
 
+  /**
+   *
+   */
   public static class FakeSparkProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
