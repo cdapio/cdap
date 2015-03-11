@@ -132,6 +132,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
+
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
         .toProvider(PreviewsDirProvider.class);
     }
