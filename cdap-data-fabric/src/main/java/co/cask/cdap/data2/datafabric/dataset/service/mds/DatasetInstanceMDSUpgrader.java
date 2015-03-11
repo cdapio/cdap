@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -29,15 +30,18 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -99,6 +103,43 @@ public final class DatasetInstanceMDSUpgrader {
         return null;
       }
     });
+  }
+
+  /**
+   * Gets the {@link DatasetSpecification} of all the {@link FileSet} from the {@link DatasetInstanceMDS} table
+   * @return A list of {@link DatasetSpecification} of all the {@link FileSet}
+   * @throws TransactionFailureException
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  public List<DatasetSpecification> getFileSetsSpecs() throws TransactionFailureException,
+                                                              InterruptedException, IOException {
+    return datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>,
+                                                                                        List<DatasetSpecification>>() {
+      @Override
+      public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
+        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
+        List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
+        for (DatasetSpecification dsSpec : dsSpecs) {
+          if (isFileSet(dsSpec)) {
+            fileSetSpecs.add(dsSpec);
+          }
+        }
+        return fileSetSpecs;
+      }
+    });
+  }
+
+  /**
+   * Checks if the the given dataset spec is of a {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the dataset
+   * @return a boolean which is true if its a {@link FileSet} else false
+   */
+  private boolean isFileSet(DatasetSpecification dsSpec) {
+    String dsType = dsSpec.getType();
+    return (FileSet.class.getName().equals(dsType) || "fileSet".equals(dsType));
   }
 
   /**
