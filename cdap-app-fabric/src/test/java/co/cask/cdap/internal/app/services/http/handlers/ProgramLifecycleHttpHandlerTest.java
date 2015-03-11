@@ -826,22 +826,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // 8. Check the current run of the workflow. It should have 2 programs running in parallel
     // 9. Allow workflow to complete and make sure that one run is marked as complete
 
-    final String oneInputPath = createInput("oneInputPath");
-    final java.io.File oneOutputPath = new java.io.File(tmpFolder.newFolder(), "output");
-    final String anotherInputPath = createInput("anotherInputPath");
-    final java.io.File anotherOutputPath = new java.io.File(tmpFolder.newFolder(), "output");
-
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put("oneInputPath", oneInputPath);
-    runtimeArguments.put("oneOutputPath", oneOutputPath.getAbsolutePath());
-    runtimeArguments.put("anotherInputPath", anotherInputPath);
-    runtimeArguments.put("anotherOutputPath", anotherOutputPath.getAbsolutePath());
+    final String oneInputPathRun1 = createInput("oneInputPathRun1");
+    final java.io.File oneOutputPathRun1 = new java.io.File(tmpFolder.newFolder(), "outputRun1");
+    final String anotherInputPathRun1 = createInput("anotherInputPathRun1");
+    final java.io.File anotherOutputPathRun1 = new java.io.File(tmpFolder.newFolder(), "outputRun1");
+
+    Map<String, String> runtimeArgumentsRun1 = Maps.newHashMap();
+    runtimeArgumentsRun1.put("oneInputPath", oneInputPathRun1);
+    runtimeArgumentsRun1.put("oneOutputPath", oneOutputPathRun1.getAbsolutePath());
+    runtimeArgumentsRun1.put("anotherInputPath", anotherInputPathRun1);
+    runtimeArgumentsRun1.put("anotherOutputPath", anotherOutputPathRun1.getAbsolutePath());
 
     setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
-                          WORKFLOW_WITH_FORK, runtimeArguments);
+                          WORKFLOW_WITH_FORK, runtimeArgumentsRun1);
 
     int status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                       WORKFLOW_WITH_FORK, "start");
@@ -869,6 +869,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "killed");
     scheduleHistoryRuns(1, runsUrl, 0);
 
+    final String oneInputPathRun2 = createInput("oneInputPathRun2");
+    final java.io.File oneOutputPathRun2 = new java.io.File(tmpFolder.newFolder(), "outputRun2");
+    final String anotherInputPathRun2 = createInput("anotherInputPathRun2");
+    final java.io.File anotherOutputPathRun2 = new java.io.File(tmpFolder.newFolder(), "outputRun2");
+
+    Map<String, String> runtimeArgumentsRun2 = Maps.newHashMap();
+    runtimeArgumentsRun2.put("oneInputPath", oneInputPathRun2);
+    runtimeArgumentsRun2.put("oneOutputPath", oneOutputPathRun2.getAbsolutePath());
+    runtimeArgumentsRun2.put("anotherInputPath", anotherInputPathRun2);
+    runtimeArgumentsRun2.put("anotherOutputPath", anotherOutputPathRun2.getAbsolutePath());
+
+    setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
+                          WORKFLOW_WITH_FORK, runtimeArgumentsRun2);
 
     status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                   WORKFLOW_WITH_FORK, "start");
