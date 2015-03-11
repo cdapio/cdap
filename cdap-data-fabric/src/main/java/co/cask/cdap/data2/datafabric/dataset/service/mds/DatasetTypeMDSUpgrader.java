@@ -228,8 +228,8 @@ public final class DatasetTypeMDSUpgrader {
   @Nullable
   protected Location renameLocation(Location oldLocation, Location newLocation) throws IOException {
     // if the newLocation does not exists or the oldLocation does we try to rename. If either one of them is false then
-    // the underlying call to renameTo will throw IOException which we propagate.
-    if (!newLocation.exists() || oldLocation.exists()) {
+    // the underlying call to renameTo will throw IOException which we re-throw.
+    if (!newLocation.exists() && oldLocation.exists()) {
       Locations.getParent(newLocation).mkdirs();
       try {
         return oldLocation.renameTo(newLocation);
