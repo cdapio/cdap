@@ -98,8 +98,9 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
     :lines: 60-86
 
 After the MapReduce has completed, the ``onFinish()`` method finalizes the addition of the new partition.
-Note that this is only needed due to a current limitation in the ``PartitionedFileSet`` implementation: itself
-should add the partition in the output committer of its output format (this will be addressed in a future CDAP release):
+Note that this is only needed due to a current limitation in the ``PartitionedFileSet`` implementation:
+the partition should be added by the output committer of the dataset's output format (this will be
+addressed in a future CDAP release):
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
@@ -129,6 +130,11 @@ Running CDAP Applications
 Running the Example
 ===================
 
+In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the Command Line Interface.
+Substitute the actual path for ``bin/cdap-cli.sh``, or ``bin\cdap-cli.bat`` on Windows, as appropriate. We
+assume that you will run all commands from the example's base directory (``examples/SportResults`` under the
+Standalone CDAP SDK directory).
+
 Starting the Service
 --------------------
 
@@ -137,26 +143,19 @@ Once the application is deployed:
 - Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
   Service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Or use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start service SportResults.UploadService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start service SportResults.UploadService``
+    cdap-cli.sh start service SportResults.UploadService
 
 Uploading Game Results
 ----------------------
 
 First, we will upload some CSV files into the ``results`` dataset. For example, to upload the results
-for the 2012 season of the NFL::
+for the 2012 season of the NFL. From the examples ::
 
   cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
 
-Feel free to add more seasons and sport leagues:
+Feel free to add more seasons and sport leagues::
 
   cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv
   cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv
@@ -191,21 +190,15 @@ have scored the least points compared to the points they conceded::
 
 Stopping the Application
 ------------------------
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the step:
+Once done, you can stop the application as described above in `Stopping an Application
+<#stopping-an-application>`__. Here is an example-specific description of the step:
 
 **Stopping the Service**
 
 - Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    cdap-cli.sh stop service SportResults.UploadService``
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop service SportResults.UploadService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop service SportResults.UploadService``
