@@ -25,6 +25,7 @@ import co.cask.cdap.cli.app.FakeFlow;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.cli.app.PrefixedEchoHandler;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
@@ -34,6 +35,7 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
@@ -116,7 +118,8 @@ public class CLIMainTest extends StandaloneTestBase {
       StandaloneTestBase.setUpClass();
     }
 
-    clientConfig = new ClientConfig.Builder().setUri(CONNECTION).build();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
+    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
     cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
@@ -178,7 +181,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
 
@@ -196,6 +199,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
+    testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
+                              "Successfully set notification threshold of Stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
@@ -232,7 +237,7 @@ public class CLIMainTest extends StandaloneTestBase {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
-    cliConfig.setCurrentNamespace(barspace);
+    cliConfig.getClientConfig().setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -254,8 +259,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
     try {
-      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-        + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      testCommandOutputContains(cli, "call procedure " +
+        qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME +
+        " 'customer bob'", "realbob");
     } finally {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");

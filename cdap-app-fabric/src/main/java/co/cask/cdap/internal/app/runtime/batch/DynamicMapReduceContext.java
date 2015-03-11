@@ -17,32 +17,35 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
+import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -56,19 +59,26 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * letting users access datasets at runtime that aren't known about at compile time.
  * </p>
  */
-public class DynamicMapReduceContext extends DynamicDatasetContext implements MapReduceContext {
-  private static final Logger LOG = LoggerFactory.getLogger(DynamicMapReduceContext.class);
-  private final BasicMapReduceContext mapReduceContext;
-  private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
+public class DynamicMapReduceContext extends BasicMapReduceContext implements DatasetContext {
 
-  public DynamicMapReduceContext(BasicMapReduceContext mapReduceContext,
-                                 DatasetFramework datasetFramework,
-                                 TransactionContext transactionContext,
-                                 CConfiguration cConf) {
-    super(Id.Namespace.from(mapReduceContext.getNamespaceId()), transactionContext,
-          new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf)),
-          mapReduceContext.getProgram().getClassLoader(), null, mapReduceContext.getRuntimeArguments());
-    this.mapReduceContext = mapReduceContext;
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicMapReduceContext.class);
+
+  private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
+  private final TransactionContext txContext;
+  private final DynamicDatasetContext dynamicDatasetContext;
+
+  public DynamicMapReduceContext(Program program,
+                                 MapReduceMetrics.TaskType type,
+                                 RunId runId, String taskId,
+                                 Arguments runtimeArguments,
+                                 MapReduceSpecification spec,
+                                 long logicalStartTime, String workflowBatch,
+                                 DiscoveryServiceClient discoveryServiceClient,
+                                 MetricsCollectionService metricsCollectionService,
+                                 TransactionSystemClient txClient,
+                                 DatasetFramework dsFramework) {
+    super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
+          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService, dsFramework);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
@@ -92,81 +102,32 @@ public class DynamicMapReduceContext extends DynamicDatasetContext implements Ma
           return Maps.newHashMap();
         }
       });
+    this.txContext = new TransactionContext(txClient);
+    this.dynamicDatasetContext = new DynamicDatasetContext(Id.Namespace.from(getNamespaceId()),
+                                                           txContext, dsFramework,
+                                                           program.getClassLoader(), null,
+                                                           runtimeArguments.asMap()) {
+      @Nullable
+      @Override
+      protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
+        return datasetsCache;
+      }
+    };
   }
 
   @Override
-  public MapReduceSpecification getSpecification() {
-    return mapReduceContext.getSpecification();
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return mapReduceContext.getLogicalStartTime();
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    return mapReduceContext.getHadoopJob();
-  }
-
-  @Override
-  public void setInput(String datasetName) {
-    mapReduceContext.setInput(datasetName);
-  }
-
-  @Override
-  public void setInput(String datasetName, List<Split> splits) {
-    mapReduceContext.setInput(datasetName, splits);
-  }
-
-  @Override
-  public void setInput(String datasetName, Dataset dataset) {
-    mapReduceContext.setInput(datasetName, dataset);
-  }
-
-  @Override
-  public void setOutput(String datasetName) {
-    mapReduceContext.setOutput(datasetName);
-  }
-
-  @Override
-  public void setOutput(String datasetName, Dataset dataset) {
-    mapReduceContext.setOutput(datasetName, dataset);
-  }
-
-  @Override
-  public void setMapperResources(Resources resources) {
-    mapReduceContext.setMapperResources(resources);
-  }
-
-  @Override
-  public void setReducerResources(Resources resources) {
-    mapReduceContext.setReducerResources(resources);
-  }
-
-  @Nullable
-  @Override
-  protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
-    return datasetsCache;
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return mapReduceContext.getRuntimeArguments();
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    return mapReduceContext.getServiceURL(applicationId, serviceId);
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return mapReduceContext.getServiceURL(serviceId);
+  public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return dynamicDatasetContext.getDataset(name, arguments);
   }
 
   public void close() {
     datasetsCache.invalidateAll();
     datasetsCache.cleanUp();
+    super.close();
+  }
+
+  public TransactionContext getTransactionContext() {
+    return txContext;
   }
 }

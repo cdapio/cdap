@@ -25,6 +25,11 @@ public class ApplicationRecord {
   private final String name;
   private final String description;
 
+  public ApplicationRecord(String name, String description) {
+    this("App", name, name, description);
+  }
+
+  @Deprecated
   public ApplicationRecord(String type, String id, String name, String description) {
     this.type = type;
     this.id = id;
@@ -36,6 +41,7 @@ public class ApplicationRecord {
     return type;
   }
 
+  @Deprecated
   public String getId() {
     return id;
   }

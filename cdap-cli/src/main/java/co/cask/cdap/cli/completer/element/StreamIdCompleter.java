@@ -46,7 +46,7 @@ public class StreamIdCompleter extends StringsCompleter {
             Iterables.transform(list, new Function<StreamRecord, String>() {
               @Override
               public String apply(StreamRecord input) {
-                return input.getId();
+                return input.getName();
               }
             })
           );

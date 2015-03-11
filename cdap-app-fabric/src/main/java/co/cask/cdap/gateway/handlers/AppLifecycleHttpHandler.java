@@ -61,7 +61,7 @@ import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramDetail;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
@@ -82,7 +82,6 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -194,7 +193,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      return deployApplication(request, responder, namespaceId, appId, archiveName);
+      return deployApplication(responder, namespaceId, appId, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -212,7 +211,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      return deployApplication(request, responder, namespaceId, null, archiveName);
+      return deployApplication(responder, namespaceId, null, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -460,7 +459,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
-  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
+  private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
@@ -584,7 +583,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void getAppDetails(HttpResponder responder, String namespace, String name) {
     try {
-      ApplicationSpecification appSpec =  store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
       if (appSpec == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -609,7 +608,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //Check if any App associated with this namespace is running
     final Id.Namespace accId = Id.Namespace.from(identifier.getId());
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().getNamespace().equals(accId);
@@ -630,7 +629,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().equals(appId);
@@ -745,11 +744,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
-                                                                   appSpec.getMapReduce().values(),
-                                                                   appSpec.getProcedures().values(),
-                                                                   appSpec.getWorkflows().values());
-    return programSpecs;
+    return Iterables.concat(appSpec.getFlows().values(),
+                            appSpec.getMapReduce().values(),
+                            appSpec.getProcedures().values(),
+                            appSpec.getServices().values(),
+                            appSpec.getSpark().values(),
+                            appSpec.getWorkers().values(),
+                            appSpec.getWorkflows().values());
   }
 
   /**
@@ -801,54 +802,35 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
   }
 
-  /**
-   * Check if any program that satisfy the given {@link Predicate} is running.
-   * Protected only to support v2 APIs
-   *
-   * @param predicate Get call on each running {@link Id.Program}.
-   * @param types Types of program to check
-   * returns True if a program is running as defined by the predicate.
-   */
-  protected boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
-    for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
-        ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
-          continue;
-        }
-        Id.Program programId = entry.getValue().getProgramId();
-        if (predicate.apply(programId)) {
-          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
-                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
-    List<ProgramDetail> programs = Lists.newArrayList();
+    List<ProgramRecord> programs = Lists.newArrayList();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
-      programs.add(new ProgramDetail(ProgramType.FLOW, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
-      programs.add(new ProgramDetail(ProgramType.MAPREDUCE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getProcedures().values()) {
-      programs.add(new ProgramDetail(ProgramType.PROCEDURE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.PROCEDURE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {
-      programs.add(new ProgramDetail(ProgramType.SERVICE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.SERVICE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getSpark().values()) {
-      programs.add(new ProgramDetail(ProgramType.SPARK, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.SPARK, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkers().values()) {
-      programs.add(new ProgramDetail(ProgramType.WORKER, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.WORKER, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
-      programs.add(new ProgramDetail(ProgramType.WORKFLOW, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.WORKFLOW, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
 
     List<StreamDetail> streams = Lists.newArrayList();

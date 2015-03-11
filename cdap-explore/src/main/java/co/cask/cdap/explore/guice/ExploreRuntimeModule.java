@@ -131,7 +131,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
       bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive13ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
-
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
 
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
@@ -272,8 +271,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
 
     Set<File> hBaseTableDeps = ExploreServiceUtils.traceDependencies(
-      new HBaseTableUtilFactory().get().getClass().getCanonicalName(),
-      bootstrapClassPaths, null);
+      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(), bootstrapClassPaths, null);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.

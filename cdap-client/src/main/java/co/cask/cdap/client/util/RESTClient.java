@@ -17,11 +17,11 @@
 package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
@@ -43,23 +43,16 @@ import javax.ws.rs.core.HttpHeaders;
 public class RESTClient {
 
   private final List<Listener> listeners;
-  private final HttpRequestConfig defaultConfig;
-  private final HttpRequestConfig uploadConfig;
-  private final int unavailableRetryLimit;
+  private final ClientConfig clientConfig;
 
   @Inject
   public RESTClient(ClientConfig clientConfig) {
+    this.clientConfig = clientConfig;
     this.listeners = Lists.newArrayList();
-    this.defaultConfig = clientConfig.getDefaultHttpConfig();
-    this.uploadConfig = clientConfig.getUploadHttpConfig();
-    this.unavailableRetryLimit = clientConfig.getUnavailableRetryLimit();
   }
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int unavailableRetryLimit) {
-    this.listeners = Lists.newArrayList();
-    this.defaultConfig = defaultConfig;
-    this.uploadConfig = uploadConfig;
-    this.unavailableRetryLimit = unavailableRetryLimit;
+  public RESTClient() {
+    this(ClientConfig.getDefault());
   }
 
   public void addListener(Listener listener) {
@@ -71,37 +64,43 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthorizedException, DisconnectedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(getAuthHeaders(accessToken)).build(),
-                   allowedErrorCodes);
+    throws IOException, UnauthorizedException, DisconnectedException {
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(getAuthHeaders(accessToken))
+                     .build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
-                              int... allowedErrorCodes) throws IOException, UnauthorizedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+                              int... allowedErrorCodes)
+    throws IOException, UnauthorizedException, DisconnectedException {
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(headers)
+                     .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+    throws IOException, UnauthorizedException, DisconnectedException {
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(headers)
+                     .addHeaders(getAuthHeaders(accessToken))
                      .withBody(body).build(), allowedErrorCodes);
   }
 
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthorizedException, DisconnectedException {
 
     int currentTry = 0;
     HttpResponse response;
     do {
       onRequest(request, currentTry);
-      response = HttpRequests.execute(request, defaultConfig);
+      response = HttpRequests.execute(request, clientConfig.getDefaultRequestConfig());
 
       int responseCode = response.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
@@ -122,7 +121,7 @@ public class RESTClient {
         throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
       }
       return response;
-    } while (currentTry <= unavailableRetryLimit);
+    } while (currentTry <= clientConfig.getUnavailableRetryLimit());
     return response;
   }
 
@@ -139,9 +138,11 @@ public class RESTClient {
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
+    throws IOException, UnauthorizedException, DisconnectedException {
+
     HttpResponse response = HttpRequests.execute(
-      HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), uploadConfig);
+      HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(),
+      clientConfig.getUploadRequestConfig());
     int responseCode = response.getResponseCode();
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {

@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 
@@ -45,7 +46,7 @@ public class ConnectCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String instanceURI = arguments.get("cdap-instance-uri");
-    CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(instanceURI);
+    ConnectionConfig connectionInfo = instanceURIParser.parse(instanceURI);
     try {
       cliConfig.tryConnect(connectionInfo, output, debug);
     } catch (Exception e) {

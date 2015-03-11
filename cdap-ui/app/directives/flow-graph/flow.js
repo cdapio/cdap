@@ -30,16 +30,25 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
     },
     link: function (scope, elem, attr) {
 
-      scope.render = function (){
+      scope.render = function () {
         var nodes = scope.model.nodes;
         var edges = scope.model.edges;
-
         var instanceMap = {};
+        var labelMap = {};
 
-        var bytesFilter = $filter('bytes');
+        var numberFilter = $filter('myNumber');
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
+        var metricCircleRadius = 25;
+        var instanceCircleRadius = 10;
+        var flowletCircleRadius = 60;
+        // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
+        var metricCountPadding = 5;
+
+        var streamDiagramWidth = 40;
+        var streamDiagramHeight = 30;
+        var instanceBufferHeight = 30;
 
         g.setGraph({
           nodesep: 60,
@@ -54,6 +63,7 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
         angular.forEach(nodes, function (node) {
           var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
           instanceMap[node.name] = node;
+          labelMap[nodeLabel] = node;
           if (node.type === 'STREAM') {
             g.setNode(node.name, { shape: 'stream', label: nodeLabel});
 
@@ -69,38 +79,39 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
         // Draw the flowlet shape.
         renderer.shapes().flowlet = function(parent, bbox, node) {
           var instances = getInstances(node.elem.__data__); // No other way to get name from node.
-          var r = 60,
-          shapeSvg = parent.insert('circle', ':first-child')
+          var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
+          var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
-            .attr('r', r)
+            .attr('r', flowletCircleRadius)
             .attr('class', 'flow-shapes foundation-shape flowlet-svg');
 
+          // Elements are positioned with respect to shapeSvg.
           parent.insert('circle')
-            .attr('cx', 50)
-            .attr('cy', -30)
-            .attr('r', 10)
+            .attr('cx', flowletCircleRadius - instanceCircleScaled)
+            .attr('cy', -instanceBufferHeight)
+            .attr('r', instanceCircleScaled)
             .attr('class', 'flow-shapes flowlet-instances');
 
           parent.insert('text')
-            .attr('x', 46)
-            .attr('y', -25)
+            .attr('x', flowletCircleRadius - instanceCircleScaled)
+            .attr('y', -instanceBufferHeight + metricCountPadding)
             .text(instances)
             .attr('class', 'flow-shapes flowlet-instance-count');
 
           parent.insert('circle')
-            .attr('cx', -58)
-            .attr('cy', 0)
-            .attr('r', 25)
+            .attr('cx', - flowletCircleRadius)
+            .attr('r', metricCircleRadius)
             .attr('class', 'flow-shapes flowlet-events');
+
           parent.insert('text')
-            .attr('x', -73)
-            .attr('y', 5)
-            .text(bytesFilter(scope.model.metrics[node.label]))
+            .attr('x', - flowletCircleRadius)
+            .attr('y', metricCountPadding)
+            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
             .attr('class', 'flow5shapes flowlet-event-count');
 
           node.intersect = function(point) {
-            return dagreD3.intersect.circle(node, r, point);
+            return dagreD3.intersect.circle(node, flowletCircleRadius, point);
           };
 
           return shapeSvg;
@@ -111,27 +122,30 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
           var w = bbox.width,
           h = bbox.height,
           points = [
-            { x:   -40, y: 30}, //e
-            { x:   -40, y: -h - 30}, //a
-            { x:   w/2, y: -h - 30}, //b
+            { x:   -streamDiagramWidth, y: streamDiagramHeight}, //e
+            { x:   -streamDiagramWidth, y: -h - streamDiagramHeight}, //a
+            { x:   w/2, y: -h - streamDiagramHeight}, //b
             { x: w, y: -h/2}, //c
-            { x: w/2, y: 30} //d
+            { x: w/2, y: streamDiagramHeight} //d
           ],
           shapeSvg = parent.insert('polygon', ':first-child')
             .attr('points', points.map(function(d) { return d.x + ',' + d.y; }).join(' '))
             .attr('transform', 'translate(' + (-w/8) + ',' + (h * 1/2) + ')')
             .attr('class', 'flow-shapes foundation-shape stream-svg');
 
-          parent.insert('circle')
-            .attr('cx', -58)
-            .attr('cy', 0)
-            .attr('r', 25)
+          // Elements are positioned with respect to shapeSvg.
+          var width = shapeSvg.node().getBBox().width;
+          var circleXPos = -1 * width/2;
+
+          parent.append('circle')
+            .attr('cx', circleXPos)
+            .attr('r', metricCircleRadius)
             .attr('class', 'flow-shapes stream-events');
 
-          parent.insert('text')
-            .attr('x', -73)
-            .attr('y', 5)
-            .text(bytesFilter(scope.model.metrics[node.label]))
+          parent.append('text')
+            .attr('x', circleXPos)
+            .attr('y', metricCountPadding)
+            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -181,10 +195,31 @@ module.directive('myFlowGraph', function (d3, dagreD3, $state, $filter) {
         svg.attr('height', g.graph().height * initialScale + 40);
 
         /**
+         * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
+         * instances text.
+         */
+        function getInstancesScaledRadius(instances, radius) {
+          var base = radius;
+          var extra = (instances.toString().length - 1) * base / 2;
+          return base + extra;
+        }
+
+        /**
          * Handles node click and sends to flowlet page.
          */
         function handleNodeClick(nodeId) {
-          $state.go('flows.detail.runs.detail.flowlets.detail', {flowletId: nodeId});
+          // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
+          if ($state.includes('**.workflows.**')) {
+            return;
+          }
+          handleHideTip(nodeId);
+          var instance = instanceMap[nodeId];
+          if (instance.type === 'STREAM') {
+            $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
+          } else {
+            $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+          }
+
         }
 
         /**

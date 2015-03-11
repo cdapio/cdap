@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithMR;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.WordCountApp;
@@ -42,52 +41,6 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testGetDatasets() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-
-    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    // No datasets should be in another namespace where the apps were not deployed
-    response = doGet(getVersionedAPIPath("datasets", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String responseString = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
-    Assert.assertTrue(responseList.isEmpty());
-
-    // Datasets should exist in the namespace that app was deployed to
-    response = doGet(getVersionedAPIPath("datasets",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    responseString = EntityUtils.toString(response.getEntity());
-    responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
-    Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
-      .put("mydataset", KeyValueTable.class.getName())
-      .put("myds", KeyValueTable.class.getName())
-      .build();
-    Assert.assertEquals(expectedDataSets.size(), responseList.size());
-    for (Map<String, String> ds : responseList) {
-      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("id"));
-      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("name"));
-      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("classname"));
-      Assert.assertTrue("problem with dataset " + ds.get("id"), expectedDataSets.containsKey(ds.get("id")));
-      Assert.assertEquals("problem with dataset " + ds.get("id"),
-                          expectedDataSets.get(ds.get("id")), ds.get("classname"));
-    }
-
-
-    response = doGet(getVersionedAPIPath("apps/WordCountApp/datasets",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    responseString = EntityUtils.toString(response.getEntity());
-    responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, responseList.size());
-    Assert.assertEquals("mydataset", responseList.get(0).get("name"));
-  }
-
-  @Test
   public void testDatasetForApp() throws Exception {
     HttpResponse response = deploy(AppWithMR.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -98,29 +51,6 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
     String responseString = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> responseList = GSON.fromJson(responseString, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertTrue(responseList.size() > 0);
-  }
-
-  @Test
-  public void testGetDatasetSpecification() throws Exception {
-    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    // Querying for the dataset with the same name but different namespace should not be found
-    response = doGet(getVersionedAPIPath("datasets/myds",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    response = doGet(getVersionedAPIPath("datasets/myds",
-                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String responseString = EntityUtils.toString(response.getEntity());
-    Map<String, String> receivedSpec = GSON.fromJson(responseString, MAP_STRING_STRING_TYPE);
-    ImmutableMap<String, String> expectedDatasetSpec =
-      ImmutableMap.of("type", "Dataset",
-                      "id", "myds",
-                      "name", "myds",
-                      "classname", "co.cask.cdap.api.dataset.lib.KeyValueTable");
-    Assert.assertEquals(expectedDatasetSpec, receivedSpec);
   }
 
   @Test
@@ -157,11 +87,11 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // Querying for the flows in a different namespace should not find them.
-    response = doGet(getVersionedAPIPath("datasets/mydataset/flows",
+    response = doGet(getVersionedAPIPath("data/datasets/mydataset/flows",
                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doGet(getVersionedAPIPath("datasets/mydataset/flows",
+    response = doGet(getVersionedAPIPath("data/datasets/mydataset/flows",
                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());
@@ -181,10 +111,10 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithWorker.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet(getVersionedAPIPath(String.format("datasets/%s/workers", AppWithWorker.DATASET),
+    response = doGet(getVersionedAPIPath(String.format("data/datasets/%s/workers", AppWithWorker.DATASET),
                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    response = doGet(getVersionedAPIPath(String.format("datasets/%s/workers", AppWithWorker.DATASET),
+    response = doGet(getVersionedAPIPath(String.format("data/datasets/%s/workers", AppWithWorker.DATASET),
                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseString = EntityUtils.toString(response.getEntity());

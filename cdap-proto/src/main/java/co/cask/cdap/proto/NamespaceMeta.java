@@ -26,11 +26,13 @@ public final class NamespaceMeta {
   private final String id;
   private final String name;
   private final String description;
+  private NamespaceConfig config;
 
-  private NamespaceMeta(String id, String name, String description) {
+  private NamespaceMeta(String id, String name, String description, NamespaceConfig config) {
     this.id = id;
     this.name = name;
     this.description = description;
+    this.config = config;
   }
 
   public String getId() {
@@ -45,6 +47,11 @@ public final class NamespaceMeta {
     return description;
   }
 
+  public NamespaceConfig getConfig() {
+    return config;
+  }
+
+
   /**
    * Builder used to build {@link NamespaceMeta}
    */
@@ -52,6 +59,18 @@ public final class NamespaceMeta {
     private String id;
     private String name;
     private String description;
+    private String schedulerQueueName;
+
+    public Builder() {
+     // No-Op
+    }
+
+    public Builder(NamespaceMeta meta) {
+      this.id =  meta.getId();
+      this.name = meta.getName();
+      this.description = meta.getDescription();
+      this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+    }
 
     public Builder setId(final String id) {
       this.id = id;
@@ -73,6 +92,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+      this.schedulerQueueName = schedulerQueueName;
+      return this;
+    }
+
     public NamespaceMeta build() {
       Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
       if (name == null) {
@@ -81,7 +105,11 @@ public final class NamespaceMeta {
       if (description == null) {
         description = "";
       }
-      return new NamespaceMeta(id, name, description);
+
+      if (schedulerQueueName == null) {
+        schedulerQueueName = "";
+      }
+      return new NamespaceMeta(id, name, description, new NamespaceConfig(schedulerQueueName));
     }
   }
 
@@ -108,6 +136,7 @@ public final class NamespaceMeta {
       .add("id", id)
       .add("name", name)
       .add("description", description)
+      .add("config", getConfig())
       .toString();
   }
 }

@@ -354,6 +354,9 @@ see the :ref:`configuration-security` section.
    * - ``stream.flume.threads``
      - ``20``
      -
+   * - ``stream.notification.threshold``
+     - ``1024``
+     - Size of data, in MB, to be ingested by a Stream before a notification is published
    * - ``thrift.max.read.buffer``
      - ``16777216``
      - Maximum read buffer size in bytes used by the Thrift server [`Note 2`_]

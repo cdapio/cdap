@@ -16,18 +16,15 @@
 
 package co.cask.cdap.client.config;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpRequestConfig;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import javax.annotation.Nullable;
 
@@ -36,7 +33,7 @@ import javax.annotation.Nullable;
  */
 public class ClientConfig {
 
-  private static final CConfiguration CONF = CConfiguration.create();
+  private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
   private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 15000;
   private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 15000;
@@ -44,44 +41,44 @@ public class ClientConfig {
 
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
-  private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
   private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
-  private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
-  private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
-  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED);
-  private static final String DEFAULT_HOST = CONF.get(Constants.Router.ADDRESS);
 
-  private HttpRequestConfig defaultHttpConfig;
-  private HttpRequestConfig uploadHttpConfig;
+  @Nullable
+  private ConnectionConfig connectionConfig;
+  private boolean verifySSLCert;
 
-  private boolean sslEnabled;
-  private String hostname;
-  private int port;
-  private Id.Namespace namespace;
+  private int defaultReadTimeout;
+  private int defaultConnectTimeout;
+  private int uploadReadTimeout;
+  private int uploadConnectTimeout;
+
   private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
-  private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, Id.Namespace namespace, boolean sslEnabled,
-                       int unavailableRetryLimit,
-                       String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
-                       HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
-    this.hostname = hostname;
+  private ClientConfig(@Nullable ConnectionConfig connectionConfig,
+                       boolean verifySSLCert, int unavailableRetryLimit,
+                       String apiVersion, Supplier<AccessToken> accessToken,
+                       int defaultReadTimeout, int defaultConnectTimeout,
+                       int uploadReadTimeout, int uploadConnectTimeout) {
+    this.connectionConfig = connectionConfig;
+    this.verifySSLCert = verifySSLCert;
     this.apiVersion = apiVersion;
-    this.port = port;
-    this.namespace = namespace;
-    this.sslEnabled = sslEnabled;
     this.unavailableRetryLimit = unavailableRetryLimit;
     this.accessToken = accessToken;
-    this.verifySSLCert = verifySSLCert;
-    this.defaultHttpConfig = defaultHttpConfig;
-    this.uploadHttpConfig = uploadHttpConfig;
+    this.defaultReadTimeout = defaultReadTimeout;
+    this.defaultConnectTimeout = defaultConnectTimeout;
+    this.uploadReadTimeout = uploadReadTimeout;
+    this.uploadConnectTimeout = uploadConnectTimeout;
   }
 
-  private URL resolveURL(String apiVersion, String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/" + path).toURL();
+  public static ClientConfig getDefault() {
+    return ClientConfig.builder().build();
+  }
+
+  private URL resolveURL(String apiVersion, String path) throws DisconnectedException, MalformedURLException {
+    return getConnectionConfig().resolveURI(apiVersion, path).toURL();
   }
 
   /**
@@ -90,9 +87,8 @@ public class ClientConfig {
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
-   * @throws MalformedURLException
    */
-  public URL resolveURL(String path) throws MalformedURLException {
+  public URL resolveURL(String path) throws DisconnectedException, MalformedURLException {
     return resolveURL(apiVersion, path);
   }
 
@@ -102,15 +98,9 @@ public class ClientConfig {
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
-   * @throws MalformedURLException
    */
   public URL resolveURLV3(String path) throws MalformedURLException {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
-  }
-
-  private URL resolveNamespacedURL(String apiVersion, Id.Namespace namespace,
-                                   String path) throws MalformedURLException {
-    return getBaseURI().resolve("/" + apiVersion + "/namespaces/" + namespace.getId() + "/" + path).toURL();
   }
 
   /**
@@ -122,110 +112,103 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
-    return resolveNamespacedURL(Constants.Gateway.API_VERSION_3_TOKEN, namespace, path);
+    return getConnectionConfig().resolveNamespacedURI(Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
-  /**
-   * @return the base URI of the target CDAP instance
-   */
-  public URI getBaseURI() {
-    return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
+  public HttpRequestConfig getDefaultRequestConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return new HttpRequestConfig(defaultConnectTimeout, defaultReadTimeout, verifySSLCert);
   }
 
-  /**
-   * @return {@link HttpRequestConfig} to use by default
-   */
-  public HttpRequestConfig getDefaultHttpConfig() {
-    return defaultHttpConfig;
+  public HttpRequestConfig getUploadRequestConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return new HttpRequestConfig(uploadConnectTimeout, uploadReadTimeout, verifySSLCert);
   }
 
-  /**
-   * @return {@link HttpRequestConfig} to use when uploading a file
-   */
-  public HttpRequestConfig getUploadHttpConfig() {
-    return uploadHttpConfig;
+  public int getDefaultReadTimeout() {
+    return defaultReadTimeout;
   }
 
-  /**
-   * @return hostname of the target CDAP instance
-   */
-  public String getHostname() {
-    return hostname;
+  public int getDefaultConnectTimeout() {
+    return defaultConnectTimeout;
   }
 
-  /**
-   * @return port of the target CDAP instance
-   */
-  public int getPort() {
-    return port;
+  public int getUploadReadTimeout() {
+    return uploadReadTimeout;
   }
 
-  /**
-   * @return namespace currently active
-   */
-  public Id.Namespace getNamespace() {
-    return namespace;
+  public int getUploadConnectTimeout() {
+    return uploadConnectTimeout;
+  }
+
+  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
+  public ConnectionConfig getConnectionConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return connectionConfig;
   }
 
   public boolean isVerifySSLCert() {
     return verifySSLCert;
   }
 
-  public String getApiVersion() {
-    return apiVersion;
+  public void setVerifySSLCert(boolean verifySSLCert) {
+    this.verifySSLCert = verifySSLCert;
   }
 
-  public boolean isSSLEnabled() {
-    return sslEnabled;
+  public void setDefaultReadTimeout(int defaultReadTimeout) {
+    this.defaultReadTimeout = defaultReadTimeout;
+  }
+
+  public void setDefaultConnectTimeout(int defaultConnectTimeout) {
+    this.defaultConnectTimeout = defaultConnectTimeout;
+  }
+
+  public void setUploadReadTimeout(int uploadReadTimeout) {
+    this.uploadReadTimeout = uploadReadTimeout;
+  }
+
+  public void setUploadConnectTimeout(int uploadConnectTimeout) {
+    this.uploadConnectTimeout = uploadConnectTimeout;
+  }
+
+  public void setUnavailableRetryLimit(int unavailableRetryLimit) {
+    this.unavailableRetryLimit = unavailableRetryLimit;
+  }
+
+  public Id.Namespace getNamespace() {
+    return this.connectionConfig.getNamespace();
+  }
+
+  public void setNamespace(Id.Namespace namespace) {
+    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
   }
 
   public int getUnavailableRetryLimit() {
     return unavailableRetryLimit;
   }
 
-  public void setSSLEnabled(boolean sslEnabled) {
-    this.sslEnabled = sslEnabled;
-  }
-
-  public void setHostname(String hostname) {
-    Preconditions.checkArgument(hostname != null, "hostname cannot be null");
-    this.hostname = hostname;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public void setNamespace(Id.Namespace namespace) {
-    this.namespace = namespace;
-  }
-
   public void setApiVersion(String apiVersion) {
     this.apiVersion = apiVersion;
   }
 
-  public void setVerifySSLCert(boolean verifySSLCert) {
-    this.verifySSLCert = verifySSLCert;
-    this.defaultHttpConfig = new HttpRequestConfig(defaultHttpConfig.getConnectTimeout(),
-                                                   defaultHttpConfig.getReadTimeout(), verifySSLCert);
-    this.uploadHttpConfig = new HttpRequestConfig(uploadHttpConfig.getConnectTimeout(),
-                                                  uploadHttpConfig.getReadTimeout(), verifySSLCert);
-  }
-
   public void setAllTimeouts(int timeout) {
-    this.defaultHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
-    this.uploadHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
-  }
-
-  public void setURI(URI uri) {
-    this.hostname = uri.getHost();
-    this.sslEnabled = "https".equals(uri.getScheme());
-    if (uri.getPort() != -1) {
-      this.port = uri.getPort();
-    }
-    if (uri.getPath() != null && !uri.getPath().isEmpty()) {
-      this.namespace = Id.Namespace.from(uri.getPath().substring(1));
-    }
+    this.defaultConnectTimeout = timeout;
+    this.defaultReadTimeout = timeout;
+    this.uploadConnectTimeout = timeout;
+    this.uploadReadTimeout = timeout;
   }
 
   @Nullable
@@ -254,54 +237,35 @@ public class ClientConfig {
    */
   public static final class Builder {
 
-    private String hostname = DEFAULT_HOST;
-    private Optional<Integer> port = Optional.absent();
-    private Id.Namespace namespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
-    private boolean sslEnabled = DEFAULT_SSL_ENABLED;
+    private ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
+
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
-
-    private int uploadReadTimeoutMs = DEFAULT_UPLOAD_READ_TIMEOUT;
-    private int uploadConnectTimeoutMs = DEFAULT_UPLOAD_CONNECT_TIMEOUT;
-    private int serviceUnavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
-
-    private int defaultReadTimeoutMs = DEFAULT_READ_TIMEOUT;
-    private int defaultConnectTimeoutMs = DEFAULT_CONNECT_TIMEOUT;
     private boolean verifySSLCert = DEFAULT_VERIFY_SSL_CERTIFICATE;
+
+    private int uploadReadTimeout = DEFAULT_UPLOAD_READ_TIMEOUT;
+    private int uploadConnectTimeout = DEFAULT_UPLOAD_CONNECT_TIMEOUT;
+    private int defaultReadTimeout = DEFAULT_READ_TIMEOUT;
+    private int defaultConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
+
+    private int unavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
 
     public Builder() { }
 
     public Builder(ClientConfig clientConfig) {
-      this.hostname = clientConfig.getHostname();
-      this.port = Optional.of(clientConfig.getPort());
-      this.namespace = clientConfig.getNamespace();
-      this.sslEnabled = clientConfig.isSSLEnabled();
-      this.apiVersion = clientConfig.getApiVersion();
-      this.accessToken = clientConfig.getAccessTokenSupplier();
-      this.uploadReadTimeoutMs = clientConfig.getUploadHttpConfig().getReadTimeout();
-      this.uploadConnectTimeoutMs = clientConfig.getUploadHttpConfig().getConnectTimeout();
-      this.defaultReadTimeoutMs = clientConfig.getDefaultHttpConfig().getReadTimeout();
-      this.defaultConnectTimeoutMs = clientConfig.getDefaultHttpConfig().getConnectTimeout();
-      this.verifySSLCert = clientConfig.isVerifySSLCert();
+      this.connectionConfig = clientConfig.connectionConfig;
+      this.verifySSLCert = clientConfig.verifySSLCert;
+      this.apiVersion = clientConfig.apiVersion;
+      this.accessToken = clientConfig.accessToken;
+      this.uploadReadTimeout = clientConfig.uploadReadTimeout;
+      this.uploadConnectTimeout = clientConfig.uploadConnectTimeout;
+      this.defaultReadTimeout = clientConfig.defaultReadTimeout;
+      this.defaultConnectTimeout = clientConfig.defaultConnectTimeout;
+      this.unavailableRetryLimit = clientConfig.unavailableRetryLimit;
     }
 
-    public Builder setUploadReadTimeoutMs(int uploadReadTimeoutMs) {
-      this.uploadReadTimeoutMs = uploadReadTimeoutMs;
-      return this;
-    }
-
-    public Builder setUploadConnectTimeoutMs(int uploadConnectTimeoutMs) {
-      this.uploadConnectTimeoutMs = uploadConnectTimeoutMs;
-      return this;
-    }
-
-    public Builder setDefaultReadTimeoutMs(int defaultReadTimeoutMs) {
-      this.defaultReadTimeoutMs = defaultReadTimeoutMs;
-      return this;
-    }
-
-    public Builder setDefaultConnectTimeoutMs(int defaultConnectTimeoutMs) {
-      this.defaultConnectTimeoutMs = defaultConnectTimeoutMs;
+    public Builder setConnectionConfig(ConnectionConfig connectionConfig) {
+      this.connectionConfig = connectionConfig;
       return this;
     }
 
@@ -310,24 +274,23 @@ public class ClientConfig {
       return this;
     }
 
-    public Builder setSSLEnabled(boolean sslEnabled) {
-      this.sslEnabled = sslEnabled;
+    public Builder setUploadReadTimeout(int uploadReadTimeout) {
+      this.uploadReadTimeout = uploadReadTimeout;
       return this;
     }
 
-    public Builder setHostname(String hostname) {
-      Preconditions.checkArgument(hostname != null, "hostname cannot be null");
-      this.hostname = hostname;
+    public Builder setUploadConnectTimeout(int uploadConnectTimeout) {
+      this.uploadConnectTimeout = uploadConnectTimeout;
       return this;
     }
 
-    public Builder setPort(int port) {
-      this.port = Optional.of(port);
+    public Builder setDefaultReadTimeout(int defaultReadTimeout) {
+      this.defaultReadTimeout = defaultReadTimeout;
       return this;
     }
 
-    public Builder setNamespace(Id.Namespace namespace) {
-      this.namespace = namespace;
+    public Builder setDefaultConnectTimeout(int defaultConnectTimeout) {
+      this.defaultConnectTimeout = defaultConnectTimeout;
       return this;
     }
 
@@ -346,25 +309,17 @@ public class ClientConfig {
       return this;
     }
 
-    public Builder setServiceUnavailableRetryLimit(int retry) {
-      this.serviceUnavailableRetryLimit = retry;
-      return this;
-    }
-
-    public Builder setUri(URI uri) {
-      this.hostname = uri.getHost();
-      this.sslEnabled = "https".equals(uri.getScheme());
-      if (uri.getPort() != -1) {
-        this.port = Optional.of(uri.getPort());
-      }
+    public Builder setUnavailableRetryLimit(int retry) {
+      this.unavailableRetryLimit = retry;
       return this;
     }
 
     public ClientConfig build() {
-      return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT), namespace,
-                              sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,
-                              new HttpRequestConfig(defaultConnectTimeoutMs, defaultReadTimeoutMs, verifySSLCert),
-                              new HttpRequestConfig(uploadConnectTimeoutMs, uploadReadTimeoutMs, verifySSLCert));
+      return new ClientConfig(connectionConfig, verifySSLCert,
+                              unavailableRetryLimit, apiVersion, accessToken,
+                              defaultConnectTimeout, defaultReadTimeout,
+                              uploadConnectTimeout, uploadReadTimeout);
     }
   }
+
 }

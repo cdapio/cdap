@@ -16,6 +16,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -23,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -30,7 +32,7 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
@@ -40,21 +42,24 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -67,6 +72,9 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -86,8 +94,9 @@ public class UpgraderMain {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private Store store;
-
+  private FileMetaDataManager fileMetaDataManager;
   private final Injector injector;
+  private final HBaseTableUtil hBaseTableUtil;
 
   /**
    * Set of Action available in this tool.
@@ -114,6 +123,7 @@ public class UpgraderMain {
     this.injector = init();
     txService = injector.getInstance(TransactionService.class);
     zkClientService = injector.getInstance(ZKClientService.class);
+    hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -133,6 +143,10 @@ public class UpgraderMain {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
+      new TwillModule(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -155,28 +169,38 @@ public class UpgraderMain {
 
         @Provides
         @Singleton
-        @Named("namespacedDSFramework")
-        public DatasetFramework getNamespacedDSFramework(CConfiguration cConf,
-                                                         DatasetDefinitionRegistryFactory registryFactory)
+        @Named("dsFramework")
+        public DatasetFramework getDSFramework(CConfiguration cConf,
+                                               DatasetDefinitionRegistryFactory registryFactory)
           throws IOException, DatasetManagementException {
           return createRegisteredDatasetFramework(cConf, registryFactory);
         }
 
         @Provides
         @Singleton
-        @Named("nonNamespacedDSFramework")
-        public DatasetFramework getNonNamespacedDSFramework(DatasetDefinitionRegistryFactory registryFactory)
-          throws DatasetManagementException {
-          return createNonNamespaceDSFramework(registryFactory);
+        @Named("defaultStore")
+        public Store getStore(@Named("dsFramework") DatasetFramework dsFramework,
+                              CConfiguration cConf, LocationFactory locationFactory,
+                              TransactionExecutorFactory txExecutorFactory) {
+          return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
         }
 
         @Provides
         @Singleton
-        @Named("nonNamespacedStore")
-        public Store getNonNamespacedStore(@Named("nonNamespacedDSFramework") DatasetFramework nonNamespacedFramework,
-                                           CConfiguration cConf, LocationFactory locationFactory,
-                                           TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, txExecutorFactory, nonNamespacedFramework);
+        @Named("logSaverTableUtil")
+        public LogSaverTableUtil getLogSaverTableUtil(@Named("dsFramework") DatasetFramework dsFramework,
+                                                      CConfiguration cConf) {
+          return new LogSaverTableUtil(dsFramework, cConf);
+        }
+
+        @Provides
+        @Singleton
+        @Named("fileMetaDataManager")
+        public FileMetaDataManager getFileMetaDataManager(@Named("logSaverTableUtil") LogSaverTableUtil tableUtil,
+                                                          @Named("dsFramework") DatasetFramework dsFramework,
+                                                          TransactionExecutorFactory txExecutorFactory,
+                                                          LocationFactory locationFactory) {
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
         }
       });
   }
@@ -189,7 +213,7 @@ public class UpgraderMain {
     zkClientService.startAndWait();
     txService.startAndWait();
 
-    createDefaultNamespace();
+    createNamespaces();
   }
 
   /**
@@ -266,10 +290,16 @@ public class UpgraderMain {
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
-    LOG.info("Upgrading archives and files");
+    LOG.info("Upgrading application metadata ...");
+    MDSUpgrader mdsUpgrader = injector.getInstance(MDSUpgrader.class);
+    mdsUpgrader.upgrade();
+
+    LOG.info("Upgrading archives and files ...");
     ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
     archiveUpgrader.upgrade();
 
+    LOG.info("Upgrading logs meta data ...");
+    getFileMetaDataManager().upgrade();
   }
 
   public static void main(String[] args) throws Exception {
@@ -290,9 +320,7 @@ public class UpgraderMain {
   private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
                                                             DatasetDefinitionRegistryFactory registryFactory)
     throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(registryFactory, cConf),
-                                     new DefaultDatasetNamespace(cConf));
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, cConf);
     addModules(datasetFramework);
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
@@ -306,7 +334,8 @@ public class UpgraderMain {
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
 
     // metrics data
-    DefaultMetricDatasetFactory.setupDatasets(cConf, datasetFramework);
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
+    DefaultMetricDatasetFactory.setupDatasets(factory);
 
     return datasetFramework;
   }
@@ -327,23 +356,26 @@ public class UpgraderMain {
   }
 
   /**
-   * Creates the {@link Constants#DEFAULT_NAMESPACE} namespace
+   * Creates the {@link Constants#SYSTEM_NAMESPACE} in hbase and {@link Constants#DEFAULT_NAMESPACE} namespace and also
+   * adds it to the store
    */
-  private void createDefaultNamespace() {
+  private void createNamespaces() {
+    LOG.info("Creating {} namespace in hbase", Constants.SYSTEM_NAMESPACE_ID);
+    try {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      hBaseTableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+    } catch (MasterNotRunningException e) {
+      Throwables.propagate(e);
+    } catch (ZooKeeperConnectionException e) {
+      Throwables.propagate(e);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
                                  .setName(Constants.DEFAULT_NAMESPACE)
                                  .setDescription(Constants.DEFAULT_NAMESPACE)
                                  .build());
-  }
-
-  /**
-   * Creates a non-namespaced {@link DatasetFramework} to access existing datasets which are not namespaced
-   */
-  private DatasetFramework createNonNamespaceDSFramework(DatasetDefinitionRegistryFactory registryFactory)
-    throws DatasetManagementException {
-    DatasetFramework nonNamespacedFramework = new InMemoryDatasetFramework(registryFactory, cConf);
-    addModules(nonNamespacedFramework);
-    return nonNamespacedFramework;
   }
 
   /**
@@ -353,8 +385,21 @@ public class UpgraderMain {
    */
   private Store getStore() {
     if (store == null) {
-      store = injector.getInstance(Key.get(Store.class, Names.named("nonNamespacedStore")));
+      store = injector.getInstance(Key.get(Store.class, Names.named("defaultStore")));
     }
     return store;
+  }
+
+  /**
+   * gets the {@link FileMetaDataManager} to update log meta
+   *
+   * @return {@link FileMetaDataManager}
+   */
+  private FileMetaDataManager getFileMetaDataManager() {
+    if (fileMetaDataManager == null) {
+      fileMetaDataManager = injector.getInstance(Key.get(FileMetaDataManager.class,
+                                                         Names.named("fileMetaDataManager")));
+    }
+    return fileMetaDataManager;
   }
 }
