@@ -21,10 +21,10 @@ import org.junit.Test;
 /**
  *
  */
-public class UpgraderMainTest {
+public class UpgradeToolTest {
   @Test
   public void testInjector() throws Exception {
-    UpgraderMain upgraderMain = new UpgraderMain();
+    UpgradeTool upgraderMain = new UpgradeTool();
     // should not throw exception
   }
 }

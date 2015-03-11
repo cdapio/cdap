@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
 
 /**
  * Command line tool to migrate data between different versions of CDAP.
- * Usually used along with upgrade tool{@link UpgraderMain}
+ * Usually used along with upgrade tool{@link UpgradeTool}
  */
 public class DataMigration {
   /**
