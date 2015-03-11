@@ -46,6 +46,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
@@ -58,6 +59,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -70,6 +72,9 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -91,6 +96,7 @@ public class UpgraderMain {
   private Store store;
   private FileMetaDataManager fileMetaDataManager;
   private final Injector injector;
+  private final HBaseTableUtil hBaseTableUtil;
 
   /**
    * Set of Action available in this tool.
@@ -117,6 +123,7 @@ public class UpgraderMain {
     this.injector = init();
     txService = injector.getInstance(TransactionService.class);
     zkClientService = injector.getInstance(ZKClientService.class);
+    hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -206,7 +213,7 @@ public class UpgraderMain {
     zkClientService.startAndWait();
     txService.startAndWait();
 
-    createDefaultNamespace();
+    createNamespaces();
   }
 
   /**
@@ -349,9 +356,22 @@ public class UpgraderMain {
   }
 
   /**
-   * Creates the {@link Constants#DEFAULT_NAMESPACE} namespace
+   * Creates the {@link Constants#SYSTEM_NAMESPACE} in hbase and {@link Constants#DEFAULT_NAMESPACE} namespace and also
+   * adds it to the store
    */
-  private void createDefaultNamespace() {
+  private void createNamespaces() {
+    LOG.info("Creating {} namespace in hbase", Constants.SYSTEM_NAMESPACE_ID);
+    try {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      hBaseTableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+    } catch (MasterNotRunningException e) {
+      Throwables.propagate(e);
+    } catch (ZooKeeperConnectionException e) {
+      Throwables.propagate(e);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
                                  .setName(Constants.DEFAULT_NAMESPACE)
                                  .setDescription(Constants.DEFAULT_NAMESPACE)
