@@ -300,6 +300,10 @@ public class UpgradeTool {
 
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
+
+    LOG.info("Upgrading queue.config table ...");
+    QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
+    queueConfigUpgrader.upgrade();
   }
 
   public static void main(String[] args) throws Exception {
