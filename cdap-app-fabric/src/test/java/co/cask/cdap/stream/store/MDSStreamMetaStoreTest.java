@@ -101,11 +101,10 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   }
 
   @Override
-  protected void createNamespace(String namespaceId) throws AlreadyExistsException {
+  protected void createNamespace(String namespace) throws AlreadyExistsException {
     store.createNamespace(new NamespaceMeta.Builder()
-                            .setId(namespaceId)
-                            .setName(namespaceId)
-                            .setDescription(namespaceId)
+                            .setName(namespace)
+                            .setDescription(namespace)
                             .build());
   }
 

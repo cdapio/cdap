@@ -23,20 +23,17 @@ import com.google.common.base.Preconditions;
  * Represents metadata for namespaces
  */
 public final class NamespaceMeta {
+  // id is always identical to name. We keep this field here because the UI may depend on it.
   private final String id;
   private final String name;
   private final String description;
   private NamespaceConfig config;
 
-  private NamespaceMeta(String id, String name, String description, NamespaceConfig config) {
-    this.id = id;
+  private NamespaceMeta(String name, String description, NamespaceConfig config) {
+    this.id = name;
     this.name = name;
     this.description = description;
     this.config = config;
-  }
-
-  public String getId() {
-    return id;
   }
 
   public String getName() {
@@ -56,7 +53,6 @@ public final class NamespaceMeta {
    * Builder used to build {@link NamespaceMeta}
    */
   public static final class Builder {
-    private String id;
     private String name;
     private String description;
     private String schedulerQueueName;
@@ -66,19 +62,13 @@ public final class NamespaceMeta {
     }
 
     public Builder(NamespaceMeta meta) {
-      this.id =  meta.getId();
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
     }
 
-    public Builder setId(final String id) {
-      this.id = id;
-      return this;
-    }
-
-    public Builder setId(final Id.Namespace id) {
-      this.id = id.getId();
+    public Builder setName(final Id.Namespace id) {
+      this.name = id.getId();
       return this;
     }
 
@@ -98,10 +88,7 @@ public final class NamespaceMeta {
     }
 
     public NamespaceMeta build() {
-      Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-      if (name == null) {
-        name = id;
-      }
+      Preconditions.checkArgument(name != null, "Namespace id cannot be null.");
       if (description == null) {
         description = "";
       }
@@ -109,7 +96,7 @@ public final class NamespaceMeta {
       if (schedulerQueueName == null) {
         schedulerQueueName = "";
       }
-      return new NamespaceMeta(id, name, description, new NamespaceConfig(schedulerQueueName));
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
     }
   }
 

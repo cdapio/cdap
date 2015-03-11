@@ -55,7 +55,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
-        .put(ArgumentName.NAMESPACE_ID.getName(), injector.getInstance(NamespaceIdCompleter.class))
+        .put(ArgumentName.NAMESPACE_NAME.getName(), injector.getInstance(NamespaceIdCompleter.class))
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }

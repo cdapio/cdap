@@ -131,7 +131,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
   @Test
   public void testPreferences() throws Exception {
     Id.Namespace invalidNamespace = Id.Namespace.from("invalid");
-    namespaceClient.create(new NamespaceMeta.Builder().setId(invalidNamespace.getId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(invalidNamespace.getId()).build());
 
     Map<String, String> propMap = client.getInstancePreferences();
     Assert.assertEquals(ImmutableMap.<String, String>of(), propMap);
@@ -228,14 +228,14 @@ public class PreferencesClientTestRun extends ClientTestBase {
     propMap.put("k1", "namespace");
 
     Id.Namespace myspace = Id.Namespace.from("myspace");
-    namespaceClient.create(new NamespaceMeta.Builder().setId(myspace.getId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace.getId()).build());
 
     client.setNamespacePreferences(myspace, propMap);
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, false));
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, true));
 
     namespaceClient.delete(myspace.getId());
-    namespaceClient.create(new NamespaceMeta.Builder().setId(myspace.getId()).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace.getId()).build());
     Assert.assertTrue(client.getNamespacePreferences(myspace, false).isEmpty());
     Assert.assertTrue(client.getNamespacePreferences(myspace, true).isEmpty());
 

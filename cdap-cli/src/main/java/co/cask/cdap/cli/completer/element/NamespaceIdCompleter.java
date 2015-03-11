@@ -42,7 +42,7 @@ public class NamespaceIdCompleter extends StringsCompleter {
         List<String> namespaceIds = new ArrayList<String>();
         try {
           for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
-            namespaceIds.add(namespaceMeta.getId());
+            namespaceIds.add(namespaceMeta.getName());
           }
         } catch (IOException e) {
           return Lists.newArrayList();

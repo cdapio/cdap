@@ -251,7 +251,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
-    namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
     cliConfig.getClientConfig().setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -445,15 +445,14 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   @Ignore
   public void testNamespaces() throws Exception {
-    final String id = PREFIX + "testNamespace";
-    final String name = "testDisplayName";
+    final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setId("default").setName("default").setDescription("default").build();
+      .setName("default").setDescription("default").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
@@ -465,30 +464,30 @@ public class CLIMainTest extends StandaloneTestBase {
                               String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s %s", id, name, description);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
+    String command = String.format("create namespace %s %s", name, description);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setId(id).setName(name).setDescription(description).build();
+      .setName(name).setDescription(description).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
     // get namespace details and verify
     expectedNamespaces = Lists.newArrayList(expected);
-    command = String.format("describe namespace %s", id);
+    command = String.format("describe namespace %s", name);
     testNamespacesOutput(cli, command, expectedNamespaces);
 
     // try creating a namespace with existing id
-    command = String.format("create namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
+    command = String.format("create namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", name));
 
     // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
-      .setId(defaultFields).setName(defaultFields).setDescription("").build();
+      .setName(defaultFields).setDescription("").build();
     // test that there are 3 namespaces including default
     expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -497,8 +496,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
 
     // delete namespace and verify
-    command = String.format("delete namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", id));
+    command = String.format("delete namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
   @Test
@@ -613,11 +612,11 @@ public class CLIMainTest extends StandaloneTestBase {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
     Table table = Table.builder()
-      .setHeader("id", "display_name", "description")
+      .setHeader("name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
     cliMain.getTableRenderer().render(printStream, table);

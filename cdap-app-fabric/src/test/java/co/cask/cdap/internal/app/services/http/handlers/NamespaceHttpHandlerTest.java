@@ -349,7 +349,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // test create and get
     String fooNamespace = "fooNamespace";
-    NamespaceMeta toCreate = new NamespaceMeta.Builder().setId(fooNamespace).build();
+    NamespaceMeta toCreate = new NamespaceMeta.Builder().setName(fooNamespace).build();
     namespaceClient.create(toCreate);
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);
     Assert.assertNotNull(receivedMeta);
@@ -376,7 +376,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
-    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setSchedulerQueueName("prod").build();
+    NamespaceMeta meta = new NamespaceMeta.Builder().setName(ID).setSchedulerQueueName("prod").build();
     setProperties(ID, meta);
     response = getNamespace(ID);
     namespace = readGetResponse(response);
@@ -390,7 +390,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // Update description
-    meta = new NamespaceMeta.Builder().setId(ID).setDescription("new fancy description").build();
+    meta = new NamespaceMeta.Builder().setName(ID).setDescription("new fancy description").build();
     setProperties(ID, meta);
     response = getNamespace(ID);
     namespace = readGetResponse(response);

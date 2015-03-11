@@ -58,7 +58,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     int initialNamespaceCount = namespaces.size();
 
     if (namespaces.size() == 1) {
-      Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaces.get(0).getId());
+      Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaces.get(0).getName());
     } else {
       Assert.assertEquals(0, namespaces.size());
     }
@@ -71,15 +71,14 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
     // create a valid namespace
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_NAMESPACE_ID).setName(TEST_NAME).setDescription(TEST_DESCRIPTION);
+    builder.setName(TEST_NAMESPACE_ID).setDescription(TEST_DESCRIPTION);
     namespaceClient.create(builder.build());
 
     // verify that the namespace got created correctly
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
     NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
-    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
-    Assert.assertEquals(TEST_NAME, meta.getName());
+    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
     // try creating a namespace with the same id again
@@ -91,18 +90,16 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
     // verify that the existing namespace was not updated
     meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
-    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
-    Assert.assertEquals(TEST_NAME, meta.getName());
+    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
     // create and verify namespace without name and description
     builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_DEFAULT_FIELDS);
+    builder.setName(TEST_DEFAULT_FIELDS);
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
     meta = namespaceClient.get(TEST_DEFAULT_FIELDS.getId());
-    Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getId());
     Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getName());
     Assert.assertEquals("", meta.getDescription());
 
@@ -131,13 +128,13 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
   private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnauthorizedException {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(DEFAULT);
+    builder.setName(DEFAULT);
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", DEFAULT));
     } catch (BadRequestException e) {
     }
-    builder.setId(SYSTEM);
+    builder.setName(SYSTEM);
     try {
       namespaceClient.create(builder.build());
       Assert.fail(String.format("Must not create '%s' namespace", SYSTEM));
