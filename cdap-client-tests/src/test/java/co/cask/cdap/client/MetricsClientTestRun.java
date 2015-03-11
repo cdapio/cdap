@@ -26,7 +26,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
