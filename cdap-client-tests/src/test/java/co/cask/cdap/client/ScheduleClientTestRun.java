@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * Copyright © 2014 Cask Data, Inc.
+=======
+ * Copyright © 2015 Cask Data, Inc.
+>>>>>>> 21a7530c9c910d24d191d155ad1547d4ffe709a8
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,14 +40,16 @@ import java.util.List;
  */
 @Category(XSlowTests.class)
 public class ScheduleClientTestRun extends ClientTestBase {
+
   private ScheduleClient scheduleClient;
   private ProgramClient programClient;
+  private ApplicationClient appClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
 
-    ApplicationClient appClient = new ApplicationClient(clientConfig);
+    appClient = new ApplicationClient(clientConfig);
     scheduleClient = new ScheduleClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
 
@@ -56,6 +62,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
   public void tearDown() throws Throwable {
     programClient.stop(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    appClient.delete(FakeApp.NAME);
   }
 
   @Test

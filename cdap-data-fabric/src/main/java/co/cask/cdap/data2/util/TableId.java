@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.util;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -49,26 +48,6 @@ public class TableId {
     Preconditions.checkArgument(tableName != null, "Table name should not be null.");
     // Id.Namespace already checks for non-null namespace
     return new TableId(namespaceId, tableName);
-  }
-
-  /**
-   * Construct a {@link TableId} from a dataset name
-   * TODO: CDAP-1593 - This is bad and should be removed, since it makes assumptions about the dataset name format.
-   * Will need a bigger change to have DatasetAdmin classes accept a namespace id in some other form to pass to 
-   * #from(tablePrefix, namespace, tableName) as opposed to getting it from the {@link DatasetSpecification#getName}
-   *
-   * @param name the dataset/table name to construct the {@link TableId} from
-   * @return the {@link TableId} object for the specified dataset/table name
-   */
-  public static TableId from(String name) {
-    Preconditions.checkArgument(name != null, "Dataset name should not be null");
-    // Dataset/Table name is expected to be in the format <table-prefix>.<namespace>.<name>
-    String invalidFormatError = String.format("Invalid format for dataset/table name '%s'. " +
-                                                "Expected - <table-prefix>.<namespace>.<dataset/table-name>", name);
-    String [] parts = name.split("\\.", 3);
-    Preconditions.checkArgument(parts.length == 3, invalidFormatError);
-    // Ignore the prefix in the input name.
-    return new TableId(Id.Namespace.from(parts[1]), parts[2]);
   }
 
   @Override

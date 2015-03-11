@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -30,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -39,7 +41,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -49,8 +50,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -70,10 +71,12 @@ public final class FileMetaDataManager {
   private final DatasetFramework dsFramework;
 
   private final Transactional<DatasetContext<Table>, Table> mds;
+  private final String logBaseDir;
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             LocationFactory locationFactory, DatasetFramework dsFramework) {
+                             LocationFactory locationFactory, DatasetFramework dsFramework,
+                             CConfiguration cConf) {
     this.dsFramework = dsFramework;
     this.txExecutorFactory = txExecutorFactory;
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
@@ -88,6 +91,7 @@ public final class FileMetaDataManager {
       }
     });
     this.locationFactory = locationFactory;
+    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
   }
 
   /**
@@ -169,6 +173,7 @@ public final class FileMetaDataManager {
           Row row;
           while ((row = scanner.next()) != null) {
             byte [] rowKey = row.getRow();
+            String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(logBaseDir, getLogPartition(rowKey));
             byte [] maxCol = getMaxKey(row.getColumns());
 
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
@@ -179,7 +184,7 @@ public final class FileMetaDataManager {
               }
               // Delete if colName is less than tillTime, but don't delete the last one
               if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
-                callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+                callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))), namespacedLogDir);
                 ctx.get().delete(rowKey, colName);
                 deletedColumns++;
               }
@@ -192,6 +197,12 @@ public final class FileMetaDataManager {
         return deletedColumns;
       }
     });
+  }
+
+  private String getLogPartition(byte[] rowKey) {
+    int offset = ROW_KEY_PREFIX_END.length;
+    int length = rowKey.length - offset;
+    return Bytes.toString(rowKey, offset, length);
   }
 
   private byte[] getRowKey(LoggingContext loggingContext) {
@@ -220,7 +231,7 @@ public final class FileMetaDataManager {
    * Implement to receive a location before its meta data is removed.
    */
   public interface DeleteCallback {
-    public void handle(Location location);
+    public void handle(Location location, String namespacedLogBaseDir);
   }
 
   /**
@@ -265,7 +276,7 @@ public final class FileMetaDataManager {
             String oldPath = Bytes.toString(entry.getValue());
             Location newPath;
             String newKey;
-            if (key.startsWith(Constants.Logging.SYSTEM_NAME) || key.startsWith(DEVELOPER_STRING)) {
+            if (key.startsWith(Constants.CDAP_NAMESPACE) || key.startsWith(DEVELOPER_STRING)) {
               newPath = upgradePath(key, oldPath);
               newKey = upgradeKey(key);
               try {
@@ -290,8 +301,8 @@ public final class FileMetaDataManager {
    * @return the new key with namespace
    */
   private String upgradeKey(String key) {
-    if (key.startsWith(Constants.Logging.SYSTEM_NAME)) {
-      return key.replace(Constants.Logging.SYSTEM_NAME, Constants.SYSTEM_NAMESPACE);
+    if (key.startsWith(Constants.CDAP_NAMESPACE)) {
+      return key.replace(Constants.CDAP_NAMESPACE, Constants.SYSTEM_NAMESPACE);
     }
     return key.replace(DEVELOPER_STRING, Constants.DEFAULT_NAMESPACE);
   }
@@ -308,7 +319,7 @@ public final class FileMetaDataManager {
   private Location upgradePath(String key, String oldLocation) throws IOException, URISyntaxException {
     Location location = locationFactory.create(new URI(oldLocation));
     Location newLocation = null;
-    if (key.startsWith(Constants.Logging.SYSTEM_NAME)) {
+    if (key.startsWith(Constants.CDAP_NAMESPACE)) {
       // Example path of this type: hdfs://blah.blah.net/
       // cdap/logs/avro/cdap/services/service-appfabric/2015-02-26/1424988452088.avro
       // removes the second occurrence of "cdap/" in the path

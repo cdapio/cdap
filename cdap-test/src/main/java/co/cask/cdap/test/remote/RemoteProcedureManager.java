@@ -48,9 +48,7 @@ public class RemoteProcedureManager implements ProcedureManager {
     ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
       .setNamespace(procedure.getNamespace())
       .build();
-    return new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(connectionConfig)
-      .build();
+    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
   }
 
   private ProgramClient getProgramClient() {
@@ -93,9 +91,7 @@ public class RemoteProcedureManager implements ProcedureManager {
       ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
         .setNamespace(procedure.getNamespace())
         .build();
-      return new ClientConfig.Builder(clientConfig)
-        .setConnectionConfig(connectionConfig)
-        .build();
+      return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
     }
 
     private ProcedureClient getProcedureClient() {

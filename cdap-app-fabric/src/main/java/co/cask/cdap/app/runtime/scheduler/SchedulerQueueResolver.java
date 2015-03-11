@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 
@@ -58,9 +57,11 @@ public class SchedulerQueueResolver {
   @Nullable
   public String getQueue(Id.Namespace namespaceId) {
     NamespaceMeta meta = store.getNamespace(namespaceId);
-    Preconditions.checkNotNull(meta, "Namespace meta cannot be null");
-
-    NamespaceConfig config = meta.getConfig();
-    return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : getDefaultQueue();
+    if (meta != null) {
+      NamespaceConfig config = meta.getConfig();
+      return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : getDefaultQueue();
+    } else {
+      return getDefaultQueue();
+    }
   }
 }

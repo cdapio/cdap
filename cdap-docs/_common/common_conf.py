@@ -142,6 +142,10 @@ rst_epilog = """
 
 .. |copyright| replace:: %(copyright)s
 
+.. |--| unicode:: U+2013   .. en dash
+.. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
+   :trim:
+
 """ % {'version': version, 
        'short_version': short_version, 
        'release': release,

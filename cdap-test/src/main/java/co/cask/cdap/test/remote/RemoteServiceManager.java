@@ -49,9 +49,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
     ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
       .setNamespace(serviceId.getNamespace())
       .build();
-    return new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(connectionConfig)
-      .build();
+    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
   }
 
   private ProgramClient getProgramClient() {
@@ -65,7 +63,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public void setRunnableInstances(String runnable, int instances) {
     try {
-      getProgramClient().setServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getId(), runnable, instances);
+      getProgramClient().setServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getId(),
+                                                     runnable, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -79,7 +78,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public int getProvisionedInstances(String runnableName) {
     try {
-      return getProgramClient().getServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getId(), runnableName);
+      return getProgramClient().getServiceRunnableInstances(serviceId.getApplicationId(),
+                                                            serviceId.getId(), runnableName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -97,7 +97,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public boolean isRunning() {
     try {
-      return "RUNNING".equals(getProgramClient().getStatus(serviceId.getApplicationId(), ProgramType.SERVICE, serviceId.getId()));
+      return "RUNNING".equals(getProgramClient().getStatus(serviceId.getApplicationId(),
+                                                           ProgramType.SERVICE, serviceId.getId()));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

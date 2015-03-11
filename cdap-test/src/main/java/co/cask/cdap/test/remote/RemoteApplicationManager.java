@@ -69,9 +69,7 @@ public class RemoteApplicationManager implements ApplicationManager {
     ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
       .setNamespace(application.getNamespace())
       .build();
-    return new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(connectionConfig)
-      .build();
+    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
   }
 
   private ApplicationClient getApplicationClient() {
@@ -360,14 +358,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (List<ProgramRecord> programRecords : getApplicationClient().listPrograms(application.getId()).values()) {
-        for (ProgramRecord programRecord : programRecords) {
-          // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
-          // throw error when you stop something that is not running.
-          ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
-          if (isRunning(id)) {
-            getProgramClient().stop(application.getId(), id.getRunnableType(), id.getRunnableId());
-          }
+      for (ProgramRecord programRecord : getApplicationClient().listPrograms(application.getId())) {
+        // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
+        // throw error when you stop something that is not running.
+        ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
+        if (isRunning(id)) {
+          getProgramClient().stop(application.getId(), id.getRunnableType(), id.getRunnableId());
         }
       }
     } catch (Exception e) {

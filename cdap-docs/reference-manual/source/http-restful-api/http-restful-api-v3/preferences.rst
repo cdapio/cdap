@@ -35,15 +35,15 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
+   * - Parameter
      - Description
-     * - ``<namespace-id>``
+   * - ``<namespace-id>``
      - Namespace ID
-     * - ``<app-id>``
+   * - ``<app-id>``
      - Application ID
-     * - ``<program-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
-     * - ``<program-id>``
+   * - ``<program-id>``
      - Program ID
 
 Properties, as a map of string-string pairs, are passed in the JSON request body.
@@ -57,13 +57,13 @@ that does not exist or an application that has not yet been deployed.
    :widths: 20 80
    :header-rows: 1
 
-     * - Status Codes
+   * - Status Codes
      - Description
-     * - ``200 OK``
+   * - ``200 OK``
      - The event successfully called the method, and the preferences were set
-     * - ``400 BAD REQUEST``
+   * - ``400 BAD REQUEST``
      - The JSON body has an invalid format
-     * - ``404 NOT FOUND``
+   * - ``404 NOT FOUND``
      - The entity for which Preferences are being set was not found
 
 
@@ -99,15 +99,15 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
+   * - Parameter
      - Description
-     * - ``<namespace-id>``
+   * - ``<namespace-id>``
      - Namespace ID
-     * - ``<app-id>``
+   * - ``<app-id>``
      - Application ID
-     * - ``<program-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
-     * - ``<program-id>``
+   * - ``<program-id>``
      - Program ID
 
 .. rubric:: HTTP Responses
@@ -116,11 +116,11 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
    :widths: 20 80
    :header-rows: 1
 
-     * - Status Codes
+   * - Status Codes
      - Description
-     * - ``200 OK``
+   * - ``200 OK``
      - The event successfully called the method, and the preferences were retrieved
-     * - ``404 NOT FOUND``
+   * - ``404 NOT FOUND``
      - The entity for which Preferences are being set was not found
 
 Delete Preferences
@@ -139,15 +139,15 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
+   * - Parameter
      - Description
-     * - ``<namespace-id>``
+   * - ``<namespace-id>``
      - Namespace ID
-     * - ``<app-id>``
+   * - ``<app-id>``
      - Application ID
-     * - ``<program-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
-     * - ``<program-id>``
+   * - ``<program-id>``
      - Program ID
 
 .. rubric:: HTTP Responses
@@ -156,9 +156,9 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    :widths: 20 80
    :header-rows: 1
 
-     * - Status Codes
+   * - Status Codes
      - Description
-     * - ``200 OK``
+   * - ``200 OK``
      - The event successfully called the method, and the preferences were retrieved
-     * - ``404 NOT FOUND``
+   * - ``404 NOT FOUND``
      - The entity for which Preferences are being set was not found

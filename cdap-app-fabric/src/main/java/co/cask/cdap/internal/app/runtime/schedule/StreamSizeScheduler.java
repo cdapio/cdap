@@ -466,7 +466,7 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     @Override
-    public Type getNotificationFeedType() {
+    public Type getNotificationType() {
       return StreamSizeNotification.class;
     }
 
