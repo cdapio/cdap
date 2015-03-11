@@ -38,11 +38,11 @@ public class DataMigrationTest {
                                                           );
     // valid cases
     for (String[] arguments : validArgumentList) {
-      Assert.assertTrue(DataMigration.testMigrationParse(arguments));
+      Assert.assertNotNull(DataMigration.testMigrationParsing(arguments));
     }
     // invalid cases
     for (String[] arguments : invalidArgumentList) {
-      Assert.assertFalse(DataMigration.testMigrationParse(arguments));
+      Assert.assertNull(DataMigration.testMigrationParsing(arguments));
     }
   }
 }

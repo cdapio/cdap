@@ -30,7 +30,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -52,6 +54,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Migration for metrics data from 2.6 to 2.8
@@ -145,7 +148,9 @@ public class MetricsDataMigrator {
     this.hConf = hConf;
   }
 
-  public void migrateMetricsTables(Version cdapVersion, boolean keepOldData) throws DataMigrationException {
+  public void migrateMetricsTables(HBaseTableUtil hBaseTableUtil,
+                                   boolean keepOldData) throws DataMigrationException {
+    Version cdapVersion = findMetricsTableVersion(new MetricHBaseTableUtil(hBaseTableUtil));
     if (cdapVersion == Version.VERSION_2_6_OR_LOWER) {
       migrateMetricsTableFromVersion26(cdapVersion);
     } else if (cdapVersion == Version.VERSION_2_7) {
@@ -158,6 +163,62 @@ public class MetricsDataMigrator {
       System.out.println("Performing cleanup of old metrics tables");
       cleanUpOldTables(cdapVersion);
     }
+  }
+
+  @Nullable
+  private Version findMetricsTableVersion(MetricHBaseTableUtil metricHBaseTableUtil) {
+
+    // Figure out what is the latest working version of CDAP
+    // 1) if latest is 2.8.x - nothing to do, if "pre-2.8", proceed to next step.
+    // 2) find a most recent metrics table: start by looking for 2.7, then 2.6
+    // 3) if we find 2.7 - we will migrate data from 2.7 table, if not - migrate data from 2.6 metrics table
+    // todo - use UpgradeTool to figure out if version is 2.8.x, return if it is 2.8.x
+
+    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
+
+    // versions older than 2.7, has two metrics table, identified by system and user prefix
+    String tableName26 = "system." + tableName27;
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    String metricsEntityTable26 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName26);
+    String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName27);
+
+    Version version = null;
+    try {
+      HBaseAdmin  hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(metricsEntityTable27)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_7, version);
+          if (version == null) {
+            return null;
+          }
+          break;
+        }
+        if (desc.getNameAsString().equals(metricsEntityTable26)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_6_OR_LOWER, version);
+          if (version == null) {
+            return null;
+          }
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return version;
+  }
+
+  private Version verifyVersion(Version expected, Version actual) {
+    if (expected != actual) {
+      System.out.println("Version detected based on table name does not match table configuration");
+      return null;
+    }
+    return actual;
   }
 
   private void migrateMetricsTableFromVersion26(Version version) throws DataMigrationException {

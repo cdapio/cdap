@@ -47,6 +47,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -61,9 +62,6 @@ import javax.annotation.Nullable;
  */
 public class DataMigration {
   private static final String KEEP_OLD_METRICS_DATA = "--keep-old-metrics-data";
-  private static boolean isTest = false;
-
-  private boolean keepOldMetricsData = false;
 
   /**
    * Set of Action available in this tool.
@@ -83,40 +81,13 @@ public class DataMigration {
     }
   }
 
-  public boolean doMain(String[] args) throws Exception {
+  public void doMain(String[] args) throws Exception {
     System.out.println(String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
     System.out.println();
 
-    if (args.length < 1) {
-      printHelp();
-      return false;
-    }
-
-    Action action = parseAction(args[0]);
+    MigrationAction action = getMigrationActionFromArguments(args);
     if (action == null) {
-      System.out.println(String.format("Unsupported action : %s", args[0]));
-      printHelp(true);
-      return false;
-    }
-
-    if (action.equals(Action.METRICS)) {
-      if (args.length > 2) {
-        System.out.println("invalid number of arguments");
-        printHelp(true);
-        return false;
-      } else if (args.length == 2) {
-        if (args[1].equals(KEEP_OLD_METRICS_DATA)) {
-          keepOldMetricsData = true;
-        } else {
-          System.out.println("invalid argument, expected argument " + KEEP_OLD_METRICS_DATA);
-          printHelp(true);
-          return false;
-        }
-      }
-    }
-
-    if (isTest) {
-      return true;
+      return;
     }
 
     CConfiguration cConf = CConfiguration.create();
@@ -135,17 +106,46 @@ public class DataMigration {
                     .build(DatasetDefinitionRegistryFactory.class));
         }
       });
+    action.perform(injector);
+  }
 
+  public MigrationAction getMigrationActionFromArguments(String[] args) {
+    if (args.length < 1) {
+      printHelp();
+      return null;
+    }
+    Action action = parseAction(args[0]);
+    if (action == null) {
+      System.out.println(String.format("Unsupported action : %s", args[0]));
+      printHelp(true);
+      return null;
+    }
     switch (action) {
       case METRICS:
-        migrateMetricsData(injector, keepOldMetricsData);
-        break;
+        return getMetricsMigrationAction(args);
       case HELP:
         printHelp();
         break;
     }
-    return true;
+    return null;
   }
+
+  private MigrationAction getMetricsMigrationAction(String[] args) {
+    if (args.length > 2) {
+      System.out.println("invalid number of arguments");
+      printHelp(true);
+    } else if (args.length == 2) {
+      if (args[1].equals(KEEP_OLD_METRICS_DATA)) {
+        return new MetricsMigration(true);
+      } else {
+        System.out.println("invalid argument, expected argument " + KEEP_OLD_METRICS_DATA);
+      }
+    } else {
+      return new MetricsMigration(false);
+    }
+    return null;
+  }
+
 
   private void printHelp() {
     printHelp(false);
@@ -171,21 +171,24 @@ public class DataMigration {
     }
   }
 
-  private void migrateMetricsData(Injector injector, boolean keepOldTables) {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    Configuration hConf = injector.getInstance(Configuration.class);
+  private static final class MetricsMigration implements MigrationAction {
 
-    System.out.println("Starting metrics data migration");
-    // find version to migrate
-    MetricHBaseTableUtil metricHBaseTableUtil = new MetricHBaseTableUtil(injector.getInstance(HBaseTableUtil.class));
-    Version version = findMetricsTableVersion(cConf, hConf, metricHBaseTableUtil);
+    boolean keepOldMetricsData;
 
-    if (version != null) {
-      System.out.println("Migrating Metrics Data from " + version.name());
+    public MetricsMigration(boolean keepOldMetricsData) {
+      this.keepOldMetricsData = keepOldMetricsData;
+    }
+
+    @Override
+    public void perform(Injector injector) {
+      CConfiguration cConf = injector.getInstance(CConfiguration.class);
+      Configuration hConf = injector.getInstance(Configuration.class);
+
       try {
         DatasetFramework framework = createRegisteredDatasetFramework(injector);
         // migrate metrics data
-        DefaultMetricDatasetFactory.migrateData(cConf, hConf, framework, version, keepOldTables);
+        DefaultMetricDatasetFactory.migrateData(cConf, hConf, framework, keepOldMetricsData,
+                                                injector.getInstance(HBaseTableUtil.class));
       } catch (DataMigrationException e) {
         System.out.println(
           String.format("Exception encountered during metrics migration : %s , Aborting metrics data migration",
@@ -194,77 +197,19 @@ public class DataMigration {
         System.out.println(String.format(
           "Exception encountered : %s , Aborting metrics migration", e));
       }
-      System.out.println("Successfully Migrated Metrics Data from " + version.name());
-    } else {
-      System.out.println("Did not find compatible CDAP Version to migrate Metrics data from");
     }
-  }
-
-  @Nullable
-  private Version findMetricsTableVersion(CConfiguration cConf, Configuration hConf,
-                                          MetricHBaseTableUtil metricHBaseTableUtil) {
-
-
-    // Figure out what is the latest working version of CDAP
-    // 1) if latest is 2.8.x - nothing to do, if "pre-2.8", proceed to next step.
-    // 2) find a most recent metrics table: start by looking for 2.7, then 2.6
-    // 3) if we find 2.7 - we will migrate data from 2.7 table, if not - migrate data from 2.6 metrics table
-    // todo - use UpgradeTool to figure out if version is 2.8.x, return if it is 2.8.x
-
-    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                   UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
-
-    // versions older than 2.7, has two metrics table, identified by system and user prefix
-    String tableName26 = "system." + tableName27;
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-    String metricsEntityTable26 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
-                                                                    tableName26);
-    String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
-                                                                    tableName27);
-
-    Version version = null;
-    try {
-      HBaseAdmin  hAdmin = new HBaseAdmin(hConf);
-      for (HTableDescriptor desc : hAdmin.listTables()) {
-        if (desc.getNameAsString().equals(metricsEntityTable27)) {
-          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
-          version = metricHBaseTableUtil.getVersion(desc);
-          version = verifyVersion(Version.VERSION_2_7, version);
-          if (version == null) {
-            return null;
-          }
-          break;
-        }
-        if (desc.getNameAsString().equals(metricsEntityTable26)) {
-          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
-          version = metricHBaseTableUtil.getVersion(desc);
-          version = verifyVersion(Version.VERSION_2_6_OR_LOWER, version);
-          if (version == null) {
-            return null;
-          }
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return version;
-  }
-
-  private Version verifyVersion(Version expected, Version actual) {
-    if (expected != actual) {
-      System.out.println("Version detected based on table name does not match table configuration");
-      return null;
-    }
-    return actual;
   }
 
   public static void main(String[] args) throws Exception {
     new DataMigration().doMain(args);
   }
 
-  public static boolean testMigrationParse(String[] args) throws Exception {
-    isTest = true;
-    return new DataMigration().doMain(args);
+  private static interface MigrationAction {
+    void perform(Injector injector);
+  }
+
+  public static MigrationAction testMigrationParsing(String[] args) {
+    return new DataMigration().getMetricsMigrationAction(args);
   }
 
   /**

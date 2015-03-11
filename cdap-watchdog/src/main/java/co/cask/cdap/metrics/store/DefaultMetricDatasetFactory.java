@@ -25,6 +25,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
@@ -159,13 +160,11 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
    * @param conf CConfiguration
    * @param hConf Configuration
    * @param datasetFramework framework to add types and datasets to
-   * @param version - version we are migrating the data from
    * @param keepOldData - boolean flag to specify if we have to keep old metrics data
    * @throws DataMigrationException
    */
   public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
-                                 MetricHBaseTableUtil.Version version,
-                                 boolean keepOldData) throws DataMigrationException {
+                                 boolean keepOldData, HBaseTableUtil tableUtil) throws DataMigrationException {
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
     MetricsDataMigrator migrator = new MetricsDataMigrator(conf, hConf, datasetFramework, factory);
     // delete existing destination tables
@@ -177,7 +176,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       LOG.error(msg, e);
       throw new DataMigrationException(msg);
     }
-    migrator.migrateMetricsTables(version, keepOldData);
+    migrator.migrateMetricsTables(tableUtil, keepOldData);
   }
 
   private int getRollTime(int resolution) {
