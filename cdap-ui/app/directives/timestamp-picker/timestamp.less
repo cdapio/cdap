@@ -1,0 +1,57 @@
+@import "../../styles/variables.less";
+
+my-timestamp-picker {
+
+
+  .input-group {
+    > input.form-control {
+      width: 50%;
+      &.last-child { // double-pseudo selector doesnt work
+        position: relative;
+        left: -1px; // borders line up
+        &:focus { // fix bootstrap inaptitude
+          border-top-right-radius: @input-border-radius;
+          border-bottom-right-radius: @input-border-radius;
+        }
+      }
+
+    }
+  }
+
+
+  .dropdown-menu.datepicker,
+  .dropdown-menu.timepicker {
+    width: auto;
+
+    padding: .5em;
+
+    button {
+      outline: none;
+      border: none;
+      text-shadow: none;
+    }
+  }
+
+
+  .dropdown-menu.datepicker {
+    min-width: 350px;
+
+    thead th {
+      padding: .5em 0;
+    }
+    tbody td {
+      padding: 3px;
+    }
+
+  }
+
+
+  .dropdown-menu.timepicker {
+
+    tbody td {
+      padding: 3px 0;
+    }
+
+  }
+
+}

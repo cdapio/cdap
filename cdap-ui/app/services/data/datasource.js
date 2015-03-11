@@ -69,7 +69,7 @@ angular.module(PKG.name+'.services')
       this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
-        if(data.statusCode!==200 || data.warning) {
+        if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, data.resource)) {
               if(b.errorCallback) {
