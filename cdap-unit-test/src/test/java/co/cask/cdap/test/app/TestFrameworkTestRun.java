@@ -754,7 +754,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try {
 
       // run a query over the dataset
-      ResultSet results = connection.prepareStatement("select first from mytable where second = '1'")
+      ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
         .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
