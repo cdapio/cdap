@@ -63,6 +63,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
+    runBefore = true;
     initialize(CConfiguration.create(), false);
   }
 

@@ -70,10 +70,10 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     // to determine input splits.
     initialize(CConfiguration.create(), true);
 
-    createStream(streamName);
-    sendStreamEvent(streamName, headers, Bytes.toBytes(body1));
-    sendStreamEvent(streamName, headers, Bytes.toBytes(body2));
-    sendStreamEvent(streamName, headers, Bytes.toBytes(body3));
+    createStream(NAMESPACE_ID.getId(), streamName);
+    sendStreamEvent(NAMESPACE_ID.getId(), streamName, headers, Bytes.toBytes(body1));
+    sendStreamEvent(NAMESPACE_ID.getId(), streamName, headers, Bytes.toBytes(body2));
+    sendStreamEvent(NAMESPACE_ID.getId(), streamName, headers, Bytes.toBytes(body3));
   }
 
   @Test
@@ -155,8 +155,9 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testStreamNameWithHyphen() throws Exception {
-    createStream("stream-test");
-    sendStreamEvent("stream-test", Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+    createStream(NAMESPACE_ID.getId(), "stream-test");
+    sendStreamEvent(NAMESPACE_ID.getId(), "stream-test",
+                    Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
 
     // Streams with '-' are replaced with '_'
     String cleanStreamName = "stream_test";
@@ -169,12 +170,12 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testJoinOnStreams() throws Exception {
-    createStream("jointest1");
-    createStream("jointest2");
-    sendStreamEvent("jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-    sendStreamEvent("jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
-    sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-    sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
+    createStream(NAMESPACE_ID.getId(), "jointest1");
+    createStream(NAMESPACE_ID.getId(), "jointest2");
+    sendStreamEvent(NAMESPACE_ID.getId(), "jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+    sendStreamEvent(NAMESPACE_ID.getId(), "jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
+    sendStreamEvent(NAMESPACE_ID.getId(), "jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+    sendStreamEvent(NAMESPACE_ID.getId(), "jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
     runCommand(NAMESPACE_ID,
                "select " + getTableName("jointest1") + ".body, " + getTableName("jointest2") + ".body" +
@@ -195,7 +196,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testAvroFormattedStream() throws Exception {
-    createStream("avroStream");
+    createStream(NAMESPACE_ID.getId(), "avroStream");
     Schema schema = Schema.recordOf(
       "purchase",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
@@ -205,15 +206,15 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     FormatSpecification formatSpecification = new FormatSpecification(
       Formats.AVRO, schema, Collections.<String, String>emptyMap());
     StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
-    setStreamProperties("avroStream", properties);
+    setStreamProperties(NAMESPACE_ID.getId(), "avroStream", properties);
 
     // our schemas are compatible
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
-    sendStreamEvent("avroStream", createAvroEvent(avroSchema, "userX", 5, 3.14));
-    sendStreamEvent("avroStream", createAvroEvent(avroSchema, "userX", 10, 2.34));
-    sendStreamEvent("avroStream", createAvroEvent(avroSchema, "userY", 1, 1.23));
-    sendStreamEvent("avroStream", createAvroEvent(avroSchema, "userZ", 50, 45.67));
-    sendStreamEvent("avroStream", createAvroEvent(avroSchema, "userZ", 100, 98.76));
+    sendStreamEvent(NAMESPACE_ID.getId(), "avroStream", createAvroEvent(avroSchema, "userX", 5, 3.14));
+    sendStreamEvent(NAMESPACE_ID.getId(), "avroStream", createAvroEvent(avroSchema, "userX", 10, 2.34));
+    sendStreamEvent(NAMESPACE_ID.getId(), "avroStream", createAvroEvent(avroSchema, "userY", 1, 1.23));
+    sendStreamEvent(NAMESPACE_ID.getId(), "avroStream", createAvroEvent(avroSchema, "userZ", 50, 45.67));
+    sendStreamEvent(NAMESPACE_ID.getId(), "avroStream", createAvroEvent(avroSchema, "userZ", 100, 98.76));
 
     Double xPrice = 5 * 3.14 + 10 * 2.34;
     Double yPrice = 1.23;

@@ -64,7 +64,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     // so that upgrade can find them, but we will manually create the Hive tables for them in the old style.
 
     // add a stream
-    createStream("purchases");
+    createStream(Constants.DEFAULT_NAMESPACE, "purchases");
 
     // add a key-value table for record scannables
     Id.DatasetInstance kvID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, "kvtable");

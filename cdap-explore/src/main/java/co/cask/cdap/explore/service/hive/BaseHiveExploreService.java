@@ -656,11 +656,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession();
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
 
+      String database = getHiveDatabase(namespace.getId());
       // "IF NOT EXISTS" so that this operation is idempotent.
-      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", getHiveDatabase(namespace.getId()));
+      String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
-      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, namespaceId);
-      LOG.trace("Creating database {} with handle {}", namespaceId, handle);
+      QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
+      LOG.info("Creating database {} with handle {}", namespaceId, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -682,7 +683,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       String statement = String.format("DROP DATABASE %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
-      LOG.trace("Creating database {} with handle {}", database, handle);
+      LOG.info("Deleting database {} with handle {}", database, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -955,7 +956,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     List<QueryInfo> result = Lists.newArrayList();
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(namespace.getId())) {
+        if (entry.getValue().getNamespace().equals(getHiveDatabase(namespace.getId()))) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -971,7 +972,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     for (Map.Entry<QueryHandle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(namespace.getId())) {
+        if (entry.getValue().getNamespace().equals(getHiveDatabase(namespace.getId()))) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -1160,7 +1161,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (namespace == null) {
       return null;
     }
-    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("cdap_%s", namespace);
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("%s_%s", tablePrefix, namespace);
   }
 
   /**
