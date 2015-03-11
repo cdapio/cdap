@@ -228,8 +228,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
-    final InstantiatorFactory instantiator = new InstantiatorFactory(false);
-    final ClassLoader classLoader = program.getClassLoader();
+    InstantiatorFactory instantiator = new InstantiatorFactory(false);
+    ClassLoader classLoader = program.getClassLoader();
 
     // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
 

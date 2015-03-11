@@ -867,7 +867,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "killed");
-    scheduleHistoryRuns(1, runsUrl, 0);
+    scheduleHistoryRuns(10, runsUrl, 0);
 
     final String oneInputPathRun2 = createInput("oneInputPathRun2");
     final java.io.File oneOutputPathRun2 = new java.io.File(tmpFolder.newFolder(), "outputRun2");
