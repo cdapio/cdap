@@ -100,7 +100,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
 
-    runCommand(NAMESPACE_ID, "describe my_table",
+    runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
                true,
                Lists.newArrayList(
                  new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
@@ -152,47 +152,47 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                )
     );
 
-    runCommand(NAMESPACE_ID, "select * from my_table",
+    runCommand(NAMESPACE_ID, "select * from " + MY_TABLE_NAME,
                true,
-               Lists.newArrayList(new ColumnDesc("my_table.s", "STRING", 1, null),
-                                  new ColumnDesc("my_table.i", "INT", 2, null),
-                                  new ColumnDesc("my_table.f", "FLOAT", 3, null),
-                                  new ColumnDesc("my_table.d", "DOUBLE", 4, null),
-                                  new ColumnDesc("my_table.l", "BIGINT", 5, null),
-                                  new ColumnDesc("my_table.b", "TINYINT", 6, null),
-                                  new ColumnDesc("my_table.bo", "BOOLEAN", 7, null),
-                                  new ColumnDesc("my_table.sh", "SMALLINT", 8, null),
+               Lists.newArrayList(new ColumnDesc(MY_TABLE_NAME + ".s", "STRING", 1, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".i", "INT", 2, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".f", "FLOAT", 3, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".d", "DOUBLE", 4, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".l", "BIGINT", 5, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".b", "TINYINT", 6, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".bo", "BOOLEAN", 7, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".sh", "SMALLINT", 8, null),
                                   // Arrays
-                                  new ColumnDesc("my_table.iarr", "array<int>", 9, null),
-                                  new ColumnDesc("my_table.farr", "array<float>", 10, null),
-                                  new ColumnDesc("my_table.darr", "array<double>", 11, null),
-                                  new ColumnDesc("my_table.larr", "array<bigint>", 12, null),
-                                  new ColumnDesc("my_table.barr", "BINARY", 13, null),
-                                  new ColumnDesc("my_table.boarr", "array<boolean>", 14, null),
-                                  new ColumnDesc("my_table.sharr", "array<smallint>", 15, null),
-                                  new ColumnDesc("my_table.sarr", "array<string>", 16, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".iarr", "array<int>", 9, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".farr", "array<float>", 10, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".darr", "array<double>", 11, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".larr", "array<bigint>", 12, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".barr", "BINARY", 13, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".boarr", "array<boolean>", 14, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".sharr", "array<smallint>", 15, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".sarr", "array<string>", 16, null),
                                   // Lists
-                                  new ColumnDesc("my_table.ilist", "array<int>", 17, null),
-                                  new ColumnDesc("my_table.flist", "array<float>", 18, null),
-                                  new ColumnDesc("my_table.dlist", "array<double>", 19, null),
-                                  new ColumnDesc("my_table.llist", "array<bigint>", 20, null),
-                                  new ColumnDesc("my_table.blist", "array<tinyint>", 21, null),
-                                  new ColumnDesc("my_table.bolist", "array<boolean>", 22, null),
-                                  new ColumnDesc("my_table.shlist", "array<smallint>", 23, null),
-                                  new ColumnDesc("my_table.slist", "array<string>", 24, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".ilist", "array<int>", 17, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".flist", "array<float>", 18, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".dlist", "array<double>", 19, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".llist", "array<bigint>", 20, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".blist", "array<tinyint>", 21, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".bolist", "array<boolean>", 22, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".shlist", "array<smallint>", 23, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".slist", "array<string>", 24, null),
                                   // Maps
-                                  new ColumnDesc("my_table.stoimap", "map<string,int>", 25, null),
-                                  new ColumnDesc("my_table.ftodmap", "map<float,double>", 26, null),
-                                  new ColumnDesc("my_table.ltobmap", "map<bigint,tinyint>", 27, null),
-                                  new ColumnDesc("my_table.botoshmap",
+                                  new ColumnDesc(MY_TABLE_NAME + ".stoimap", "map<string,int>", 25, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".ftodmap", "map<float,double>", 26, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".ltobmap", "map<bigint,tinyint>", 27, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".botoshmap",
                                                  "map<boolean,smallint>", 28, null),
                                   // Custom type
-                                  new ColumnDesc("my_table.v", "struct<s:string,i:int>", 29, null),
-                                  new ColumnDesc("my_table.varr", "array<struct<s:string,i:int>>",
+                                  new ColumnDesc(MY_TABLE_NAME + ".v", "struct<s:string,i:int>", 29, null),
+                                  new ColumnDesc(MY_TABLE_NAME + ".varr", "array<struct<s:string,i:int>>",
                                                  30, null),
-                                  new ColumnDesc("my_table.vlist", "array<struct<s:string,i:int>>",
+                                  new ColumnDesc(MY_TABLE_NAME + ".vlist", "array<struct<s:string,i:int>>",
                                                  31, null),
-                                  new ColumnDesc("my_table.stovmap",
+                                  new ColumnDesc(MY_TABLE_NAME + ".stovmap",
                                                  "map<string,struct<s:string,i:int>>", 32, null)
                ),
                Lists.newArrayList(
@@ -262,6 +262,6 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                                          new TableInfo.ColumnInfo("vlist", "array<struct<s:string,i:int>>", null),
                                          new TableInfo.ColumnInfo("stovmap", "map<string,struct<s:string,i:int>>", null)
                         ),
-                        exploreService.getTableInfo(NAMESPACE_ID.getId(), "my_table").getSchema());
+                        exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME).getSchema());
   }
 }

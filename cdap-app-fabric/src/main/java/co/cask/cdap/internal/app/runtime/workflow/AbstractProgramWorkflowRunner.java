@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -122,6 +123,11 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
 
       @Override
+      public void killed() {
+        completion.set(context);
+      }
+
+      @Override
       public void error(Throwable cause) {
         completion.setException(cause);
       }
@@ -136,6 +142,15 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
         throw (Exception) cause;
       }
       throw Throwables.propagate(cause);
+    } catch (InterruptedException e) {
+      try {
+        Futures.getUnchecked(controller.stop());
+      } catch (Throwable t) {
+        // no-op
+      }
+      // reset the interrupt
+      Thread.currentThread().interrupt();
+      return null;
     }
   }
 }
