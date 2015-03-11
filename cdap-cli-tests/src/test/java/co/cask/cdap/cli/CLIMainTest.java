@@ -121,26 +121,11 @@ public class CLIMainTest extends StandaloneTestBase {
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
-    cliConfig = new CLIConfig(clientConfig);
-    Injector injector = Guice.createInjector(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(PrintStream.class).toInstance(System.out);
-        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
-        bind(CLIConfig.class).toInstance(cliConfig);
-        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-        bind(CConfiguration.class).toInstance(CConfiguration.create());
-        bind(TableRenderer.class).to(CsvTableRenderer.class);
-      }
-    });
-
+    cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
+    cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = injector.getInstance(CLIMain.class);
     cli = cliMain.getCLI();
 
     testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
