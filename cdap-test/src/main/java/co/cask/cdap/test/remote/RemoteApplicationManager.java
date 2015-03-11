@@ -23,6 +23,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -65,9 +66,10 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   private ClientConfig getClientConfig() {
-    return new ClientConfig.Builder(clientConfig)
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
       .setNamespace(application.getNamespace())
       .build();
+    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
   }
 
   private ApplicationClient getApplicationClient() {
