@@ -252,11 +252,11 @@ public class HBase94TableUtil extends HBaseTableUtil {
       Map<byte[], HServerLoad.RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
       for (HServerLoad.RegionLoad regionLoad : regionsLoad.values()) {
-        String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
-        if (!tableName.startsWith(root)) {
+        byte[] tableNameInBytes = HRegionInfo.getTableName(regionLoad.getName());
+        String tableName = Bytes.toString(tableNameInBytes);
+        if (!isCDAPTable(admin.getTableDescriptor(tableNameInBytes))) {
           continue;
         }
-
         TableStats stat = datasetStat.get(tableName);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());

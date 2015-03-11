@@ -271,10 +271,7 @@ public class HBase96TableUtil extends HBaseTableUtil {
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
         TableName tableName = HRegionInfo.getTable(regionLoad.getName());
-        String namespace = tableName.getNamespaceAsString();
-        String qualifier = tableName.getQualifierAsString();
-        if (!namespace.startsWith(root + "_") &&
-          !(namespace.equals(Constants.DEFAULT_NAMESPACE) && qualifier.startsWith(root + "."))) {
+        if (!isCDAPTable(admin.getTableDescriptor(tableName))) {
           continue;
         }
         TableStats stat = datasetStat.get(tableName);
