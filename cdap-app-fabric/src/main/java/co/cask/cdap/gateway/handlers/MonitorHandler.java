@@ -26,6 +26,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -98,7 +99,16 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       }
 
       MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
-      int instance = getInstances(request);
+      int instance = 0;
+      try {
+        instance = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
         return;

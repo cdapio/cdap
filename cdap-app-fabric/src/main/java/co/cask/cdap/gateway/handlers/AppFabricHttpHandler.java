@@ -132,6 +132,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -159,6 +160,8 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
+  private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
+  private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
 
   /**
    * Json serializer.
@@ -378,6 +381,70 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NumberFormatException e) {
       LOG.info("Could not invalidate transaction: {} is not a valid tx id", txId);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  @Path("/transactions/invalid/remove/until")
+  @POST
+  public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
+    try {
+      Map<String, Long> body;
+      try {
+        body = parseBody(request, STRING_LONG_MAP_TYPE);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
+        return;
+      }
+
+      if (body == null || !body.containsKey("time")) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
+        return;
+      }
+
+      long time = body.get("time");
+      txClient.truncateInvalidTxBefore(time);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Path("/transactions/invalid/remove/ids")
+  @POST
+  public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+    try {
+      Map<String, Set<Long>> body;
+      try {
+        body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid ids specified in request");
+        return;
+      }
+
+      if (body == null || !body.containsKey("ids")) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Transaction ids not specified");
+        return;
+      }
+
+      Set<Long> txIds = body.get("ids");
+      txClient.truncateInvalidTx(txIds);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Path("/transactions/invalid/size")
+  @GET
+  public void invalidTxSize(HttpRequest request, HttpResponder responder) {
+    try {
+      int invalidSize = txClient.getInvalidSize();
+      responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -942,7 +1009,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int instances = getInstances(request);
+      int instances;
+      try {
+        instances = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
@@ -1317,9 +1393,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
                                   @PathParam("flowlet-id") final String flowletId) {
-    int instances = 0;
+    int instances;
     try {
-      instances = getInstances(request);
+      try {
+        instances = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;

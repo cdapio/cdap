@@ -35,6 +35,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -46,9 +47,9 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -73,12 +74,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     super(authenticator);
   }
 
-  protected int getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    return parseBody(request, Instances.class).getInstances();
+  protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {
+    Instances instances = parseBody(request, Instances.class);
+    if (instances == null) {
+      throw new IllegalArgumentException("Could not read instances from request body");
+    }
+    return instances.getInstances();
   }
-
   @Nullable
-  protected <T> T parseBody(HttpRequest request, Class<T> type) throws IOException {
+  protected <T> T parseBody(HttpRequest request, Type type) throws IllegalArgumentException, JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       return null;
@@ -90,11 +94,11 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
       throw e;
     } finally {
-      reader.close();
+      Closeables.closeQuietly(reader);
     }
   }
 
-  protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {
+  protected Map<String, String> decodeArguments(HttpRequest request) throws JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       return ImmutableMap.of();
@@ -107,7 +111,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
     } finally {
-      reader.close();
+      Closeables.closeQuietly(reader);
     }
   }
 
