@@ -25,6 +25,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -65,6 +66,8 @@ public class StandaloneTestBase {
         // Start without UI
         standaloneMain = StandaloneMain.create(null, configuration, new Configuration());
         standaloneMain.startUp();
+
+
       } catch (Exception e) {
         LOG.error("Failed to start standalone", e);
         if (standaloneMain != null) {
@@ -89,6 +92,7 @@ public class StandaloneTestBase {
     if (standaloneMain != null && testStackIndex == 0) {
       standaloneMain.shutDown();
       standaloneMain = null;
+      LevelDBTableService.getInstance().clearTables();
     }
   }
 
