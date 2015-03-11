@@ -21,8 +21,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -32,14 +30,14 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,19 +47,14 @@ import java.util.List;
 /**
  * Upgrades Dataset instances MDS
  */
-public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
+public final class DatasetInstanceMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceMDSUpgrader.class);
-  private final LocationFactory locationFactory;
-  private final CConfiguration cConf;
   private final Transactional<UpgradeMDSStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
-
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                     @Named("dsFramework") final DatasetFramework dsFramework,
-                                     LocationFactory locationFactory, CConfiguration cConf) {
-    this.locationFactory = locationFactory;
-    this.cConf = cConf;
+                                     @Named("dsFramework") final DatasetFramework dsFramework) {
+
     this.datasetInstanceMds = Transactional.of(executorFactory,
        new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
          @Override
@@ -89,7 +82,6 @@ public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
        });
   }
 
-  @Override
   public void upgrade() throws Exception {
     // Moves dataset instance meta entries into new table (in system namespace)
     // Also updates the spec's name ('cdap.user.foo' -> 'foo')
@@ -105,10 +97,36 @@ public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
           LOG.info("Migrating Dataset Spec: {}", dsSpec);
           Id.Namespace namespace = namespaceFromDatasetName(dsSpec.getName());
           DatasetSpecification migratedDsSpec = migrateDatasetSpec(dsSpec);
-          LOG.info("Writing new dataset Spec: {}", migratedDsSpec);
+          LOG.info("Writing new Dataset Spec: {}", migratedDsSpec);
           newMds.write(namespace, migratedDsSpec);
         }
         return null;
+      }
+    });
+  }
+
+  /**
+   * Gets the {@link DatasetSpecification} of all the {@link FileSet} from the {@link DatasetInstanceMDS} table
+   * @return A list of {@link DatasetSpecification} of all the {@link FileSet}
+   * @throws TransactionFailureException
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  public List<DatasetSpecification> getFileSetsSpecs() throws TransactionFailureException,
+                                                              InterruptedException, IOException {
+    return datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>,
+                                                                                        List<DatasetSpecification>>() {
+      @Override
+      public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
+        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
+        List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
+        for (DatasetSpecification dsSpec : dsSpecs) {
+          if (isFileSet(dsSpec)) {
+            fileSetSpecs.add(dsSpec);
+          }
+        }
+        return fileSetSpecs;
       }
     });
   }
@@ -122,20 +140,6 @@ public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
   private boolean isFileSet(DatasetSpecification dsSpec) {
     String dsType = dsSpec.getType();
     return (FileSet.class.getName().equals(dsType) || "fileSet".equals(dsType));
-  }
-
-  /**
-   * Upgrades the {@link FileSet} by moving the base path under namespaced directory
-   *
-   * @param dsSpec the {@link DatasetSpecification} of the {@link FileSet} to be upgraded
-   * @throws IOException
-   */
-  private void upgradeFileSet(DatasetSpecification dsSpec) throws IOException {
-    String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
-    Location oldLocation = locationFactory.create(basePath);
-    Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
-      .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
-    renameLocation(oldLocation, newlocation);
   }
 
   /**
@@ -155,7 +159,7 @@ public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
     return Id.DatasetInstance.from(parts[1], parts[2]);
   }
 
-  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) throws IOException {
+  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
     DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
@@ -165,9 +169,6 @@ public final class DatasetInstanceMDSUpgrader extends AbstractMDSUpgrader {
       DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
       LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
       builder.datasets(migratedEmbeddedSpec);
-    }
-    if (isFileSet(oldSpec)) {
-      upgradeFileSet(oldSpec);
     }
     return builder.build();
   }
