@@ -26,9 +26,7 @@ import co.cask.cdap.common.metrics.MetricsContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.XSlowTests;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,18 +57,25 @@ public class MetricsClientTestRun extends ClientTestBase {
   @Test
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
-    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    streamClient.sendEvent(FakeApp.STREAM_NAME, "hello world");
+    try {
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      try {
+        streamClient.sendEvent(FakeApp.STREAM_NAME, "hello world");
 
-    Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
-    Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
-    String flowlet = FakeFlow.FLOWLET_NAME;
+        Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
+        Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
+        String flowlet = FakeFlow.FLOWLET_NAME;
 
-    RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics(programId.getNamespaceId(),
-                                                            programId.getApplicationId(), programId.getId());
-    metrics.waitForProcessed(1, 15, TimeUnit.SECONDS);
-    MetricQueryResult result = metricsClient.query(MetricsContext.forFlowlet(programId, flowlet),
-                                                   MetricsConstants.FLOWLET_INPUT, null);
-    Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+        RuntimeMetrics metrics = metricsClient.getFlowletMetrics(programId, flowlet);
+        metrics.waitForProcessed(1, 15, TimeUnit.SECONDS);
+        MetricQueryResult result = metricsClient.query(MetricsContext.forFlowlet(programId, flowlet),
+                                                       MetricsConstants.FLOWLET_INPUT, null);
+        Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+      } finally {
+        programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      }
+    } finally {
+      appClient.delete(FakeApp.NAME);
+    }
   }
 }

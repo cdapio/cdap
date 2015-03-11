@@ -37,7 +37,7 @@ public class FakeApp extends AbstractApplication {
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
-  public static final List<String> WORKFLOWS = Lists.newArrayList();
+  public static final List<String> WORKFLOWS = Lists.newArrayList(FakeWorkflow.NAME);
   public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME);
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
     .addAll(FLOWS)
