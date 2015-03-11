@@ -123,7 +123,15 @@ public final class DatasetInstanceMDSUpgrader {
   private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
-    return DatasetSpecification.changeName(oldSpec, newDatasetName);
+    DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
+      .properties(oldSpec.getProperties());
+    for (DatasetSpecification embeddedDsSpec : oldSpec.getSpecifications().values()) {
+      LOG.debug("Migrating embedded Dataset spec: {}", embeddedDsSpec);
+      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
+      LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
+      builder.datasets(migratedEmbeddedSpec);
+    }
+    return builder.build();
   }
 
   private Id.Namespace namespaceFromDatasetName(String dsName) {
