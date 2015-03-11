@@ -16,6 +16,8 @@
 
 package co.cask.cdap.explore.guice;
 
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
@@ -37,6 +39,7 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -51,6 +54,7 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -131,7 +135,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
       bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive13ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
-
+      install(new FactoryModuleBuilder()
+                .implement(Store.class, DefaultStore.class)
+                .build(StoreFactory.class)
+      );
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
 
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
