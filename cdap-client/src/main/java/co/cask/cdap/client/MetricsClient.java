@@ -78,11 +78,6 @@ public class MetricsClient {
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
   }
 
-  public RuntimeMetrics getMapReduceMetrics(Id.Program id) {
-    return getMetrics(MetricsContexts.forMapReduce(id),
-                      MetricsConstants.MAPREDUCE_INPUT, MetricsConstants.MAPREDUCE_PROCESSED, null);
-  }
-
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
     return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
                       MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,

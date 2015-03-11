@@ -32,11 +32,6 @@ public interface MapReduceManager {
   void stop();
 
   /**
-   * @return the MapReduce metrics.
-   */
-  RuntimeMetrics getMetrics();
-
-  /**
    * Blocks until mapreduce job is finished or given timeout is reached
    * @param timeout amount of time units to wait
    * @param timeoutUnit time unit type

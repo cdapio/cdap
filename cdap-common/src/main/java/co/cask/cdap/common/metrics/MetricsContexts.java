@@ -30,13 +30,6 @@ public final class MetricsContexts {
   private MetricsContexts() {
   }
 
-  public static Map<String, String> forMapReduce(Id.Program id) {
-    return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.MAPREDUCE, id.getId());
-  }
-
   // TODO: Use Id.Flow.Flowlet
   public static Map<String, String> forFlowlet(Id.Program flowId, String flowletId) {
     return ImmutableMap.of(

@@ -130,12 +130,6 @@ public class RemoteApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public RuntimeMetrics getMetrics() {
-          Id.Application app = Id.Application.from(clientConfig.getNamespace(), applicationId);
-          return metricsClient.getMapReduceMetrics(Id.Program.from(app, ProgramType.MAPREDUCE, jobId.getRunnableId()));
-        }
-
-        @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
           programWaitForFinish(timeout, timeoutUnit, jobId);
         }

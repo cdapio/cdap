@@ -58,12 +58,6 @@ public final class RuntimeStats {
     metricStore.deleteBefore(System.currentTimeMillis() / 1000);
   }
 
-  public static RuntimeMetrics getMapReduceMetrics(String applicationId, String mapReduceId) {
-    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.MAPREDUCE, mapReduceId);
-    return getMetrics(MetricsContexts.forMapReduce(id),
-                      MetricsConstants.MAPREDUCE_INPUT, MetricsConstants.MAPREDUCE_PROCESSED, null);
-  }
-
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.FLOW, flowId);
     return getMetrics(MetricsContexts.forFlowlet(id, flowletId),

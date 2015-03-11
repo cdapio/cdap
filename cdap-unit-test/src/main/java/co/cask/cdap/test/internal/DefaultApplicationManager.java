@@ -183,11 +183,6 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public RuntimeMetrics getMetrics() {
-          return RuntimeStats.getMapReduceMetrics(applicationId, jobId.getRunnableId());
-        }
-
-        @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
           programWaitForFinish(timeout, timeoutUnit, jobId);
         }
