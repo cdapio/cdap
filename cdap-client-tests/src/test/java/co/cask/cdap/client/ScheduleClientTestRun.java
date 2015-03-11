@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,35 +16,28 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-
 /**
- * Tests for {@link ServiceClient}.
+ * Tests for {@link co.cask.cdap.client.ServiceClient}.
  */
 @Category(XSlowTests.class)
-public class ServiceClientTestRun extends ClientTestBase {
+public class ScheduleClientTestRun extends ClientTestBase {
 
-  private ServiceClient serviceClient;
+  private ScheduleClient scheduleClient;
   private ProgramClient programClient;
   private ApplicationClient appClient;
 
@@ -53,7 +46,7 @@ public class ServiceClientTestRun extends ClientTestBase {
     super.setUp();
 
     appClient = new ApplicationClient(clientConfig);
-    serviceClient = new ServiceClient(clientConfig);
+    scheduleClient = new ScheduleClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
 
     appClient.deploy(createAppJarFile(FakeApp.class));
@@ -69,27 +62,20 @@ public class ServiceClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testGetServiceSpecification() throws Exception {
-    ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, PingService.NAME);
-    assertEquals(serviceSpecification.getName(), PingService.NAME);
-    assertEquals(serviceSpecification.getHandlers().size(), 1);
-    assertEquals(serviceSpecification.getWorkers().size(), 0);
-  }
+  public void testAll() throws Exception {
+    List<ScheduleSpecification> list = scheduleClient.list(FakeApp.NAME, FakeWorkflow.NAME);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(0).getSchedule().getName());
 
-  @Test
-  public void testGetEndpoints() throws Exception {
-    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(FakeApp.NAME, PingService.NAME);
-    assertEquals(1, endpoints.size());
-    ServiceHttpEndpoint endpoint = endpoints.get(0);
-    assertEquals("GET", endpoint.getMethod());
-    assertEquals("/ping", endpoint.getPath());
-  }
+    String status = scheduleClient.getStatus(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
+    Assert.assertEquals("SCHEDULED", status);
 
-  @Test
-  public void testGetServiceURL() throws Exception {
-    URL url = new URL(serviceClient.getServiceURL(FakeApp.NAME, PingService.NAME), "ping");
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse response = HttpRequests.execute(request);
-    assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    scheduleClient.suspend(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
+    status = scheduleClient.getStatus(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
+    Assert.assertEquals("SUSPENDED", status);
+
+    scheduleClient.resume(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
+    status = scheduleClient.getStatus(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
+    Assert.assertEquals("SCHEDULED", status);
   }
 }

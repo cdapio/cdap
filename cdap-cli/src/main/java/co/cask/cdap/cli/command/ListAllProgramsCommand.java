@@ -64,7 +64,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
         @Override
         public List<?> makeRow(ProgramRecord object) {
           return Lists.newArrayList(object.getType().getCategoryName(), object.getApp(),
-                                    object.getId(), object.getDescription());
+                                    object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

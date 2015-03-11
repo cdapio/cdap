@@ -38,7 +38,7 @@ public class ComponentLoggingContext extends SystemLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/%s", super.getLogPathFragment(), getSystemTag(TAG_COMPONENT_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_COMPONENT_ID));
   }
 }
