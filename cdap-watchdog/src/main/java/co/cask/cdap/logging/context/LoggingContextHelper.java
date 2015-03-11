@@ -27,6 +27,7 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
@@ -36,6 +37,17 @@ import java.util.Map;
  */
 public final class LoggingContextHelper {
   private LoggingContextHelper() {}
+
+  public static String getNamespacedBaseDir(String logBaseDir, String logPartition) {
+    Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
+    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
+    String [] partitions = logPartition.split(":");
+    Preconditions.checkArgument(partitions.length == 3,
+                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
+    // don't care about the app or the program, only need the namespace
+    GenericLoggingContext loggingContext = new GenericLoggingContext(partitions[0], partitions[1], partitions[2]);
+    return loggingContext.getNamespacedLogBaseDir(logBaseDir);
+  }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
