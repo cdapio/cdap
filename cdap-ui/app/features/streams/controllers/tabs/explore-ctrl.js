@@ -63,5 +63,35 @@ angular.module(PKG.name + '.feature.streams')
 
       $scope.getQueries();
 
+      $scope.results = {};
+
+      $scope.fetchResult = function(query) {
+        $scope.results.request = query;
+
+        // request schema
+        dataSrc
+          .request({
+            _cdapPath: '/data/explore/queries/' +
+                          query.query_handle + '/schema'
+          })
+          .then(function (result) {
+            $scope.results.schema = result;
+          });
+
+
+        // request preview
+        dataSrc
+          .request({
+            _cdapPath: '/data/explore/queries/' +
+                          query.query_handle + '/preview',
+            method: 'POST'
+          })
+          .then(function (result) {
+            $scope.results.results = result;
+          });
+      };
+
+
+
     }
   );
