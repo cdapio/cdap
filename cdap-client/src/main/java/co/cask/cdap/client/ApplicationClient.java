@@ -241,7 +241,7 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramRecord> listPrograms(String appId, final ProgramType programType)
+  public List<ProgramRecord> listPrograms(String appId, ProgramType programType)
     throws ApplicationNotFoundException, IOException, UnauthorizedException {
     Preconditions.checkArgument(programType.isListable());
 
