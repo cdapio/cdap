@@ -1017,7 +1017,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (namespace == null) {
       return null;
     }
-    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("cdap_%s", namespace);
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("%s_%s", tablePrefix, namespace);
   }
 
   /**
