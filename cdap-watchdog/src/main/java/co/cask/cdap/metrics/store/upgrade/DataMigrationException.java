@@ -16,7 +16,7 @@
 package co.cask.cdap.metrics.store.upgrade;
 
 /**
- * thrown during failure while migrating data
+ * Thrown during failure while migrating data
  */
 public class DataMigrationException extends Exception {
   private final String exceptionMsg;

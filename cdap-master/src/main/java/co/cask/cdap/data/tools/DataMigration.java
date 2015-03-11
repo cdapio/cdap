@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -29,32 +28,24 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
-import co.cask.cdap.metrics.store.upgrade.UpgradeMetricsConstants;
 import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Command line tool to migrate data between different versions of CDAP.
@@ -85,7 +76,7 @@ public class DataMigration {
     System.out.println(String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
     System.out.println();
 
-    MigrationAction action = getMigrationActionFromArguments(args);
+    MigrationAction action = getAction(args);
     if (action == null) {
       return;
     }
@@ -109,7 +100,7 @@ public class DataMigration {
     action.perform(injector);
   }
 
-  public MigrationAction getMigrationActionFromArguments(String[] args) {
+  public MigrationAction getAction(String[] args) {
     if (args.length < 1) {
       printHelp();
       return null;
