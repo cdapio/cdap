@@ -305,7 +305,7 @@ public class FileSetProperties {
 
     /**
      * Set a property for the table format.
-     * This may only be a called after setting the format using {@link #setExploreFormat(String))}.
+     * This may only be a called after setting the format using {@link #setExploreFormat}.
      */
     public Builder setExploreFormatProperty(String name, String value) {
       if (format == null) {

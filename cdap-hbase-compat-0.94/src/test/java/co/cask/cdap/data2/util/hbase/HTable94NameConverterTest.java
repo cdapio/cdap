@@ -16,14 +16,25 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.TableId;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class HTable94NameConverterTest {
   @Test
   public void testGetSysConfigTablePrefix() throws Exception {
-    HTable94NameConverter hBaseNameConversionUtil = new HTable94NameConverter();
-    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap_user.some_table"));
-    Assert.assertEquals("cdap_system.", hBaseNameConversionUtil.getSysConfigTablePrefix("cdap.table_in_default_ns"));
+    CConfiguration cConf = CConfiguration.create();
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableNameConverter hBaseNameConversionUtil = new HTableNameConverterFactory().get();
+
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(TableId.from("user", "some_table"));
+    Assert.assertEquals(tablePrefix + "_system.", hBaseNameConversionUtil.getSysConfigTablePrefix(htd));
+    htd = tableUtil.createHTableDescriptor(TableId.from(Constants.DEFAULT_NAMESPACE_ID, "table_in_default_ns"));
+    Assert.assertEquals(tablePrefix + "_system.", hBaseNameConversionUtil.getSysConfigTablePrefix(htd));
   }
 }

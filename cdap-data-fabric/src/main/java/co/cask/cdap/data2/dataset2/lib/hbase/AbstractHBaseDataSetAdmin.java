@@ -104,7 +104,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    * @throws IOException If upgrade failed.
    */
   protected void upgradeTable(TableId tableId) throws IOException {
-    HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
 
     // Upgrade any table properties if necessary
     boolean needUpgrade = upgradeTable(tableDescriptor);

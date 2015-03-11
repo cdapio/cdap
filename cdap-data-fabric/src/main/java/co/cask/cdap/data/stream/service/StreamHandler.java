@@ -26,9 +26,8 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.upload.BufferedContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
-import co.cask.cdap.data.stream.service.upload.FileContentWriterFactory;
+import co.cask.cdap.data.stream.service.upload.LengthBasedContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -435,19 +434,14 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
    * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
    */
   private ContentWriterFactory createContentWriterFactory(Id.Stream streamId, HttpRequest request) throws IOException {
-    long contentLength = HttpHeaders.getContentLength(request, -1L);
     String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
     Map<String, String> headers = getHeaders(request, streamId.getName(),
                                              ImmutableMap.<String, String>builder().put("content.type", contentType));
 
-    if (contentLength >= 0 && contentLength <= batchBufferThreshold) {
-      return new BufferedContentWriterFactory(streamId, streamWriter, headers);
-    }
-
     StreamConfig config = streamAdmin.getConfig(streamId);
-    return new FileContentWriterFactory(config, streamWriter, headers);
+    return new LengthBasedContentWriterFactory(config, streamWriter, headers, batchBufferThreshold);
   }
 
   /**

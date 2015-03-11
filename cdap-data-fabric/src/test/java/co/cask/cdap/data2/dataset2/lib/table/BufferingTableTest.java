@@ -27,6 +27,8 @@ import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -39,12 +41,12 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
   @Test
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
-    DatasetAdmin admin = getTableAdmin(MY_TABLE);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       Transaction tx1 = txClient.startShort();
       BufferingTable myTable1 =
-        new BufferingTableWithPersistingFailure(getTable(MY_TABLE));
+        new BufferingTableWithPersistingFailure(getTable(CONTEXT1, MY_TABLE));
       myTable1.startTx(tx1);
       // write some data but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -71,7 +73,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(MY_TABLE);
+      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
@@ -88,13 +90,13 @@ public abstract class BufferingTableTest<T extends BufferingTable>
    */
   @Test
   public void testScanWithBuffering() throws Exception {
-    String testScanWithBuffering = DS_NAMESPACE.namespace(NAMESPACE_ID, "testScanWithBuffering");
-    DatasetAdmin admin = getTableAdmin(testScanWithBuffering);
+    String testScanWithBuffering = "testScanWithBuffering";
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, testScanWithBuffering);
     admin.create();
     try {
       //
       Transaction tx1 = txClient.startShort();
-      Table table1 = getTable(testScanWithBuffering);
+      Table table1 = getTable(CONTEXT1, testScanWithBuffering);
       ((TransactionAware) table1).startTx(tx1);
 
       table1.put(Bytes.toBytes("1_01"), a(C1), a(V1));
@@ -186,13 +188,12 @@ public abstract class BufferingTableTest<T extends BufferingTable>
     // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
     // affecting the stored data.
     // Also, one can re-use (modify) returned data from the table without affecting the stored data.
-    String myTable = DS_NAMESPACE.namespace(NAMESPACE_ID, "myTable");
-    DatasetAdmin admin = getTableAdmin(myTable);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingTable table = getTable(myTable);
+      BufferingTable table = getTable(CONTEXT1, MY_TABLE);
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});
@@ -369,6 +370,53 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       // We don't care to persist changes and commit tx here: we tested what we wanted
     } finally {
       admin.drop();
+    }
+  }
+
+  // This test is in Buffering table because it needs to test the transaction change prefix
+  @Test
+  public void testTxChangePrefix() throws Exception {
+    String tableName = "same";
+    DatasetAdmin admin1 = getTableAdmin(CONTEXT1, tableName);
+    DatasetAdmin admin2 = getTableAdmin(CONTEXT2, tableName);
+    admin1.create();
+    admin2.create();
+    try {
+      BufferingTable table1 = getTable(CONTEXT1, tableName);
+      BufferingTable table2 = getTable(CONTEXT2, tableName);
+
+      // write some values in table1
+      Transaction tx1 = txClient.startShort();
+      table1.startTx(tx1);
+      table1.put(R1, a(C1), a(V1));
+      Collection<byte []> tx1Changes = table1.getTxChanges();
+      Assert.assertTrue(txClient.canCommit(tx1, tx1Changes));
+      Assert.assertTrue(table1.commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+      table1.postTxCommit();
+
+      // write some values in table2
+      Transaction tx2 = txClient.startShort();
+      table2.startTx(tx2);
+      table2.put(R1, a(C1), a(V1));
+      Collection<byte []> tx2Changes = table2.getTxChanges();
+      Assert.assertTrue(txClient.canCommit(tx2, tx2Changes));
+      Assert.assertTrue(table2.commitTx());
+      Assert.assertTrue(txClient.commit(tx2));
+      table1.postTxCommit();
+
+      String tx1ChangePrefix = new String(table1.getNameAsTxChangePrefix());
+      String tx2ChangePrefix = new String(table2.getNameAsTxChangePrefix());
+      String tx1Change = new String(((ArrayList<byte []>) tx1Changes).get(0));
+      String tx2Change = new String(((ArrayList<byte []>) tx2Changes).get(0));
+      Assert.assertNotEquals(tx1ChangePrefix, tx2ChangePrefix);
+      Assert.assertTrue(tx1ChangePrefix.contains(NAMESPACE1.getId()));
+      Assert.assertTrue(tx2ChangePrefix.contains(NAMESPACE2.getId()));
+      Assert.assertTrue(tx1Change.startsWith(tx1ChangePrefix));
+      Assert.assertTrue(tx2Change.startsWith(tx2ChangePrefix));
+    } finally {
+      admin1.drop();
+      admin2.drop();
     }
   }
 

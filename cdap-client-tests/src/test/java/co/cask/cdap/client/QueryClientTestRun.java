@@ -20,10 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.XSlowTests;
@@ -43,9 +46,13 @@ import java.util.concurrent.ExecutionException;
 public class QueryClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private QueryClient queryClient;
+  private QueryClient queryClientOtherNamespace;
+  private NamespaceClient namespaceClient;
   private ProgramClient programClient;
   private StreamClient streamClient;
   private ExploreClient exploreClient;
+
+  private Id.Namespace otherNamespace = Id.Namespace.from("otherNamespace");
 
   @Before
   public void setUp() throws Throwable {
@@ -55,12 +62,19 @@ public class QueryClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
-    exploreClient = new FixedAddressExploreClient(clientConfig.getHostname(), clientConfig.getPort(),
+    ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+    exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
+                                                  connectionConfig.getPort(),
                                                   accessToken);
+    namespaceClient = new NamespaceClient(clientConfig);
+    ClientConfig config = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    config.setNamespace(otherNamespace);
+    queryClientOtherNamespace = new QueryClient(config);
   }
 
   @Test
   public void testAll() throws Exception {
+    namespaceClient.create(new NamespaceMeta.Builder().setId(otherNamespace).build());
     appClient.deploy(createAppJarFile(FakeApp.class));
     programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
@@ -70,26 +84,29 @@ public class QueryClientTestRun extends ClientTestBase {
     Thread.sleep(3000);
 
     Id.Namespace namespace = getClientConfig().getNamespace();
-    String instanceName = String.format("cdap.%s.%s", namespace, FakeApp.DS_NAME);
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, instanceName);
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
 
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
 
     exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from cdap_default_" + FakeApp.DS_NAME).get();
+      queryClient.execute("select * from dataset_" + FakeApp.DS_NAME).get();
       Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
     } catch (ExecutionException e) {
 
     }
 
     exploreClient.enableExploreDataset(datasetInstance).get();
-    executeBasicQuery(instanceName);
+    executeBasicQuery(FakeApp.DS_NAME);
+
+    ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
+    List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
+    Assert.assertEquals(0, otherNamespaceTables.size());
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {
     // Hive replaces the periods with underscores
-    String query = "select * from " + instanceName.replace(".", "_");
+    String query = "select * from dataset_" + instanceName.replace(".", "_");
     ExploreExecutionResult executionResult = queryClient.execute(query).get();
     Assert.assertNotNull(executionResult.getResultSchema());
     List<QueryResult> results = Lists.newArrayList(executionResult);

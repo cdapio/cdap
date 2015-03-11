@@ -16,35 +16,48 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hbase.HTableDescriptor;
 
 /**
  * Utility methods for dealing with HBase table name conversions in HBase 0.94.
  */
 public class HTable94NameConverter extends HTableNameConverter {
   @Override
-  public String getSysConfigTablePrefix(String hTableName) {
-    return HBASE_NAMESPACE_PREFIX + Constants.SYSTEM_NAMESPACE + ".";
+  public String getSysConfigTablePrefix(HTableDescriptor htd) {
+    return getNamespacePrefix(htd) + "_" + Constants.SYSTEM_NAMESPACE + ".";
   }
 
-  public static String toTableName(CConfiguration cConf, TableId tableId) {
+  @Override
+  public TableId from(HTableDescriptor htd) {
+    return prefixedTableIdFromTableName(htd.getNameAsString()).getTableId();
+  }
+
+  @Override
+  public String getNamespacePrefix(HTableDescriptor htd) {
+    return prefixedTableIdFromTableName(htd.getNameAsString()).getTablePrefix();
+  }
+
+  /**
+   * Returns the actual HBase table name.
+   */
+  public String toTableName(String namespacePrefix, TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     // backward compatibility
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
-      return getHBaseTableName(cConf, tableId);
+      return getHBaseTableName(namespacePrefix, tableId);
     }
-    return Joiner.on(".").join(toHBaseNamespace(tableId.getNamespace()),
-                               getHBaseTableName(cConf, tableId));
+    return Joiner.on(".").join(toHBaseNamespace(namespacePrefix, tableId.getNamespace()),
+                               getHBaseTableName(namespacePrefix, tableId));
   }
 
   // Assumptions made:
   // 1) root prefix can not have '.' or '_'.
   // 2) namespace can not have '.'
-  public static TableId fromTableName(String hTableName) {
+  private PrefixedTableId prefixedTableIdFromTableName(String hTableName) {
     Preconditions.checkArgument(hTableName != null, "HBase table name should not be null.");
     String[] parts = hTableName.split("\\.", 2);
     String hBaseNamespace;
@@ -57,6 +70,6 @@ public class HTable94NameConverter extends HTableNameConverter {
       hBaseNamespace = parts[0];
       hBaseQualifier = parts[1];
     }
-    return HTableNameConverter.from(hBaseNamespace, hBaseQualifier);
+    return fromHBaseTableName(hBaseNamespace, hBaseQualifier);
   }
 }

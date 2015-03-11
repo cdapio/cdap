@@ -16,13 +16,12 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hbase.HTableDescriptor;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -31,13 +30,11 @@ import java.net.URLEncoder;
  * Common utility methods for dealing with HBase table name conversions.
  */
 public abstract class HTableNameConverter {
-  protected static final String HBASE_NAMESPACE_PREFIX = "cdap_";
-
-  private static String getHBaseTableName(String tableName) {
+  private String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);
   }
 
-  private static String encodeTableName(String tableName) {
+  private String encodeTableName(String tableName) {
     try {
       return URLEncoder.encode(tableName, "ASCII");
     } catch (UnsupportedEncodingException e) {
@@ -46,7 +43,7 @@ public abstract class HTableNameConverter {
     }
   }
 
-  private static String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
+  private String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
     String tableName = tableId.getTableName();
     // handle table names in default namespace so we do not have to worry about upgrades
     if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
@@ -55,7 +52,7 @@ public abstract class HTableNameConverter {
       // also no need to prepend the table name if it already starts with 'user'.
       // TODO: the 'user' should be prepended by the HBaseTableAdmin.
       if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE)) ||
-          tableName.startsWith("user.")) {
+        tableName.startsWith("user.")) {
         return Joiner.on(".").join(tablePrefix, tableName);
       }
       // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
@@ -70,57 +67,80 @@ public abstract class HTableNameConverter {
   /**
    * @return Backward compatible, ASCII encoded table name
    */
-  protected static String getHBaseTableName(CConfiguration cConf, TableId tableId) {
-    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+  protected String getHBaseTableName(String tablePrefix, TableId tableId) {
     Preconditions.checkArgument(tablePrefix != null, "Table prefix should not be null.");
     return getHBaseTableName(getBackwardCompatibleTableName(tablePrefix, tableId));
   }
 
   /**
-   * Gets the system configuration table prefix
-   * @param hTableName Full HBase table name.
+   * Gets the system configuration table prefix.
+   *
+   * @param htd Table descriptor for any table that can be associated with the
    * @return System configuration table prefix (full table name minus the table qualifier).
    * Example input: "cdap_ns.table.name"  -->  output: "cdap_system."   (hbase 94)
    * Example input: "cdap.table.name"     -->  output: "cdap_system."   (hbase 94. input table is in default namespace)
    * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (hbase 96, 98)
    */
-  public abstract String getSysConfigTablePrefix(String hTableName);
+  public abstract String getSysConfigTablePrefix(HTableDescriptor htd);
 
-  @VisibleForTesting
-  protected static String toHBaseNamespace(Id.Namespace namespace) {
+  /**
+   * Returns {@link TableId} for the table represented by the given {@link HTableDescriptor}.
+   */
+  public abstract TableId from(HTableDescriptor htd);
+
+  /**
+   * Returns the prefix prepended to the namespace.
+   */
+  public abstract String getNamespacePrefix(HTableDescriptor htd);
+
+  protected String toHBaseNamespace(String hBaseNamespacePrefix, Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return HTableNameConverter.getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
-                                                   HBASE_NAMESPACE_PREFIX + namespace.getId());
+    return getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
+                               hBaseNamespacePrefix + "_" + namespace.getId());
   }
 
-  protected static TableId from(String hBaseNamespace, String hTableName) {
-    Preconditions.checkArgument(hBaseNamespace != null, "Table namespace should not be null.");
-    Preconditions.checkArgument(hTableName != null, "Table name should not be null.");
-
-    String namespace;
-    String prefix;
+  protected PrefixedTableId fromHBaseTableName(String namespace, String qualifier) {
+    Preconditions.checkArgument(namespace != null, "Table namespace should not be null.");
+    Preconditions.checkArgument(qualifier != null, "Table qualifier should not be null.");
 
     // Handle backward compatibility to not add the prefix for default namespace
-    if (Constants.DEFAULT_NAMESPACE.equals(hBaseNamespace)) {
-      namespace = hBaseNamespace;
-      // in Default namespace, hTableName is something like 'cdap.foo.table'
-      String[] parts = hTableName.split("\\.", 2);
+    if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+      // in Default namespace, qualifier is something like 'cdap.foo.table'
+      String[] parts = qualifier.split("\\.", 2);
       Preconditions.checkArgument(parts.length == 2,
-                                  String.format("expected table name to contain '.': %s", hTableName));
-      // prefix is parts[0], but it is not needed
-      hTableName = parts[1];
-      return TableId.from(namespace, hTableName);
+                                  String.format("expected table name to contain '.': %s", qualifier));
+      String prefix = parts[0];
+      qualifier = parts[1];
+      return new PrefixedTableId(prefix, namespace, qualifier);
     }
 
-
-    String[] parts = hBaseNamespace.split("_");
+    // If non-default HBase namespace is used, namespace is something like 'cdap_userNS'
+    String[] parts = namespace.split("_");
     Preconditions.checkArgument(parts.length == 2,
-                                String.format("expected hbase namespace to have a '_': %s", hBaseNamespace));
-    // prefix is parts[0], but it is not needed
-    namespace = parts[1];
-
+                                String.format("expected hbase namespace to have a '_': %s", namespace));
     // Id.Namespace already checks for non-null namespace
-    return TableId.from(namespace, hTableName);
+    return new PrefixedTableId(parts[0], parts[1], qualifier);
+  }
+
+  /**
+   * Used internal to HTableNameConverter, so that one parsing method can extract both the prefix and TableId.
+   */
+  protected static final class PrefixedTableId {
+    private final String tablePrefix;
+    private final TableId tableId;
+
+    private PrefixedTableId(String tablePrefix, String namespace, String tableName) {
+      this.tablePrefix = tablePrefix;
+      this.tableId = TableId.from(namespace, tableName);
+    }
+
+    public String getTablePrefix() {
+      return tablePrefix;
+    }
+
+    public TableId getTableId() {
+      return tableId;
+    }
   }
 }

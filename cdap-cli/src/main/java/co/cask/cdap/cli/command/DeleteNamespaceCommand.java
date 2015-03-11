@@ -48,7 +48,7 @@ public class DeleteNamespaceCommand implements Command {
     namespaceClient.delete(namespaceId.getId());
     out.println(String.format(SUCCESS_MSG, namespaceId));
     if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
-      cliConfig.setCurrentNamespace(Constants.DEFAULT_NAMESPACE_ID);
+      cliConfig.getClientConfig().setNamespace(Constants.DEFAULT_NAMESPACE_ID);
       out.printf("Now using namespace '%s'", Constants.DEFAULT_NAMESPACE_ID.getId());
       out.println();
     }

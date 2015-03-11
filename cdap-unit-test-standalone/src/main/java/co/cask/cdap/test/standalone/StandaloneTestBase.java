@@ -18,9 +18,11 @@ package co.cask.cdap.test.standalone;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.StandaloneMain;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
@@ -91,12 +93,15 @@ public class StandaloneTestBase {
   }
 
   protected ClientConfig getClientConfig() {
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(
+      StandaloneContainer.DEFAULT_CONNECTION_URI.toString());
+
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
-    builder.setDefaultConnectTimeoutMs(120000);
-    builder.setDefaultReadTimeoutMs(120000);
-    builder.setUploadConnectTimeoutMs(0);
-    builder.setUploadConnectTimeoutMs(0);
+    builder.setConnectionConfig(connectionConfig);
+    builder.setDefaultConnectTimeout(120000);
+    builder.setDefaultReadTimeout(120000);
+    builder.setUploadConnectTimeout(0);
+    builder.setUploadConnectTimeout(0);
 
     return builder.build();
   }
