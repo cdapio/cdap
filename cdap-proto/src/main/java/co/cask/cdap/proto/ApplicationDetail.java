@@ -26,13 +26,13 @@ public class ApplicationDetail {
   private final String description;
   private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
-  private final List<ProgramDetail> programs;
+  private final List<ProgramRecord> programs;
 
   public ApplicationDetail(String name,
                            String description,
                            List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
-                           List<ProgramDetail> programs) {
+                           List<ProgramRecord> programs) {
     this.name = name;
     this.description = description;
     this.streams = streams;
@@ -56,7 +56,7 @@ public class ApplicationDetail {
     return datasets;
   }
 
-  public List<ProgramDetail> getPrograms() {
+  public List<ProgramRecord> getPrograms() {
     return programs;
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
@@ -43,6 +44,7 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -51,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -102,7 +105,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   /**
-   * Constructs an new instance. Parameters are binded by Guice.
+   * Constructs an new instance. Parameters are bound by Guice.
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -162,9 +165,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                         responder, txId);
   }
 
-  /**
-   * Reset the state of the transaction manager.
-   */
+  @Path("/transactions/invalid/remove/until")
+  @POST
+  public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.truncateInvalidTxBefore(request, responder);
+  }
+
+  @Path("/transactions/invalid/remove/ids")
+  @POST
+  public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.truncateInvalidTx(request, responder);
+  }
+
+  @Path("/transactions/invalid/size")
+  @GET
+  public void invalidTxSize(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.invalidTxSize(request, responder);
+  }
+
+    /**
+     * Reset the state of the transaction manager.
+     */
   @Path("/transactions/state")
   @POST
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
@@ -399,7 +420,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int instances = getInstances(request);
+      int instances;
+      try {
+        instances = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
@@ -485,9 +515,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    *   "requested": 3},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Runnable": Flowlet1 not found"}]
-   *
-   * @param request
-   * @param responder
    */
   @POST
   @Path("/instances")
@@ -517,9 +544,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
    * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
    * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
-   *
-   * @param request
-   * @param responder
    */
   @POST
   @Path("/status")
@@ -550,9 +574,32 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                             @PathParam("flow-id") String flowId,
                                             @PathParam("flowlet-id") String flowletId,
                                             @PathParam("stream-id") String streamId) throws IOException {
-    programLifecycleHttpHandler.changeFlowletStreamConnection(RESTMigrationUtils.rewriteV2RequestToV3(request),
-                                                              responder, Constants.DEFAULT_NAMESPACE,
-                                                              appId, flowId, flowletId, streamId);
+    try {
+      Map<String, String> arguments = decodeArguments(request);
+      String oldStreamId = arguments.get("oldStreamId");
+      if (oldStreamId == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
+        return;
+      }
+
+      StreamSpecification stream = store.getStream(Constants.DEFAULT_NAMESPACE_ID, streamId);
+      if (stream == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream specified with streamId param does not exist");
+        return;
+      }
+
+      Id.Program programId = Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, ProgramType.FLOW, flowId);
+      store.changeFlowletSteamConnection(programId, flowletId, oldStreamId, streamId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -635,8 +682,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId,
                                 @PathParam("procedure-id") String procedureId) {
-    getLiveInfo(request, responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE,
-                runtimeService);
+    getLiveInfo(responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
   }
 
   @GET
@@ -887,8 +933,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getFlowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                              Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.FLOW.getCategoryName());
   }
 
   /**
@@ -898,9 +943,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getProgramsByApp(responder,
-                                                 Constants.DEFAULT_NAMESPACE,
-                                                 appId, ProgramType.PROCEDURE.getCategoryName());
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**
@@ -910,8 +953,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getMapreduceByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.MAPREDUCE.getCategoryName());
+  }
+
+  /**
+   * Returns a list of services associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/services")
+  public void getServicesByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") String appId) {
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.SERVICE.getCategoryName());
   }
 
   /**
@@ -921,8 +973,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getSparkByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                              Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.SPARK.getCategoryName());
   }
 
   /**
@@ -932,8 +983,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getWorkflowsByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.WORKFLOW.getCategoryName());
   }
 
   /**
@@ -942,8 +992,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workers")
   public void getWorkersByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getWorkersByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                Constants.DEFAULT_NAMESPACE, appId);
+    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.WORKER.getCategoryName());
   }
 
   /**
@@ -963,7 +1012,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams/{stream-id}")
   public void getStreamSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("stream-id") final String streamId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
+    dataList(responder, store, dsFramework, Data.STREAM, Constants.DEFAULT_NAMESPACE, streamId, null);
   }
 
   /**
@@ -994,8 +1043,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/datasets/{dataset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
                                       @PathParam("dataset-id") final String datasetId) {
-    appFabricDataHttpHandler.getDatasetSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                     Constants.DEFAULT_NAMESPACE, datasetId);
+    appFabricDataHttpHandler.getDatasetSpecification(responder, Constants.DEFAULT_NAMESPACE, datasetId);
   }
 
   /**
@@ -1050,7 +1098,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove preferences stored at instance level
       preferencesStore.deleteProperties();
 
-      // remove all data in consolesettings
+      // remove all data in console settings
       consoleSettingsStore.delete();
 
       // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
@@ -1090,4 +1138,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
   }
+
+  protected void getProgramsByApp(HttpResponder responder, String namespaceId, String appId, String programCategory) {
+    ProgramType type = getProgramType(programCategory);
+    if (type == null) {
+      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
+                                                                                programCategory));
+      return;
+    }
+    programList(responder, namespaceId, type, appId, store);
+  }
+
+
 }

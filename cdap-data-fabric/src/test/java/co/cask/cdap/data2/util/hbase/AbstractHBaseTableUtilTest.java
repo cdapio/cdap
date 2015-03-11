@@ -76,6 +76,8 @@ public abstract class AbstractHBaseTableUtilTest {
 
   protected abstract HBaseTableUtil getTableUtil();
 
+  protected abstract HTableNameConverter getNameConverter();
+
   protected abstract String getTableNameAsString(TableId tableId);
 
   protected abstract boolean namespacesSupported();
@@ -176,26 +178,26 @@ public abstract class AbstractHBaseTableUtilTest {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("cdap_myspace", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);

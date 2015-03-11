@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,31 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package co.cask.cdap.client.app;
+
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
- * Represents a program in an HTTP response.
+ *
  */
-public class ProgramDetail {
-  private final ProgramType type;
-  private final String name;
-  private final String description;
+public class FakeWorkflow implements Workflow {
 
-  public ProgramDetail(ProgramType type, String name, String description) {
-    this.type = type;
-    this.name = name;
-    this.description = description;
-  }
+  public static final String NAME = "FakeWorkflow";
 
-  public ProgramType getType() {
-    return type;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getDescription() {
-    return description;
+  @Override
+  public void configure(WorkflowConfigurer configurer) {
+    configurer.setName(NAME);
+    configurer.addAction(new AbstractWorkflowAction() {
+      @Override
+      public void run() {
+        // NO-OP
+      }
+    });
   }
 }

@@ -36,8 +36,7 @@ import org.apache.hadoop.hbase.regionserver.ScanType;
 public class DefaultTransactionProcessor extends TransactionProcessor {
   @Override
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
-    String sysConfigTablePrefix
-      = new HTable98NameConverter().getSysConfigTablePrefix(env.getRegion().getTableDesc().getNameAsString());
+    String sysConfigTablePrefix = new HTable98NameConverter().getSysConfigTablePrefix(env.getRegion().getTableDesc());
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 

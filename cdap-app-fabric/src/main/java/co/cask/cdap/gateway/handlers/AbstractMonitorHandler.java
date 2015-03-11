@@ -26,6 +26,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -36,10 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -88,7 +85,16 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       }
 
       MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
-      int instance = getInstances(request);
+      int instance;
+      try {
+        instance = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
         return;

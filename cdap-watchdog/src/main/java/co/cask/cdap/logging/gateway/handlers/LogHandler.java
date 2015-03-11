@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -171,7 +171,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
@@ -193,7 +193,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
@@ -215,7 +215,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.Logging.SYSTEM_NAME, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);

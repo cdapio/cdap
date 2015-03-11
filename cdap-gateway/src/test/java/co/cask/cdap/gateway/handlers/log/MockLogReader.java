@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,17 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogReader;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,41 +41,46 @@ public class MockLogReader implements LogReader {
   private final Multimap<String, LogLine> logMap;
   private static final int MAX = 80;
   public static final String TEST_NAMESPACE = "testNamespace";
+  private final String logBaseDir;
 
-  MockLogReader() {
+  @Inject
+  MockLogReader(CConfiguration cConf) {
+    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    String defaultNamespacedLogBaseDir = String.format("%s/%s", Constants.DEFAULT_NAMESPACE, this.logBaseDir);
+    String testNamespacedLogBaseDir = String.format("%s/%s", TEST_NAMESPACE, this.logBaseDir);
     logMap = ArrayListMultimap.create();
 
     // Add log lines for app testApp1, flow testFlow1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(defaultNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testService1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp4/userservice-testService1",
+      logMap.put(defaultNamespacedLogBaseDir + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));
     }
 
     // Add log lines for app testApp2, flow testProcedure1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp2/procedure-testProcedure1",
+      logMap.put(defaultNamespacedLogBaseDir + "/testApp2/procedure-testProcedure1",
                  new LogLine(i, "testProcedure1<img>-" + i));
     }
 
     // Add log lines for app testApp3, flow testMapReduce1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(Constants.DEFAULT_NAMESPACE + "/testApp3/mapred-testMapReduce1",
+      logMap.put(defaultNamespacedLogBaseDir + "/testApp3/mapred-testMapReduce1",
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testFlow1 in testNamespace
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(TEST_NAMESPACE + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(testNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testService1 in testNamespace
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(TEST_NAMESPACE + "/testApp4/userservice-testService1",
+      logMap.put(testNamespacedLogBaseDir + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));
     }
   }
@@ -88,7 +96,7 @@ public class MockLogReader implements LogReader {
     callback.init();
     try {
       int count = 0;
-      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment())) {
+      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
         if (logLine.getOffset() >= fromOffset) {
           if (++count > maxEvents) {
             break;
@@ -125,7 +133,7 @@ public class MockLogReader implements LogReader {
     try {
       int count = 0;
       long startOffset = fromOffset - maxEvents;
-      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment())) {
+      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
         if (logLine.getOffset() >= startOffset && logLine.getOffset() < fromOffset) {
           if (++count > maxEvents) {
             break;

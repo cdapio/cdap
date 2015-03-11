@@ -53,7 +53,7 @@ public class ListStreamsCommand extends AbstractAuthCommand {
       .setRows(streamClient.list(), new RowMaker<StreamRecord>() {
         @Override
         public List<?> makeRow(StreamRecord object) {
-          return Lists.newArrayList(object.getId());
+          return Lists.newArrayList(object.getName());
         }
       }).build();
     tableRenderer.render(output, table);
