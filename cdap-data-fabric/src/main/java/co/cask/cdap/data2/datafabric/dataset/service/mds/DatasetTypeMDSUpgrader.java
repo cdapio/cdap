@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
 /**
  * Upgrades {@link DatasetTypeMDS}
  */
-public final class DatasetTypeMDSUpgrader {
+public final class DatasetTypeMDSUpgrader extends AbstractMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeMDSUpgrader.class);
   // lists of datasets type modules which existed earlier but does not anymore existed in 2.6 and removed in 2.8
   private static final Set<String> REMOVED_DATASET_MODULES = Sets.newHashSet(
@@ -127,6 +127,7 @@ public final class DatasetTypeMDSUpgrader {
    * @throws InterruptedException
    * @throws IOException
    */
+  @Override
   public void upgrade() throws Exception {
     DatasetTypeMDS oldMds = getOldDatasetTypeMDS();
     if (oldMds != null) {
@@ -214,34 +215,5 @@ public final class DatasetTypeMDSUpgrader {
 
     return locationFactory.create(namespace).append(datasets).append(datasetClassname).append(archive)
       .append(jarFilename);
-  }
-
-
-  /**
-   * Renames the old location to new location if old location exists and the new one does not
-   *
-   * @param oldLocation the old {@link Location}
-   * @param newLocation the new {@link Location}
-   * @return new location if and only if the file or directory is successfully moved; null otherwise.
-   * @throws IOException
-   */
-  @Nullable
-  protected Location renameLocation(Location oldLocation, Location newLocation) throws IOException {
-    // if the newLocation does not exists or the oldLocation does we try to rename. If either one of them is false then
-    // the underlying call to renameTo will throw IOException which we propagate.
-    if (!newLocation.exists() || oldLocation.exists()) {
-      Locations.getParent(newLocation).mkdirs();
-      try {
-        return oldLocation.renameTo(newLocation);
-      } catch (IOException ioe) {
-        newLocation.delete();
-        LOG.warn("Failed to rename {} to {}", oldLocation, newLocation);
-        throw ioe;
-      }
-    } else {
-      LOG.debug("New location {} already exists and old location {} does not exists. The location might already be " +
-                  "updated.", newLocation, oldLocation);
-      return null;
-    }
   }
 }
