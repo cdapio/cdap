@@ -929,7 +929,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of spark jobs associated with account & application.
+   * Returns a list of services associated with account & application.
    */
   @GET
   @Path("/apps/{app-id}/services")
