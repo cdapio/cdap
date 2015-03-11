@@ -70,5 +70,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     MetricQueryResult result = metricsClient.query(MetricsContext.forFlowlet(programId, flowlet),
                                                    MetricsConstants.FLOWLET_INPUT, null);
     Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+    // TODO: more tests
   }
 }
