@@ -560,7 +560,7 @@ For Workflows, you can also retrieve:
 
 - the information about the specific run currently running::
 
-  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+    GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
