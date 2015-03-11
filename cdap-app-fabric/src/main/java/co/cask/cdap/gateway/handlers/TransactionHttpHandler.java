@@ -22,8 +22,10 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -32,6 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -44,6 +49,8 @@ import javax.ws.rs.PathParam;
 public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHttpHandler.class);
+  private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
+  private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
 
   private final TransactionSystemClient txClient;
 
@@ -110,6 +117,70 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
   }
+  
+  @Path("/transactions/invalid/remove/until")
+  @POST
+  public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
+    try {
+      Map<String, Long> body;
+      try {
+        body = parseBody(request, STRING_LONG_MAP_TYPE);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
+        return;
+      }
+      
+      if (body == null || !body.containsKey("time")) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
+        return;
+      }
+      
+      long time = body.get("time");
+      txClient.truncateInvalidTxBefore(time);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Path("/transactions/invalid/remove/ids")
+  @POST
+  public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+    try {
+      Map<String, Set<Long>> body;
+      try {
+        body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid ids specified in request");
+        return;
+      }
+
+      if (body == null || !body.containsKey("ids")) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Transaction ids not specified");
+        return;
+      }
+
+      Set<Long> txIds = body.get("ids");
+      txClient.truncateInvalidTx(txIds);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Path("/transactions/invalid/size")
+  @GET
+  public void invalidTxSize(HttpRequest request, HttpResponder responder) {
+    try {
+      int invalidSize = txClient.getInvalidSize();
+      responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   /**
    * Reset the state of the transaction manager.
@@ -120,5 +191,4 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     txClient.resetState();
     responder.sendStatus(HttpResponseStatus.OK);
   }
-
 }

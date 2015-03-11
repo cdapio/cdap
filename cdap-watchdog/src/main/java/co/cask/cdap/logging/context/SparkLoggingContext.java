@@ -43,7 +43,7 @@ public class SparkLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/spark-%s", super.getLogPathFragment(), getSystemTag(TAG_SPARK_JOB_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/spark-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_SPARK_JOB_ID));
   }
 }
