@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #send data
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
-curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'adrien bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
+curl -v http://127.0.0.1:10000/v2/streams/purchaseStream -X POST -d 'edwin bought 1 apple for $1'
 
 #start flow
 curl -v http://127.0.0.1:10000/v2/apps/PurchaseHistory/flows/PurchaseFlow/start -X POST
