@@ -44,6 +44,7 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -164,9 +165,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                         responder, txId);
   }
 
-  /**
-   * Reset the state of the transaction manager.
-   */
+  @Path("/transactions/invalid/remove/until")
+  @POST
+  public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.truncateInvalidTxBefore(request, responder);
+  }
+
+  @Path("/transactions/invalid/remove/ids")
+  @POST
+  public void truncateInvalidTx(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.truncateInvalidTx(request, responder);
+  }
+
+  @Path("/transactions/invalid/size")
+  @GET
+  public void invalidTxSize(HttpRequest request, HttpResponder responder) {
+    transactionHttpHandler.invalidTxSize(request, responder);
+  }
+
+    /**
+     * Reset the state of the transaction manager.
+     */
   @Path("/transactions/state")
   @POST
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
@@ -401,7 +420,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int instances = getInstances(request);
+      int instances;
+      try {
+        instances = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;

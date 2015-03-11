@@ -33,13 +33,11 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -47,16 +45,16 @@ import java.util.List;
  */
 public final class DatasetInstanceMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceMDSUpgrader.class);
-  private final Transactional<UpgradeMdsStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
+  private final Transactional<UpgradeMDSStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
                                      @Named("dsFramework") final DatasetFramework dsFramework) {
 
     this.datasetInstanceMds = Transactional.of(executorFactory,
-       new Supplier<UpgradeMdsStores<DatasetInstanceMDS>>() {
+       new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
          @Override
-         public UpgradeMdsStores<DatasetInstanceMDS> get() {
+         public UpgradeMDSStores<DatasetInstanceMDS> get() {
            String dsName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
            Id.DatasetInstance datasetId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
            DatasetInstanceMDS oldMds;
@@ -75,7 +73,7 @@ public final class DatasetInstanceMDSUpgrader {
              LOG.error("Failed to access Datasets instances meta table.");
              throw Throwables.propagate(e);
            }
-           return new UpgradeMdsStores<DatasetInstanceMDS>(oldMds, newMds);
+           return new UpgradeMDSStores<DatasetInstanceMDS>(oldMds, newMds);
          }
        });
   }
@@ -84,9 +82,9 @@ public final class DatasetInstanceMDSUpgrader {
     // Moves dataset instance meta entries into new table (in system namespace)
     // Also updates the spec's name ('cdap.user.foo' -> 'foo')
     LOG.info("Upgrading Dataset instance mds.");
-    datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMdsStores<DatasetInstanceMDS>, Void>() {
+    datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>, Void>() {
       @Override
-      public Void apply(UpgradeMdsStores<DatasetInstanceMDS> ctx) throws Exception {
+      public Void apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
         MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
         DatasetInstanceMDS newMds = ctx.getNewMds();
         List<DatasetSpecification> dsSpecs = ctx.getOldMds().list(key, DatasetSpecification.class);
@@ -145,27 +143,6 @@ public final class DatasetInstanceMDSUpgrader {
     } else {
       throw new IllegalArgumentException(String.format("Expected Dataset namespace to be either 'system' or 'user': %s",
                                                        dsId));
-    }
-  }
-
-  private static final class UpgradeMdsStores<T> implements Iterable<T> {
-    private final List<T> stores;
-
-    private UpgradeMdsStores(T oldMds, T newMds) {
-      this.stores = ImmutableList.of(oldMds, newMds);
-    }
-
-    private T getOldMds() {
-      return stores.get(0);
-    }
-
-    private T getNewMds() {
-      return stores.get(1);
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-      return stores.iterator();
     }
   }
 }

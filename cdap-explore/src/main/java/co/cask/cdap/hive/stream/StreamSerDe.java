@@ -56,7 +56,7 @@ public class StreamSerDe implements SerDe {
   private static final int BODY_OFFSET = 2;
   private ObjectInspector inspector;
   private StreamEventRecordFormat<?> streamFormat;
-  private ObjectDeserializer translator;
+  private ObjectDeserializer deserializer;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
   // the conf, but be very careful when doing so. If there are multiple hive tables involved in a query, initialize
@@ -72,6 +72,17 @@ public class StreamSerDe implements SerDe {
 
     String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
     String streamNamespace = properties.getProperty(Constants.Explore.STREAM_NAMESPACE);
+
+    // no namespace SHOULD be an exception but... Hive calls initialize in several places, one of which is
+    // when you try and drop a table.
+    // When updating to CDAP 2.8, old tables will not have namespace as a serde property. So in order
+    // to avoid a null pointer exception that prevents dropping a table, we handle the null namespace case here.
+    if (streamNamespace == null) {
+      // we also still need an ObjectInspector as Hive uses it to check what columns the table has.
+      this.inspector = new ObjectDeserializer(properties, null).getInspector();
+      return;
+    }
+
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try {
       // Get the stream format from the stream config.
@@ -82,8 +93,8 @@ public class StreamSerDe implements SerDe {
       FormatSpecification formatSpec = streamConfig.getFormat();
       this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
       Schema schema = formatSpec.getSchema();
-      this.translator = new ObjectDeserializer(properties, schema, BODY_OFFSET);
-      this.inspector = translator.getInspector();
+      this.deserializer = new ObjectDeserializer(properties, schema, BODY_OFFSET);
+      this.inspector = deserializer.getInspector();
     } catch (UnsupportedTypeException e) {
       // this should have been validated up front when schema was set on the stream.
       // if we hit this something went wrong much earlier.
@@ -127,7 +138,7 @@ public class StreamSerDe implements SerDe {
 
     try {
       // The format should always format the stream event into a record.
-      event.addAll(translator.translateRecord(streamFormat.read(streamEvent)));
+      event.addAll(deserializer.translateRecord(streamFormat.read(streamEvent)));
       return event;
     } catch (Throwable t) {
       LOG.info("Unable to format the stream body.", t);
