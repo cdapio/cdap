@@ -98,7 +98,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
     runCommand(NAMESPACE_ID, "show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(MY_TABLE_NAME))));
 
     runCommand(NAMESPACE_ID, "describe " + MY_TABLE_NAME,
                true,

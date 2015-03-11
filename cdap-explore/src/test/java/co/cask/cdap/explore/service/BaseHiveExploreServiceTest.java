@@ -109,13 +109,12 @@ public class BaseHiveExploreServiceTest {
   protected static final String NAMESPACE_DATABASE = "cdap_namespace";
   protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
-  protected static final String MY_TABLE_NAME = "my_table";
-  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, MY_TABLE_NAME);
+  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+  protected static final String MY_TABLE_NAME = getDatasetHiveName(MY_TABLE);
   protected static final Id.DatasetModule OTHER_KEY_STRUCT_VALUE =
     Id.DatasetModule.from(OTHER_NAMESPACE_ID, "keyStructValue");
-  protected static final String OTHER_MY_TABLE_NAME = "my_table";
-  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID,
-                                                                                     OTHER_MY_TABLE_NAME);
+  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "my_table");
+  protected static final String OTHER_MY_TABLE_NAME = getDatasetHiveName(OTHER_MY_TABLE);
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
@@ -131,6 +130,7 @@ public class BaseHiveExploreServiceTest {
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
   protected static LocationFactory locationFactory;
+  protected static ExploreTableManager exploreTableManager;
 
   protected static Injector injector;
 
@@ -174,6 +174,8 @@ public class BaseHiveExploreServiceTest {
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
 
+    exploreTableManager = injector.getInstance(ExploreTableManager.class);
+
     locationFactory = injector.getInstance(LocationFactory.class);
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
     Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
@@ -203,6 +205,10 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+  }
+
+  protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {
+    return "dataset_" + datasetID.getId().replaceAll("\\.", "_").replaceAll("-", "_");
   }
 
   protected static ExploreClient getExploreClient() {
@@ -260,7 +266,7 @@ public class BaseHiveExploreServiceTest {
           newCols.add(((String) obj).trim());
         } else if (obj instanceof Double) {
           // NOTE: this means only use 4 decimals for double and float values in test cases
-          newCols.add((double) Math.round(((Double) obj).doubleValue() * 10000) / 10000);
+          newCols.add((double) Math.round((Double) obj * 10000) / 10000);
         } else {
           newCols.add(obj);
         }
