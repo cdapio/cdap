@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -28,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
@@ -47,9 +49,11 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
 
   @Inject
   protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, StreamAdmin streamAdmin,
-                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin);
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   StreamAdmin streamAdmin,
+                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                                   StoreFactory storeFactory) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin, storeFactory);
   }
 
   @Override
