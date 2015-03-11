@@ -31,8 +31,8 @@ public class GenericLoggingContext extends ApplicationLoggingContext {
    * @param entityId flow entity id
    */
   public GenericLoggingContext(final String namespaceId,
-                                 final String applicationId,
-                                 final String entityId) {
+                               final String applicationId,
+                               final String entityId) {
     super(namespaceId, applicationId);
     setSystemTag(TAG_ENTITY_ID, entityId);
   }
@@ -43,7 +43,7 @@ public class GenericLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
+  public String getLogPathFragment(String logBaseDir) {
     throw new UnsupportedOperationException("GenericLoggingContext does not support this");
   }
 }

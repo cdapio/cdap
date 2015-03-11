@@ -88,7 +88,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
     try {
       // check program list
       LOG.info("Checking program list for app");
-      Map<ProgramType, List<ProgramRecord>> programs = appClient.listPrograms(FakeApp.NAME);
+      Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(FakeApp.NAME);
       verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
       verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
       verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
@@ -107,7 +107,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
+      verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
     } finally {
       // delete app
       LOG.info("Deleting app");

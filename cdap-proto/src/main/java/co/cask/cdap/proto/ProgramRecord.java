@@ -26,6 +26,11 @@ public class ProgramRecord {
   private final String name;
   private final String description;
 
+  public ProgramRecord(ProgramType type, String app, String name, String description) {
+    this(type, app, name, name, description);
+  }
+
+  @Deprecated
   public ProgramRecord(ProgramType type, String app, String id, String name, String description) {
     this.type = type;
     this.app = app;
@@ -42,6 +47,7 @@ public class ProgramRecord {
     return app;
   }
 
+  @Deprecated
   public String getId() {
     return id;
   }

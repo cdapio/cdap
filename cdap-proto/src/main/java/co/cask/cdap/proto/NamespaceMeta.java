@@ -28,10 +28,6 @@ public final class NamespaceMeta {
   private final String description;
   private NamespaceConfig config;
 
-  private NamespaceMeta(String id, String name, String description) {
-    this(id, name, description, null);
-  }
-
   private NamespaceMeta(String id, String name, String description, NamespaceConfig config) {
     this.id = id;
     this.name = name;

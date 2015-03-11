@@ -41,7 +41,7 @@ public class ProgramIdCompleter extends StringsCompleter {
           List<ProgramRecord> programs = appClient.listAllPrograms(programType);
           List<String> programIds = Lists.newArrayList();
           for (ProgramRecord programRecord : programs) {
-            programIds.add(programRecord.getApp() + "." + programRecord.getId());
+            programIds.add(programRecord.getApp() + "." + programRecord.getName());
           }
           return programIds;
         } catch (IOException e) {
