@@ -41,9 +41,11 @@ import java.util.concurrent.TimeUnit;
 @Category(SlowTests.class)
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
-  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+  private static final String otherTableName = "other_table";
+  private static final String namespacedOtherTableName = "other_table";
+  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, otherTableName);
   private static final Id.DatasetInstance namespacedOtherTable =
-    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "other_table");
+    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, namespacedOtherTableName);
 
   @BeforeClass
   public static void start() throws Exception {
@@ -89,13 +91,13 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
+                              "", NAMESPACE_DATABASE, MY_TABLE_NAME, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                              "", NAMESPACE_DATABASE, otherTableName, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
+                              "", OTHER_NAMESPACE_DATABASE, OTHER_MY_TABLE_NAME, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
+                              "", OTHER_NAMESPACE_DATABASE, namespacedOtherTableName, "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
@@ -110,9 +112,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")),
+                              "", NAMESPACE_DATABASE, otherTableName, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                             "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
+                             "", OTHER_NAMESPACE_DATABASE, namespacedOtherTableName, "TABLE", "CDAP Dataset")))
 
     );
 
@@ -129,9 +131,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "my_table", "TABLE", "CDAP Dataset")),
+                              "", OTHER_NAMESPACE_DATABASE, OTHER_MY_TABLE_NAME, "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", OTHER_NAMESPACE_DATABASE, "other_table", "TABLE", "CDAP Dataset")))
+                              "", OTHER_NAMESPACE_DATABASE, namespacedOtherTableName, "TABLE", "CDAP Dataset")))
     );
   }
 
@@ -354,7 +356,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   private List<QueryResult> getExpectedColumns(String database) {
     return Lists.newArrayList(
       new QueryResult(Lists.<Object>newArrayList(
-        null, database, "my_table", "key", 12, "STRING",
+        null, database, MY_TABLE_NAME, "key", 12, "STRING",
         2147483647, null, null, null, 1,
         "from deserializer", null, null, null, null, 1,
         "YES", null, null, null, null, "NO")),
@@ -370,7 +372,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
         "from deserializer", null, null, null, null, 1,
         "YES", null, null, null, null, "NO")),
       new QueryResult(Lists.<Object>newArrayList(
-        null, database, "other_table", "value", 2002,
+        null, database, otherTableName, "value", 2002,
         "struct<name:string,ints:array<int>>", null, null,
         null, null, 1, "from deserializer", null, null,
         null, null, 2, "YES", null, null, null, null,

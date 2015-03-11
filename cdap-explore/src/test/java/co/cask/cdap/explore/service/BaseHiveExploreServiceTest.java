@@ -109,10 +109,13 @@ public class BaseHiveExploreServiceTest {
   protected static final String NAMESPACE_DATABASE = "cdap_namespace";
   protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
-  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+  protected static final String MY_TABLE_NAME = "my_table";
+  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, MY_TABLE_NAME);
   protected static final Id.DatasetModule OTHER_KEY_STRUCT_VALUE =
     Id.DatasetModule.from(OTHER_NAMESPACE_ID, "keyStructValue");
-  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "my_table");
+  protected static final String OTHER_MY_TABLE_NAME = "my_table";
+  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID,
+                                                                                     OTHER_MY_TABLE_NAME);
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
