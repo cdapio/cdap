@@ -342,7 +342,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
                                          int expectedCount, int expectedTotalCount) throws Exception {
-    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace,
+                                                              AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
