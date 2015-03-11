@@ -51,8 +51,7 @@ public abstract class HTableNameConverter {
       // e.g. namespace = default, tableName = system.queue.config. Resulting table name = cdap.system.queue.config
       // also no need to prepend the table name if it already starts with 'user'.
       // TODO: the 'user' should be prepended by the HBaseTableAdmin.
-      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE)) ||
-        tableName.startsWith("user.")) {
+      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE))) {
         return Joiner.on(".").join(tablePrefix, tableName);
       }
       // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
@@ -111,6 +110,12 @@ public abstract class HTableNameConverter {
                                   String.format("expected table name to contain '.': %s", hTableName));
       String prefix = parts[0];
       hTableName = parts[1];
+
+      // strip 'user.' from the beginning of table name since we prepend it in getBackwardCompatibleTableName
+      parts = hTableName.split("\\.", 2);
+      if (parts.length == 2 && "user".equals(parts[0])) {
+        hTableName = parts[1];
+      }
       return PrefixedTableId.from(prefix, namespace, hTableName);
     }
 

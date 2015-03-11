@@ -51,7 +51,6 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   private final MetricsCollectionService metricsService;
   private final LevelDBTableService ldbService;
-  private final CConfiguration conf;
   private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
@@ -63,7 +62,6 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
-    this.conf = conf;
     this.dsFramework = dsFramework;
   }
 
@@ -103,39 +101,25 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String namespace = statEntry.getKey().getNamespace().getId();
       // emit metrics for only user datasets, tables in system namespace are ignored
-      if (namespace.equals("system")) {
+      if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
         continue;
       }
       String tableName = statEntry.getKey().getTableName();
 
       Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
       for (DatasetSpecificationSummary spec : instances) {
-        // todo :  we are stripping cdap.{namespace} right now , this can be removed after namespace fixes
-        String dsName = stripRootPrefixAndNamespace(spec.getName());
+        String dsName = spec.getName();
         if (tableName.startsWith(dsName)) {
           // use the first part of the dataset name, would use history if dataset name is history.objects.kv
           MetricsCollector collector =
             metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
                                                         Constants.Metrics.Tag.DATASET, dsName));
-
-
           int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
           collector.gauge("dataset.size.mb", sizeInMb);
           break;
         }
       }
     }
-  }
-
-  private String stripRootPrefixAndNamespace(String dsName) {
-    // ignoring "cdap." and namespace at beginning
-    String rootPrefix = conf.get(Constants.Dataset.TABLE_PREFIX) + ".";
-    if (dsName.startsWith(rootPrefix)) {
-      dsName = dsName.substring(rootPrefix.length());
-      // remove namespace part
-      dsName = dsName.substring(dsName.indexOf(".") + 1);
-    }
-    return dsName;
   }
 
 }

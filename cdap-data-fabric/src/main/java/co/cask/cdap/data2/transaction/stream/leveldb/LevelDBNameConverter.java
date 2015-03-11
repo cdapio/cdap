@@ -33,8 +33,8 @@ public class LevelDBNameConverter {
     // remove table-prefix
     String[] tablePrefixSplit = levelDBTableName.split("_");
     Preconditions.checkArgument(tablePrefixSplit.length > 1, "Missing table-prefix");
-    List<String> tableNameParts = Lists.newArrayList(tablePrefixSplit[1].split("\\.", 2));
-    Preconditions.checkArgument(tableNameParts.size() > 1, "Missing namespace or tableName");
-    return TableId.from(tableNameParts.get(0), tableNameParts.get(1));
+    String[] tableNameParts = tablePrefixSplit[1].split("\\.", 2);
+    Preconditions.checkArgument(tableNameParts.length > 1, "Missing namespace or tableName");
+    return TableId.from(tableNameParts[0], tableNameParts[1]);
   }
 }
