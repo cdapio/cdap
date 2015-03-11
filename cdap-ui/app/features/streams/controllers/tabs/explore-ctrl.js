@@ -45,6 +45,7 @@ angular.module(PKG.name + '.feature.streams')
           })
           .then(function () {
             $scope.getQueries();
+            $scope.activePanel = 2;
           });
       };
 
