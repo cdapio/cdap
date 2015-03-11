@@ -23,6 +23,8 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Provides access to metrics about running processors.
+ *
+ * TODO: Support custom metrics https://issues.cask.co/browse/CDAP-765
  */
 @Beta
 public interface RuntimeMetrics {
