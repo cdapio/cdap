@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
@@ -45,8 +47,10 @@ public class DefaultSchedulerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
+    private CConfiguration cConf;
 
-    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService) {
+    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, CConfiguration cConf) {
+      this.cConf = cConf;
       taskRunner = new ScheduleTaskRunner(store, programRuntimeService);
     }
 
@@ -65,11 +69,18 @@ public class DefaultSchedulerService {
       String programId = parts[3];
 
       LOG.debug("Schedule execute {}", key);
-      Arguments args = new BasicArguments(ImmutableMap.of(
-        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()),
-        ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount())
-      ));
+      
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
+      builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
 
+      // Add YARN queue, if defined
+      String yarnQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+      if (yarnQueue != null && !yarnQueue.isEmpty()) {
+        builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, yarnQueue);
+      }
+
+      Arguments args = new BasicArguments(builder.build());
       taskRunner.run(Id.Program.from(accountId, applicationId, programId), programType, args);
     }
   }

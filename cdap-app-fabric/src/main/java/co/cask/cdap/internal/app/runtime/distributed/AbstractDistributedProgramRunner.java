@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -95,8 +96,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File cConfFile;
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
-
+    final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    
     try {
+      if (schedulerQueueName != null) {
+        hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
+        LOG.info("Setting scheduler queue to {}", schedulerQueueName);
+      }
+      
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
@@ -148,6 +155,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           LOG.info("Starting {} with debugging enabled and logback: {}",
                    program.getId(), programLogbackURI);
           twillPreparer.enableDebugging();
+        }
+        // Add scheduler queue name if defined
+        if (schedulerQueueName != null) {
+          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+          twillPreparer.setSchedulerQueue(schedulerQueueName);
         }
         if (programLogbackURI != null) {
           twillPreparer.withResources(programLogbackURI);

@@ -882,10 +882,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           userArgs.put(entry.getKey(), entry.getValue());
         }
       }
+      
+      // Add YARN queue, if defined
+      String yarnQueue = configuration.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+      BasicArguments systemArguments;
+      if (yarnQueue != null && !yarnQueue.isEmpty()) {
+        systemArguments = new BasicArguments(ImmutableMap.of(Constants.AppFabric.APP_SCHEDULER_QUEUE, yarnQueue));
+      } else {
+        systemArguments = new BasicArguments();
+      }
 
       BasicArguments userArguments = new BasicArguments(userArgs);
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
+        runtimeService.run(program, new SimpleProgramOptions(id.getId(), systemArguments, userArguments, debug));
 
       final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();

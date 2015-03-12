@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -54,9 +55,9 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
   private final WrappedScheduler delegate;
 
-  public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                                  ProgramRuntimeService programRuntimeService) {
-    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService);
+  public AbstractSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
+                                  ProgramRuntimeService programRuntimeService, CConfiguration cConf) {
+    this.delegate = new WrappedScheduler(schedulerSupplier, storeFactory, programRuntimeService, cConf);
   }
 
   /**
@@ -130,18 +131,20 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     private final StoreFactory storeFactory;
     private final Supplier<Scheduler> schedulerSupplier;
     private final ProgramRuntimeService programRuntimeService;
+    private CConfiguration cConf;
 
     WrappedScheduler(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                     ProgramRuntimeService programRuntimeService) {
+                     ProgramRuntimeService programRuntimeService, CConfiguration cConf) {
       this.schedulerSupplier = schedulerSupplier;
       this.storeFactory = storeFactory;
       this.programRuntimeService = programRuntimeService;
+      this.cConf = cConf;
       this.scheduler = null;
     }
 
     void start() throws SchedulerException {
       scheduler = schedulerSupplier.get();
-      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      scheduler.setJobFactory(createJobFactory(storeFactory.create(), cConf));
       scheduler.start();
     }
 
@@ -306,14 +309,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
 
-    private JobFactory createJobFactory(final Store store) {
+    private JobFactory createJobFactory(final Store store, final CConfiguration cConf) {
       return new JobFactory() {
         @Override
         public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler) throws SchedulerException {
           Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
           if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService);
+            return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, cConf);
           } else {
             try {
               return jobClass.newInstance();

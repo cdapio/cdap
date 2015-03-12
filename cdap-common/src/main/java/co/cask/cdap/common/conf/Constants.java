@@ -41,6 +41,8 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
+    /** Scheduler queue name to submit the master service app. */
+    public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
   }
 
   /**
@@ -84,6 +86,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
+    public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
 
     /**
      * Defaults.

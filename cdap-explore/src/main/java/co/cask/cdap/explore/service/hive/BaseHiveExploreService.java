@@ -64,6 +64,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -886,7 +887,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
-    
+
+    // Add YARN queue, if defined
+    String yarnQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    if (yarnQueue != null && !yarnQueue.isEmpty()) {
+      sessionConf.put(JobContext.QUEUE_NAME, yarnQueue);
+    }
+
     Transaction tx = startTransaction();
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
