@@ -18,7 +18,7 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3, $state, $filter) {
+module.controller('myFlowController', function($scope, d3, dagreD3, $state) {
   function update(newVal, oldVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
@@ -29,7 +29,7 @@ module.controller('myFlowController', function($scope, d3, dagreD3, $state, $fil
   $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function () {
+module.directive('myFlowGraph', function ($filter) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = function () {
@@ -253,7 +253,7 @@ module.directive('myFlowGraph', function () {
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function () {
+module.directive('myWorkflowGraph', function ($filter) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = function () {
@@ -290,51 +290,41 @@ module.directive('myWorkflowGraph', function () {
           var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
           instanceMap[node.name] = node;
           labelMap[nodeLabel] = node;
-          // if (node.type === 'STREAM') {
-          //   g.setNode(node.name, { shape: 'stream', label: nodeLabel});
-
-          // } else {
-          g.setNode(node.name, { shape: 'flowlet', label: nodeLabel});
-          // }
+          if (node.type === 'ACTION') {
+            g.setNode(node.name, { shape: 'job', label: nodeLabel});
+          } else {
+            g.setNode(node.name, { shape: 'conditional', label: nodeLabel});
+          }
         });
 
         angular.forEach(edges, function (edge) {
           g.setEdge(edge.sourceName, edge.targetName);
         });
 
-        // Draw the flowlet shape.
-        renderer.shapes().flowlet = function(parent, bbox, node) {
+        renderer.shapes().job = function(parent, bbox, node) {
           var instances = getInstances(node.elem.__data__); // No other way to get name from node.
           var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
             .attr('r', flowletCircleRadius)
-            .attr('class', 'flow-shapes foundation-shape flowlet-svg');
+            .attr('class', 'workflow-shapes foundation-shape job-svg');
 
-          // Elements are positioned with respect to shapeSvg.
-          parent.insert('circle')
-            .attr('cx', flowletCircleRadius - instanceCircleScaled)
-            .attr('cy', -instanceBufferHeight)
-            .attr('r', instanceCircleScaled)
-            .attr('class', 'flow-shapes flowlet-instances');
+          node.intersect = function(point) {
+            return dagreD3.intersect.circle(node, flowletCircleRadius, point);
+          };
 
-          parent.insert('text')
-            .attr('x', flowletCircleRadius - instanceCircleScaled)
-            .attr('y', -instanceBufferHeight + metricCountPadding)
-            .text(instances)
-            .attr('class', 'flow-shapes flowlet-instance-count');
+          return shapeSvg;
+        };
 
-          parent.insert('circle')
-            .attr('cx', - flowletCircleRadius)
-            .attr('r', metricCircleRadius)
-            .attr('class', 'flow-shapes flowlet-events');
-
-          parent.insert('text')
-            .attr('x', - flowletCircleRadius)
-            .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
-            .attr('class', 'flow5shapes flowlet-event-count');
+        renderer.shapes().conditional = function(parent, bbox, node) {
+          var instances = getInstances(node.elem.__data__); // No other way to get name from node.
+          var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
+          var shapeSvg = parent.insert('circle', ':first-child')
+            .attr('x', -bbox.width / 2)
+            .attr('y', -bbox.height / 2)
+            .attr('r', flowletCircleRadius)
+            .attr('class', 'workflow-shapes foundation-shape conditional-svg');
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
