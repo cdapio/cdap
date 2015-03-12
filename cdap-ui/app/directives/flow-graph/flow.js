@@ -18,7 +18,7 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3, $state) {
+module.controller('myFlowController', function($scope, d3, dagreD3) {
   function update(newVal, oldVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
@@ -29,7 +29,7 @@ module.controller('myFlowController', function($scope, d3, dagreD3, $state) {
   $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function ($filter) {
+module.directive('myFlowGraph', function ($filter, $state) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = function () {
@@ -253,7 +253,7 @@ module.directive('myFlowGraph', function ($filter) {
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function ($filter) {
+module.directive('myWorkflowGraph', function ($filter, $state) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = function () {
@@ -266,16 +266,7 @@ module.directive('myWorkflowGraph', function ($filter) {
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
-        var jobOctagonRadius = 50;
-        var metricCircleRadius = 25;
-        var instanceCircleRadius = 10;
-        var flowletCircleRadius = 60;
-        // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
-        var metricCountPadding = 5;
-
-        var streamDiagramWidth = 40;
-        var streamDiagramHeight = 30;
-        var instanceBufferHeight = 30;
+        var defaultRadius = 50;
 
         g.setGraph({
           nodesep: 60,
@@ -307,18 +298,17 @@ module.directive('myWorkflowGraph', function ($filter) {
           var h = bbox.height;
           var points = [
             //clockwise points from top
-            { x: 0, y: -50}, //a 
-            { x: 33.33, y: -50}, // b
-            { x: 66.6, y: -25}, // c 
-            { x: 66.6, y: 25}, // d 
-            { x: 33.33, y: 50}, // e
-            { x: 0, y: 50}, // f
-            { x: -33.3, y: 25}, // g
-            { x: -33.3, y: -25}, //h
+            { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a 
+            { x: 0, y: -defaultRadius}, // b
+            { x: defaultRadius * 2/3, y: -defaultRadius * 2/3}, // c 
+            { x: defaultRadius, y: 0}, // d 
+            { x: defaultRadius * 2/3, y: defaultRadius * 2/3}, // e
+            { x: 0, y: defaultRadius}, // f
+            { x: -defaultRadius * 2/3, y: defaultRadius * 2/3}, // g
+            { x: -defaultRadius, y: -0}, //h
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
             .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
-            .attr("transform", 'rotate(' + 60 + ')')
             .attr('class', 'workflow-shapes foundation-shape job-svg');
 
           node.intersect = function(point) {
@@ -332,10 +322,11 @@ module.directive('myWorkflowGraph', function ($filter) {
           var w = (bbox.width * Math.SQRT2) / 2,
           h = (bbox.height * Math.SQRT2) / 2,
           points = [
-            { x:  0, y: -h },
-            { x: -w, y:  0 },
-            { x:  0, y:  h },
-            { x:  w, y:  0 }
+            // draw a diamond
+            { x:  0, y: -defaultRadius },
+            { x: -defaultRadius, y:  0 },
+            { x:  0, y:  defaultRadius },
+            { x:  defaultRadius, y:  0 }
           ],
           shapeSvg = parent.insert("polygon", ":first-child")
             .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
