@@ -351,4 +351,4 @@ public class AppFabricClient {
 
     return createDeploymentJar(locationFactory, clz, manifest);
   }
- }
+}

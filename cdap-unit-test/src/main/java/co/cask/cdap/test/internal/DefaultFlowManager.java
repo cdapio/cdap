@@ -32,10 +32,12 @@ public class DefaultFlowManager implements FlowManager {
   private final DefaultApplicationManager applicationManager;
   private final String flowName;
   private final String applicationId;
+  private final String namespace;
 
-  public DefaultFlowManager(String flowName, DefaultApplicationManager.ProgramId flowID,
+  public DefaultFlowManager(String namespace, String flowName, DefaultApplicationManager.ProgramId flowID,
                             String applicationId, AppFabricClient appFabricClient,
                             DefaultApplicationManager applicationManager) {
+    this.namespace = namespace;
     this.applicationManager = applicationManager;
     this.applicationId = applicationId;
     this.appFabricClient = appFabricClient;
@@ -55,7 +57,7 @@ public class DefaultFlowManager implements FlowManager {
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return RuntimeStats.getFlowletMetrics(applicationId, flowName, flowletId);
+    return RuntimeStats.getFlowletMetrics(namespace, applicationId, flowName, flowletId);
   }
 
   @Override
