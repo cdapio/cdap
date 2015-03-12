@@ -41,8 +41,8 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/userservice-%s", super.getLogPathFragment(), getSystemTag(TAG_USERSERVICE_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/userservice-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_USERSERVICE_ID));
   }
 
 }

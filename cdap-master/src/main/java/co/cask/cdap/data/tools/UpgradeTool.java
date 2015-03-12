@@ -85,9 +85,9 @@ import java.io.IOException;
 /**
  * Command line tool for the Upgrade tool
  */
-public class UpgraderMain {
+public class UpgradeTool {
 
-  private static final Logger LOG = LoggerFactory.getLogger(UpgraderMain.class);
+  private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -116,7 +116,7 @@ public class UpgraderMain {
     }
   }
 
-  public UpgraderMain() throws Exception {
+  public UpgradeTool() throws Exception {
     cConf = CConfiguration.create();
     hConf = HBaseConfiguration.create();
 
@@ -129,7 +129,7 @@ public class UpgraderMain {
       @Override
       public void run() {
         try {
-          UpgraderMain.this.stop();
+          UpgradeTool.this.stop();
         } catch (Throwable e) {
           LOG.error("Failed to upgrade", e);
         }
@@ -200,7 +200,7 @@ public class UpgraderMain {
                                                           @Named("dsFramework") DatasetFramework dsFramework,
                                                           TransactionExecutorFactory txExecutorFactory,
                                                           LocationFactory locationFactory) {
-          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework);
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
         }
       });
   }
@@ -303,14 +303,14 @@ public class UpgraderMain {
   }
 
   public static void main(String[] args) throws Exception {
-    UpgraderMain thisUpgraderMain = new UpgraderMain();
-    thisUpgraderMain.startUp();
+    UpgradeTool upgradeTool = new UpgradeTool();
+    upgradeTool.startUp();
     try {
-      thisUpgraderMain.doMain(args);
+      upgradeTool.doMain(args);
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
     } finally {
-      thisUpgraderMain.stop();
+      upgradeTool.stop();
     }
   }
 

@@ -92,10 +92,9 @@ public class QueryClientTestRun extends ClientTestBase {
 
       exploreClient.disableExploreDataset(datasetInstance).get();
       try {
-        queryClient.execute("select * from dataset_" + FakeApp.DS_NAME).get();
+        queryClient.execute("select * from " + FakeApp.DS_NAME).get();
         Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
       } catch (ExecutionException e) {
-
       }
 
       exploreClient.enableExploreDataset(datasetInstance).get();
@@ -105,6 +104,8 @@ public class QueryClientTestRun extends ClientTestBase {
       List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
       Assert.assertEquals(0, otherNamespaceTables.size());
     } finally {
+      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
       appClient.delete(FakeApp.NAME);
     }
   }

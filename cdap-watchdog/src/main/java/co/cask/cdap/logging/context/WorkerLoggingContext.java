@@ -37,7 +37,7 @@ public class WorkerLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/worker-%s", super.getLogPathFragment(), getSystemTag(TAG_WORKER_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/worker-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_WORKER_ID));
   }
 }

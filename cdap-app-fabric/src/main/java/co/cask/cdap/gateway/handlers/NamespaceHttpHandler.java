@@ -221,6 +221,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean isReserved(String namespaceId) {
     return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId) ||
-      Constants.Logging.SYSTEM_NAME.equals(namespaceId);
+      Constants.CDAP_NAMESPACE.equals(namespaceId);
   }
 }

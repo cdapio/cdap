@@ -30,7 +30,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
                       QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
-                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class })
+                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class,
+                      ScheduleClientTestRun.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }
