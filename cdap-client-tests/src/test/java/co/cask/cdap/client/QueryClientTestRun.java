@@ -103,10 +103,9 @@ public class QueryClientTestRun extends ClientTestBase {
       ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
       List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
       Assert.assertEquals(0, otherNamespaceTables.size());
-
+    } finally {
       programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
       assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    } finally {
       appClient.delete(FakeApp.NAME);
     }
   }
