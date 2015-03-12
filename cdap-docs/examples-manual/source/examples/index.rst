@@ -61,7 +61,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
       of URLs from an input stream.
   * - :doc:`Sport Results<sport-results>`
     - An application that illustrates the use of partitioned file sets.
-    - It loads game results into a file set partitioned by league and season, and processes them with MapReduce.
+      It loads game results into a file set partitioned by league and season, and processes them with MapReduce.
   * - :doc:`Stream Conversion<stream-conversion>`
     - An application that demonstrates the use of time-partitioned File sets.
       It periodically converts a Stream into partitions of a File set, which can be read by SQL queries.
