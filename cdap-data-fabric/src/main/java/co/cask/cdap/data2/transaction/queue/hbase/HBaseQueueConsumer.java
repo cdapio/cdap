@@ -133,7 +133,8 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   public boolean rollbackTx() throws Exception {
-    return super.rollbackTx() && stateStore.rollbackTx();
+    boolean result = super.rollbackTx();
+    return stateStore.rollbackTx() && result;
   }
 
   @Override
