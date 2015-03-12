@@ -382,18 +382,25 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) {
-    reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
     NavigableMap<byte[], Update> colVals = buff.get(row);
+    boolean newRow = false;
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      // NOTE: we copy passed row's byte arrays to protect buffer against possible changes of this array on client
-      buff.put(copy(row), colVals);
+      newRow = true;
     }
     for (int i = 0; i < columns.length; i++) {
       // NOTE: we copy passed column's and value's byte arrays to protect buffer against possible changes of these
       // arrays on client
+      Preconditions.checkArgument(values[i] == null || values[i].length > 0,
+                                  "Write of an empty value is not supported");
       colVals.put(copy(columns[i]), new PutValue(copy(values[i])));
     }
+    if (newRow) {
+      // NOTE: we copy passed row's byte arrays to protect buffer against possible changes of this array on client
+      buff.put(copy(row), colVals);
+    }
+    // report metrics _after_ write was performed
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
   }
 
   /**
@@ -500,6 +507,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
+    Preconditions.checkArgument(newValue == null || newValue.length > 0, "Write of an empty value is not supported");
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing

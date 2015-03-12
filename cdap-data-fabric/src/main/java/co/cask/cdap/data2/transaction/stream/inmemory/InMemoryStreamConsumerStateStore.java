@@ -82,7 +82,7 @@ public final class InMemoryStreamConsumerStateStore extends StreamConsumerStateS
     int i = 0;
     for (Map.Entry<byte[], byte[]> columnValue : values.entrySet()) {
       columns[i] = columnValue.getKey();
-      vals[i] = columnValue.getValue();
+      vals[i] = columnValue.getValue().length > 0 ? columnValue.getValue() : null;
       i++;
     }
 

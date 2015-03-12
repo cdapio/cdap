@@ -74,6 +74,8 @@ public abstract class TableTest<T extends Table> {
   static final byte[] L4 = Bytes.toBytes(4L);
   static final byte[] L5 = Bytes.toBytes(5L);
 
+  static final byte[] MT = new byte[0];
+
   protected static final Id.Namespace NAMESPACE1 = Id.Namespace.from("ns1");
   protected static final Id.Namespace NAMESPACE2 = Id.Namespace.from("ns2");
   protected static final String MY_TABLE = "myTable";
@@ -120,7 +122,45 @@ public abstract class TableTest<T extends Table> {
   }
 
   @Test
+  public void testEmptyValuePut() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    Transaction tx = txClient.startShort();
+    try {
+      Table myTable = getTable(CONTEXT1, MY_TABLE);
+      try {
+        myTable.put(R1, C1, MT);
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.put(R1, a(C1, C2), a(V1, MT));
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.put(new Put(R1).add(C1, V1).add(C2, MT));
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.compareAndSwap(R1, C1, V1, MT);
+        Assert.fail("CompareAndSwap with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+    } finally {
+      txClient.abort(tx);
+      admin.drop();
+    }
+  }
+
+  @Test
   public void testBasicGetPutWithTx() throws Exception {
+
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
@@ -693,15 +733,12 @@ public abstract class TableTest<T extends Table> {
       myTable2.delete(R2);
       // same as delete a column
       myTable2.put(R3, C1, null);
-      // same as delete a column
-      myTable2.put(R4, C1, new byte[0]);
       // verify can see deletes in own changes before commit
       verify(a(C2, V2), myTable2.get(R1, a(C1, C2)));
       verify(null, myTable2.get(R1, C1));
       verify(V2, myTable2.get(R1, C2));
       verify(a(), myTable2.get(R2));
       verify(a(C2, V4), myTable2.get(R3));
-      verify(a(C2, V5), myTable2.get(R4));
       // overwrite c2 and write new value to c1
       myTable2.put(R1, a(C1, C2), a(V3, V4));
       myTable2.put(R2, a(C1, C2), a(V4, V5));
@@ -719,7 +756,6 @@ public abstract class TableTest<T extends Table> {
       myTable2.delete(R1, a(C2));
       myTable2.delete(R2);
       myTable2.put(R1, C2, null);
-      myTable2.put(R1, C2, new byte[0]);
       // verify that delete is there (i.e. not reverted to whatever was persisted before)
       verify(a(C1, V3), myTable2.get(R1, a(C1, C2)));
       verify(V3, myTable2.get(R1, C1));
