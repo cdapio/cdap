@@ -46,6 +46,7 @@ public class FakeApp extends AbstractApplication {
     .addAll(PROCEDURES)
     .addAll(MAPREDUCES)
     .addAll(WORKFLOWS)
+    .addAll(SPARK)
     .addAll(SERVICES)
     .build();
 
