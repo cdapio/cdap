@@ -136,7 +136,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
 
     final URI programLogbackURI = logbackURI;
-    final String programOptions = GSON.toJson(options);
 
     // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
     // Twill would also ignore it if it is not running in secure mode.
@@ -146,8 +145,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       public TwillController launch(TwillApplication twillApplication) {
         TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
         if (options.isDebug()) {
-          LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
-                   program.getId(), programOptions, programLogbackURI);
+          LOG.info("Starting {} with debugging enabled and logback: {}",
+                   program.getId(), programLogbackURI);
           twillPreparer.enableDebugging();
         }
         if (programLogbackURI != null) {
