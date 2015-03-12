@@ -1,12 +1,12 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _install:
 
-============================================
+==============================
 Installation and Configuration
-============================================
+==============================
 
 .. Note: this file is included in quick-start.rst; check any edits in this file with it!
 
@@ -464,7 +464,7 @@ one of the machines where you installed the packages and started the services.
 .. _install-highly-available:
 
 Making CDAP Highly-available
----------------------------------
+----------------------------
 Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
 
 - ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
@@ -517,7 +517,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 .. _install-upgrade:
 
 Upgrading an Existing Version
----------------------------------
+-----------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
@@ -549,6 +549,9 @@ and then restart CDAP.
 #. Run the upgrade tool::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
+
+#. Copy ``logback-container.xml`` from ``/etc/cdap/conf.dist`` to the directory you use for configuration
+   as described in :ref:`Configuration <install-configuration>`.
 
 #. Restart the CDAP processes::
 
