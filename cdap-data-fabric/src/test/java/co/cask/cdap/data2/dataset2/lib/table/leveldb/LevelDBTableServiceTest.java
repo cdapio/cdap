@@ -56,7 +56,7 @@ public class LevelDBTableServiceTest {
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
+      new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     service = injector.getInstance(LevelDBTableService.class);
