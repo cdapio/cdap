@@ -22,8 +22,10 @@ import co.cask.cdap.client.ProcedureClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ProcedureManager;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
@@ -39,6 +41,7 @@ public class RemoteProcedureManager implements ProcedureManager {
   private final MetricsClient metricsClient;
 
   public RemoteProcedureManager(Id.Procedure procedure, ClientConfig clientConfig) {
+    Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE_ID.equals(procedure.getNamespace()));
     this.procedure = procedure;
     this.clientConfig = clientConfig;
     this.metricsClient = new MetricsClient(clientConfig);
@@ -46,9 +49,12 @@ public class RemoteProcedureManager implements ProcedureManager {
 
   private ClientConfig getClientConfig() {
     ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
-      .setNamespace(procedure.getNamespace())
+      .setNamespace(Constants.DEFAULT_NAMESPACE_ID)
       .build();
-    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
+    return new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(connectionConfig)
+      .setApiVersion(Constants.Gateway.API_VERSION_2_TOKEN)
+      .build();
   }
 
   private ProgramClient getProgramClient() {
