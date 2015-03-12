@@ -15,13 +15,17 @@
  */
 
 package co.cask.cdap.api.metrics;
+import co.cask.cdap.api.annotation.Beta;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Provides access to metrics about running processors.
+ *
+ * TODO: Support custom metrics https://issues.cask.co/browse/CDAP-765
  */
+@Beta
 public interface RuntimeMetrics {
 
   /**

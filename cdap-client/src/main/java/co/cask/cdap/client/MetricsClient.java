@@ -21,7 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.metrics.MetricsConstants;
-import co.cask.cdap.common.metrics.MetricsContext;
+import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.common.http.HttpMethod;
@@ -42,7 +42,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP Metrics.
  */
-public class MetricsClient implements MetricsConstants {
+public class MetricsClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -78,23 +78,22 @@ public class MetricsClient implements MetricsConstants {
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
   }
 
-  public RuntimeMetrics getMapReduceMetrics(Id.Program id) {
-    return getMetrics(MetricsContext.forMapReduce(id), MAPREDUCE_INPUT, MAPREDUCE_PROCESSED, MAPREDUCE_EXCEPTIONS);
-  }
-
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
-    return getMetrics(MetricsContext.forFlowlet(flowId, flowletId),
-                      FLOWLET_INPUT, FLOWLET_PROCESSED, FLOWLET_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
+                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
+                      MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
   public RuntimeMetrics getProcedureMetrics(Id.Program procedureId) {
-    return getMetrics(MetricsContext.forProcedure(procedureId),
-                      PROCEDURE_INPUT, PROCEDURE_PROCESSED, PROCEDURE_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forProcedure(procedureId),
+                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
+                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
-    return getMetrics(MetricsContext.forService(serviceId),
-                      SERVICE_INPUT, SERVICE_PROCESSED, SERVICE_EXCEPTIONS);
+    return getMetrics(MetricsContexts.forService(serviceId),
+                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
+                      MetricsConstants.SERVICE_EXCEPTIONS);
   }
 
   /**

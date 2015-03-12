@@ -17,7 +17,6 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.metrics.RuntimeMetrics;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -30,11 +29,6 @@ public interface MapReduceManager {
    * Stops the running mapreduce job.
    */
   void stop();
-
-  /**
-   * @return the MapReduce metrics.
-   */
-  RuntimeMetrics getMetrics();
 
   /**
    * Blocks until mapreduce job is finished or given timeout is reached
