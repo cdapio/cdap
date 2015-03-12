@@ -251,7 +251,7 @@ public class HBase94TableUtil extends HBaseTableUtil {
       for (HServerLoad.RegionLoad regionLoad : regionsLoad.values()) {
         byte[] tableNameInBytes = HRegionInfo.getTableName(regionLoad.getName());
         String tableName = Bytes.toString(tableNameInBytes);
-        if (admin.tableExists(tableName) && !isCDAPTable(admin.getTableDescriptor(tableNameInBytes))) {
+        if (!admin.tableExists(tableName) || !isCDAPTable(admin.getTableDescriptor(tableNameInBytes))) {
           continue;
         }
         HTableNameConverter hTableNameConverter = new HTable94NameConverter();

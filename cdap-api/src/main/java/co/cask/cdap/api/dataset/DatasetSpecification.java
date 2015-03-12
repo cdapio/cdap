@@ -197,9 +197,9 @@ public final class DatasetSpecification {
       return true;
     }
     if (tableName.startsWith(specification.getName())) {
-      for (Map.Entry<String, DatasetSpecification> specEntry : specification.getSpecifications().entrySet()) {
-        if (tableName.startsWith(specEntry.getValue().getName())) {
-          return isParent(tableName, specEntry.getValue());
+      for (DatasetSpecification spec : specification.getSpecifications().values()) {
+        if (isParent(tableName, spec)) {
+          return true;
         }
       }
     }
