@@ -99,6 +99,25 @@ public final class NamespaceMeta {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    NamespaceMeta other = (NamespaceMeta) o;
+    return Objects.equal(name, other.name)
+      && Objects.equal(description, other.description)
+      && Objects.equal(config, other.config);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, description, config);
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("name", name)
