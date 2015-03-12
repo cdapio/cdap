@@ -690,14 +690,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoCreateDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
   }
 
@@ -710,8 +710,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
@@ -755,7 +755,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testSQLQuery() throws Exception {
     // Deploying app makes sure that the default namespace is available.
     deployApplication(testSpace, DummyApp.class);
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     deployApplication(testSpace, AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
       getDataset(testSpace, "myTable");
