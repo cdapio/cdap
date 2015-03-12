@@ -111,12 +111,12 @@ public class AppFabricClient {
 
     // delete all namespaces
     for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
-      if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getId()) &&
-        !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getId())) {
-        Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getId());
+      if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getName()) &&
+        !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getName())) {
+        Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
         streamAdmin.dropAllInNamespace(namespace);
-        namespaceHttpHandler.deleteDatasets(null, new MockResponder(), namespaceMeta.getId());
-        namespaceHttpHandler.delete(null, new MockResponder(), namespaceMeta.getId());
+        namespaceHttpHandler.deleteDatasets(null, new MockResponder(), namespaceMeta.getName());
+        namespaceHttpHandler.delete(null, new MockResponder(), namespaceMeta.getName());
       }
     }
   }

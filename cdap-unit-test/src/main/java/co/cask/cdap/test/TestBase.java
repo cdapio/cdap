@@ -353,7 +353,7 @@ public class TestBase {
    * @throws Exception
    */
   protected static void createNamespace(Id.Namespace namespace) throws Exception {
-    getTestManager().createNamespace(new NamespaceMeta.Builder().setId(namespace).build());
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   /**

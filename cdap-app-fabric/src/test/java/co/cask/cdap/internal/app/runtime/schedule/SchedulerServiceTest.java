@@ -72,7 +72,7 @@ public class SchedulerServiceTest {
     store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setId(namespace).build());
+    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   @AfterClass
