@@ -374,25 +374,44 @@ To query a metric within a given context, perform an HTTP POST request::
    * - Parameter
      - Description
    * - ``<context>``
-     - Metrics context to search within.
+     - Metrics context to search within
    * - ``<tags>`` (Optional)
-     - Comma-separated `Tag List`_ by which to group results (optional).
+     - Comma-separated :ref:`tag list <http-restful-api-metrics-tag-list>` by which to group 
+       results (optional)
    * - ``<metric>``
-     - Metric being queried;
+     - Metric being queried
    * - ``<time-range>``
-     - A `Time Range`__ or ``aggregate=true`` for all since the Application was deployed
+     - A :ref:`time range <http-restful-api-metrics-time-range>` or ``aggregate=true`` for 
+       all since the Application was deployed
 
+.. rubric:: Examples
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/v3/metrics/query?context=namespace.default.apps/HelloWorld/flows/``
+       ``WhoFlow/flowlets/saver/process.busyness?aggregate=true``
+   * - Description
+     - Using a *System* metric, *process.busyness*
+   * - 
+     - 
+   * - HTTP Method
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
+       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
+   * - Description
+     - Querying the *User-Defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
+   * - 
+     - 
+   * - HTTP Method
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
+       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
+   * - Description
+     - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
 
 
 .. rubric:: Comments
-
-The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
-
-System metrics are either Application metrics (about Applications and their Flows,
-Procedures, MapReduce, Workflows and Workers) or they are Data metrics (relating to
-Streams or Datasets).
-
-User metrics are always in the Application context.
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*,
 in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP
@@ -458,10 +477,10 @@ with the arguments as a JSON string in the body::
 If the context of the requested metric or metric itself doesn't exist the system returns
 status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
-
+.. _http-restful-api-metrics-tag-list:
 
 Tag List
-----------
+--------
 
 In a query, the optional ``groupBy``​parameter defines a list of tags whose values are
 used to build multiple timeseries. All data points that have the same values in tags
@@ -480,10 +499,13 @@ multiple tags for grouping by providing a comma-separated list.
    * - ``groupBy=app,flow``
      - Retrieves a time series for each app and flow combination
 
+.. _http-restful-api-metrics-time-range:
 
 Time Range
 ----------
-The time range of a metric query can be specified in various ways.
+The time range of a metric query can be specified in various ways: either
+``aggregate=true`` to retrieve the total aggregated since the Application was deployed, 
+or as a ``start`` and ``end`` to define a specific range and return a series of data points.
 
 .. list-table::
    :widths: 20 80
@@ -492,11 +514,23 @@ The time range of a metric query can be specified in various ways.
    * - Parameter
      - Description
    * - ``aggregate=true``
-     - Total aggregated value for the metric.
+     - Total aggregated value for the metric since the Application was deployed.
+       If the metric is a gauge type, the aggregate will return the latest value set for 
+       the metric.
    * - ``start=<time>&end=<time>``
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
 
+
+With a specific time range, a ``resolution`` can be included to retrieve a series of data
+points for a metric. By default, ``resolution=auto``, which means that the resolution will
+be determined based on a time difference calculated between the start and end times. If:
+
+- ``(endTime - startTime) >= 3610``, resolution will be in hours; 
+- ``(endTime - startTime) >= 610``, resolution will be in minutes; 
+- otherwise, resolution will be in seconds.
+
+
 .. list-table::
    :header-rows: 1
    :widths: 30 70
@@ -520,216 +554,49 @@ The time range of a metric query can be specified in various ways.
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
-**Note:**
-``resolution=auto`` will automatically determine the resolution based on a time difference
-calculated between the start and end times. If ``(endTime - startTime) >= 3610``,
-resolution will be in hours; else if ``(endTime - startTime) >= 610``, resolution will be
-in minutes; otherwise, resolution will be in seconds.
+**Comments:**
 
-Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. This request will return the total number of
-input objects processed since the Application *CountRandom* was deployed, assuming that
-CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
+For example: to return the total number of input objects processed since the
+Application *CountRandom* was deployed, assuming that CDAP has not been stopped or
+restarted (you cannot specify a time range for aggregates)::
 
-  POST <base-url>/v3/metrics//apps/CountRandom/process.events.processed?aggregate=true
+  POST <base-url>/v3/metrics/query?context=namespace.default.apps.
+      CountRandom.system.process.events.processed?aggregate=true
 
-If the metric is a gauge type, the aggregate will return the latest value set for the metric.
-For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
-``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 
-  POST <base-ur>/v3/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true
+For example: this request will retrieve the completion percentage for the map-stage of the MapReduce
+``PurchaseHistoryWorkflow_PurchaseHistoryBuilder`` (reformatted to fit)::
+
+  POST <base-url>/v3/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true
   
-  system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
-
-
-  http://localhost:10000/v3/metrics/query?metric=system.store.ops&context=namespace.default.app.PurchaseHistory.flow.MyFlow.run.234-234-2323423-
-
-
-
-
-
-
-
-
-v2 API material
-===============
-
-Metrics Requests
-----------------
-The general form of a metrics request is::
-
-  GET <base-url>/metrics/<scope>/<context>/<run-id>/<metric>?<time-range>
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<scope>``
-     - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
-   * - ``<context>``
-     - Hierarchy of context; see Available Contexts
-   * - ``<run-id>``
-     - Run-ID of the program; see Querying by Run-ID
-   * - ``<metric>``
-     - Metric being queried; see Available Metrics
-   * - ``<time-range>``
-     - A Time Range or ``aggregate=true`` for all since the Application was deployed
-
-.. rubric:: Examples
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/metrics/system/apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/process.busyness?aggregate=true``
-   * - Description
-     - Using a *System* metric, *process.busyness*
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
-       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
-   * - Description
-     - Querying the *User-Defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
-       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
-   * - Description
-     - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
-
-.. rubric:: Comments
-
-The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
-
-System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce, Workflows and Workers) or they are Data metrics (relating to Streams or Datasets).
-
-User metrics are always in the Application context.
-
-For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*,
-in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP
-GET method::
-
-  GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/flowlets/
-          splitter/process.events.processed?start=now-5s&count=5
-
-This returns a JSON response that has one entry for every second in the requested time interval. It will have
-values only for the times where the metric was actually emitted (shown here "pretty-printed")::
-
-  HTTP/1.1 200 OK
-  Content-Type: application/json
-  {"start":1382637108,"end":1382637112,"data":[
-  {"time":1382637108,"value":6868},
-  {"time":1382637109,"value":6895},
-  {"time":1382637110,"value":6856},
-  {"time":1382637111,"value":6816},
-  {"time":1382637112,"value":6765}]}
-
-Each run of a flow is identified by a run-ID. To retrieve the aggregate of events processed by the
-run of a flow, you can issue an HTTP GET method::
-
-  GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/
-          splitter/process.events.processed?aggregate=true
-
-If the run-ID is not specified, we aggregate the events processed for all the runs of this flow.
-
-If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
-API at the Flow context::
-
-  GET <base-url>/metrics/system/apps/CountRandom/flows/
-    CountRandomFlow/process.events.processed?start=now-5s&count=5
-
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire CDAP::
-
-  GET <base-url>/metrics/system/apps/CountRandom/
-    flows/process.events.processed?start=now-5s&count=5
-  GET <base-url>/metrics/system/apps/CountRandom/
-    process.events.processed?start=now-5s&count=5
-  GET <base-url>/metrics/system/process.events?start=now-5s&count=5
-
-To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
-and specify the user-defined metric at the end of the request.
-
-For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
-
-  GET <base-url>/metrics/user/apps/HelloWorld/flows/
-    WhoFlow/flowlets/saver/names.bytes?aggregate=true
-
-To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON list as the request body that enumerates the name and attributes for each metrics. For example::
-
-  POST <base-url>/metrics
-
-with the arguments as a JSON string in the body::
-
-  Content-Type: application/json
-  [ "/system/collect.events?aggregate=true",
-  "/system/apps/HelloWorld/process.events.processed?start=1380323712&count=6000" ]
-
-If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
-
-Time Range
-----------
-The time range of a metric query can be specified in various ways:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
-
-   * - Time Range
-     - Description
-   * - ``start=now-30s&end=now``
-     - The last 30 seconds. The start time is given in seconds relative to the current time.
-       You can apply simple math, using ``now`` for the current time, 
-       ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days. 
-       For example: ``now-5d-12h`` is 5 days and 12 hours ago.
-   * - ``start=1385625600&`` ``end=1385629200``
-     - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
-       both given as since the start of the Epoch
-   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
-     - The same as before, the count given as a number of seconds
-   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
-     - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
-       with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
-   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=1h``
-     - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
-       with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
-
-**Note:**
-``resolution=auto`` will automatically determine the resolution based on a time difference calculated between the start and end times. If ``(endTime - startTime) >= 3610``, resolution will be in hours; else if ``(endTime - startTime) >= 610``, resolution will be in minutes; otherwise, resolution will be in seconds.
-
-Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
-
-  GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
-
-If the metric is a gauge type, the aggregate will return the latest value set for the metric.
-
-This request will retrieve the completion percentage for the map-stage of the MapReduce ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
-
-  GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
-
-
 
 Querying by Run-ID
 ------------------
 
-Each execution of an program (Flow, MapReduce, Spark, Services, Worker, Procedure) has an
-associated run-ID that uniquely identifies that program's run. We can query metrics for an
-program by its run-ID to see the metrics for a particular run. Please see the :ref:`Run
+Each execution of an program (Flow, MapReduce, Spark, Services, Worker) has an
+associated run-ID that uniquely identifies that program's run. We can query metrics for a
+program by its run-ID to retrieve the metrics for a particular run. Please see the :ref:`Run
 Records and Schedule <rest-program-runs>` on retrieving active and historical program runs.
 
-When querying by run-ID, it is specified after the ``program-id`` in the path::
+When querying by ``run-ID``, it is specified in the context after the ``program-id`` with the tag ``run``::
 
-  /apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/
+  ...apps.<app-id>.<program-type>.<program-id>.run.<run-id>
 
-Examples::
+Examples (reformatted to fit)::
 
-  GET /apps/<app-id>/flows/<flow-id>/runs/<run-id>/flowlets/<flowlet-id>/
-  GET /apps/<app-id>/mapreduce/<mapreduce-id>/runs/<run-id>/
+  POST <base-url>/v3/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
+      MyFlow.run.364-789-1636765&metric=system.process.completion
+  
+  POST <base-url>/v3/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion
+
+
+
+
+
+
 
 
 
