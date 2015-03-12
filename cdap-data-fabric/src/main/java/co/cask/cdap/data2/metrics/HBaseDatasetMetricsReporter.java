@@ -99,7 +99,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   }
 
   private void reportHBaseStats() throws IOException, DatasetManagementException {
-    Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(conf, hAdmin);
+    Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }

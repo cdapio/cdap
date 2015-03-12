@@ -16,8 +16,6 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.DequeueScanObserver;
@@ -261,10 +259,9 @@ public class HBase96TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<TableId, TableStats> getTableStats(CConfiguration conf, HBaseAdmin admin) throws IOException {
+  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-    String root = conf.get(Constants.Dataset.TABLE_PREFIX);
     Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
@@ -276,11 +273,12 @@ public class HBase96TableUtil extends HBaseTableUtil {
         if (!isCDAPTable(admin.getTableDescriptor(tableName))) {
           continue;
         }
-        TableStats stat = datasetStat.get(tableName);
+        HTableNameConverter hTableNameConverter = new HTable96NameConverter();
+        TableId tableId = hTableNameConverter.from(new HTableDescriptor(tableName));
+        TableStats stat = datasetStat.get(tableId);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          HTableNameConverter hTableNameConverter = new HTable96NameConverter();
-          datasetStat.put(hTableNameConverter.from(new HTableDescriptor(tableName)), stat);
+          datasetStat.put(tableId, stat);
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
           stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());

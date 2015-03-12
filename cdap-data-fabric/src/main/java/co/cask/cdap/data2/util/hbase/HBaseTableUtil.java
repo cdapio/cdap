@@ -586,7 +586,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public abstract Map<TableId, TableStats> getTableStats(CConfiguration conf, HBaseAdmin admin) throws IOException;
+  public abstract Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
 
   /**
    * Carries information about table stats

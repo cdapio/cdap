@@ -23,10 +23,8 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -154,7 +152,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
     if (namespacesSupported()) {
       try {
-        deleteNamespace("namespace");
+        deleteNamespace("namespace", 5);
         Assert.fail("Should not be able to delete a non-empty namespace.");
       } catch (ConstraintException e) {
       }
@@ -165,15 +163,15 @@ public abstract class AbstractHBaseTableUtilTest {
     drop("namespace", "table3");
 
     if (namespacesSupported()) {
-      deleteNamespace("namespace");
-      deleteNamespace("namespace2");
+      deleteNamespace("namespace", 5);
+      deleteNamespace("namespace2", 5);
       Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
       Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace2")));
     }
   }
 
   @Test
-  public void testBackwardCompatibility() throws IOException {
+  public void testBackwardCompatibility() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
@@ -201,11 +199,11 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
-    deleteNamespace("myspace");
+    deleteNamespace("myspace", 5);
   }
 
   @Test
-  public void testListAllInNamespace() throws IOException {
+  public void testListAllInNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
                                                         TableId.from("foo", "other.table"),
@@ -234,11 +232,11 @@ public abstract class AbstractHBaseTableUtilTest {
 
     drop(tableIdInOtherNamespace);
     Assert.assertEquals(0, hAdmin.listTables().length);
-    deleteNamespace("foobar");
+    deleteNamespace("foobar", 5);
   }
 
   @Test
-  public void testDropAllInDefaultNamespace() throws IOException {
+  public void testDropAllInDefaultNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId tableId = TableId.from("default", "some.table1");
     create(tableId);
@@ -259,11 +257,11 @@ public abstract class AbstractHBaseTableUtilTest {
 
     drop(tableIdInOtherNamespace);
     Assert.assertEquals(0, hAdmin.listTables().length);
-    deleteNamespace("default2");
+    deleteNamespace("default2", 5);
   }
 
   @Test
-  public void testDropAllInOtherNamespaceWithPrefix() throws IOException {
+  public void testDropAllInOtherNamespaceWithPrefix() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     createNamespace("foonamespace");
     createNamespace("barnamespace");
@@ -291,8 +289,8 @@ public abstract class AbstractHBaseTableUtilTest {
     drop(tableIdInOtherNamespace);
     drop(tableIdWithOtherPrefix);
     Assert.assertEquals(0, hAdmin.listTables().length);
-    deleteNamespace("foonamespace");
-    deleteNamespace("barnamespace");
+    deleteNamespace("foonamespace", 5);
+    deleteNamespace("barnamespace", 5);
   }
 
   private void waitForMetricsToUpdate() throws InterruptedException {
@@ -318,6 +316,22 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void createNamespace(String namespace) throws IOException {
     getTableUtil().createNamespaceIfNotExists(hAdmin, Id.Namespace.from(namespace));
+  }
+
+  private void deleteNamespace(String namespace, int retries) throws InterruptedException, IOException {
+    int trial = 0;
+    while (trial++ < retries) {
+      deleteNamespace(namespace);
+      if (!existsNamespace(namespace)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertFalse(existsNamespace(namespace));
+  }
+
+  private boolean existsNamespace(String namespace) throws IOException {
+    return getTableUtil().hasNamespace(hAdmin, Id.Namespace.from(namespace));
   }
 
   private void deleteNamespace(String namespace) throws IOException {
@@ -375,7 +389,7 @@ public abstract class AbstractHBaseTableUtilTest {
     HBaseTableUtil tableUtil = getTableUtil();
     // todo : should support custom table-prefix
     TableId tableId = TableId.from(namespace, tableName);
-    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(cConf, hAdmin);
+    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(hAdmin);
     return statsMap.get(tableId);
   }
 }
