@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
@@ -115,10 +116,10 @@ public class IntegrationTestBase {
     if (streamRecords.size() > 0) {
       for (StreamRecord streamRecord : streamRecords) {
         try {
-          streamClient.truncate(streamRecord.getId());
+          streamClient.truncate(streamRecord.getName());
         } catch (Exception e) {
           Assert.fail("All existing streams must be truncated" +
-                      " - failed to truncate stream '" + streamRecord.getId() + "'");
+                      " - failed to truncate stream '" + streamRecord.getName() + "'");
         }
       }
     }
@@ -143,19 +144,21 @@ public class IntegrationTestBase {
   protected static ClientConfig getClientConfig() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     if (INSTANCE_URI.isEmpty()) {
-      builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        StandaloneContainer.DEFAULT_CONNECTION_URI.toString()));
     } else {
-      builder.setUri(URI.create(INSTANCE_URI));
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        URI.create(INSTANCE_URI).toString()));
     }
 
     if (!ACCESS_TOKEN.isEmpty()) {
       builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
     }
 
-    builder.setDefaultConnectTimeoutMs(120000);
-    builder.setDefaultReadTimeoutMs(120000);
-    builder.setUploadConnectTimeoutMs(0);
-    builder.setUploadConnectTimeoutMs(0);
+    builder.setDefaultConnectTimeout(120000);
+    builder.setDefaultReadTimeout(120000);
+    builder.setUploadConnectTimeout(0);
+    builder.setUploadConnectTimeout(0);
 
     return builder.build();
   }
@@ -232,7 +235,7 @@ public class IntegrationTestBase {
     List<ApplicationRecord> applicationRecords = applicationClient.list();
     List<String> applicationIds = Lists.newArrayList();
     for (ApplicationRecord applicationRecord : applicationRecords) {
-      applicationIds.add(applicationRecord.getId());
+      applicationIds.add(applicationRecord.getName());
     }
 
     Assert.assertEquals("Must have no deployed apps, but found the following apps: "
@@ -242,7 +245,7 @@ public class IntegrationTestBase {
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+      Assert.assertTrue(expected.contains(actualProgramRecord.getName()));
     }
   }
 

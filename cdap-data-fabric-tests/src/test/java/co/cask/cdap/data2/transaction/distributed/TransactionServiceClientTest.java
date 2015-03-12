@@ -41,6 +41,7 @@ import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -123,6 +124,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       zkServer.stopAndWait();
       txStateStorage.stopAndWait();
     }
+  }
+
+  @Before
+  public void resetState() throws Exception {
+    TransactionSystemClient txClient = getClient();
+    txClient.resetState();
   }
 
   @Test

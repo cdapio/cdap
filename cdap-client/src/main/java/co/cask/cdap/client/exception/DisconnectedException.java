@@ -13,32 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.proto;
+package co.cask.cdap.client.exception;
 
 /**
- * Represents a program in an HTTP response.
+ * Thrown when the client is not connected, but a request was attempted.
  */
-public class ProgramDetail {
-  private final ProgramType type;
-  private final String name;
-  private final String description;
-
-  public ProgramDetail(ProgramType type, String name, String description) {
-    this.type = type;
-    this.name = name;
-    this.description = description;
-  }
-
-  public ProgramType getType() {
-    return type;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getDescription() {
-    return description;
-  }
+public class DisconnectedException extends RuntimeException {
 }

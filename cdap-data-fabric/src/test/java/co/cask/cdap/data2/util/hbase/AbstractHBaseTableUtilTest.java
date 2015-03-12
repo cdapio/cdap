@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -71,6 +72,8 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   protected abstract HBaseTableUtil getTableUtil();
+
+  protected abstract HTableNameConverter getNameConverter();
 
   protected abstract String getTableNameAsString(TableId tableId);
 
@@ -172,26 +175,26 @@ public abstract class AbstractHBaseTableUtilTest {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("cdap_myspace", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
@@ -274,7 +277,12 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), "some");
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId input) {
+        return input.getTableName().startsWith("some");
+      }
+    });
     Assert.assertEquals(2, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);

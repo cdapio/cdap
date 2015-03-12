@@ -46,6 +46,8 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
+    /** Scheduler queue name to submit the master service app. */
+    public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
   }
 
   /**
@@ -90,6 +92,7 @@ public final class Constants {
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
     public static final String ADAPTER_DIR = "app.adapter.dir";
+    public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
 
     /**
      * Defaults.
@@ -480,7 +483,6 @@ public final class Constants {
    * Logging constants.
    */
   public static final class Logging {
-    public static final String SYSTEM_NAME = "cdap";
     public static final String COMPONENT_NAME = "services";
   }
 
@@ -723,6 +725,11 @@ public final class Constants {
    */
   public static final String SYSTEM_NAMESPACE = "system";
   public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
+
+  /**
+   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
+   */
+  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.
