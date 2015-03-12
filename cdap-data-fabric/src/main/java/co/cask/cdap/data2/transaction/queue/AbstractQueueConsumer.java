@@ -48,6 +48,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Common queue consumer for persisting engines such as HBase and LevelDB.
@@ -82,12 +83,10 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
   // Maximum amount of time spent in dequeue to avoid transaction timeout.
   private final long maxDequeueMillis;
 
-  protected byte[] startRow;
   private byte[] scanStartRow;
+  private boolean committed;
   protected Transaction transaction;
   protected int commitCount;
-  private boolean committed;
-
 
   protected abstract boolean claimEntry(byte[] rowKey, byte[] stateContent) throws IOException;
   protected abstract void updateState(Set<byte[]> rowKeys, byte[] stateColumnName, byte[] stateContent)
@@ -97,12 +96,18 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
   protected abstract QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException;
 
   protected AbstractQueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig, QueueName queueName) {
+    this(cConf, consumerConfig, queueName, null);
+  }
+
+  protected AbstractQueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig,
+                                  QueueName queueName, @Nullable byte[] startRow) {
     this.consumerConfig = consumerConfig;
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
-    this.startRow = getRowKey(0L, 0);
+    this.scanStartRow = (startRow == null || startRow.length == 0)
+                        ? QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0) : startRow;
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
 
@@ -131,6 +136,83 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
 
   @Override
   public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
+    DequeueResult<byte[]> result = performDequeue(maxBatchSize);
+    if (scanStartRow != null) {
+      if (!consumingEntries.isEmpty()) {
+        // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
+        // that is smaller than or equal to scanStartRow
+        byte[] floorKey = consumingEntries.floorKey(scanStartRow);
+        if (floorKey != null) {
+          updateStartRow(floorKey);
+        }
+      } else {
+        // If the dequeue has empty result, startRow can advance to scanStartRow
+        updateStartRow(scanStartRow);
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    consumingEntries.clear();
+    this.transaction = tx;
+    this.committed = false;
+  }
+
+  @Override
+  public Collection<byte[]> getTxChanges() {
+    // No conflicts guaranteed in dequeue logic.
+    return ImmutableList.of();
+  }
+
+  @Override
+  public boolean commitTx() throws Exception {
+    if (consumingEntries.isEmpty()) {
+      return true;
+    }
+
+    byte[] stateContent = encodeStateColumn(ConsumerEntryState.PROCESSED);
+    updateState(consumingEntries.keySet(), stateColumnName, stateContent);
+    commitCount += consumingEntries.size();
+    committed = true;
+    return true;
+  }
+
+  @Override
+  public boolean rollbackTx() throws Exception {
+    if (consumingEntries.isEmpty()) {
+      return true;
+    }
+
+    // Put the consuming entries back to cache
+    entryCache.putAll(consumingEntries);
+
+    // If not committed, no need to update HBase.
+    if (!committed) {
+      return true;
+    }
+    commitCount -= consumingEntries.size();
+
+    // Revert changes in HBase rows
+    // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
+    if (getConfig().getDequeueStrategy() == DequeueStrategy.FIFO && getConfig().getGroupSize() > 1) {
+      byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
+      updateState(consumingEntries.keySet(), stateColumnName, stateContent);
+    } else {
+      undoState(consumingEntries.keySet(), stateColumnName);
+    }
+    return true;
+  }
+
+  /**
+   * Called when the start row is updated.
+   */
+  protected void updateStartRow(byte[] startRow) {
+    // No-op by default.
+  }
+
+  private DequeueResult<byte[]> performDequeue(int maxBatchSize) throws IOException {
     Preconditions.checkArgument(maxBatchSize > 0, "Batch size must be > 0.");
 
     // pre-compute the "claimed" state content in case of FIFO.
@@ -198,75 +280,6 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
     return new SimpleDequeueResult(consumingEntries.values());
   }
 
-  @Override
-  public void startTx(Transaction tx) {
-    consumingEntries.clear();
-    this.transaction = tx;
-    this.committed = false;
-  }
-
-  @Override
-  public Collection<byte[]> getTxChanges() {
-    // No conflicts guaranteed in dequeue logic.
-    return ImmutableList.of();
-  }
-
-  @Override
-  public boolean commitTx() throws Exception {
-    if (consumingEntries.isEmpty()) {
-      return true;
-    }
-
-    byte[] stateContent = encodeStateColumn(ConsumerEntryState.PROCESSED);
-    updateState(consumingEntries.keySet(), stateColumnName, stateContent);
-    commitCount += consumingEntries.size();
-    committed = true;
-    return true;
-  }
-
-  @Override
-  public void postTxCommit() {
-    if (scanStartRow != null) {
-      if (!consumingEntries.isEmpty()) {
-        // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-        // that is smaller than or equal to scanStartRow
-        byte[] floorKey = consumingEntries.floorKey(scanStartRow);
-        if (floorKey != null) {
-          startRow = floorKey;
-        }
-      } else {
-        // If the dequeue has empty result, startRow can advance to scanStartRow
-        startRow = Arrays.copyOf(scanStartRow, scanStartRow.length);
-      }
-    }
-  }
-
-  @Override
-  public boolean rollbackTx() throws Exception {
-    if (consumingEntries.isEmpty()) {
-      return true;
-    }
-
-    // Put the consuming entries back to cache
-    entryCache.putAll(consumingEntries);
-
-    // If not committed, no need to update HBase.
-    if (!committed) {
-      return true;
-    }
-    commitCount -= consumingEntries.size();
-
-    // Revert changes in HBase rows
-    // If it is FIFO, restore to the CLAIMED state. This instance will retry it on the next dequeue.
-    if (getConfig().getDequeueStrategy() == DequeueStrategy.FIFO && getConfig().getGroupSize() > 1) {
-      byte[] stateContent = encodeStateColumn(ConsumerEntryState.CLAIMED);
-      updateState(consumingEntries.keySet(), stateColumnName, stateContent);
-    } else {
-      undoState(consumingEntries.keySet(), stateColumnName);
-    }
-    return true;
-  }
-
   /**
    * Try to dequeue (claim) entries up to a maximum size.
    * @param entries For claimed entries to fill in.
@@ -307,9 +320,6 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
 
     // Scan the table for queue entries.
     int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * PREFETCH_BATCHES);
-    if (scanStartRow == null) {
-      scanStartRow = Arrays.copyOf(startRow, startRow.length);
-    }
     QueueScanner scanner = getScanner(scanStartRow,
                                       QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction),
                                       numRows);
@@ -396,16 +406,6 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
     }
 
     return QueueEntryRow.CanConsume.YES == canConsume;
-  }
-
-  /**
-   * Creates a new byte[] that gives the entry row key for the given enqueue transaction and counter.
-   */
-  private byte[] getRowKey(long writePointer, int count) {
-    byte[] row = Arrays.copyOf(queueRowPrefix, queueRowPrefix.length + Longs.BYTES + Ints.BYTES);
-    Bytes.putLong(row, queueRowPrefix.length, writePointer);
-    Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count);
-    return row;
   }
 
   /**

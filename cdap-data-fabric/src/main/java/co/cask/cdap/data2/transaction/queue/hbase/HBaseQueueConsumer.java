@@ -21,6 +21,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueConsumer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.hbase.client.Delete;
@@ -28,8 +29,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,14 +38,6 @@ import java.util.Set;
  * Queue consumer for HBase.
  */
 abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueConsumer.class);
-
-  // Persist latest start row every n entries consumed.
-  // The smaller this number, the more frequent latest startRow is persisted, which makes more
-  // entries could be evicted since startRow is used by the eviction logic to determine what can be evicted.
-  // The down side of decreasing this value is more overhead on each postCommit call for writing to HBase.
-  private static final int PERSIST_START_ROW_LIMIT = 1000;
 
   private final HTable hTable;
   private final HBaseConsumerStateStore stateStore;
@@ -66,16 +57,11 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                      HBaseQueueStrategy queueStrategy) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
-    super(cConf, consumerConfig, queueName);
+    super(cConf, consumerConfig, queueName, consumerState.getStartRow());
     this.hTable = hTable;
     this.stateStore = stateStore;
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.queueStrategy = queueStrategy;
-
-    byte[] startRow = consumerState.getStartRow();
-    if (startRow != null && startRow.length > 0) {
-      this.startRow = startRow;
-    }
   }
 
   @Override
@@ -133,26 +119,38 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     if (closed) {
       return;
     }
-    try {
-      stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
-    } finally {
-      Closeables.closeQuietly(queueStrategy);
-      hTable.close();
-      closed = true;
-    }
+    closed = true;
+    Closeables.closeQuietly(queueStrategy);
+    Closeables.closeQuietly(stateStore);
+    Closeables.closeQuietly(hTable);
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    super.startTx(tx);
+    stateStore.startTx(tx);
+  }
+
+  @Override
+  public boolean rollbackTx() throws Exception {
+    boolean result = super.rollbackTx();
+    return stateStore.rollbackTx() && result;
+  }
+
+  @Override
+  public boolean commitTx() throws Exception {
+    return super.commitTx() && stateStore.commitTx();
   }
 
   @Override
   public void postTxCommit() {
-    super.postTxCommit();
-    if (commitCount >= PERSIST_START_ROW_LIMIT) {
-      try {
-        stateStore.saveState(new HBaseConsumerState(startRow, getConfig().getGroupId(), getConfig().getInstanceId()));
-        commitCount = 0;
-      } catch (IOException e) {
-        LOG.error("Failed to persist start row to HBase.", e);
-      }
-    }
+    stateStore.postTxCommit();
+  }
+
+  @Override
+  protected void updateStartRow(byte[] startRow) {
+    ConsumerConfig consumerConfig = getConfig();
+    stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
   }
 
   protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);

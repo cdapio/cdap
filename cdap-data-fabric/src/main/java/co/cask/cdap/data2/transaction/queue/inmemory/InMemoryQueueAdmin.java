@@ -17,11 +17,12 @@
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -62,6 +63,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
     queueService.truncateAllWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
   }
 
+  @Override
+  public QueueConfigurer getQueueConfigurer(QueueName queueName) {
+    return new NoopQueueConfigurer();
+  }
+
   // Only used by InMemoryStreadmAdmin
   void drop(QueueName queueName) throws Exception {
     queueService.drop(queueName);
@@ -75,18 +81,6 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
-  }
-
-  @Override
-  public void configureInstances(QueueName queueName, long groupId, int instances) {
-    // No-op for InMemoryQueueAdmin
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
-  }
-
-  @Override
-  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
-    // No-op for InMemoryQueueAdmin
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
   }
 
   @Override

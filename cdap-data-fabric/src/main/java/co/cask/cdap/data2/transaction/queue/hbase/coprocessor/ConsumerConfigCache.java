@@ -19,7 +19,13 @@ package co.cask.cdap.data2.transaction.queue.hbase.coprocessor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionCodec;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.util.TxUtils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableNotFoundException;
@@ -56,6 +62,8 @@ public class ConsumerConfigCache {
   private final byte[] queueConfigTableName;
   private final Configuration hConf;
   private final CConfigurationReader cConfReader;
+  private final Supplier<TransactionSnapshot> transactionSnapshotSupplier;
+  private final TransactionCodec txCodec;
 
   private Thread refreshThread;
   private long lastUpdated;
@@ -65,10 +73,21 @@ public class ConsumerConfigCache {
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, CConfigurationReader cConfReader) {
+  /**
+   * Constructs a new instance.
+   *
+   * @param hConf configuration for HBase
+   * @param queueConfigTableName table name that stores queue configuration
+   * @param cConfReader reader to read the latest {@link CConfiguration}
+   * @param transactionSnapshotSupplier A supplier for the latest {@link TransactionSnapshot}
+   */
+  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName,
+                      CConfigurationReader cConfReader, Supplier<TransactionSnapshot> transactionSnapshotSupplier) {
     this.hConf = hConf;
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
+    this.transactionSnapshotSupplier = transactionSnapshotSupplier;
+    this.txCodec = new TransactionCodec();
   }
 
   private void init() {
@@ -116,11 +135,21 @@ public class ConsumerConfigCache {
   public synchronized void updateCache() throws IOException {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
-    HTable table = null;
+    TransactionSnapshot txSnapshot = transactionSnapshotSupplier.get();
+    if (txSnapshot == null) {
+      LOG.debug("No transaction snapshot is available. Not updating the consumer config cache.");
+      return;
+    }
+
+    HTable table = new HTable(hConf, queueConfigTableName);
     try {
-      table = new HTable(hConf, queueConfigTableName);
+      // Scan the table with the transaction snapshot
       Scan scan = new Scan();
       scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
+      scan.setCacheBlocks(false);
+      scan.setCaching(1000);
+      Transaction tx = TxUtils.createDummyTransaction(txSnapshot);
+      scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
@@ -155,12 +184,10 @@ public class ConsumerConfigCache {
         LOG.debug("Updated consumer config cache with {} entries, took {} msec", configCnt, elapsed);
       }
     } finally {
-      if (table != null) {
-        try {
-          table.close();
-        } catch (IOException ioe) {
-          LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
-        }
+      try {
+        table.close();
+      } catch (IOException ioe) {
+        LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
       }
     }
   }
@@ -202,10 +229,11 @@ public class ConsumerConfigCache {
   }
 
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
-                                                CConfigurationReader cConfReader) {
+                                                CConfigurationReader cConfReader,
+                                                Supplier<TransactionSnapshot> txSnapshotSupplier) {
     ConsumerConfigCache cache = instances.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, cConfReader);
+      cache = new ConsumerConfigCache(hConf, tableName, cConfReader, txSnapshotSupplier);
       if (instances.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();
