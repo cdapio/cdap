@@ -109,6 +109,13 @@ public class UnitTestManager implements TestManager {
   public void clear() throws Exception {
     try {
       appFabricClient.reset();
+      // delete all namespaces
+      for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
+        if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getId()) &&
+          !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getId())) {
+          namespaceAdmin.deleteNamespace(Id.Namespace.from(namespaceMeta.getId()));
+        }
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
