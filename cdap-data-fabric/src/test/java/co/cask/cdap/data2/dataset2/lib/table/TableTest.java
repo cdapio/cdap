@@ -733,15 +733,12 @@ public abstract class TableTest<T extends Table> {
       myTable2.delete(R2);
       // same as delete a column
       myTable2.put(R3, C1, null);
-      // same as delete a column
-      myTable2.put(R4, C1, new byte[0]);
       // verify can see deletes in own changes before commit
       verify(a(C2, V2), myTable2.get(R1, a(C1, C2)));
       verify(null, myTable2.get(R1, C1));
       verify(V2, myTable2.get(R1, C2));
       verify(a(), myTable2.get(R2));
       verify(a(C2, V4), myTable2.get(R3));
-      verify(a(C2, V5), myTable2.get(R4));
       // overwrite c2 and write new value to c1
       myTable2.put(R1, a(C1, C2), a(V3, V4));
       myTable2.put(R2, a(C1, C2), a(V4, V5));
@@ -759,7 +756,6 @@ public abstract class TableTest<T extends Table> {
       myTable2.delete(R1, a(C2));
       myTable2.delete(R2);
       myTable2.put(R1, C2, null);
-      myTable2.put(R1, C2, new byte[0]);
       // verify that delete is there (i.e. not reverted to whatever was persisted before)
       verify(a(C1, V3), myTable2.get(R1, a(C1, C2)));
       verify(V3, myTable2.get(R1, C1));
