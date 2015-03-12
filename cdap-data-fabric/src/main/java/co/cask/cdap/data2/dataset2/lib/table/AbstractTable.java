@@ -76,7 +76,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public void put(byte [] row, byte [] column, byte[] value) {
-    put(row, new byte[][] {column}, new byte[][] {value});
+    put(row, new byte[][]{column}, new byte[][]{value});
   }
 
   @Override

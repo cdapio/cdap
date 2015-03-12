@@ -74,6 +74,8 @@ public abstract class TableTest<T extends Table> {
   static final byte[] L4 = Bytes.toBytes(4L);
   static final byte[] L5 = Bytes.toBytes(5L);
 
+  static final byte[] MT = new byte[0];
+
   protected static final Id.Namespace NAMESPACE1 = Id.Namespace.from("ns1");
   protected static final Id.Namespace NAMESPACE2 = Id.Namespace.from("ns2");
   protected static final String MY_TABLE = "myTable";
@@ -120,7 +122,45 @@ public abstract class TableTest<T extends Table> {
   }
 
   @Test
+  public void testEmptyValuePut() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    Transaction tx = txClient.startShort();
+    try {
+      Table myTable = getTable(CONTEXT1, MY_TABLE);
+      try {
+        myTable.put(R1, C1, MT);
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.put(R1, a(C1, C2), a(V1, MT));
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.put(new Put(R1).add(C1, V1).add(C2, MT));
+        Assert.fail("Put with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        myTable.compareAndSwap(R1, C1, V1, MT);
+        Assert.fail("CompareAndSwap with empty value should fail.");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+    } finally {
+      txClient.abort(tx);
+      admin.drop();
+    }
+  }
+
+  @Test
   public void testBasicGetPutWithTx() throws Exception {
+
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
     try {
