@@ -17,6 +17,9 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
@@ -31,11 +34,13 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +101,31 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     // Upgrade the datasets instance meta table
     datasetInstanceMDSUpgrader.upgrade();
+
+    // upgrade all the filesets base paths
+    for (DatasetSpecification fileSetSpec : datasetInstanceMDSUpgrader.getFileSetsSpecs()) {
+      upgradeFileSet(fileSetSpec);
+    }
+  }
+
+  /**
+   * Upgrades the {@link FileSet} and also its embedded filesets if any by moving the base path under
+   * namespaced directory
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the {@link FileSet} to be upgraded
+   * @throws IOException
+   */
+  private void upgradeFileSet(DatasetSpecification dsSpec) throws IOException {
+    String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
+    if (basePath != null) {
+      Location oldLocation = locationFactory.create(basePath);
+      Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
+        .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
+      LOG.info("Upgrading base path for dataset {} from {} to {}", dsSpec.getName(), oldLocation, newlocation);
+      renameLocation(oldLocation, newlocation);
+    } else {
+      LOG.info("The basepath for files {} is null. No files will be moved");
+    }
   }
 
   private void upgradeSystemDatasets() throws Exception {

@@ -181,11 +181,6 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public RuntimeMetrics getMetrics() {
-          return RuntimeStats.getMapReduceMetrics(applicationId.getNamespaceId(), applicationId.getId(), jobName);
-        }
-
-        @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
           programWaitForFinish(timeout, timeoutUnit, jobId);
         }
@@ -283,7 +278,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
     };
   }
-
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {

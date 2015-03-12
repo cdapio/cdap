@@ -180,6 +180,13 @@ public final class QueueName {
   }
 
   /**
+   * @return the number of components in the queue name
+   */
+  public int getNumComponents() {
+    return components.length;
+  }
+
+  /**
    * Gets the bytes representation of the queue uri. Note that mutating the returned array will mutate the underlying
    * byte array as well. If mutation is needed, one has to copy to a separate array.
    *

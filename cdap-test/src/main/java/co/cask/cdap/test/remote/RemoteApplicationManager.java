@@ -106,8 +106,7 @@ public class RemoteApplicationManager implements ApplicationManager {
       @Override
       public RuntimeMetrics getFlowletMetrics(String flowletId) {
         return metricsClient.getFlowletMetrics(
-          Id.Program.from(Id.Application.from(clientConfig.getNamespace(), application.getId()),
-                          ProgramType.FLOW, flowId.getRunnableId()), flowletId);
+          Id.Program.from(application, ProgramType.FLOW, flowId.getRunnableId()), flowletId);
       }
 
       @Override
@@ -145,12 +144,6 @@ public class RemoteApplicationManager implements ApplicationManager {
         @Override
         public void stop() {
           stopProgram(jobId);
-        }
-
-        @Override
-        public RuntimeMetrics getMetrics() {
-          return metricsClient.getMapReduceMetrics(Id.Program.from(application, ProgramType.MAPREDUCE,
-                                                                   jobId.getRunnableId()));
         }
 
         @Override
