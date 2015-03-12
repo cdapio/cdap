@@ -64,7 +64,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   /**
    * Returns {@code true} if service error is propagated as error for this controller state.
    * If this method returns {@code false}, service error is just getting logged and state will just change
-   * to {@link State#COMPLETED}. This method returns {@code true} by default.
+   * to {@link State#KILLED}. This method returns {@code true} by default.
    */
   protected boolean propagateServiceError() {
     return true;
@@ -83,8 +83,6 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
         if (propagateServiceError()) {
           error(failure);
         } else if (getState() != State.STOPPING) {
-          complete();
-        } else {
           stop();
         }
       }
