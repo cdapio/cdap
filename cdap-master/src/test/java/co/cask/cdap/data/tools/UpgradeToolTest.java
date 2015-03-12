@@ -14,27 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
+import org.junit.Test;
 
 /**
- * Instance of this class is for managing a running {@link co.cask.cdap.api.procedure.Procedure Procedure}.
+ *
  */
-public interface ProcedureManager {
-
-  /**
-   * Stops the running procedure.
-   */
-  void stop();
-
-  /**
-   * @return the Procedure metrics.
-   */
-  RuntimeMetrics getMetrics();
-
-  /**
-   * @return A {@link ProcedureClient} for issuing queries to the running procedure.
-   */
-  ProcedureClient getClient();
+public class UpgradeToolTest {
+  @Test
+  public void testInjector() throws Exception {
+    UpgradeTool upgraderMain = new UpgradeTool();
+    // should not throw exception
+  }
 }
