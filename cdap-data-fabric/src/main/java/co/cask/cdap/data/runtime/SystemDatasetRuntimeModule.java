@@ -99,6 +99,5 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
     mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
     mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
-
   }
 }
