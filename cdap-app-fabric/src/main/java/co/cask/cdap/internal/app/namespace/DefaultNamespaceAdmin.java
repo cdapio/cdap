@@ -240,8 +240,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       new ArrayList<ApplicationSpecification>(store.getAllApplications(namespaceId));
 
     for (ApplicationSpecification appSpec : allAppSpec) {
-      for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
-        ScheduleSpecification scheduleSpec = entry.getValue();
+      for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
         Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
         ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
         Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
