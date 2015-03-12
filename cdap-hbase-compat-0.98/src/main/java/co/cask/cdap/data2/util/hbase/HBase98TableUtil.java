@@ -271,8 +271,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
       for (RegionLoad regionLoad : regionsLoad.values()) {
         //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
         TableName tableName = HRegionInfo.getTable(regionLoad.getName());
-
-        if (!isCDAPTable(admin.getTableDescriptor(tableName))) {
+        if (admin.tableExists(tableName) && !isCDAPTable(admin.getTableDescriptor(tableName))) {
           continue;
         }
         HTableNameConverter hTableNameConverter = new HTable98NameConverter();

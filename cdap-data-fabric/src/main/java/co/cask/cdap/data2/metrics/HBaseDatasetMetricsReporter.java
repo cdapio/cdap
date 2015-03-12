@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metrics;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -25,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -117,11 +119,13 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
       try {
         Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(statEntry.getKey().getNamespace());
         for (DatasetSpecificationSummary spec : instances) {
-          String dsName = spec.getName();
-          if (tableName.startsWith(dsName)) {
+          dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace, spec.getName()));
+          DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
+                                                                                                  spec.getName()));
+          if (specification.isParent(tableName)) {
             MetricsCollector collector =
               metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
-                                                          Constants.Metrics.Tag.DATASET, dsName));
+                                                          Constants.Metrics.Tag.DATASET, spec.getName()));
             collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
             break;
           }

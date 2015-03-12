@@ -181,6 +181,32 @@ public final class DatasetSpecification {
   }
 
   /**
+   * Returns true if the tableName corresponds to the dataset spec.
+   * @param tableName
+   * @return
+   */
+  public boolean isParent(String tableName) {
+    return isParent(tableName, this);
+  }
+
+  private boolean isParent(String tableName, DatasetSpecification specification) {
+    if (tableName == null) {
+      return false;
+    }
+    if (specification.getSpecifications().size() == 0 && specification.getName().equals(tableName)) {
+      return true;
+    }
+    if (tableName.startsWith(specification.getName())) {
+      for (Map.Entry<String, DatasetSpecification> specEntry : specification.getSpecifications().entrySet()) {
+        if (tableName.startsWith(specEntry.getValue().getName())) {
+          return isParent(tableName, specEntry.getValue());
+        }
+      }
+    }
+    return  false;
+  }
+
+  /**
    * Hash value.
    */
   @Override

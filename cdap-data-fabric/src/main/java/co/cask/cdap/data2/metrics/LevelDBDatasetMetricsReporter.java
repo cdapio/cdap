@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metrics;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -108,12 +109,12 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
       Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
       for (DatasetSpecificationSummary spec : instances) {
-        String dsName = spec.getName();
-        if (tableName.startsWith(dsName)) {
-          // use the first part of the dataset name, would use history if dataset name is history.objects.kv
+        DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
+                                                                                                spec.getName()));
+        if (specification.isParent(tableName)) {
           MetricsCollector collector =
             metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
-                                                        Constants.Metrics.Tag.DATASET, dsName));
+                                                        Constants.Metrics.Tag.DATASET, spec.getName()));
           int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
           collector.gauge("dataset.size.mb", sizeInMb);
           break;
