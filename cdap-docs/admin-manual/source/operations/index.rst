@@ -35,7 +35,8 @@ Operations
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
+- |preferences|_ **Preferences** provide the ability to save configuration information. 
+  Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
