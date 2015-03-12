@@ -67,7 +67,6 @@ public class StandaloneTestBase {
         standaloneMain = StandaloneMain.create(null, configuration, new Configuration());
         standaloneMain.startUp();
 
-
       } catch (Exception e) {
         LOG.error("Failed to start standalone", e);
         if (standaloneMain != null) {

@@ -10,7 +10,6 @@ angular.module(PKG.name + '.feature.admin')
         method: 'PUT',
         _cdapPath: '/namespaces/' + $scope.model.name,
         body: {
-          id: $scope.model.name,
           name: $scope.model.name,
           description: $scope.model.description
         }

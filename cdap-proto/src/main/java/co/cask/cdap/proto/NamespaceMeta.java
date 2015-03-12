@@ -23,14 +23,12 @@ import com.google.common.base.Preconditions;
  * Represents metadata for namespaces
  */
 public final class NamespaceMeta {
-  // id is always identical to name. We keep this field here because the UI may depend on it.
-  private final String id;
+
   private final String name;
   private final String description;
   private NamespaceConfig config;
 
   private NamespaceMeta(String name, String description, NamespaceConfig config) {
-    this.id = name;
     this.name = name;
     this.description = description;
     this.config = config;
@@ -101,26 +99,8 @@ public final class NamespaceMeta {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    return id.equals(((NamespaceMeta) o).id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(id);
-  }
-
-  @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("id", id)
       .add("name", name)
       .add("description", description)
       .add("config", getConfig())

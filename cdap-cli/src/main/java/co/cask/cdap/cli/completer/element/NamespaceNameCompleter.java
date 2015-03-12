@@ -32,10 +32,10 @@ import java.util.List;
 /**
  * Completer for namespace ids.
  */
-public class NamespaceIdCompleter extends StringsCompleter {
+public class NamespaceNameCompleter extends StringsCompleter {
 
   @Inject
-  public NamespaceIdCompleter(final NamespaceClient namespaceClient) {
+  public NamespaceNameCompleter(final NamespaceClient namespaceClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
