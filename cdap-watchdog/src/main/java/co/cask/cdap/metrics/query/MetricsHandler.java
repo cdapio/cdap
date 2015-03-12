@@ -26,6 +26,7 @@ import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;

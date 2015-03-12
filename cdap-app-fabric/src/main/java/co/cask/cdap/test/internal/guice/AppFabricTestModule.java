@@ -78,8 +78,8 @@ public final class AppFabricTestModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
-    install(new DataSetsModules().getLocalModule());
-    install(new DataSetServiceModules().getInMemoryModule());
+    install(new DataSetsModules().getStandaloneModules());
+    install(new DataSetServiceModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
     install(new AuthModule());

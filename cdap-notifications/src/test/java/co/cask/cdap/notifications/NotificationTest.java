@@ -96,8 +96,8 @@ public abstract class NotificationTest {
                                   ImmutableList.of(
                                     new ConfigModule(cConf, new Configuration()),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new DataSetsModules().getLocalModule(),
-                                    new DataSetServiceModules().getInMemoryModule(),
+                                    new DataSetsModules().getStandaloneModules(),
+                                    new DataSetServiceModules().getInMemoryModules(),
                                     new LocationRuntimeModule().getInMemoryModules(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new ExploreClientModule(),

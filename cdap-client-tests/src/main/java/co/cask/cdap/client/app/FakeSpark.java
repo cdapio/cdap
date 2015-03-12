@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
@@ -38,6 +38,9 @@ public class FakeSpark extends AbstractSpark {
     setMainClass(FakeSparkProgram.class);
   }
 
+  /**
+   *
+   */
   public static class FakeSparkProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {

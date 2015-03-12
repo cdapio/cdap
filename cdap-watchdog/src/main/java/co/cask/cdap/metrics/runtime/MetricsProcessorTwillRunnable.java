@@ -119,7 +119,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new KafkaMetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule()
      );

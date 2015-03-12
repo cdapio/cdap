@@ -300,6 +300,10 @@ public class UpgradeTool {
 
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
+
+    LOG.info("Upgrading queue.config table ...");
+    QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
+    queueConfigUpgrader.upgrade();
   }
 
   public static void main(String[] args) throws Exception {
@@ -372,7 +376,7 @@ public class UpgradeTool {
       Throwables.propagate(e);
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
-    getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
+    getStore().createNamespace(new NamespaceMeta.Builder()
                                  .setName(Constants.DEFAULT_NAMESPACE)
                                  .setDescription(Constants.DEFAULT_NAMESPACE)
                                  .build());

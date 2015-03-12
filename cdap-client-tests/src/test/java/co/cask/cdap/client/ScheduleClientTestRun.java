@@ -64,8 +64,14 @@ public class ScheduleClientTestRun extends ClientTestBase {
   @Test
   public void testAll() throws Exception {
     List<ScheduleSpecification> list = scheduleClient.list(FakeApp.NAME, FakeWorkflow.NAME);
-    Assert.assertEquals(1, list.size());
-    Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(0).getSchedule().getName());
+    Assert.assertEquals(2, list.size());
+    if (FakeApp.SCHEDULE_NAME.equals(list.get(0).getSchedule().getName())) {
+      Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(0).getSchedule().getName());
+      Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, list.get(1).getSchedule().getName());
+    } else {
+      Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, list.get(0).getSchedule().getName());
+      Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(1).getSchedule().getName());
+    }
 
     String status = scheduleClient.getStatus(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
     Assert.assertEquals("SCHEDULED", status);

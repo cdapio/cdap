@@ -99,11 +99,15 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
-  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE1)
-    .setName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1)
+    .build();
   protected static final String TEST_NAMESPACE2 = "testnamespace2";
-  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
-    .setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
+  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE2)
+    .setDescription(TEST_NAMESPACE2)
+    .build();
 
 
   private static final String hostname = "127.0.0.1";

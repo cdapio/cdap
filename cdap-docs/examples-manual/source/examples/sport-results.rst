@@ -3,7 +3,7 @@
     :description: Cask Data Application Platform WordCount Application
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _examples-fileset:
+.. _examples-sport-results:
 
 =============
 Sport Results
