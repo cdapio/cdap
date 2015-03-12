@@ -20,6 +20,8 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ApplicationBundler;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -80,22 +82,27 @@ public class AppFabricClient {
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceAdmin namespaceAdmin;
+  private final StreamAdmin streamAdmin;
+  private final StreamMetaStore streamMetaStore;
 
   @Inject
   public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin) {
+                         NamespaceAdmin namespaceAdmin, StreamAdmin streamAdmin,
+                         StreamMetaStore streamMetaStore) {
     this.httpHandler = httpHandler;
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceAdmin = namespaceAdmin;
+    this.streamAdmin = streamAdmin;
+    this.streamMetaStore = streamMetaStore;
   }
 
-  public void reset() {
+  public void reset() throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/unrecoverable/reset");
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
@@ -106,6 +113,8 @@ public class AppFabricClient {
     for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
       if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getId()) &&
         !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getId())) {
+        Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getId());
+        streamAdmin.dropAllInNamespace(namespace);
         namespaceHttpHandler.deleteDatasets(null, new MockResponder(), namespaceMeta.getId());
         namespaceHttpHandler.delete(null, new MockResponder(), namespaceMeta.getId());
       }

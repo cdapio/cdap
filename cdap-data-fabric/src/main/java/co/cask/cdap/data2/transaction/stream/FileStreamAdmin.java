@@ -110,7 +110,9 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     for (final Location streamLocation : locations) {
+      Id.Stream stream = StreamUtils.getStreamIdFromLocation(streamLocation);
       doTruncate(streamLocation);
+      alterExploreStream(stream, false);
     }
 
     // Also drop the state table
@@ -325,6 +327,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public void drop(Id.Stream streamId) throws Exception {
     // Same as truncate
     truncate(streamId);
+    alterExploreStream(streamId, false);
   }
 
   private Location getStreamConfigLocation(Id.Stream streamId) throws IOException {
