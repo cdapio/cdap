@@ -721,7 +721,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     deployApplication(testSpace, DummyApp.class);
     deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
+      getDataset(testSpace, "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
     kvTable.put("test", "hello");
     dataSetManager.flush();
