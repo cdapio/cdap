@@ -100,8 +100,8 @@ public class StreamClientTestRun extends ClientTestBase {
 
     streamClient.create(streamId);
 
-    // Send 5000 events
-    int eventCount = 5000;
+    // Send 500 events
+    int eventCount = 500;
     for (int i = 0; i < eventCount; i++) {
       streamClient.sendEvent(streamId, "Testing " + i);
     }
