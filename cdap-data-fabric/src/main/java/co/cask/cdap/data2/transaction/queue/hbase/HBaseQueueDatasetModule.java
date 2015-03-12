@@ -81,7 +81,7 @@ public class HBaseQueueDatasetModule implements DatasetModule {
                                               ClassLoader classLoader) throws IOException {
       QueueName queueName = QueueName.from(URI.create(arguments.get(PROPERTY_QUEUE_NAME)));
       Table table = tableDefinition.getDataset(datasetContext, spec.getSpecification("config"), arguments, classLoader);
-      return new HBaseConsumerStateStore(queueName, table);
+      return new HBaseConsumerStateStore(spec.getName(), queueName, table);
     }
   }
 }

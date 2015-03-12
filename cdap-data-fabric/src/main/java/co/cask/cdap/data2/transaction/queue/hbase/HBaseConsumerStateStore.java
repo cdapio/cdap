@@ -20,10 +20,8 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -45,8 +43,8 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
   private final Table table;
   private final byte[] minStartRow;
 
-  HBaseConsumerStateStore(QueueName queueName, Table table) {
-    super(Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QueueType.QUEUE, table);
+  HBaseConsumerStateStore(String datasetName, QueueName queueName, Table table) {
+    super(datasetName, table);
     this.queueName = queueName;
     this.table = table;
     this.minStartRow = QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0);
@@ -86,8 +84,8 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
   }
 
   /**
-   * Changes the number of consumer instances of the given consumer group. The consumer group configuration needs to be
-   * existed already.
+   * Changes the number of consumer instances of the given consumer group. The consumer group configuration
+   * must exist already.
    *
    * @param groupId groupId of the consumer group
    * @param instances number of instances to change to
