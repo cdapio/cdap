@@ -57,6 +57,7 @@ public class FakeApp extends AbstractApplication {
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
+    addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
     scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", "0 0 1 1 *"), FakeWorkflow.NAME);
     scheduleWorkflow(Schedules.createDataSchedule(STREAM_SCHEDULE_NAME, "", Schedules.Source.STREAM,
