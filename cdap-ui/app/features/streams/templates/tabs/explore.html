@@ -140,21 +140,28 @@
             <div class="results">
               <h3>Results</h3>
               <div class="text-right">
-                <button class="btn btn-default" disabled>Download All</button>
+                <a
+                  class="btn btn-default"
+                  ng-click="download(results.request)"
+                >
+                  Download All
+                </a>
               </div>
 
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th ng-repeat="header in results.schema">{{ header.name }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="results in results.results">
-                    <td ng-repeat="result in results.columns">{{ result }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th ng-repeat="header in results.schema">{{ header.name }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="results in results.results">
+                      <td ng-repeat="result in results.columns">{{ result }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <div ng-hide="results.results.length" class="text-center">

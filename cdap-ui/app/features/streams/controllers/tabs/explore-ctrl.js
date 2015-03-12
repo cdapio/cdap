@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.streams')
       $scope.doEventSearch();
 
 
-      $scope.query = 'SELECT * from history LIMIT 5';
+      $scope.query = 'SELECT * FROM history LIMIT 5';
 
       $scope.execute = function() {
         dataSrc
@@ -79,7 +79,6 @@ angular.module(PKG.name + '.feature.streams')
             $scope.results.schema = result;
           });
 
-
         // request preview
         dataSrc
           .request({
@@ -92,6 +91,22 @@ angular.module(PKG.name + '.feature.streams')
           });
       };
 
+      $scope.download = function(query) {
+        dataSrc
+          .request({
+            _cdapPath: '/data/explore/queries/' +
+                            query.query_handle + '/download',
+            method: 'POST'
+          })
+          .then(function (res) {
+            var element = angular.element('<a/>');
+            element.attr({
+              href: 'data:atachment/csv,' + encodeURIComponent(res),
+              target: '_self',
+              download: 'result.csv'
+            })[0].click();
+          });
+      };
 
 
     }
