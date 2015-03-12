@@ -90,7 +90,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testFlowRuntimeArguments() throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, FilterApp.class);
+    ApplicationManager applicationManager = deployApplication(FilterApp.class);
     Map<String, String> args = Maps.newHashMap();
     args.put("threshold", "10");
     applicationManager.startFlow("FilterFlow", args);
@@ -194,7 +194,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
-    ApplicationManager applicationManager = deployApplication(testSpace, JoinMultiStreamApp.class);
+    ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
     applicationManager.startFlow("JoinMultiFlow");
 
     StreamWriter s1 = applicationManager.getStreamWriter("s1");
@@ -205,7 +205,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     s2.send("testing 2");
     s3.send("testing 3");
 
-    RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "JoinMulti",
+    RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
                                                                     "JoinMultiFlow", "Terminal");
 
     terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
@@ -233,7 +233,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testGetServiceURL() throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
+    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
     centralServiceManager.waitForStatus(true);
 
@@ -384,7 +384,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
     serviceManager.waitForStatus(true);
@@ -413,8 +413,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(testSpace.getId(),
-                                                                   AppWithServices.APP_NAME,
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
                                                                    AppWithServices.SERVICE_NAME);
     serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
     Assert.assertEquals(3, serviceMetrics.getInput());
@@ -530,7 +529,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
   private void testApp(Class<? extends Application> app, String streamName) throws Exception {
 
-    ApplicationManager applicationManager = deployApplication(testSpace, app);
+    ApplicationManager applicationManager = deployApplication(app);
     applicationManager.startFlow("WordCountFlow");
 
     // Send some inputs to streams
@@ -540,8 +539,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
-                                                                   "WordCountApp",
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
                                                                    "WordCountFlow",
                                                                    "CountByField");
     flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
@@ -561,8 +559,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
-    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics(testSpace.getId(), "WordCountApp",
-                                                                       "WordFrequency");
+    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
     procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, procedureMetrics.getException());
 
@@ -583,7 +580,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // The stream MR only consume the body, not the header.
     Assert.assertEquals(3 * 100L, totalCount);
 
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset(testSpace, "mydataset");
+    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
@@ -690,28 +687,28 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoCreateDataset() throws Exception {
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
@@ -740,7 +737,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, app);
+    ApplicationManager applicationManager = deployApplication(app);
     // Query the result
     ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
     ProcedureClient procedureClient = procedureManager.getClient();
