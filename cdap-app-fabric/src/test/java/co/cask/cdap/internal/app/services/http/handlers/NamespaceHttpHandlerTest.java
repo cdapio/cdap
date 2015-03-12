@@ -280,6 +280,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
     Assert.assertFalse(streamAdmin.exists(myStream));
 
+    // Create the namespace again and deploy the application containing schedules.
+    // Application deployment should succeed.
     assertResponseCode(200, createNamespace(OTHER_NAME));
     HttpResponse response = deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    OTHER_NAME);

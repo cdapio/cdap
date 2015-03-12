@@ -22,7 +22,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- *
+ * Application to test the deletion of the Schedules after unrecoverable reset
  */
 public class AppForUnrecoverableResetTest extends AbstractApplication {
   @Override
@@ -35,7 +35,10 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
                      "DummyWorkflow");
   }
 
-  public class DummyWorkflow extends AbstractWorkflow {
+  /**
+   * Dummy workflow
+   */
+  class DummyWorkflow extends AbstractWorkflow {
 
     @Override
     protected void configure() {
@@ -45,8 +48,8 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
   }
 
   /**
-   *
+   * Dummy MapReduce which does nothing
    */
-  public static class DummyMR extends AbstractMapReduce {
+  static class DummyMR extends AbstractMapReduce {
   }
 }
