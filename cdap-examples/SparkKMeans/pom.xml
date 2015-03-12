@@ -28,7 +28,7 @@
 
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkkmeans.SparkKMeansApp</app.main.class>
-    <cdap.version>2.6.1</cdap.version>
+    <cdap.version>2.6.2</cdap.version>
   </properties>
 
   <repositories>
