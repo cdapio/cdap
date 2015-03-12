@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithStreamSizeSchedule;
@@ -262,6 +263,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
     deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
     deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_ID);
+    deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_ID);
 
     Id.DatasetInstance myDataset = Id.DatasetInstance.from(ID, "myds");
     Id.Stream myStream = Id.Stream.from(OTHER_ID, "stream");
@@ -285,6 +287,12 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(streamAdmin.exists(myStream));
     assertResponseCode(200, deleteNamespace(OTHER_ID));
     Assert.assertFalse(streamAdmin.exists(myStream));
+
+    // Schedules should be deleted when the namespace was deleted. Deploying app again should succeed
+    assertResponseCode(200, createNamespace(OTHER_ID));
+    HttpResponse response = deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_ID);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    assertResponseCode(200, deleteNamespace(OTHER_ID));
   }
 
   @Test

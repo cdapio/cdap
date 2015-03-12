@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -28,6 +30,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -35,13 +39,14 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Admin for managing namespaces
@@ -57,11 +62,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final ProgramRuntimeService runtimeService;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final Scheduler scheduler;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
-                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               Scheduler scheduler) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -69,6 +76,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
+    this.scheduler = scheduler;
   }
 
   /**
@@ -191,6 +199,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Delete queues and streams data
       queueAdmin.dropAllInNamespace(namespaceId.getId());
       streamAdmin.dropAllInNamespace(namespaceId);
+      // Delete all the schedules
+      deleteAllSchedules(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
       // TODO: CDAP-1729 - Delete/Expire Metrics. API unavailable right now.
@@ -209,6 +219,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
       }
+    } catch (SchedulerException e) {
+      LOG.warn("Error while deleting namespace {}", namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     } catch (DatasetManagementException e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
@@ -220,6 +233,22 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
+  }
+
+  private void deleteAllSchedules(Id.Namespace namespaceId) throws NotFoundException, SchedulerException {
+    List<ApplicationSpecification> allAppSpec =
+      new ArrayList<ApplicationSpecification>(store.getAllApplications(namespaceId));
+
+    for (ApplicationSpecification appSpec : allAppSpec) {
+      for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
+        ScheduleSpecification scheduleSpec = entry.getValue();
+        Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
+        ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+        Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
+        scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(),
+                                 scheduleSpec.getSchedule().getName());
+      }
+    }
   }
 
   @Override
