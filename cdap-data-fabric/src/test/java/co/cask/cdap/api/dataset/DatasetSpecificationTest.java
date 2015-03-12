@@ -55,4 +55,31 @@ public class DatasetSpecificationTest {
     Assert.assertEquals("table", actualInner.getType());
     Assert.assertTrue(actualInner.getSpecifications().isEmpty());
   }
+
+  @Test
+  public void testParent() {
+    DatasetSpecification firstSpec = DatasetSpecification.builder("inner", "table")
+      .build();
+    DatasetSpecification secondSpec = DatasetSpecification.builder("kv", "kvtable")
+      .datasets(firstSpec)
+      .build();
+    DatasetSpecification objSpec1 = DatasetSpecification.builder("obj", "objects")
+      .datasets(secondSpec)
+      .build();
+    DatasetSpecification objSpec2 = DatasetSpecification.builder("objt", "objects")
+      .datasets(secondSpec)
+      .build();
+    DatasetSpecification fourthSpec = DatasetSpecification.builder("history", "store")
+      .datasets(objSpec1, objSpec2)
+      .build();
+
+    Assert.assertTrue(fourthSpec.isParent("history.obj.kv.inner"));
+    Assert.assertTrue(objSpec2.isParent("objt.kv.inner"));
+    Assert.assertTrue(fourthSpec.isParent("history.objt.kv.inner"));
+    Assert.assertFalse(objSpec1.isParent("objt.kv.inner"));
+    Assert.assertFalse(fourthSpec.isParent("history.obj.kv.outer"));
+    Assert.assertFalse(fourthSpec.isParent("history.obj.kv.inner.outer"));
+    Assert.assertFalse(fourthSpec.isParent("history.obj.kv.inner.inner"));
+    Assert.assertFalse(fourthSpec.isParent("obj.kv.inner"));
+  }
 }

@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data2.util.TableId;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -55,7 +56,7 @@ public class LevelDBTableServiceTest {
       new ConfigModule(conf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
+      new DataSetsModules().getLocalModule(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     service = injector.getInstance(LevelDBTableService.class);
@@ -63,42 +64,46 @@ public class LevelDBTableServiceTest {
 
   @Test
   public void testGetTableStats() throws Exception {
-    Assert.assertNull(service.getTableStats().get("table1"));
-    Assert.assertNull(service.getTableStats().get("table2"));
+    String table1 = "cdap_default.table1";
+    String table2 = "cdap_default.table2";
+    TableId tableId1 = TableId.from("default", "table1");
+    TableId tableId2 = TableId.from("default", "table2");
+    Assert.assertNull(service.getTableStats().get(table1));
+    Assert.assertNull(service.getTableStats().get(table2));
 
-    service.ensureTableExists("table1");
-    service.ensureTableExists("table2");
+    service.ensureTableExists(table1);
+    service.ensureTableExists(table2);
     // We sleep to allow ops flush out to disk
     TimeUnit.SECONDS.sleep(1);
 
     // NOTE: empty table may take non-zero disk space: it stores some meta files as well
-    Assert.assertNotNull(service.getTableStats().get("table1"));
-    long table1Size = service.getTableStats().get("table1").getDiskSizeBytes();
-    Assert.assertNotNull(service.getTableStats().get("table2"));
-    long table2Size = service.getTableStats().get("table2").getDiskSizeBytes();
+    Assert.assertNotNull(service.getTableStats().get(tableId1));
+    long table1Size = service.getTableStats().get(tableId1).getDiskSizeBytes();
+    Assert.assertNotNull(service.getTableStats().get(tableId2));
+    long table2Size = service.getTableStats().get(tableId2).getDiskSizeBytes();
 
-    writeSome("table1");
+    writeSome(table1);
     TimeUnit.SECONDS.sleep(1);
 
-    long table1SizeUpdated = service.getTableStats().get("table1").getDiskSizeBytes();
+    long table1SizeUpdated = service.getTableStats().get(tableId1).getDiskSizeBytes();
     Assert.assertTrue(table1SizeUpdated > table1Size);
     table1Size = table1SizeUpdated;
-    Assert.assertEquals(table2Size, service.getTableStats().get("table2").getDiskSizeBytes());
+    Assert.assertEquals(table2Size, service.getTableStats().get(tableId2).getDiskSizeBytes());
 
-    writeSome("table1");
-    writeSome("table2");
+    writeSome(table1);
+    writeSome(table2);
     TimeUnit.SECONDS.sleep(1);
 
-    Assert.assertTrue(service.getTableStats().get("table1").getDiskSizeBytes() > table1Size);
-    long table2SizeUpdated = service.getTableStats().get("table2").getDiskSizeBytes();
+    Assert.assertTrue(service.getTableStats().get(tableId1).getDiskSizeBytes() > table1Size);
+    long table2SizeUpdated = service.getTableStats().get(tableId2).getDiskSizeBytes();
     Assert.assertTrue(table2SizeUpdated > table2Size);
     table2Size = table2SizeUpdated;
 
-    service.dropTable("table1");
+    service.dropTable(table1);
     TimeUnit.SECONDS.sleep(1);
 
-    Assert.assertNull(service.getTableStats().get("table1"));
-    Assert.assertEquals(table2Size, service.getTableStats().get("table2").getDiskSizeBytes());
+    Assert.assertNull(service.getTableStats().get(tableId1));
+    Assert.assertEquals(table2Size, service.getTableStats().get(tableId2).getDiskSizeBytes());
   }
 
   private void writeSome(String tableName) throws IOException {
