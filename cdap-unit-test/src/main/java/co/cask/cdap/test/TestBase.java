@@ -63,8 +63,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -73,6 +72,8 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -95,7 +96,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -136,49 +136,14 @@ public class TestBase {
   private static StreamCoordinatorClient streamCoordinatorClient;
 
   // This list is to record ApplicationManager create inside @Test method
-  private final List<ApplicationManager> applicationManagers = Lists.newArrayList();
+  private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   private static TestManager testManager;
+  private static NamespaceAdmin namespaceAdmin;
 
-  protected static TestManager getTestManager() {
+  private static TestManager getTestManager() {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager;
-  }
-
-  /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
-   * must be in the same or children package as the application.
-   *
-   * @deprecated Use {@link TestManager#deployApplication(Class, java.io.File...)} from {@link #getTestManager()}.
-   *
-   * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
-   */
-  @Deprecated
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                 File... bundleEmbeddedJars) {
-    TestManager testManager = getTestManager();
-    ApplicationManager applicationManager = testManager.deployApplication(applicationClz, bundleEmbeddedJars);
-    applicationManagers.add(applicationManager);
-    return applicationManager;
-  }
-
-  /**
-   * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
-   * This method could be called between two unit tests, to make them independent.
-   *
-   * @deprecated Use {@link TestManager#clear()} from {@link #getTestManager()}.
-   */
-  @Deprecated
-  protected void clear() {
-    try {
-      TestManager testManager = getTestManager();
-      testManager.clear();
-    } catch (Exception e) {
-      // Unchecked exception to maintain compatibility until we remove this method
-      throw Throwables.propagate(e);
-    }
   }
 
   @Before
@@ -291,10 +256,7 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
+    appFabricClient = injector.getInstance(AppFabricClient.class);
     datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
@@ -305,7 +267,8 @@ public class TestBase {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
-    testManager = new UnitTestManager(injector, appFabricClient, datasetFramework, txSystemClient, discoveryClient);
+    testManager = injector.getInstance(UnitTestManager.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
   }
@@ -384,74 +347,182 @@ public class TestBase {
   }
 
   /**
+   * Creates a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void createNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setId(namespace).build());
+  }
+
+  /**
+   * Deletes a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().deleteNamespace(namespace);
+  }
+
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
+   * must be in the same or children package as the application.
+   *
+   * @param applicationClz The application class
+   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   */
+  protected static ApplicationManager deployApplication(Id.Namespace namespace,
+                                                        Class<? extends Application> applicationClz,
+                                                        File... bundleEmbeddedJars) {
+    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz,
+                                                                               bundleEmbeddedJars);
+    applicationManagers.add(applicationManager);
+    return applicationManager;
+  }
+
+
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
+   * must be in the same or children package as the application.
+   *
+   * @param applicationClz The application class
+   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   */
+  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+                                                        File... bundleEmbeddedJars) {
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+  }
+
+  /**
+   * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
+   * This method could be called between two unit tests, to make them independent.
+   */
+  protected static void clear() {
+    try {
+      getTestManager().clear();
+    } catch (Exception e) {
+      // Unchecked exception to maintain compatibility until we remove this method
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
    * Deploys {@link DatasetModule}.
    *
-   * @deprecated Use {@link TestManager#deployDatasetModule(String, Class)} ()} from {@link #getTestManager()}.
-   *
-   * @param moduleName name of the module
+   * @param moduleName name othe module
    * @param datasetModule module class
    * @throws Exception
    */
-  @Deprecated
-  protected final void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
-    throws Exception {
-    TestManager testManager = getTestManager();
-    testManager.deployDatasetModule(moduleName, datasetModule);
+  protected static void deployDatasetModule(Id.Namespace namespace, String moduleName,
+                                            Class<? extends DatasetModule> datasetModule) throws Exception {
+    getTestManager().deployDatasetModule(namespace, moduleName, datasetModule);
+  }
+
+
+  /**
+   * Deploys {@link DatasetModule}.
+   *
+   * @param moduleName name othe module
+   * @param datasetModule module class
+   * @throws Exception
+   */
+  protected static void deployDatasetModule(String moduleName,
+                                            Class<? extends DatasetModule> datasetModule) throws Exception {
+    deployDatasetModule(Constants.DEFAULT_NAMESPACE_ID, moduleName, datasetModule);
   }
 
   /**
    * Adds an instance of a dataset.
-   *
-   * @deprecated Use {@link TestManager#addDatasetInstance(String, String, DatasetProperties)}
-   * from {@link #getTestManager()}.
    *
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
    */
-  @Deprecated
-  protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
-                                                       String datasetInstanceName,
-                                                       DatasetProperties props) throws Exception {
-    TestManager testManager = getTestManager();
-    return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, props);
+  protected static <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
+                                                                 String datasetInstanceName,
+                                                                 DatasetProperties props) throws Exception {
+    return getTestManager().addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, props);
+  }
+
+
+  /**
+   * Adds an instance of a dataset.
+   *
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param props properties
+   * @param <T> type of the dataset admin
+   */
+  protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+                                                                 String datasetInstanceName,
+                                                                 DatasetProperties props) throws Exception {
+    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName, props);
   }
 
   /**
    * Adds an instance of dataset.
    *
-   * @deprecated Use {@link TestManager#addDatasetInstance(String, String)} ()} from {@link #getTestManager()}.
+   * @param datasetTypeName dataset type name
+   * @param datasetInstanceName instance name
+   * @param <T> type of the dataset admin
+   */
+  protected final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
+                                                                String datasetInstanceName) throws Exception {
+    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Adds an instance of dataset.
    *
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
-  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    TestManager testManager = getTestManager();
-    return testManager.addDatasetInstance(datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName,
+                              DatasetProperties.EMPTY);
   }
 
   /**
    * Gets Dataset manager of Dataset instance of type <T>
-   * @deprecated Use {@link TestManager#getDataset(String)} ()} from {@link #getTestManager()}.
+   *
    * @param datasetInstanceName - instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
-  @Deprecated
+  protected final <T> DataSetManager<T> getDataset(Id.Namespace namespace,
+                                                   String datasetInstanceName) throws Exception {
+    return getTestManager().getDataset(namespace, datasetInstanceName);
+  }
+
+  /**
+   * Gets Dataset manager of Dataset instance of type <T>
+   *
+   * @param datasetInstanceName - instance name of dataset
+   * @return Dataset Manager of Dataset instance of type <T>
+   * @throws Exception
+   */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
-    TestManager testManager = getTestManager();
-    return testManager.getDataset(datasetInstanceName);
+    return getDataset(Constants.DEFAULT_NAMESPACE_ID, datasetInstanceName);
+  }
+
+  /**
+   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   */
+  protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
+    return getTestManager().getQueryClient(namespace);
   }
 
   /**
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
-    TestManager testManager = getTestManager();
-    return testManager.getQueryClient();
+    return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
   }
 }

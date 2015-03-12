@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -52,6 +53,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -79,9 +81,16 @@ import java.util.concurrent.TimeoutException;
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
 
+  private final Id.Namespace testSpace = Id.Namespace.from("testspace");
+
+  @Before
+  public void setUp() throws Exception {
+    createNamespace(testSpace);
+  }
+
   @Test
   public void testFlowRuntimeArguments() throws Exception {
-    ApplicationManager applicationManager = deployApplication(FilterApp.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, FilterApp.class);
     Map<String, String> args = Maps.newHashMap();
     args.put("threshold", "10");
     applicationManager.startFlow("FilterFlow", args);
@@ -105,7 +114,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
-    ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
     WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();
     Assert.assertEquals(1, schedules.size());
@@ -185,7 +194,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
   public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
-    ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, JoinMultiStreamApp.class);
     applicationManager.startFlow("JoinMultiFlow");
 
     StreamWriter s1 = applicationManager.getStreamWriter("s1");
@@ -196,7 +205,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     s2.send("testing 2");
     s3.send("testing 3");
 
-    RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti", "JoinMultiFlow", "Terminal");
+    RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "JoinMulti",
+                                                                    "JoinMultiFlow", "Terminal");
 
     terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
@@ -216,14 +226,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
-  public void testApp() throws InterruptedException, IOException, TimeoutException {
+  public void testApp() throws Exception {
     testApp(WordCountApp.class, "text");
   }
 
   @Category(SlowTests.class)
   @Test
   public void testGetServiceURL() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
     centralServiceManager.waitForStatus(true);
 
@@ -285,7 +295,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testServiceRunnableInstances() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
     serviceManager.waitForStatus(true);
 
@@ -331,9 +341,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
-                                         int expectedCount, int expectedTotalCount) {
-    DataSetManager<KeyValueTable> datasetManager = applicationManager
-      .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+                                         int expectedCount, int expectedTotalCount) throws Exception {
+    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace,
+                                                              AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
@@ -358,13 +368,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithWorker() throws Exception {
-    ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
     TimeUnit.MILLISECONDS.sleep(200);
     manager.stop();
     applicationManager.stopAll();
-    DataSetManager<KeyValueTable> dataSetManager = applicationManager.getDataSet(AppWithWorker.DATASET);
+    DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
     KeyValueTable table = dataSetManager.get();
     Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
     Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
@@ -374,7 +384,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
     serviceManager.waitForStatus(true);
@@ -403,7 +413,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(testSpace.getId(),
+                                                                   AppWithServices.APP_NAME,
                                                                    AppWithServices.SERVICE_NAME);
     serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
     Assert.assertEquals(3, serviceMetrics.getInput());
@@ -457,7 +468,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testTransactionHandlerService() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
     serviceManager.waitForStatus(true);
@@ -511,17 +522,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.stop();
     serviceManager.waitForStatus(false);
 
-    DataSetManager<KeyValueTable> dsManager
-      = applicationManager.getDataSet(AppWithServices.TRANSACTIONS_DATASET_NAME);
+    DataSetManager<KeyValueTable> dsManager = getDataset(testSpace, AppWithServices.TRANSACTIONS_DATASET_NAME);
     String value = Bytes.toString(dsManager.get().read(AppWithServices.DESTROY_KEY));
     Assert.assertEquals(AppWithServices.VALUE, value);
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<? extends Application> app, String streamName)
-    throws IOException, TimeoutException, InterruptedException {
+  private void testApp(Class<? extends Application> app, String streamName) throws Exception {
 
-    ApplicationManager applicationManager = deployApplication(app);
+    ApplicationManager applicationManager = deployApplication(testSpace, app);
     applicationManager.startFlow("WordCountFlow");
 
     // Send some inputs to streams
@@ -531,7 +540,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WordCountApp",
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
+                                                                   "WordCountApp",
                                                                    "WordCountFlow",
                                                                    "CountByField");
     flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
@@ -551,7 +561,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
-    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
+    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics(testSpace.getId(), "WordCountApp",
+                                                                       "WordFrequency");
     procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, procedureMetrics.getException());
 
@@ -572,27 +583,29 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // The stream MR only consume the body, not the header.
     Assert.assertEquals(3 * 100L, totalCount);
 
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager =
-      applicationManager.getDataSet("mydataset");
+    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset(testSpace, "mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
   @Category(SlowTests.class)
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
-    ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
+    ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
     applicationManager.startFlow("GenSinkFlow");
 
     // Check the flowlet metrics
-    RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+    RuntimeMetrics genMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
+                                                               "GenSinkApp",
                                                                "GenSinkFlow",
                                                                "GenFlowlet");
 
-    RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+    RuntimeMetrics sinkMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
+                                                                "GenSinkApp",
                                                                 "GenSinkFlow",
                                                                 "SinkFlowlet");
 
-    RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics("GenSinkApp",
+    RuntimeMetrics batchSinkMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(),
+                                                                     "GenSinkApp",
                                                                      "GenSinkFlow",
                                                                      "BatchSinkFlowlet");
 
@@ -610,19 +623,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testAppRedeployKeepsData() {
-    ApplicationManager appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
+  public void testAppRedeployKeepsData() throws Exception {
+    ApplicationManager appManager = deployApplication(testSpace, AppWithTable.class);
+    DataSetManager<Table> myTableManager = getDataset(testSpace, "my_table");
     myTableManager.get().put(new Put("key1", "column1", "value1"));
     myTableManager.flush();
 
     // Changes should be visible to other instances of datasets
-    DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
+    DataSetManager<Table> myTableManager2 = getDataset(testSpace, "my_table");
     Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Even after redeploy of an app: changes should be visible to other instances of datasets
     appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
+    DataSetManager<Table> myTableManager3 = getDataset(testSpace, "my_table");
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Calling commit again (to test we can call it multiple times)
@@ -634,11 +647,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
 
   @Test(timeout = 60000L)
-  public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
-    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
+  public void testFlowletInitAndSetInstances() throws Exception {
+    ApplicationManager appManager = deployApplication(testSpace, DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "DataSetInitApp",
+                                                                   "DataSetFlow", "Consumer");
 
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
@@ -661,7 +675,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     flowManager.stop();
 
-    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+    DataSetManager<Table> dataSetManager = getDataset(testSpace, "conf");
     Table confTable = dataSetManager.get();
 
     Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
@@ -676,38 +690,39 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoCreateDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
   }
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
     // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
-    deployApplication(DummyApp.class);
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
+    deployApplication(testSpace, DummyApp.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
+      getDataset(testSpace, "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
     kvTable.put("test", "hello");
     dataSetManager.flush();
@@ -725,7 +740,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
-    ApplicationManager applicationManager = deployApplication(app);
+    ApplicationManager applicationManager = deployApplication(testSpace, app);
     // Query the result
     ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
     ProcedureClient procedureClient = procedureManager.getClient();
@@ -739,18 +754,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 90000L)
   public void testSQLQuery() throws Exception {
     // Deploying app makes sure that the default namespace is available.
-    deployApplication(DummyApp.class);
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
+    deployApplication(testSpace, DummyApp.class);
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployApplication(testSpace, AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-      appManager.getDataSet("myTable");
+      getDataset(testSpace, "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
     kvTable.put("a", "1");
     kvTable.put("b", "2");
     kvTable.put("c", "1");
     myTableManager.flush();
 
-    Connection connection = getQueryClient();
+    Connection connection = getQueryClient(testSpace);
     try {
 
       // run a query over the dataset
@@ -773,11 +788,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testByteCodeClassLoader() throws Exception {
     // This test verify bytecode generated classes ClassLoading
 
-    ApplicationManager appManager = deployApplication(ClassLoaderTestApp.class);
+    ApplicationManager appManager = deployApplication(testSpace, ClassLoaderTestApp.class);
     FlowManager flowManager = appManager.startFlow("BasicFlow");
 
     // Wait for at least 10 records being generated
-    RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
+    RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "ClassLoaderTestApp",
+                                                                "BasicFlow", "Sink");
     flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
     flowManager.stop();
 
@@ -795,16 +811,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.stop();
 
     // Verify the record count with dataset
-    KeyValueTable records = appManager.<KeyValueTable>getDataSet("records").get();
+    DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace, "records");
+    KeyValueTable records = recordsManager.get();
     Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
   }
 
   @Category(XSlowTests.class)
   @Test
   public void testDatasetUncheckedUpgrade() throws Exception {
-    ApplicationManager applicationManager = deployApplication(DatasetUncheckedUpgradeApp.class);
+    deployApplication(testSpace, DatasetUncheckedUpgradeApp.class);
     DataSetManager<DatasetUncheckedUpgradeApp.RecordDataset> datasetManager =
-      applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+      getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
     DatasetUncheckedUpgradeApp.Record expectedRecord = new DatasetUncheckedUpgradeApp.Record("0AXB", "john", "doe");
     datasetManager.get().writeRecord("key", expectedRecord);
     datasetManager.flush();
@@ -814,15 +831,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(expectedRecord, actualRecord);
 
     // Test compatible upgrade
-    applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(testSpace, CompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record compatibleRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), compatibleRecord);
 
     // Test in-compatible upgrade
-    applicationManager = deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(testSpace, IncompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
     try {
       datasetManager.get().getRecord("key");
       Assert.fail("Expected to throw exception here due to an incompatible Dataset upgrade.");
@@ -831,8 +848,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     // Revert the upgrade
-    applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    deployApplication(testSpace, CompatibleDatasetUncheckedUpgradeApp.class);
+    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record revertRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), revertRecord);

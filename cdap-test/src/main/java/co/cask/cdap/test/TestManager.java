@@ -21,6 +21,8 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 
 import java.io.File;
 import java.sql.Connection;
@@ -35,10 +37,12 @@ public interface TestManager {
    * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
    *
+   * @param namespace The namespace to deploy to
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
-  ApplicationManager deployApplication(Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+  ApplicationManager deployApplication(Id.Namespace namespace,
+                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
@@ -48,46 +52,73 @@ public interface TestManager {
 
   /**
    * Deploys {@link DatasetModule}.
+   *
+   * @param namespace namespace to deploy the dataset module to
    * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
    */
   @Beta
-  void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule)
+  void deployDatasetModule(Id.Namespace namespace, String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception;
 
   /**
    * Adds an instance of a dataset.
+   *
+   * @param namespace namespace of the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
    */
   @Beta
-  <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
+  <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                String datasetTypeName, String datasetInstanceName,
                                                 DatasetProperties props) throws Exception;
 
   /**
    * Adds an instance of dataset.
+   *
+   * @param namespace namespace of the dataset
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
    */
   @Beta
-  <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName) throws Exception;
+  <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                String datasetTypeName, String datasetInstanceName) throws Exception;
 
   /**
    * Gets Dataset manager of Dataset instance of type <T>
-   * @param datasetInstanceName - instance name of dataset
+   *
+   * @param namespace namespace of the dataset
+   * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
   @Beta
-  <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception;
+  <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception;
 
   /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
+   * @param namespace namespace to interact within
+   * @return a JDBC connection that allows to run SQL queries over data sets.
    */
   @Beta
-  Connection getQueryClient() throws Exception;
+  Connection getQueryClient(Id.Namespace namespace) throws Exception;
+
+  /**
+   * Creates a namespace.
+   *
+   * @param namespaceMeta the namespace to create
+   * @throws Exception
+   */
+  void createNamespace(NamespaceMeta namespaceMeta) throws Exception;
+
+  /**
+   * Deletes a namespace.
+   *
+   * @param namespace the namespace to delete
+   * @throws Exception
+   */
+  void deleteNamespace(Id.Namespace namespace) throws Exception;
 }

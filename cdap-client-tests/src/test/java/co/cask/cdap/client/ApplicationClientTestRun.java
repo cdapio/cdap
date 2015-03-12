@@ -137,7 +137,6 @@ public class ApplicationClientTestRun extends ClientTestBase {
       appClient.deleteAll();
       appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
       appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
-
       Assert.assertEquals(0, appClient.list().size());
     }
   }

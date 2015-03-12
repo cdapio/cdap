@@ -15,7 +15,6 @@
  */
 
 package co.cask.cdap.api.metrics;
-
 import co.cask.cdap.api.annotation.Beta;
 
 import java.util.concurrent.TimeUnit;
