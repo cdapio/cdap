@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
@@ -45,8 +46,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
   @Inject
   public DistributedSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
                                      ProgramRuntimeService programRuntimeService,
-                                     DiscoveryServiceClient discoveryServiceClient) {
-    super(schedulerSupplier, storeFactory, programRuntimeService);
+                                     DiscoveryServiceClient discoveryServiceClient, CConfiguration cConf) {
+    super(schedulerSupplier, storeFactory, programRuntimeService, cConf);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
