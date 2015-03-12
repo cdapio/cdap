@@ -25,6 +25,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
@@ -75,15 +76,26 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   }
 
   @Override
-  public QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
-    throws IOException {
+  public QueueConsumer createConsumer(QueueName queueName,
+                                      ConsumerConfig consumerConfig, int numGroups) throws IOException {
     LevelDBQueueAdmin admin = ensureTableExists(queueName);
     LevelDBTableCore core = new LevelDBTableCore(admin.getActualTableName(queueName), service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
-    QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
-      new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
+    QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0)
+                            ? QueueEvictor.NOOP : createEvictor(queueName, numGroups, core);
     return new LevelDBQueueConsumer(cConf, core, getQueueLock(queueName.toString()),
                                     consumerConfig, queueName, evictor);
+  }
+
+  @VisibleForTesting
+  QueueEvictor createEvictor(QueueName queueName, int numGroups) throws IOException {
+    LevelDBQueueAdmin admin = ensureTableExists(queueName);
+    LevelDBTableCore core = new LevelDBTableCore(admin.getActualTableName(queueName), service);
+    return createEvictor(queueName, numGroups, core);
+  }
+
+  private QueueEvictor createEvictor(QueueName queueName, int numGroups, LevelDBTableCore core) {
+    return new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
   }
 
   /**

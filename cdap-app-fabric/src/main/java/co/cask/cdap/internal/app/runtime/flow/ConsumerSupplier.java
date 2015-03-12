@@ -20,8 +20,6 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -45,7 +43,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final QueueName queueName;
   private final int numGroups;
   private ConsumerConfig consumerConfig;
-  private Object consumer;
+  private Closeable consumer;
 
   static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
@@ -107,18 +105,8 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   @Override
   public void close() throws IOException {
     try {
-      if (consumer != null && consumer instanceof Closeable) {
-        // Call close in a new transaction.
-        // TODO (terence): Actually need to coordinates with other flowlets to drain the queue.
-        TransactionContext txContext = dataFabricFacade.createTransactionManager();
-        txContext.start();
-        try {
-          ((Closeable) consumer).close();
-          txContext.finish();
-        } catch (TransactionFailureException e) {
-          LOG.warn("Fail to commit transaction when closing consumer.");
-          txContext.abort();
-        }
+      if (consumer != null) {
+        consumer.close();
       }
     } catch (Exception e) {
       LOG.warn("Fail to close queue consumer.", e);
