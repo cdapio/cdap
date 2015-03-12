@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Services;
-import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +44,6 @@ public class RouterMain extends DaemonMain {
 
   private ZKClientService zkClientService;
   private NettyRouter router;
-  private DiscoveryService discoveryService;
 
   public static void main(String[] args) {
     try {
@@ -79,9 +77,6 @@ public class RouterMain extends DaemonMain {
 
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
-
-      //Get the discovery service
-      discoveryService = injector.getInstance(DiscoveryService.class);
 
       LOG.info("Router initialized.");
     } catch (Throwable t) {
