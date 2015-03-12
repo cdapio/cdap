@@ -201,8 +201,8 @@ public class TestBase {
 
     injector = Guice.createInjector(
       createDataFabricModule(cConf),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new AuthModule(),

@@ -16,19 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -41,7 +35,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -73,23 +66,14 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new ExploreClientModule(),
+      new DataSetsModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
-
           // Data-fabric bindings
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-
-          // txds2
-          install(new FactoryModuleBuilder()
-                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                    .build(DatasetDefinitionRegistryFactory.class));
-          bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
-          bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
-
           // For log publishing
           bind(LogAppender.class).to(KafkaLogAppender.class);
-
         }
       }
     );

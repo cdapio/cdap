@@ -376,7 +376,7 @@ public class UpgradeTool {
       Throwables.propagate(e);
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
-    getStore().createNamespace(new NamespaceMeta.Builder().setId(Constants.DEFAULT_NAMESPACE)
+    getStore().createNamespace(new NamespaceMeta.Builder()
                                  .setName(Constants.DEFAULT_NAMESPACE)
                                  .setDescription(Constants.DEFAULT_NAMESPACE)
                                  .build());

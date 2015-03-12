@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
@@ -24,16 +25,33 @@ import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFac
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 /**
  * DataSets framework bindings
  */
-public class DataSetsModules {
+public class DataSetsModules extends RuntimeModule {
 
-  public Module getLocalModule() {
+  @Override
+  public Module getInMemoryModules() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        install(new FactoryModuleBuilder()
+                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                  .build(DatasetDefinitionRegistryFactory.class));
+        bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+        expose(DatasetFramework.class);
+      }
+    };
+  }
+
+  @Override
+  public Module getStandaloneModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -49,7 +67,8 @@ public class DataSetsModules {
 
   }
 
-  public Module getDistributedModule() {
+  @Override
+  public Module getDistributedModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {

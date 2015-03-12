@@ -80,7 +80,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override

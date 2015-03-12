@@ -33,7 +33,7 @@ public enum ElementType {
            null, null, ArgumentName.INSTANCE, Capability.PREFERENCES),
 
   NAMESPACE("Namespace", "Namespaces", "namespace", "namespaces",
-            null, null, ArgumentName.NAMESPACE_ID, Capability.PREFERENCES),
+            null, null, ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
 
   APP("Application", "Applications", "app", "apps",
       null, null, ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
