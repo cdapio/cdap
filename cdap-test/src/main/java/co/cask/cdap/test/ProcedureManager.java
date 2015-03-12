@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
+
 /**
  * Instance of this class is for managing a running {@link co.cask.cdap.api.procedure.Procedure Procedure}.
  */
@@ -25,6 +27,11 @@ public interface ProcedureManager {
    * Stops the running procedure.
    */
   void stop();
+
+  /**
+   * @return the Procedure metrics.
+   */
+  RuntimeMetrics getMetrics();
 
   /**
    * @return A {@link ProcedureClient} for issuing queries to the running procedure.

@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

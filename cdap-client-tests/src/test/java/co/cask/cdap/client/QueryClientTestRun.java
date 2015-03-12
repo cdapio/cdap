@@ -74,7 +74,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    namespaceClient.create(new NamespaceMeta.Builder().setId(otherNamespace).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(otherNamespace).build());
     appClient.deploy(createAppJarFile(FakeApp.class));
 
     try {
@@ -103,10 +103,9 @@ public class QueryClientTestRun extends ClientTestBase {
       ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
       List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
       Assert.assertEquals(0, otherNamespaceTables.size());
-
+    } finally {
       programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
       assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    } finally {
       appClient.delete(FakeApp.NAME);
     }
   }
