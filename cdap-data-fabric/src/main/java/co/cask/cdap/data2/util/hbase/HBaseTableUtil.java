@@ -444,7 +444,7 @@ public abstract class HBaseTableUtil {
    * @param namespace the {@link Id.Namespace} to delete
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
 
   /**
    * Disable an HBase table
@@ -586,7 +586,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public abstract Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
+  public abstract Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
 
   /**
    * Carries information about table stats
