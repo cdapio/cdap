@@ -30,13 +30,10 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
-import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
-
-import java.util.Map;
 
 /**
  * Provides guice bindings for {@link DatasetModule} that are by default available in the system.
@@ -57,11 +54,7 @@ public class DefaultDatasetRuntimeModule extends RuntimeModule {
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
         mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
-        mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
-        mapBinder.addBinding("fileSet").toInstance(new FileSetModule());
-        mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
-        mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
-        mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
+        bindDefaultModules(mapBinder);
       }
     };
   }
@@ -76,11 +69,7 @@ public class DefaultDatasetRuntimeModule extends RuntimeModule {
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-leveldb").toInstance(new LevelDBTableModule());
         mapBinder.addBinding("metricsTable-leveldb").toInstance(new LevelDBMetricsTableModule());
-        mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
-        mapBinder.addBinding("fileSet").toInstance(new FileSetModule());
-        mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
-        mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
-        mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
+        bindDefaultModules(mapBinder);
       }
     };
   }
@@ -94,15 +83,22 @@ public class DefaultDatasetRuntimeModule extends RuntimeModule {
                                                                             Names.named("defaultDatasetModules"));
 
         // NOTE: order is important due to dependencies between modules
-        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
         mapBinder.addBinding("orderedTable-hbase").toInstance(new HBaseTableModule());
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
-        mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
-        mapBinder.addBinding("fileSet").toInstance(new FileSetModule());
-        mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
-        mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
-        mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
+        bindDefaultModules(mapBinder);
       }
     };
+  }
+
+  /**
+   * Add bindings for Dataset modules that are available by default
+   */
+  private void bindDefaultModules(MapBinder<String, DatasetModule> mapBinder) {
+    mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
+    mapBinder.addBinding("fileSet").toInstance(new FileSetModule());
+    mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
+    mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
+    mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
+
   }
 }
