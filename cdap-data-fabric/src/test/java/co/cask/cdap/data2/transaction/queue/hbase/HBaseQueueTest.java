@@ -16,8 +16,6 @@
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -29,17 +27,12 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -64,24 +57,18 @@ import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
-import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
-import com.google.common.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -146,24 +133,12 @@ public abstract class HBaseQueueTest extends QueueTest {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
-
-          // Bind the state store DS
-          Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-          defaultModules.put("orderedTable-hbase", new HBaseTableModule());
-          defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
-          defaultModules.put("core", new CoreDatasetsModule());
-          defaultModules.put("queueDataset", new HBaseQueueDatasetModule());
-
-          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-            .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
-          install(new FactoryModuleBuilder()
-                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                    .build(DatasetDefinitionRegistryFactory.class));
-          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         }
       },
       Modules.override(new StreamAdminModules().getDistributedModules())
