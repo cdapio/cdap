@@ -28,7 +28,7 @@ import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.runtime.DefaultDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -131,7 +131,7 @@ public abstract class DatasetServiceTestBase {
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DefaultDatasetRuntimeModule().getInMemoryModules());
+      new SystemDatasetRuntimeModule().getInMemoryModules());
 
     DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override

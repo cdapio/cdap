@@ -23,7 +23,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.DefaultDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.tephra.TransactionManager;
@@ -77,7 +77,7 @@ public class LogCleanupTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new DefaultDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules()
     );
 
     txManager = injector.getInstance(TransactionManager.class);

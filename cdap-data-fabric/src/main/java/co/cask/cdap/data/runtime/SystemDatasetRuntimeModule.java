@@ -42,7 +42,7 @@ import com.google.inject.name.Names;
  * This class is separated out so that combining different {@link DatasetFramework} and {@link DatasetModule} is
  * easier, especially for unit-test.
  */
-public class DefaultDatasetRuntimeModule extends RuntimeModule {
+public class SystemDatasetRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {

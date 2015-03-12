@@ -58,7 +58,7 @@ public class DataSetServiceModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new DefaultDatasetRuntimeModule().getInMemoryModules());
+        install(new SystemDatasetRuntimeModule().getInMemoryModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
@@ -96,7 +96,7 @@ public class DataSetServiceModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new DefaultDatasetRuntimeModule().getStandaloneModules());
+        install(new SystemDatasetRuntimeModule().getStandaloneModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
@@ -136,7 +136,7 @@ public class DataSetServiceModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new DefaultDatasetRuntimeModule().getDistributedModules());
+        install(new SystemDatasetRuntimeModule().getDistributedModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));

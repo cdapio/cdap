@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.DefaultDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -78,7 +78,7 @@ public class TestFileLogging {
       new TransactionModules().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new DefaultDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules()
     );
 
     txManager = injector.getInstance(TransactionManager.class);
