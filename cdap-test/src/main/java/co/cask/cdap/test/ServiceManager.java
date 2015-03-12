@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
+
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -87,4 +89,9 @@ public interface ServiceManager {
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */
   void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
+
+  /**
+   * @return the Service metrics.
+   */
+  RuntimeMetrics getMetrics();
 }

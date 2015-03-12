@@ -54,20 +54,18 @@ import java.util.Set;
 public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   private static final String EMPTY = "";
-  private static final String ID_FIELD = "id";
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
-  private static final String ID = "test";
-  private static final String NAME = "display test";
+  private static final String NAME = "test";
   private static final String DESCRIPTION = "test description";
   private static final String METADATA_VALID =
-    String.format("{\"name\":\"%s\", \"description\":\"%s\"}", NAME, DESCRIPTION);
+    String.format("{\"%s\":\"%s\", \"%s\":\"%s\"}", NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION);
   private static final String METADATA_MISSING_FIELDS = "{}";
   private static final String METADATA_EMPTY_FIELDS = "{\"name\":\"\", \"description\":\"\"}";
   private static final String METADATA_INVALID_JSON = "invalid";
-  private static final String INVALID_ID = "!nv@l*d/";
-  private static final String OTHER_ID = "test1";
+  private static final String INVALID_NAME = "!nv@l*d/";
+  private static final String OTHER_NAME = "test1";
   private static final Gson GSON = new Gson();
 
   private HttpResponse createNamespace(String id) throws Exception {
@@ -122,16 +120,15 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     List<JsonObject> namespaces = readListResponse(response);
     int initialSize = namespaces.size();
     // create and verify
-    response = createNamespace(METADATA_VALID, ID);
+    response = createNamespace(METADATA_VALID, NAME);
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
     Assert.assertEquals(initialSize + 1, namespaces.size());
-    Assert.assertEquals(ID, namespaces.get(0).get(ID_FIELD).getAsString());
     Assert.assertEquals(NAME, namespaces.get(0).get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
     response = listAllNamespaces();
     namespaces = readListResponse(response);
@@ -141,34 +138,32 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateDuplicate() throws Exception {
     // prepare - create namespace
-    HttpResponse response = createNamespace(METADATA_VALID, ID);
+    HttpResponse response = createNamespace(METADATA_VALID, NAME);
     assertResponseCode(200, response);
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // create again with the same name
-    response = createNamespace(METADATA_EMPTY_FIELDS, ID);
+    response = createNamespace(METADATA_EMPTY_FIELDS, NAME);
     // create is idempotent, so response code is 200, but no updates should happen
     assertResponseCode(200, response);
     // check that no updates happened
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
   }
 
   @Test
   public void testInvalidReservedId() throws Exception {
-    HttpResponse response = createNamespace(METADATA_VALID, INVALID_ID);
+    HttpResponse response = createNamespace(METADATA_VALID, INVALID_NAME);
     assertResponseCode(400, response);
     // 'default' and 'system' are reserved namespaces
     response = createNamespace(METADATA_VALID, Constants.DEFAULT_NAMESPACE);
@@ -190,55 +185,52 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCreateInvalidJson() throws Exception {
     // invalid json should return 400
-    HttpResponse response = createNamespace(METADATA_INVALID_JSON, ID);
+    HttpResponse response = createNamespace(METADATA_INVALID_JSON, NAME);
     assertResponseCode(400, response);
     // verify
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     assertResponseCode(404, response);
   }
 
   @Test
   public void testCreateMissingOrEmptyFields() throws Exception {
     // create with no metadata
-    HttpResponse response = createNamespace(ID);
+    HttpResponse response = createNamespace(NAME);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
 
     // create with missing fields
-    response = createNamespace(METADATA_MISSING_FIELDS, ID);
+    response = createNamespace(METADATA_MISSING_FIELDS, NAME);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
 
     // create with empty fields
-    response = createNamespace(METADATA_EMPTY_FIELDS, ID);
+    response = createNamespace(METADATA_EMPTY_FIELDS, NAME);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(EMPTY, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
   }
 
@@ -247,43 +239,43 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     // test deleting non-existent namespace
     assertResponseCode(404, deleteNamespace("doesnotexist"));
-    assertResponseCode(200, createNamespace(ID));
-    assertResponseCode(200, getNamespace(ID));
-    assertResponseCode(200, createNamespace(OTHER_ID));
-    assertResponseCode(200, getNamespace(OTHER_ID));
+    assertResponseCode(200, createNamespace(NAME));
+    assertResponseCode(200, getNamespace(NAME));
+    assertResponseCode(200, createNamespace(OTHER_NAME));
+    assertResponseCode(200, getNamespace(OTHER_NAME));
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    Location nsLocation = locationFactory.create(ID);
+    Location nsLocation = locationFactory.create(NAME);
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     StreamAdmin streamAdmin = getInjector().getInstance(StreamAdmin.class);
 
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
-    deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_ID);
+    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
-    Id.DatasetInstance myDataset = Id.DatasetInstance.from(ID, "myds");
-    Id.Stream myStream = Id.Stream.from(OTHER_ID, "stream");
+    Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
+    Id.Stream myStream = Id.Stream.from(OTHER_NAME, "stream");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Assert.assertTrue(streamAdmin.exists(myStream));
-    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because unrecoverable reset is disabled
-    assertResponseCode(403, deleteNamespace(ID));
+    assertResponseCode(403, deleteNamespace(NAME));
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
     // because service is running
-    assertResponseCode(403, deleteNamespace(ID));
+    assertResponseCode(403, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
-    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
     // delete should work now
-    assertResponseCode(200, deleteNamespace(ID));
+    assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
     Assert.assertTrue(streamAdmin.exists(myStream));
-    assertResponseCode(200, deleteNamespace(OTHER_ID));
+    assertResponseCode(200, deleteNamespace(OTHER_NAME));
     Assert.assertFalse(streamAdmin.exists(myStream));
   }
 
@@ -291,41 +283,41 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testDeleteDatasetsOnly() throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     // test deleting non-existent namespace
-    assertResponseCode(200, createNamespace(ID));
-    assertResponseCode(200, getNamespace(ID));
+    assertResponseCode(200, createNamespace(NAME));
+    assertResponseCode(200, getNamespace(NAME));
 
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    Location nsLocation = locationFactory.create(ID);
+    Location nsLocation = locationFactory.create(NAME);
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
 
-    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, ID);
+    deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
 
-    Id.DatasetInstance myDataset = Id.DatasetInstance.from(ID, "myds");
+    Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
-    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because reset is not enabled
-    assertResponseCode(403, deleteNamespaceData(ID));
+    assertResponseCode(403, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
     // because service is running
-    assertResponseCode(403, deleteNamespace(ID));
+    assertResponseCode(403, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
-    getRunnableStartStop(ID, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
-    assertResponseCode(200, deleteNamespaceData(ID));
+    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    assertResponseCode(200, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
-    Assert.assertTrue(getAppList(ID).size() == 2);
-    Assert.assertTrue(getAppDetails(ID, "AppWithServices").get("name").getAsString().equals("AppWithServices"));
-    Assert.assertTrue(getAppDetails(ID, "AppWithDataSet").get("name").getAsString().equals("AppWithDataSet"));
-    assertResponseCode(200, getNamespace(ID));
+    Assert.assertTrue(getAppList(NAME).size() == 2);
+    Assert.assertTrue(getAppDetails(NAME, "AppWithServices").get("name").getAsString().equals("AppWithServices"));
+    Assert.assertTrue(getAppDetails(NAME, "AppWithDataSet").get("name").getAsString().equals("AppWithDataSet"));
+    assertResponseCode(200, getNamespace(NAME));
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
-    assertResponseCode(200, deleteNamespace(ID));
-    assertResponseCode(404, getNamespace(ID));
+    assertResponseCode(200, deleteNamespace(NAME));
+    assertResponseCode(404, getNamespace(NAME));
   }
 
   @Test
@@ -349,7 +341,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // test create and get
     String fooNamespace = "fooNamespace";
-    NamespaceMeta toCreate = new NamespaceMeta.Builder().setId(fooNamespace).build();
+    NamespaceMeta toCreate = new NamespaceMeta.Builder().setName(fooNamespace).build();
     namespaceClient.create(toCreate);
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);
     Assert.assertNotNull(receivedMeta);
@@ -366,19 +358,18 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testProperties() throws Exception {
     // create with no metadata
-    HttpResponse response = createNamespace(ID);
+    HttpResponse response = createNamespace(NAME);
     assertResponseCode(200, response);
     // verify
-    response = getNamespace(ID);
+    response = getNamespace(NAME);
     JsonObject namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
-    Assert.assertEquals(ID, namespace.get(ID_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
-    NamespaceMeta meta = new NamespaceMeta.Builder().setId(ID).setSchedulerQueueName("prod").build();
-    setProperties(ID, meta);
-    response = getNamespace(ID);
+    NamespaceMeta meta = new NamespaceMeta.Builder().setName(NAME).setSchedulerQueueName("prod").build();
+    setProperties(NAME, meta);
+    response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
@@ -386,19 +377,19 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                                                            NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
-    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
     // Update description
-    meta = new NamespaceMeta.Builder().setId(ID).setDescription("new fancy description").build();
-    setProperties(ID, meta);
-    response = getNamespace(ID);
+    meta = new NamespaceMeta.Builder().setName(NAME).setDescription("new fancy description").build();
+    setProperties(NAME, meta);
+    response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
     //verify that the description has changed
     Assert.assertEquals("new fancy description", namespace.get(DESCRIPTION_FIELD).getAsString());
-    Assert.assertEquals(ID, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
 
     // verify other properties set earlier has not changed.
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
@@ -406,7 +397,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("prod", config.getSchedulerQueueName());
 
     // cleanup
-    response = deleteNamespace(ID);
+    response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

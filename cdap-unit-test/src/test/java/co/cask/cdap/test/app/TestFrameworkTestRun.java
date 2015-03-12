@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
@@ -33,7 +34,6 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
@@ -754,7 +754,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try {
 
       // run a query over the dataset
-      ResultSet results = connection.prepareStatement("select first from mytable where second = '1'")
+      ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
         .executeQuery();
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));

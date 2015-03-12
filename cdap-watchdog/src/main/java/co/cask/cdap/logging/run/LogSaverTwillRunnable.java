@@ -196,7 +196,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new LogSaverStatusServiceModule()
     );
   }

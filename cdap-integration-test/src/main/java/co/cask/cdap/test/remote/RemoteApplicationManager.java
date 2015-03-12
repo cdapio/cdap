@@ -16,10 +16,13 @@
 
 package co.cask.cdap.test.remote;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -53,12 +56,14 @@ public class RemoteApplicationManager implements ApplicationManager {
   private final ApplicationClient applicationClient;
   private final ProgramClient programClient;
   private final String applicationId;
+  private final MetricsClient metricsClient;
 
   public RemoteApplicationManager(String applicationId, ClientConfig clientConfig) {
     this.applicationId = applicationId;
     this.clientConfig = clientConfig;
     this.applicationClient = new ApplicationClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
+    this.metricsClient = new MetricsClient(clientConfig);
   }
 
   @Override
@@ -78,6 +83,13 @@ public class RemoteApplicationManager implements ApplicationManager {
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
+      }
+
+      @Override
+      public RuntimeMetrics getFlowletMetrics(String flowletId) {
+        return metricsClient.getFlowletMetrics(
+          Id.Program.from(Id.Application.from(clientConfig.getNamespace(), applicationId),
+                          ProgramType.FLOW, flowId.getRunnableId()), flowletId);
       }
 
       @Override
@@ -197,7 +209,6 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    final ProgramId workflowId = new ProgramId(applicationId, workflowName, ProgramType.WORKFLOW);
     // currently we are using it for schedule, so not starting the workflow
 
     return new WorkflowManager() {
@@ -299,14 +310,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (List<ProgramRecord> programRecords : applicationClient.listPrograms(applicationId).values()) {
-        for (ProgramRecord programRecord : programRecords) {
-          // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
-          // throw error when you stop something that is not running.
-          ProgramId id = new ProgramId(programRecord.getApp(), programRecord.getId(), programRecord.getType());
-          if (isRunning(id)) {
-            programClient.stop(id.getApplicationId(), id.getRunnableType(), id.getRunnableId());
-          }
+      for (ProgramRecord programRecord : applicationClient.listPrograms(applicationId)) {
+        // have to do a check, since some program types (mapreduce, spark) could stop by themselves earlier,
+        // and appFabricServer.stop will throw error when you stop something that is not running.
+        ProgramId id = new ProgramId(programRecord.getApp(), programRecord.getName(), programRecord.getType());
+        if (isRunning(id)) {
+          programClient.stop(id.getApplicationId(), id.getRunnableType(), id.getRunnableId());
         }
       }
     } catch (Exception e) {

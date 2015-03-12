@@ -355,7 +355,7 @@ see the :ref:`configuration-security` section.
      - ``20``
      -
    * - ``stream.notification.threshold``
-     - ``1000``
+     - ``1024``
      - Size of data, in MB, to be ingested by a Stream before a notification is published
    * - ``thrift.max.read.buffer``
      - ``16777216``

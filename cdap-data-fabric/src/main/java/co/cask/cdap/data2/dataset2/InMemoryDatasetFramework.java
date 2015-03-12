@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -89,7 +88,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                  @Named("defaultDatasetModules") Map<String, ? extends DatasetModule> defaultModules,
+                                  @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
                                   CConfiguration configuration) {
     this.registryFactory = registryFactory;
     this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
@@ -111,7 +110,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     // add default dataset modules to system namespace
     namespaces.add(Constants.SYSTEM_NAMESPACE_ID);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
-    for (Map.Entry<String, ? extends DatasetModule> entry : defaultModules.entrySet()) {
+    for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
       LOG.info("Adding Default module {} to system namespace", entry.getKey());
       String moduleName = entry.getKey();
       DatasetModule module = entry.getValue();
@@ -181,7 +180,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
-    LOG.info("Dataset Specification name {} and properties {}", spec.getName(), spec.getProperties());
     def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
     instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
     LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);

@@ -18,13 +18,6 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.cli.app.AdapterApp;
-import co.cask.cdap.cli.app.FakeApp;
-import co.cask.cdap.cli.app.FakeDataset;
-import co.cask.cdap.cli.app.FakeFlow;
-import co.cask.cdap.cli.app.FakeProcedure;
-import co.cask.cdap.cli.app.FakeSpark;
-import co.cask.cdap.cli.app.PrefixedEchoHandler;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
@@ -34,6 +27,14 @@ import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.AdapterApp;
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeDataset;
+import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.FakeProcedure;
+import co.cask.cdap.client.app.FakeSpark;
+import co.cask.cdap.client.app.FakeWorkflow;
+import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -121,26 +122,11 @@ public class CLIMainTest extends StandaloneTestBase {
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
-    cliConfig = new CLIConfig(clientConfig);
-    Injector injector = Guice.createInjector(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(PrintStream.class).toInstance(System.out);
-        bind(String.class).annotatedWith(Names.named(CLIMain.NAME_URI)).toInstance(CONNECTION.toString());
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_VERIFY_SSL)).toInstance(false);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_DEBUG)).toInstance(true);
-        bind(Boolean.class).annotatedWith(Names.named(CLIMain.NAME_AUTOCONNECT)).toInstance(true);
-        bind(CLIConfig.class).toInstance(cliConfig);
-        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-        bind(CConfiguration.class).toInstance(CConfiguration.create());
-        bind(TableRenderer.class).to(CsvTableRenderer.class);
-      }
-    });
-
+    cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
+    cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = injector.getInstance(CLIMain.class);
     cli = cliMain.getCLI();
 
     testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
@@ -241,6 +227,18 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  public void testSchedule() throws Exception {
+    String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
+    String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
+    testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
+  }
+
+  @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
@@ -251,7 +249,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
-    namespaceClient.create(new NamespaceMeta.Builder().setId(barspace).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
     cliConfig.getClientConfig().setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -445,15 +443,14 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   @Ignore
   public void testNamespaces() throws Exception {
-    final String id = PREFIX + "testNamespace";
-    final String name = "testDisplayName";
+    final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setId("default").setName("default").setDescription("default").build();
+      .setName("default").setDescription("default").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
@@ -465,30 +462,30 @@ public class CLIMainTest extends StandaloneTestBase {
                               String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s %s", id, name, description);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
+    String command = String.format("create namespace %s %s", name, description);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setId(id).setName(name).setDescription(description).build();
+      .setName(name).setDescription(description).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
     // get namespace details and verify
     expectedNamespaces = Lists.newArrayList(expected);
-    command = String.format("describe namespace %s", id);
+    command = String.format("describe namespace %s", name);
     testNamespacesOutput(cli, command, expectedNamespaces);
 
     // try creating a namespace with existing id
-    command = String.format("create namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
+    command = String.format("create namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", name));
 
     // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
-      .setId(defaultFields).setName(defaultFields).setDescription("").build();
+      .setName(defaultFields).setDescription("").build();
     // test that there are 3 namespaces including default
     expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -497,8 +494,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
 
     // delete namespace and verify
-    command = String.format("delete namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", id));
+    command = String.format("delete namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
   @Test
@@ -613,11 +610,11 @@ public class CLIMainTest extends StandaloneTestBase {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
     Table table = Table.builder()
-      .setHeader("id", "display_name", "description")
+      .setHeader("name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return Lists.newArrayList(object.getId(), object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
     cliMain.getTableRenderer().render(printStream, table);

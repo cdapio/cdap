@@ -89,8 +89,10 @@ public class LevelDBTableService {
   /**
    * only use in unit test since the singleton may be reused for multiple tests.
    */
-  public void clearTables() {
-    tables.clear();
+  public void clearTables() throws IOException {
+    for (String name : ImmutableList.copyOf(tables.keySet())) {
+      dropTable(name);
+    }
   }
 
   public Collection<String> list() throws Exception {

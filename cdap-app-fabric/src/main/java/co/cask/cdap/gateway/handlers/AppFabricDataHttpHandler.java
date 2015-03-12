@@ -69,7 +69,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, null);
+    dataList(responder, store, dsFramework, Data.STREAM, namespaceId, null, null);
   }
 
   /**
@@ -80,7 +80,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStreamsByApp(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-id") String appId) {
-    dataList(request, responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
+    dataList(responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
   }
 
   /**
@@ -91,7 +91,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowsByStream(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("stream-id") String streamId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
+    programListByDataAccess(responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
                             namespaceId, streamId);
   }
 
@@ -101,17 +101,17 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    */
   void getDatasets(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
+    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
   }
 
   /**
    * Returns a dataset associated with namespace. This is here for the v2 API to use,
    * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
    */
-  void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+  void getDatasetSpecification(HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("dataset-id") String datasetId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
+    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
   }
 
   /**
@@ -122,7 +122,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId) {
-    dataList(request, responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
+    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
   }
 
   /**
@@ -133,7 +133,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
+    programListByDataAccess(responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
                             namespaceId, datasetId);
   }
 
@@ -145,7 +145,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkersByDataset(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.WORKER, Data.DATASET,
+    programListByDataAccess(responder, store, dsFramework, ProgramType.WORKER, Data.DATASET,
                             namespaceId, datasetId);
   }
 
@@ -157,7 +157,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   public void getMapReduceByDataset(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(request, responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
+    programListByDataAccess(responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
                             namespaceId, datasetId);
   }
 }

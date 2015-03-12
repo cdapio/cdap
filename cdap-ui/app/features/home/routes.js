@@ -32,7 +32,7 @@ angular.module(PKG.name+'.feature.home')
         controller: function ($state, rNsList, mySessionStorage) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
-            return one.id === $state.params.namespace;
+            return one.name === $state.params.namespace;
           });
 
 
@@ -41,7 +41,7 @@ angular.module(PKG.name+'.feature.home')
           if(!n.length) {
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
-                var d = latest || rNsList[0].id;
+                var d = latest || rNsList[0].name;
                 console.warn('invalid namespace, defaulting to ', d);
                 $state.go(
                   $state.current,

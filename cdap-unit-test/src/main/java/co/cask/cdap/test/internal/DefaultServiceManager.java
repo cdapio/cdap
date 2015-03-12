@@ -16,10 +16,12 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractServiceManager;
+import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -114,6 +116,11 @@ public class DefaultServiceManager extends AbstractServiceManager {
     String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceName);
     ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
     return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
+  }
+
+  @Override
+  public RuntimeMetrics getMetrics() {
+    return RuntimeStats.getServiceMetrics(applicationId, serviceName);
   }
 
   @Nullable
