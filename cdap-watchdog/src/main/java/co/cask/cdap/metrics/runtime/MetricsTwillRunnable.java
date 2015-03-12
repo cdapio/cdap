@@ -109,7 +109,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new ZKClientModule(),
       new KafkaClientModule(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

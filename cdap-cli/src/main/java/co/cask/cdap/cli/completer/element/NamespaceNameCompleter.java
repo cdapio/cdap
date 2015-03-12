@@ -32,17 +32,17 @@ import java.util.List;
 /**
  * Completer for namespace ids.
  */
-public class NamespaceIdCompleter extends StringsCompleter {
+public class NamespaceNameCompleter extends StringsCompleter {
 
   @Inject
-  public NamespaceIdCompleter(final NamespaceClient namespaceClient) {
+  public NamespaceNameCompleter(final NamespaceClient namespaceClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         List<String> namespaceIds = new ArrayList<String>();
         try {
           for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
-            namespaceIds.add(namespaceMeta.getId());
+            namespaceIds.add(namespaceMeta.getName());
           }
         } catch (IOException e) {
           return Lists.newArrayList();

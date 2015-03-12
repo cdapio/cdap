@@ -84,7 +84,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new LocationRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
-        new DataSetsModules().getDistributedModule(),
+        new DataSetsModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
         new ExploreClientModule(),

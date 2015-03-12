@@ -14,10 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.schedule.Schedules;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -31,19 +32,21 @@ public class FakeApp extends AbstractApplication {
   public static final String NAME = "FakeApp";
   public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
+  public static final String SCHEDULE_NAME = "someSchedule";
+  public static final String STREAM_SCHEDULE_NAME = "streamSchedule";
 
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
   public static final List<String> SPARK = Lists.newArrayList(FakeSpark.NAME);
-  public static final List<String> WORKFLOWS = Lists.newArrayList();
-  public static final List<String> SERVICES = Lists.newArrayList();
+  public static final List<String> WORKFLOWS = Lists.newArrayList(FakeWorkflow.NAME);
+  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME, PrefixedEchoHandler.NAME);
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
     .addAll(FLOWS)
     .addAll(PROCEDURES)
     .addAll(MAPREDUCES)
-    .addAll(SPARK)
     .addAll(WORKFLOWS)
+    .addAll(SPARK)
     .addAll(SERVICES)
     .build();
 
@@ -56,6 +59,11 @@ public class FakeApp extends AbstractApplication {
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
+    addWorkflow(new FakeWorkflow());
+    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", "0 0 1 1 *"), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.createDataSchedule(STREAM_SCHEDULE_NAME, "", Schedules.Source.STREAM,
+                                                  STREAM_NAME, 10000), FakeWorkflow.NAME);
+    addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }
 }

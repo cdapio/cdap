@@ -35,6 +35,9 @@ public class AdapterApp extends AbstractApplication {
     addMapReduce(new DummyMapReduceJob());
   }
 
+  /**
+   *
+   */
   public static class AdapterWorkflow extends AbstractWorkflow {
     public static final String NAME = "AdapterWorkflow";
     @Override
@@ -45,6 +48,9 @@ public class AdapterApp extends AbstractApplication {
     }
   }
 
+  /**
+   *
+   */
   public static class DummyMapReduceJob extends AbstractMapReduce {
     public static final String NAME = "DummyMapReduceJob";
     @Override

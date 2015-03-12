@@ -48,6 +48,7 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(AdapterCommands.class))
         .add(injector.getInstance(PreferencesCommandSet.class))
         .add(injector.getInstance(NamespaceCommands.class))
+        .add(injector.getInstance(ScheduleCommands.class))
         .build());
   }
 }

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
+
 /**
  * Instance for this class is for managing a running {@link co.cask.cdap.api.flow.Flow Flow}.
  */
@@ -28,6 +30,12 @@ public interface FlowManager {
    * @param instances Number of instances to change to.
    */
   void setFlowletInstances(String flowletName, int instances);
+
+  /**
+   * @param flowletId Id of the flowlet.
+   * @return the flowlet metrics.
+   */
+  RuntimeMetrics getFlowletMetrics(String flowletId);
 
   /**
    * Stops the running flow.
