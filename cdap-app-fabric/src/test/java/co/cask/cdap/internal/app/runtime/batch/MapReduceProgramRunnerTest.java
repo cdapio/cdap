@@ -73,7 +73,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -354,11 +356,19 @@ public class MapReduceProgramRunnerTest {
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class, false);
 
-    java.io.File[] outputFiles = outputDir.listFiles();
+    File[] outputFiles = outputDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.startsWith("part-r-") && !name.endsWith(".crc");
+      }
+    });
     Assert.assertNotNull("no output files found", outputFiles);
-    Assert.assertTrue("no output files found", outputFiles.length > 0);
-    java.io.File outputFile = outputFiles[0];
-    int lines = Files.readLines(outputFile, Charsets.UTF_8).size();
+
+    int lines = 0;
+    for (File file : outputFiles) {
+      lines += Files.readLines(file, Charsets.UTF_8).size();
+    }
+
     // dummy check that output file is not empty
     Assert.assertTrue(lines > 0);
   }
