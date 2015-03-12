@@ -74,7 +74,7 @@ public class QueryClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    namespaceClient.create(new NamespaceMeta.Builder().setId(otherNamespace).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(otherNamespace).build());
     appClient.deploy(createAppJarFile(FakeApp.class));
 
     try {

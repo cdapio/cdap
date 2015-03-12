@@ -41,6 +41,9 @@ public class AppReturnsArgs extends AbstractApplication {
     addService(new BasicService(SERVICE, new ArgService()));
   }
 
+  /**
+   *
+   */
   public static final class ArgService extends AbstractHttpServiceHandler {
 
     @Path(ENDPOINT)

@@ -18,7 +18,6 @@ package co.cask.cdap.logging.appender;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -46,12 +45,8 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
@@ -68,7 +63,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -103,17 +97,8 @@ public class TestResilientLogging {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      // NOTE: we want real service, but we don't need persistence
-      Modules.override(new DataSetServiceModules().getLocalModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() {
-          })
-            .annotatedWith(Names.named("defaultDatasetModules"))
-            .toInstance(DataSetServiceModules.INMEMORY_DATASET_MODULES);
-        }
-      }),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),

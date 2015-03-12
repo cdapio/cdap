@@ -78,13 +78,13 @@ public abstract class AbstractNamespaceClient {
 
   public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
     UnauthorizedException {
-    URL url = resolve(String.format("namespaces/%s", namespaceMeta.getId()));
+    URL url = resolve(String.format("namespaces/%s", namespaceMeta.getName()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
-                                                                    namespaceMeta.getId()))) {
-        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
+                                                                    namespaceMeta.getName()))) {
+        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getName());
       }
       return;
     }
