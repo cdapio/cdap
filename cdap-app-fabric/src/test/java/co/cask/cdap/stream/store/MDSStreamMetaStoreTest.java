@@ -61,8 +61,8 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   public static void init() throws Exception {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
-      new DataSetServiceModules().getInMemoryModule(),
-      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getInMemoryModules(),
+      new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
       new ExploreClientModule(),
       new AuthModule(),

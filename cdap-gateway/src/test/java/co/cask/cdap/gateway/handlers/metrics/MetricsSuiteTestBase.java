@@ -166,8 +166,8 @@ public abstract class MetricsSuiteTestBase {
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule()
     ).with(new AbstractModule() {
       @Override

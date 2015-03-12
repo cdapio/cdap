@@ -102,7 +102,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule());
+      new DataSetsModules().getDistributedModules());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
