@@ -21,6 +21,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionType;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -143,7 +144,8 @@ public class DequeueScanAttributes {
     long firstShortInProgress = dataInput.readLong();
     long[] inProgress = readLongArray(dataInput);
     long[] invalids = readLongArray(dataInput);
-    return new Transaction(readPointer, writePointer, invalids, inProgress, firstShortInProgress);
+    return new Transaction(readPointer, writePointer, invalids, inProgress, firstShortInProgress,
+                           TransactionType.SHORT);
   }
 
   private static void write(DataOutput dataOutput, long[] array) throws IOException {

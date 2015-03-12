@@ -36,8 +36,7 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -154,7 +153,16 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int instances = getInstances(request);
+      int instances;
+      try {
+        instances = getInstances(request);
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
+        return;
+      } catch (JsonSyntaxException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
+        return;
+      }
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
