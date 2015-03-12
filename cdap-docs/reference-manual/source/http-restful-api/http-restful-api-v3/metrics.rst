@@ -348,7 +348,7 @@ To search for the available metrics within a given context, perform an HTTP POST
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/v3/search?target=metric&context=namespace.default.app.PurchaseHistory``
+     - ``POST <base-url>/v3/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory``
    * - Returns
      - ``[ "user.customers.count”, “system.events.processed” ]``
    * - Description
@@ -362,7 +362,7 @@ Querying A Metric
 Once you know the context and the metric to query, you can formulate a request for the
 metrics data.
 
-To query a metric within a given context, perform an HTTP POST request::
+To query a metric within a given context, perform an HTTP GET request::
 
   POST <base-url>/v3/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>
 
@@ -391,31 +391,31 @@ To query a metric within a given context, perform an HTTP POST request::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/v3/metrics/query?context=namespace.default.apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/process.busyness?aggregate=true``
+     - ``GET <base-url>/v3/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.flowlet.saver.system.process.busyness?aggregate=true``
    * - Description
-     - Using a *System* metric, *process.busyness*
+     - Using a *System* metric, *system.process.busyness*
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
-       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
+     - ``GET <base-url>/v3/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.runs.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver.user.names.bytes?aggregate=true``
    * - Description
-     - Querying the *User-Defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
+     - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
-       ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
+     - ``GET <base-url>/v3/metrics/query?context=namespace.default.app.HelloWorld.services``
+       ``WhoService.runnables.WhoRun.names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
+     - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
 
 .. rubric:: Comments
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*,
 in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP
-GET method::
+POST method::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events.processed?start=now-5s&count=5
