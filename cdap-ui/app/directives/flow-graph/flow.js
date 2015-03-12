@@ -266,6 +266,7 @@ module.directive('myWorkflowGraph', function ($filter) {
 
         var renderer = new dagreD3.render();
         var g = new dagreD3.graphlib.Graph();
+        var jobOctagonRadius = 50;
         var metricCircleRadius = 25;
         var instanceCircleRadius = 10;
         var flowletCircleRadius = 60;
@@ -302,34 +303,47 @@ module.directive('myWorkflowGraph', function ($filter) {
         });
 
         renderer.shapes().job = function(parent, bbox, node) {
-          var instances = getInstances(node.elem.__data__); // No other way to get name from node.
-          var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
-          var shapeSvg = parent.insert('circle', ':first-child')
-            .attr('x', -bbox.width / 2)
-            .attr('y', -bbox.height / 2)
-            .attr('r', flowletCircleRadius)
+          var w = bbox.width;
+          var h = bbox.height;
+          var points = [
+            //clockwise points from top
+            { x: 0, y: -50}, //a 
+            { x: 33.33, y: -50}, // b
+            { x: 66.6, y: -25}, // c 
+            { x: 66.6, y: 25}, // d 
+            { x: 33.33, y: 50}, // e
+            { x: 0, y: 50}, // f
+            { x: -33.3, y: 25}, // g
+            { x: -33.3, y: -25}, //h
+          ];
+          var shapeSvg = parent.insert('polygon', ':first-child')
+            .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
+            .attr("transform", 'rotate(' + 60 + ')')
             .attr('class', 'workflow-shapes foundation-shape job-svg');
 
           node.intersect = function(point) {
-            return dagreD3.intersect.circle(node, flowletCircleRadius, point);
+            return dagreD3.intersect.polygon(node, points, point);
           };
 
           return shapeSvg;
         };
 
         renderer.shapes().conditional = function(parent, bbox, node) {
-          var instances = getInstances(node.elem.__data__); // No other way to get name from node.
-          var instanceCircleScaled = getInstancesScaledRadius(instances, instanceCircleRadius);
-          var shapeSvg = parent.insert('circle', ':first-child')
-            .attr('x', -bbox.width / 2)
-            .attr('y', -bbox.height / 2)
-            .attr('r', flowletCircleRadius)
+          var w = (bbox.width * Math.SQRT2) / 2,
+          h = (bbox.height * Math.SQRT2) / 2,
+          points = [
+            { x:  0, y: -h },
+            { x: -w, y:  0 },
+            { x:  0, y:  h },
+            { x:  w, y:  0 }
+          ],
+          shapeSvg = parent.insert("polygon", ":first-child")
+            .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
             .attr('class', 'workflow-shapes foundation-shape conditional-svg');
 
-          node.intersect = function(point) {
-            return dagreD3.intersect.circle(node, flowletCircleRadius, point);
+          node.intersect = function(p) {
+            return dagreD3.intersect.polygon(node, points, p);
           };
-
           return shapeSvg;
         };
 
@@ -391,12 +405,7 @@ module.directive('myWorkflowGraph', function ($filter) {
           }
           handleHideTip(nodeId);
           var instance = instanceMap[nodeId];
-          // if (instance.type === 'STREAM') {
-          //   $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
-          // } else {
-            $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
-          // }
-
+          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
         }
 
         /**
