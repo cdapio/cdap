@@ -45,12 +45,13 @@ import static org.junit.Assert.assertEquals;
 public class ServiceClientTestRun extends ClientTestBase {
   private ServiceClient serviceClient;
   private ProgramClient programClient;
+  private ApplicationClient appClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
 
-    ApplicationClient appClient = new ApplicationClient(clientConfig);
+    appClient = new ApplicationClient(clientConfig);
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
 
@@ -63,6 +64,7 @@ public class ServiceClientTestRun extends ClientTestBase {
   public void tearDown() throws Throwable {
     programClient.stop(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    appClient.delete(FakeApp.NAME);
   }
 
   @Test

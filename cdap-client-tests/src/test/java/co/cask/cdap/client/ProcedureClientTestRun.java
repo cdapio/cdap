@@ -58,53 +58,56 @@ public class ProcedureClientTestRun extends ClientTestBase {
     File jarFile = createAppJarFile(FakeApp.class);
     appClient.deploy(jarFile);
 
-    // check procedure list
-    verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
-
-    // start procedure
-    programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
-    // wait for procedure to start
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
-    // call procedure
-    String result = procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
-                                         ImmutableMap.of("customer", "joe"));
-    Assert.assertEquals(GSON.toJson(ImmutableMap.of("customer", "realjoe")), result);
-
-    // Validate that procedure calls can not be made to non-default namespaces
-    Id.Namespace testNamespace = clientConfig.getNamespace();
-    clientConfig.setNamespace(Id.Namespace.from("fooNamespace"));
     try {
-      procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
-                           ImmutableMap.of("customer", "joe"));
-      Assert.fail("Procedure calls should not be supported in non-default namespaces.");
-    } catch (IllegalStateException e) {
-      String expectedErrMsg = "Procedure operations are only supported in the default namespace.";
-      Assert.assertEquals(expectedErrMsg, e.getMessage());
+
+      // check procedure list
+      verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
+
+      // start procedure
+      programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+
+      // wait for procedure to start
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+
+      // call procedure
+      String result = procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
+                                           ImmutableMap.of("customer", "joe"));
+      Assert.assertEquals(GSON.toJson(ImmutableMap.of("customer", "realjoe")), result);
+
+      // Validate that procedure calls can not be made to non-default namespaces
+      Id.Namespace testNamespace = clientConfig.getNamespace();
+      clientConfig.setNamespace(Id.Namespace.from("fooNamespace"));
+      try {
+        procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
+                             ImmutableMap.of("customer", "joe"));
+        Assert.fail("Procedure calls should not be supported in non-default namespaces.");
+      } catch (IllegalStateException e) {
+        String expectedErrMsg = "Procedure operations are only supported in the default namespace.";
+        Assert.assertEquals(expectedErrMsg, e.getMessage());
+      }
+      // revert namespace to continue execution of test
+      clientConfig.setNamespace(testNamespace);
+
+      // Validate that procedure calls can not be in non-V2 APIs
+      String testVersion = clientConfig.getApiVersion();
+      clientConfig.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
+      try {
+        procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
+                             ImmutableMap.of("customer", "joe"));
+        Assert.fail("Procedure calls should not be supported in non-v2 APIs.");
+      } catch (IllegalStateException e) {
+        String expectedErrMsg = "Procedure operations are only supported in V2 APIs.";
+        Assert.assertEquals(expectedErrMsg, e.getMessage());
+      }
+      // revert apiVersion to continue execution of test
+      clientConfig.setApiVersion(testVersion);
+
+      // stop procedure
+      programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+    } finally {
+      appClient.delete(FakeApp.NAME);
+      Assert.assertEquals(0, appClient.list().size());
     }
-    // revert namespace to continue execution of test
-    clientConfig.setNamespace(testNamespace);
-
-    // Validate that procedure calls can not be in non-V2 APIs
-    String testVersion = clientConfig.getApiVersion();
-    clientConfig.setApiVersion(Constants.Gateway.API_VERSION_3_TOKEN);
-    try {
-      procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
-                           ImmutableMap.of("customer", "joe"));
-      Assert.fail("Procedure calls should not be supported in non-v2 APIs.");
-    } catch (IllegalStateException e) {
-      String expectedErrMsg = "Procedure operations are only supported in V2 APIs.";
-      Assert.assertEquals(expectedErrMsg, e.getMessage());
-    }
-    // revert apiVersion to continue execution of test
-    clientConfig.setApiVersion(testVersion);
-
-    // stop procedure
-    programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
-    appClient.delete(FakeApp.NAME);
-    Assert.assertEquals(0, appClient.list().size());
   }
 }

@@ -76,32 +76,37 @@ public class QueryClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     namespaceClient.create(new NamespaceMeta.Builder().setId(otherNamespace).build());
     appClient.deploy(createAppJarFile(FakeApp.class));
-    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
-    streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
 
-    Thread.sleep(3000);
-
-    Id.Namespace namespace = getClientConfig().getNamespace();
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
-
-    executeBasicQuery(FakeApp.DS_NAME);
-
-    exploreClient.disableExploreDataset(datasetInstance).get();
     try {
-      queryClient.execute("select * from dataset_" + FakeApp.DS_NAME).get();
-      Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
-    } catch (ExecutionException e) {
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
+      streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
 
+      Thread.sleep(3000);
+
+      Id.Namespace namespace = getClientConfig().getNamespace();
+      Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
+
+      executeBasicQuery(FakeApp.DS_NAME);
+
+      exploreClient.disableExploreDataset(datasetInstance).get();
+      try {
+        queryClient.execute("select * from dataset_" + FakeApp.DS_NAME).get();
+        Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
+      } catch (ExecutionException e) {
+
+      }
+
+      exploreClient.enableExploreDataset(datasetInstance).get();
+      executeBasicQuery(FakeApp.DS_NAME);
+
+      ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
+      List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
+      Assert.assertEquals(0, otherNamespaceTables.size());
+    } finally {
+      appClient.delete(FakeApp.NAME);
     }
-
-    exploreClient.enableExploreDataset(datasetInstance).get();
-    executeBasicQuery(FakeApp.DS_NAME);
-
-    ExploreExecutionResult executionResult = queryClientOtherNamespace.execute("show tables").get();
-    List<QueryResult> otherNamespaceTables = Lists.newArrayList(executionResult);
-    Assert.assertEquals(0, otherNamespaceTables.size());
   }
 
   private void executeBasicQuery(String instanceName) throws Exception {
