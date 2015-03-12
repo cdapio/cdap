@@ -122,7 +122,7 @@ public final class DatasetInstanceMDSUpgrader {
       List<DatasetSpecification>>() {
       @Override
       public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
-        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        MDSKey key = new MDSKey.Builder().add(DatasetInstanceMDS.INSTANCE_PREFIX).build();
         List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
         List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
         for (DatasetSpecification dsSpec : dsSpecs) {
