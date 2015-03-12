@@ -22,10 +22,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
@@ -56,7 +59,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -76,15 +78,21 @@ public class AppFabricClient {
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final NamespaceHttpHandler namespaceHttpHandler;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
   public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
-                         ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
+                         ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                         NamespaceHttpHandler namespaceHttpHandler,
+                         NamespaceAdmin namespaceAdmin) {
     this.httpHandler = httpHandler;
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.namespaceHttpHandler = namespaceHttpHandler;
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   public void reset() {
@@ -93,6 +101,15 @@ public class AppFabricClient {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     httpHandler.resetCDAP(request, responder);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Reset application failed");
+
+    // delete all namespaces
+    for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
+      if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getId()) &&
+        !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getId())) {
+        namespaceHttpHandler.deleteDatasets(null, new MockResponder(), namespaceMeta.getId());
+        namespaceHttpHandler.delete(null, new MockResponder(), namespaceMeta.getId());
+      }
+    }
   }
 
   public void startProgram(String namespaceId, String appId,

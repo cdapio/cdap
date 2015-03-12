@@ -703,8 +703,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
   }
 
