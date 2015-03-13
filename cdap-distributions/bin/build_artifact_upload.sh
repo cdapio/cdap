@@ -14,20 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+######################################################################################
 # Receive artifacts and upload them directly to docs1 (or docs2 if there is an issue?)
 # This script expects to receive 3 parameters in this order:
 #   $1 user                     REMOTE_USER
 #   $2 remote host              REMOTE_HOST
 #   $3 target directory         REMOTE_INCOMING_DIR
-###############################################################################
-#S3_DRY_RUN=--dry-run
-DEBUG="yes"
+######################################################################################
+#DRY_RUN=--dry-run		### uncomment to only test what the rsync would do
+DEBUG=${DEBUG:-NO}              ### set to YES for debugging
 
 # Vars
 RUN_DATE=`date '+%Y%m%d_%R'`
 MAINDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
-LOG_DIR=${MAINDIR}/logs                                 ### log directory
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
@@ -35,12 +35,8 @@ REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
 BUILD_RELEASE_DIRS=*/target                             ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
 
-# notifications and logging
-LOG_FILE=build_sync_logs_${RUN_DATE}.txt
-LOGS=$LOG_DIR/$LOG_FILE
-exec &> >(tee -a "${LOGS}")
-
 #############################
+# find top of repo
 find_repo_root() {
   while test -z ${__repo_root} ; do
     t_root=${PWD}
@@ -54,14 +50,14 @@ find_repo_root() {
 
 # output trimmer
 decho () {
-  if [[ ${DEBUG} ]]; then
+  if [[ ${DEBUG} == 'YES' ]]; then
     echo ${*}
   else
     RSYNC_QUIET='--quiet'
   fi
 }
 
-#Help function
+# Help function
 function HELP {
   echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
   echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT${NORM} <remote_user> <remote_host> <remote_target_directory"\\n
@@ -98,26 +94,25 @@ function sync_build_artifacts_to_docs () {
 
     OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
     mkdir -p ${OUTGOING_DIR}
-    decho "rsyncing with rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${S3_DRY_RUN} 2>&1"
-    rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${S3_DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+    decho "rsyncing with rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1"
+    rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
     echo ""
   done
 }
 
-###############################################################################
+######################################################################################
 decho "STARTING"
 #################################
-mkdir -p ${LOG_DIR}
 find_repo_root && cd ${__repo_root}  ### this takes us to the right place (top of the repo)
 
-#Check number of arguments. If <3 are passed, print help and exit.
+# Check number of arguments. If <3 are passed, print help and exit.
 NUMARGS=$#
 decho -e \\n"Number of arguments: ${NUMARGS}"
 if [ ${NUMARGS} -lt 3 ]; then
   HELP
 fi
 
-## getopts -- Parse command line flags
+# getopts -- Parse command line flags
 while getopts :h FLAG; do
   case ${FLAG} in
     h)  #show help
@@ -134,7 +129,7 @@ shift $((OPTIND-1))
 
 #################################
 
-decho "################################################################################"
+decho "#######################################################################################"
 echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} to docs"
 sync_build_artifacts_to_docs "${BUILD_RELEASE_DIRS}"
 
