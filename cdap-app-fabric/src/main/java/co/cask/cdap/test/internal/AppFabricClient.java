@@ -182,8 +182,8 @@ public class AppFabricClient {
   public ServiceInstances getRunnableInstances(String namespaceId, String applicationId,
                                                String serviceName, String runnableName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/runnables/%s/instances",
-                               namespaceId, applicationId, serviceName, runnableName);
+    String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
+                               namespaceId, applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
