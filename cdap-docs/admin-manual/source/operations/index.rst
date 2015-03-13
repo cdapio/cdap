@@ -17,6 +17,7 @@ Operations
     Metrics <metrics>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
+    Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
     Troubleshooting <troubleshooting>
 
@@ -44,13 +45,17 @@ Operations
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
 
 
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees for **CDAP Programs in YARN.**
+
+
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
-.. |resource-guarantees-in-yarn| replace:: **Providing Resource Guarantees for CDAP Programs in YARN.**
-.. _resource-guarantees-in-yarn: resource-guarantees-in-yarn.html
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: troubleshooting.html
