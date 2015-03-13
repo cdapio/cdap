@@ -180,6 +180,10 @@ public final class Id  {
       return application.getNamespaceId();
     }
 
+    public Namespace getNamespace() {
+      return application.getNamespace();
+    }
+
     public Application getApplication() {
       return application;
     }
@@ -236,6 +240,34 @@ public final class Id  {
       }
       sb.append(")");
       return sb.toString();
+    }
+  }
+
+  /**
+   * Uniquely identifies a Procedure.
+   */
+  public static class Procedure extends Program {
+
+    public Procedure(Application application, String id) {
+      super(application, ProgramType.PROCEDURE, id);
+    }
+
+    public static Procedure from(Application application, String id) {
+      return new Procedure(application, id);
+    }
+  }
+
+  /**
+   * Uniquely identifies a Service.
+   */
+  public static class Service extends Program {
+
+    public Service(Application application, String id) {
+      super(application, ProgramType.SERVICE, id);
+    }
+
+    public static Service from(Application application, String id) {
+      return new Service(application, id);
     }
   }
 
