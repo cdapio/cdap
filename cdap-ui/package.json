@@ -8,7 +8,10 @@
     "prebuild": "npm install && ./node_modules/bower/bin/bower update --config.interactive=false",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
     "test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
-    "test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run"
+    "test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
+    "prewebdriver": "webdriver-manager update",
+    "webdriver": "webdriver-manager start",
+    "integration": "protractor test/integration/conf.js"
   },
   "repository": {
     "type": "git",
@@ -39,7 +42,8 @@
     "karma-chrome-launcher": "^0.1.4",
     "karma-jasmine": "^0.3.0",
     "main-bower-files": "^2.1.0",
-    "merge-stream": "^0.1.5"
+    "merge-stream": "^0.1.5",
+    "protractor": "^1.8.0"
   },
   "dependencies": {
     "body-parser": "^1.9.3",
