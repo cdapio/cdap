@@ -103,21 +103,27 @@ public class AppFabricClient {
   }
 
   public void reset() throws Exception {
-    MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/unrecoverable/reset");
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    httpHandler.resetCDAP(request, responder);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Reset application failed");
+    MockResponder responder;
+    HttpRequest request;
 
     // delete all namespaces
     for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
-      if (!Constants.DEFAULT_NAMESPACE.equals(namespaceMeta.getName()) &&
-        !Constants.SYSTEM_NAMESPACE.equals(namespaceMeta.getName())) {
-        Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
-        streamAdmin.dropAllInNamespace(namespace);
-        namespaceHttpHandler.deleteDatasets(null, new MockResponder(), namespaceMeta.getName());
-        namespaceHttpHandler.delete(null, new MockResponder(), namespaceMeta.getName());
-      }
+      Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+      streamAdmin.dropAllInNamespace(namespace);
+
+      responder = new MockResponder();
+      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+                                       String.format("/v3/unrecoverable/namespaces/%s/datasets", namespace.getId()));
+      namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
+                     String.format("could not delete datasets in namespace '%s'", namespace.getId()));
+
+      responder = new MockResponder();
+      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+                                       String.format("/v3/unrecoverable/namespaces/%s", namespace.getId()));
+      namespaceHttpHandler.delete(request, responder, namespaceMeta.getName());
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
+                     String.format("could not delete namespace '%s'", namespace.getId()));
     }
   }
 
@@ -180,7 +186,7 @@ public class AppFabricClient {
   }
 
   public ServiceInstances getRunnableInstances(String namespaceId, String applicationId,
-                                               String serviceName, String runnableName) {
+                                               String serviceName) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
                                namespaceId, applicationId, serviceName);

@@ -91,7 +91,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   private ServiceInstances getRunnableInstances(String runnableName) {
     try {
-      return appFabricClient.getRunnableInstances(namespace, applicationId, serviceName, runnableName);
+      return appFabricClient.getRunnableInstances(namespace, applicationId, serviceName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
