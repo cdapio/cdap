@@ -16,8 +16,8 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.HelpCommand;
-import co.cask.cdap.cli.command.SearchCommandsCommand;
+import co.cask.cdap.cli.command.system.HelpCommand;
+import co.cask.cdap.cli.command.system.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.cli.util.InstanceURIParser;
@@ -94,7 +94,6 @@ public class CLIMain {
     this.cliConfig = cliConfig;
 
     final PrintStream output = cliConfig.getOutput();
-    final TableRenderer tableRenderer = cliConfig.getTableRenderer();
 
     cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
     Injector injector = Guice.createInjector(
@@ -106,7 +105,6 @@ public class CLIMain {
           bind(PrintStream.class).toInstance(output);
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-          bind(TableRenderer.class).toInstance(tableRenderer);
         }
       }
     );

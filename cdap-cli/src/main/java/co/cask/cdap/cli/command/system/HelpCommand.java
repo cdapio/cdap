@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.Categorized;

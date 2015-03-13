@@ -23,7 +23,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -41,13 +40,11 @@ import javax.inject.Inject;
 public class ListAllProgramsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ApplicationClient appClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -67,7 +64,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
                                     object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(output, table);
   }
 
   @Override
