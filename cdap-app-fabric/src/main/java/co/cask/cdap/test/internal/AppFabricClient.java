@@ -109,7 +109,6 @@ public class AppFabricClient {
     // delete all namespaces
     for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
-      streamAdmin.dropAllInNamespace(namespace);
 
       responder = new MockResponder();
       request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
