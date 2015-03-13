@@ -18,6 +18,9 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -25,7 +28,11 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
@@ -44,10 +51,15 @@ import javax.annotation.Nullable;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
+  private final TransactionExecutorFactory txExecutorFactory;
+
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, locationFactory, tableUtil, QueueConstants.QueueType.STREAM);
+                          HBaseTableUtil tableUtil, DatasetFramework datasetFramework,
+                          TransactionExecutorFactory txExecutorFactory) throws IOException {
+    super(hConf, cConf, locationFactory, tableUtil,
+          datasetFramework, txExecutorFactory, QueueConstants.QueueType.STREAM);
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
@@ -85,13 +97,39 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+  public void configureInstances(Id.Stream streamId, final long groupId, final int instances) throws Exception {
+    // Do the configuration in a new TX
+    // TODO: Make StreamAdmin reconfiguration transactional
+    final QueueConfigurer queueConfigurer = getQueueConfigurer(QueueName.fromStream(streamId));
+    try {
+      Transactions.createTransactionExecutor(txExecutorFactory, queueConfigurer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            queueConfigurer.configureInstances(groupId, instances);
+          }
+        });
+    } finally {
+      Closeables.closeQuietly(queueConfigurer);
+    }
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+  public void configureGroups(Id.Stream streamId, final Map<Long, Integer> groupInfo) throws Exception {
+    // Do the configuration in a new TX
+    // TODO: Make StreamAdmin reconfiguration transactional
+    final QueueConfigurer queueConfigurer = getQueueConfigurer(QueueName.fromStream(streamId));
+    try {
+      Transactions.createTransactionExecutor(txExecutorFactory, queueConfigurer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            queueConfigurer.configureGroups(groupInfo);
+          }
+        });
+    } finally {
+      Closeables.closeQuietly(queueConfigurer);
+    }
   }
 
   @Override
