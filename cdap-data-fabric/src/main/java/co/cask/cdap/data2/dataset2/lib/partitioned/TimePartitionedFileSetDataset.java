@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
@@ -31,7 +32,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -115,11 +115,13 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   @Override
   public String getPartition(long time) {
-    String path = getPartition(partitionKeyForTime(time));
-    if (path == null && isLegacyDataset) {
+    Partition partition = getPartition(partitionKeyForTime(time));
+    if (partition != null) {
+      return partition.getRelativePath();
+    } else if (isLegacyDataset) {
       return getLegacyPartition(time);
     }
-    return path;
+    return null;
   }
 
   @Override
@@ -143,8 +145,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public Map<Long, String> getPartitions(long startTime, long endTime) {
     final Map<Long, String> partitions = Maps.newHashMap();
     for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
-      for (Map.Entry<PartitionKey, String> entry : getPartitions(filter).entrySet()) {
-        partitions.put(timeForPartitionKey(entry.getKey()), entry.getValue());
+      for (Partition partition : getPartitions(filter)) {
+        partitions.put(timeForPartitionKey(partition.getPartitionKey()), partition.getRelativePath());
       }
     }
     if (isLegacyDataset) {
