@@ -366,12 +366,12 @@ public abstract class AppFabricTestBase {
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
+    String suspendSchedulesOption = String.format("?%s=true", Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION);
     if (appName == null) {
-      request = getPost(versionedApiPath);
+      request = getPost(versionedApiPath + suspendSchedulesOption);
     } else {
-      request = getPut(versionedApiPath + appName);
+      request = getPut(versionedApiPath + appName + suspendSchedulesOption);
     }
-    // TODO add option to disable schedules
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));

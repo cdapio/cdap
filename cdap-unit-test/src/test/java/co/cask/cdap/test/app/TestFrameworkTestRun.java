@@ -105,6 +105,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
+    // TODO create schedules apis through application manager
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
     WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();

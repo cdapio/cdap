@@ -975,6 +975,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    response = doPost(String.format("/v2/apps/AppWithSchedule/schedules/SampleSchedule/resume"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("someKey", "someWorkflowValue");
     runtimeArguments.put("workflowKey", "workflowValue");
