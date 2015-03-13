@@ -120,7 +120,6 @@ angular.module(PKG.name + '.feature.workflows')
         }
       ];
 */
-
 function convert(nodes, connections) {
 
   for (var i=0; i+1 < nodes.length; i++) {
@@ -153,7 +152,6 @@ function convert(nodes, connections) {
   * @return [Array] of connections
 
 */
-
 function flatten(source, fork, target, connections) {
   var branches = fork.branches,
       temp = [];
@@ -176,7 +174,6 @@ function flatten(source, fork, target, connections) {
   * @return [Array] of connections
 
 */
-
 function expandForks(nodes, expandedNodes) {
   for(var i=0; i<nodes.length; i++) {
     if (nodes[i].nodeType === 'ACTION') {
