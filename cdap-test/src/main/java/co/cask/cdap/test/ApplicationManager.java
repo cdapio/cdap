@@ -102,7 +102,7 @@ public interface ApplicationManager {
    * @param <T> Type of the dataset.
    * @return A {@link DataSetManager} instance.
    * @deprecated As of version 2.8.0, replaced by
-   *             {@link TestManager#getDataset(co.cask.cdap.proto.Id.Namespace, String)}
+   *             {@link TestBase#getDataset(co.cask.cdap.proto.Id.Namespace, String)}
    */
   @Deprecated
   <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception;

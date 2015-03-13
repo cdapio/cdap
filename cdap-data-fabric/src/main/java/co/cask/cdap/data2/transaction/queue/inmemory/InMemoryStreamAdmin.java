@@ -47,12 +47,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+    // No-op
   }
 
   @Override
   public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+    // No-op
   }
 
   @Override
