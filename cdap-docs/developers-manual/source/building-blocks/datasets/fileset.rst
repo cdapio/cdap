@@ -141,12 +141,12 @@ Yet that can become tedious to manage, especially if the naming convention shoul
 applications would have to be changed simultaneously for proper functioning.
 
 The PartitionedFileSet Dataset relieves applications from understanding file name conventions. Instead,
-it associates a partition key with every file, for example the year and month associated with that file.
+it associates a partition key with every file; for example the year and month associated with that file.
 Because different files cannot have the same partition key, this allows applications to address the
-data uniquely through its partition keys, or more broadly through conditions over the partition keys,
-for example, the months of February through June of a particular year, or the month of November in any
-year. Inheriting the attributes of FileSets—like format and schema—PartitionedFileSets are a powerful
-abstraction over data that is organized into files.
+data uniquely through its partition keys, or more broadly through conditions over the partition keys.
+For example, the months of February through June of a particular year, or the month of November in any
+year. By inheriting the attributes |---| such as format and schema |---| of FileSets, PartitionedFileSets
+are a powerful abstraction over data that is organized into files.
 
 Creating a PartitionedFileSet
 =============================
@@ -166,14 +166,14 @@ configuration, similar to FileSets. However, the partitioning has to be given as
       .build());
 
 This creates a new PartitionedFileSet named *results*. Similar to FileSets, it specifies ``TextInputFormat`` and
-``TextOutputFormat.``, and for the output format, we specify that the separator between fields is a comma.
+``TextOutputFormat.``; for the output format, we specify that the separator between fields is a comma.
 The difference to a FileSet is that this Dataset is partitioned by league and season. This means that every file
 added to this Dataset must have a partitioning key with a unique combination of league and season.
 
 Reading and Writing PartitionedFileSets
 =======================================
 
-You can interact with the files in a PartitionedFileSet directly, through the ``Location`` abstraction
+You can interact with the files in a PartitionedFileSet directly through the ``Location`` abstraction
 of the file system. This is similar to a FileSet, but instead of a relative path, you specify a
 partition key to obtain a Partition; you can then get a Location from that Partition.
 
@@ -205,7 +205,7 @@ that contains part files. In that case, list the files in the directory to find 
 
 Instead of reading a single partition, you can also specify a PartitionFilter to query the
 partitioned file set for all partitions whose keys match that filter. The PartitionFilter
-can specify either a exact value (en equality condition) or a range for the value of each
+can specify either an exact value (en equality condition) or a range for the value of each
 field in the dataset's partitioning. For example, the following code reads all partitions
 for the NFL and the eighties' seasons::
 
