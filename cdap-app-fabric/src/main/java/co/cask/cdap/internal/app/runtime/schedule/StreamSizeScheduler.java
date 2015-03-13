@@ -375,7 +375,7 @@ public class StreamSizeScheduler implements Scheduler {
       deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
     }
   }
-  
+
   @Override
   public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException {
