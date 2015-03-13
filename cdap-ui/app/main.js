@@ -1,5 +1,5 @@
 console.time(PKG.name);
-
+var provide;
 angular
   .module(PKG.name, [
 
@@ -22,7 +22,7 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
-        // 'ngResource',
+        'ngResource',
         'ngStorage',
         'ui.router',
         'cask-angular-window-manager',
@@ -92,13 +92,46 @@ angular
     cfpLoadingBarProvider.includeSpinner = false;
   })
 
+  .config(function($provide) {
+
+    $provide.decorator('$http', function($delegate, MyDataSource) {
+
+      var myDataSrc = new MyDataSource();
+
+      function newHttp(config) {
+        var promise;
+        if (config.options) {
+          switch(config.options.type) {
+            case 'POLL':
+              promise = myDataSrc.poll(config);
+              break;
+            case 'REQUEST':
+              promise = myDataSrc.request(config);
+              break;
+            case 'POLL-STOP':
+              promise = myDataSrc.pollStop(config);
+              break;
+          }
+          return promise;
+        } else {
+          return $delegate(config);
+        }
+      }
+
+      newHttp.get = $delegate.get;
+      newHttp.post = $delegate.post;
+      newHttp.put = $delegate.put;
+      newHttp.patch = $delegate.patch;
+      return newHttp;
+    });
+  })
+
   .config(function (caskThemeProvider) {
     caskThemeProvider.setThemes([
       'cdap',   // customized theme
       'default' // bootstrap default theme
     ]);
   })
-
 
   .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
 
