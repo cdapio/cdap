@@ -391,8 +391,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     for (int i = 0; i < columns.length; i++) {
       // NOTE: we copy passed column's and value's byte arrays to protect buffer against possible changes of these
       // arrays on client
-      Preconditions.checkArgument(values[i] == null || values[i].length > 0,
-                                  "Write of an empty value is not supported");
+      if (values[i] != null && values[i].length == 0) {
+        LOG.warn("Write of an empty value is not supported");
+      }
       colVals.put(copy(columns[i]), new PutValue(copy(values[i])));
     }
     if (newRow) {
@@ -507,7 +508,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
-    Preconditions.checkArgument(newValue == null || newValue.length > 0, "Write of an empty value is not supported");
+    if (newValue != null && newValue.length == 0) {
+      LOG.warn("Write of an empty value is not supported");
+    }
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
