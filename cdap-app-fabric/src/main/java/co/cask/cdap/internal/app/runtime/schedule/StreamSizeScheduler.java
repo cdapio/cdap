@@ -23,6 +23,8 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -44,6 +46,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -355,6 +358,24 @@ public class StreamSizeScheduler implements Scheduler {
     }
   }
 
+  @Override
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(store.getAllApplications(namespaceId));
+    for (ApplicationSpecification appSpec : allAppSpec) {
+      deleteAllSchedules(namespaceId, appSpec);
+    }
+  }
+
+  private void deleteAllSchedules(Id.Namespace namespaceId, ApplicationSpecification appSpec)
+    throws SchedulerException {
+    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
+      Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
+      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
+    }
+  }
+  
   @Override
   public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException {

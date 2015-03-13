@@ -244,6 +244,11 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+
+  }
+
+  @Override
   public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException {
     checkInitialized();

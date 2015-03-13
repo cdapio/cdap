@@ -30,9 +30,11 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -195,6 +197,24 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     throws SchedulerException {
     timeScheduler.deleteSchedules(program, programType);
     streamSizeScheduler.deleteSchedules(program, programType);
+  }
+
+  @Override
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(store.getAllApplications(namespaceId));
+    for (ApplicationSpecification appSpec : allAppSpec) {
+      deleteAllSchedules(namespaceId, appSpec);
+    }
+  }
+
+  private void deleteAllSchedules(Id.Namespace namespaceId, ApplicationSpecification appSpec)
+    throws SchedulerException {
+    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
+      Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
+      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
+    }
   }
 
   @Override

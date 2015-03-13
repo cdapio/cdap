@@ -36,6 +36,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -200,7 +201,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       queueAdmin.dropAllInNamespace(namespaceId.getId());
       streamAdmin.dropAllInNamespace(namespaceId);
       // Delete all the schedules
-      deleteAllSchedules(namespaceId);
+      scheduler.deleteAllSchedules(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
       // TODO: CDAP-1729 - Delete/Expire Metrics. API unavailable right now.
@@ -219,35 +220,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
       }
-    } catch (SchedulerException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
-    } catch (DatasetManagementException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
-    } catch (IOException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
-  }
-
-  private void deleteAllSchedules(Id.Namespace namespaceId) throws NotFoundException, SchedulerException {
-    List<ApplicationSpecification> allAppSpec =
-      new ArrayList<ApplicationSpecification>(store.getAllApplications(namespaceId));
-
-    for (ApplicationSpecification appSpec : allAppSpec) {
-      for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-        Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
-        ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-        Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
-        scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(),
-                                 scheduleSpec.getSchedule().getName());
-      }
-    }
   }
 
   @Override
