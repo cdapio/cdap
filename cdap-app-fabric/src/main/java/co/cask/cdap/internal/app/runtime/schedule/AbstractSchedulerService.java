@@ -201,7 +201,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(store.getAllApplications(namespaceId));
+    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(getStore().getAllApplications(namespaceId));
     for (ApplicationSpecification appSpec : allAppSpec) {
       deleteAllSchedules(namespaceId, appSpec);
     }
