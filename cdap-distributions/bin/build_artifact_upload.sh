@@ -114,4 +114,4 @@ decho "#########################################################################
 echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} RPMs/DEBs to ${REMOTE_HOST}"
 sync_build_artifacts_to_server "${BUILD_RELEASE_DIRS}"
 
-decho "DONE"
+echo 0
