@@ -28,16 +28,6 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
   $scope.labelMap = {};
 
   /**
-   * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
-   * instances text.
-   */
-  $scope.getInstancesScaledRadius = function(instances, radius) {
-    var base = radius;
-    var extra = (instances.toString().length - 1) * base / 2;
-    return base + extra;
-  }
-
-  /**
    * Gets number of instances from node map.
    */
   $scope.getInstances = function(nodeId) {
@@ -171,6 +161,16 @@ module.directive('myFlowGraph', function ($filter, $state) {
         var instance = instanceMap[nodeId];
         $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
       };
+
+      /**
+       * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
+       * instances text.
+       */
+      scope.getInstancesScaledRadius = function(instances, radius) {
+        var base = radius;
+        var extra = (instances.toString().length - 1) * base / 2;
+        return base + extra;
+      }
 
     }
   }, baseDirective);
