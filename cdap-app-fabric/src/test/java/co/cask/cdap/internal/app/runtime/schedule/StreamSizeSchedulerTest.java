@@ -92,6 +92,12 @@ public class StreamSizeSchedulerTest {
     // Test the StreamSizeScheduler behavior using notifications
 
     AppFabricTestHelper.deployApplication(AppWithStreamSizeSchedule.class);
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
@@ -153,7 +159,7 @@ public class StreamSizeSchedulerTest {
 
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
-    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2, true);
     metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
                                                     Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
                                     "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),

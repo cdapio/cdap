@@ -34,9 +34,10 @@ public interface Scheduler {
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedule Schedule with which the program runs.
+   * @param active {@code true} if the schedule should be active upon creation, {@code false} otherwise
    * @throws SchedulerException on unforeseen error.
    */
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws SchedulerException;
 
   /**
@@ -45,10 +46,11 @@ public interface Scheduler {
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedules Schedules with which the program runs.
+   * @param active {@code true} if the schedules should be active upon creation, {@code false} otherwise
    * @throws SchedulerException on unforeseen error.
    */
-  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException;
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       boolean active) throws SchedulerException;
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
@@ -112,11 +114,12 @@ public interface Scheduler {
    * @param program the program for which schedule needs to be updated
    * @param programType the type of the program
    * @param schedule the new schedule. The schedule with the same name will be replaced
-   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program} 
+   * @param active {@code true} if the schedule should be active upon update, {@code false} otherwise
+   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws NotFoundException, SchedulerException;
 
   /**

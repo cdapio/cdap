@@ -341,7 +341,7 @@ public class AdapterService extends AbstractIdleService {
       Location destination = namespaceHomeLocation.append(appFabricDir)
         .append(Constants.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
       DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
-                                                         ApplicationDeployScope.SYSTEM);
+                                                         ApplicationDeployScope.SYSTEM, false);
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo).get();
       return applicationWithPrograms.getSpecification();
@@ -396,7 +396,7 @@ public class AdapterService extends AbstractIdleService {
                                            new ScheduleProgramInfo(programType, programId.getId()),
                                            adapterSpec.getProperties());
 
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(), true);
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(programId, scheduleSpec);
   }

@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -63,6 +64,7 @@ final class TimeScheduler implements Scheduler {
   private final PreferencesStore preferencesStore;
   private final CConfiguration cConf;
   private ListeningExecutorService taskExecutorService;
+  private boolean schedulerStarted;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
                 ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
@@ -72,6 +74,11 @@ final class TimeScheduler implements Scheduler {
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
     this.cConf = cConf;
+    this.schedulerStarted = false;
+  }
+
+  private boolean isLazyStart() {
+    return cConf.getBoolean(Constants.Scheduler.TIME_SCHEDULER_LAZY_START, false);
   }
 
   void start() throws SchedulerException {
@@ -80,7 +87,18 @@ final class TimeScheduler implements Scheduler {
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      if (!isLazyStart()) {
+        startQuartzScheduler();
+      }
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+  }
+
+  private void startQuartzScheduler() throws SchedulerException {
+    try {
       scheduler.start();
+      schedulerStarted = true;
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -100,14 +118,14 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws SchedulerException {
-    schedule(programId, programType, ImmutableList.of(schedule));
+    schedule(programId, programType, ImmutableList.of(schedule), active);
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       boolean active) throws SchedulerException {
     checkInitialized();
     Preconditions.checkNotNull(schedules);
 
@@ -139,6 +157,13 @@ final class TimeScheduler implements Scheduler {
         scheduler.scheduleJob(trigger);
       } catch (org.quartz.SchedulerException e) {
         throw new SchedulerException(e);
+      }
+      if (!active) {
+        try {
+          scheduler.pauseTrigger(new TriggerKey(triggerKey));
+        } catch (org.quartz.SchedulerException e) {
+          throw new SchedulerException(e);
+        }
       }
     }
   }
@@ -194,6 +219,10 @@ final class TimeScheduler implements Scheduler {
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     checkInitialized();
+    if (!schedulerStarted && isLazyStart()) {
+      startQuartzScheduler();
+    }
+
     try {
       scheduler.resumeTrigger(new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
                                                                                     scheduleName)));
@@ -203,11 +232,11 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws NotFoundException, SchedulerException {
     // TODO modify the update flow [CDAP-1618]
     deleteSchedule(program, programType, schedule.getName());
-    schedule(program, programType, schedule);
+    schedule(program, programType, schedule, active);
   }
 
   @Override

@@ -90,12 +90,15 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -193,7 +196,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      return deployApplication(responder, namespaceId, appId, archiveName);
+      boolean suspendSchedules = suspendScheduleOnDeploy(request);
+      return deployApplication(responder, namespaceId, appId, archiveName, suspendSchedules);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -211,11 +215,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespaceId, null, archiveName);
+      boolean suspendSchedules = suspendScheduleOnDeploy(request);
+      return deployApplication(responder, namespaceId, null, archiveName, suspendSchedules);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
+  }
+
+  private boolean suspendScheduleOnDeploy(HttpRequest request) throws URISyntaxException {
+    // Optional argument to suspend schedules upon application deployment
+    Map<String, List<String>> queryParams = new QueryStringDecoder(new URI(request.getUri())).getParameters();
+    boolean suspendSchedules = false;
+    List<String> values = queryParams.get(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION);
+    if (values != null && values.size() == 1 && Boolean.parseBoolean(values.get(0))) {
+      suspendSchedules = true;
+    }
+    return suspendSchedules;
   }
 
   /**
@@ -461,7 +477,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
-                                         final String archiveName) throws IOException {
+                                         final String archiveName, final boolean suspendSchedules) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (!namespaceAdmin.hasNamespace(namespace)) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
@@ -503,7 +519,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive, suspendSchedules);
           deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {

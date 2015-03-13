@@ -140,6 +140,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    conf.setBoolean(Constants.Scheduler.TIME_SCHEDULER_LAZY_START, true);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
@@ -370,6 +371,7 @@ public abstract class AppFabricTestBase {
     } else {
       request = getPut(versionedApiPath + appName);
     }
+    // TODO add option to disable schedules
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));

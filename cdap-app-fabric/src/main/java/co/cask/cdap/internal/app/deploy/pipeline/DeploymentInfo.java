@@ -27,6 +27,7 @@ public class DeploymentInfo {
   private final File appJarFile;
   private final Location destination;
   private final ApplicationDeployScope applicationDeployScope;
+  private final boolean suspendSchedules;
 
   /**
    * Construct the DeploymentInfo with appJarFile and destination.
@@ -34,11 +35,14 @@ public class DeploymentInfo {
    * @param appJarFile Application jar file that should be deployed. The File is expected to be present in the local
    *                   file system.
    * @param destination Destination that represents {@link Location} of the jar
+   * @param suspendSchedules {@code true} if schedule should be suspended upon application deployment, {@code false}
+   *                         otherwise
    */
-  public DeploymentInfo(File appJarFile, Location destination) {
+  public DeploymentInfo(File appJarFile, Location destination, boolean suspendSchedules) {
     this.appJarFile = appJarFile;
     this.destination = destination;
     this.applicationDeployScope = ApplicationDeployScope.USER;
+    this.suspendSchedules = suspendSchedules;
   }
 
   /**
@@ -48,11 +52,15 @@ public class DeploymentInfo {
    *                   file system.
    * @param destination Destination that represents {@link Location} of the jar
    * @param applicationDeployScope Scope that the application is being deployed in
+   * @param suspendSchedules {@code true} if schedule should be suspended upon application deployment, {@code false}
+   *                         otherwise
    */
-  public DeploymentInfo(File appJarFile, Location destination, ApplicationDeployScope applicationDeployScope) {
+  public DeploymentInfo(File appJarFile, Location destination, ApplicationDeployScope applicationDeployScope,
+                        boolean suspendSchedules) {
     this.appJarFile = appJarFile;
     this.destination = destination;
     this.applicationDeployScope = applicationDeployScope;
+    this.suspendSchedules = suspendSchedules;
   }
 
   public File getAppJarFile() {
@@ -65,5 +73,9 @@ public class DeploymentInfo {
 
   public ApplicationDeployScope getApplicationDeployScope() {
     return applicationDeployScope;
+  }
+
+  public boolean isSuspendSchedules() {
+    return suspendSchedules;
   }
 }

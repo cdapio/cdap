@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -79,7 +78,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
       scheduler.updateSchedule(Id.Program.from(input.getId(), programType,
                                                newScheduleSpec.getProgram().getProgramName()),
                                newScheduleSpec.getProgram().getProgramType(),
-                               newScheduleSpec.getSchedule());
+                               newScheduleSpec.getSchedule(), !input.isSuspendSchedules());
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
@@ -87,7 +86,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
       scheduler.schedule(Id.Program.from(input.getId(), programType, scheduleSpec.getProgram().getProgramName()),
                          scheduleSpec.getProgram().getProgramType(),
-                         scheduleSpec.getSchedule());
+                         scheduleSpec.getSchedule(), !input.isSuspendSchedules());
     }
 
     // Note: the mapDiff also has a entriesInCommon method returning all entries in left and right maps

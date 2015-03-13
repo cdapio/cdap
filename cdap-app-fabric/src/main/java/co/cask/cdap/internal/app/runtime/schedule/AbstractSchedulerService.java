@@ -114,20 +114,20 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws SchedulerException {
     if (schedule instanceof TimeSchedule) {
-      timeScheduler.schedule(programId, programType, schedule);
+      timeScheduler.schedule(programId, programType, schedule, active);
     } else if (schedule instanceof StreamSizeSchedule) {
-      streamSizeScheduler.schedule(programId, programType, schedule);
+      streamSizeScheduler.schedule(programId, programType, schedule, active);
     } else {
       throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
     }
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       boolean active) throws SchedulerException {
     Set<Schedule> timeSchedules = Sets.newHashSet();
     Set<Schedule> streamSizeSchedules = Sets.newHashSet();
     for (Schedule schedule : schedules) {
@@ -140,10 +140,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
     if (!timeSchedules.isEmpty()) {
-      timeScheduler.schedule(programId, programType, timeSchedules);
+      timeScheduler.schedule(programId, programType, timeSchedules, active);
     }
     if (!streamSizeSchedules.isEmpty()) {
-      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules);
+      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules, active);
     }
   }
 
@@ -177,10 +177,10 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
     throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, programType, schedule.getName());
-    scheduler.updateSchedule(program, programType, schedule);
+    scheduler.updateSchedule(program, programType, schedule, active);
   }
 
   @Override

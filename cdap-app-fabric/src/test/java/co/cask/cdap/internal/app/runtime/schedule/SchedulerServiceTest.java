@@ -78,7 +78,7 @@ public class SchedulerServiceTest {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1), true);
     store.addApplication(appId, createNewSpecification(applicationSpecification, program, programType, timeSchedule1),
                          locationFactory.create("app"));
 
@@ -92,7 +92,7 @@ public class SchedulerServiceTest {
     List<String> scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(0, scheduleIdsOtherNamespace.size());
 
-    schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(timeSchedule2));
+    schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(timeSchedule2), true);
     store.addApplication(appId, createNewSpecification(applicationSpecification, programInOtherNamespace, programType,
                                                        timeSchedule2),
                          locationFactory.create("app"));
@@ -109,21 +109,23 @@ public class SchedulerServiceTest {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1), false);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+    schedulerService.resumeSchedule(program, programType, "Schedule1");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    schedulerService.schedule(program, programType, timeSchedule2);
+    schedulerService.schedule(program, programType, timeSchedule2, true);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule2);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(2, scheduleIds.size());
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(dataSchedule1, dataSchedule2));
+    schedulerService.schedule(program, programType, ImmutableList.of(dataSchedule1, dataSchedule2), true);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule1);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule2);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));

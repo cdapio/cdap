@@ -46,19 +46,21 @@ public final class ApplicationDeployable implements Closeable {
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
   private final Location location;
+  private final boolean suspendSchedules;
   private File unpackDir;
   private ClassLoader classLoader;
 
   public ApplicationDeployable(CConfiguration cConf, Id.Application id, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope,
-                               Location location) {
+                               Location location, boolean suspendSchedules) {
     this.cConf = cConf;
     this.id = id;
     this.specification = specification;
     this.existingAppSpec = existingAppSpec;
     this.applicationDeployScope = applicationDeployScope;
     this.location = location;
+    this.suspendSchedules = suspendSchedules;
   }
 
   public Id.Application getId() {
@@ -80,6 +82,10 @@ public final class ApplicationDeployable implements Closeable {
 
   public Location getLocation() {
     return location;
+  }
+
+  public boolean isSuspendSchedules() {
+    return suspendSchedules;
   }
 
   public synchronized ClassLoader getClassLoader() {

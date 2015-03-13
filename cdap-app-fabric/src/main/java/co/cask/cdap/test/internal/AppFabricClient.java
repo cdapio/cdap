@@ -250,7 +250,8 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = applicationId + ".jar";
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        "/v2/apps?suspendSchedules=true");
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
