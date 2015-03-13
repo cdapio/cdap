@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.data.stream;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.stream.StreamEventData;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  * Enabling Programs to write to Streams through their Context.
  */
+@Beta
 public interface StreamWriter {
 
   /**
