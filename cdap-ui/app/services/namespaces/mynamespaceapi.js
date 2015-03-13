@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.services')
-  .factory('myNamespaceApi', function(MySocketProvider, $state, myCdapUrl) {
+  .factory('myNamespaceApi', function($resource, $state, myCdapUrl, myAuth) {
     var url = myCdapUrl.constructUrl;
-    
-    return MySocketProvider(
+
+    return $resource(
       url({
         _cdapPath: '/namespaces/:namespaceId'
       }),
@@ -11,7 +11,17 @@ angular.module(PKG.name + '.services')
       },
       {
         create: {
-          method: 'PUT'
+          method: 'PUT',
+          options: { type: 'REQUEST' },
+          user: myAuth.currentUser || null,
+          headers: {
+            authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
+          },
+          interceptor: {
+            response: function(response) {
+              return response;
+            }
+          }
         }
       }
 
