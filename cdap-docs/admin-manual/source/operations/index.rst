@@ -49,6 +49,8 @@ Operations
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
+.. |resource-guarantees-in-yarn| replace:: **Providing Resource Guarantees for CDAP Programs in YARN.**
+.. _resource-guarantees-in-yarn: resource-guarantees-in-yarn.html
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: troubleshooting.html
