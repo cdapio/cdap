@@ -244,39 +244,6 @@ public final class Id  {
   }
 
   /**
-   * Uniquely identifies a Schedule.
-   */
-  public static class Schedule {
-    private final Application application;
-    private final String id;
-
-    public Schedule(Application application, String id) {
-      this.application = application;
-      this.id = id;
-    }
-
-    public Application getApplication() {
-      return application;
-    }
-
-    public String getApplicationId() {
-      return application.getId();
-    }
-
-    public String getNamespaceId() {
-      return application.getNamespaceId();
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public static Schedule from(Application application, String id) {
-      return new Schedule(application, id);
-    }
-  }
-
-  /**
    * Uniquely identifies a Procedure.
    */
   public static class Procedure extends Program {
