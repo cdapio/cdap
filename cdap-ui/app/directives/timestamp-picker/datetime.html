@@ -1,0 +1,20 @@
+<div class="input-group">
+  <span class="input-group-addon">
+    <span class="fa fa-calendar"></span>
+    <span ng-bind="label"></span>
+  </span>
+  <input type="text"
+         class="form-control"
+         placeholder="Date"
+         ng-model="timestamp"
+         data-autoclose="1"
+         data-date-type="number"
+         bs-datepicker />
+  <input type="text"
+         class="form-control last-child"
+         placeholder="Time"
+         ng-model="timestamp"
+         data-autoclose="1"
+         data-time-type="number"
+         bs-timepicker />
+</div>
