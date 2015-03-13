@@ -23,20 +23,23 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableMap;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -51,39 +54,40 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(XSlowTests.class)
-public class StreamSizeSchedulerPollingTest {
-  public static StreamSizeScheduler streamSizeScheduler;
-  public static NotificationFeedManager notificationFeedManager;
-  public static NotificationService notificationService;
-  public static Store store;
-  public static MetricStore metricStore;
+public class StreamSizeSchedulerPollingTest extends SchedulerTestBase {
+  private static StreamSizeScheduler streamSizeScheduler;
+  private static Store store;
+  private static MetricStore metricStore;
+  private static NamespaceAdmin namespaceAdmin;
+  private static ProgramRuntimeService runtimeService;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application APP_ID = new Id.Application(NAMESPACE, "AppWithStreamSizeSchedule");
+  private static final Id.Application APP_ID = new Id.Application(Constants.DEFAULT_NAMESPACE_ID,
+                                                                  "AppWithStreamSizeSchedule");
   private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(NAMESPACE, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "stream");
   private static final Schedule UPDATE_SCHEDULE_2 =
     Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
 
   @BeforeClass
-  public static void set() throws Exception {
+  public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.setLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY, 1);
     PreferencesStore preferencesStore = AppFabricTestHelper.getInjector(cConf).getInstance(PreferencesStore.class);
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
-    preferencesStore.setProperties(NAMESPACE.getId(), APP_ID.getId(), properties);
-    notificationFeedManager = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationFeedManager.class);
-    notificationService = AppFabricTestHelper.getInjector(cConf).getInstance(NotificationService.class);
+    preferencesStore.setProperties(Constants.DEFAULT_NAMESPACE_ID.getId(), APP_ID.getId(), properties);
     streamSizeScheduler = AppFabricTestHelper.getInjector(cConf).getInstance(StreamSizeScheduler.class);
     StoreFactory storeFactory = AppFabricTestHelper.getInjector(cConf).getInstance(StoreFactory.class);
     store = storeFactory.create();
     metricStore = AppFabricTestHelper.getInjector(cConf).getInstance(MetricStore.class);
+    namespaceAdmin = AppFabricTestHelper.getInjector(cConf).getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    runtimeService = AppFabricTestHelper.getInjector(cConf).getInstance(ProgramRuntimeService.class);
   }
 
   @Test
@@ -152,6 +156,11 @@ public class StreamSizeSchedulerPollingTest {
                                     "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                     1024 * 1024, MetricType.COUNTER));
     waitForRuns(PROGRAM_ID, 5);
+
+    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
+    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
+    streamSizeScheduler.deleteSchedules(PROGRAM_ID, PROGRAM_TYPE);
+    waitUntilFinished(runtimeService, PROGRAM_ID, 10);
   }
 
   private void waitForRuns(Id.Program programId, int expectedRuns) throws Exception {
@@ -167,5 +176,10 @@ public class StreamSizeSchedulerPollingTest {
       }
     }
     Assert.fail("Time out");
+  }
+
+  @AfterClass
+  public static void tearDown() throws NotFoundException, NamespaceCannotBeDeletedException {
+    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
   }
 }
