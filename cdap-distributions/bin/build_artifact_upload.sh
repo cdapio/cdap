@@ -49,7 +49,7 @@ find_repo_root() {
 
 # output trimmer
 decho () {
-  if [[ ${DEBUG} == 'yes' ]]; then
+  if [[ "${DEBUG}" == 'yes' ]]; then
     echo ${*}
   else
     RSYNC_QUIET='--quiet'
@@ -100,7 +100,7 @@ function sync_build_artifacts_to_server () {
 
 ######################################################################################
 decho "STARTING"
-#################################
+
 find_repo_root && cd ${__repo_root}  ### this takes us to the right place (top of the repo)
 
 # Check number of arguments. If <3 are passed, print help and exit.
@@ -111,7 +111,7 @@ if [ ${NUMARGS} -lt 3 ]; then
 fi
 
 decho "#######################################################################################"
-echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} to ${REMOTE_HOST}"
+echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} RPMs/DEBs to ${REMOTE_HOST}"
 sync_build_artifacts_to_server "${BUILD_RELEASE_DIRS}"
 
 decho "DONE"
