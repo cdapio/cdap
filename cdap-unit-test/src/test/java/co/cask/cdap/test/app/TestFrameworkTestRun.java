@@ -237,6 +237,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
     centralServiceManager.waitForStatus(true);
 
+    WorkerManager pingingWorker = applicationManager.startWorker(AppUsingGetServiceURL.PINGING_WORKER);
+    pingingWorker.waitForStatus(true);
+
     // Test procedure's getServiceURL
     ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
     ProcedureClient procedureClient = procedureManager.getClient();
@@ -250,6 +253,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
     procedureManager.stop();
+
+    pingingWorker.stop();
+    pingingWorker.waitForStatus(false);
 
     centralServiceManager.stop();
     centralServiceManager.waitForStatus(false);
