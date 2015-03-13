@@ -245,16 +245,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify that the procedure was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
-
-    // Test serviceWorker's getServiceURL
-    ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-    serviceWithWorker.waitForStatus(true);
-    // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping
-    // the CentralService, get the appropriate response, and write to to a dataset.
-    Thread.sleep(2000);
-    serviceWithWorker.stop();
-    serviceWithWorker.waitForStatus(false);
-
     result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
                                                                   AppUsingGetServiceURL.DATASET_KEY));
     decodedResult = new Gson().fromJson(result, String.class);
@@ -270,18 +260,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
    * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
    * successive attempt.
    */
-  private void runnableInstancesCheck(ServiceManager serviceManager,
-                                      int expected, int retries, String instanceType) throws InterruptedException {
+  private void workerInstancesCheck(WorkerManager workerManager, int expected,
+                                    int retries) throws InterruptedException {
     for (int i = 0; i <= retries; i++) {
-      int actualInstances;
-      if ("requested".equals(instanceType)) {
-        actualInstances = serviceManager.getRequestedInstances();
-      } else if ("provisioned".equals(instanceType)) {
-        actualInstances = serviceManager.getProvisionedInstances();
-      } else {
-        String error = String.format("instanceType can be 'requested' or 'provisioned'. Found %s.", instanceType);
-        throw new IllegalArgumentException(error);
-      }
+      int actualInstances = workerManager.getInstances();
       if (actualInstances == expected) {
         return;
       }
@@ -294,38 +276,44 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(SlowTests.class)
   @Test
-  public void testServiceInstances() throws Exception {
+  public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
-    ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-    serviceManager.waitForStatus(true);
+    WorkerManager workerManager = applicationManager.startWorker(AppUsingGetServiceURL.PINGING_WORKER);
+    workerManager.waitForStatus(true);
 
     int retries = 5;
 
-    // Should be 1 instance when first started.
-    runnableInstancesCheck(serviceManager, 1, retries, "provisioned");
+    // Should be 5 instances when first started.
+    workerInstancesCheck(workerManager, 5, retries);
 
     // Test increasing instances.
-    serviceManager.setInstances(5);
-    runnableInstancesCheck(serviceManager, 5, retries, "provisioned");
+    workerManager.setInstances(10);
+    workerInstancesCheck(workerManager, 10, retries);
 
     // Test decreasing instances.
-    serviceManager.setInstances(2);
-    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
+    workerManager.setInstances(2);
+    workerInstancesCheck(workerManager, 2, retries);
 
     // Test requesting same number of instances.
-    serviceManager.setInstances(2);
-    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
+    workerManager.setInstances(2);
+    workerInstancesCheck(workerManager, 2, retries);
+
+    WorkerManager lifecycleWorkerManager = applicationManager.startWorker(AppUsingGetServiceURL.LIFECYCLE_WORKER);
+    lifecycleWorkerManager.waitForStatus(true);
 
     // Set 5 instances for the LifecycleWorker
-    serviceManager.setInstances(5);
-    runnableInstancesCheck(serviceManager, 5, retries, "provisioned");
+    lifecycleWorkerManager.setInstances(5);
+    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
 
-    serviceManager.stop();
-    serviceManager.waitForStatus(false);
+    lifecycleWorkerManager.stop();
+    lifecycleWorkerManager.waitForStatus(false);
 
-    // Should be 0 instances when stopped.
-    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
-    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
+    workerManager.stop();
+    workerManager.waitForStatus(false);
+
+    // Should be same instances after being stopped.
+    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
+    workerInstancesCheck(workerManager, 2, retries);
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
@@ -341,8 +329,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
                                          int expectedCount, int expectedTotalCount) throws Exception {
-    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace,
-                                                              AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet(
+      AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {

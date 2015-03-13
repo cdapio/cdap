@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.WorkerManager;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Throwables;
@@ -25,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager implements WorkerManager {
+public class DefaultWorkerManager extends AbstractWorkerManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultWorkerManager.class);
 
@@ -48,7 +49,7 @@ public class DefaultWorkerManager implements WorkerManager {
   }
 
   @Override
-  public void setRunnableInstances(int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
       appFabricClient.setWorkerInstances(namespace, appId, workerId, instances);
@@ -65,5 +66,10 @@ public class DefaultWorkerManager implements WorkerManager {
   @Override
   public boolean isRunning() {
     return applicationManager.isRunning(programId);
+  }
+
+  @Override
+  public int getInstances() {
+    return appFabricClient.getWorkerInstances(namespace, appId, workerId).getInstances();
   }
 }

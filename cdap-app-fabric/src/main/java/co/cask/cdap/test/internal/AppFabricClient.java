@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -201,8 +202,17 @@ public class AppFabricClient {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
-    httpHandler.setWorkerInstances(request, responder, appId, workerId);
+    programLifecycleHttpHandler.setWorkerInstances(request, responder, namespaceId, appId, workerId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
+  }
+
+  public Instances getWorkerInstances(String namespaceId, String appId, String workerId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v3/namespaces/%s/apps/%s/worker/%s/instances", namespaceId, appId, workerId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    programLifecycleHttpHandler.getWorkerInstances(request, responder, namespaceId, appId, workerId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get worker instances failed");
+    return responder.decodeResponseContent(new TypeToken<Instances>() { });
   }
 
   public void setServiceInstances(String namespaceId, String applicationId, String serviceName, int instances) {
