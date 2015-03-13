@@ -94,7 +94,6 @@ public class CLIMain {
     this.cliConfig = cliConfig;
 
     final PrintStream output = cliConfig.getOutput();
-    final TableRenderer tableRenderer = cliConfig.getTableRenderer();
 
     cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
     Injector injector = Guice.createInjector(
@@ -106,7 +105,6 @@ public class CLIMain {
           bind(PrintStream.class).toInstance(output);
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-          bind(TableRenderer.class).toInstance(tableRenderer);
         }
       }
     );

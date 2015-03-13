@@ -38,13 +38,11 @@ import java.util.List;
 public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -61,7 +59,7 @@ public class DescribeAppCommand extends AbstractAuthCommand {
                                     object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(output, table);
   }
 
   @Override
