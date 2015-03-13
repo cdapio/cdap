@@ -323,9 +323,10 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
-    // Same as truncate
-    truncate(streamId);
+    Location streamBaseLocation = getStreamBaseLocation(streamId);
+    doTruncate(streamBaseLocation);
     alterExploreStream(streamId, false);
+    streamBaseLocation.delete(true);
   }
 
   private Location getStreamConfigLocation(Id.Stream streamId) throws IOException {
