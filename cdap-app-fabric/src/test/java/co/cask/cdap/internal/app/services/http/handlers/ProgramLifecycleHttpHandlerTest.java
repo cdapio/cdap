@@ -74,6 +74,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -778,7 +779,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Category(XSlowTests.class)
-  @Test
+  @Ignore
   public void testWorkflowForkApp() throws Exception {
     // Steps for the test
     // 1. Deploy the Workflow app containing fork node
