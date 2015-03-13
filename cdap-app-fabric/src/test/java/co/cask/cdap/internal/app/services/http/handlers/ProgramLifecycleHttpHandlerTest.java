@@ -780,6 +780,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Category(XSlowTests.class)
   @Ignore
+  @Test
   public void testWorkflowForkApp() throws Exception {
     // Steps for the test
     // 1. Deploy the Workflow app containing fork node
