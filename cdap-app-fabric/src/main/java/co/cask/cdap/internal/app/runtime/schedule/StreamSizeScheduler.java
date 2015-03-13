@@ -46,7 +46,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -360,8 +359,7 @@ public class StreamSizeScheduler implements Scheduler {
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(store.getAllApplications(namespaceId));
-    for (ApplicationSpecification appSpec : allAppSpec) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }

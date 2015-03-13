@@ -250,8 +250,7 @@ final class TimeScheduler implements Scheduler {
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(store.getAllApplications(namespaceId));
-    for (ApplicationSpecification appSpec : allAppSpec) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }

@@ -34,7 +34,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -201,8 +200,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    List<ApplicationSpecification> allAppSpec = Lists.newArrayList(getStore().getAllApplications(namespaceId));
-    for (ApplicationSpecification appSpec : allAppSpec) {
+    for (ApplicationSpecification appSpec : getStore().getAllApplications(namespaceId)) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }
