@@ -68,8 +68,7 @@ public enum ArgumentName {
   SETTINGS("settings"),
   FREQUENCY("frequency"),
 
-  NAMESPACE_ID("namespace-id"),
-  NAMESPACE_DISPLAY_NAME("namespace-display-name"),
+  NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),

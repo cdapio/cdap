@@ -25,16 +25,19 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,18 +157,26 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   /**
    * Migrates metrics data from version 2.7 and older to 2.8
-   * @param conf configuration
+   * @param conf CConfiguration
+   * @param hConf Configuration
    * @param datasetFramework framework to add types and datasets to
-   * @param version - version we are migrating the data from
-   * @throws IOException
-   * @throws DatasetManagementException
+   * @param keepOldData - boolean flag to specify if we have to keep old metrics data
+   * @throws DataMigrationException
    */
-  public static void migrateData(CConfiguration conf, DatasetFramework datasetFramework,
-                                 MetricHBaseTableUtil.Version version) throws IOException, DatasetManagementException {
+  public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
+                                 boolean keepOldData, HBaseTableUtil tableUtil) throws DataMigrationException {
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
-    setupDatasets(factory);
-    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, datasetFramework, factory);
-    migrator.migrateMetricsTables(version);
+    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, hConf, datasetFramework, factory);
+    // delete existing destination tables
+    migrator.cleanupDestinationTables();
+    try {
+      setupDatasets(factory);
+    } catch (Exception e) {
+      String msg = "Exception creating destination tables";
+      LOG.error(msg, e);
+      throw new DataMigrationException(msg);
+    }
+    migrator.migrateMetricsTables(tableUtil, keepOldData);
   }
 
   private int getRollTime(int resolution) {

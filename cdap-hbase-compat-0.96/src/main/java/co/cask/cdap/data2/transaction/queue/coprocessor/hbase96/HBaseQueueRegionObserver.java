@@ -19,6 +19,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
@@ -58,6 +59,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private Configuration conf;
   private byte[] configTableNameBytes;
+  private CConfigurationReader cConfReader;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -82,15 +84,17 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
       }
 
-      namespaceId = HTable96NameConverter.fromTableName(tableDesc.getTableName()).getNamespace().getId();
+      HTable96NameConverter nameConverter = new HTable96NameConverter();
+      namespaceId = nameConverter.from(tableDesc).getNamespace().getId();
       appName = HBaseQueueAdmin.getApplicationName(hTableName);
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       conf = env.getConfiguration();
-      String hbaseNamespacePrefix = HTable96NameConverter.getHbaseNamespacePrefix(tableDesc.getTableName());
+      String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
       TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
-      configTableNameBytes = HTable96NameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable96NameConverter());
+      configTableNameBytes = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
+      cConfReader = new CConfigurationReader(conf, nameConverter.getSysConfigTablePrefix(tableDesc));
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader);
     }
   }
 
@@ -120,7 +124,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, new HTable96NameConverter());
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader);
     }
     return configCache;
   }

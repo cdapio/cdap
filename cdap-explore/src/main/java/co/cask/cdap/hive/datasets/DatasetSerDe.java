@@ -48,6 +48,7 @@ import java.util.Properties;
 public class DatasetSerDe implements SerDe {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
 
+  private ObjectInspector objectInspector;
   private ObjectDeserializer deserializer;
   private ObjectSerializer serializer;
 
@@ -60,12 +61,24 @@ public class DatasetSerDe implements SerDe {
     // object inspectors will reflect them.
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     String namespace = properties.getProperty(Constants.Explore.DATASET_NAMESPACE);
+
+    // no namespace SHOULD be an exception but... Hive calls initialize in several places, one of which is
+    // when you try and drop a table.
+    // When updating to CDAP 2.8, old tables will not have namespace as a serde property. So in order
+    // to avoid a null pointer exception that prevents dropping a table, we handle the null namespace case here.
+    if (namespace == null) {
+      // we also still need an ObjectInspector as Hive uses it to check what columns the table has.
+      this.objectInspector = new ObjectDeserializer(properties, null).getInspector();
+      return;
+    }
+
     Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetName);
     try {
       Schema schema = DatasetAccessor.getRecordSchema(entries, datasetInstanceId);
       this.deserializer = new ObjectDeserializer(properties, schema);
       ArrayList<String> columnNames = Lists.newArrayList(StringUtils.split(properties.getProperty("columns"), ","));
       this.serializer = new ObjectSerializer(columnNames);
+      this.objectInspector = deserializer.getInspector();
     } catch (NullJobConfException e) {
       // This is the case when this serDe is used by Hive only for its serialize method. In that case,
       // We don't need to initialize a context since serialize does not need any dataset information.
@@ -78,6 +91,7 @@ public class DatasetSerDe implements SerDe {
       throw new SerDeException("Schema is of an unsupported type.");
     }
   }
+
 
   @Override
   public Class<? extends Writable> getSerializedClass() {
@@ -121,7 +135,7 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
-    return deserializer.getInspector();
+    return objectInspector;
   }
 
 }

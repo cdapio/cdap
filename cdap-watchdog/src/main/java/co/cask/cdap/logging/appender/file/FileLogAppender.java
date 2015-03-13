@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,6 @@ import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +57,11 @@ public class FileLogAppender extends LogAppender {
 
   public static final String APPENDER_NAME = "FileLogAppender";
 
+  private final CConfiguration cConf;
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
-  private final Location logBaseDir;
+  private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
@@ -82,15 +82,14 @@ public class FileLogAppender extends LogAppender {
                          TransactionExecutorFactory txExecutorFactory,
                          LocationFactory locationFactory) {
     setName(APPENDER_NAME);
-
+    this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
     this.dsFramework = dsFramework;
 
-    String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = locationFactory.create(baseDir);
+    this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
 
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
@@ -130,17 +129,15 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
-                                                                        txExecutorFactory,
-                                                                        locationFactory, dsFramework);
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
+                                                                        locationFactory, dsFramework, cConf);
 
-      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
-                                                         logSchema,
-                                                         maxLogFileSizeBytes, syncIntervalBytes,
+      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, locationFactory.create(""),
+                                                         logBaseDir, logSchema, maxLogFileSizeBytes, syncIntervalBytes,
                                                          inactiveIntervalMs);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), retentionDurationMs);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
                                             logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {

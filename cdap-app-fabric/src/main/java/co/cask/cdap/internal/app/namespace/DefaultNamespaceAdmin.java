@@ -35,7 +35,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,9 +75,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    */
   private void createDefaultNamespace() {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    NamespaceMeta defaultNamespace = builder.setId(Constants.DEFAULT_NAMESPACE)
-      .setName("Default namespace")
-      .setDescription("The default namespace, a reserved system namespace.")
+    NamespaceMeta defaultNamespace = builder
+      .setName(Constants.DEFAULT_NAMESPACE)
+      .setDescription("Default Namespace")
       .build();
 
     try {
@@ -146,15 +145,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public void createNamespace(NamespaceMeta metadata) throws NamespaceCannotBeCreatedException, AlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getId()));
+    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getName()));
     if (existing != null) {
-      throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getId());
+      throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getName());
     }
 
     try {
-      dsFramework.createNamespace(Id.Namespace.from(metadata.getId()));
+      dsFramework.createNamespace(Id.Namespace.from(metadata.getName()));
     } catch (DatasetManagementException e) {
-      throw new NamespaceCannotBeCreatedException(metadata.getId(), e);
+      throw new NamespaceCannotBeCreatedException(metadata.getName(), e);
     }
 
     store.createNamespace(metadata);

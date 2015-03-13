@@ -76,8 +76,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   @Inject
   public DatasetTypeManager(CConfiguration configuration, MDSDatasetsRegistry mdsDatasets,
                             LocationFactory locationFactory,
-                            @Named("defaultDatasetModules")
-                            Map<String, ? extends DatasetModule> defaultModules) {
+                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);

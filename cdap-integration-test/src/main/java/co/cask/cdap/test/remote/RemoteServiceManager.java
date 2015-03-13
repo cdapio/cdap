@@ -16,9 +16,12 @@
 
 package co.cask.cdap.test.remote;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.AbstractServiceManager;
 import com.google.common.base.Throwables;
@@ -34,11 +37,15 @@ public class RemoteServiceManager extends AbstractServiceManager {
   private final RemoteApplicationManager.ProgramId serviceId;
   private final ServiceClient serviceClient;
   private final ProgramClient programClient;
+  private final MetricsClient metricsClient;
+  private final ClientConfig clientConfig;
 
   public RemoteServiceManager(RemoteApplicationManager.ProgramId serviceId, ClientConfig clientConfig) {
     this.serviceId = serviceId;
+    this.clientConfig = clientConfig;
     this.serviceClient = new ServiceClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
+    this.metricsClient = new MetricsClient(clientConfig);
   }
 
   @Override
@@ -102,5 +109,12 @@ public class RemoteServiceManager extends AbstractServiceManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public RuntimeMetrics getMetrics() {
+    Id.Application app = Id.Application.from(clientConfig.getNamespace(), serviceId.getApplicationId());
+    Id.Program program = Id.Program.from(app, ProgramType.SERVICE, serviceId.getRunnableId());
+    return metricsClient.getServiceMetrics(program);
   }
 }

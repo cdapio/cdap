@@ -34,7 +34,6 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -775,7 +774,7 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
-        Id.Namespace namespaceId = Id.Namespace.from(metadata.getId());
+        Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
         NamespaceMeta existing = input.apps.getNamespace(namespaceId);
         if (existing != null) {
           return existing;
@@ -792,7 +791,7 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds input) throws Exception {
-        NamespaceMeta existing = input.apps.getNamespace(Id.Namespace.from(metadata.getId()));
+        NamespaceMeta existing = input.apps.getNamespace(Id.Namespace.from(metadata.getName()));
         if (existing != null) {
           input.apps.createNamespace(metadata);
         }

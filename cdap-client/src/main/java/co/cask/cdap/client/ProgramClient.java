@@ -159,10 +159,10 @@ public class ProgramClient {
       List<ProgramRecord> programRecords = entry.getValue();
       for (ProgramRecord programRecord : programRecords) {
         try {
-          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getId());
+          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getName());
           if (!status.equals("STOPPED")) {
-            this.stop(programRecord.getApp(), programType, programRecord.getId());
-            this.waitForStatus(programRecord.getApp(), programType, programRecord.getId(),
+            this.stop(programRecord.getApp(), programType, programRecord.getName());
+            this.waitForStatus(programRecord.getApp(), programType, programRecord.getName(),
                                "STOPPED", 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {

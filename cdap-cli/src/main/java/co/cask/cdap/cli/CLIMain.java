@@ -26,7 +26,6 @@ import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.CLI;
@@ -34,19 +33,13 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -69,12 +62,6 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class CLIMain {
 
-  public static final String NAME_DEBUG = "debug";
-  public static final String NAME_URI = "uri";
-  public static final String NAME_VERIFY_SSL = "verify_ssl";
-  public static final String NAME_AUTOCONNECT = "autoconnect";
-
-  private static final Gson GSON = new Gson();
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
@@ -101,80 +88,55 @@ public class CLIMain {
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
-  private final TableRenderer tableRenderer;
+  private final CLIConfig cliConfig;
 
-  /**
-   * @param output output to print to
-   * @param uri provided URI of CDAP instance
-   * @param autoconnect if true, try provided connection (or default from CConfiguration) before startup
-   * @param debug if true, log all exception stack traces
-   * @throws URISyntaxException
-   * @throws IOException
-   */
-  @Inject
-  public CLIMain(final PrintStream output,
-                 @Named(NAME_URI) String uri,
-                 @Named(NAME_AUTOCONNECT) boolean autoconnect,
-                 @Named(NAME_DEBUG) final boolean debug,
-                 InstanceURIParser instanceURIParser,
-                 CLIConfig cliConfig,
-                 DefaultCommands defaultCommands,
-                 DefaultCompleters defaultCompleters,
-                 EndpointSupplier endpointSupplier,
-                 TableRenderer tableRenderer,
-                 RESTClient restClient) throws URISyntaxException, IOException {
+  public CLIMain(final LaunchOptions options, final CLIConfig cliConfig) throws URISyntaxException, IOException {
+    this.cliConfig = cliConfig;
 
-    if (debug) {
-      restClient.addListener(new RESTClient.Listener() {
+    final PrintStream output = cliConfig.getOutput();
+    final TableRenderer tableRenderer = cliConfig.getTableRenderer();
+
+    cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
+    Injector injector = Guice.createInjector(
+      new AbstractModule() {
         @Override
-        public void onRequest(HttpRequest request, int attempt) {
-          output.printf("DEBUG: Executing HTTP request (attempt %d): " +
-                        "method=%s url=%s hasBody=%s bodyLength=%s headers=%s",
-                        attempt, request.getMethod().name(), request.getURL().toString(),
-                        request.getBody() != null, request.getBodyLength(),
-                        limit(GSON.toJson(request.getHeaders()), 100));
-          output.println();
+        protected void configure() {
+          bind(LaunchOptions.class).toInstance(options);
+          bind(CConfiguration.class).toInstance(CConfiguration.create());
+          bind(PrintStream.class).toInstance(output);
+          bind(CLIConfig.class).toInstance(cliConfig);
+          bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          bind(TableRenderer.class).toInstance(tableRenderer);
         }
+      }
+    );
 
-        @Override
-        public void onResponse(HttpRequest request, HttpResponse response, int attemptsMade) {
-          output.printf("DEBUG: Got HTTP response (after %d attempt(s)): " +
-                          "response={code=%d message=%s body=%s headers=%s}",
-                        attemptsMade, response.getResponseCode(),
-                        limit(response.getResponseMessage(), 100),
-                        limit(response.getResponseBodyAsString(), 100),
-                        limit(GSON.toJson(response.getHeaders()), 100));
-          output.println();
-        }
-      });
-    }
-
-    this.tableRenderer = tableRenderer;
-    if (autoconnect) {
+    InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
+    if (options.isAutoconnect()) {
       try {
-        ConnectionConfig connectionInfo = instanceURIParser.parse(uri);
-        cliConfig.tryConnect(connectionInfo, output, debug);
+        ConnectionConfig connectionInfo = instanceURIParser.parse(options.getUri());
+        cliConfig.tryConnect(connectionInfo, output, options.isDebug());
       } catch (Exception e) {
-        if (debug) {
+        if (options.isDebug()) {
           e.printStackTrace(output);
         }
       }
     }
 
     this.commands = ImmutableList.of(
-      defaultCommands,
+      injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
         new HelpCommand(getCommandsSupplier()),
         new SearchCommandsCommand(getCommandsSupplier())
       )));
-    Map<String, Completer> completers = defaultCompleters.get();
-
+    Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
         if (e instanceof SSLHandshakeException) {
-          output.printf("To ignore this error, set -D%s=false when starting the CLI\n", CLIConfig.PROP_VERIFY_SSL_CERT);
+          output.printf("To ignore this error, set \"--%s false\" when starting the CLI\n",
+                        VERIFY_SSL_OPTION.getLongOpt());
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
@@ -184,14 +146,14 @@ public class CLIMain {
           output.println("Error: " + e.getMessage());
         }
 
-        if (debug) {
+        if (options.isDebug()) {
           e.printStackTrace(output);
         }
 
         return false;
       }
     });
-    cli.addCompleterSupplier(endpointSupplier);
+    cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
     updateCLIPrompt(cliConfig.getClientConfig().getConnectionConfig());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
@@ -237,7 +199,7 @@ public class CLIMain {
   }
 
   public TableRenderer getTableRenderer() {
-    return tableRenderer;
+    return cliConfig.getTableRenderer();
   }
 
   public CLI getCLI() {
@@ -264,37 +226,19 @@ public class CLIMain {
         usage();
         System.exit(0);
       }
-      final String uri = command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI());
-      final boolean debug = command.hasOption(DEBUG_OPTION.getOpt());
-      final boolean verifySSL = parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL);
-      final boolean autoconnect = parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT);
+
+      LaunchOptions launchOptions = LaunchOptions.builder()
+        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI()))
+        .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
+        .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
+        .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
+        .build();
+
       String[] commandArgs = command.getArgs();
 
       try {
-        ClientConfig clientConfig = new ClientConfig.Builder()
-          .setConnectionConfig(null)
-          .setVerifySSLCert(verifySSL)
-          .build();
-        final CLIConfig cliConfig = new CLIConfig(clientConfig);
-        Injector injector = Guice.createInjector(
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(PrintStream.class).toInstance(output);
-              bind(String.class).annotatedWith(Names.named(NAME_URI)).toInstance(uri);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_VERIFY_SSL)).toInstance(verifySSL);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_DEBUG)).toInstance(debug);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_AUTOCONNECT)).toInstance(autoconnect);
-              bind(CLIConfig.class).toInstance(cliConfig);
-              bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-              bind(CConfiguration.class).toInstance(CConfiguration.create());
-              bind(TableRenderer.class).to(AltStyleTableRenderer.class);
-              bind(RESTClient.class).toInstance(new RESTClient(cliConfig.getClientConfig()));
-            }
-          }
-        );
-
-        CLIMain cliMain = injector.getInstance(CLIMain.class);
+        final CLIConfig cliConfig = new CLIConfig(ClientConfig.builder().build(), output, new AltStyleTableRenderer());
+        CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
 
         if (commandArgs.length == 0) {

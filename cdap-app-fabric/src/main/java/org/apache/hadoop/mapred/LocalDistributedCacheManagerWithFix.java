@@ -89,6 +89,11 @@ class LocalDistributedCacheManagerWithFix {
   private List<File> symlinksCreated = new ArrayList<File>();
 
   private boolean setupCalled = false;
+  private JobID jobId;
+
+  public LocalDistributedCacheManagerWithFix(JobID jobId) {
+    this.jobId = jobId;
+  }
 
   /**
    * Set up the distributed cache by localizing the resources, and updating
@@ -147,7 +152,8 @@ class LocalDistributedCacheManagerWithFix {
       for (LocalResource resource : localResources.values()) {
         Callable<Path> download =
           new FSDownload(localFSFileContext, ugi, conf,
-                         new Path(destPath, Long.toString(uniqueNumberGenerator.incrementAndGet())),
+                         new Path(destPath, jobId.toString() + "_" +
+                           Long.toString(uniqueNumberGenerator.incrementAndGet())),
                          resource);
         Future<Path> future = exec.submit(download);
         resourcesToPaths.put(resource, future);

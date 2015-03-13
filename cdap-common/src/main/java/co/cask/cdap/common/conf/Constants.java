@@ -483,7 +483,6 @@ public final class Constants {
    * Logging constants.
    */
   public static final class Logging {
-    public static final String SYSTEM_NAME = "cdap";
     public static final String COMPONENT_NAME = "services";
   }
 
@@ -726,6 +725,11 @@ public final class Constants {
    */
   public static final String SYSTEM_NAMESPACE = "system";
   public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
+
+  /**
+   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
+   */
+  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.

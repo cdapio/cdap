@@ -166,7 +166,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
       // Manage the distributed cache.  If there are files to be copied,
       // this will trigger localFile to be re-written again.
-      localDistributedCacheManager = new LocalDistributedCacheManagerWithFix();
+      localDistributedCacheManager = new LocalDistributedCacheManagerWithFix(id);
       localDistributedCacheManager.setup(conf);
 
       // Write out configuration file.  Instead of copying it from

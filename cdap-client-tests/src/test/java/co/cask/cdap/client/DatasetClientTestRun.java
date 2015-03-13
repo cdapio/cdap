@@ -61,11 +61,11 @@ public class DatasetClientTestRun extends ClientTestBase {
     typeClient = new DatasetTypeClient(clientConfig);
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
     try {
-      namespaceClient.create(new NamespaceMeta.Builder().setId(TEST_NAMESPACE).build());
+      namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
     }
     try {
-      namespaceClient.create(new NamespaceMeta.Builder().setId(OTHER_NAMESPACE).build());
+      namespaceClient.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
     }
     clientConfig.setNamespace(TEST_NAMESPACE);

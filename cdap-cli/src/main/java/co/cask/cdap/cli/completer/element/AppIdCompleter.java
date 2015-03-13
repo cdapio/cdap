@@ -42,7 +42,7 @@ public class AppIdCompleter extends StringsCompleter {
           List<ApplicationRecord> appsList = applicationClient.list();
           List<String> appIds = Lists.newArrayList();
           for (ApplicationRecord item : appsList) {
-            appIds.add(item.getId());
+            appIds.add(item.getName());
           }
           return appIds;
         } catch (IOException e) {

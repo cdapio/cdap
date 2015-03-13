@@ -17,6 +17,7 @@ package co.cask.cdap.api.dataset;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -77,8 +78,8 @@ public final class DatasetSpecification {
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
-    this.datasetSpecs = datasetSpecs;
+    this.properties = ImmutableSortedMap.copyOfSorted(properties);
+    this.datasetSpecs = ImmutableSortedMap.copyOfSorted(datasetSpecs);
   }
 
   /**

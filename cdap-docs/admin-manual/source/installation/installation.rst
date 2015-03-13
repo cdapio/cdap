@@ -591,7 +591,7 @@ and then restart CDAP.
 
 #. Run the upgrade tool::
 
-     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
+     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
 #. Restart the CDAP processes::
 

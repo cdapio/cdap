@@ -17,9 +17,11 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -29,17 +31,20 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,16 +52,16 @@ import java.util.List;
  */
 public final class DatasetInstanceMDSUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceMDSUpgrader.class);
-  private final Transactional<UpgradeMdsStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
+  private final Transactional<UpgradeMDSStores<DatasetInstanceMDS>, DatasetInstanceMDS> datasetInstanceMds;
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
                                      @Named("dsFramework") final DatasetFramework dsFramework) {
 
     this.datasetInstanceMds = Transactional.of(executorFactory,
-       new Supplier<UpgradeMdsStores<DatasetInstanceMDS>>() {
+       new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
          @Override
-         public UpgradeMdsStores<DatasetInstanceMDS> get() {
+         public UpgradeMDSStores<DatasetInstanceMDS> get() {
            String dsName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
            Id.DatasetInstance datasetId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
            DatasetInstanceMDS oldMds;
@@ -75,7 +80,7 @@ public final class DatasetInstanceMDSUpgrader {
              LOG.error("Failed to access Datasets instances meta table.");
              throw Throwables.propagate(e);
            }
-           return new UpgradeMdsStores<DatasetInstanceMDS>(oldMds, newMds);
+           return new UpgradeMDSStores<DatasetInstanceMDS>(oldMds, newMds);
          }
        });
   }
@@ -84,9 +89,9 @@ public final class DatasetInstanceMDSUpgrader {
     // Moves dataset instance meta entries into new table (in system namespace)
     // Also updates the spec's name ('cdap.user.foo' -> 'foo')
     LOG.info("Upgrading Dataset instance mds.");
-    datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMdsStores<DatasetInstanceMDS>, Void>() {
+    datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>, Void>() {
       @Override
-      public Void apply(UpgradeMdsStores<DatasetInstanceMDS> ctx) throws Exception {
+      public Void apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
         MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
         DatasetInstanceMDS newMds = ctx.getNewMds();
         List<DatasetSpecification> dsSpecs = ctx.getOldMds().list(key, DatasetSpecification.class);
@@ -104,13 +109,66 @@ public final class DatasetInstanceMDSUpgrader {
   }
 
   /**
+   * Gets the {@link DatasetSpecification} of all the {@link FileSet} from the {@link DatasetInstanceMDS} table
+   *
+   * @return A list of {@link DatasetSpecification} of all the {@link FileSet}
+   * @throws TransactionFailureException
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  public List<DatasetSpecification> getFileSetsSpecs() throws TransactionFailureException,
+    InterruptedException, IOException {
+    return datasetInstanceMds.execute(new TransactionExecutor.Function<UpgradeMDSStores<DatasetInstanceMDS>,
+      List<DatasetSpecification>>() {
+      @Override
+      public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
+        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
+        List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
+        for (DatasetSpecification dsSpec : dsSpecs) {
+          fileSetSpecs.addAll(findFileSetsInEmbeddedDS(dsSpec));
+        }
+        return fileSetSpecs;
+      }
+    });
+  }
+
+  /**
+   * Recursively search the embedded datasets of a {@link Dataset} which is not a {@link FileSet} for {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of a {@link Dataset} which should be searched for {@link FileSet}
+   * @return A list of {@link DatasetSpecification} of {@link FileSet}
+   */
+  private List<DatasetSpecification> findFileSetsInEmbeddedDS(DatasetSpecification dsSpec) {
+    if (isFileSet(dsSpec)) {
+      return ImmutableList.of(dsSpec);
+    }
+    ArrayList<DatasetSpecification> dsSpecs = Lists.newArrayList();
+    for (DatasetSpecification embeddedDsSpec : dsSpec.getSpecifications().values()) {
+      dsSpecs.addAll(findFileSetsInEmbeddedDS(embeddedDsSpec));
+    }
+    return dsSpecs;
+  }
+
+  /**
+   * Checks if the the given dataset spec is of a {@link FileSet}
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the dataset
+   * @return a boolean which is true if its a {@link FileSet} else false
+   */
+  public boolean isFileSet(DatasetSpecification dsSpec) {
+    String dsType = dsSpec.getType();
+    return (FileSet.class.getName().equals(dsType) || "fileSet".equals(dsType));
+  }
+
+  /**
    * Construct a {@link Id.DatasetInstance} from a pre-2.8.0 CDAP Dataset name
    *
    * @param datasetName the dataset/table name to construct the {@link Id.DatasetInstance} from
    * @return the {@link Id.DatasetInstance} object for the specified dataset/table name
    */
   private static Id.DatasetInstance from(String datasetName) {
-    Preconditions.checkArgument(datasetName != null, "Dataset name should not be null");
+    Preconditions.checkNotNull(datasetName, "Dataset name should not be null");
     // Dataset/Table name is expected to be in the format <table-prefix>.<namespace>.<name>
     String invalidFormatError = String.format("Invalid format for dataset '%s'. " +
                                                 "Expected - <table-prefix>.<namespace>.<dataset-name>", datasetName);
@@ -123,7 +181,15 @@ public final class DatasetInstanceMDSUpgrader {
   private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
-    return DatasetSpecification.changeName(oldSpec, newDatasetName);
+    DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
+      .properties(oldSpec.getProperties());
+    for (DatasetSpecification embeddedDsSpec : oldSpec.getSpecifications().values()) {
+      LOG.debug("Migrating embedded Dataset spec: {}", embeddedDsSpec);
+      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
+      LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
+      builder.datasets(migratedEmbeddedSpec);
+    }
+    return builder.build();
   }
 
   private Id.Namespace namespaceFromDatasetName(String dsName) {
@@ -137,27 +203,6 @@ public final class DatasetInstanceMDSUpgrader {
     } else {
       throw new IllegalArgumentException(String.format("Expected Dataset namespace to be either 'system' or 'user': %s",
                                                        dsId));
-    }
-  }
-
-  private static final class UpgradeMdsStores<T> implements Iterable<T> {
-    private final List<T> stores;
-
-    private UpgradeMdsStores(T oldMds, T newMds) {
-      this.stores = ImmutableList.of(oldMds, newMds);
-    }
-
-    private T getOldMds() {
-      return stores.get(0);
-    }
-
-    private T getNewMds() {
-      return stores.get(1);
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-      return stores.iterator();
     }
   }
 }

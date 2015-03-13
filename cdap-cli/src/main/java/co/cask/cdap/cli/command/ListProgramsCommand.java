@@ -57,7 +57,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
       .setRows(programs, new RowMaker<ProgramRecord>() {
         @Override
         public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(object.getApp(), object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getApp(), object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

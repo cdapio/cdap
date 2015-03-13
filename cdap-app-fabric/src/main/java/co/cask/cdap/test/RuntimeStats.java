@@ -21,8 +21,14 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricsConstants;
+import co.cask.cdap.common.metrics.MetricsContexts;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -34,11 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public final class RuntimeStats {
+
   // ugly attempt to suport existing APIs
   // todo: non-thread safe? or fine as long as in-memory datasets underneath are used?
   public static MetricStore metricStore;
@@ -51,33 +59,24 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.FLOW, flowId,
-      Constants.Metrics.Tag.FLOWLET, flowletId);
-
-    return getMetrics(
-      context, "system.process.tuples.read", "system.process.events.processed", "system.process.errors");
+    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.FLOW, flowId);
+    return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
+                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
+                      MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROCEDURE, procedureId);
-
-    return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
+    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.PROCEDURE, procedureId);
+    return getMetrics(MetricsContexts.forProcedure(id),
+                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
+                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.SERVICE, serviceId);
-
-    return getMetrics(
-      context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
+    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.SERVICE, serviceId);
+    return getMetrics(MetricsContexts.forService(id),
+                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
+                      MetricsConstants.SERVICE_EXCEPTIONS);
   }
 
   @Deprecated
@@ -97,7 +96,7 @@ public final class RuntimeStats {
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
-                                           final String exceptionName) {
+                                           @Nullable final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
@@ -111,6 +110,7 @@ public final class RuntimeStats {
 
       @Override
       public long getException() {
+        Preconditions.checkArgument(exceptionName != null, "exception count not supported");
         return getTotalCounter(context, exceptionName);
       }
 

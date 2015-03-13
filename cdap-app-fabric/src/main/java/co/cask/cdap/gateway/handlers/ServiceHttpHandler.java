@@ -58,16 +58,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user Services in an application.
-   */
-  @Path("/apps/{app-id}/services")
-  @GET
-  public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programLifecycleHttpHandler.getServicesByApp(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE, appId);
-  }
-
-  /**
    * Return the number of instances for the given runnable of a service.
    */
   @GET
@@ -76,7 +66,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") String appId,
                            @PathParam("service-id") String serviceId,
                            @PathParam("runnable-name") String runnableName) {
-    programLifecycleHttpHandler.getServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    programLifecycleHttpHandler.getServiceInstances(responder,
                                                     Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
   }
 

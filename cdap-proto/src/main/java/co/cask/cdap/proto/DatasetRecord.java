@@ -26,6 +26,11 @@ public class DatasetRecord {
   private final String name;
   private final String classname;
 
+  public DatasetRecord(String name, String classname) {
+    this("Dataset", name, name, classname);
+  }
+
+  @Deprecated
   public DatasetRecord(String type, String id, String name, String classname) {
     this.type = type;
     this.id = id;
@@ -37,6 +42,7 @@ public class DatasetRecord {
     return type;
   }
 
+  @Deprecated
   public String getId() {
     return id;
   }

@@ -15,11 +15,10 @@ Operations
    
     Logging <logging>
     Metrics <metrics>
-    Runtime Arguments <runtime-arguments>
+    Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     CDAP Console <cdap-console>
     Troubleshooting <troubleshooting>
-    
 
 .. |logging| replace:: **Logging:**
 .. _logging: logging.html

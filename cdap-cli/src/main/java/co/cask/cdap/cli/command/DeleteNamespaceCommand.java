@@ -44,7 +44,7 @@ public class DeleteNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream out) throws Exception {
-    Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.toString()));
+    Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
     namespaceClient.delete(namespaceId.getId());
     out.println(String.format(SUCCESS_MSG, namespaceId));
     if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
@@ -56,7 +56,7 @@ public class DeleteNamespaceCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("delete namespace <%s>", ArgumentName.NAMESPACE_ID);
+    return String.format("delete namespace <%s>", ArgumentName.NAMESPACE_NAME);
   }
 
   @Override

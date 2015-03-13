@@ -45,7 +45,7 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     List<ProgramRecord> programRecords = readResponse(response, typeToken);
 
     Assert.assertEquals(1, programRecords.size());
-    Assert.assertEquals("NoOpService", programRecords.get(0).getId());
+    Assert.assertEquals("NoOpService", programRecords.get(0).getName());
   }
 
   @Test

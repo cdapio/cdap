@@ -17,8 +17,8 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.query.MetricQueryResult;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -149,7 +149,7 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
     }
     return events;
   }
-  
+
   private void checkEventsProcessed(Id.Stream streamId, long expectedCount, int retries) throws Exception {
     for (int i = 0; i < retries; i++) {
       long numProcessed = getNumProcessed(streamId);

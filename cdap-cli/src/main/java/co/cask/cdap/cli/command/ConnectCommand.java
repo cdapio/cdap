@@ -17,12 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.inject.name.Named;
 
 import java.io.PrintStream;
 import javax.inject.Inject;
@@ -38,10 +37,10 @@ public class ConnectCommand implements Command {
 
   @Inject
   public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
-                        @Named(CLIMain.NAME_DEBUG) final boolean debug) {
+                        LaunchOptions launchOptions) {
     this.cliConfig = cliConfig;
     this.instanceURIParser = instanceURIParser;
-    this.debug = debug;
+    this.debug = launchOptions.isDebug();
   }
 
   @Override

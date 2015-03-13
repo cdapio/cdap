@@ -18,8 +18,7 @@ package co.cask.cdap.common.conf;
 
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
+import com.google.gson.stream.JsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Comment;
@@ -1810,27 +1809,23 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   public static void dumpConfiguration(Configuration config,
                                        Writer out) throws IOException {
-    JsonFactory dumpFactory = new JsonFactory();
-    JsonGenerator dumpGenerator = dumpFactory.createJsonGenerator(out);
-    dumpGenerator.writeStartObject();
-    dumpGenerator.writeFieldName("properties");
-    dumpGenerator.writeStartArray();
+    JsonWriter dumpGenerator = new JsonWriter(out);
+    dumpGenerator.beginObject();
+    dumpGenerator.name("properties");
+    dumpGenerator.beginArray();
     dumpGenerator.flush();
     synchronized (config) {
       for (Map.Entry<Object, Object> item: config.getProps().entrySet()) {
-        dumpGenerator.writeStartObject();
-        dumpGenerator.writeStringField("key", (String) item.getKey());
-        dumpGenerator.writeStringField("value",
-                                       config.get((String) item.getKey()));
-        dumpGenerator.writeBooleanField("isFinal",
-                                        config.finalParameters.contains(item.getKey()));
-        dumpGenerator.writeStringField("resource",
-                                       config.updatingResource.get(item.getKey()));
-        dumpGenerator.writeEndObject();
+        dumpGenerator.beginObject();
+        dumpGenerator.name("key").value((String) item.getKey());
+        dumpGenerator.name("value").value(config.get((String) item.getKey()));
+        dumpGenerator.name("isFinal").value(config.finalParameters.contains(item.getKey()));
+        dumpGenerator.name("resource").value(config.updatingResource.get(item.getKey()));
+        dumpGenerator.endObject();
       }
     }
-    dumpGenerator.writeEndArray();
-    dumpGenerator.writeEndObject();
+    dumpGenerator.endArray();
+    dumpGenerator.endObject();
     dumpGenerator.flush();
   }
 

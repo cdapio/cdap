@@ -301,7 +301,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void createNamespace(NamespaceMeta metadata) {
-    write(getNamespaceKey(metadata.getId()), metadata);
+    write(getNamespaceKey(metadata.getName()), metadata);
   }
 
   public NamespaceMeta getNamespace(Id.Namespace id) {

@@ -63,6 +63,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
+    runBefore = true;
     initialize(CConfiguration.create(), false);
   }
 
@@ -78,7 +79,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
     final Id.DatasetInstance datasetInstanceId =
       DATASET_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, datasetName));
 
-    final String tableName = datasetInstanceId.getId().replaceAll("\\.", "_");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
     datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
@@ -136,7 +137,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testPartitionedFileSet() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parted");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replaceAll("\\.", "_");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
     datasetFramework.addInstance("partitionedFileSet", datasetInstanceId, PartitionedFileSetProperties.builder()
@@ -258,7 +259,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   private void testPartitionedTextFile(String name, String format, String delim, String fileDelim) throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, name);
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replaceAll("\\.", "_");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
     // create a time partitioned file set
     PartitionedFileSetProperties.Builder builder = (PartitionedFileSetProperties.Builder)
       PartitionedFileSetProperties.builder()
@@ -321,7 +322,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testTimePartitionedFileSet() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parts");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replaceAll("\\.", "_");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
@@ -439,7 +440,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   public void testTimePartitionedFileSetBackwardsCompatibility() throws Exception {
     final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "backward");
     final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
-    final String tableName = datasetName.replaceAll("\\.", "_");
+    final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()

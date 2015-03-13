@@ -231,8 +231,8 @@
 
     <property>
         <name>stream.notification.threshold</name>
-        <value>1000</value>
-        <description>Size of data, in MB, to be ingested by a Stream before a notification is published</description>
+        <value>1024</value>
+        <description>Default size of data, in MB, to be ingested by a Stream before a notification is published</description>
     </property>
 
     <property>

@@ -48,7 +48,7 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/flow-%s", super.getLogPathFragment(), getSystemTag(TAG_FLOW_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/flow-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_FLOW_ID));
   }
 }

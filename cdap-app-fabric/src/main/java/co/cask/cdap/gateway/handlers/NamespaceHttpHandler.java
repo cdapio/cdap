@@ -36,7 +36,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -97,7 +96,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK, "Properties updated");
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.error("Failed to read namespace metadata request body.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
@@ -112,7 +111,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
       return;
-    } catch (IOException e) {
+    } catch (Exception e) {
       LOG.error("Failed to read namespace metadata request body.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
       return;
@@ -131,23 +130,12 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    // Handle optional params
-    String name = null;
-    String description = null;
-    if (metadata != null) {
-      if (metadata.getName() != null) {
-        name = metadata.getName();
-      }
-      if (metadata.getDescription() != null) {
-        description = metadata.getDescription();
-      }
-    }
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespaceId);
 
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(namespaceId)
-      .setName(name)
-      .setDescription(description)
-      .build();
+    // Handle optional params
+    if (metadata != null && metadata.getDescription() != null) {
+        builder.setDescription(metadata.getDescription());
+    }
 
     try {
       namespaceAdmin.createNamespace(builder.build());
@@ -222,6 +210,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean isReserved(String namespaceId) {
     return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId) ||
-      Constants.Logging.SYSTEM_NAME.equals(namespaceId);
+      Constants.CDAP_NAMESPACE.equals(namespaceId);
   }
 }

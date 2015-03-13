@@ -25,7 +25,7 @@ Let's look at some of these components, and then run the Application and see the
 The FileSetExample Application
 ------------------------------
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by the class ``FileSetExample``:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
@@ -60,8 +60,8 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 It uses the ``getLocation()`` of the file set to obtain the location representing the requested file,
 and then opens an input stream for that location. ``Location`` is a file system abstraction from
-`Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the Apache Twill
-`Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
+`Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
+`Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
 MapReduce over Files
 ====================

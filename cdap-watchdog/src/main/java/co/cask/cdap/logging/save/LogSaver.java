@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
@@ -61,6 +60,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
   private static final int TIMEOUT_SECONDS = 10;
 
+  private final String logBaseDir;
   private final String topic;
   private final LoggingEventSerializer serializer;
 
@@ -98,10 +98,9 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     this.kafkaClient = kafkaClient;
 
-    String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    Location logBaseDir = locationFactory.create(baseDir);
-    LOG.info(String.format("Log base dir is %s", logBaseDir.toURI()));
+    this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
+    LOG.info(String.format("Log base dir is %s", this.logBaseDir));
 
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
@@ -150,18 +149,16 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager,
-                                                       logBaseDir,
-                                                       serializer.getAvroSchema(),
-                                                       maxLogFileSizeBytes, syncIntervalBytes,
-                                                       inactiveIntervalMs);
+    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, locationFactory.create(""),
+                                                       logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
+                                                       syncIntervalBytes, inactiveIntervalMs);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
     this.scheduledExecutor =
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
-    this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), retentionDurationMs);
 
     this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
     this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
@@ -264,7 +261,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       kafkaCancelMap.put(part, preparer.consume(
         new LogCollectorCallback(messageTable, serializer,
                                  eventBucketIntervalMs, maxNumberOfBucketsInTable,
-                                 kafkaCancelCallbackLatchMap.get(part))));
+                                 kafkaCancelCallbackLatchMap.get(part), logBaseDir)));
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
