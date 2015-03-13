@@ -94,7 +94,7 @@ function sync_build_artifacts_to_server () {
     mkdir -p ${OUTGOING_DIR}
     decho "rsyncing with rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1"
     rsync -av ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
-    echo ""
+    decho ""
   done
 }
 
@@ -114,4 +114,4 @@ decho "#########################################################################
 echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} RPMs/DEBs to ${REMOTE_HOST}"
 sync_build_artifacts_to_server "${BUILD_RELEASE_DIRS}"
 
-echo 0
+exit 0
