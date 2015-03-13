@@ -427,3 +427,117 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
     }
   }, baseDirective);
 });
+
+
+function genericRender(scope, $filter) {
+  var nodes = scope.model.nodes;
+  var edges = scope.model.edges;
+  var instanceMap = {};
+  var labelMap = {};
+
+  var numberFilter = $filter('myNumber');
+
+  var renderer = new dagreD3.render();
+  var g = new dagreD3.graphlib.Graph();
+
+
+  g.setGraph({
+    nodesep: 60,
+    ranksep: 70,
+    rankdir: 'LR',
+    marginx: 30,
+    marginy: 30
+  })
+    .setDefaultEdgeLabel(function () { return {}; });
+
+  // First set nodes and edges.
+  angular.forEach(nodes, function (node) {
+    var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
+    instanceMap[node.name] = node;
+    labelMap[nodeLabel] = node;
+    if (node.type === 'ACTION') {
+      g.setNode(node.name, { shape: scope.getShape('ACTION'), label: nodeLabel});
+    } else {
+      g.setNode(node.name, { shape: scope.getShape(), label: nodeLabel});
+    }
+  });
+
+  angular.forEach(edges, function (edge) {
+    g.setEdge(edge.sourceName, edge.targetName);
+  });
+
+  angular.extend(renderer.shapes(), scope.getShapes());
+
+  // Set up an SVG group so that we can translate the final graph and tooltip.
+  var svg = d3.select('svg').attr('fill', 'white');
+  var svgGroup = d3.select('svg g');
+  var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0]);
+  svg.call(tip);
+
+  // Set up zoom support
+  var zoom = d3.behavior.zoom().on('zoom', function() {
+    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
+                                'scale(' + d3.event.scale + ')');
+  });
+  // svg.call(zoom);
+
+  // Run the renderer. This is what draws the final graph.
+  renderer(d3.select('svg g'), g);
+
+  // Set up onclick after rendering.
+  svg
+    .selectAll('g.node')
+    .on('click', scope.handleNodeClick);
+
+  svg
+    .selectAll('g.node text')
+    .on('mouseover', handleShowTip)
+    .on('mouseout', handleHideTip);
+
+
+  // Center svg.
+  var initialScale = 1.1;
+  var svgWidth = svg.node().getBoundingClientRect().width;
+  zoom
+    .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
+    .scale(initialScale)
+    .event(svg);
+  svg.attr('height', g.graph().height * initialScale + 40);
+
+  /**
+   * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
+   * instances text.
+   */
+  function getInstancesScaledRadius(instances, radius) {
+    var base = radius;
+    var extra = (instances.toString().length - 1) * base / 2;
+    return base + extra;
+  }
+
+  /**
+   * Gets number of instances from node map.
+   */
+  function getInstances(nodeId) {
+    return instanceMap[nodeId].instances ? instanceMap[nodeId].instances : 0;
+  }
+
+  /**
+   * Handles showing tooltip on mouseover of node name.
+   */
+  function handleShowTip(nodeId) {
+    tip
+      .html(function(d) {
+        return '<strong>' + instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
+      })
+      .show();
+  }
+
+  /**
+   * Handles hiding tooltip on mouseout of node name.
+   */
+  function handleHideTip(nodeId) {
+    tip.hide();
+  }
+};
