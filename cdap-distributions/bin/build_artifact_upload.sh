@@ -22,17 +22,16 @@
 #   $3 target directory         REMOTE_INCOMING_DIR
 ######################################################################################
 #DRY_RUN=--dry-run		### uncomment to only test what the rsync would do
-DEBUG=${DEBUG:-NO}              ### set to YES for debugging
+DEBUG=${DEBUG:-no}              ### set to yes for debugging
 
 # Vars
 RUN_DATE=`date '+%Y%m%d_%R'`
-MAINDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
 REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
-BUILD_RELEASE_DIRS=*/target                             ### Source directories
+BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
 
 #############################
@@ -50,7 +49,7 @@ find_repo_root() {
 
 # output trimmer
 decho () {
-  if [[ ${DEBUG} == 'YES' ]]; then
+  if [[ ${DEBUG} == 'yes' ]]; then
     echo ${*}
   else
     RSYNC_QUIET='--quiet'
@@ -69,7 +68,7 @@ die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 
 ###############################################################################
 # sync any rpm/deb
-function sync_build_artifacts_to_docs () {
+function sync_build_artifacts_to_server () {
   _source=$1
   echo "source directories: ${_source}"
 
@@ -80,10 +79,9 @@ function sync_build_artifacts_to_docs () {
 
   # copy packages
   decho "copy packages"
-  for i in `echo "${PACKAGES}"`
+  for i in ${PACKAGES}
   do
     decho "PACKAGE=${i}"
-    error_msg='rsync from bamboo to docs1 failed to complete cleanly'
     _package=`echo ${i} | awk -F / '{ print $(NF) }'`
     if [[ "${_package}" == *rpm ]]
     then
@@ -112,26 +110,8 @@ if [ ${NUMARGS} -lt 3 ]; then
   HELP
 fi
 
-# getopts -- Parse command line flags
-while getopts :h FLAG; do
-  case ${FLAG} in
-    h)  #show help
-      HELP
-      ;;
-    \?) #unrecognized option - show help
-      echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
-      HELP
-      ;;
-  esac
-done
-
-shift $((OPTIND-1))
-
-#################################
-
 decho "#######################################################################################"
-echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} to docs"
-sync_build_artifacts_to_docs "${BUILD_RELEASE_DIRS}"
+echo "Syncing build release src directory ${BUILD_RELEASE_DIRS} to ${REMOTE_HOST}"
+sync_build_artifacts_to_server "${BUILD_RELEASE_DIRS}"
 
 decho "DONE"
-
