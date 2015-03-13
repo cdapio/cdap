@@ -27,22 +27,45 @@ angular.module(PKG.name+'.services')
       }
     ); // will post to <host>:<port>/v3/system/config
    */
-  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q) {
+  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
+    MYSOCKET_EVENT, $q, MyPromise, $timeout) {
 
     var instances = {}; // keyed by scopeid
 
     function _pollStart (resource) {
+      var re = {};
+
+      if (!resource.url) {
+        re = resource;
+      } else {
+        re = {
+          url: resource.url,
+          json: true,
+          method: resource.method
+        };
+      }
+
       mySocket.send({
         action: 'poll-start',
-        resource: resource
+        resource: re
       });
     }
 
     function _pollStop (resource) {
+
+      var re = {};
+      if (!resource.url) {
+        re = resource;
+      }else {
+        re = {
+          url: resource.url,
+          json: true,
+          method: resource.method
+        };
+      }
       mySocket.send({
         action: 'poll-stop',
-        resource: resource
+        resource: re
       });
     }
 
@@ -50,14 +73,14 @@ angular.module(PKG.name+'.services')
       $log.log('[DataSource] reconnected, reloading...');
 
       // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
+      // $state.transitionTo($state.current, $state.$current.params,
+      //   { reload: true, inherit: true, notify: true }
+      // );
+      window.$go('home');
     });
 
     function DataSource (scope) {
       scope = scope || $rootScope.$new();
-
       var id = scope.$id,
           self = this;
 
@@ -81,7 +104,14 @@ angular.module(PKG.name+'.services')
         }
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, data.resource)) {
-            scope.$apply(b.callback.bind(null, data.response));
+            scope.$apply(
+              angular.isFunction(b.callback) ?
+                b.callback.bind(null, data.response) : angular.noop()
+            );
+
+            if (b && b.resolve) {
+              b.resolve(data.response);
+            }
           }
         });
       });
@@ -115,20 +145,47 @@ angular.module(PKG.name+'.services')
      * poll a resource
      */
     DataSource.prototype.poll = function (resource, cb) {
-      this.bindings.push({
-        poll: true,
-        resource: resource,
-        callback: cb
-      });
+      var self = this;
+      var prom = new MyPromise(function(resolve, reject) {
+        var re = {};
+        if (!resource.url) {
+          re = resource;
+        }else {
+          re = {
+            url: resource.url,
+            json: true,
+            method: resource.method
+          };
+        }
 
-      this.scope.$on('$destroy', function () {
-        _pollStop(resource);
-      });
+        var a = {
+          poll: true,
+          resource: re,
+          callback: cb,
+          resolve: resolve,
+          reject: reject
+        };
 
-      _pollStart(resource);
+
+        self.bindings.push(a);
+
+        self.scope.$on('$destroy', function () {
+          _pollStop(resource);
+        });
+
+        $timeout(function() { _pollStart(resource);});
+      }, true);
+      return prom;
     };
 
-
+    DataSource.prototype.pollStop = function(resource) {
+      var prom = new MyPromise(function(resolve, reject) {
+        $timeout(function() {
+          _pollStop(resource);
+        });
+      });
+      return prom;
+    };
 
 
     /**
@@ -136,32 +193,25 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.request = function (resource, cb) {
       var once = false,
-          deferred = $q.defer();
+          self = this;
+      var prom = new MyPromise(function(resolve, reject) {
+          self.bindings.push({
+            resource: resource,
+            callback: cb,
+            resolve: resolve,
+            reject: reject
+          });
 
-      this.bindings.push({
-        resource: resource,
-        callback: function (result) {
-          if(!once) {
-            once = true;
-            /*jshint -W030 */
-            cb && cb.apply(this, arguments);
-            deferred.resolve(result);
-          }
-        },
-        errorCallback: function (err) {
-          if(!once) {
-            once = true;
-            deferred.reject(err);
-          }
-        }
-      });
+          $timeout(function() {
+            mySocket.send({
+              action: 'request',
+              resource: resource
+            });
+          });
 
-      mySocket.send({
-        action: 'request',
-        resource: resource
-      });
+      }, false);
 
-      return deferred.promise;
+      return prom;
     };
 
     return DataSource;
