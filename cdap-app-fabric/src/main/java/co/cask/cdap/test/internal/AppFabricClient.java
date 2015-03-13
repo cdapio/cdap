@@ -114,8 +114,7 @@ public class AppFabricClient {
       request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
                                        String.format("/v3/unrecoverable/namespaces/%s/datasets", namespace.getId()));
       namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
-                     String.format("could not delete datasets in namespace '%s'", namespace.getId()));
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), String.format("could not delete datasets in namespace '%s'", namespace.getId()));
 
       responder = new MockResponder();
       request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
@@ -206,7 +205,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
 
-  public void setRunnableInstances(String namespaceId, String applicationId, String serviceName, int instances) {
+  public void setServiceInstances(String namespaceId, String applicationId, String serviceName, int instances) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
                                namespaceId, applicationId, serviceName);
@@ -218,8 +217,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
   }
 
-  public ServiceInstances getRunnableInstances(String namespaceId, String applicationId,
-                                               String serviceName) {
+  public ServiceInstances getServiceInstances(String namespaceId, String applicationId, String serviceName) {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
                                namespaceId, applicationId, serviceName);

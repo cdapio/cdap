@@ -270,14 +270,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
    * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
    * successive attempt.
    */
-  private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
+  private void runnableInstancesCheck(ServiceManager serviceManager,
                                       int expected, int retries, String instanceType) throws InterruptedException {
     for (int i = 0; i <= retries; i++) {
       int actualInstances;
       if ("requested".equals(instanceType)) {
-        actualInstances = serviceManager.getRequestedInstances(runnableName);
+        actualInstances = serviceManager.getRequestedInstances();
       } else if ("provisioned".equals(instanceType)) {
-        actualInstances = serviceManager.getProvisionedInstances(runnableName);
+        actualInstances = serviceManager.getProvisionedInstances();
       } else {
         String error = String.format("instanceType can be 'requested' or 'provisioned'. Found %s.", instanceType);
         throw new IllegalArgumentException(error);
@@ -294,39 +294,38 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(SlowTests.class)
   @Test
-  public void testServiceRunnableInstances() throws Exception {
+  public void testServiceInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
     serviceManager.waitForStatus(true);
 
-    String runnableName = AppUsingGetServiceURL.SERVICE_WITH_WORKER;
     int retries = 5;
 
     // Should be 1 instance when first started.
-    runnableInstancesCheck(serviceManager, runnableName, 1, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 1, retries, "provisioned");
 
     // Test increasing instances.
-    serviceManager.setRunnableInstances(runnableName, 5);
-    runnableInstancesCheck(serviceManager, runnableName, 5, retries, "provisioned");
+    serviceManager.setInstances(5);
+    runnableInstancesCheck(serviceManager, 5, retries, "provisioned");
 
     // Test decreasing instances.
-    serviceManager.setRunnableInstances(runnableName, 2);
-    runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
+    serviceManager.setInstances(2);
+    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
 
     // Test requesting same number of instances.
-    serviceManager.setRunnableInstances(runnableName, 2);
-    runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
+    serviceManager.setInstances(2);
+    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
 
     // Set 5 instances for the LifecycleWorker
-    serviceManager.setRunnableInstances(AppUsingGetServiceURL.LIFECYCLE_WORKER, 5);
-    runnableInstancesCheck(serviceManager, AppUsingGetServiceURL.LIFECYCLE_WORKER, 5, retries, "provisioned");
+    serviceManager.setInstances(5);
+    runnableInstancesCheck(serviceManager, 5, retries, "provisioned");
 
     serviceManager.stop();
     serviceManager.waitForStatus(false);
 
     // Should be 0 instances when stopped.
-    runnableInstancesCheck(serviceManager, runnableName, 0, retries, "provisioned");
-    runnableInstancesCheck(serviceManager, AppUsingGetServiceURL.LIFECYCLE_WORKER, 0, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
