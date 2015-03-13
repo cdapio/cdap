@@ -59,6 +59,13 @@ public class QueueEntryRow {
   }
 
   /**
+   * Simple method to return a queue entry row key. This method is not for performance usage (e.g. in enqueue).
+   */
+  public static byte[] getQueueEntryRowKey(QueueName queueName, long writePoint, int count) {
+    return Bytes.add(QueueEntryRow.getQueueRowPrefix(queueName), Bytes.toBytes(writePoint), Bytes.toBytes(count));
+  }
+
+  /**
    * Returns a byte array representing prefix of a queue. The prefix is formed by first byte of
    * MD5 of the queue name followed by the queue name.
    */

@@ -22,20 +22,31 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.ForwardingTransactionAware;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Closeables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +81,8 @@ public final class FlowUtils {
    * @return A Multimap from flowletId to QueueName where the flowlet is a consumer of.
    */
   public static Multimap<String, QueueName> configureQueue(Program program, FlowSpecification flowSpec,
-                                                           StreamAdmin streamAdmin, QueueAdmin queueAdmin) {
+                                                           StreamAdmin streamAdmin, QueueAdmin queueAdmin,
+                                                           TransactionExecutorFactory txExecutorFactory) {
     // Generate all queues specifications
     Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
@@ -96,15 +108,36 @@ public final class FlowUtils {
     }
 
     try {
-      // For each queue in the flow, configure it through QueueAdmin
+      // Configure each stream consumer in the Flow. Also collects all queue configurers.
+      final List<ConsumerGroupConfigurer> groupConfigurers = Lists.newArrayList();
+
       for (Map.Entry<QueueName, Map<Long, Integer>> row : queueConfigs.rowMap().entrySet()) {
         LOG.info("Queue config for {} : {}", row.getKey(), row.getValue());
         if (row.getKey().isStream()) {
           streamAdmin.configureGroups(row.getKey().toStreamId(), row.getValue());
         } else {
-          queueAdmin.configureGroups(row.getKey(), row.getValue());
+          groupConfigurers.add(new ConsumerGroupConfigurer(queueAdmin.getQueueConfigurer(row.getKey()),
+                                                           row.getValue()));
         }
       }
+
+      // Configure queue transactionally
+      try {
+        Transactions.createTransactionExecutor(txExecutorFactory, groupConfigurers)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              for (ConsumerGroupConfigurer configurer : groupConfigurers) {
+                configurer.configure();
+              }
+            }
+          });
+      } finally {
+        for (ConsumerGroupConfigurer configurer : groupConfigurers) {
+          Closeables.closeQuietly(configurer);
+        }
+      }
+
       return resultBuilder.build();
     } catch (Exception e) {
       LOG.error("Failed to configure queues", e);
@@ -119,15 +152,58 @@ public final class FlowUtils {
    * @param groupId consumer group id
    * @param instances consumer instance count
    */
-  public static void reconfigure(Iterable<QueueName> consumerQueues, long groupId, int instances,
-                                 StreamAdmin streamAdmin, QueueAdmin queueAdmin) throws Exception {
-    // Then reconfigure stream/queue
+  public static void reconfigure(Iterable<QueueName> consumerQueues, final long groupId, final int instances,
+                                 StreamAdmin streamAdmin, QueueAdmin queueAdmin,
+                                 TransactionExecutorFactory txExecutorFactory) throws Exception {
+    // Reconfigure stream and collects all queue configurers
+    final List<QueueConfigurer> queueConfigurers = Lists.newArrayList();
     for (QueueName queueName : consumerQueues) {
       if (queueName.isStream()) {
         streamAdmin.configureInstances(queueName.toStreamId(), groupId, instances);
       } else {
-        queueAdmin.configureInstances(queueName, groupId, instances);
+        queueConfigurers.add(queueAdmin.getQueueConfigurer(queueName));
       }
+    }
+
+    // Reconfigure queue transactionally
+    try {
+      Transactions.createTransactionExecutor(txExecutorFactory, queueConfigurers)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            for (QueueConfigurer queueConfigurer : queueConfigurers) {
+              queueConfigurer.configureInstances(groupId, instances);
+            }
+          }
+        });
+    } finally {
+      for (QueueConfigurer configurer : queueConfigurers) {
+        Closeables.closeQuietly(configurer);
+      }
+    }
+  }
+
+  /**
+   * Helper class for configuring queue with new consumer groups information.
+   */
+  private static final class ConsumerGroupConfigurer extends ForwardingTransactionAware implements Closeable {
+
+    private final QueueConfigurer queueConfigurer;
+    private final Map<Long, Integer> groupInfo;
+
+    private ConsumerGroupConfigurer(QueueConfigurer queueConfigurer, Map<Long, Integer> groupInfo) {
+      super(queueConfigurer);
+      this.queueConfigurer = queueConfigurer;
+      this.groupInfo = ImmutableMap.copyOf(groupInfo);
+    }
+
+    private void configure() throws Exception {
+      queueConfigurer.configureGroups(groupInfo);
+    }
+
+    @Override
+    public void close() throws IOException {
+      queueConfigurer.close();
     }
   }
 

@@ -20,18 +20,24 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
@@ -46,15 +52,18 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
-import co.cask.tephra.persist.NoOpTransactionStateStorage;
-import co.cask.tephra.persist.TransactionStateStorage;
+import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -65,13 +74,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -85,7 +89,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * HBase queue tests.
@@ -117,36 +120,25 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
-    cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
-    final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule();
-    // turn off persistence in tx manager to get rid of ugly zookeeper warnings
-    final Module dataFabricModule = Modules.override(dfModule).with(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
-        }
-      });
+    cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
 
+    Module dataFabricModule = new DataFabricDistributedModule();
     final Injector injector = Guice.createInjector(
       dataFabricModule,
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
+      new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          try {
-            bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
-            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
         }
       },
       Modules.override(new StreamAdminModules().getDistributedModules())
@@ -159,6 +151,9 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       })
     );
+
+    // create base location
+//    injector.getInstance(LocationFactory.class).create("/").mkdirs();
 
     //create HBase namespace
     tableUtil = injector.getInstance(HBaseTableUtil.class);
@@ -181,6 +176,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     };
     t.start();
 
+    // The TransactionManager should be started by the txService.
+    // We just want a reference to that so that we can ask for tx snapshot
+    transactionManager = injector.getInstance(TransactionManager.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
@@ -228,63 +226,83 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
-    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableId(queueName);
-
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+                                                      "app", "flow", "flowlet", "configure");
     // Set a group info
-    queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
+    final Map<Long, Integer> groupInfo = ImmutableMap.of(1L, 1, 2L, 2, 3L, 3);
+    configureGroups(queueName, groupInfo);
 
-    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
+    final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
     try {
-      byte[] rowKey = queueName.toBytes();
-      Result result = hTable.get(new Get(rowKey));
-
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-
-      Assert.assertEquals(1 + 2 + 3, familyMap.size());
-
-      // Update the startRow of group 2.
-      Put put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
-      hTable.put(put);
+      TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, stateStore);
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          byte[] minStartRow = QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0);
+          for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
+            long groupId = entry.getKey();
+            for (int instanceId = 0; instanceId < entry.getValue(); instanceId++) {
+              // All consumers should have empty start rows
+              Assert.assertTrue(
+                Bytes.compareTo(minStartRow, stateStore.getState(groupId, instanceId).getStartRow()) == 0);
+            }
+          }
+          // Update the startRow of group 2.
+          stateStore.updateState(2L, 0, Bytes.toBytes(4));
+          stateStore.updateState(2L, 1, Bytes.toBytes(5));
+        }
+      });
 
       // Add instance to group 2
-      queueAdmin.configureInstances(queueName, 2L, 3);
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          stateStore.configureInstances(2L, 3);
+        }
+      });
 
       // All instances should have startRow == smallest of old instances
-      result = hTable.get(new Get(rowKey));
-      for (int i = 0; i < 3; i++) {
-        int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                          HBaseQueueAdmin.getConsumerStateColumn(2L, i)).getValue());
-        Assert.assertEquals(4, startRow);
-      }
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          for (int instanceId = 0; instanceId < 3; instanceId++) {
+            int startRow = Bytes.toInt(stateStore.getState(2L, instanceId).getStartRow());
+            Assert.assertEquals(4, startRow);
+          }
+          // Advance startRow of group 2 instance 0.
+          stateStore.updateState(2L, 0, Bytes.toBytes(7));
+        }
+      });
 
-      // Advance startRow of group 2.
-      put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
-      hTable.put(put);
-
-      // Reduce instances of group 2 through group reconfiguration and also add a new group
-      queueAdmin.configureGroups(queueName, ImmutableMap.of(2L, 1, 4L, 1));
+      // Reduce instances of group 2 through group reconfiguration, remove group 1 and 3, add group 4.
+      configureGroups(queueName, ImmutableMap.of(2L, 1, 4L, 1));
 
       // The remaining instance should have startRow == smallest of all before reduction.
-      result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
-      Assert.assertEquals(4, startRow);
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          int startRow = Bytes.toInt(stateStore.getState(2L, 0).getStartRow());
+          Assert.assertEquals(4, startRow);
 
-      result = hTable.get(new Get(rowKey));
-      familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
+          // All instances of group 1 and 3 should be gone
+          for (long groupId : new long[]{1L, 3L}) {
+            for (int instanceId = 0; instanceId < groupInfo.get(groupId); instanceId++) {
+              try {
+                stateStore.getState(groupId, instanceId);
+                Assert.fail("Not expect to get state for group " + groupId + ", instance " + instanceId);
+              } catch (Exception e) {
+                // expected
+              }
+            }
+          }
 
-      Assert.assertEquals(2, familyMap.size());
-
-      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                    HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
-      Assert.assertEquals(4, startRow);
+          startRow = Bytes.toInt(stateStore.getState(4L, 0).getStartRow());
+          Assert.assertEquals(4, startRow);
+        }
+      });
 
     } finally {
-      hTable.close();
+      stateStore.close();
       queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
   }
@@ -319,7 +337,29 @@ public abstract class HBaseQueueTest extends QueueTest {
     byte[] configTableNameBytes = Bytes.toBytes(configTableName);
     HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
     CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
-    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes, cConfReader);
+    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+                                           cConfReader, new Supplier<TransactionSnapshot>() {
+      @Override
+      public TransactionSnapshot get() {
+        try {
+          return transactionManager.getSnapshot();
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
+  }
+
+  /**
+   * Asks the tx manager to take a snapshot.
+   */
+  private void takeTxSnapshot() throws Exception {
+    Method doSnapshot = transactionManager.getClass().getDeclaredMethod("doSnapshot", boolean.class);
+    doSnapshot.setAccessible(true);
+    doSnapshot.invoke(transactionManager, false);
+
+    LOG.info("Read pointer: {}", transactionManager.getCurrentState().getReadPointer());
+    LOG.info("Snapshot read pointer: {}", transactionManager.getSnapshot().getReadPointer());
   }
 
   @AfterClass
@@ -336,10 +376,12 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void forceEviction(QueueName queueName) throws Exception {
-    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getTableId(queueName);
-    byte[] tableName = tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName();
-    // make sure consumer config cache is updated
+  protected void forceEviction(QueueName queueName, int numGroups) throws Exception {
+    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    byte[] tableName = tableUtil.getHTableDescriptor(testHBase.getHBaseAdmin(), tableId).getName();
+
+    // make sure consumer config cache is updated with the latest tx snapshot
+    takeTxSnapshot();
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
     testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {
       public Object apply(HRegion region) {
@@ -347,7 +389,17 @@ public abstract class HBaseQueueTest extends QueueTest {
           Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
           // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
           // by different classloader (corresponds to a cp's jar)
-          LOG.info("forcing update cache for HBaseQueueRegionObserver of region: " + region);
+          LOG.info("forcing update of transaction state cache for HBaseQueueRegionObserver of region: {}", region);
+          Method getTxStateCache = cp.getClass().getDeclaredMethod("getTxStateCache");
+          getTxStateCache.setAccessible(true);
+          Object txStateCache = getTxStateCache.invoke(cp);
+          // the one returned is of type DefaultTransactionStateCache.
+          // The refreshState method is a private method of its parent, TransactionStateCache
+          Method refreshState = txStateCache.getClass().getSuperclass().getDeclaredMethod("refreshState");
+          refreshState.setAccessible(true);
+          refreshState.invoke(txStateCache);
+
+          LOG.info("forcing update cache for HBaseQueueRegionObserver of region: {}", region);
           Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
           getConfigCacheMethod.setAccessible(true);
           Object configCache = getConfigCacheMethod.invoke(cp);
@@ -367,11 +419,37 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
+  protected void configureGroups(QueueName queueName, final Map<Long, Integer> groupInfo) throws Exception {
     if (queueName.isQueue()) {
-      queueAdmin.configureGroups(queueName, groupInfo);
+      final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
+      try {
+        Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              queueConfigurer.configureGroups(groupInfo);
+            }
+          });
+      } finally {
+        Closeables.closeQuietly(queueConfigurer);
+      }
     } else {
       streamAdmin.configureGroups(queueName.toStreamId(), groupInfo);
+    }
+  }
+
+  @Override
+  protected void resetConsumerState(QueueName queueName, final ConsumerConfig consumerConfig) throws Exception {
+    final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
+    try {
+      Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), Bytes.EMPTY_BYTE_ARRAY);
+        }
+      });
+    } finally {
+      Closeables.closeQuietly(stateStore);
     }
   }
 }
