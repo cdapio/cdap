@@ -61,15 +61,6 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   }
 
-  /**
-   * Returns {@code true} if service error is propagated as error for this controller state.
-   * If this method returns {@code false}, service error is just getting logged and state will just change
-   * to {@link State#KILLED}. This method returns {@code true} by default.
-   */
-  protected boolean propagateServiceError() {
-    return true;
-  }
-
   private void listenToRuntimeState(Service service) {
     service.addListener(new ServiceListenerAdapter() {
       @Override
@@ -80,11 +71,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         LOG.error("Program terminated with exception", failure);
-        if (propagateServiceError()) {
-          error(failure);
-        } else if (getState() != State.STOPPING) {
-          stop();
-        }
+        error(failure);
       }
 
       @Override
