@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.Multimap;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -42,14 +43,17 @@ final class DistributedFlowletInstanceUpdater {
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final Multimap<String, QueueName> consumerQueues;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   DistributedFlowletInstanceUpdater(Program program, TwillController twillController, QueueAdmin queueAdmin,
-                                    StreamAdmin streamAdmin, Multimap<String, QueueName> consumerQueues) {
+                                    StreamAdmin streamAdmin, Multimap<String, QueueName> consumerQueues,
+                                    TransactionExecutorFactory txExecutorFactory) {
     this.program = program;
     this.twillController = twillController;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.consumerQueues = consumerQueues;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   void update(String flowletId, int newInstanceCount, int oldInstanceCount) throws Exception {
@@ -58,7 +62,7 @@ final class DistributedFlowletInstanceUpdater {
 
     FlowUtils.reconfigure(consumerQueues.get(flowletId),
                           FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
-                          streamAdmin, queueAdmin);
+                          streamAdmin, queueAdmin, txExecutorFactory);
 
     twillController.changeInstances(flowletId, newInstanceCount).get();
     twillController.sendCommand(flowletId, ProgramCommands.RESUME).get();

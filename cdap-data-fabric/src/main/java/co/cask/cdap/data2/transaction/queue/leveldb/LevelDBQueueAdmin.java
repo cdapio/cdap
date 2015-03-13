@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
+import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
 import com.google.inject.Inject;
@@ -27,7 +29,6 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Properties;
 
 import static co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType.QUEUE;
@@ -112,6 +113,11 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
+  public QueueConfigurer getQueueConfigurer(QueueName queueName) {
+    return new NoopQueueConfigurer();
+  }
+
+  @Override
   public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
     String tableName = getTableNameForFlow(namespaceId, app, flow);
     service.dropTable(tableName);
@@ -131,18 +137,6 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId, unqualifiedTableNamePrefix));
-  }
-
-  @Override
-  public void configureInstances(QueueName queueName, long groupId, int instances) {
-    // No-op
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
-  }
-
-  @Override
-  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
-    // No-op
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
   }
 
   @Override

@@ -61,7 +61,7 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
   protected Schema getDefaultSchema() {
     return Schema.recordOf("streamEvent",
              Schema.Field.of("remote_host", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("remote_login ", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+             Schema.Field.of("remote_login", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("auth_user", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("date", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
              Schema.Field.of("request", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
