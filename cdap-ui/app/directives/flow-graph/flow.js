@@ -209,20 +209,7 @@ module.directive('myFlowGraph', function ($filter, $state) {
         /**
          * Handles node click and sends to flowlet page.
          */
-        function handleNodeClick(nodeId) {
-          // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
-          if ($state.includes('**.workflows.**')) {
-            return;
-          }
-          handleHideTip(nodeId);
-          var instance = instanceMap[nodeId];
-          if (instance.type === 'STREAM') {
-            $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
-          } else {
-            $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
-          }
 
-        }
 
         /**
          * Gets number of instances from node map.
@@ -256,52 +243,19 @@ module.directive('myFlowGraph', function ($filter, $state) {
 module.directive('myWorkflowGraph', function ($filter, $state) {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.render = function () {
-        var nodes = scope.model.nodes;
-        var edges = scope.model.edges;
-        var instanceMap = {};
-        var labelMap = {};
-
-        var numberFilter = $filter('myNumber');
-
-        var renderer = new dagreD3.render();
-        var g = new dagreD3.graphlib.Graph();
-        var defaultRadius = 50;
-
-        g.setGraph({
-          nodesep: 60,
-          ranksep: 70,
-          rankdir: 'LR',
-          marginx: 30,
-          marginy: 30
-        })
-          .setDefaultEdgeLabel(function () { return {}; });
-
-        // First set nodes and edges.
-        angular.forEach(nodes, function (node) {
-          var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
-          instanceMap[node.name] = node;
-          labelMap[nodeLabel] = node;
-          if (node.type === 'ACTION') {
-            g.setNode(node.name, { shape: 'job', label: nodeLabel});
-          } else {
-            g.setNode(node.name, { shape: 'conditional', label: nodeLabel});
-          }
-        });
-
-        angular.forEach(edges, function (edge) {
-          g.setEdge(edge.sourceName, edge.targetName);
-        });
-
-        renderer.shapes().job = function(parent, bbox, node) {
+      scope.render = genericRender.bind(null, scope, $filter);
+      var defaultRadius = 50;
+      scope.getShapes = function() {
+        var shapes = {};
+        shapes.job = function(parent, bbox, node) {
           var w = bbox.width;
           var h = bbox.height;
           var points = [
             //clockwise points from top
-            { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a 
+            { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a
             { x: 0, y: -defaultRadius}, // b
-            { x: defaultRadius * 2/3, y: -defaultRadius * 2/3}, // c 
-            { x: defaultRadius, y: 0}, // d 
+            { x: defaultRadius * 2/3, y: -defaultRadius * 2/3}, // c
+            { x: defaultRadius, y: 0}, // d
             { x: defaultRadius * 2/3, y: defaultRadius * 2/3}, // e
             { x: 0, y: defaultRadius}, // f
             { x: -defaultRadius * 2/3, y: defaultRadius * 2/3}, // g
@@ -316,9 +270,9 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
           };
 
           return shapeSvg;
-        };
+        }
 
-        renderer.shapes().conditional = function(parent, bbox, node) {
+        shapes.conditional = function(parent, bbox, node) {
           var w = (bbox.width * Math.SQRT2) / 2,
           h = (bbox.height * Math.SQRT2) / 2,
           points = [
@@ -338,92 +292,33 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
           return shapeSvg;
         };
 
-        // Set up an SVG group so that we can translate the final graph and tooltip.
-        var svg = d3.select('svg').attr('fill', 'white');
-        var svgGroup = d3.select('svg g');
-        var tip = d3.tip()
-          .attr('class', 'd3-tip')
-          .offset([-10, 0]);
-        svg.call(tip);
-
-        // Set up zoom support
-        var zoom = d3.behavior.zoom().on('zoom', function() {
-          svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
-                                      'scale(' + d3.event.scale + ')');
-        });
-        // svg.call(zoom);
-
-        // Run the renderer. This is what draws the final graph.
-        renderer(d3.select('svg g'), g);
-
-        // Set up onclick after rendering.
-        svg
-          .selectAll('g.node')
-          .on('click', handleNodeClick);
-
-        svg
-          .selectAll('g.node text')
-          .on('mouseover', handleShowTip)
-          .on('mouseout', handleHideTip);
-
-
-        // Center svg.
-        var initialScale = 1.1;
-        var svgWidth = svg.node().getBoundingClientRect().width;
-        zoom
-          .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
-          .scale(initialScale)
-          .event(svg);
-        svg.attr('height', g.graph().height * initialScale + 40);
-
-        /**
-         * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
-         * instances text.
-         */
-        function getInstancesScaledRadius(instances, radius) {
-          var base = radius;
-          var extra = (instances.toString().length - 1) * base / 2;
-          return base + extra;
-        }
-
-        /**
-         * Handles node click and sends to flowlet page.
-         */
-        function handleNodeClick(nodeId) {
-          // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
-          if ($state.includes('**.workflows.**')) {
-            return;
-          }
-          handleHideTip(nodeId);
-          var instance = instanceMap[nodeId];
-          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
-        }
-
-        /**
-         * Gets number of instances from node map.
-         */
-        function getInstances(nodeId) {
-          return instanceMap[nodeId].instances ? instanceMap[nodeId].instances : 0;
-        }
-
-        /**
-         * Handles showing tooltip on mouseover of node name.
-         */
-        function handleShowTip(nodeId) {
-          tip
-            .html(function(d) {
-              return '<strong>' + instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
-            })
-            .show();
-        }
-
-        /**
-         * Handles hiding tooltip on mouseout of node name.
-         */
-        function handleHideTip(nodeId) {
-          tip.hide();
-        }
+        return shapes;
       };
+
+      scope.getShape = function(name) {
+        var shapeName;
+
+        switch(name) {
+          case 'ACTION':
+            shapeName = 'job';
+            break;
+          default:
+            shapeName = 'conditional';
+            break;
+        }
+        return shapeName;
+      }
+
+      scope.handleNodeClick = function(nodeId) {
+        // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
+        if ($state.includes('**.workflows.**')) {
+          return;
+        }
+        handleHideTip(nodeId);
+        var instance = instanceMap[nodeId];
+        $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+      }
+
     }
   }, baseDirective);
 });
