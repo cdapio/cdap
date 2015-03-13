@@ -18,7 +18,6 @@ package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.system.HelpCommand;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;

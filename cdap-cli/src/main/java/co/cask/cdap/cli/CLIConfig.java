@@ -57,8 +57,8 @@ public class CLIConfig {
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
-  private final TableRenderer tableRenderer;
 
+  private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
 
   /**
@@ -87,6 +87,10 @@ public class CLIConfig {
 
   public Id.Namespace getCurrentNamespace() {
     return clientConfig.getNamespace();
+  }
+
+  public void setTableRenderer(TableRenderer tableRenderer) {
+    this.tableRenderer = tableRenderer;
   }
 
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
