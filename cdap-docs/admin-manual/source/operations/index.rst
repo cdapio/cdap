@@ -6,9 +6,9 @@
 
 .. _operations-index:
 
-============================================
+==========
 Operations
-============================================
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -18,6 +18,7 @@ Operations
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     CDAP Console <cdap-console>
+    Master Services Logback <logback>
     Troubleshooting <troubleshooting>
 
 .. |logging| replace:: **Logging:**
@@ -49,6 +50,10 @@ Operations
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
+.. |logback| replace:: **Master Services Logging Configuration:**
+.. _logback: logback.html
+
+- |logback|_ This section describes the logging configuration used by CDAP Master Services.
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: troubleshooting.html
