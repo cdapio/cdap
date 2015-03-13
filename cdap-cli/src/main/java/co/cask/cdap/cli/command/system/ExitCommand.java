@@ -14,15 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
+
+import co.cask.common.cli.Arguments;
+import co.cask.common.cli.Command;
+
+import java.io.PrintStream;
 
 /**
- * {@link ExitCommand}, but with a different command pattern.
+ * Exits the CLI.
  */
-public class QuitCommand extends ExitCommand {
+public class ExitCommand implements Command {
+
+  @Override
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    System.exit(0);
+  }
 
   @Override
   public String getPattern() {
-    return "quit";
+    return "exit";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Exits the CLI.";
   }
 }

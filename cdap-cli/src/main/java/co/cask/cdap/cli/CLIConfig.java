@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.VersionCommand;
+import co.cask.cdap.cli.command.system.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;

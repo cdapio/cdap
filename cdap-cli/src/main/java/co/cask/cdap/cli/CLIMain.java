@@ -16,8 +16,8 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.HelpCommand;
-import co.cask.cdap.cli.command.SearchCommandsCommand;
+import co.cask.cdap.cli.command.system.HelpCommand;
+import co.cask.cdap.cli.command.system.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.cli.util.InstanceURIParser;
