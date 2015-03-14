@@ -54,7 +54,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -248,6 +247,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return builder.toString();
   }
 
+  /**
+   * Interface use internally to build different types of results when scanning partitions.
+   */
   protected interface PartitionConsumer {
     void consume(PartitionKey key, String path);
   }
@@ -485,11 +487,14 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return builder.build();
   }
 
+  /**
+   * Simple Implementation of Partition.
+   */
   protected class BasicPartition implements Partition {
     protected final String relativePath;
     protected final PartitionKey key;
 
-    protected BasicPartition(@Nonnull String relativePath, @Nonnull PartitionKey key) {
+    protected BasicPartition(String relativePath, PartitionKey key) {
       this.relativePath = relativePath;
       this.key = key;
     }
@@ -527,9 +532,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
+  /**
+   * Simple Implementation of PartitionOutput.
+   */
   protected class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
 
-    protected BasicPartitionOutput(@Nonnull String relativePath, @Nonnull PartitionKey key) {
+    protected BasicPartitionOutput(String relativePath, PartitionKey key) {
       super(relativePath, key);
     }
 

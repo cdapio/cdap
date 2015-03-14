@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -586,12 +585,12 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
     private final Long time;
 
-    private BasicTimePartition(@Nonnull String relativePath, @Nonnull PartitionKey key) {
+    private BasicTimePartition(String relativePath, PartitionKey key) {
       super(relativePath, key);
       time = null;
     }
 
-    private BasicTimePartition(@Nonnull String relativePath, long time) {
+    private BasicTimePartition(String relativePath, long time) {
       super(relativePath, partitionKeyForTime(time));
       this.time = time;
     }
@@ -604,7 +603,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   private class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
 
-    private BasicTimePartitionOutput(@Nonnull String relativePath, @Nonnull PartitionKey key) {
+    private BasicTimePartitionOutput(String relativePath, PartitionKey key) {
       super(relativePath, key);
     }
 
