@@ -21,6 +21,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Throwables;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -47,6 +49,13 @@ public abstract class StreamCoordinatorTestBase {
   protected abstract StreamCoordinatorClient getStreamCoordinator();
 
   protected abstract StreamAdmin getStreamAdmin();
+
+  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
+    // FileStreamAdmin expects namespace directory to exist.
+    // Simulate namespace create
+    locationFactory.create(Constants.DEFAULT_NAMESPACE).mkdirs();
+  }
+
 
   @Test
   public void testGeneration() throws Exception {

@@ -196,12 +196,6 @@ public abstract class GatewayTestBase {
     streamService.startAndWait();
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.hasNamespace(Constants.DEFAULT_NAMESPACE_ID)) {
-      namespaceAdmin.createNamespace(new NamespaceMeta.Builder()
-                                       .setName(Constants.DEFAULT_NAMESPACE)
-                                       .setDescription(Constants.DEFAULT_NAMESPACE)
-                                       .build());
-    }
     namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
     namespaceAdmin.createNamespace(TEST_NAMESPACE_META2);
 

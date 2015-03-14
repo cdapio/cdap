@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,6 +41,12 @@ public abstract class StreamConsumerStateTestBase {
 
   protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerStateTestNamespace");
   protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
+
+  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
+    locationFactory.create(TEST_NAMESPACE.getId()).mkdirs();
+    locationFactory.create(OTHER_NAMESPACE.getId()).mkdirs();
+  }
+
 
   @Test
   public void testStateExists() throws Exception {

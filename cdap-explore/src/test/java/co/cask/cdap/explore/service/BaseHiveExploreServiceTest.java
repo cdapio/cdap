@@ -35,11 +35,13 @@ import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -131,6 +133,8 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreClient exploreClient;
   protected static LocationFactory locationFactory;
   protected static ExploreTableManager exploreTableManager;
+  private static StreamAdmin streamAdmin;
+  private static StreamMetaStore streamMetaStore;
 
   protected static Injector injector;
 
@@ -177,7 +181,11 @@ public class BaseHiveExploreServiceTest {
     exploreTableManager = injector.getInstance(ExploreTableManager.class);
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    streamMetaStore = injector.getInstance(StreamMetaStore.class);
+
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
+    Locations.mkdirsIfNotExists(locationFactory.create(Constants.DEFAULT_NAMESPACE));
     Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
     Locations.mkdirsIfNotExists(locationFactory.create(OTHER_NAMESPACE_ID.getId()));
 
@@ -276,11 +284,10 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(String namespace, String streamName) throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
-    urlConn.setRequestMethod(HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-    urlConn.disconnect();
+  protected static void createStream(String namespace, String streamName) throws Exception {
+    Id.Stream streamId = Id.Stream.from(namespace, streamName);
+    streamAdmin.create(streamId);
+    streamMetaStore.addStream(streamId);
   }
 
   protected static void setStreamProperties(String namespace, String streamName,

@@ -18,9 +18,11 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WebCrawlApp;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -53,6 +55,10 @@ public class LocalManagerTest {
   public static void before() throws Exception {
     lf = new LocalLocationFactory();
     temp = TMP_FOLDER.newFolder("pipeline");
+
+    AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
+    NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
   /**
