@@ -53,7 +53,7 @@ Configurations for submitting to non-default YARN queues can be specified in two
    
    with the property as a JSON string in the body::
    
-      {"config": {"scheduler.queue.name": "A"}'
+      {"config": {"scheduler.queue.name": "A"}
 
     
    **Note:** The configuration at the Namespace level can only be set for CDAP programs and
