@@ -28,11 +28,11 @@ higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
 The core Datasets of CDAP are Tables and FileSets:
-- Unlike relational database systems, CDAP tables are not organized into rows with a fixed schema.
+- Unlike relational database systems, CDAP **tables** are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
-- CDAP file sets provide an abstraction over the raw file system, and associate properties such as
-  the format or the schema with the files they contain. In addition, partitioned file sets allow
+- CDAP **file sets** provide an abstraction over the raw file system, and associate properties such as
+  the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
   be aware of actual file system locations.
 
@@ -45,7 +45,7 @@ by using one Table for the data and a second Table for the index of that data.
 A number of useful Datasets—we refer to them as system Datasets—are
 included with CDAP, including key/value tables, indexed tables and
 time series. You can implement your own data patterns as custom
-Datasets on top of core and/or system Datasets.
+Datasets, on top of any combination of core and system Datasets.
 
 .. rubric:: Creating a Dataset
 
@@ -120,10 +120,10 @@ the name of that column is a metadata property of each Dataset of this type.
 
 .. rubric:: Core Datasets
 
-**Tables** and **FileSets** are the only core Datasets, and all other Datasets are built using
-one or more Tables or FileSets.
+**Tables** and **FileSets** are the core Datasets,
+and all other Datasets are built using combinations of Tables and FileSets.
 
-While these Tables have rows and columns relational database tables, there are a few key differences:
+While these Tables have rows and columns similar to relational database tables, there are key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
   row has the same schema, every row of a Table can have a different set of columns.
@@ -142,22 +142,22 @@ While these Tables have rows and columns relational database tables, there are a
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
 
 
-A FileSet represents a collections of files in the file system that share some common attributes
+A |fileset|_ represents a collections of files in the file system that share some common attributes
 such as the format and schema, while abstracting from the actual underlying file system interfaces.
 
 - Every file in a FileSet is in a location relative to the FileSet's base directory.
 
 - Knowing a file's relative path, any program can obtain a ``Location`` for that file through a method
-  of the FileSet dataset. It can then directly interact with the file's Location, for example write
-  data to the Location, or read data from it.
+  of the FileSet dataset. It can then interact directly with the file's Location; for example, to write
+  data to the Location, or to read data from it.
 
 - A FileSet can be used as the input or output to MapReduce. The MapReduce program need not specify
-  the input and output format to use, or configuration for these—the FileSet dataset provides this
+  the input and output format to use, or configuration for these |---| the FileSet dataset provides this
   information to the MapReduce runtime system.
 
-- An extension of FileSets, a PartitionedFileSet allows associating meta data (partitioning keys) with
-  each file. The file can be addressed through its meta data, removing the need for programs to be
-  aware of actual file paths.
+- An extension of FileSets, ``PartitionedFileSets`` allow the associating of meta data (partitioning keys)
+  with each file. The file can then be addressed through its meta data, removing the need for programs to
+  be aware of actual file paths.
 
 .. |fileset| replace:: **FileSet**
 .. _fileset: fileset.html

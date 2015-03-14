@@ -155,7 +155,7 @@ To create and use a PartitionedFileSet in an application, you create it as part 
 configuration, similar to FileSets. However, the partitioning has to be given as an additional property::
 
   public void configure() {
-
+    ...
     createDataset("results", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("league").addIntField("season").build())
@@ -164,6 +164,8 @@ configuration, similar to FileSets. However, the partitioning has to be given as
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
       .build());
+    ...
+  }
 
 This creates a new PartitionedFileSet named *results*. Similar to FileSets, it specifies ``TextInputFormat`` and
 ``TextOutputFormat.``; for the output format, we specify that the separator between fields is a comma.
@@ -207,7 +209,7 @@ Instead of reading a single partition, you can also specify a PartitionFilter to
 partitioned file set for all partitions whose keys match that filter. The PartitionFilter
 can specify either an exact value (en equality condition) or a range for the value of each
 field in the dataset's partitioning. For example, the following code reads all partitions
-for the NFL and the eighties' seasons::
+for the NFL and the '80s seasons::
 
       PartitionFilter filter = PartitionFilter.builder().addValueCondition("league", "nfl")
                                                         .addRangeCondition("season", 1980, 1990)
@@ -223,20 +225,20 @@ for the NFL and the eighties' seasons::
         }
       }
 
-Note that the upper bound for the season (1990) is exclusive, that is, the 1990 season is not
-included in returned partitions. For a range condition, either the lower or the upper bound may
+Note that the upper bound for the seasons (1990) is exclusive; that is, the 1990 season is not
+included in the returned partitions. For a range condition, either the lower or the upper bound may
 be null, meaning that the filter in unbounded in that direction.
 
-Writing a partition is similar, but instead of a Partition, you get a ``PartitionOutput``
-for the partition key. That object has methods to obtain a Location, and to add the partition
-once you have written to that Location. For example, the following code writes a file named
-``file`` under the location returned from the PartitionOutput::
-
+Adding a partition is similar; however, instead of a Partition, you receive a ``PartitionOutput``
+for the partition key. That object has methods to obtain a Location and to add the partition once
+you have written to that Location.
+For example, this code writes to a file named ``part`` under the location returned from the
+``PartitionOutput``::
 
       PartitionKey key = ...
       PartitionOutput output = dataset.getPartitionOutput(key);
       try {
-        Location location = output.getLocation().append("file");
+        Location location = output.getLocation().append("part");
         OutputStream outputStream = location.getOutputStream());
         ...
       } catch (IOException e) {
@@ -247,10 +249,10 @@ once you have written to that Location. For example, the following code writes a
 Using PartitionedFileSets in MapReduce
 ======================================
 
-A partitioned file set can be accessed in MapReduce in a similar way as a FileSet. The difference
+A partitioned file set can be accessed in MapReduce in a similar fashion to a FileSet. The difference
 is that instead of input and output paths, you specify a partition filter for the input and a
 partition key for the output. For example, the MapReduce program of the SportResults example
-reads as input all partitions for the league given by its runtime arguments, and writes as output
+reads as input all partitions for the league given in its runtime arguments, and writes as output
 a partition with that league as the only key::
 
   @Override
@@ -278,8 +280,8 @@ Here, the ``beforeSubmit()`` method of the MapReduce generates the runtime argum
 partitioned file sets that specify the input partition filter and output partition key. This
 is convenient for starting the MapReduce, because only a single argument has to be given for
 the MapReduce run. If that code was not in the ``beforeSubmit()``, you could still achieve the
-same by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
-For example, you would give the following arguments when starting the MapReduce through a REST call::
+same result by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
+For example, give these arguments when starting the MapReduce through a RESTful call::
 
   {
     "dataset.results.input.partition.filter.league.value": "nfl",
@@ -326,15 +328,14 @@ format::
 
 You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the StreamConversion example for more details.
+Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example for more details.
 
-TimePartitionedFileSets
-=======================
+======================
+TimePartitionedFileSet
+======================
 
 TimePartitionedFileSets are a special case (and in fact, a subclass) of PartitionedFileSets, where
-the partitioning is fixed to five integers, representing the year, month, day of the month, hour of the day
+the partitioning is fixed to five integers representing the year, month, day of the month, hour of the day,
 and minute of a partition's time. For convenience, it offers methods to address the partitions by
 time instead of partition key or filter. The time is interpreted as milliseconds since the Epoch.
 
-TimePartitionedFileSets are supported for backward-compatibility with version 2.7.0 of CDAP. It is
-recommended that you consider using PartitionedFileSet instead.
