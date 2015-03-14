@@ -360,8 +360,8 @@ call the corresponding methods of ``PartitionedFileSet`` with the resulting part
   of partition filters, retrieves the partitions for each filter, and returns the superset of all these
   partitions.
 
-Using PartitionedFileSets in MapReduce
-======================================
+Using TimePartitionedFileSets in MapReduce
+==========================================
 
 Using time partitioned file sets in MapReduce is similar as for partitioned file sets; however, instead of
 setting an input partition filter and an output partition key, you configure an input time range and an
