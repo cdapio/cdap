@@ -17,6 +17,7 @@
 package co.cask.cdap.common.conf;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 
 import java.util.concurrent.TimeUnit;
 
@@ -719,6 +720,8 @@ public final class Constants {
    */
   public static final String DEFAULT_NAMESPACE = "default";
   public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
+    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
 
   /**
    * 'system' reserved namespace name
