@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
@@ -70,6 +71,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
   private final NamespaceAdmin namespaceAdmin;
+  private final StreamCoordinatorClient streamCoordinatorClient;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -86,6 +88,7 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          NamespaceAdmin namespaceAdmin) {
@@ -101,6 +104,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.namespaceAdmin = namespaceAdmin;
+    this.streamCoordinatorClient = streamCoordinatorClient;
   }
 
   /**
@@ -120,6 +124,7 @@ public final class AppFabricServer extends AbstractIdleService {
     schedulerService.start();
     adapterService.start();
     programRuntimeService.start();
+    streamCoordinatorClient.start();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
