@@ -115,7 +115,7 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnauthorizedException {
+  private void verifyReservedCreate() throws Exception {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setName(Constants.DEFAULT_NAMESPACE_ID);
     try {
