@@ -168,7 +168,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     try {
       context.start();
       runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
-                                             getProgram().getClassLoader(), datasets, runtimeArgs) {
+                                             getProgram().getClassLoader(), null, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
           return datasetsCache;

@@ -58,6 +58,8 @@ public interface WorkerConfigurer {
   /**
    * Adds the names of {@link Dataset Datasets} used by the worker.
    * @param datasets dataset names
+   * @deprecated datasets being used during runtime need not be specified during configuration
    */
+  @Deprecated
   void useDatasets(Iterable<String> datasets);
 }

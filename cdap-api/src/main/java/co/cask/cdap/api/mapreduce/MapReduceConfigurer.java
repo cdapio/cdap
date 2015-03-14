@@ -45,7 +45,9 @@ public interface MapReduceConfigurer {
 
   /**
    * Specifies set of dataset names that are used by the {@link MapReduce}.
+   * @deprecated datasets used in runtime need not be specified during configuration
    */
+  @Deprecated
   void useDatasets(Iterable<String> datasets);
 
   /**
