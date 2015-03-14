@@ -30,7 +30,6 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -46,11 +45,9 @@ import org.junit.Test;
 import java.util.List;
 
 public class SchedulerServiceTest {
-  public static SchedulerService schedulerService;
-  public static NotificationFeedManager notificationFeedManager;
-  public static Store store;
-  public static LocationFactory locationFactory;
-
+  private static SchedulerService schedulerService;
+  private static Store store;
+  private static LocationFactory locationFactory;
   private static NamespaceAdmin namespaceAdmin;
   private static final Id.Namespace namespace = new Id.Namespace("notdefault");
   private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
@@ -68,16 +65,17 @@ public class SchedulerServiceTest {
   @BeforeClass
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
-    notificationFeedManager = AppFabricTestHelper.getInjector().getInstance(NotificationFeedManager.class);
     store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
   @AfterClass
   public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
     namespaceAdmin.deleteNamespace(namespace);
+    namespaceAdmin.deleteDatasets(Constants.DEFAULT_NAMESPACE_ID);
     schedulerService.stopAndWait();
   }
 

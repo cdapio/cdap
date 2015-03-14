@@ -96,13 +96,13 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("load %s preferences <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
+    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
                          ArgumentName.CONTENT_TYPE, type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Set Preferences of a %s from a local Config File (supported formats = JSON).", 
+    return String.format("Set Preferences of a %s from a local Config File (supported formats = JSON).",
                          type.getPluralPrettyName());
   }
 }

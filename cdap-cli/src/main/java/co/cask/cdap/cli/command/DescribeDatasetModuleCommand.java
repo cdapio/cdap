@@ -40,14 +40,11 @@ import java.util.List;
 public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetModuleClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig,
-                                      TableRenderer tableRenderer) {
+  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -66,7 +63,7 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
                                     Joiner.on(", ").join(object.getUsedByModules()));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(output, table);
   }
 
   @Override
