@@ -248,7 +248,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return builder.toString();
   }
 
-  private interface PartitionConsumer {
+  protected interface PartitionConsumer {
     void consume(PartitionKey key, String path);
   }
 
@@ -485,7 +485,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return builder.build();
   }
 
-  private class BasicPartition implements Partition {
+  protected class BasicPartition implements Partition {
     protected final String relativePath;
     protected final PartitionKey key;
 
@@ -527,9 +527,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
-  private class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
+  protected class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
 
-    private BasicPartitionOutput(@Nonnull String relativePath, @Nonnull PartitionKey key) {
+    protected BasicPartitionOutput(@Nonnull String relativePath, @Nonnull PartitionKey key) {
       super(relativePath, key);
     }
 

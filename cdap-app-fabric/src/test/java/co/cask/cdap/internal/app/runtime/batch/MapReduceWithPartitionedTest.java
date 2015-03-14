@@ -165,7 +165,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time);
+          Partition partition = tpfs.getPartitionByTime(time);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
         }
@@ -191,7 +193,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time5);
+          Partition partition = tpfs.getPartitionByTime(time5);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-20"));
         }

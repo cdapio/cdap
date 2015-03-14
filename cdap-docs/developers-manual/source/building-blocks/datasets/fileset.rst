@@ -333,7 +333,8 @@ TimePartitionedFileSets
 
 TimePartitionedFileSets are a special case (and in fact, a subclass) of PartitionedFileSets, where
 the partitioning is fixed to five integers, representing the year, month, day of the month, hour of the day
-and minute of a partition's time.
+and minute of a partition's time. For convenience, it offers methods to address the partitions by
+time instead of partition key or filter. The time is interpreted as milliseconds since the Epoch.
 
 TimePartitionedFileSets are supported for backward-compatibility with version 2.7.0 of CDAP. It is
 recommended that you consider using PartitionedFileSet instead.

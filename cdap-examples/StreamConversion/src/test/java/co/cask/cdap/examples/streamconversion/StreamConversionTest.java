@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -30,7 +31,7 @@ import org.junit.Test;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Calendar;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,9 +68,9 @@ public class StreamConversionTest extends TestBase {
     // verify the single partition in the file set
     DataSetManager<TimePartitionedFileSet> fileSetManager = getTestManager().getDataset("converted");
     TimePartitionedFileSet converted = fileSetManager.get();
-    Map<Long, String> partitions = converted.getPartitions(startTime, System.currentTimeMillis());
+    Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
     Assert.assertEquals(1, partitions.size());
-    long partitionTime = partitions.keySet().iterator().next();
+    long partitionTime = partitions.iterator().next().getTime();
 
     // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
