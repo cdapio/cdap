@@ -54,6 +54,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -80,14 +81,16 @@ public class DFSStreamHeartbeatsTest {
 
   private static String hostname;
   private static int port;
-  private static CConfiguration conf;
 
-  private static Injector injector;
   private static StreamHttpService streamHttpService;
   private static StreamService streamService;
   private static MockHeartbeatPublisher heartbeatPublisher;
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
+  private static StreamAdmin streamAdmin;
+  private static StreamFetchHandler streamFetchHandler;
+  private static StreamHandler streamHandler;
+  private static StreamMetaStore streamMetaStore;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -97,12 +100,12 @@ public class DFSStreamHeartbeatsTest {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     conf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
 
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    injector = Guice.createInjector(
+    Injector injector = Guice.createInjector(
       Modules.override(
         new ZKClientModule(),
         new DataFabricModules().getInMemoryModules(),
@@ -147,6 +150,13 @@ public class DFSStreamHeartbeatsTest {
 
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
+
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    streamHandler = injector.getInstance(StreamHandler.class);
+    streamFetchHandler = injector.getInstance(StreamFetchHandler.class);
+    streamMetaStore = injector.getInstance(StreamMetaStore.class);
+
+    injector.getInstance(LocationFactory.class).create(Constants.DEFAULT_NAMESPACE).mkdirs();
   }
 
   @AfterClass
@@ -170,14 +180,13 @@ public class DFSStreamHeartbeatsTest {
     final String streamName = "test_stream";
     final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Create a new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName),
-                                        HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-    urlConn.disconnect();
+    streamAdmin.create(streamId);
+    streamMetaStore.addStream(streamId);
 
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
+      HttpURLConnection urlConn =
+        openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);

@@ -158,7 +158,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    streamAdmin.dropAllInNamespace(Id.Namespace.from(Constants.DEFAULT_NAMESPACE));
+    streamAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
     // verify that stream is gone and queue is still there
     configureGroups(queueName, ImmutableMap.of(0L, 1));
     configureGroups(streamName, ImmutableMap.of(0L, 1));
