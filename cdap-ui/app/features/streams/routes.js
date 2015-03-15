@@ -27,11 +27,9 @@ angular.module(PKG.name + '.feature.streams')
         onEnter: function($bootstrapModal, $state) {
           $bootstrapModal.open({
             templateUrl: '/assets/features/streams/templates/streamscreate.html',
-            controller: function() {
-              console.log("Inside controller");
-            }
+            size: 'lg',
+            controller: 'StreamsCreateController'
           }).result.finally(function() {
-            console.log("Hola!");
             $state.go('streams.list');
           });
         }
