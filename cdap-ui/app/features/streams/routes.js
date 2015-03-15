@@ -22,6 +22,21 @@ angular.module(PKG.name + '.feature.streams')
         }
       })
 
+      .state('streams.list.create', {
+        url: '/create',
+        onEnter: function($bootstrapModal, $state) {
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/streams/templates/streamscreate.html',
+            controller: function() {
+              console.log("Inside controller");
+            }
+          }).result.finally(function() {
+            console.log("Hola!");
+            $state.go('streams.list');
+          });
+        }
+      })
+
       .state('streams.detail', {
         url: '/:streamId',
         abstract: true,
