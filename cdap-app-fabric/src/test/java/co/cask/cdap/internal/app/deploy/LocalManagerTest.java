@@ -56,7 +56,6 @@ public class LocalManagerTest {
     lf = new LocalLocationFactory();
     temp = TMP_FOLDER.newFolder("pipeline");
 
-    AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }

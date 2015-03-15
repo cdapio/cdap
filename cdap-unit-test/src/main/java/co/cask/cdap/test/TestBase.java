@@ -83,7 +83,7 @@ import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
-import co.cask.cdap.test.internal.InMemoryNamespaceClient;
+import co.cask.cdap.test.internal.LocalNamespaceClient;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -224,7 +224,7 @@ public class TestBase {
           bind(StreamFetchHandlerV2.class).in(Scopes.SINGLETON);
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
-          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+          bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);

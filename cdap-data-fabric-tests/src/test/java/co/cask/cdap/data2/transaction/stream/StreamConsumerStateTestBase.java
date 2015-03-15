@@ -47,7 +47,6 @@ public abstract class StreamConsumerStateTestBase {
     locationFactory.create(OTHER_NAMESPACE.getId()).mkdirs();
   }
 
-
   @Test
   public void testStateExists() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();

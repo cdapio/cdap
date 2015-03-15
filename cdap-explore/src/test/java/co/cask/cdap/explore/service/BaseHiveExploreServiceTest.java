@@ -284,8 +284,7 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(String namespace, String streamName) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespace, streamName);
+  protected static void createStream(Id.Stream streamId) throws Exception {
     streamAdmin.create(streamId);
     streamMetaStore.addStream(streamId);
   }
@@ -303,29 +302,30 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  protected static void sendStreamEvent(String namespace, String streamName, byte[] body) throws IOException {
-    sendStreamEvent(namespace, streamName, Collections.<String, String>emptyMap(), body);
+  protected static void sendStreamEvent(Id.Stream streamId, byte[] body) throws IOException {
+    sendStreamEvent(streamId, Collections.<String, String>emptyMap(), body);
   }
 
-  protected static void sendStreamEvent(String namespace, String streamName, Map<String, String> headers, byte[] body)
+  protected static void sendStreamEvent(Id.Stream streamId, Map<String, String> headers, byte[] body)
     throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
+    HttpURLConnection urlConn = openStreamConnection(streamId);
     urlConn.setRequestMethod(HttpMethod.POST);
     urlConn.setDoOutput(true);
     for (Map.Entry<String, String> header : headers.entrySet()) {
       // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
       // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamName + "." + header.getKey(), header.getValue());
+      urlConn.addRequestProperty(streamId.getName() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
-  private static HttpURLConnection openStreamConnection(String namespace, String streamName) throws IOException {
+  private static HttpURLConnection openStreamConnection(Id.Stream streamId) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
     URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
-                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
+                                    port, Constants.Gateway.API_VERSION_3,
+                                    streamId.getNamespaceId(), streamId.getName()));
     return (HttpURLConnection) url.openConnection();
   }
 

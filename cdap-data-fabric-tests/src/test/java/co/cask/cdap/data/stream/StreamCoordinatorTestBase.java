@@ -56,7 +56,6 @@ public abstract class StreamCoordinatorTestBase {
     locationFactory.create(Constants.DEFAULT_NAMESPACE).mkdirs();
   }
 
-
   @Test
   public void testGeneration() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();

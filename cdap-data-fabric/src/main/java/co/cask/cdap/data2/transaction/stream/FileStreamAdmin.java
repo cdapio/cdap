@@ -300,7 +300,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
     Location namespaceHomeLocation = Locations.getParent(getStreamsHomeLocation(namespaceId));
     Preconditions.checkArgument(namespaceHomeLocation.exists(),
-                                String.format("Expected home directory %s for namespace %s to exist.",
+                                String.format("Home directory %s for namespace %s not found",
                                               namespaceHomeLocation.toURI().getPath(), namespaceId));
   }
 

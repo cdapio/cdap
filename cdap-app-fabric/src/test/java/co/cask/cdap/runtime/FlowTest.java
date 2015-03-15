@@ -100,7 +100,6 @@ public class FlowTest {
 
   @BeforeClass
   public static void init() throws AlreadyExistsException, NamespaceCannotBeCreatedException {
-    AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }

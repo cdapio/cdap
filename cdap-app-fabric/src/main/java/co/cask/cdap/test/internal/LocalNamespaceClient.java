@@ -32,13 +32,13 @@ import java.net.URL;
 import java.util.List;
 
 /**
- *
+ * NamespaceClient which directly interacts with a {@link NamespaceAdmin}
  */
-public class InMemoryNamespaceClient extends AbstractNamespaceClient {
+public class LocalNamespaceClient extends AbstractNamespaceClient {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public InMemoryNamespaceClient(NamespaceAdmin namespaceAdmin) {
+  public LocalNamespaceClient(NamespaceAdmin namespaceAdmin) {
     this.namespaceAdmin = namespaceAdmin;
   }
 

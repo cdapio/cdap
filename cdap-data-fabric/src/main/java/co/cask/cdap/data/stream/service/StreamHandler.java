@@ -213,6 +213,9 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     } catch (NotFoundException e) {
       LOG.error("Failed to create stream {}", stream, e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Failed to create stream {}", stream, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
