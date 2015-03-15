@@ -105,6 +105,10 @@ public abstract class StreamAdminTest {
 
     streamAdmin.dropAllInNamespace(Id.Namespace.from(fooNamespace));
 
+    for (Id.Stream stream : allStreams) {
+      streamAdmin.create(stream);
+    }
+
     // All of the streams within the default namespace should have no data in them
     for (Id.Stream defaultStream : fooStreams) {
       Assert.assertEquals(0, getStreamSize(defaultStream));
