@@ -28,6 +28,8 @@ angular.module(PKG.name + '.feature.streams')
           $bootstrapModal.open({
             templateUrl: '/assets/features/streams/templates/streamscreate.html',
             size: 'lg',
+            backdrop: true,
+            keyboard: true,
             controller: 'StreamsCreateController'
           }).result.finally(function() {
             $state.go('streams.list');
