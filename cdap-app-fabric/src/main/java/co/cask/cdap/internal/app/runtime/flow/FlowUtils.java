@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.ForwardingTransactionAware;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -68,8 +69,13 @@ public final class FlowUtils {
    * Generates a queue consumer groupId for the given flowlet in the given program id.
    */
   public static long generateConsumerGroupId(Id.Program program, String flowletId) {
+    // Use 'developer' in place of a program's namespace for programs in the 'default' namespace
+    // to support backwards compatibility for queues and streams.
+    String namespace = program.getNamespaceId();
+    String backwardsCompatibleNamespace =
+      Constants.DEFAULT_NAMESPACE.equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
     return Hashing.md5().newHasher()
-                  .putString(program.getNamespaceId())
+                  .putString(backwardsCompatibleNamespace)
                   .putString(program.getApplicationId())
                   .putString(program.getId())
                   .putString(flowletId).hash().asLong();

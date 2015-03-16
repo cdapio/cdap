@@ -724,6 +724,11 @@ public final class Constants {
     new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
 
   /**
+   * Used for upgrade and backwards compatability
+   */
+  public static final String DEVELOPER_ACCOUNT = "developer";
+
+  /**
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";

@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractUpgrader.class);
-  protected static final String DEVELOPER_ACCOUNT = "developer";
   protected final LocationFactory locationFactory;
 
   public AbstractUpgrader(LocationFactory locationFactory) {

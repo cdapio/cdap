@@ -84,7 +84,7 @@ public class QueueConfigUpgrader extends AbstractUpgrader {
       try {
         while ((result = resultScanner.next()) != null) {
           byte[] row = result.getRow();
-          String rowKey = Bytes.toStringBinary(row);
+          String rowKey = Bytes.toString(row);
           LOG.debug("Processing queue config for  {}", rowKey);
           NavigableMap<byte[], byte[]> columnsMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           QueueName queueName = fromRowKey(row);
