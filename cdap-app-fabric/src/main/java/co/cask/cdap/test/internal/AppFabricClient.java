@@ -115,7 +115,8 @@ public class AppFabricClient {
       request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
                                        String.format("/v3/unrecoverable/namespaces/%s/datasets", namespace.getId()));
       namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), String.format("could not delete datasets in namespace '%s'", namespace.getId()));
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
+                     String.format("could not delete datasets in namespace '%s'", namespace.getId()));
 
       responder = new MockResponder();
       request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
