@@ -30,6 +30,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -64,6 +65,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
               })
     );
 
+    setupNamespaces(injector.getInstance(LocationFactory.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

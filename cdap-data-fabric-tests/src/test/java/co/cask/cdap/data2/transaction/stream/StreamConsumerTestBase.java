@@ -35,6 +35,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -75,6 +76,11 @@ public abstract class StreamConsumerTestBase {
   protected abstract TransactionSystemClient getTransactionClient();
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
+
+  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
+    locationFactory.create(TEST_NAMESPACE.getId()).mkdirs();
+    locationFactory.create(OTHER_NAMESPACE.getId()).mkdirs();
+  }
 
   @Test
   public void testNamespacedStreamConsumers() throws Exception {
