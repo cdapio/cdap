@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -23,16 +25,21 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * For updating number of flowlet instances
  */
+@NotThreadSafe
 final class DistributedFlowletInstanceUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedFlowletInstanceUpdater.class);
   private static final int MAX_WAIT_SECONDS = 30;
@@ -56,16 +63,34 @@ final class DistributedFlowletInstanceUpdater {
     this.txExecutorFactory = txExecutorFactory;
   }
 
-  void update(String flowletId, int newInstanceCount, int oldInstanceCount) throws Exception {
-    waitForInstances(flowletId, oldInstanceCount);
-    twillController.sendCommand(flowletId, ProgramCommands.SUSPEND).get();
+  void update(String flowletId, int newInstanceCount, FlowSpecification flowSpec) throws Exception {
+    // Find all flowlets that are source of the given flowletId.
+    Set<String> flowlets = getUpstreamFlowlets(flowSpec, flowletId, Sets.<String>newHashSet());
+    flowlets.add(flowletId);
 
-    FlowUtils.reconfigure(consumerQueues.get(flowletId),
-                          FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
-                          streamAdmin, queueAdmin, txExecutorFactory);
-
-    twillController.changeInstances(flowletId, newInstanceCount).get();
-    twillController.sendCommand(flowletId, ProgramCommands.RESUME).get();
+    try {
+      // Suspend all upstream flowlets and the flowlet that is going to change instances
+      for (String id : flowlets) {
+        waitForInstances(id, getInstances(flowSpec, id));
+        // Need to suspend one by one due to a bug in Twill (TWILL-123)
+        twillController.sendCommand(id, ProgramCommands.SUSPEND).get();
+      }
+      FlowUtils.reconfigure(consumerQueues.get(flowletId),
+                            FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
+                            streamAdmin, queueAdmin, txExecutorFactory);
+      twillController.changeInstances(flowletId, newInstanceCount).get();
+    } finally {
+      for (String id : flowlets) {
+        // Need to resume one by one due to TWILL-123.
+        // Also ignore any error as resuming a non-suspended flowlet is ok,
+        // except getting from exception log from the container.
+        try {
+          twillController.sendCommand(id, ProgramCommands.RESUME).get();
+        } catch (Exception e) {
+          LOG.warn("Failed to resume flowlet {}", id, e);
+        }
+      }
+    }
   }
 
   // wait until there are expectedInstances of the flowlet.  This is needed to prevent the case where a suspend
@@ -92,5 +117,19 @@ final class DistributedFlowletInstanceUpdater {
 
   private int getNumberOfProvisionedInstances(String flowletId) {
     return twillController.getResourceReport().getRunnableResources(flowletId).size();
+  }
+
+  private <T extends Collection<String>> T getUpstreamFlowlets(FlowSpecification flowSpec, String flowletId, T result) {
+    for (FlowletConnection connection : flowSpec.getConnections()) {
+      if (connection.getTargetName().equals(flowletId)
+        && connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
+        result.add(connection.getSourceName());
+      }
+    }
+    return result;
+  }
+
+  private int getInstances(FlowSpecification flowSpec, String flowletId) {
+    return flowSpec.getFlowlets().get(flowletId).getInstances();
   }
 }

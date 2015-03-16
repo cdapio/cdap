@@ -15,30 +15,55 @@
  */
 package co.cask.cdap.data2.transaction.queue.hbase;
 
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.data2.queue.ConsumerConfig;
+import com.google.common.base.Objects;
+
+import javax.annotation.Nullable;
+
 /**
- * Represents state of queue consumer.
+ * Represents state of a queue consumer.
  */
 public final class HBaseConsumerState {
 
-  private final long groupId;
-  private final int instanceId;
+  private final ConsumerConfig consumerConfig;
   private final byte[] startRow;
+  private final byte[] barrierStartRow;
+  private final byte[] barrierEndRow;
 
-  HBaseConsumerState(byte[] startRow, long groupId, int instanceId) {
+  HBaseConsumerState(ConsumerConfig consumerConfig, byte[] startRow,
+                     @Nullable byte[] barrierStartRow, @Nullable byte[] barrierEndRow) {
+    this.consumerConfig = consumerConfig;
     this.startRow = startRow;
-    this.groupId = groupId;
-    this.instanceId = instanceId;
+    this.barrierStartRow = barrierStartRow;
+    this.barrierEndRow = barrierEndRow;
+  }
+
+  public ConsumerConfig getConsumerConfig() {
+    return consumerConfig;
   }
 
   public byte[] getStartRow() {
     return startRow;
   }
 
-  public long getGroupId() {
-    return groupId;
+  @Nullable
+  public byte[] getBarrierStartRow() {
+    return barrierStartRow;
   }
 
-  public int getInstanceId() {
-    return instanceId;
+  @Nullable
+  public byte[] getBarrierEndRow() {
+    return barrierEndRow;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("config", consumerConfig)
+      .add("start", Bytes.toStringBinary(startRow))
+      .add("barrierStart", Bytes.toStringBinary(barrierStartRow))
+      .add("barrierEnd", Bytes.toStringBinary(barrierEndRow))
+      .toString();
   }
 }
