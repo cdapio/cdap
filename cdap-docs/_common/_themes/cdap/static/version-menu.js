@@ -21,10 +21,11 @@
  * 
  * Requires a JSONP file at http://docs.cask.co/cdap/json-versions.js in the format:
  * 
- *  versionscallback({ "development":[["2.7.0-SNAPSHOT", "2.7.0"], ["2.6.0-SNAPSHOT","2.6.0"],], "current": ["2.5.2", "2.5.2"], "versions": [["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],] });
+ *  versionscallback({ "development":[["2.7.0-SNAPSHOT", "2.7.0"], ["2.6.0-SNAPSHOT","2.6.0"],], "older": ["2.5.2", "2.5.2"], "versions": [["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"],] });
  * 
  * list of development versions; one current version; list of additional versions
- * the tool versionscallback-gen.py will generate this from scanning a directory
+ *
+ * version 0.2
  * 
  */
 
@@ -35,16 +36,19 @@
     return versionsURL + dir + '/en/';
   });
   var writelink = (function(dir, label){
-//     document.write('<option value="' + versionsURL + dir + '/en/">Version ' + label + '</option>')
     document.write('<option value="' + buildURL(dir) + '">Version ' + label + '</option>');
   });
   window.versionscallback = (function(data){
     if (data) {
-      document.write('<li style="width: 120px; position: absolute; margin-left: -165px; text-align: right; top: 6px;">');
+      document.write('<li class="versions">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
-    if (data.development) {
-      document.write('<optgroup label="Development Release">');          
+    var ess = "s";
+    if (data.development && data.development.length > 0) {
+      if (data.development.length == 1) {
+        ess = "";
+      }
+      document.write('<optgroup label="Development Release' + ess +'">');          
       var i;
       for (i in data.development) {
         writelink(data.development[i][0], data.development[i][1]);
@@ -52,12 +56,16 @@
       document.write('</optgroup>');
     }
       document.write('<optgroup label="Current Release">');
-    if (data.current) {
+    if (data.current && data.current.length > 0) {
       writelink(data.current[0], data.current[1]);
       document.write('</optgroup>');
     }
-    if (data.older) {
-      document.write('<optgroup label="Older Releases">');
+    if (data.older && data.older.length > 0) {
+      ess = "s";
+      if (data.older.length == 1) {
+        ess = "";
+      }
+      document.write('<optgroup label="Older Release' + ess + '">');
       var j;
       for (j in data.older) {
         writelink(data.older[j][0], data.older[j][1]);

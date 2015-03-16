@@ -63,6 +63,7 @@ function usage() {
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
+  echo "    javadocs       Build Javadocs"
   echo "    licenses       Clean build of License Dependency PDFs"
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
@@ -79,6 +80,7 @@ function run_command() {
     docs )              build_docs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
+    javadocs )          build_javadocs; exit 1;;
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
@@ -114,6 +116,11 @@ function copy_html() {
 }
 
 function build_docs_outer_level() {
+  echo ""
+  echo "========================================================"
+  echo "Building outer-level docs..."
+  echo "========================================================"
+  echo ""
   clean
   version
   
@@ -135,7 +142,12 @@ function build_docs_outer_level() {
     sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
   fi
   
-  # Copy lower-level doc manuals
+  echo ""
+  echo "========================================================"
+  echo "Copying lower-level docs..."
+  echo "========================================================"
+  echo ""
+
   copy_html admin-manual
   copy_html developers-manual
   copy_html reference-manual
@@ -171,6 +183,11 @@ function build_all() {
   bell
 }
 
+function build_javadocs() {
+  # Uses function from common
+  build_javadocs_api
+}
+
 function build_docs_javadocs() {
   build "build"
 }
@@ -180,7 +197,7 @@ function build_docs() {
 }
 
 function build_docs_github() {
-  _build_docs "docs-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
+  _build_docs "build-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
 }
 
 function build_docs_web() {
@@ -204,7 +221,11 @@ function build() {
 }
 
 function build_specific_doc() {
+  echo ""
+  echo "========================================================"
   echo "Building $1, target $2..."
+  echo "========================================================"
+  echo ""
   cd $SCRIPT_PATH/$1
   ./build.sh $2 $ARG_2 $ARG_3
 }
@@ -252,15 +273,9 @@ function bell() {
 }
 
 function test() {
-#   echo "Test..."
-#   echo "Version..."
-#   display_version
-#   echo "Build all docs..."
-#   build
-#   echo "Build SDK..."
-#   build_sdk
-#   build_json
-  bell "Test completed."
+  echo "Test..."
+  build_json
+  echo "Test completed."
 }
 
 set_project_path

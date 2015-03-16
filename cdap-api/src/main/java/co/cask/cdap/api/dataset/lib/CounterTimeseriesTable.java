@@ -94,8 +94,8 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
 
   /**
    * Reads entries for a given time range and returns an <code>Iterator<Counter></code>.
-   * Provides the same functionality as {@link #read(byte[], long, long, byte[]...)} but accepts additional
-   * parameters for pagination purposes.
+   * Provides the same functionality as {@link #read(byte[], long, long, byte[][]) read(byte[], long, long, byte[]...)}
+   * but accepts additional parameters for pagination purposes.
    *
    * @param counter name of the counter to read
    * @param startTime defines start of the time range to read, inclusive

@@ -63,10 +63,3 @@ CDAP Developers’ Manual
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
   developers who want a deeper dive into CDAP, with presentations on the **Data Exploration
   of Datasets** and **Best Practices for CDAP development**.
-  
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:

@@ -110,10 +110,3 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _search: search.html
 
 - |search|_ Search this documentation using *Quick Search*
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:

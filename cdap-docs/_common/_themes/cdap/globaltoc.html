@@ -26,8 +26,14 @@
     {%- endif %}
 {%- endif %}
 {%- if not hideglobaltoc %}
-{%- if html_short_title_toc|length > 20 %}{% set title_br = '<br>' %}{%- endif %}
-<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}:{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
+  {%- if html_short_title_toc|length == 0 %}
+    {% set title_br = '' %}
+  {%- elif html_short_title_toc|length >= 20 %}
+    {% set title_br = ':<br>' %}
+  {%- else %}
+    {% set title_br = ':' %}
+  {%- endif %}
+<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
 <nav class="pagenav">
 {{ toctree() }}
 </nav>
