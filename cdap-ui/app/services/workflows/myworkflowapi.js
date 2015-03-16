@@ -16,86 +16,34 @@ angular.module(PKG.name + '.services')
       runs: {
         url: url({ _cdapNsPath: basepath + '/runs'}),
         method: 'GET',
-        options: { type: 'POLL', id: runsId },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        isArray: true,
+        options: { type: 'POLL', id: runsId }
       },
       runsStop: {
         url: url({ _cdapNsPath: basepath + '/runs'}),
+        isArray: true,
         method: 'GET',
-        options: { type: 'POLL-STOP', id: runsId },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        options: { type: 'POLL-STOP', id: runsId }
       },
       status: {
         url: url({ _cdapNsPath: basepath + '/status' }),
         method: 'GET',
-        options: { type: 'POLL', id: statusId },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        options: { type: 'POLL', id: statusId }
       },
       statusStop: {
         url: url({ _cdapNsPath: basepath + '/status' }),
         method: 'GET',
-        options: { type: 'POLL-STOP', id: statusId },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        options: { type: 'POLL-STOP', id: statusId }
       },
       start: {
         url: url({ _cdapNsPath: basepath + '/start' }),
         method: 'POST',
-        options: { type: 'REQUEST' },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        options: { type: 'REQUEST' }
       },
       stop: {
         url: url({ _cdapNsPath: basepath + '/stop' }),
         method: 'POST',
-        options: { type: 'REQUEST' },
-        user: myAuth.currentUser || null,
-        headers: {
-          authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-        },
-        interceptor: {
-          response: function(response) {
-            return response;
-          }
-        }
+        options: { type: 'REQUEST' }
       }
     });
   });

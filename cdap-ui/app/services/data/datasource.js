@@ -70,7 +70,7 @@ angular.module(PKG.name+'.services')
     }
 
     $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
+      // $log.log('[DataSource] reconnected, reloading...');
 
       // https://github.com/angular-ui/ui-router/issues/582
       // $state.transitionTo($state.current, $state.$current.params,
@@ -91,12 +91,12 @@ angular.module(PKG.name+'.services')
 
       this.bindings = [];
 
-      scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+      $rootScope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, data.resource)) {
               if(b.errorCallback) {
-                scope.$apply(b.errorCallback.bind(null, data.response));
+                $rootScope.$applyAsync(b.errorCallback.bind(null, {data: data.response}));
               }
             }
           });
@@ -104,13 +104,12 @@ angular.module(PKG.name+'.services')
         }
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, data.resource)) {
-            scope.$apply(
-              angular.isFunction(b.callback) ?
-                b.callback.bind(null, data.response) : angular.noop()
-            );
+            if (angular.isFunction(b.callback)) {
+              $rootScope.$applyAsync(b.callback.bind(null, data.response));
+            }
 
             if (b && b.resolve) {
-              b.resolve(data.response);
+              b.resolve({data: data.response});
             }
           }
         });
@@ -173,16 +172,14 @@ angular.module(PKG.name+'.services')
           _pollStop(resource);
         });
 
-        $timeout(function() { _pollStart(resource);});
+        _pollStart(resource);
       }, true);
       return prom;
     };
 
     DataSource.prototype.pollStop = function(resource) {
       var prom = new MyPromise(function(resolve, reject) {
-        $timeout(function() {
-          _pollStop(resource);
-        });
+        _pollStop(resource);
       });
       return prom;
     };
@@ -202,15 +199,18 @@ angular.module(PKG.name+'.services')
             reject: reject
           });
 
-          $timeout(function() {
+          // $timeout(function() {
             mySocket.send({
               action: 'request',
               resource: resource
             });
-          });
+          //});
 
       }, false);
-
+      prom = prom.then(function(res) {
+        res = res.data;
+        return res;
+      });
       return prom;
     };
 
