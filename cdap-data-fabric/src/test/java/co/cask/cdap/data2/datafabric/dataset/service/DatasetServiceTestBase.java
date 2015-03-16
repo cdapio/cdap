@@ -16,17 +16,19 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -36,6 +38,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpE
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -53,13 +57,18 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -74,6 +83,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -86,7 +96,7 @@ public abstract class DatasetServiceTestBase {
   private InMemoryDiscoveryService discoveryService;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
-  private LocalLocationFactory locationFactory;
+  private LocationFactory locationFactory;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
 
@@ -118,8 +128,22 @@ public abstract class DatasetServiceTestBase {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
-    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
+    final Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules());
+
+    DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
+      @Override
+      public DatasetDefinitionRegistry create() {
+        DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
+        injector.injectMembers(registry);
+        return registry;
+      }
+    };
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
@@ -130,17 +154,19 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
+    Map<String, DatasetModule> defaultModules =
+      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                   Names.named("defaultDatasetModules")));
+
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient,
-                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, defaultModules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
                                  locationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),

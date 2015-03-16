@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.services')
 
   .factory('mySettings', function (MyPersistentStorage) {
-    return new MyPersistentStorage('consolesettings');
+    return new MyPersistentStorage('user');
   })
 
   .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyDataSource, myHelpers) {

@@ -101,7 +101,7 @@ function makeApp (authAddress, cdapConfig) {
 
   // serve static assets
   app.use('/assets', [
-    httpStaticLogger,
+    //httpStaticLogger,
     express.static(DIST_PATH + '/assets', {
       index: false
     }),
@@ -111,7 +111,7 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
   app.get('/robots.txt', [
-    httpStaticLogger,
+    //httpStaticLogger,
     function (req, res) {
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
@@ -140,7 +140,7 @@ function makeApp (authAddress, cdapConfig) {
   }
 
   app.get('/test/playground', [
-    httpStaticLogger,
+    //httpStaticLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/test.html');
     }

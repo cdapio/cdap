@@ -62,11 +62,19 @@ public class ProgramClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private final ApplicationClient applicationClient;
 
   @Inject
+  public ProgramClient(ClientConfig config, RESTClient restClient, ApplicationClient applicationClient) {
+    this.config = config;
+    this.restClient = restClient;
+    this.applicationClient = applicationClient;
+  }
+
   public ProgramClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
+    this.applicationClient = new ApplicationClient(config, restClient);
   }
 
   /**
@@ -145,16 +153,16 @@ public class ProgramClient {
    * @throws TimeoutException
    */
   public void stopAll() throws IOException, UnauthorizedException, InterruptedException, TimeoutException {
-    Map<ProgramType, List<ProgramRecord>> allPrograms = new ApplicationClient(config).listAllPrograms();
+    Map<ProgramType, List<ProgramRecord>> allPrograms = applicationClient.listAllPrograms();
     for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
       ProgramType programType = entry.getKey();
       List<ProgramRecord> programRecords = entry.getValue();
       for (ProgramRecord programRecord : programRecords) {
         try {
-          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getId());
+          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getName());
           if (!status.equals("STOPPED")) {
-            this.stop(programRecord.getApp(), programType, programRecord.getId());
-            this.waitForStatus(programRecord.getApp(), programType, programRecord.getId(),
+            this.stop(programRecord.getApp(), programType, programRecord.getName());
+            this.waitForStatus(programRecord.getApp(), programType, programRecord.getName(),
                                "STOPPED", 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {
@@ -500,14 +508,13 @@ public class ProgramClient {
                                         long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnauthorizedException {
 
-    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state,
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
+                                       Constants.AppFabric.QUERY_PARAM_STATUS, state,
                                        Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    String path = String.format("apps/%s/%s/%s/runs?%s",
-                                appId, programType.getCategoryName(),
-                                programId, queryParams);
+    String path = String.format("apps/%s/%s/%s/runs?%s", appId, programType.getCategoryName(), programId, queryParams);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -570,8 +577,7 @@ public class ProgramClient {
     throws IOException, NotFoundException, UnauthorizedException {
 
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
-                                appId, programType.getCategoryName(),
-                                programId, start, stop);
+                                appId, programType.getCategoryName(), programId, start, stop);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

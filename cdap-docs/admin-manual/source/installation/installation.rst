@@ -548,7 +548,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a web browser to the CDAP Console.
    It is located on port ``9999`` of the box where you installed CDAP.
 #. On the Console, click the button *Load an App*.
-#. Find the pre-built ``WordCount-``|literal-release|``.jar`` using the dialog box to navigate to
+#. Find the pre-built ``WordCount-``\ |literal-release|\ ``.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example. <examples-word-count>`
@@ -591,7 +591,7 @@ and then restart CDAP.
 
 #. Run the upgrade tool::
 
-     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
+     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
 #. Restart the CDAP processes::
 

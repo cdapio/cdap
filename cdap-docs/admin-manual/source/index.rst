@@ -56,7 +56,7 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. |operations| replace:: **Operations:**
 .. _operations: installation/index.html
 
-|operations|_ Covers **logging, metrics, runtime arguments, scaling instances and 
+|operations|_ Covers **logging, metrics, preferences, scaling instances and
 introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
@@ -69,10 +69,10 @@ introduces the CDAP Console.**
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
-.. |runtime-arguments| replace:: **Runtime Arguments:**
-.. _runtime-arguments: operations/runtime-arguments.html
+.. |preferences| replace:: **Preferences and Runtime Arguments:**
+.. _preferences: operations/preferences.html
 
-- |runtime-arguments|_ Flows, Procedures, MapReduce programs, and Workflows can receive **runtime arguments:** 
+- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html

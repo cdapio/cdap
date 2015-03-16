@@ -55,12 +55,13 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
     StreamProperties config = streamClient.getConfig(streamId);
 
     Table table = Table.builder()
-      .setHeader("ttl", "format", "schema")
+      .setHeader("ttl", "format", "schema", "notification.threshold.mb")
       .setRows(ImmutableList.of(config), new RowMaker<StreamProperties>() {
         @Override
         public List<?> makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
-          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString());
+          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString(),
+                                    object.getNotificationThresholdMB());
         }
       }).build();
     tableRenderer.render(output, table);

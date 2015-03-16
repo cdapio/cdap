@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.file.FileAdmin;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetAdmin;
 
 /**
  * {@link co.cask.cdap.api.dataset.module.DatasetModule}
@@ -33,7 +33,7 @@ public class TimePartitionedFileSetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
-    DatasetDefinition<FileSet, FileAdmin> fileSetDef = registry.get("fileSet");
+    DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get("fileSet");
     DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
 
     // file dataset

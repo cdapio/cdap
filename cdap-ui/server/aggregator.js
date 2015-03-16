@@ -28,7 +28,7 @@ function Aggregator (conn) {
   this.polledResources = new HashTable();
   this.bodyCache = {};
 
-  this.log('init');
+  // this.log('init');
 }
 
 /**
@@ -67,13 +67,13 @@ function doPoll () {
       rscs = this.polledResources.toArray(),
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
 
-  this.log('poll', rscs.length);
+  //this.log('poll', rscs.length);
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;
     request(resource, function(error, response, body){
 
       if(error || _.isEqual(that.bodyCache[one.hash], body)) {
-        that.log('not emitting', resource.url);
+        // that.log('not emitting', resource.url);
         return; // we do not send down identical bodies
       }
 
@@ -109,7 +109,7 @@ function emitResponse (resource, error, response, body) {
     return;
   }
 
-  this.log('emit', resource.url);
+  // this.log('emit', resource.url);
   this.connection.write(JSON.stringify({
     resource: resource,
     statusCode: response.statusCode,
@@ -124,7 +124,7 @@ function emitResponse (resource, error, response, body) {
 function onSocketData (message) {
   try {
     message = JSON.parse(message);
-    this.log('data', message.action);
+    // this.log('data', message.action);
 
     var r = message.resource;
     // @TODO whitelist resources
@@ -157,7 +157,7 @@ function onSocketData (message) {
  * @private onSocketClose
  */
 function onSocketClose () {
-  this.log('closed');
+  // this.log('closed');
   this.stopPolling();
   this.polledResources.reset();
 }

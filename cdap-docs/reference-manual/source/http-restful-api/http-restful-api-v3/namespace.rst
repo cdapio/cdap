@@ -53,10 +53,6 @@ Properties for the namespace are passed in the JSON request body:
      - Display description of the namespace
      - An empty string ("")
 
-Once a namespace has been created with a particular
-ID and properties, its properties cannot be edited. To change the display name and
-description for a particular ID, you need to delete the namespace and recreate it.
-
 If a namespace with the same ID already exists, the method will still return ``200 OK``,
 but with a message that the ``Namespace '<namespace-id>' already exists``.
 
@@ -70,8 +66,6 @@ but with a message that the ``Namespace '<namespace-id>' already exists``.
      - Description
    * - ``200 OK``
      - The event successfully called the method, and the namespace was created
-
-
 
 List Existing Namespaces
 ------------------------
@@ -118,13 +112,11 @@ The information will be returned in the body of the response::
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
+Editing a Namespace
+-------------------
+To edit an existing namespace, submit an HTTP PUT request to::
 
-Delete a Namespace
-------------------
-To delete a Namespace—together with all of its Flows, Datasets and MapReduce 
-programs, any and all entities associated with that namespace—submit an HTTP DELETE::
-
-  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/properties
 
 .. list-table::
    :widths: 20 80
@@ -135,8 +127,7 @@ programs, any and all entities associated with that namespace—submit an HTTP D
    * - ``<namespace-id>``
      - Namespace ID
 
-**Note:** This is an **unrecoverable operation**. As the deletion of a namespace occurs in
-a transaction, if a delete for any of the entities that a namespace contains fails, the
-result is a failure of the namespace deletion. The transaction will be rolled back and it
-will be as if the deletion had not be attempted.
-     
+The ``<namespace-id>`` must be of the limited character set for namespaces, as 
+described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
+Properties for the namespace are passed in the JSON request body, as described
+for when you `Create a Namespace`_.

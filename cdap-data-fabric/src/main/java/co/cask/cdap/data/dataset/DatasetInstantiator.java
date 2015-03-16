@@ -21,12 +21,9 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Iterables;
@@ -70,16 +67,13 @@ public class DatasetInstantiator implements DatasetContext {
    */
   public DatasetInstantiator(Id.Namespace namespaceId,
                              DatasetFramework datasetFramework,
-                             CConfiguration configuration,
                              ClassLoader classLoader,
                              @Nullable
                              MetricsCollector metricsCollector) {
     this.namespaceId = namespaceId;
     this.classLoader = classLoader;
     this.metricsCollector = metricsCollector;
-    // todo: should be passed in already namespaced. Refactor
-    this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
+    this.datasetFramework = datasetFramework;
   }
 
   @Override

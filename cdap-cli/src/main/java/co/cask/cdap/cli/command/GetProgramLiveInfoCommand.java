@@ -71,7 +71,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
       .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
         @Override
         public List<?> makeRow(DistributedProgramLiveInfo object) {
-          return Lists.newArrayList(object.getApp(), object.getType(), object.getId(),
+          return Lists.newArrayList(object.getApp(), object.getType(), object.getName(),
                                     object.getRuntime(), object.getYarnAppId());
         }
       }).build();

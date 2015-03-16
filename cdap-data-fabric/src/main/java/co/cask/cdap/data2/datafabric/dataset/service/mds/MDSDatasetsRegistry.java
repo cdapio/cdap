@@ -17,12 +17,9 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.TransactionalDatasetRegistry;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
@@ -42,10 +39,9 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
 
   @Inject
   public MDSDatasetsRegistry(TransactionSystemClient txClient,
-                             @Named("datasetMDS") DatasetFramework framework,
-                             CConfiguration conf) {
+                             @Named("datasetMDS") DatasetFramework framework) {
     super(txClient);
-    this.dsFramework = new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf));
+    this.dsFramework = framework;
   }
 
   @Override

@@ -60,7 +60,7 @@ parser.extractConfig('cdap')
     // sockjs
     var sockServer = sockjs.createServer({
       log: function (lvl, msg) {
-        console.log(colors.blue('sock'), msg);
+        // console.log(colors.blue('sock'), msg);
       }
     });
 

@@ -44,7 +44,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.async.ExecutorUtils;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -132,7 +131,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
-  private final CConfiguration configuration;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -142,8 +140,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
-                              DatasetFramework dsFramework,
-                              CConfiguration configuration) {
+                              DatasetFramework dsFramework) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -151,7 +148,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.configuration = configuration;
     this.dsFramework = dsFramework;
   }
 
@@ -204,8 +200,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient,
-                                               dsFramework, configuration);
+                                               metricsCollectionService, discoveryServiceClient, dsFramework);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

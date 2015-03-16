@@ -36,17 +36,18 @@ and write to an ObjectStore Dataset.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    *history* Dataset every morning at 4:00 A.M.
+    *history* Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
+    is ingested by the ``purchaseStream`` using a Data Schedule.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the *history* Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
-    calls, or more conveniently using the :ref:`Command Line Interface: <cli>`.
+    calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-PurchaseHistoryService will responds with *204 No Response* status code.
+PurchaseHistoryService will respond with *204 No Response* status code.
 
 Let's look at some of these components, and then run the Application and see the results.
 
@@ -168,8 +169,8 @@ Once the application is deployed:
 
 - You can send ``curl`` requests to CDAP::
 
-    curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/start'
-    curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/services/CatalogLookupService/start'
+    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
+    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookupService/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
   SDK in ``libexec\bin\curl.exe``
@@ -212,7 +213,7 @@ Once the sentences have been injected:
 
 - You can send a ``curl`` request to CDAP::
 
-    curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
+    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
   SDK in ``libexec\bin\curl.exe``
@@ -235,8 +236,7 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w '\n' -v \
-      'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
+    curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
@@ -322,9 +322,9 @@ If you prefer to use ``curl`` directly, here is the sequence of steps to execute
 
 First, submit the query for execution::
 
-  curl -w '\n' -v -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}' \
-    http://localhost:10000/v2/data/explore/queries;
-
+  curl -w'\n' -v http://localhost:10000/v3/namespaces/default/data/explore/queries \
+    -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}'
+    
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
 
@@ -333,7 +333,7 @@ correctly at the shell command prompt. On success, this will return a handle for
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
 status, issue a GET to the query's URL using the handle::
 
-  curl -w '\n' -v -X GET http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
+  curl -w'\n' -v -X GET http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -341,7 +341,7 @@ Because a SQL query can run for several minutes, you may have to repeat the call
 
 Once execution has finished, you can retrieve the results of the query using the handle::
 
-  curl -w '\n' -v -X POST http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
+  curl -w'\n' -v -X POST http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
 This will return—up to a limited number—the results in JSON format::
 
@@ -354,7 +354,7 @@ This will return—up to a limited number—the results in JSON format::
 You repeat this step until the ``curl`` call returns an empty list. That means you have
 retrieved all of the results and you can now close the query::
 
-  curl -v -X DELETE http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
+  curl -v -X DELETE http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 Stopping the Application
 -------------------------------

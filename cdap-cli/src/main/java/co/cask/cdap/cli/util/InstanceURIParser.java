@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli.util;
 
-import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -28,6 +28,7 @@ import java.net.URI;
  */
 public class InstanceURIParser {
 
+  public static final InstanceURIParser DEFAULT = new InstanceURIParser(CConfiguration.create());
   public static final String DEFAULT_PROTOCOL = "http";
 
   private final CConfiguration cConf;
@@ -37,7 +38,7 @@ public class InstanceURIParser {
     this.cConf = cConf;
   }
 
-  public CLIConfig.ConnectionInfo parse(String uriString) {
+  public ConnectionConfig parse(String uriString) {
     if (!uriString.contains("://")) {
       uriString = DEFAULT_PROTOCOL + "://" + uriString;
     }
@@ -56,7 +57,11 @@ public class InstanceURIParser {
         cConf.getInt(Constants.Router.ROUTER_PORT);
     }
 
-    return new CLIConfig.ConnectionInfo(hostname, port, sslEnabled, namespace);
+    return ConnectionConfig.builder()
+      .setHostname(hostname)
+      .setPort(port)
+      .setSSLEnabled(sslEnabled)
+      .build();
   }
 
 }

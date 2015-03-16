@@ -22,12 +22,10 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionFailureException;
@@ -45,8 +43,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    this.dsFramework = new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
-                                                      new DefaultDatasetNamespace(cConf));
+    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf);
     this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 

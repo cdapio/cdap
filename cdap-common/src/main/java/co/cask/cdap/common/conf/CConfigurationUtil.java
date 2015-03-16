@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.conf;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Properties;
 
 /**
@@ -32,5 +34,24 @@ public class CConfigurationUtil extends Configuration {
         destination.set(property, cConf.get(property));
       }
     }
+  }
+
+  /**
+   * Asserts that the given CConfiguration has valid properties.
+   * @param cConf the CConfiguration object to check
+   * @throws IllegalArgumentException if the given cConf is invalid.
+   */
+  public static void verify(CConfiguration cConf) {
+    // Checks to ensure that certain keys (e.g. "root.prefix") are valid as expected by CDAP.
+    assertAlphanumeric(cConf, Constants.ROOT_NAMESPACE);
+    assertAlphanumeric(cConf, Constants.Dataset.TABLE_PREFIX);
+  }
+
+  private static void assertAlphanumeric(CConfiguration cConf, String key) {
+    String value = cConf.get(key);
+    Preconditions.checkNotNull(value, "Entry of CConf with key: {} is null", key);
+    Preconditions.checkArgument(value.matches("[a-zA-Z0-9]+"),
+                                "CConf entry with key: {} must consist " +
+                                  "of only alphanumeric characters; it is: {}", key, value);
   }
 }

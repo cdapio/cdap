@@ -7,7 +7,7 @@
 .. _cdap-mapreduce-guide:
 
 .. include:: ../../build/_includes/cdap-mapreduce-guide/README.rst
-   :end-line: 3
+   :end-line: 4
 
 .. pull-quote::
 
@@ -15,4 +15,4 @@
   `CDAP Guides GitHub repository <https://github.com/cdap-guides/cdap-mapreduce-guide>`__.
 
 .. include:: ../../build/_includes/cdap-mapreduce-guide/README.rst
-   :start-line: 2
+   :start-line: 4

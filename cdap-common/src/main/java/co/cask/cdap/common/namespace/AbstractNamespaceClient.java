@@ -64,7 +64,8 @@ public abstract class AbstractNamespaceClient {
 
   public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
     UnauthorizedException {
-    HttpResponse response = execute(HttpRequest.delete(resolve(String.format("namespaces/%s", namespaceId))).build());
+    URL url = resolve(String.format("unrecoverable/namespaces/%s", namespaceId));
+    HttpResponse response = execute(HttpRequest.delete(url).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(NAMESPACE_ENTITY_TYPE, namespaceId);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
@@ -77,13 +78,13 @@ public abstract class AbstractNamespaceClient {
 
   public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
     UnauthorizedException {
-    URL url = resolve(String.format("namespaces/%s", namespaceMeta.getId()));
+    URL url = resolve(String.format("namespaces/%s", namespaceMeta.getName()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
-                                                                    namespaceMeta.getId()))) {
-        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getId());
+                                                                    namespaceMeta.getName()))) {
+        throw new AlreadyExistsException(NAMESPACE_ENTITY_TYPE, namespaceMeta.getName());
       }
       return;
     }

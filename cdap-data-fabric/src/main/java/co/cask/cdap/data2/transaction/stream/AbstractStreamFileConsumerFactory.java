@@ -25,9 +25,9 @@ import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -63,13 +63,13 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix = new DefaultDatasetNamespace(cConf).namespace(QueueConstants.QueueType.STREAM.toString()).getId();
+    this.tablePrefix = String.format("%s.%s", Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
   }
 
   /**
    * Creates a {@link StreamConsumer}.
    *
-   * @param tableName name of the table for storing process states
+   * @param tableId Id of the table for storing process states
    * @param streamConfig configuration of the stream to consume from
    * @param consumerConfig configuration of the consumer
    * @param stateStore The {@link StreamConsumerStateStore} for recording consumer state
@@ -77,7 +77,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
    * @return A new instance of {@link StreamConsumer}
    */
   protected abstract StreamConsumer create(
-    String tableName, StreamConfig streamConfig, ConsumerConfig consumerConfig,
+    TableId tableId, StreamConfig streamConfig, ConsumerConfig consumerConfig,
     StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
     @Nullable ReadFilter extraFilter) throws IOException;
@@ -85,9 +85,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   /**
    * Deletes process states table.
    *
-   * @param tableName name of the process states table.
+   * @param tableId Id of the process states table.
    */
-  protected abstract void dropTable(String tableName) throws IOException;
+  protected abstract void dropTable(TableId tableId) throws IOException;
 
   protected void getFileOffsets(Location partitionLocation,
                                 Collection<? super StreamFileOffset> fileOffsets,
@@ -111,11 +111,11 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
     StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamId);
 
-    String tableName = getTableName(streamId, namespace);
+    TableId tableId = getTableId(streamId, namespace);
     StreamConsumerStateStore stateStore = stateStoreFactory.create(streamConfig);
     StreamConsumerState consumerState = stateStore.get(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
 
-    return create(tableName, streamConfig, consumerConfig,
+    return create(tableId, streamConfig, consumerConfig,
                   stateStore, consumerState, createReader(streamConfig, consumerState),
                   new TTLReadFilter(streamConfig.getTTL()));
   }
@@ -123,7 +123,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   @Override
   public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // Delete the entry table
-    dropTable(getTableName(streamId, namespace));
+    dropTable(getTableId(streamId, namespace));
 
     // Cleanup state store
     Map<Long, Integer> groupInfo = Maps.newHashMap();
@@ -139,8 +139,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
-  private String getTableName(Id.Stream streamId, String namespace) {
-    return String.format("%s.%s.%s", tablePrefix, streamId.getName(), namespace);
+  private TableId getTableId(Id.Stream streamId, String namespace) {
+    return TableId.from(streamId.getNamespace(), String.format("%s.%s.%s", tablePrefix, streamId.getName(), namespace));
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,

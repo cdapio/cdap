@@ -35,14 +35,17 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
@@ -60,6 +63,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -96,8 +100,8 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static CConfiguration cConf;
   private static Configuration hConf;
 
-  private static HBaseTestBase testHBase;
-  private static HBaseTableUtil tableUtil;
+  protected static HBaseTestBase testHBase;
+  protected static HBaseTableUtil tableUtil;
   private static ZKClientService zkClientService;
 
   @BeforeClass
@@ -128,13 +132,6 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
 
-    //create HBase namespace
-    tableUtil = new HBaseTableUtilFactory().get();
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
-
     final Injector injector = Guice.createInjector(
       dataFabricModule,
       new ConfigModule(cConf, hConf),
@@ -163,6 +160,15 @@ public abstract class HBaseQueueTest extends QueueTest {
       })
     );
 
+    //create HBase namespace
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+
+    ConfigurationTable configTable = new ConfigurationTable(hConf);
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
 
@@ -180,32 +186,27 @@ public abstract class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    tableUtil = new HBaseTableUtilFactory().get();
   }
 
-  // TODO: CDAP-1177 Should move to QueueTest after making getNamespaceId() etc instance methods in a base class
+  // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
-    String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.default.system.queue.application1.flow1", tableName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, HBaseQueueAdmin.getNamespaceId(tableName));
+    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
+    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
-    tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
-    Assert.assertEquals("test.testNamespace.system.queue.application1.flow1", tableName);
-    Assert.assertEquals("testNamespace", HBaseQueueAdmin.getNamespaceId(tableName));
+    tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
+    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
-
-    try {
-      HBaseQueueAdmin.getNamespaceId("test.system.queue.testNamespace.application1.flow1.unexpected");
-      Assert.fail("Should fail because of invalid table name");
-    } catch (IllegalArgumentException e) {
-    }
   }
 
   @Test
@@ -215,11 +216,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
-    String tableName = admin.getActualTableName(queueName);
-    if (!admin.exists(queueName.toString())) {
-      admin.create(queueName.toString());
+    TableId tableId = admin.getDataTableId(queueName);
+    if (!admin.exists(queueName)) {
+      admin.create(queueName);
     }
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -228,12 +229,12 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Test
   public void configTest() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "out");
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
+    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableId(queueName);
 
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
@@ -291,10 +292,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
-      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                                                  new HTableNameConverterFactory().get());
+      ConsumerConfigCache cache = getConsumerConfigCache(queueName);
       cache.updateCache();
       Assert.assertNotNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
     }
@@ -303,12 +301,9 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws Exception {
     for (QueueName queueName : queueNames) {
-      String configTableName = ((HBaseQueueAdmin) queueAdmin).getConfigTableName(queueName);
-      byte[] configTableNameBytes = Bytes.toBytes(configTableName);
       // Either the config table doesn't exists, or the consumer config is empty for the given queue
-      ConsumerConfigCache cache = ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                                                  new HTableNameConverterFactory().get());
       try {
+        ConsumerConfigCache cache = getConsumerConfigCache(queueName);
         cache.updateCache();
         Assert.assertNull("for " + queueName, cache.getConsumerConfig(queueName.toBytes()));
       } catch (TableNotFoundException e) {
@@ -317,22 +312,33 @@ public abstract class HBaseQueueTest extends QueueTest {
     }
   }
 
+  private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
+    TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
+    HTableDescriptor htd = tableUtil.createHTable(hConf, tableId).getTableDescriptor();
+    String configTableName = htd.getNameAsString();
+    byte[] configTableNameBytes = Bytes.toBytes(configTableName);
+    HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
+    CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
+    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes, cConfReader);
+  }
+
   @AfterClass
   public static void finish() throws Exception {
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+
     txService.stop();
     testHBase.stopHBase();
     zkClientService.stopAndWait();
   }
 
-  @Test
-  public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix(Constants.DEFAULT_NAMESPACE);
-    Assert.assertTrue(queueTablename.startsWith("test."));
-  }
-
   @Override
   protected void forceEviction(QueueName queueName) throws Exception {
-    byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
+    TableId tableId = ((HBaseQueueClientFactory) queueClientFactory).getTableId(queueName);
+    byte[] tableName = tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName();
     // make sure consumer config cache is updated
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
     testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {

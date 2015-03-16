@@ -16,10 +16,34 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import com.google.inject.Inject;
+
 /**
  * Factory for HBase version-specific {@link HBaseTableUtil} instances.
  */
 public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTableUtil> {
+
+  private final CConfiguration cConf;
+
+  @Inject
+  public HBaseTableUtilFactory(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
+  @Override
+  protected HBaseTableUtil createInstance(String className) throws ClassNotFoundException {
+    HBaseTableUtil hBaseTableUtil = super.createInstance(className);
+    hBaseTableUtil.setCConf(cConf);
+    return hBaseTableUtil;
+  }
+
+  public static Class<? extends HBaseTableUtil> getHBaseTableUtilClass() {
+    // Since we only need the class name, it is fine to have a null CConfiguration, since we do not use the
+    // tableUtil instance
+    return new HBaseTableUtilFactory(null).get().getClass();
+  }
+
   @Override
   protected String getHBase94Classname() {
     return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";

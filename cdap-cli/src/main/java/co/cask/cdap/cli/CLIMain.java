@@ -24,6 +24,8 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.CLI;
@@ -37,10 +39,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -62,11 +61,6 @@ import javax.net.ssl.SSLHandshakeException;
  * Main class for the CDAP CLI.
  */
 public class CLIMain {
-
-  public static final String NAME_DEBUG = "debug";
-  public static final String NAME_URI = "uri";
-  public static final String NAME_VERIFY_SSL = "verify_ssl";
-  public static final String NAME_AUTOCONNECT = "autoconnect";
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
@@ -94,79 +88,78 @@ public class CLIMain {
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
-  private final TableRenderer tableRenderer;
+  private final CLIConfig cliConfig;
 
-  /**
-   * @param output output to print to
-   * @param uri provided URI of CDAP instance
-   * @param autoconnect if true, try provided connection (or default from CConfiguration) before startup
-   * @param debug if true, log all exception stack traces
-   * @throws URISyntaxException
-   * @throws IOException
-   */
-  @Inject
-  public CLIMain(PrintStream output,
-                 @Named(NAME_URI) String uri,
-                 @Named(NAME_AUTOCONNECT) boolean autoconnect,
-                 @Named(NAME_DEBUG) final boolean debug,
-                 InstanceURIParser instanceURIParser,
-                 CLIConfig cliConfig,
-                 DefaultCommands defaultCommands,
-                 DefaultCompleters defaultCompleters,
-                 EndpointSupplier endpointSupplier,
-                 TableRenderer tableRenderer) throws URISyntaxException, IOException {
+  public CLIMain(final LaunchOptions options, final CLIConfig cliConfig) throws URISyntaxException, IOException {
+    this.cliConfig = cliConfig;
 
-    this.tableRenderer = tableRenderer;
-    if (autoconnect) {
+    final PrintStream output = cliConfig.getOutput();
+    final TableRenderer tableRenderer = cliConfig.getTableRenderer();
+
+    cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
+    Injector injector = Guice.createInjector(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LaunchOptions.class).toInstance(options);
+          bind(CConfiguration.class).toInstance(CConfiguration.create());
+          bind(PrintStream.class).toInstance(output);
+          bind(CLIConfig.class).toInstance(cliConfig);
+          bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          bind(TableRenderer.class).toInstance(tableRenderer);
+        }
+      }
+    );
+
+    InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
+    if (options.isAutoconnect()) {
       try {
-        CLIConfig.ConnectionInfo connectionInfo = instanceURIParser.parse(uri);
-        cliConfig.tryConnect(connectionInfo, output, debug);
-        cliConfig.getClientConfig().setHostname(connectionInfo.getHostname());
-        cliConfig.getClientConfig().setPort(connectionInfo.getPort());
-        cliConfig.getClientConfig().setSSLEnabled(connectionInfo.isSSLEnabled());
-        cliConfig.getClientConfig().setNamespace(connectionInfo.getNamespace());
+        ConnectionConfig connectionInfo = instanceURIParser.parse(options.getUri());
+        cliConfig.tryConnect(connectionInfo, output, options.isDebug());
       } catch (Exception e) {
-        if (debug) {
+        if (options.isDebug()) {
           e.printStackTrace(output);
         }
       }
     }
 
     this.commands = ImmutableList.of(
-      defaultCommands,
+      injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
         new HelpCommand(getCommandsSupplier()),
         new SearchCommandsCommand(getCommandsSupplier())
       )));
-
-    Map<String, Completer> completers = defaultCompleters.get();
+    Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
         if (e instanceof SSLHandshakeException) {
-          output.printf("To ignore this error, set -D%s=false when starting the CLI\n", CLIConfig.PROP_VERIFY_SSL_CERT);
+          output.printf("To ignore this error, set \"--%s false\" when starting the CLI\n",
+                        VERIFY_SSL_OPTION.getLongOpt());
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
+        } else if (e instanceof DisconnectedException) {
+          cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else {
           output.println("Error: " + e.getMessage());
         }
 
-        if (debug) {
+        if (options.isDebug()) {
           e.printStackTrace(output);
         }
 
         return false;
       }
     });
-    cli.addCompleterSupplier(endpointSupplier);
+    cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
 
-    updateCLIPrompt(cliConfig.getClientConfig());
+    updateCLIPrompt(cliConfig.getClientConfig().getConnectionConfig());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(ClientConfig clientConfig) {
-        updateCLIPrompt(clientConfig);
+      public void onConnectionChanged(ConnectionConfig connectionConfig) {
+        updateCLIPrompt(connectionConfig);
       }
     });
   }
@@ -183,14 +176,30 @@ public class CLIMain {
     return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
   }
 
-  private void updateCLIPrompt(ClientConfig clientConfig) {
-    URI baseURI = clientConfig.getBaseURI();
-    URI uri = baseURI.resolve("/" + clientConfig.getNamespace());
-    cli.getReader().setPrompt("cdap (" + uri + ")> ");
+  private String limit(String string, int maxLength) {
+    if (string.length() <= maxLength) {
+      return string;
+    }
+
+    if (string.length() >= 4) {
+      return string.substring(0, string.length() - 3) + "...";
+    } else {
+      return string;
+    }
+  }
+
+  private void updateCLIPrompt(ConnectionConfig connectionConfig) {
+    try {
+      URI baseURI = connectionConfig.getURI();
+      URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+      cli.getReader().setPrompt("cdap (" + uri + ")> ");
+    } catch (DisconnectedException e) {
+      cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
+    }
   }
 
   public TableRenderer getTableRenderer() {
-    return tableRenderer;
+    return cliConfig.getTableRenderer();
   }
 
   public CLI getCLI() {
@@ -217,33 +226,19 @@ public class CLIMain {
         usage();
         System.exit(0);
       }
-      final String uri = command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI());
-      final boolean debug = command.hasOption(DEBUG_OPTION.getOpt());
-      final boolean verifySSL = parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL);
-      final boolean autoconnect = parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT);
+
+      LaunchOptions launchOptions = LaunchOptions.builder()
+        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI()))
+        .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
+        .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
+        .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
+        .build();
+
       String[] commandArgs = command.getArgs();
 
       try {
-        ClientConfig clientConfig = new ClientConfig.Builder().setVerifySSLCert(verifySSL).build();
-        final CLIConfig cliConfig = new CLIConfig(clientConfig);
-        Injector injector = Guice.createInjector(
-          new AbstractModule() {
-            @Override
-            protected void configure() {
-              bind(PrintStream.class).toInstance(output);
-              bind(String.class).annotatedWith(Names.named(NAME_URI)).toInstance(uri);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_VERIFY_SSL)).toInstance(verifySSL);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_DEBUG)).toInstance(debug);
-              bind(Boolean.class).annotatedWith(Names.named(NAME_AUTOCONNECT)).toInstance(autoconnect);
-              bind(CLIConfig.class).toInstance(cliConfig);
-              bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-              bind(CConfiguration.class).toInstance(CConfiguration.create());
-              bind(TableRenderer.class).to(AltStyleTableRenderer.class);
-            }
-          }
-        );
-
-        CLIMain cliMain = injector.getInstance(CLIMain.class);
+        final CLIConfig cliConfig = new CLIConfig(ClientConfig.builder().build(), output, new AltStyleTableRenderer());
+        CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
 
         if (commandArgs.length == 0) {
@@ -284,7 +279,13 @@ public class CLIMain {
 
   private static void usage() {
     HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp("CDAP CLI", getOptions());
+    String args =
+      "[--autoconnect <true|false>] " +
+      "[--debug] " +
+      "[--help] " +
+      "[--verify-ssl <true|false>] " +
+      "[--uri <arg>]";
+    formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
 }

@@ -48,14 +48,14 @@ public class DescribeNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
+    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
     NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
     Table table = Table.builder()
-      .setHeader("id", "display_name", "description")
+      .setHeader("name", "description")
       .setRows(ImmutableList.of(namespaceMeta), new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
+          return ImmutableList.of(object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);
@@ -63,7 +63,7 @@ public class DescribeNamespaceCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("describe namespace <%s>", ArgumentName.NAMESPACE_ID);
+    return String.format("describe namespace <%s>", ArgumentName.NAMESPACE_NAME);
   }
 
   @Override

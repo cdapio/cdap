@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
 
   private final FileMetaDataManager fileMetaDataManager;
-  private final Location baseDir;
+  private final Location rootDir;
+  private final String logBaseDir;
   private final Schema schema;
   private final int syncIntervalBytes;
   private final Map<String, AvroFile> fileMap;
@@ -57,17 +58,18 @@ public final class AvroFileWriter implements Closeable, Flushable {
   /**
    * Constructs an AvroFileWriter object.
    * @param fileMetaDataManager used to store file meta data.
-   * @param baseDir base dir.
+   * @param rootDir the CDAP root dir on the filesystem
+   * @param logBaseDir the basedirectory for logs as defined in configuration
    * @param schema schema of the Avro data to be written.
    * @param maxFileSize Avro files greater than maxFileSize will get rotated.
    * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
-  public AvroFileWriter(FileMetaDataManager fileMetaDataManager,
-                        Location baseDir, Schema schema,
+  public AvroFileWriter(FileMetaDataManager fileMetaDataManager, Location rootDir, String logBaseDir, Schema schema,
                         long maxFileSize, int syncIntervalBytes, long inactiveIntervalMs) {
     this.fileMetaDataManager = fileMetaDataManager;
-    this.baseDir = baseDir;
+    this.rootDir = rootDir;
+    this.logBaseDir = logBaseDir;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
     this.fileMap = Maps.newHashMap();
@@ -91,7 +93,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
     LoggingContext loggingContext = event.getLoggingContext();
 
     if (LOG.isTraceEnabled()) {
-      LOG.trace("Appending {} messages for logging context {}", events.size(), loggingContext.getLogPathFragment());
+      LOG.trace("Appending {} messages for logging context {}", events.size(),
+                loggingContext.getLogPathFragment(logBaseDir));
     }
 
     long timestamp = event.getLogEvent().getTimeStamp();
@@ -146,7 +149,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   }
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
-    AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment());
+    AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment(logBaseDir));
     if (avroFile == null) {
       avroFile = createAvroFile(loggingContext, timestamp);
     }
@@ -155,7 +158,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     long currentTs = System.currentTimeMillis();
-    Location location = createLocation(loggingContext.getLogPathFragment(), currentTs);
+    Location location = createLocation(loggingContext.getLogPathFragment(logBaseDir), currentTs);
     LOG.info(String.format("Creating Avro file %s", location.toURI()));
     AvroFile avroFile = new AvroFile(location);
     try {
@@ -170,13 +173,14 @@ public final class AvroFileWriter implements Closeable, Flushable {
       closeAndDelete(avroFile);
       throw new IOException(e);
     }
-    fileMap.put(loggingContext.getLogPathFragment(), avroFile);
+    fileMap.put(loggingContext.getLogPathFragment(logBaseDir), avroFile);
     return avroFile;
   }
 
   private Location createLocation(String pathFragment, long timestamp) throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    return baseDir.append(String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
+    String fileName = String.format("%s.avro", timestamp);
+    return rootDir.append(pathFragment).append(date).append(fileName);
   }
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {

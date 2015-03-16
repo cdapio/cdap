@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.kv;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -42,7 +43,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory().get();
+  private static HBaseTableUtil hBaseTableUtil = new HBaseTableUtilFactory(CConfiguration.create()).get();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -53,7 +54,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testHBase.deleteTables(hBaseTableUtil.toHBaseNamespace(NAMESPACE_ID));
+    hBaseTableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     hBaseTableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     testHBase.stopHBase();
   }
@@ -63,6 +64,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
     Injector injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
         bind(Configuration.class).toInstance(testHBase.getConfiguration());
         bind(HBaseTableUtil.class).toInstance(hBaseTableUtil);
       }

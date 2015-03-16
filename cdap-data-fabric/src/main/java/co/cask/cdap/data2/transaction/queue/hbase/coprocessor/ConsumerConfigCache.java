@@ -19,8 +19,6 @@ package co.cask.cdap.data2.transaction.queue.hbase.coprocessor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -47,7 +45,7 @@ import javax.annotation.Nullable;
  */
 public class ConsumerConfigCache {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
-  
+
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
@@ -57,23 +55,20 @@ public class ConsumerConfigCache {
 
   private final byte[] queueConfigTableName;
   private final Configuration hConf;
+  private final CConfigurationReader cConfReader;
 
   private Thread refreshThread;
   private long lastUpdated;
   private volatile Map<byte[], QueueConsumerConfig> configCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
-  private ConfigurationTable configTable;
-  // hBase namespace + namespace separator
-  private String tablePrefix;
   private CConfiguration conf;
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, HTableNameConverter hTableNameConverter) {
+  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, CConfigurationReader cConfReader) {
     this.hConf = hConf;
     this.queueConfigTableName = queueConfigTableName;
-    this.tablePrefix = hTableNameConverter.getSysConfigTablePrefix(Bytes.toString(queueConfigTableName));
-    this.configTable = new ConfigurationTable(hConf);
+    this.cConfReader = cConfReader;
   }
 
   private void init() {
@@ -93,7 +88,7 @@ public class ConsumerConfigCache {
     long now = System.currentTimeMillis();
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
-        this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tablePrefix);
+        this.conf = cConfReader.read();
         if (this.conf != null) {
           LOG.info("Reloaded CConfiguration at {}", now);
           this.lastConfigUpdate = now;
@@ -207,10 +202,10 @@ public class ConsumerConfigCache {
   }
 
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
-                                                HTableNameConverter hTableNameConverter) {
+                                                CConfigurationReader cConfReader) {
     ConsumerConfigCache cache = instances.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, hTableNameConverter);
+      cache = new ConsumerConfigCache(hConf, tableName, cConfReader);
       if (instances.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();

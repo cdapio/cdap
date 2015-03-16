@@ -85,7 +85,7 @@ public class ContextManager {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AbstractModule() {

@@ -30,18 +30,28 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link Cube}.
  */
 public class DefaultCube implements Cube {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
+
+  private static final TagValueComparator TAG_VALUE_COMPARATOR = new TagValueComparator();
+
   private final Map<Integer, FactTable> resolutionToFactTable;
 
   private final Collection<? extends Aggregation> aggregations;
@@ -154,14 +164,52 @@ public class DefaultCube implements Cube {
   }
 
   public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
-    return resolutionToFactTable.get(query.getResolution()).findNextAvailableTags(query.getTagValues(),
-                                                                                  query.getStartTs(), query.getEndTs());
+    LOG.trace("Searching for next-level context, query: {}", query);
+
+    // In each aggregation that matches given tags, try to fill in value in a single null-valued given tag.
+    // NOTE: that we try to fill in first value that is non-null-valued in a stored record
+    //       (see FactTable#findSingleTagValue)
+    SortedSet<TagValue> result = Sets.newTreeSet(TAG_VALUE_COMPARATOR);
+
+    // todo: the passed query should have map instead
+    LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
+    for (TagValue tagValue : query.getTagValues()) {
+      slice.put(tagValue.getTagName(), tagValue.getValue());
+    }
+
+    FactTable table = resolutionToFactTable.get(query.getResolution());
+
+    for (Aggregation agg : aggregations) {
+      if (agg.getTagNames().containsAll(slice.keySet())) {
+        result.addAll(table.findSingleTagValue(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
+      }
+    }
+
+    return result;
   }
 
   @Override
   public Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception {
-    return resolutionToFactTable.get(query.getResolution()).getMeasureNames(query.getTagValues(),
-                                                                            query.getStartTs(), query.getEndTs());
+    LOG.trace("Searching for metrics, query: {}", query);
+
+    // In each aggregation that matches given tags, try to find metric names
+    SortedSet<String> result = Sets.newTreeSet();
+
+    // todo: the passed query should have map instead
+    LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
+    for (TagValue tagValue : query.getTagValues()) {
+      slice.put(tagValue.getTagName(), tagValue.getValue());
+    }
+
+    FactTable table = resolutionToFactTable.get(query.getResolution());
+
+    for (Aggregation agg : aggregations) {
+      if (agg.getTagNames().containsAll(slice.keySet())) {
+        result.addAll(table.findMeasureNames(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
+      }
+    }
+
+    return result;
   }
 
   @Nullable
@@ -252,5 +300,27 @@ public class DefaultCube implements Cube {
     }
 
     return result;
+  }
+
+  private static final class TagValueComparator implements Comparator<TagValue> {
+    @Override
+    public int compare(TagValue t1, TagValue t2) {
+      int cmp = t1.getTagName().compareTo(t2.getTagName());
+      if (cmp != 0) {
+        return cmp;
+      }
+      if (t1.getValue() == null) {
+        if (t2.getValue() == null) {
+          return 0;
+        } else {
+          return -1;
+        }
+      }
+      if (t2.getValue() == null) {
+        return 1;
+      }
+      return t1.getValue().compareTo(t2.getValue());
+    }
+
   }
 }

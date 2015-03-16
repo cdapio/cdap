@@ -25,7 +25,6 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -85,11 +84,11 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
                            SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
                            MetricsCollectionService metricsCollectionService,
-                           DatasetFramework dsFramework, CConfiguration conf,
+                           DatasetFramework dsFramework,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, runId.getId()),
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.streamAdmin = streamAdmin;

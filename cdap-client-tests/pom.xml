@@ -22,13 +22,24 @@ the License.
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>2.8.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-client-tests</artifactId>
   <name>CDAP Java Client Tests</name>
 
   <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- TODO: remove when FakeSpark doesn't need -->
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>

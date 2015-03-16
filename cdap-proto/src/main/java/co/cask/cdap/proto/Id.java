@@ -79,7 +79,7 @@ public final class Id  {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(id);
+      return id.hashCode();
     }
 
     public static Namespace from(String namespace) {
@@ -383,18 +383,17 @@ public final class Id  {
    * Id.Stream uniquely identifies a stream.
    */
   public static final class Stream {
-    private final String namespace;
+    private final Namespace namespace;
     private final String streamName;
     private transient int hashCode;
 
     private transient String id;
     private transient byte[] idBytes;
 
-    private Stream(final String namespace, final String streamName) {
+    private Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
       Preconditions.checkArgument(isId(streamName),
                                   "Stream name can only contains alphanumeric, '-' and '_' characters only.");
 
@@ -403,11 +402,11 @@ public final class Id  {
     }
 
     public Namespace getNamespace() {
-      return Id.Namespace.from(namespace);
+      return namespace;
     }
 
     public String getNamespaceId() {
-      return namespace;
+      return namespace.getId();
     }
 
     public String getName() {
@@ -415,11 +414,11 @@ public final class Id  {
     }
 
     public static Stream from(Namespace id, String streamName) {
-      return new Stream(id.getId(), streamName);
+      return new Stream(id, streamName);
     }
 
     public static Stream from(String namespaceId, String streamName) {
-      return new Stream(namespaceId, streamName);
+      return from(Id.Namespace.from(namespaceId), streamName);
     }
 
     public static Stream fromId(String id) {

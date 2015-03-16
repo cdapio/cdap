@@ -19,7 +19,6 @@ package co.cask.cdap.logging.read;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
@@ -28,10 +27,8 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.kafka.KafkaConsumer;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +37,6 @@ import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,10 +75,7 @@ public final class DistributedLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public DistributedLogReader(DatasetFramework dsFramework,
-                              TransactionSystemClient txClient,
-                              CConfiguration cConfig,
-                              LocationFactory locationFactory) {
+  public DistributedLogReader(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
         cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
@@ -98,8 +91,7 @@ public final class DistributedLogReader implements LogReader {
 
       this.serializer = new LoggingEventSerializer();
 
-      this.fileMetaDataManager =
-        new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConfig), txClient, locationFactory);
+      this.fileMetaDataManager = fileMetaDataManager;
 
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {

@@ -14,14 +14,23 @@ angular.module(PKG.name+'.feature.dashboard')
         parent: 'ns',
         url: '/dashboard/:tab',
         templateUrl: '/assets/features/dashboard/main.html',
-        controller: 'DashboardCtrl'
+        controller: 'DashboardCtrl',
+        resolve: {
+          rDashboardsModel: function ($stateParams, MyDashboardsModel) {
+            return (new MyDashboardsModel($stateParams.namespace)).$promise;
+          }
+
+        }
       })
 
         .state('dashboard.addwdgt', {
           // url: '/widget/add',
-          onEnter: function ($state, $modal) {
+          onEnter: function ($state, $modal, $rootScope, rDashboardsModel) {
+            var scope = $rootScope.$new();
+            scope.currentDashboard = rDashboardsModel.current();
             $modal({
-              template: '/assets/features/dashboard/partials/addwdgt.html'
+              template: '/assets/features/dashboard/partials/addwdgt.html',
+              scope: scope
             }).$promise.then(function () {
               $state.go('^', $state.params);
             });

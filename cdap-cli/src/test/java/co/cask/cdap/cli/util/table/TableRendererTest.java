@@ -78,4 +78,17 @@ public abstract class TableRendererTest {
       .build();
     getRenderer().render(System.out, table);
   }
+
+  @Test
+  public void testLongHeader() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333veryveryveryveryveryveryveryveryveryveryvery long header")
+      .setRows(Table.rows()
+                 .add(Strings.repeat("z", 27) + "a", "2", "3")
+                 .add("r2", "r2222", "z")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
+      .build();
+    getRenderer().render(System.out, table);
+  }
 }

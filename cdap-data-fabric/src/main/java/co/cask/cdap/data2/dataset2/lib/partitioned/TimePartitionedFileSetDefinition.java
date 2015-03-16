@@ -28,9 +28,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;
@@ -40,9 +38,6 @@ import java.util.Map;
  * partitioned dataset, so all admin is simply on the partition table.
  */
 public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefinition {
-
-  @Inject
-  private CConfiguration cConf;
 
   public TimePartitionedFileSetDefinition(String name,
                                           DatasetDefinition<? extends FileSet, ?> filesetDef,
@@ -75,7 +70,7 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
     Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
                                       classLoader);
 
-    return new TimePartitionedFileSetDataset(cConf, spec.getName(), fileset, table, spec, arguments,
+    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments,
                                              getExploreProvider());
   }
 

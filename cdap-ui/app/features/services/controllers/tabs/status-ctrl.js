@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.services')
       });
 
     dataSrc.request({
-      _cdapNsPath: path + '/runnables/' + $state.params.programId + '/instances'
+      _cdapNsPath: path + '/instances'
     })
       .then(function(res) {
         $scope.instances = res;

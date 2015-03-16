@@ -16,14 +16,14 @@ var request = require('request'),
 
 
 var PING_INTERVAL = 1000,
-    PING_MAX_RETRIES = 3,
+    PING_MAX_RETRIES = 1000,
     PING_PATH = '/v3/ping';
 
 
 function AuthAddress () {
   this.enabled = false;
   this.addresses = [];
-};
+}
 
 
 /**
@@ -46,33 +46,29 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
 
   function pingAttempt () {
     attempts++;
-    if (attempts > PING_MAX_RETRIES) {
-      console.error('Exceeded max attempts calling secure endpoint.');
-      deferred.reject();
-    } else {
-      console.log('Calling security endpoint: ', url, ' attempt ', attempts);
-      request({
-          method: 'GET',
-          url: url,
-          rejectUnauthorized: false,
-          requestCert: true,
-          agent: false
-        },
-        function (err, response, body) {
-          if (!err && response) {
-            if (response.statusCode === 401) {
-              self.enabled = true;
-              self.addresses = JSON.parse(body).auth_uri || [];
-            }
-            console.info('Security is '+(self.enabled ? 'enabled': 'disabled')+'.');
-            deferred.resolve(self);
+
+    console.log('Calling security endpoint: ', url, ' attempt ', attempts);
+    request({
+        method: 'GET',
+        url: url,
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false
+      },
+      function (err, response, body) {
+        if (!err && response) {
+          if (response.statusCode === 401) {
+            self.enabled = true;
+            self.addresses = JSON.parse(body).auth_uri || [];
           }
-          else {
-            setTimeout(pingAttempt, PING_INTERVAL);
-          }
+          console.info('Security is '+(self.enabled ? 'enabled': 'disabled')+'.');
+          deferred.resolve(self);
         }
-      );
-    }
+        else {
+          setTimeout(pingAttempt, attempts<PING_MAX_RETRIES ? PING_INTERVAL : PING_INTERVAL*60);
+        }
+      }
+    );
   };
 
   if(process.env.CDAP_INSECURE) {

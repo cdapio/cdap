@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
@@ -91,16 +90,16 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                                }
                                              });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), conf);
     dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-hbase"),
                           new HBaseMetricsTableModule());
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    testHBase.deleteTables(tableUtil.toHBaseNamespace(Constants.SYSTEM_NAMESPACE_ID));
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     testHBase.stopHBase();
   }
@@ -108,7 +107,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   @Override
   @Test
   public void testConcurrentIncrement() throws Exception {
-    String testConcurrentIncrement = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentIncrement");
+    String testConcurrentIncrement = "testConcurrentIncrement";
     final MetricsTable table = getTable(testConcurrentIncrement);
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);

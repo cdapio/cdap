@@ -16,8 +16,13 @@
 
 package co.cask.cdap.data2.increment.hbase94;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -58,12 +63,15 @@ public class IncrementSummingScannerTest {
   private static final byte[] TRUE = Bytes.toBytes(true);
   private static HBaseTestingUtility testUtil;
   private static Configuration conf;
+  private static CConfiguration cConf;
+
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     testUtil = new HBaseTestingUtility();
     testUtil.startMiniCluster();
     conf = testUtil.getConfiguration();
+    cConf = CConfiguration.create();
   }
 
   @AfterClass
@@ -73,10 +81,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanning() throws Exception {
-    String tableName = "TestIncrementSummingScanner";
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
 
@@ -212,10 +220,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testFlushAndCompact() throws Exception {
-    String tableName = "TestFlushAndCompact";
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
 
@@ -305,10 +313,10 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanningWithBatchAndUVB() throws Exception {
-    String tableName = "TestIncrementSummingScannerWithUpperVisibilityBound";
+    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScannerWithUpperVisibilityBound");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HRegion region = createRegion(tableName, familyBytes);
+    HRegion region = createRegion(tableId, familyBytes);
     try {
       region.initialize();
 
@@ -417,16 +425,20 @@ public class IncrementSummingScannerTest {
     assertFalse(hasMore);
   }
 
-  private HRegion createRegion(String tableName, byte[] family) throws Exception {
-    return createRegion(conf, tableName, new HColumnDescriptor(family));
+  private HRegion createRegion(TableId tableId, byte[] family) throws Exception {
+    return createRegion(conf, cConf, tableId, new HColumnDescriptor(family));
   }
 
-  static HRegion createRegion(Configuration hConf, String tableName, HColumnDescriptor cfd) throws Exception {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+  static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
+                              HColumnDescriptor cfd) throws Exception {
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
+
+    String tableName = htd.getNameAsString();
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     Path oldPath = new Path("/tmp/.oldLogs-" + tableName);
@@ -434,7 +446,7 @@ public class IncrementSummingScannerTest {
     assertTrue(fs.mkdirs(tablePath));
     HLog hlog = new HLog(fs, hlogPath, oldPath, hConf);
     return new HRegion(tablePath, hlog, fs, hConf,
-                       new HRegionInfo(Bytes.toBytes(tableName)), htd, new MockRegionServerServices());
+                       new HRegionInfo(htd.getName()), htd, new MockRegionServerServices());
   }
 
   /**

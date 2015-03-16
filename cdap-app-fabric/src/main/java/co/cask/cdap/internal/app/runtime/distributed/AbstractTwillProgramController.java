@@ -78,7 +78,13 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
       @Override
       public void terminated(Service.State from) {
         LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
-        stop();
+        if (getState() != State.STOPPING) {
+          // Service completed by itself. Simply signal the state change of this controller.
+          complete();
+        } else {
+          // Service was killed
+          stop();
+        }
       }
 
       @Override

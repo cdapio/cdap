@@ -33,7 +33,7 @@ Let's look at some of these components, and then run the Application and see the
 Introducing a Feature: Column-Level Conflict Detection
 ======================================================
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
@@ -114,7 +114,7 @@ Re-build the Application with Column-level Conflict Detection
 - Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
 
-    curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
+    curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
 
 - Now, rebuild the application, setting the ``tableProperties`` back to its original value, ``ConflictDetection.COLUMN``.
 - Re-deploy and re-run the application. You should not see any errors now in the log.    
@@ -140,7 +140,7 @@ Deleting an Existing Dataset
 If it has been created from an earlier run of the example, delete the ``profiles``
 Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call::
 
-  curl -w '\n' -v localhost:10000/v2/data/datasets/profiles -XDELETE
+  curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
 
 
 Starting the Service and the Flow

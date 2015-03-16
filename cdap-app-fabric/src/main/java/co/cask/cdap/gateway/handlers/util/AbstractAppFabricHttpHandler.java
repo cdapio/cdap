@@ -35,7 +35,9 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetRecord;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
@@ -49,6 +51,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -60,9 +63,10 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -139,12 +143,16 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     super(authenticator);
   }
 
-  protected int getInstances(HttpRequest request) throws IOException, NumberFormatException {
-    return parseBody(request, Instances.class).getInstances();
+  protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {
+    Instances instances = parseBody(request, Instances.class);
+    if (instances == null) {
+      throw new IllegalArgumentException("Could not read instances from request body");
+    }
+    return instances.getInstances();
   }
 
   @Nullable
-  protected <T> T parseBody(HttpRequest request, Class<T> type) throws IOException {
+  protected <T> T parseBody(HttpRequest request, Type type) throws IllegalArgumentException, JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       return null;
@@ -156,11 +164,11 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
       throw e;
     } finally {
-      reader.close();
+      Closeables.closeQuietly(reader);
     }
   }
 
-  protected Map<String, String> decodeArguments(HttpRequest request) throws IOException {
+  protected Map<String, String> decodeArguments(HttpRequest request) throws JsonSyntaxException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
       return ImmutableMap.of();
@@ -173,7 +181,46 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
     } finally {
-      reader.close();
+      Closeables.closeQuietly(reader);
+    }
+  }
+
+  protected final void getAppRecords(HttpResponder responder, Store store, String namespaceId, String appId) {
+    if (appId != null && appId.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
+      return;
+    }
+
+    try {
+      Id.Namespace accId = Id.Namespace.from(namespaceId);
+      List<ApplicationRecord> appRecords = Lists.newArrayList();
+      List<ApplicationSpecification> specList;
+      if (appId == null) {
+        specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
+      } else {
+        ApplicationSpecification appSpec = store.getApplication(new Id.Application(accId, appId));
+        if (appSpec == null) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          return;
+        }
+        specList = Collections.singletonList(store.getApplication(new Id.Application(accId, appId)));
+      }
+
+      for (ApplicationSpecification appSpec : specList) {
+        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getDescription()));
+      }
+
+      if (appId == null) {
+        responder.sendJson(HttpResponseStatus.OK, appRecords);
+      } else {
+        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
+      }
+    } catch (SecurityException e) {
+      LOG.debug("Security Exception while retrieving app details: ", e);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception : ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -237,6 +284,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
+  @Nullable
+  protected ProgramType getProgramType(String programType) {
+    try {
+      return ProgramType.valueOfCategoryName(programType);
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
   protected final List<ProgramRecord> listPrograms(Collection<ApplicationSpecification> appSpecs,
                                                    ProgramType type) throws Exception {
     List<ProgramRecord> programRecords = Lists.newArrayList();
@@ -279,7 +335,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   protected static ProgramRecord makeProgramRecord(String appId, ProgramSpecification spec, ProgramType type) {
-    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
+    return new ProgramRecord(type, appId, spec.getName(), spec.getDescription());
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
@@ -300,7 +356,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return null;
   }
 
-  protected void getLiveInfo(HttpRequest request, HttpResponder responder, String namespaceId,
+  protected void getLiveInfo(HttpResponder responder, String namespaceId,
                              final String appId, final String programId, ProgramType type,
                              ProgramRuntimeService runtimeService) {
     try {
@@ -319,7 +375,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
    */
   protected boolean respondIfElementNotFound(Throwable t, HttpResponder responder) {
     return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND, responder,
-                                "Could not find element.", null);
+                                "Could not find element.");
   }
 
   private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type, HttpResponseStatus status,
@@ -333,7 +389,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
   // TODO: refactor
-  protected final void dataList(HttpRequest request, HttpResponder responder, Store store, DatasetFramework dsFramework,
+  protected final void dataList(HttpResponder responder, Store store, DatasetFramework dsFramework,
                                 Data type, String namespaceId, String name, String appId) {
     try {
       if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
@@ -371,7 +427,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
                                Id.Namespace namespace, Data type, String name) {
     if (type == Data.DATASET) {
       DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
-      return dsSpec == null ? "" : GSON.toJson(makeDataSetRecord(name, dsSpec.getType()));
+      return dsSpec == null ? "" : GSON.toJson(new DatasetRecord(name, dsSpec.getType()));
     } else if (type == Data.STREAM) {
       StreamSpecification spec = store.getStream(namespace, name);
       return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
@@ -382,10 +438,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   private String listDataEntities(Store store, DatasetFramework dsFramework,
                                   Id.Namespace namespace, Data type) throws Exception {
     if (type == Data.DATASET) {
-      Collection<DatasetSpecification> instances = dsFramework.getInstances(namespace);
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(namespace);
       List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
-      for (DatasetSpecification instance : instances) {
-        result.add(makeDataSetRecord(instance.getName(), instance.getType()));
+      for (DatasetSpecificationSummary instance : instances) {
+        result.add(new DatasetRecord(instance.getName(), instance.getType()));
       }
       return GSON.toJson(result);
     } else if (type == Data.STREAM) {
@@ -415,7 +471,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
         if (dsSpec != null) {
           typeName = dsSpec.getType();
         }
-        result.add(makeDataSetRecord(dsName, typeName));
+        result.add(new DatasetRecord(dsName, typeName));
       }
       return GSON.toJson(result);
     }
@@ -481,7 +537,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return result;
   }
 
-  protected final void programListByDataAccess(HttpRequest request, HttpResponder responder,
+  protected final void programListByDataAccess(HttpResponder responder,
                                                Store store, DatasetFramework dsFramework,
                                                ProgramType type, Data data, String namespaceId, String name) {
     try {
@@ -577,11 +633,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   /* -----------------  helpers to return Json consistently -------------- */
 
-  protected static final DatasetRecord makeDataSetRecord(String name, String classname) {
-    return new DatasetRecord("Dataset", name, name, classname);
-  }
-
-  protected static final StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
-    return new StreamRecord("Stream", name, name, GSON.toJson(specification));
+  protected static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
+    return new StreamRecord(name, GSON.toJson(specification));
   }
 }

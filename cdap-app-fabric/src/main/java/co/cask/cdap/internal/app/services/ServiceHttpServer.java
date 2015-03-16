@@ -98,7 +98,6 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final BasicHttpServiceContextFactory contextFactory;
-  private final CConfiguration cConf;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
@@ -108,7 +107,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient, CConfiguration cConf) {
+                           DiscoveryServiceClient discoveryServiceClient) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -122,7 +121,6 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.cConf = cConf;
 
     this.contextFactory = createHttpServiceContextFactory();
     this.handlerReferences = Maps.newConcurrentMap();
@@ -164,7 +162,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, runtimeArgs,
-                                           metricsCollectionService, datasetFramework, cConf,
+                                           metricsCollectionService, datasetFramework,
                                            discoveryServiceClient, txClient);
       }
     };

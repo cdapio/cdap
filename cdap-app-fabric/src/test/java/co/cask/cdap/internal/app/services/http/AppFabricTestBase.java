@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -98,11 +99,15 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
-  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE1)
-    .setName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1)
+    .build();
   protected static final String TEST_NAMESPACE2 = "testnamespace2";
-  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setId(TEST_NAMESPACE2)
-    .setName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
+  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder()
+    .setName(TEST_NAMESPACE2)
+    .setDescription(TEST_NAMESPACE2)
+    .build();
 
 
   private static final String hostname = "127.0.0.1";
@@ -113,6 +118,7 @@ public abstract class AppFabricTestBase {
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsQueryService metricsService;
+  private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
@@ -153,6 +159,8 @@ public abstract class AppFabricTestBase {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(appFabricHttpDiscovered);
     port = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress().getPort();
     txClient = injector.getInstance(TransactionSystemClient.class);
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
@@ -172,6 +180,7 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    metricsCollectionService.stopAndWait();
   }
 
   protected static Injector getInjector() {
@@ -501,10 +510,11 @@ public abstract class AppFabricTestBase {
   }
 
   private static void deleteNamespaces() throws Exception {
-    HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
+    HttpResponse response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
                                                    TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
+    response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
+                                      TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

@@ -20,13 +20,11 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
@@ -39,26 +37,21 @@ public final class CheckpointManager {
   private final Transactional<DatasetContext<Table>, Table> mds;
   private final byte [] rowKeyPrefix;
 
-  public CheckpointManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient, String topic) {
+  @Inject
+  public CheckpointManager(final LogSaverTableUtil tableUtil,
+                           TransactionExecutorFactory txExecutorFactory, String topic) {
     this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));
-    this.mds = Transactional.of(
-      new TransactionExecutorFactory() {
-        @Override
-        public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
-          return new DefaultTransactionExecutor(txClient, txAwares);
+    this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
+      @Override
+      public DatasetContext<Table> get() {
+        try {
+          return DatasetContext.of(tableUtil.getMetaTable());
+        } catch (Exception e) {
+          // there's nothing much we can do here
+          throw Throwables.propagate(e);
         }
-      },
-      new Supplier<DatasetContext<Table>>() {
-        @Override
-        public DatasetContext<Table> get() {
-          try {
-            return DatasetContext.of(tableUtil.getMetaTable());
-          } catch (Exception e) {
-            // there's nothing much we can do here
-            throw Throwables.propagate(e);
-          }
-        }
-      });
+      }
+    });
   }
 
 

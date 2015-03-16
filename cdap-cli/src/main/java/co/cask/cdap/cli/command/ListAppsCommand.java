@@ -53,7 +53,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
       .setRows(appClient.list(), new RowMaker<ApplicationRecord>() {
         @Override
         public List<?> makeRow(ApplicationRecord object) {
-          return Lists.newArrayList(object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
     tableRenderer.render(output, table);

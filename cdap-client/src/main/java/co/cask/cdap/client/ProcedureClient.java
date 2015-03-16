@@ -51,9 +51,14 @@ public class ProcedureClient {
   private final ClientConfig config;
 
   @Inject
+  public ProcedureClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public ProcedureClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**

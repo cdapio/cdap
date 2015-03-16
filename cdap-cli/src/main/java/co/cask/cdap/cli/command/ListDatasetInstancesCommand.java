@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -48,13 +49,13 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetSpecification> datasetMetas = datasetClient.list();
+    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list();
 
     Table table = Table.builder()
       .setHeader("name", "type")
-      .setRows(datasetMetas, new RowMaker<DatasetSpecification>() {
+      .setRows(datasetMetas, new RowMaker<DatasetSpecificationSummary>() {
         @Override
-        public List<?> makeRow(DatasetSpecification object) {
+        public List<?> makeRow(DatasetSpecificationSummary object) {
           return Lists.newArrayList(object.getName(), object.getType());
         }
       }).build();

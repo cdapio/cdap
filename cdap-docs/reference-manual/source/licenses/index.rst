@@ -27,12 +27,6 @@ Cask Data, Inc.:
      - Common descriptive name for the goods or services
    * - Cask
      - Computer software and related services
-   * - CDAP
-     - Computer software and related services
-   * - Coopr
-     - Computer software and related services
-   * - Coopr Cloud
-     - Computer software and related services
    * - Tephra
      - Computer software and related services
    * - Tigon

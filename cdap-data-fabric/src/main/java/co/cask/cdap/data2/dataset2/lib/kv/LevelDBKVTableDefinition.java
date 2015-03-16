@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import com.google.common.base.Throwables;
@@ -40,6 +42,8 @@ import javax.annotation.Nullable;
 public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   @Inject
   private LevelDBTableService service;
+  @Inject
+  private CConfiguration cConf;
 
   public LevelDBKVTableDefinition(String name) {
     super(name);
@@ -55,21 +59,22 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new DatasetAdminImpl(spec.getName(), service);
+    return new DatasetAdminImpl(datasetContext, spec.getName(), service, cConf);
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new KVTableImpl(spec.getName(), service);
+    return new KVTableImpl(datasetContext, spec.getName(), service, cConf);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
     private final String tableName;
     protected final LevelDBTableService service;
 
-    private DatasetAdminImpl(String tableName, LevelDBTableService service) throws IOException {
-      this.tableName = tableName;
+    private DatasetAdminImpl(DatasetContext datasetContext, String tableName, LevelDBTableService service,
+                             CConfiguration cConf) throws IOException {
+      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName);
       this.service = service;
     }
 
@@ -117,8 +122,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     private final String tableName;
     private final LevelDBTableService service;
 
-    public KVTableImpl(String tableName, LevelDBTableService service) throws IOException {
-      this.tableName = tableName;
+    public KVTableImpl(DatasetContext datasetContext, String tableName, LevelDBTableService service,
+                       CConfiguration cConf) throws IOException {
+      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName);
       this.service = service;
     }
 

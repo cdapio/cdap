@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,7 +79,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));
 
@@ -121,7 +121,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new KafkaClientModule(),
       new AuthModule(),
       createDataFabricModule(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),

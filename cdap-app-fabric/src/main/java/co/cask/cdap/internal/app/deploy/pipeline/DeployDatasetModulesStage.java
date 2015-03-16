@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
@@ -37,10 +39,16 @@ import java.util.Map;
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {
   private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
   private final DatasetFramework datasetFramework;
+  // An instance of InMemoryDatasetFramework is used to check if a dataset is a system dataset
+  private final DatasetFramework systemDatasetFramework;
+  private final boolean allowDatasetUncheckedUpgrade;
 
-  public DeployDatasetModulesStage(DatasetFramework datasetFramework) {
+  public DeployDatasetModulesStage(CConfiguration configuration,
+                                   DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.datasetFramework = datasetFramework;
+    this.systemDatasetFramework = inMemoryDatasetFramework;
+    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   /**
@@ -69,11 +77,13 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
         if (DatasetModule.class.isAssignableFrom(clazz)) {
           datasetFramework.addModule(moduleId, (DatasetModule) clazz.newInstance());
         } else if (Dataset.class.isAssignableFrom(clazz)) {
-          // checking if type is in already
-          // note: this does not allow upgrade even for user modules. Re-visit when upgrade is possible
-          if (!datasetFramework.hasSystemType(clazz.getName()) &&
-            !datasetFramework.hasType(Id.DatasetType.from(moduleNamespace, clazz.getName()))) {
-            datasetFramework.addModule(moduleId, new SingleTypeModule((Class<Dataset>) clazz));
+          if (!systemDatasetFramework.hasSystemType(clazz.getName())) {
+            // checking if type is in already or force upgrade is allowed
+            Id.DatasetType typeId = Id.DatasetType.from(moduleNamespace, clazz.getName());
+            if (!datasetFramework.hasType(typeId) || allowDatasetUncheckedUpgrade) {
+              LOG.info("Adding module: {}", clazz.getName());
+              datasetFramework.addModule(moduleId, new SingleTypeModule((Class<Dataset>) clazz));
+            }
           }
         } else {
           String msg = String.format(

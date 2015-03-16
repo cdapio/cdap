@@ -16,8 +16,8 @@
 
 package co.cask.cdap.examples.webanalytics;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;

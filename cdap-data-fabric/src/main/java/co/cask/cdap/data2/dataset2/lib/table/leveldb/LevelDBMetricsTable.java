@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,12 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -51,8 +54,10 @@ public class LevelDBMetricsTable implements MetricsTable {
 
   private final LevelDBTableCore core;
 
-  public LevelDBMetricsTable(String tableName, LevelDBTableService service) throws IOException {
-    this.core = new LevelDBTableCore(tableName, service);
+  public LevelDBMetricsTable(DatasetContext datasetContext, String tableName,
+                             LevelDBTableService service, CConfiguration cConf) throws IOException {
+    this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
+                                     service);
   }
 
   @Override
