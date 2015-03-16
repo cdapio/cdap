@@ -72,6 +72,7 @@ angular
 
     // for debugging... or to trigger easter eggs?
     window.$go = $state.go;
+    window.$rootScope = $rootScope;
   })
 
 
@@ -101,11 +102,11 @@ angular
 
     $provide.decorator('$http', function($delegate, MyDataSource) {
 
-      var myDataSrc = new MyDataSource();
 
       function newHttp(config) {
         var promise;
         if (config.options) {
+          var myDataSrc = new MyDataSource();
           switch(config.options.type) {
             case 'POLL':
               promise = myDataSrc.poll(config);
@@ -136,6 +137,27 @@ angular
       'cdap',   // customized theme
       'default' // bootstrap default theme
     ]);
+  })
+
+  .config(function($httpProvider) {
+    $httpProvider.interceptors.push(function($rootScope) {
+      return {
+        'request': function(config) {
+          if ($rootScope.currentUser) {
+            angular.extend({
+              user: $rootScope.currentUser || null,
+              headers: {
+                authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
+              }
+            }, config);
+          }
+          return config;
+        },
+        'response': function(response) {
+          return response;
+        }
+      }
+    });
   })
 
   .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
