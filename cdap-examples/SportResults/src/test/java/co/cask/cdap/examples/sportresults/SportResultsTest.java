@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sportresults;
 
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
@@ -74,9 +75,9 @@ public class SportResultsTest extends TestBase {
     // validate the output by reading directly from the file set
     DataSetManager<PartitionedFileSet> dataSetManager = getDataset("totals");
     PartitionedFileSet totals = dataSetManager.get();
-    String path = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
-    Assert.assertNotNull(path);
-    Location location = totals.getEmbeddedFileSet().getLocation(path);
+    Partition partition = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
+    Assert.assertNotNull(partition);
+    Location location = partition.getLocation();
 
     // find the part file that has the actual results
     Assert.assertTrue(location.isDirectory());

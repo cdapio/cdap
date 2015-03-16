@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
@@ -1031,9 +1032,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // if this is a time partitioned file set, we need to add all partitions
     if (dataset instanceof TimePartitionedFileSet) {
       TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
-      Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
+      Set<Partition> partitions = tpfs.getPartitions(null);
       if (!partitions.isEmpty()) {
-        QueryHandle handle = exploreTableManager.addPartitions(datasetID, tpfs.getPartitions(null));
+        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitions);
         QueryStatus status = waitForCompletion(handle);
         // if add partitions failed, stop
         if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
