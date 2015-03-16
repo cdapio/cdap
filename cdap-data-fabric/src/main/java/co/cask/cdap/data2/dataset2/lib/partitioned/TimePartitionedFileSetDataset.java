@@ -146,7 +146,6 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return partitions;
   }
 
-  @Nullable
   @Override
   public TimePartitionOutput getPartitionOutput(long time) {
     PartitionKey key = partitionKeyForTime(time);
@@ -587,7 +586,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
     private BasicTimePartition(String relativePath, PartitionKey key) {
       super(relativePath, key);
-      time = null;
+      this.time = timeForPartitionKey(key);
     }
 
     private BasicTimePartition(String relativePath, long time) {
@@ -597,19 +596,22 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
     @Override
     public long getTime() {
-      return time != null ? time : timeForPartitionKey(getPartitionKey());
+      return time;
     }
   }
 
   private class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
 
+    private final Long time;
+
     private BasicTimePartitionOutput(String relativePath, PartitionKey key) {
       super(relativePath, key);
+      this.time = timeForPartitionKey(key);
     }
 
     @Override
     public long getTime() {
-      return timeForPartitionKey(getPartitionKey());
+      return time;
     }
   }
 

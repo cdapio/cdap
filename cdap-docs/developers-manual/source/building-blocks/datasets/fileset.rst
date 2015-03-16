@@ -137,7 +137,7 @@ While a FileSet is a convenient abstraction over actual file system interfaces, 
 the application to be aware of file system paths. For example, an application that maintains data
 over time might have a new file for every month. One could come up with a naming convention that encodes
 the month into each file name, and share that convention across all applications that use this file set.
-Yet that can become tedious to manage, especially if the naming convention should ever change—then all
+Yet that can become tedious to manage, especially if the naming convention should ever change |---| then all
 applications would have to be changed simultaneously for proper functioning.
 
 The PartitionedFileSet Dataset relieves applications from understanding file name conventions. Instead,

@@ -73,7 +73,6 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
    */
-  @Nullable
   public TimePartitionOutput getPartitionOutput(long time);
 
   /**
