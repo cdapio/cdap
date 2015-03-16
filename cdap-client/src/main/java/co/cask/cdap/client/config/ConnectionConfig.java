@@ -95,7 +95,8 @@ public class ConnectionConfig {
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled);
+      Objects.equal(this.sslEnabled, other.sslEnabled) &&
+      Objects.equal(this.namespace, other.namespace);
   }
 
   @Override
@@ -104,6 +105,7 @@ public class ConnectionConfig {
       .add("hostname", hostname)
       .add("port", port)
       .add("sslEnabled", sslEnabled)
+      .add("namespace", namespace)
       .toString();
   }
 

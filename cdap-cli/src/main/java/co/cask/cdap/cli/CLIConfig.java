@@ -95,9 +95,7 @@ public class CLIConfig {
 
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
     clientConfig.setConnectionConfig(connectionConfig);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(connectionConfig);
-    }
+    notifyConnectionChanged();
   }
 
   public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
@@ -243,6 +241,13 @@ public class CLIConfig {
     }
   }
 
+  public void setNamespace(Id.Namespace namespace) {
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(namespace)
+      .build();
+    this.setConnectionConfig(connectionConfig);
+  }
+
   public ClientConfig getClientConfig() {
     return clientConfig;
   }
@@ -255,10 +260,16 @@ public class CLIConfig {
     this.connectionChangeListeners.add(listener);
   }
 
+  private void notifyConnectionChanged() {
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig);
+    }
+  }
+
   /**
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(ConnectionConfig connectionConfig);
+    void onConnectionChanged(ClientConfig clientConfig);
   }
 }
