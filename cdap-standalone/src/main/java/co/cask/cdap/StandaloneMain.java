@@ -178,13 +178,12 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
 
-    String hostname = System.getenv("CDAP_HOSTNAME");
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       configuration.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Standalone CDAP started successfully.");
-    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, hostname, dashboardPort);
+    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
 
   /**

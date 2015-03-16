@@ -16,7 +16,6 @@
 # the License.
 #
 
-CDAP_HOSTNAME=`hostname`; export CDAP_HOSTNAME
 
 # We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
