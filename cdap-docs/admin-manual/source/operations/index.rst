@@ -6,9 +6,9 @@
 
 .. _operations-index:
 
-============================================
+==========
 Operations
-============================================
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -17,7 +17,9 @@ Operations
     Metrics <metrics>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
+    Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
+    Master Services Logback <logback>
     Troubleshooting <troubleshooting>
 
 .. |logging| replace:: **Logging:**
@@ -45,11 +47,21 @@ Operations
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
 
 
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+
+
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
+.. |logback| replace:: **Master Services Logging Configuration:**
+.. _logback: logback.html
+
+- |logback|_ This section describes the logging configuration used by CDAP Master Services.
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: troubleshooting.html
