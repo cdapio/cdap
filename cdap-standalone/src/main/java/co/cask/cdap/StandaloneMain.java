@@ -178,7 +178,7 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
 
-    String hostname = InetAddress.getLocalHost().getHostName();
+    String hostname = System.getenv("CDAP_HOSTNAME");
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
