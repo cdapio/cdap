@@ -40,14 +40,11 @@ import java.util.List;
 public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
 
   private final DatasetTypeClient datasetTypeClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig,
-                                    TableRenderer tableRenderer) {
+  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetTypeClient = datasetTypeClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -63,7 +60,7 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(output, table);
   }
 
   @Override

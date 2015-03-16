@@ -57,7 +57,7 @@ public class SportResultsTest extends TestBase {
   public void testPartitionedCounting() throws Exception {
 
     // deploy the application and start the upload service
-    ApplicationManager appManager = getTestManager().deployApplication(SportResults.class);
+    ApplicationManager appManager = deployApplication(SportResults.class);
     ServiceManager serviceManager = appManager.startService("UploadService");
     serviceManager.waitForStatus(true);
 
@@ -72,7 +72,7 @@ public class SportResultsTest extends TestBase {
     mrManager.waitForFinish(5, TimeUnit.MINUTES); // should be much faster, though
 
     // validate the output by reading directly from the file set
-    DataSetManager<PartitionedFileSet> dataSetManager = getTestManager().getDataset("totals");
+    DataSetManager<PartitionedFileSet> dataSetManager = getDataset("totals");
     PartitionedFileSet totals = dataSetManager.get();
     String path = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
     Assert.assertNotNull(path);
@@ -103,7 +103,7 @@ public class SportResultsTest extends TestBase {
 
     // verify using SQL
     // query with SQL
-    Connection connection = getTestManager().getQueryClient();
+    Connection connection = getQueryClient();
     ResultSet results = connection
       .prepareStatement("SELECT wins, ties, losses, scored, conceded " +
                           "FROM dataset_totals WHERE team = 'My Team' AND league = 'fantasy'")
