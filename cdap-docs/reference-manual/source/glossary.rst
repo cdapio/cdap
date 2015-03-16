@@ -1,14 +1,14 @@
 .. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
 
 .. _glossary:
 
-============================================
+========
 Glossary
-============================================
+========
 
 .. glossary::
    :sorted:
@@ -98,5 +98,6 @@ Glossary
    Apache Hadoop
       See :term:`Hadoop`.
 
-.. Apache |(TM)| Hadoop |(R)|
-.. Apache™ Hadoop®
+   Master Services
+      CDAP system services that are run in YARN containers like Transaction Service,
+      Dataset Executor, Log Saver, Metrics Processor, etc.
