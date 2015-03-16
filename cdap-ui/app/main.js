@@ -104,9 +104,11 @@ angular
 
 
       function newHttp(config) {
-        var promise;
+        var promise,
+            myDataSrc;
         if (config.options) {
-          var myDataSrc = new MyDataSource();
+          myDataSrc = MyDataSource(config.params.scope);
+          delete config.params.scope;
           switch(config.options.type) {
             case 'POLL':
               promise = myDataSrc.poll(config);

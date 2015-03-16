@@ -85,16 +85,30 @@ angular.module(PKG.name+'.services')
           self = this;
 
       if(instances[id]) {
-        throw new Error('multiple DataSource for scope', id);
+        // throw new Error('multiple DataSource for scope', id);
+        console.log("Matched for an instanceId", instances[id]);
+        return instances[id];
+
       }
+
+      if (!(this instanceof DataSource)) {
+        return new DataSource(scope);
+      }
+
       instances[id] = self;
 
       this.bindings = [];
 
-      $rootScope.$on(MYSOCKET_EVENT.message, function (event, data) {
+      scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+        var match = {
+          json: data.resource.json || true,
+          url: data.resource.url,
+          method: data.resource.method
+        };
+        // console.log("Bindings: ", self.bindings);
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
-            if(angular.equals(b.resource, data.resource)) {
+            if(angular.equals(b.resource, match)) {
               if(b.errorCallback) {
                 $rootScope.$applyAsync(b.errorCallback.bind(null, {data: data.response}));
               }
@@ -103,20 +117,26 @@ angular.module(PKG.name+'.services')
           return; // errors are handled at $rootScope level
         }
         angular.forEach(self.bindings, function (b) {
-          if(angular.equals(b.resource, data.resource)) {
+          if(angular.equals(b.resource, match)) {
+            console.log("Match: ", match, b.resource);
             if (angular.isFunction(b.callback)) {
               $rootScope.$applyAsync(b.callback.bind(null, data.response));
             }
 
             if (b && b.resolve) {
+              // console.log("Resolving for : ", match, data.response);
               b.resolve({data: data.response});
+              // $rootScope.$applyAsync(b.resolve.bind(null, {data: data.response}));
+              return;
             }
           }
         });
       });
 
       scope.$on('$destroy', function () {
+        // console.log("Deleting instances: ", instances[id].bindings);
         delete instances[id];
+        // console.log("Instances: ", instances);
       });
 
       scope.$on(caskWindowManager.event.blur, function () {
@@ -165,9 +185,8 @@ angular.module(PKG.name+'.services')
           reject: reject
         };
 
-
         self.bindings.push(a);
-
+        console.log("POLL: Pushing to bindings: ", self.bindings);
         self.scope.$on('$destroy', function () {
           _pollStop(resource);
         });
@@ -192,6 +211,8 @@ angular.module(PKG.name+'.services')
       var once = false,
           self = this;
       var prom = new MyPromise(function(resolve, reject) {
+
+          // console.log("Pushing to bindings: ", resource);
           self.bindings.push({
             resource: resource,
             callback: cb,
@@ -199,6 +220,7 @@ angular.module(PKG.name+'.services')
             reject: reject
           });
 
+          console.log("REQUEST: Pushing to bindings: ", self.bindings);
           // $timeout(function() {
             mySocket.send({
               action: 'request',
