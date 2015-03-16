@@ -70,10 +70,3 @@ CDAP Developers’ Manual
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
   developers who want a deeper dive into CDAP, with presentations on 
   **Best Practices for CDAP development** and **Adapters**.
-  
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:

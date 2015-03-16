@@ -33,6 +33,7 @@ import java.util.Map;
  * Tests for {@link PreferencesHttpHandler}
  */
 public class PreferencesHttpHandlerTest extends AppFabricTestBase {
+
   @Test
   public void testInstance() throws Exception {
     Map<String, String> propMap = Maps.newHashMap();
@@ -169,12 +170,12 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void setProperty(String uri, Map<String, String> props, int expectedStatus) throws Exception {
-    HttpResponse response = doPut(String.format("/v3/configuration/preferences/%s", uri), GSON.toJson(props));
+    HttpResponse response = doPut(String.format("/v3/%s/preferences", uri), GSON.toJson(props));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 
   private Map<String, String> getProperty(String uri, boolean resolved, int expectedStatus) throws Exception {
-    String request = String.format("/v3/configuration/preferences/%s", uri);
+    String request = String.format("/v3/%s/preferences", uri);
     if (resolved) {
       request += "?resolved=true";
     }
@@ -188,7 +189,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void deleteProperty(String uri, int expectedStatus) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/configuration/preferences/%s", uri));
+    HttpResponse response = doDelete(String.format("/v3/%s/preferences", uri));
     Assert.assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
   }
 }

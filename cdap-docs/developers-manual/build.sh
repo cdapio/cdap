@@ -66,14 +66,6 @@ function pandoc_includes() {
   # Fix version(s)
   local release_version="1.1.0-SNAPSHOT" # Version to be written into file
   rewrite $java_client_working $java_client "{version}" $release_version
-  
-  version
-  cd $SCRIPT_PATH
-  local get_start="$SCRIPT_PATH/$SOURCE/getting-started"
-  rewrite $get_start/building-apps-version.txt         $INCLUDES_DIR/building-apps-versioned.rst   "<version>" $PROJECT_VERSION
-  rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
-  rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
-  rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
 }
 
 function test_includes () {

@@ -39,6 +39,10 @@ angular
       'cask-angular-confirmable',
       'cask-angular-promptable',
       'cask-angular-json-edit',
+
+      'mgcrea.ngStrap.datepicker',
+      'mgcrea.ngStrap.timepicker',
+
       'mgcrea.ngStrap.alert',
       'mgcrea.ngStrap.tooltip',
       'mgcrea.ngStrap.popover',
@@ -49,6 +53,7 @@ angular
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
       'mgcrea.ngStrap.modal',
+
       'ncy-angular-breadcrumb',
       'angularMoment'
 

@@ -16,11 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -34,6 +36,8 @@ public class LevelDBTableDefinition
 
   @Inject
   private LevelDBTableService service;
+  @Inject
+  private CConfiguration cConf;
 
   public LevelDBTableDefinition(String name) {
     super(name);
@@ -47,15 +51,16 @@ public class LevelDBTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                        Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     ConflictDetection conflictDetection =
-      ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    return new LevelDBTable(spec.getName(), conflictDetection, service);
+      ConflictDetection.valueOf(spec.getProperty(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name()));
+    return new LevelDBTable(datasetContext, spec.getName(), conflictDetection, service, cConf);
   }
 
   @Override
-  public LevelDBTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new LevelDBTableAdmin(spec, service);
+  public LevelDBTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                    ClassLoader classLoader) throws IOException {
+    return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 }

@@ -75,7 +75,7 @@ public class AdapterClientTest extends ClientTestBase {
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE);
+    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
     adapterClient = new AdapterClient(clientConfig);
     applicationClient = new ApplicationClient(clientConfig);
   }

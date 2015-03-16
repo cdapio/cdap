@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 
@@ -75,62 +76,62 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         if (programIdParts.length != 1) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getApplicationPreferences(cliConfig.getCurrentNamespace(),
-                                                                          programIdParts[0], resolved)));
+        printStream.print(joinMapEntries(client.getApplicationPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), resolved)));
         break;
 
       case FLOW:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       case PROCEDURE:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       case MAPREDUCE:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       case WORKFLOW:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       case SERVICE:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       case SPARK:
         if (programIdParts.length != 2) {
           throw new CommandInputError(this);
         }
-        printStream.print(joinMapEntries(client.getProgramPreferences(cliConfig.getCurrentNamespace(),
-                                                                      programIdParts[0], type.getPluralName(),
-                                                                      programIdParts[1], resolved)));
+        printStream.print(joinMapEntries(client.getProgramPreferences(
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
+          type.getPluralName(), programIdParts[1], resolved)));
         break;
 
       default:

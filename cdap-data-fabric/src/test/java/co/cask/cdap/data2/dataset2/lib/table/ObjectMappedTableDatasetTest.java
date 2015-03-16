@@ -117,4 +117,13 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
     createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "custom"),
                    ObjectMappedTableProperties.builder().setType(Custom.class).build());
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRowKeyConflict() throws Exception {
+    createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "record"),
+                   ObjectMappedTableProperties.builder()
+                     .setType(Record.class)
+                     .setRowKeyExploreName("intfield")
+                     .build());
+  }
 }

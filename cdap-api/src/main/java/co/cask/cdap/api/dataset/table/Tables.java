@@ -94,7 +94,7 @@ public final class Tables {
    */
   public static DatasetProperties tableProperties(ConflictDetection level, int ttl, DatasetProperties props) {
     return DatasetProperties.builder()
-      .add("conflict.level", level.name())
+      .add(Table.PROPERTY_CONFLICT_LEVEL, level.name())
       .add(Table.PROPERTY_TTL, ttl)
       .addAll(props.getProperties())
       .build();

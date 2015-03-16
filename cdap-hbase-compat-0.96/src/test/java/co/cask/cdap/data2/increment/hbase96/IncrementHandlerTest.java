@@ -19,13 +19,15 @@ package co.cask.cdap.data2.increment.hbase96;
 import co.cask.cdap.data2.increment.hbase.AbstractIncrementHandlerTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -108,28 +110,28 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   }
 
   @Override
-  public void createTable(String tableName) throws Exception {
-    TableName table = TableName.valueOf(tableName);
-    HTableDescriptor tableDesc = new HTableDescriptor(table);
+  public HTable createTable(TableId tableId) throws Exception {
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableDescriptor tableDesc = tableUtil.createHTableDescriptor(tableId);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     columnDesc.setValue(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false");
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitUntilTableAvailable(Bytes.toBytes(tableName), 5000);
+    testUtil.waitUntilTableAvailable(tableDesc.getName(), 5000);
+    return tableUtil.createHTable(conf, tableId);
   }
 
   @Override
-  public RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception {
-    TableName table = TableName.valueOf(tableName);
+  public RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception {
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     for (Map.Entry<String, String> prop : familyProperties.entrySet()) {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase96RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), table, columnDesc));
+        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   public static ColumnCell convertCell(Cell cell) {

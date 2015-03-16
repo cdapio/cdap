@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -29,6 +30,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -43,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
@@ -56,18 +61,23 @@ final class TimeScheduler implements Scheduler {
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
+  private final CConfiguration cConf;
+  private ListeningExecutorService taskExecutorService;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
+                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.storeFactory = storeFactory;
     this.programRuntimeService = programRuntimeService;
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
+    this.cConf = cConf;
   }
 
   void start() throws SchedulerException {
     try {
+      taskExecutorService = MoreExecutors.listeningDecorator(
+        Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
       scheduler.start();
@@ -80,6 +90,9 @@ final class TimeScheduler implements Scheduler {
     try {
       if (scheduler != null) {
         scheduler.shutdown();
+      }
+      if (taskExecutorService != null) {
+        taskExecutorService.shutdownNow();
       }
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
@@ -98,7 +111,7 @@ final class TimeScheduler implements Scheduler {
     checkInitialized();
     Preconditions.checkNotNull(schedules);
 
-    String jobKey = getJobKey(programId, programType).getName();
+    String jobKey = jobKeyFor(programId, programType).getName();
     JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
       .withIdentity(jobKey)
       .storeDurably(true)
@@ -113,7 +126,7 @@ final class TimeScheduler implements Scheduler {
       TimeSchedule timeSchedule = (TimeSchedule) schedule;
       String scheduleName = timeSchedule.getName();
       String cronEntry = timeSchedule.getCronEntry();
-      String triggerKey = getScheduleId(programId, programType, scheduleName);
+      String triggerKey = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
 
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
@@ -137,7 +150,7 @@ final class TimeScheduler implements Scheduler {
 
     List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
     try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
+      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
         ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
                                                         trigger.getNextFireTime().getTime());
         scheduledRuntimes.add(runtime);
@@ -155,7 +168,7 @@ final class TimeScheduler implements Scheduler {
 
     List<String> scheduleIds = Lists.newArrayList();
     try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(getJobKey(program, programType))) {
+      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
         scheduleIds.add(trigger.getKey().getName());
       }
     }   catch (org.quartz.SchedulerException e) {
@@ -170,7 +183,8 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
-      scheduler.pauseTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
+      scheduler.pauseTrigger(new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                                   scheduleName)));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -181,7 +195,8 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
-      scheduler.resumeTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
+      scheduler.resumeTrigger(new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                                    scheduleName)));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -200,7 +215,8 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
-      Trigger trigger = scheduler.getTrigger(new TriggerKey(getScheduleId(program, programType, scheduleName)));
+      Trigger trigger = scheduler.getTrigger(
+        new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
       if (trigger == null) {
         throw new ScheduleNotFoundException(scheduleName);
       }
@@ -221,7 +237,7 @@ final class TimeScheduler implements Scheduler {
     throws SchedulerException {
     checkInitialized();
     try {
-      scheduler.deleteJob(getJobKey(program, programType));
+      scheduler.deleteJob(jobKeyFor(program, programType));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -232,8 +248,8 @@ final class TimeScheduler implements Scheduler {
     throws SchedulerException {
     checkInitialized();
     try {
-      Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(getScheduleId(program, programType,
-                                                                                          scheduleName)));
+      Trigger.TriggerState state = scheduler.getTriggerState(
+        new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
       // Map trigger state to schedule state.
       // This method is only interested in returning if the scheduler is
       // Paused, Scheduled or NotFound.
@@ -254,14 +270,8 @@ final class TimeScheduler implements Scheduler {
     Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
   }
 
-  private String getScheduleId(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-    return String.format("%s:%s", getJobKey(program, programType).getName(), scheduleName);
-  }
-
-
-  private JobKey getJobKey(Id.Program program, SchedulableProgramType programType) {
-    return new JobKey(String.format("%s:%s:%s:%s", program.getNamespaceId(), program.getApplicationId(),
-                                    programType.name(), program.getId()));
+  private static JobKey jobKeyFor(Id.Program program, SchedulableProgramType programType) {
+    return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
   }
 
   //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
@@ -293,7 +303,8 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore);
+          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore,
+                                                          cConf, taskExecutorService);
         } else {
           try {
             return jobClass.newInstance();

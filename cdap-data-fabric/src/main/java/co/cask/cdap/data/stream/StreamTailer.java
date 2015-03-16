@@ -56,7 +56,7 @@ public class StreamTailer {
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new DataFabricModules().getDistributedModules(),
-                                             new DataSetsModules().getDistributedModule(),
+                                             new DataSetsModules().getDistributedModules(),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new StreamAdminModules().getDistributedModules(),
                                              new NotificationFeedClientModule());

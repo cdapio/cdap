@@ -72,7 +72,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {

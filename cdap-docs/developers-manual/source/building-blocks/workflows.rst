@@ -28,7 +28,8 @@ to the Workflow::
     addMapReduce(new AnotherMapReduce());
     addSpark(new MySpark());
     addWorkflow(new MyWorkflow());
-    scheduleWorkflow("FiveHourSchedule", "0 */5 * * *", "MyWorkflow");
+    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", "Schedule running every 5 hours", "0 */5 * * *"),
+                     "MyWorkflow");
     ...
   }
 

@@ -16,10 +16,13 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Defines types of programs supported by the system.
@@ -29,28 +32,70 @@ public enum ProgramType {
   // @SerializedName to maintain backwards-compatibility
 
   @SerializedName("Flow")
-  FLOW(1, "flows", "Flow", true),
+  FLOW(1, Parameters.builder()
+    .setCategoryName("flows")
+    .setPrettyName("Flow")
+    .setListable(true)
+    .build()),
 
   @SerializedName("Procedure")
-  PROCEDURE(2, "procedures", "Procedure", true),
+  PROCEDURE(2, Parameters.builder()
+    .setCategoryName("procedures")
+    .setPrettyName("Procedure")
+    .setListable(true)
+    .build()),
 
   @SerializedName("Mapreduce")
-  MAPREDUCE(3, "mapreduce", "Mapreduce", true),
+  MAPREDUCE(3, Parameters.builder()
+    .setCategoryName("mapreduce")
+    .setPrettyName("MapReduce")
+    .setListable(true)
+    .setSchedulableType(SchedulableProgramType.MAPREDUCE)
+    .build()),
 
   @SerializedName("Workflow")
-  WORKFLOW(4, "workflows", "Workflow", true),
+  WORKFLOW(4, Parameters.builder()
+    .setCategoryName("workflows")
+    .setPrettyName("Workflow")
+    .setListable(true)
+    .setSchedulableType(SchedulableProgramType.WORKFLOW)
+    .build()),
 
   @SerializedName("Webapp")
-  WEBAPP(5, "webapp", "Webapp", false),
+  WEBAPP(5, Parameters.builder()
+    .setCategoryName("webapp")
+    .setPrettyName("Webapp")
+    .setListable(false)
+    .build()),
 
   @SerializedName("Service")
-  SERVICE(6, "services", "Service", true),
+  SERVICE(6, Parameters.builder()
+    .setCategoryName("services")
+    .setPrettyName("Service")
+    .setListable(true)
+    .build()),
 
   @SerializedName("Spark")
-  SPARK(7, "spark", "Spark", true),
+  SPARK(7, Parameters.builder()
+    .setCategoryName("spark")
+    .setPrettyName("Spark")
+    .setListable(true)
+    .setSchedulableType(SchedulableProgramType.SPARK)
+    .build()),
 
   @SerializedName("Worker")
-  WORKER(8, "workers", "Worker", true);
+  WORKER(8, Parameters.builder()
+    .setCategoryName("workers")
+    .setPrettyName("Worker")
+    .setListable(true)
+    .build()),
+
+  CUSTOM_ACTION(9, Parameters.builder()
+    .setCategoryName("custom")
+    .setPrettyName("Custom")
+    .setListable(false)
+    .setSchedulableType(SchedulableProgramType.CUSTOM_ACTION)
+    .build());
 
   private static final Map<String, ProgramType> CATEGORY_MAP;
 
@@ -61,28 +106,42 @@ public enum ProgramType {
     }
   }
 
-  private final int programType;
-  private final String prettyName;
-  private final boolean listable;
-  private final String categoryName;
+  private final int index;
+  private final Parameters parameters;
 
-  private ProgramType(int type, String categoryName, String prettyName, boolean listable) {
-    this.programType = type;
-    this.categoryName = categoryName;
-    this.prettyName = prettyName;
-    this.listable = listable;
+  private ProgramType(int type, Parameters parameters) {
+    this.index = type;
+    this.parameters = parameters;
   }
 
   public boolean isListable() {
-    return listable;
+    return parameters.listable;
   }
 
   public String getCategoryName() {
-    return categoryName;
+    return parameters.getCategoryName();
   }
 
   public String getPrettyName() {
-    return prettyName;
+    return parameters.getPrettyName();
+  }
+
+  @Nullable
+  public SchedulableProgramType getSchedulableType() {
+    return parameters.getSchedulableType();
+  }
+
+  public int getIndex() {
+    return index;
+  }
+
+  public static ProgramType valueOfSchedulableType(SchedulableProgramType schedulableType) {
+    for (ProgramType type : ProgramType.values()) {
+      if (schedulableType.equals(type.getSchedulableType())) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("No ProgramType found for SchedulableProgramType " + schedulableType);
   }
 
   public static ProgramType valueOfPrettyName(String pretty) {
@@ -99,7 +158,83 @@ public enum ProgramType {
 
   @Override
   public String toString() {
-    return prettyName;
+    return parameters.getPrettyName();
+  }
+
+  /**
+   * Holds various properties of each ProgramType.
+   */
+  private static final class Parameters {
+    private final String prettyName;
+    private final boolean listable;
+    private final String categoryName;
+    private final SchedulableProgramType schedulableType;
+
+    public Parameters(String prettyName, Boolean listable, String categoryName,
+                      @Nullable SchedulableProgramType schedulableType) {
+      Preconditions.checkArgument(prettyName != null, "prettyName cannot be null");
+      Preconditions.checkArgument(listable != null, "listable cannot be null");
+      Preconditions.checkArgument(categoryName != null, "categoryName cannot be null");
+      this.prettyName = prettyName;
+      this.listable = listable;
+      this.categoryName = categoryName;
+      this.schedulableType = schedulableType;
+    }
+
+    @Nullable
+    public SchedulableProgramType getSchedulableType() {
+      return schedulableType;
+    }
+
+    public String getPrettyName() {
+      return prettyName;
+    }
+
+    public boolean isListable() {
+      return listable;
+    }
+
+    public String getCategoryName() {
+      return categoryName;
+    }
+
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    /**
+     * Builder for {@link ProgramType.Parameters}.
+     */
+    private static final class Builder {
+      private String prettyName;
+      private Boolean listable;
+      private String categoryName;
+      private SchedulableProgramType schedulableType;
+
+      public Builder setSchedulableType(SchedulableProgramType schedulableType) {
+        this.schedulableType = schedulableType;
+        return this;
+      }
+
+      public Builder setPrettyName(String prettyName) {
+        this.prettyName = prettyName;
+        return this;
+      }
+
+      public Builder setListable(boolean listable) {
+        this.listable = listable;
+        return this;
+      }
+
+      public Builder setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+        return this;
+      }
+
+      public Parameters build() {
+        return new Parameters(prettyName, listable, categoryName, schedulableType);
+      }
+    }
   }
 
 }

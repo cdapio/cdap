@@ -21,7 +21,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 
@@ -38,24 +37,24 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public boolean exists(QueueName queueName) throws Exception {
     // no special actions needed to create it
-    return queueService.exists(name);
+    return queueService.exists(queueName);
   }
 
   @Override
-  public void create(String name) throws Exception {
-    queueService.getQueue(QueueName.from(URI.create(name)));
+  public void create(QueueName queueName) throws Exception {
+    queueService.getQueue(queueName);
   }
 
   @Override
-  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
-    create(name);
+  public void create(QueueName queueName, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(queueName);
   }
 
   @Override
-  public void truncate(String name) throws Exception {
-    queueService.truncate(name);
+  public void truncate(QueueName queueName) throws Exception {
+    queueService.truncate(queueName);
   }
 
   @Override
@@ -63,14 +62,9 @@ public class InMemoryQueueAdmin implements QueueAdmin {
     queueService.truncateAllWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
   }
 
-  @Override
-  public void drop(String name) throws Exception {
-    queueService.drop(name);
-  }
-
-  @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // no-op
+  // Only used by InMemoryStreadmAdmin
+  void drop(QueueName queueName) throws Exception {
+    queueService.drop(queueName);
   }
 
   @Override

@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Version;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -35,7 +35,7 @@ import java.io.IOException;
 public class MetaClientTestRun extends ClientTestBase {
 
   @Test
-  public void testAll() throws IOException, UnAuthorizedAccessTokenException {
+  public void testAll() throws IOException, UnauthorizedException {
     MetaClient metaClient = new MetaClient(clientConfig);
     metaClient.ping();
 

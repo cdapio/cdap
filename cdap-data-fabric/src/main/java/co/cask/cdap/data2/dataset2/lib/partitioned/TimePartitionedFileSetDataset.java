@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
@@ -30,6 +31,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -79,11 +81,11 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   // this flag will tell whether the dataset was created before release 2.8
   private final boolean isLegacyDataset;
 
-  public TimePartitionedFileSetDataset(String name,
+  public TimePartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                        FileSet fileSet, Table partitionTable,
                                        DatasetSpecification spec, Map<String, String> arguments,
                                        Provider<ExploreFacade> exploreFacadeProvider) {
-    super(name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
+    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
 
     isLegacyDataset = arguments.containsKey(ARGUMENT_LEGACY_DATASET) ||
       PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null;

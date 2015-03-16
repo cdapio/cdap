@@ -33,10 +33,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
@@ -105,8 +103,7 @@ public class AdapterService extends AbstractIdleService {
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                         PreferencesStore preferencesStore) {
     this.configuration = configuration;
-    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(configuration));
+    this.datasetFramework = datasetFramework;
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -282,7 +279,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
                                 constructScheduleName(programId, adapterName));
     }
@@ -306,7 +304,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
                                constructScheduleName(programId, adapterName));
     }
@@ -360,7 +359,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       addSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec);
     }
   }
@@ -374,7 +374,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), ProgramType.WORKFLOW,
+                                             entry.getValue().getName());
       deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
                      constructScheduleName(programId, adapterSpec.getName()));
     }

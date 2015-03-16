@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardAddWdgtCtrl',
-function ($scope, caskFocusManager, myDashboardsModel, Widget) {
+function ($scope, caskFocusManager, Widget) {
 
   caskFocusManager.focus('addWdgtType');
 
@@ -18,8 +18,15 @@ function ($scope, caskFocusManager, myDashboardsModel, Widget) {
     { name: 'Debug',                 type: 'json' }
   ];
 
+  $scope.$watch('model.metric.name', function (newVal) {
+    if(newVal) {
+      $scope.model.title = newVal;
+    }
+
+  });
+
   $scope.doAddWidget = function () {
-    myDashboardsModel.current().addWidget($scope.model);
+    $scope.currentDashboard.addWidget($scope.model);
     $scope.$hide();
   };
 

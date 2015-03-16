@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,6 +53,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class StreamConsumerTestBase {
 
+  protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerTestNamespace");
+  protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
   private static final Comparator<StreamEvent> STREAM_EVENT_COMPARATOR = new Comparator<StreamEvent>() {
     @Override
     public int compare(StreamEvent o1, StreamEvent o2) {
@@ -74,15 +76,13 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
-  private static final String TEST_NAMESPACE = "streamConsumerTestNamespace";
-
   @Test
   public void testNamespacedStreamConsumers() throws Exception {
     // Test two consumers for two streams with the same name, but in different namespaces. Their consumption should be
     // independent of the other.
     String stream = "testNamespacedStreamConsumers";
     Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
-    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", stream);
+    Id.Stream otherStreamId = Id.Stream.from(OTHER_NAMESPACE, stream);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);

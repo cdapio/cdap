@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,13 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
@@ -40,8 +42,9 @@ import java.io.IOException;
  */
 public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
   public static final String PROPERTY_SPLITS = "hbase.splits";
-  static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
+
   private static final Gson GSON = new Gson();
+  private static final byte[] DEFAULT_DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final DatasetSpecification spec;
   // todo: datasets should not depend on cdap configuration!
@@ -49,12 +52,13 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   private final LocationFactory locationFactory;
 
-  public HBaseTableAdmin(DatasetSpecification spec,
+  public HBaseTableAdmin(DatasetContext datasetContext,
+                         DatasetSpecification spec,
                          Configuration hConf,
                          HBaseTableUtil tableUtil,
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
-    super(spec.getName(), hConf, tableUtil);
+    super(TableId.from(datasetContext.getNamespaceId(), spec.getName()), hConf, tableUtil);
     this.spec = spec;
     this.conf = conf;
     this.locationFactory = locationFactory;
@@ -62,9 +66,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   public void create() throws IOException {
-    final byte[] name = Bytes.toBytes(HBaseTableUtil.getHBaseTableName(tableName));
-
-    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor(getColumnFamily(spec));
 
     if (supportsReadlessIncrements(spec)) {
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
@@ -85,7 +87,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       }
     }
 
-    final HTableDescriptor tableDescriptor = new HTableDescriptor(name);
+    final HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
     setVersion(tableDescriptor);
     tableDescriptor.addFamily(columnDescriptor);
 
@@ -117,12 +119,12 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(getAdmin(), name, tableDescriptor, splits);
+    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor, splits);
   }
 
   @Override
   protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
+    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(getColumnFamily(spec));
 
     boolean needUpgrade = false;
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
@@ -220,6 +222,15 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
    */
   public static boolean isTransactional(DatasetSpecification spec) {
     return !"true".equalsIgnoreCase(spec.getProperty(Constants.Dataset.TABLE_TX_DISABLED));
+  }
+
+  /**
+   * Returns the column family as being set in the given specification.
+   * If it is not set, the {@link #DEFAULT_DATA_COLUMN_FAMILY} will be returned.
+   */
+  public static byte[] getColumnFamily(DatasetSpecification spec) {
+    String columnFamily = spec.getProperty(Table.PROPERTY_COLUMN_FAMILY);
+    return columnFamily == null ? DEFAULT_DATA_COLUMN_FAMILY : Bytes.toBytes(columnFamily);
   }
 
   /**

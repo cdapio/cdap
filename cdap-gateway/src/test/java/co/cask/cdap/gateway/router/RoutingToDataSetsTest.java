@@ -53,7 +53,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * TODO: Eventually this can be removed, since we do not have any proxy rules anymore for datasets.
  */
 public class RoutingToDataSetsTest {
   private static NettyRouter nettyRouter;
@@ -111,11 +111,11 @@ public class RoutingToDataSetsTest {
   @Test
   public void testInstanceHandlerRequests() throws Exception {
     Assert.assertEquals("list", doRequest("/namespaces/myspace/data/datasets", "GET"));
-    Assert.assertEquals("post:cdap.myspace.myInstance",
+    Assert.assertEquals("post:myInstance",
                         doRequest("/namespaces/myspace/data/datasets/myInstance", "POST"));
-    Assert.assertEquals("delete:cdap.myspace.myInstance",
+    Assert.assertEquals("delete:myInstance",
                         doRequest("/namespaces/myspace/data/datasets/myInstance", "DELETE"));
-    Assert.assertEquals("get:cdap.myspace.myInstance",
+    Assert.assertEquals("get:myInstance",
                         doRequest("/namespaces/myspace/data/datasets/myInstance", "GET"));
   }
 

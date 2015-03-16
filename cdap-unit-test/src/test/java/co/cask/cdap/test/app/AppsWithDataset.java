@@ -26,6 +26,7 @@ import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -195,10 +196,10 @@ public class AppsWithDataset {
     }
 
     @Override
-    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetSpecification spec,
+    public KeyValueTableDefinition.KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                                             Map<String, String> arguments,
                                                             ClassLoader classLoader) throws IOException {
-      return new KeyValueTable(spec, getDataset("data", Table.class, spec, arguments, classLoader));
+      return new KeyValueTable(spec, getDataset(datasetContext, "data", Table.class, spec, arguments, classLoader));
     }
 
     /**

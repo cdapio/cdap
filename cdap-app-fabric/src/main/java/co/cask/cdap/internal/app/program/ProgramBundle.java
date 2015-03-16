@@ -80,11 +80,11 @@ public final class ProgramBundle {
 
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, className);
-    manifest.getMainAttributes().put(ManifestFields.PROCESSOR_TYPE, type.toString());
     manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, ManifestFields.MANIFEST_SPEC_FILE);
     manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getNamespaceId());
     manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
     manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
+    manifest.getMainAttributes().put(ManifestFields.PROGRAM_TYPE, type.name());
 
     bundler.clone(output, manifest, ImmutableMap.of(APPLICATION_META_ENTRY, getInputSupplier(appSpec)), META_IGNORE);
     return output;

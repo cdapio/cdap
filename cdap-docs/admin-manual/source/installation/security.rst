@@ -394,7 +394,7 @@ Testing Security
 As described in the :ref:`CDAP Reference Manual <http-restful-api-conventions>`, the
 **base URL** (represented by ``<base-url>``) that clients can use for the HTTP RESTful API is::
 
-  http://<host>:<port>/v2
+  http://<host>:<port>/v3/namespaces/default/
 
 Note that if :ref:`SSL is enabled for CDAP Servers<running_servers_with_ssl>`, then the
 base URL will use ``https``.
@@ -410,7 +410,7 @@ security components are working as expected:
 	
  such as::
 	
-    curl -vw '\n' http://localhost:10000/v2/apps
+    curl -vw'\n' http://localhost:10000/v3/namespaces/default/apps
 
  This should return a ``401 Unauthorized`` response with a list of authentication URIs in
  the response body. For example::
@@ -419,12 +419,12 @@ security components are working as expected:
 
 - Submit a username and password to one of the URLs to obtain an ``AccessToken``::
 
-    curl -vw '\n' -u username:password <auth-url>
+    curl -vw'\n' -u username:password <auth-url>
 	
  such as (assuming an authentication server at the above URI and that you have defined a 
  username:password pair such as *cdap:realtime*)::
 	
-    curl -vw '\n' -u cdap:realtime http://localhost:10009/token
+    curl -vw'\n' -u cdap:realtime http://localhost:10009/token
 
  This should return a ``200 OK`` response with the ``AccessToken`` string in the response
  body (formatted to fit)::
@@ -434,13 +434,13 @@ security components are working as expected:
 
 - Reattempt the first command, but this time include the ``AccessToken`` as a header in the request::
 
-    curl -vw '\n' -H "Authorization: Bearer <AccessToken>" <base-url>/apps
+    curl -vw'\n' -H "Authorization: Bearer <AccessToken>" <base-url>/apps
 	  
  such as (formatted to fit)::
 	
-    curl -vw '\n' -H "Authorization: Bearer 
+    curl -vw'\n' -H "Authorization: Bearer 
       AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS" 
-      http://localhost:10000/v2/apps
+      http://localhost:10000/v3/namespaces/default/apps
 
  This should return a ``200 OK`` response.
 

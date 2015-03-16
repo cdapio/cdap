@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,12 +31,19 @@ public abstract class SystemLoggingContext extends AbstractLoggingContext {
   }
 
   @Override
+  public String getNamespacedLogBaseDir(String logBaseDir) {
+    // cannot just call #getLogPathFragment here, because if called on a subclass' object, that would return
+    // a wrong value
+    return String.format("%s/%s", getSystemTag(TAG_SYSTEM_ID), logBaseDir);
+  }
+
+  @Override
   public String getLogPartition() {
     return String.format("%s", getSystemTag(TAG_SYSTEM_ID));
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s", getSystemTag(TAG_SYSTEM_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/%s", getSystemTag(TAG_SYSTEM_ID), logBaseDir);
   }
 }

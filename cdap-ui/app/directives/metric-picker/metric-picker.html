@@ -12,7 +12,7 @@
   <input type="text" class="form-control"
     placeholder="Context"
     ng-model="metric.context"
-    ng-options="c for c in available.contexts"
+    ng-options="c.value as c.display for c in available.contexts"
     data-watch-options="1"
     data-min-length="0"
     data-container="body"

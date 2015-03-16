@@ -19,11 +19,10 @@ package co.cask.cdap.data2.increment.hbase94;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
 import co.cask.tephra.hbase94.Filters;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -50,7 +49,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -69,7 +67,6 @@ import java.util.TreeMap;
  * all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
-  private static final Log LOG = LogFactory.getLog(IncrementHandler.class);
 
   private HRegion region;
   private IncrementHandlerState state;
@@ -80,7 +77,8 @@ public class IncrementHandler extends BaseRegionObserver {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
       this.state = new IncrementHandlerState(env.getConfiguration(),
-          env.getRegion().getTableDesc().getNameAsString());
+                                             env.getRegion().getTableDesc(),
+                                             new HTable94NameConverter());
 
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {

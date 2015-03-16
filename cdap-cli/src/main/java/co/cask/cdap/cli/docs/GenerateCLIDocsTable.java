@@ -17,8 +17,16 @@
 package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.CLIMain;
+import co.cask.cdap.cli.LaunchOptions;
+import co.cask.cdap.cli.commandset.DefaultCommands;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.TableRenderer;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.cli.Command;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -32,13 +40,24 @@ public class GenerateCLIDocsTable {
   private final Command printDocsCommand;
 
   public GenerateCLIDocsTable(final CLIConfig cliConfig) throws URISyntaxException, IOException {
-    this.printDocsCommand = new GenerateCLIDocsTableCommand(new CLIMain(cliConfig).getCommandsSupplier());
+    Injector injector = Guice.createInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CConfiguration.class).toInstance(CConfiguration.create());
+        bind(LaunchOptions.class).toInstance(LaunchOptions.DEFAULT);
+        bind(PrintStream.class).toInstance(System.out);
+        bind(CLIConfig.class).toInstance(cliConfig);
+        bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+        bind(TableRenderer.class).toInstance(new CsvTableRenderer());
+      }
+    });
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(injector.getInstance(DefaultCommands.class));
   }
 
   public static void main(String[] args) throws Exception {
     PrintStream output = System.out;
 
-    CLIConfig config = new CLIConfig(null);
+    CLIConfig config = new CLIConfig();
     GenerateCLIDocsTable generateCLIDocsTable = new GenerateCLIDocsTable(config);
     generateCLIDocsTable.printDocsCommand.execute(null, output);
   }

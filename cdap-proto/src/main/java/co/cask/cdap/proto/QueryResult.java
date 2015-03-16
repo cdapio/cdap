@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.Iterator;

@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -48,16 +49,17 @@ public class IntegerStoreDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("table"), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("table"), classLoader);
   }
 
   @Override
-  public ObjectStoreDataset<Integer> getDataset(DatasetSpecification spec,
+  public ObjectStoreDataset<Integer> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                                 Map<String, String> arguments,
                                                 ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("table");
-    KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
+    KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 
     try {
       return new IntegerStore(spec.getName(), table);

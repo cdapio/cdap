@@ -102,30 +102,31 @@ public class DefaultStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplication(ToyApp.class);
-    Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp", "ToyFlow"),
+    Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
+                                                        ProgramType.FLOW, "ToyFlow"),
                                         ProgramType.FLOW);
     Assert.assertNotNull(program);
   }
 
   @Test(expected = RuntimeException.class)
   public void testStopBeforeStart() throws RuntimeException {
-    Id.Program programId = Id.Program.from("account1", "invalidApp", "InvalidFlowOperation");
+    Id.Program programId = Id.Program.from("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
-    store.setStop(programId, "runx", now, ProgramController.State.ERROR);
+    store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
   }
 
   @Test
   public void testConcurrentStopStart() throws Exception {
     // Two programs that start/stop at same time
     // Should have two run history.
-    Id.Program programId = Id.Program.from("account1", "concurrentApp", "concurrentFlow");
+    Id.Program programId = Id.Program.from("account1", "concurrentApp", ProgramType.FLOW, "concurrentFlow");
     long now = System.currentTimeMillis();
 
     store.setStart(programId, "run1", now - 1000);
     store.setStart(programId, "run2", now - 1000);
 
-    store.setStop(programId, "run1", now, ProgramController.State.STOPPED);
-    store.setStop(programId, "run2", now, ProgramController.State.STOPPED);
+    store.setStop(programId, "run1", now, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, "run2", now, ProgramController.State.COMPLETED.getRunStatus());
 
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -135,26 +136,26 @@ public class DefaultStoreTest {
   @Test
   public void testLogProgramRunHistory() throws Exception {
     // record finished flow
-    Id.Program programId = Id.Program.from("account1", "application1", "flow1");
+    Id.Program programId = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow1");
     long now = System.currentTimeMillis();
 
     store.setStart(programId, "run1", now - 2000);
-    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR);
+    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR.getRunStatus());
 
     // record another finished flow
     store.setStart(programId, "run2", now - 1000);
-    store.setStop(programId, "run2", now - 500, ProgramController.State.STOPPED);
+    store.setStop(programId, "run2", now - 500, ProgramController.State.COMPLETED.getRunStatus());
 
     // record not finished flow
     store.setStart(programId, "run3", now);
 
     // record run of different program
-    Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
+    Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
     store.setStart(programId2, "run4", now - 500);
-    store.setStop(programId2, "run4", now - 400, ProgramController.State.STOPPED);
+    store.setStop(programId2, "run4", now - 400, ProgramController.State.COMPLETED.getRunStatus());
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
+    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"), "run3", now - 300);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> successHistory = store.getRuns(programId, ProgramRunStatus.COMPLETED,
@@ -171,7 +172,7 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.STOPPED.getRunStatus(), run.getStatus());
+    Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
@@ -372,7 +373,7 @@ public class DefaultStoreTest {
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
 
     // Test setting of service instances
-    Id.Program programId = Id.Program.from(appId, "NoOpService");
+    Id.Program programId = Id.Program.from(appId, ProgramType.SERVICE, "NoOpService");
     int count = store.getServiceInstances(programId);
     Assert.assertEquals(1, count);
 
@@ -397,7 +398,7 @@ public class DefaultStoreTest {
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
-    Id.Program programId = new Id.Program(appId, "WordCountFlow");
+    Id.Program programId = new Id.Program(appId, ProgramType.FLOW, "WordCountFlow");
     store.setFlowletInstances(programId, "StreamSource",
                                                       initialInstances + 5);
     // checking that app spec in store was adjusted
@@ -419,7 +420,7 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
-    Id.Program programId = new Id.Program(appId, "NoOpProcedure");
+    Id.Program programId = new Id.Program(appId, ProgramType.PROCEDURE, "NoOpProcedure");
 
     int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
     Assert.assertEquals(1, instancesFromSpec);
@@ -494,10 +495,10 @@ public class DefaultStoreTest {
 
     Assert.assertNotNull(store.getApplication(appId));
 
-    Id.Program flowProgramId = new Id.Program(appId, "NoOpFlow");
-    Id.Program mapreduceProgramId = new Id.Program(appId, "NoOpMR");
-    Id.Program procedureProgramId = new Id.Program(appId, "NoOpProcedure");
-    Id.Program workflowProgramId = new Id.Program(appId, "NoOpWorkflow");
+    Id.Program flowProgramId = new Id.Program(appId, ProgramType.FLOW, "NoOpFlow");
+    Id.Program mapreduceProgramId = new Id.Program(appId, ProgramType.MAPREDUCE, "NoOpMR");
+    Id.Program procedureProgramId = new Id.Program(appId, ProgramType.PROCEDURE, "NoOpProcedure");
+    Id.Program workflowProgramId = new Id.Program(appId, ProgramType.WORKFLOW, "NoOpWorkflow");
 
     store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
     store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
@@ -553,12 +554,12 @@ public class DefaultStoreTest {
     Id.Application appId2 = new Id.Application(namespaceId, spec.getName());
     store.addApplication(appId2, spec, new LocalLocationFactory().create("/wordCount"));
 
-    Id.Program flowProgramId1 = new Id.Program(appId1, "NoOpFlow");
-    Id.Program mapreduceProgramId1 = new Id.Program(appId1, "NoOpMR");
-    Id.Program procedureProgramId1 = new Id.Program(appId1, "NoOpProcedure");
-    Id.Program workflowProgramId1 = new Id.Program(appId1, "NoOpWorkflow");
+    Id.Program flowProgramId1 = new Id.Program(appId1, ProgramType.FLOW, "NoOpFlow");
+    Id.Program mapreduceProgramId1 = new Id.Program(appId1, ProgramType.MAPREDUCE, "NoOpMR");
+    Id.Program procedureProgramId1 = new Id.Program(appId1, ProgramType.PROCEDURE, "NoOpProcedure");
+    Id.Program workflowProgramId1 = new Id.Program(appId1, ProgramType.WORKFLOW, "NoOpWorkflow");
 
-    Id.Program flowProgramId2 = new Id.Program(appId2, "WordCountFlow");
+    Id.Program flowProgramId2 = new Id.Program(appId2, ProgramType.FLOW, "WordCountFlow");
 
     Assert.assertNotNull(store.getApplication(appId1));
     Assert.assertNotNull(store.getApplication(appId2));
@@ -566,19 +567,19 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     store.setStart(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.STOPPED);
+    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.STOPPED);
+    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
-    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.STOPPED);
+    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(workflowProgramId1, "wfRun1", now - 1000);
-    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.STOPPED);
+    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.STOPPED);
+    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus());
 
     verifyRunHistory(flowProgramId1, 1);
     verifyRunHistory(mapreduceProgramId1, 1);
@@ -680,7 +681,8 @@ public class DefaultStoreTest {
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
+                                                           AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");

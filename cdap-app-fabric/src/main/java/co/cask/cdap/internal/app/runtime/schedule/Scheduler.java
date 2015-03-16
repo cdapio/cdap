@@ -52,7 +52,9 @@ public interface Scheduler {
 
   /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
-   * the method returns the next scheduled runtimes for all the schedules.
+   * the method returns the next scheduled runtimes for all the schedules. This method only takes
+   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + be returned.
    *
    * @param program program to fetch the next runtime.
    * @param programType type of program.
@@ -75,7 +77,9 @@ public interface Scheduler {
     throws SchedulerException;
 
   /**
-   * Suspends a schedule. Sub-sequent schedules will not trigger for the job.
+   * Suspends a schedule. Sub-sequent schedules will not trigger for the job. If the schedule is already suspended,
+   * this method will not do anything.
+   *
    * @param program the program for which schedule needs to be suspended
    * @param programType the type of the program
    * @param scheduleName the name of the schedule
@@ -87,8 +91,10 @@ public interface Scheduler {
     throws NotFoundException, SchedulerException;
 
   /**
-   * Resume given schedule. The scheduled job will trigger from the next possible runtime.
-   * The schedules between pause and resume calls will not be re-run.
+   * Resume given schedule. If the schedule is already active, this method will not do anything.
+   * The time schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
+   * from the next possible runtime. For data schedules based on size, the execution will be triggered only once,
+   * even if the data requirement has been met multiple times.
    *
    * @param program the program for which schedule needs to be resumed
    * @param programType the type of the program

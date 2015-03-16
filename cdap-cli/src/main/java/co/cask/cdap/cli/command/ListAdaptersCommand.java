@@ -19,11 +19,14 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
@@ -38,26 +41,31 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
+  public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.adapterClient = adapterClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<AdapterSpecification> list = adapterClient.list();
 
-    new AsciiTable<AdapterSpecification>(
-      new String[]{"name", "type", "sources", "sinks", "properties"}, list,
-      new RowMaker<AdapterSpecification>() {
+    Table table = Table.builder()
+      .setHeader("name", "type", "sources", "sinks", "properties")
+      .setRows(list, new RowMaker<AdapterSpecification>() {
         @Override
-        public Object[] makeRow(AdapterSpecification object) {
-          return new Object[] { object.getName(), object.getType(), GSON.toJson(object.getSources()),
-            GSON.toJson(object.getSinks()), GSON.toJson(object.getProperties())};
+        public List<?> makeRow(AdapterSpecification object) {
+          return Lists.newArrayList(object.getName(), object.getType(),
+                                    GSON.toJson(object.getSources()),
+                                    GSON.toJson(object.getSinks()),
+                                    GSON.toJson(object.getProperties()));
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

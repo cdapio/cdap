@@ -174,8 +174,10 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         context.addTransactionAware((TransactionAware) dataset);
         txnInProgressDatasets.add(datasetCacheKey);
       }
+      @SuppressWarnings("unchecked")
+      T t = (T) dataset;
+      return t;
 
-      return (T) dataset;
     } catch (DatasetInstantiationException e) {
       throw e;
     } catch (Throwable t) {

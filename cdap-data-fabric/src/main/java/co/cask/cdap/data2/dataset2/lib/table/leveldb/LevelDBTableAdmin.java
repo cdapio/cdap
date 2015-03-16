@@ -17,7 +17,10 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 
 import java.io.IOException;
 
@@ -29,9 +32,10 @@ public class LevelDBTableAdmin implements DatasetAdmin {
   private final LevelDBTableService service;
   private final String name;
 
-  public LevelDBTableAdmin(DatasetSpecification spec, LevelDBTableService service) throws IOException {
+  public LevelDBTableAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                           LevelDBTableService service, CConfiguration cConf) throws IOException {
     this.service = service;
-    this.name = spec.getName();
+    this.name = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName());
   }
 
   @Override

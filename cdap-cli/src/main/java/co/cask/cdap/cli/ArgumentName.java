@@ -47,6 +47,7 @@ public enum ArgumentName {
   NEW_STREAM("new-stream-id"),
   PARAMETER_MAP("parameter-map"),
   TTL_IN_SECONDS("ttl-in-seconds"),
+  NOTIFICATION_THRESHOLD_MB("notification-threshold-mb"),
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),
@@ -67,8 +68,7 @@ public enum ArgumentName {
   SETTINGS("settings"),
   FREQUENCY("frequency"),
 
-  NAMESPACE_ID("namespace-id"),
-  NAMESPACE_DISPLAY_NAME("namespace-display-name"),
+  NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),

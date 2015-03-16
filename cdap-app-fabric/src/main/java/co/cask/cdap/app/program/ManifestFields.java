@@ -25,7 +25,7 @@ import java.util.jar.Attributes;
 public final class ManifestFields {
   public static final Attributes.Name MAIN_CLASS = Attributes.Name.MAIN_CLASS;
   public static final Attributes.Name MANIFEST_VERSION = Attributes.Name.MANIFEST_VERSION;
-  public static final Attributes.Name PROCESSOR_TYPE = new Attributes.Name("Processor-Type");
+  public static final Attributes.Name PROGRAM_TYPE = new Attributes.Name("Processor-Type");
   public static final Attributes.Name SPEC_FILE = new Attributes.Name("Spec-File");
 
   public static final Attributes.Name ACCOUNT_ID = new Attributes.Name("Account-Id");

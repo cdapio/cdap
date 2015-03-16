@@ -34,7 +34,7 @@ object can be reattempted. This ensures "exactly-once" processing of each object
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Cask Data Application Platform uses `Cask's Tephra, <http://tephra.io>`__ which uses
+The Cask Data Application Platform uses `Cask's Tephra™ <http://tephra.io>`__, which uses
 *Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational
 databases that use locks to prevent conflicting operations between transactions, under OCC
 we allow these conflicting writes to happen. When the transaction is committed, we can

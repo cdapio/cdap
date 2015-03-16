@@ -35,7 +35,8 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   public SimpleRuntimeInfo(ProgramController controller, Program program) {
     this(controller,
          program.getType(),
-         Id.Program.from(program.getNamespaceId(), program.getApplicationId(), program.getName()));
+         Id.Program.from(program.getNamespaceId(), program.getApplicationId(),
+                         program.getType(), program.getName()));
   }
 
   public SimpleRuntimeInfo(ProgramController controller, ProgramType type, Id.Program programId) {

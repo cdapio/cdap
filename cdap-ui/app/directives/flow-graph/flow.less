@@ -45,6 +45,7 @@ my-flow-graph {
   .flowlet-event-count {
     fill: white;
     font-size: 11px;
+    text-anchor: middle;
   }
 
   .stream-events {
@@ -57,6 +58,7 @@ my-flow-graph {
   .stream-event-count {
     fill: white;
     font-size: 11px;
+    text-anchor: middle;
   }
 
   .flowlet-instances {
@@ -68,7 +70,61 @@ my-flow-graph {
   .flowlet-instance-count {
     fill: white;
     cursor: default;
+    text-anchor: middle;
   }
+}
+
+my-workflow-graph {
+  .flow-chart-container {
+
+  }
+
+  text {
+    font-weight: 300;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    fill: white;
+  }
+
+  .node rect {
+    stroke: #999;
+    fill: #fff;
+    stroke-width: 1.5px;
+  }
+
+  .edgePath path {
+    stroke-dasharray: 8px, 8px;
+    stroke: #5A5D6E;
+    stroke-width: 2px;
+  }
+
+
+  .job-svg {
+    fill: #3C4355;
+    cursor: pointer;
+  }
+
+  .conditional-svg {
+    fill: #3C4355;
+    cursor: pointer;
+  }
+
+  .job-events {
+    fill: #FF6600;
+    stroke: #ebecf1;
+    stroke-width: 2px;
+    cursor: pointer;
+  }
+
+  .conditional-events {
+    fill: #0AAE33;
+    stroke: white;
+    stroke-width: 2px;
+    cursor: pointer;
+  }
+
 }
 
 .d3-tip {

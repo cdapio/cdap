@@ -16,6 +16,7 @@ How-To Guides
 
    cdap-flow-guide
    cdap-flume-guide
+   cdap-kafka-ingest-guide
    cdap-mapreduce-guide
    cdap-bi-guide
    cdap-timeseries-guide
@@ -38,6 +39,12 @@ instructions for building the “Hello World” of any development task with CDA
 .. _flume-guide: cdap-flume-guide.html
 
 - |flume-guide|_ Learn how to use **Flume to ingest data into CDAP** in real-time.
+
+
+.. |kafka-ingest-guide| replace:: **Consuming Data From Kafka:**
+.. _kafka-ingest-guide: cdap-kafka-ingest-guide.html
+
+- |kafka-ingest-guide|_ Learn how to **consume data from a Kafka topic** to process data **in realtime.**
 
 
 .. |mapreduce-guide| replace:: **Batch Data Processing With CDAP:**

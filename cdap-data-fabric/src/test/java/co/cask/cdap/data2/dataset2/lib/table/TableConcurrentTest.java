@@ -79,8 +79,7 @@ public abstract class TableConcurrentTest<T extends Table>
     //   Append is: read all columns, add <last_column+1>
     // todo: improve to use deletes. E.g. in append - remove all existing before appending new
     int n = 5;
-
-    getTableAdmin("myTable").create();
+    getTableAdmin(CONTEXT1, MY_TABLE).create();
     try {
       final Thread[] incrementingClients = new Thread[n];
       final Thread[] appendingClients = new Thread[n];
@@ -102,7 +101,7 @@ public abstract class TableConcurrentTest<T extends Table>
       }
 
       // verify result
-      final T table = getTable("myTable");
+      final T table = getTable(CONTEXT1, MY_TABLE);
       TransactionExecutor txExecutor =
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
       txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -137,7 +136,7 @@ public abstract class TableConcurrentTest<T extends Table>
       });
 
     } finally {
-      getTableAdmin("myTable").drop();
+      getTableAdmin(CONTEXT1, MY_TABLE).drop();
     }
   }
 
@@ -147,7 +146,7 @@ public abstract class TableConcurrentTest<T extends Table>
 
     public IncrementingClient(TransactionExecutorFactory txExecutorFactory) throws Exception {
       this.txExecutorFactory = txExecutorFactory;
-      this.table = getTable("myTable");
+      this.table = getTable(CONTEXT1, MY_TABLE);
     }
 
     @Override
@@ -184,7 +183,7 @@ public abstract class TableConcurrentTest<T extends Table>
 
     public AppendingClient(TransactionExecutorFactory txExecutorFactory) throws Exception {
       this.txExecutorFactory = txExecutorFactory;
-      this.table = getTable("myTable");
+      this.table = getTable(CONTEXT1, MY_TABLE);
     }
 
     @Override
@@ -256,7 +255,7 @@ public abstract class TableConcurrentTest<T extends Table>
     Assert.assertTrue("First thread failed. ", success1.get());
     Assert.assertTrue("Second thread failed. ", success2.get());
     // perform a read - if the table was not opened successfully this will fail
-    getTable("conccreate").get(new byte[] { 'a' }, new byte[][] { { 'b' } });
+    getTable(CONTEXT1, "conccreate").get(new byte[]{'a'}, new byte[][]{{'b'}});
   }
 
   class CreateThread extends Thread {
@@ -270,7 +269,7 @@ public abstract class TableConcurrentTest<T extends Table>
     public void run() {
       try {
         success.set(false);
-        getTableAdmin("conccreate").create();
+        getTableAdmin(CONTEXT1, "conccreate").create();
         success.set(true);
       } catch (Throwable throwable) {
         success.set(false);

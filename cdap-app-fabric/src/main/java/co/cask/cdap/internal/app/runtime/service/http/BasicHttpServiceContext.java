@@ -21,7 +21,6 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
@@ -58,18 +57,17 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param runtimeArgs runtimeArgs for the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
    * @param dsFramework dsFramework to use for getting datasets.
-   * @param conf CConfiguration of the system.
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
-                                 DatasetFramework dsFramework, CConfiguration conf,
-                                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+                                 DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
+                                 TransactionSystemClient txClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, discoveryServiceClient);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

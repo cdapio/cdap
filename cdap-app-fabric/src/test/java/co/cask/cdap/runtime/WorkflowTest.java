@@ -99,8 +99,8 @@ public class WorkflowTest {
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
       @Override
-      public void stopped() {
-        LOG.info("Stopped");
+      public void completed() {
+        LOG.info("Completed");
         completion.set("Completed");
       }
 
@@ -179,8 +179,8 @@ public class WorkflowTest {
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
       @Override
-      public void stopped() {
-        LOG.info("Stopped");
+      public void completed() {
+        LOG.info("Completed");
         completion.set("Completed");
       }
 

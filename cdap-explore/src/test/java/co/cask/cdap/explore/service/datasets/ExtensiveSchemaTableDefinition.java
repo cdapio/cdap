@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -61,14 +62,16 @@ public class ExtensiveSchemaTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return tableDef.getAdmin(spec.getSpecification("ext-schema-table"), classLoader);
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return tableDef.getAdmin(datasetContext, spec.getSpecification("ext-schema-table"), classLoader);
   }
 
   @Override
-  public ExtensiveSchemaTable getDataset(DatasetSpecification spec,
+  public ExtensiveSchemaTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    Table table = tableDef.getDataset(spec.getSpecification("ext-schema-table"), arguments, classLoader);
+    Table table = tableDef.getDataset(datasetContext, spec.getSpecification("ext-schema-table"), arguments,
+                                      classLoader);
     return new ExtensiveSchemaTable(spec.getName(), table);
   }
 

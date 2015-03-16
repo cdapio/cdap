@@ -183,7 +183,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId, null, null , null, 100);
+    httpHandler.programHistory(request, responder, appId, "workflows", wflowId, null, null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });

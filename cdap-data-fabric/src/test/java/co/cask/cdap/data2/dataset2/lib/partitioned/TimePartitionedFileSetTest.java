@@ -57,8 +57,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   static final long YEAR = TimeUnit.DAYS.toMillis(365);
   static final long MAX = Long.MAX_VALUE;
 
-  private static final Id.DatasetInstance TPFS_INSTANCE = Id.DatasetInstance.from(NAMESPACE_ID, "tpfs");
-
+  private static final Id.DatasetInstance TPFS_INSTANCE =
+    DS_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "tpfs"));
 
   @Before
   public void before() throws Exception {

@@ -18,25 +18,32 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.cli.app.AdapterApp;
-import co.cask.cdap.cli.app.FakeApp;
-import co.cask.cdap.cli.app.FakeDataset;
-import co.cask.cdap.cli.app.FakeFlow;
-import co.cask.cdap.cli.app.FakeProcedure;
-import co.cask.cdap.cli.app.FakeSpark;
-import co.cask.cdap.cli.app.PrefixedEchoHandler;
-import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.CsvTableRenderer;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.AdapterApp;
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeDataset;
+import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.FakeProcedure;
+import co.cask.cdap.client.app.FakeSpark;
+import co.cask.cdap.client.app.FakeWorkflow;
+import co.cask.cdap.client.app.PrefixedEchoHandler;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -52,10 +59,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,6 +80,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -86,13 +99,13 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final String PROTOCOL = "http";
-  private static final String HOSTNAME = "localhost";
-  private static final String PORT = "10000";
+  private static final URI CONNECTION = URI.create("http://localhost:10000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
+  private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
+  private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
@@ -106,16 +119,17 @@ public class CLIMainTest extends StandaloneTestBase {
       StandaloneTestBase.setUpClass();
     }
 
-    cliConfig = new CLIConfig(HOSTNAME);
-    cliConfig.getClientConfig().setAllTimeouts(60000);
-
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
+    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    clientConfig.setAllTimeouts(60000);
+    cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
+    cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
-    CLIMain cliMain = new CLIMain(cliConfig);
     cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -140,12 +154,15 @@ public class CLIMainTest extends StandaloneTestBase {
     // NO-OP
   }
 
+  @Before
+  public void setUp() {
+    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+  }
+
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect " + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME, "Successfully connected");
-    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
   }
 
   @Test
@@ -165,7 +182,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
 
@@ -183,6 +200,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
+    testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
+                              "Successfully set notification threshold of Stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
@@ -208,6 +227,18 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  public void testSchedule() throws Exception {
+    String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
+    String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
+    testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
+  }
+
+  @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
@@ -217,8 +248,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
-    namespaceClient.create(new NamespaceMeta.Builder().setId("bar").build());
-    cliConfig.setCurrentNamespace("bar");
+    Id.Namespace barspace = Id.Namespace.from("bar");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
+    cliConfig.getClientConfig().setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -240,8 +272,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
     try {
-      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-        + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      testCommandOutputContains(cli, "call procedure " +
+        qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME +
+        " 'customer bob'", "realbob");
     } finally {
       testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
       assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
@@ -410,15 +443,14 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   @Ignore
   public void testNamespaces() throws Exception {
-    final String id = PREFIX + "testNamespace";
-    final String name = "testDisplayName";
+    final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setId("default").setName("default").setDescription("default").build();
+      .setName("default").setDescription("default").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
@@ -430,30 +462,30 @@ public class CLIMainTest extends StandaloneTestBase {
                               String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s %s %s", id, name, description);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", id));
+    String command = String.format("create namespace %s %s", name, description);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setId(id).setName(name).setDescription(description).build();
+      .setName(name).setDescription(description).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 
     // get namespace details and verify
     expectedNamespaces = Lists.newArrayList(expected);
-    command = String.format("describe namespace %s", id);
+    command = String.format("describe namespace %s", name);
     testNamespacesOutput(cli, command, expectedNamespaces);
 
     // try creating a namespace with existing id
-    command = String.format("create namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", id));
+    command = String.format("create namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", name));
 
     // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", defaultFields));
 
     NamespaceMeta namespaceDefaultFields = new NamespaceMeta.Builder()
-      .setId(defaultFields).setName(defaultFields).setDescription("").build();
+      .setName(defaultFields).setDescription("").build();
     // test that there are 3 namespaces including default
     expectedNamespaces = Lists.newArrayList(defaultNs, namespaceDefaultFields, expected);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -462,8 +494,8 @@ public class CLIMainTest extends StandaloneTestBase {
     testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
 
     // delete namespace and verify
-    command = String.format("delete namespace %s", id);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", id));
+    command = String.format("delete namespace %s", name);
+    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
   @Test
@@ -550,7 +582,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     String status;
     int numTries = 0;
@@ -568,7 +600,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }
@@ -577,17 +609,17 @@ public class CLIMainTest extends StandaloneTestBase {
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
-    new AsciiTable<NamespaceMeta>(
-      new String[] {"id", "display_name", "description"},
-      expected,
-      new RowMaker<NamespaceMeta>() {
+    Table table = Table.builder()
+      .setHeader("name", "description")
+      .setRows(expected, new RowMaker<NamespaceMeta>() {
         @Override
-        public Object[] makeRow(NamespaceMeta object) {
-          return new Object[] {object.getId(), object.getName(), object.getDescription()};
+        public List<?> makeRow(NamespaceMeta object) {
+          return Lists.newArrayList(object.getName(), object.getDescription());
         }
-      }
-    ).print(printStream);
+      }).build();
+    cliMain.getTableRenderer().render(printStream, table);
     final String expectedOutput = outputStream.toString();
+
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override

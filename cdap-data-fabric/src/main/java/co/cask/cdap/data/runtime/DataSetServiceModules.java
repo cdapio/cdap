@@ -17,8 +17,8 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.DistributedUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
@@ -34,76 +34,38 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
-import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
-import com.google.common.collect.Maps;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
-import java.util.Map;
-
 /**
  * Bindings for DataSet Service.
  */
-public class DataSetServiceModules {
-  public static final Map<String, DatasetModule> INMEMORY_DATASET_MODULES;
+public class DataSetServiceModules extends RuntimeModule {
 
-  static {
-    INMEMORY_DATASET_MODULES = Maps.newLinkedHashMap();
-    // NOTE: order is important due to dependencies between modules
-    INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryTableModule());
-    INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
-    INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
-    INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
-    INMEMORY_DATASET_MODULES.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-    INMEMORY_DATASET_MODULES.put("partitionedFileSet", new PartitionedFileSetModule());
-    INMEMORY_DATASET_MODULES.put("objectMappedTable", new ObjectMappedTableModule());
-  }
-
-  public Module getInMemoryModule() {
+  @Override
+  public Module getInMemoryModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        // NOTE: order is important due to dependencies between modules
-        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-memory", new InMemoryTableModule());
-        defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
-        defaultModules.put("core", new CoreDatasetsModule());
-        defaultModules.put("fileSet", new FileSetModule());
-        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
-        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
-
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
-
+        install(new SystemDatasetRuntimeModule().getInMemoryModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
         expose(DatasetService.class);
@@ -129,29 +91,19 @@ public class DataSetServiceModules {
 
   }
 
-  public Module getLocalModule() {
+  @Override
+  public Module getStandaloneModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        // NOTE: order is important due to dependencies between modules
-        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-leveldb", new LevelDBTableModule());
-        defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
-        defaultModules.put("core", new CoreDatasetsModule());
-        defaultModules.put("fileSet", new FileSetModule());
-        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
-        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
-
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
-
+        install(new SystemDatasetRuntimeModule().getStandaloneModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
@@ -179,29 +131,19 @@ public class DataSetServiceModules {
 
   }
 
-  public Module getDistributedModule() {
+  @Override
+  public Module getDistributedModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        // NOTE: order is important due to dependencies between modules
-        Map<String, DatasetModule> defaultModules = Maps.newLinkedHashMap();
-        defaultModules.put("orderedTable-hbase", new HBaseTableModule());
-        defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
-        defaultModules.put("core", new CoreDatasetsModule());
-        defaultModules.put("fileSet", new FileSetModule());
-        defaultModules.put("timePartitionedFileSet", new TimePartitionedFileSetModule());
-        defaultModules.put("partitionedFileSet", new PartitionedFileSetModule());
-        defaultModules.put("objectMappedTable", new ObjectMappedTableModule());
-
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
-          .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
-
+        install(new SystemDatasetRuntimeModule().getDistributedModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
         // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)

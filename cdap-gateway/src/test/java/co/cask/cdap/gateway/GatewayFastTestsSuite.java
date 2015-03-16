@@ -22,6 +22,7 @@ import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.ProcedureHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
+import co.cask.cdap.gateway.run.StreamWriterTestRun;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -62,7 +63,8 @@ import javax.annotation.Nullable;
   PingHandlerTestRun.class,
   ProcedureHandlerTestRun.class,
   MetricsReporterHookTestRun.class,
-  RuntimeArgumentTestRun.class
+  RuntimeArgumentTestRun.class,
+  StreamWriterTestRun.class
 })
 
 public class GatewayFastTestsSuite {

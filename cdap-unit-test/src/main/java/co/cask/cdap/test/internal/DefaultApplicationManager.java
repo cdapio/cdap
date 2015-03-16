@@ -16,8 +16,8 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
@@ -33,6 +33,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProcedureClient;
 import co.cask.cdap.test.ProcedureManager;
+import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -84,7 +85,6 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
-                                   CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
                                    ServiceHttpHandler serviceHttpHandler,
@@ -104,7 +104,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.datasetInstantiator = new DatasetInstantiator(Id.Namespace.from(accountId), datasetFramework, configuration,
+      this.datasetInstantiator = new DatasetInstantiator(Id.Namespace.from(accountId), datasetFramework,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null);
@@ -270,12 +270,16 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
 
       @Override
+      public RuntimeMetrics getMetrics() {
+        return RuntimeStats.getProcedureMetrics(applicationId, procedureId.getRunnableId());
+      }
+
+      @Override
       public ProcedureClient getClient() {
         return procedureClientFactory.create(accountId, applicationId, procedureName);
       }
     };
   }
-
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {

@@ -23,20 +23,24 @@ The CDAP Standalone Virtual Machine is configured with the recommended settings 
 - 10 GB of disk space
 
 It has pre-installed all the software that you need to run and develop CDAP applications:
-
-.. include:: ../../../build/_includes/standalone-versioned.rst 
-   :start-line: 2
-   :end-line:   10
+   
+- Java JDK 7 and Node.js are both installed.
+- Maven is installed and configured to work for CDAP.
+- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-``\ |literal-release|
+  and will automatically start when the virtual machine starts.
+- Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
+- The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
+  ``http://localhost:9999``.
 
 No password is required to enter the virtual machine; however, should you need to install or
 remove software, the admin user and password are both ``cdap``.
 
-.. include:: ../../../build/_includes/dev-env-versioned.rst  
-   :start-line: 5
+.. include:: ../dev-env.rst  
+   :start-line: 7
 
-.. include:: ../../../build/_includes/start-stop-cdap-versioned.rst  
+.. include:: ../start-stop-cdap.rst  
    :start-line: 4
-   :end-line:   29
+   :end-line:   33
 
 .. include:: ../building-apps.rst
    :start-line: 7

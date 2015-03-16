@@ -56,8 +56,8 @@ public final class Id  {
     private final String id;
 
     public Namespace(String id) {
-      Preconditions.checkNotNull(id, "Namespace cannot be null.");
-      Preconditions.checkArgument(isId(id), "Namespace has an incorrect format.");
+      Preconditions.checkNotNull(id, "Namespace '" + id + "' cannot be null.");
+      Preconditions.checkArgument(isId(id), "Namespace '" + id + "' has an incorrect format.");
       this.id = id;
     }
 
@@ -79,7 +79,7 @@ public final class Id  {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(id);
+      return id.hashCode();
     }
 
     public static Namespace from(String namespace) {
@@ -152,13 +152,20 @@ public final class Id  {
    */
   public static class Program {
     private final Application application;
+    private final ProgramType type;
     private final String id;
 
-    public Program(Application application, final String id) {
+    public Program(Application application, ProgramType type, final String id) {
       Preconditions.checkNotNull(application, "Application cannot be null.");
+      Preconditions.checkNotNull(type, "Program type cannot be null.");
       Preconditions.checkNotNull(id, "Id cannot be null.");
       this.application = application;
+      this.type = type;
       this.id = id;
+    }
+
+    public ProgramType getType() {
+      return type;
     }
 
     public String getId() {
@@ -197,12 +204,12 @@ public final class Id  {
       return result;
     }
 
-    public static Program from(Application appId, String pgmId) {
-      return new Program(appId, pgmId);
+    public static Program from(Application appId, ProgramType type, String pgmId) {
+      return new Program(appId, type, pgmId);
     }
 
-    public static Program from(String namespaceId, String appId, String pgmId) {
-      return new Program(new Application(new Namespace(namespaceId), appId), pgmId);
+    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
     @Override
@@ -376,18 +383,17 @@ public final class Id  {
    * Id.Stream uniquely identifies a stream.
    */
   public static final class Stream {
-    private final String namespace;
+    private final Namespace namespace;
     private final String streamName;
     private transient int hashCode;
 
     private transient String id;
     private transient byte[] idBytes;
 
-    private Stream(final String namespace, final String streamName) {
+    private Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
       Preconditions.checkArgument(isId(streamName),
                                   "Stream name can only contains alphanumeric, '-' and '_' characters only.");
 
@@ -396,11 +402,11 @@ public final class Id  {
     }
 
     public Namespace getNamespace() {
-      return Id.Namespace.from(namespace);
+      return namespace;
     }
 
     public String getNamespaceId() {
-      return namespace;
+      return namespace.getId();
     }
 
     public String getName() {
@@ -408,11 +414,11 @@ public final class Id  {
     }
 
     public static Stream from(Namespace id, String streamName) {
-      return new Stream(id.getId(), streamName);
+      return new Stream(id, streamName);
     }
 
     public static Stream from(String namespaceId, String streamName) {
-      return new Stream(namespaceId, streamName);
+      return from(Id.Namespace.from(namespaceId), streamName);
     }
 
     public static Stream fromId(String id) {

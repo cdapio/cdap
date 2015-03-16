@@ -125,11 +125,6 @@ define([], function () {
       if (service && service.requested === input) {
         return; //no-op
       }
-      var isInvalid = C.Util.isInvalidNumInstances(inputStr, service.min, service.max);
-      if(isInvalid){
-        C.Modal.show('Error', isInvalid);
-        return;
-      }
 
       this.setInstances(service, input);
     },

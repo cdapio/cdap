@@ -27,11 +27,12 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -42,21 +43,29 @@ import java.util.List;
 
 public class SchedulerServiceTest {
   public static SchedulerService schedulerService;
+  public static NotificationFeedManager notificationFeedManager;
   public static Store store;
   public static LocationFactory locationFactory;
 
   private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
   private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, AppWithWorkflow.SampleWorkflow.NAME);
+  private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
+                                                           AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(account, "stream");
+  private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
+  private static final Schedule timeSchedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Schedule dataSchedule1 =
+    Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
+  private static final Schedule dataSchedule2 =
+    Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getName(), 10);
 
   @BeforeClass
-  public static void set() {
+  public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
+    notificationFeedManager = AppFabricTestHelper.getInjector().getInstance(NotificationFeedManager.class);
     store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
-    locationFactory = new LocalLocationFactory();
+    locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
   }
 
   @AfterClass
@@ -69,12 +78,13 @@ public class SchedulerServiceTest {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(schedule1));
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, schedule1);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
+    store.addApplication(appId, createNewSpecification(applicationSpecification, program, programType, timeSchedule1),
+                         locationFactory.create("app"));
 
     Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()), program.getId());
+      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()),
+                      program.getType(), program.getId());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
@@ -82,10 +92,10 @@ public class SchedulerServiceTest {
     List<String> scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(0, scheduleIdsOtherNamespace.size());
 
-    schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(schedule2));
-    applicationSpecification = createNewSpecification(applicationSpecification, programInOtherNamespace, programType,
-                                                      schedule2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(timeSchedule2));
+    store.addApplication(appId, createNewSpecification(applicationSpecification, programInOtherNamespace, programType,
+                                                       timeSchedule2),
+                         locationFactory.create("app"));
 
     scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(1, scheduleIdsOtherNamespace.size());
@@ -99,23 +109,36 @@ public class SchedulerServiceTest {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(schedule1));
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, schedule1);
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    schedulerService.schedule(program, programType, ImmutableList.of(schedule2));
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, schedule2);
+    schedulerService.schedule(program, programType, timeSchedule2);
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule2);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(2, scheduleIds.size());
+    checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
+    schedulerService.schedule(program, programType, ImmutableList.of(dataSchedule1, dataSchedule2));
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule1);
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule2);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    scheduleIds = schedulerService.getScheduleIds(program, programType);
+    Assert.assertEquals(4, scheduleIds.size());
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
     schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule1");
     schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule2");
+
+    checkState(Scheduler.ScheduleState.SUSPENDED, ImmutableList.of("Schedule1", "Schedule2"));
+    checkState(Scheduler.ScheduleState.SCHEDULED, ImmutableList.of("Schedule3", "Schedule4"));
+
+    schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule3");
+    schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule4");
 
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
 
@@ -130,10 +153,11 @@ public class SchedulerServiceTest {
   }
 
   private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) throws Exception {
-    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
-                                                                      "Schedule1"));
-    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
-                                                                      "Schedule1"));
+    for (String scheduleId : scheduleIds) {
+      int i = scheduleId.lastIndexOf(':');
+      Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
+                                                                        scheduleId.substring(i + 1)));
+    }
   }
 
   private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, Id.Program programId,

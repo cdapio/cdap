@@ -91,7 +91,7 @@ public class TransactionServiceTest {
         new DiscoveryRuntimeModule().getDistributedModules(),
         new TransactionMetricsModule(),
         new DataFabricModules().getDistributedModules(),
-        new DataSetsModules().getDistributedModule()
+        new DataSetsModules().getDistributedModules()
       );
 
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);

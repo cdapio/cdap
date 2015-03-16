@@ -37,8 +37,8 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 - |cli|_ methods for interacting with a CDAP instance from within a shell.
 
 
-.. |licenses| replace:: **Licenses and Dependencies:**
+.. |licenses| replace:: **Trademarks, Licenses, and Dependencies:**
 .. _licenses: licenses/index.html
 
-- |licenses|_ License information for the CDAP Product and Documentation and CDAP
-  Dependent Packages, Licenses, and License URLs.
+- |licenses|_ Trademark and License information for the CDAP Product and Documentation, and lists of
+  CDAP Dependent Packages, Licenses, and License URLs.

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.config.PreferencesStore;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
@@ -35,8 +36,9 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
   @Inject
   public LocalSchedulerService(Supplier<Scheduler> schedulerSupplier,
                                StreamSizeScheduler streamSizeScheduler, StoreFactory storeFactory,
-                               ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore) {
-    super(schedulerSupplier, streamSizeScheduler, storeFactory, programRuntimeService, preferencesStore);
+                               ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
+                               CConfiguration cConf) {
+    super(schedulerSupplier, streamSizeScheduler, storeFactory, programRuntimeService, preferencesStore, cConf);
   }
 
   @Override

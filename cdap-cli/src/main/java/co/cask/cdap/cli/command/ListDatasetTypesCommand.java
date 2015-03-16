@@ -19,8 +19,9 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -38,29 +39,33 @@ import java.util.List;
 public class ListDatasetTypesCommand extends AbstractAuthCommand {
 
   private final DatasetTypeClient datasetTypeClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetTypesCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig) {
+  public ListDatasetTypesCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig,
+                                 TableRenderer tableRenderer) {
     super(cliConfig);
     this.datasetTypeClient = datasetTypeClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.list();
 
-    new AsciiTable<DatasetTypeMeta>(
-      new String[]{ "name", "modules" }, datasetTypeMetas,
-      new RowMaker<DatasetTypeMeta>() {
+    Table table = Table.builder()
+      .setHeader("name", "modules")
+      .setRows(datasetTypeMetas, new RowMaker<DatasetTypeMeta>() {
         @Override
-        public Object[] makeRow(DatasetTypeMeta object) {
+        public List<?> makeRow(DatasetTypeMeta object) {
           List<String> modulesStrings = Lists.newArrayList();
           for (DatasetModuleMeta module : object.getModules()) {
             modulesStrings.add(module.getName());
           }
-          return new Object[] { object.getName(), Joiner.on(", ").join(modulesStrings) };
+          return Lists.newArrayList(object.getName(), Joiner.on(", ").join(modulesStrings));
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

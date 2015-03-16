@@ -79,7 +79,6 @@ public abstract class AbstractSparkContextBuilder {
     // Initializing dataset context and hooking it up with Spark job transaction
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
 
@@ -93,7 +92,7 @@ public abstract class AbstractSparkContextBuilder {
     BasicSparkContext context =
       new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
                             sparkSpec, logicalStartTime, workflowBatch, metricsCollectionService,
-                            datasetFramework, configuration, discoveryServiceClient, streamAdmin);
+                            datasetFramework, discoveryServiceClient, streamAdmin);
 
     // propagating tx to all txAware guys
     // The tx is committed or aborted depending upon the job success by the ProgramRunner and DatasetRecordWriter

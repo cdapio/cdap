@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -119,7 +120,7 @@ public interface DatasetFramework {
    * @param namespaceId the specified namespace id
    * @return a collection of {@link DatasetSpecification}s for all datasets in the specified namespace
    */
-  Collection<DatasetSpecification> getInstances(Id.Namespace namespaceId) throws DatasetManagementException;
+  Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) throws DatasetManagementException;
 
   /**
    * Gets the {@link DatasetSpecification} for the specified dataset instance id

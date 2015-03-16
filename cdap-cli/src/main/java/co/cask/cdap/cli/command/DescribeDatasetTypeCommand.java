@@ -20,16 +20,19 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Shows information about a dataset type.
@@ -37,11 +40,14 @@ import java.io.PrintStream;
 public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
 
   private final DatasetTypeClient datasetTypeClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig) {
+  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig,
+                                    TableRenderer tableRenderer) {
     super(cliConfig);
     this.datasetTypeClient = datasetTypeClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -49,14 +55,15 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
     String typeName = arguments.get(ArgumentName.DATASET_TYPE.toString());
     DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(typeName);
 
-    new AsciiTable<DatasetTypeMeta>(
-      new String[] { "name", "modules" }, Lists.newArrayList(datasetTypeMeta),
-      new RowMaker<DatasetTypeMeta>() {
+    Table table = Table.builder()
+      .setHeader("name", "modules")
+      .setRows(ImmutableList.of(datasetTypeMeta), new RowMaker<DatasetTypeMeta>() {
         @Override
-        public Object[] makeRow(DatasetTypeMeta object) {
-          return new Object[] { object.getName(), Joiner.on(", ").join(object.getModules()) };
+        public List<?> makeRow(DatasetTypeMeta object) {
+          return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
         }
-      }).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

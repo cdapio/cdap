@@ -16,7 +16,8 @@ This can be done using SQL if your Dataset fulfills two requirements:
 * it has a method to scan its data record by record.
 
 For CDAP Datasets, this is done by implementing the ``RecordScannable`` interface.
-The CDAP built-in Dataset ``KeyValueTable`` already implements this and can be used for ad-hoc queries.
+The CDAP built-in ``KeyValueTable`` and ``ObjectMappedTable`` Datasets already implement this
+and can be used for ad-hoc queries.
 
 Let's take a closer look at the ``RecordScannable`` interface.
 

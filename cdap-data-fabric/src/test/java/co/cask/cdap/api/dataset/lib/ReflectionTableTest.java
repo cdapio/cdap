@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Put;
@@ -25,21 +26,18 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionPutWriter;
 import co.cask.cdap.internal.io.ReflectionRowReader;
+import co.cask.cdap.internal.io.ReflectionRowRecordReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -48,81 +46,29 @@ public class ReflectionTableTest extends AbstractDatasetTest {
   private static final Id.DatasetInstance users = Id.DatasetInstance.from(NAMESPACE_ID, "users");
   private static final User SAMUEL = new User(
     "Samuel L.", "Jackson",
-    Gender.MALE,
     123,
     1234567890000L,
-    new Date(2015, 2, 10),
     50000000.02f,
     Double.MAX_VALUE,
-    new int[] { 2, 8, 1, 3, 3, 0, 8, 0, 0, 4 },
-    Lists.newArrayList("Shaft", "Mace", "Pulp Fiction guy"),
-    ImmutableMap.of("occupation", "goat", "rank", "1"),
     new byte[] { 0, 1, 2 });
-
-  public static enum Gender {
-    MALE,
-    FEMALE
-  }
-
-  public static class Date {
-    private int year;
-    private int month;
-    private int day;
-
-    public Date(int year, int month, int day) {
-      this.year = year;
-      this.month = month;
-      this.day = day;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (!(o instanceof Date)) {
-        return false;
-      }
-
-      Date that = (Date) o;
-
-      return year == that.year && month == that.month && day == that.day;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(year, month, day);
-    }
-  }
 
   public static class User {
     private String firstName;
     private String lastName;
-    private Gender gender;
     private Integer id;
     private Long timestamp;
-    private Date signupDate;
     private Float salary;
     private Double lastPurchase;
-    private int[] digits;
-    private List<String> aliases;
-    private Map<String, String> attributes;
     private byte[] blob;
 
-    public User(String firstName, String lastName, Gender gender, Integer id, Long timestamp,
-                Date signupDate, Float salary, Double lastPurchase, int[] digits,
-                List<String> aliases, Map<String, String> attributes, byte[] blob) {
+    public User(String firstName, String lastName, Integer id, Long timestamp,
+                Float salary, Double lastPurchase, byte[] blob) {
       this.firstName = firstName;
       this.lastName = lastName;
-      this.gender = gender;
       this.id = id;
       this.timestamp = timestamp;
-      this.signupDate = signupDate;
       this.salary = salary;
       this.lastPurchase = lastPurchase;
-      this.digits = digits;
-      this.aliases = aliases;
-      this.attributes = attributes;
       this.blob = blob;
     }
 
@@ -139,22 +85,16 @@ public class ReflectionTableTest extends AbstractDatasetTest {
 
       return Objects.equal(firstName, that.firstName) &&
         Objects.equal(lastName, that.lastName) &&
-        Objects.equal(gender, that.gender) &&
         Objects.equal(id, that.id) &&
         Objects.equal(timestamp, that.timestamp) &&
-        Objects.equal(signupDate, that.signupDate) &&
         Objects.equal(salary, that.salary) &&
         Objects.equal(lastPurchase, that.lastPurchase) &&
-        Arrays.equals(digits, that.digits) &&
-        Objects.equal(aliases, that.aliases) &&
-        Objects.equal(attributes, that.attributes) &&
         Arrays.equals(blob, that.blob);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(firstName, lastName, gender, id, timestamp, signupDate, salary,
-                              lastPurchase, digits, aliases, attributes, blob);
+      return Objects.hashCode(firstName, lastName, id, timestamp, salary, lastPurchase, blob);
     }
   }
 
@@ -257,6 +197,65 @@ public class ReflectionTableTest extends AbstractDatasetTest {
     }
   }
 
+  @Test
+  public void testStructuredRecordRepresentation() throws Exception {
+    createInstance("table", users, DatasetProperties.builder().build());
+    try {
+      final Table usersTable = getInstance(users);
+      final byte[] rowKey = Bytes.toBytes(123);
+      final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
+
+      // TableDataset is not accessible here, but we know that's the underlying implementation...
+      TransactionExecutor tx = newTransactionExecutor((TransactionAware) usersTable);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Put put = new Put(rowKey);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(schema);
+          putWriter.write(SAMUEL, put);
+          usersTable.put(put);
+          Row row = usersTable.get(rowKey);
+          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(schema);
+          StructuredRecord actual = rowReader.read(row, schema).build();
+          assertRecordEqualsUser(SAMUEL, actual);
+        }
+      });
+    } finally {
+      deleteInstance(users);
+    }
+  }
+
+  @Test
+  public void testStructuredRecordProjection() throws Exception {
+    createInstance("table", users, DatasetProperties.builder().build());
+    try {
+      final Table usersTable = getInstance(users);
+      final byte[] rowKey = Bytes.toBytes(123);
+      final User2 projected = new User2("Samuel L.", 123L, ((Float) 50000000.02f).doubleValue(), Double.MAX_VALUE,
+                                        ByteBuffer.wrap(new byte[]{0, 1, 2}));
+      final Schema fullSchema = new ReflectionSchemaGenerator().generate(User.class);
+      final Schema projSchema = new ReflectionSchemaGenerator().generate(User2.class);
+
+      // TableDataset is not accessible here, but we know that's the underlying implementation...
+      TransactionExecutor tx = newTransactionExecutor((TransactionAware) usersTable);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Put put = new Put(rowKey);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(fullSchema);
+          putWriter.write(SAMUEL, put);
+          usersTable.put(put);
+          Row row = usersTable.get(rowKey);
+          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(projSchema);
+          StructuredRecord actual = rowReader.read(row, fullSchema).build();
+          assertRecordEqualsUser(projected, actual);
+        }
+      });
+    } finally {
+      deleteInstance(users);
+    }
+  }
+
   private void assertGetAndPut(final Table table, final byte[] rowKey, final User obj,
                                final Schema schema) throws Exception {
     // TableDataset is not accessible here, but we know that's the underlying implementation...
@@ -274,5 +273,24 @@ public class ReflectionTableTest extends AbstractDatasetTest {
         Assert.assertEquals(obj, actual);
       }
     });
+  }
+
+  private void assertRecordEqualsUser(User expected, StructuredRecord actual) {
+    Assert.assertEquals(expected.firstName, actual.get("firstName"));
+    Assert.assertEquals(expected.lastName, actual.get("lastName"));
+    Assert.assertEquals(expected.id, actual.get("id"));
+    Assert.assertEquals(expected.timestamp, actual.get("timestamp"));
+    Assert.assertEquals(expected.salary, actual.get("salary"));
+    Assert.assertEquals(expected.lastPurchase, actual.get("lastPurchase"));
+    Assert.assertEquals(ByteBuffer.wrap(expected.blob), actual.get("blob"));
+  }
+
+  private void assertRecordEqualsUser(User2 expected, StructuredRecord actual) {
+    Assert.assertEquals(expected.firstName, actual.get("firstName"));
+    Assert.assertEquals(expected.id, actual.get("id"));
+    Assert.assertEquals(expected.salary, actual.get("salary"));
+    Assert.assertEquals(expected.lastPurchase, actual.get("lastPurchase"));
+    Assert.assertEquals(expected.blob, actual.get("blob"));
+    Assert.assertEquals(expected.newField, actual.get("newField"));
   }
 }

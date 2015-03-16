@@ -54,12 +54,12 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
 
   @Inject
   public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                     Configuration hConf, CConfiguration conf) {
+                                     Configuration hConf, CConfiguration cConf) {
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
-    this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf);
+    this.reportIntervalInSec = cConf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
+    this.userDsNamespace = new DefaultDatasetNamespace(cConf);
   }
 
   @Override

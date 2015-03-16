@@ -7,7 +7,7 @@
 .. _cdap-flume-guide:
 
 .. include:: ../../build/_includes/cdap-flume-guide/README.rst
-   :end-line: 3
+   :end-line: 4
 
 .. pull-quote::
 
@@ -15,4 +15,4 @@
   `CDAP Guides GitHub repository <https://github.com/cdap-guides/cdap-flume-guide>`__.
 
 .. include:: ../../build/_includes/cdap-flume-guide/README.rst
-   :start-line: 2
+   :start-line: 4

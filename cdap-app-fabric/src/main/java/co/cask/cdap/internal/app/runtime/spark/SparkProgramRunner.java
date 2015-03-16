@@ -111,7 +111,7 @@ public class SparkProgramRunner implements ProgramRunner {
     final BasicSparkContext context = new BasicSparkContext(program, runId, options.getUserArguments(),
                                                             appSpec.getDatasets().keySet(), spec,
                                                             logicalStartTime, workflowBatch,
-                                                            metricsCollectionService, datasetFramework, cConf,
+                                                            metricsCollectionService, datasetFramework,
                                                             discoveryServiceClient, streamAdmin);
 
     LoggingContextAccessor.setLoggingContext(context.getLoggingContext());

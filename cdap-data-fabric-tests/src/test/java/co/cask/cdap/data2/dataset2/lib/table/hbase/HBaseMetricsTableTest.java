@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
@@ -62,10 +63,10 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(SlowTests.class)
 public class HBaseMetricsTableTest extends MetricsTableTest {
-  private static HBaseTestBase testHBase;
 
+  private static HBaseTestBase testHBase;
+  private static HBaseTableUtil tableUtil;
   private static DatasetFramework dsFramework;
-  private static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -89,19 +90,25 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                                }
                                              });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "metrics-hbase"), new HBaseMetricsTableModule());
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), conf);
+    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-hbase"),
+                          new HBaseMetricsTableModule());
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     testHBase.stopHBase();
   }
 
   @Override
   @Test
   public void testConcurrentIncrement() throws Exception {
-    final MetricsTable table = getTable("testConcurrentIncrement");
+    String testConcurrentIncrement = "testConcurrentIncrement";
+    final MetricsTable table = getTable(testConcurrentIncrement);
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);
     Map<byte[], Long> inc2 = ImmutableMap.of(Y, 1L, Z, 2L);
@@ -109,10 +116,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // HBaseMetricsTable does not support mixed increment and incrementAndGet so the
     // updates and assertions here are different from MetricsTableTest.testConcurrentIncrement()
     Collection<? extends Thread> threads =
-        ImmutableList.of(new IncThread(getTable("testConcurrentIncrement"), A, inc1, rounds),
-            new IncThread(getTable("testConcurrentIncrement"), A, inc2, rounds),
-            new IncAndGetThread(getTable("testConcurrentIncrement"), A, R, 5, rounds),
-            new IncAndGetThread(getTable("testConcurrentIncrement"), A, R, 2, rounds));
+        ImmutableList.of(new IncThread(getTable(testConcurrentIncrement), A, inc1, rounds),
+            new IncThread(getTable(testConcurrentIncrement), A, inc2, rounds),
+            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 5, rounds),
+            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 2, rounds));
     for (Thread t : threads) {
       t.start();
     }
@@ -130,7 +137,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, name);
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null, null);

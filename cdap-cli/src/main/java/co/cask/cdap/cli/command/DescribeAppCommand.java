@@ -20,18 +20,17 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.cli.util.table.Table;
+import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Shows detailed information about an application.
@@ -39,33 +38,30 @@ import java.util.Map;
 public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
+  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
     super(cliConfig);
     this.applicationClient = applicationClient;
+    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String appId = arguments.get(ArgumentName.APP.toString());
-    Map<ProgramType, List<ProgramRecord>> programs = applicationClient.listPrograms(appId);
-    List<ProgramRecord> programsList = Lists.newArrayList();
-    for (List<ProgramRecord> subList : programs.values()) {
-      programsList.addAll(subList);
-    }
+    final String appId = arguments.get(ArgumentName.APP.toString());
+    List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
-    new AsciiTable<ProgramRecord>(
-      new String[] { "app", "type", "id", "description" },
-      programsList,
-      new RowMaker<ProgramRecord>() {
+    Table table = Table.builder()
+      .setHeader("app", "type", "id", "description")
+      .setRows(programsList, new RowMaker<ProgramRecord>() {
         @Override
-        public Object[] makeRow(ProgramRecord object) {
-          return new Object[] { object.getApp(), object.getType().getCategoryName(),
-            object.getId(), object.getDescription() };
+        public List<?> makeRow(ProgramRecord object) {
+          return Lists.newArrayList(appId, object.getType().getCategoryName(),
+                                    object.getName(), object.getDescription());
         }
-      }
-    ).print(output);
+      }).build();
+    tableRenderer.render(output, table);
   }
 
   @Override

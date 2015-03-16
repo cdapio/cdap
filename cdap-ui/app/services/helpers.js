@@ -4,7 +4,6 @@
 angular.module(PKG.name+'.services')
   .factory('myHelpers', function(){
 
-
    /**
     * set a property deep in an object
     * adapted from Y.namespace
@@ -96,7 +95,6 @@ angular.module(PKG.name+'.services')
     }
     return obj;
   }
-
 
   /* ----------------------------------------------------------------------- */
 

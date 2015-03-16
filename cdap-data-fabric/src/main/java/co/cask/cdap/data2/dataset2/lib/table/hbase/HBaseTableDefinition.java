@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -33,8 +33,7 @@ import java.util.Map;
 /**
  *
  */
-public class HBaseTableDefinition
-  extends AbstractDatasetDefinition<Table, HBaseTableAdmin> {
+public class HBaseTableDefinition extends AbstractDatasetDefinition<Table, HBaseTableAdmin> {
 
   @Inject
   private Configuration hConf;
@@ -44,7 +43,7 @@ public class HBaseTableDefinition
   private LocationFactory locationFactory;
   // todo: datasets should not depend on cdap configuration!
   @Inject
-  private CConfiguration conf;
+  private CConfiguration cConf;
 
   public HBaseTableDefinition(String name) {
     super(name);
@@ -58,18 +57,14 @@ public class HBaseTableDefinition
   }
 
   @Override
-  public Table getDataset(DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    ConflictDetection conflictDetection =
-      ConflictDetection.valueOf(spec.getProperty("conflict.level", ConflictDetection.ROW.name()));
-    // NOTE: ttl property is applied on server-side in CPs
-    // check if read-less increment operations are supported
-    boolean supportsIncrements = HBaseTableAdmin.supportsReadlessIncrements(spec);
-    return new HBaseTable(spec.getName(), conflictDetection, hConf, supportsIncrements);
+  public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    return new HBaseTable(datasetContext, spec, cConf, hConf, hBaseTableUtil);
   }
 
   @Override
-  public HBaseTableAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(spec, hConf, hBaseTableUtil, conf, locationFactory);
+  public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                                  ClassLoader classLoader) throws IOException {
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }

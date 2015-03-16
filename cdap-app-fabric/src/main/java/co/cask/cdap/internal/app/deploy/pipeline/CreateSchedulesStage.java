@@ -17,10 +17,12 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -56,7 +58,8 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnLeft().entrySet()) {
       // delete schedules that existed in the old app spec, but don't anymore
       ScheduleSpecification scheduleSpec = entry.getValue();
-      scheduler.deleteSchedule(Id.Program.from(input.getId(), scheduleSpec.getProgram().getProgramName()),
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      scheduler.deleteSchedule(Id.Program.from(input.getId(), programType, scheduleSpec.getProgram().getProgramName()),
                                scheduleSpec.getProgram().getProgramType(),
                                scheduleSpec.getSchedule().getName());
     }
@@ -72,14 +75,17 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         continue;
       }
 
-      scheduler.updateSchedule(Id.Program.from(input.getId(), newScheduleSpec.getProgram().getProgramName()),
+      ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
+      scheduler.updateSchedule(Id.Program.from(input.getId(), programType,
+                                               newScheduleSpec.getProgram().getProgramName()),
                                newScheduleSpec.getProgram().getProgramType(),
                                newScheduleSpec.getSchedule());
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
       ScheduleSpecification scheduleSpec = entry.getValue();
-      scheduler.schedule(Id.Program.from(input.getId(), scheduleSpec.getProgram().getProgramName()),
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      scheduler.schedule(Id.Program.from(input.getId(), programType, scheduleSpec.getProgram().getProgramName()),
                          scheduleSpec.getProgram().getProgramType(),
                          scheduleSpec.getSchedule());
     }
