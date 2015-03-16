@@ -27,7 +27,11 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -125,7 +129,9 @@ public class WorkflowAppWithScopedParameters extends AbstractApplication {
   public static class SparkTestProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      // no-op
+      List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      distData.collect();
     }
   }
 
