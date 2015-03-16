@@ -1,14 +1,14 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
 .. _operations-index:
 
-============================================
+==========
 Operations
-============================================
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -17,6 +17,7 @@ Operations
     Metrics <metrics>
     Runtime Arguments <runtime-arguments>
     Scaling Instances <scaling-instances>
+    Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
     Troubleshooting <troubleshooting>
     
@@ -43,6 +44,12 @@ Operations
 .. _scaling-instances: scaling-instances.html
 
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
+
+
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
 
 
 .. |cdap-console| replace:: **CDAP Console:**
