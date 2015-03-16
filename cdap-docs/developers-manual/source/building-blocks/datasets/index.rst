@@ -42,7 +42,7 @@ counter Table. A Dataset can also combine multiple Datasets to create a
 complex data pattern. For example, an indexed Table can be implemented
 by using one Table for the data and a second Table for the index of that data.
 
-A number of useful Datasets |---| we refer to them as system Datasets—are
+A number of useful Datasets |---| we refer to them as system Datasets |---| are
 included with CDAP, including key/value tables, indexed tables and
 time series. You can implement your own data patterns as custom
 Datasets, on top of any combination of core and system Datasets.
