@@ -208,7 +208,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
                                                                     "JoinMultiFlow", "Terminal");
 
-    terminalMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+    terminalMetrics.waitForProcessed(3, 15, TimeUnit.SECONDS);
 
     TimeUnit.SECONDS.sleep(1);
 
