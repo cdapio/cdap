@@ -38,6 +38,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -90,6 +91,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     streamCoordinatorClient.startAndWait();
 
     txManager.startAndWait();
+    setupNamespaces(injector.getInstance(LocationFactory.class));
   }
 
   @AfterClass

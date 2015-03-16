@@ -24,9 +24,9 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
@@ -38,13 +38,10 @@ import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
@@ -184,26 +181,21 @@ public class TransactionServiceTest {
     // tests should use the current user for HDFS
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, outPath.getAbsolutePath());
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
 
-    final DataFabricDistributedModule dfModule = new DataFabricDistributedModule();
-
     final Injector injector =
-      Guice.createInjector(dfModule,
-                           new ConfigModule(cConf, hConf),
+      Guice.createInjector(new ConfigModule(cConf, hConf),
+                           new LocationRuntimeModule().getInMemoryModules(),  // Use local location factory
                            new ZKClientModule(),
                            new DiscoveryRuntimeModule().getDistributedModules(),
                            new TransactionMetricsModule(),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
-                               bind(LocationFactory.class)
-                                 .toInstance(new LocalLocationFactory(outPath));
-                             }
-                           });
+                           new DataFabricModules().getDistributedModules(),
+                           new SystemDatasetRuntimeModule().getInMemoryModules(),
+                           new DataSetsModules().getInMemoryModules());
     injector.getInstance(ZKClientService.class).startAndWait();
 
     return injector.getInstance(TransactionService.class);

@@ -28,9 +28,11 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
@@ -51,19 +53,25 @@ import javax.annotation.Nullable;
 public class QueueConfigUpgrader extends AbstractUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(QueueConfigUpgrader.class);
   private final HBaseTableUtil tableUtil;
+  private final Configuration conf;
 
   @Inject
-  public QueueConfigUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil) {
+  public QueueConfigUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
     super(locationFactory);
     this.tableUtil = tableUtil;
+    this.conf = conf;
   }
 
   @Override
   void upgrade() throws Exception {
     String dsName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, QueueConstants.QUEUE_CONFIG_TABLE_NAME);
     Id.DatasetInstance datasetId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
-    HTable queueConfigTable = tableUtil.createHTable(HBaseConfiguration.create(),
-                                                     TableId.from(datasetId.getNamespaceId(), dsName));
+    TableId queueConfigTableId = TableId.from(datasetId.getNamespaceId(), dsName);
+    if (!tableUtil.tableExists(new HBaseAdmin(conf), queueConfigTableId)) {
+      LOG.info("Queue config table does not exist: {}. No upgrade necessary.", queueConfigTableId);
+      return;
+    }
+    HTable queueConfigTable = tableUtil.createHTable(conf, queueConfigTableId);
     LOG.info("Starting upgrade for queue config table {}", Bytes.toString(queueConfigTable.getTableName()));
     try {
       Scan scan = new Scan();

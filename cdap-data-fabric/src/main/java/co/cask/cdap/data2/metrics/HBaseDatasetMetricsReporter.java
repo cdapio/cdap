@@ -16,13 +16,16 @@
 
 package co.cask.cdap.data2.metrics;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -32,6 +35,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,23 +47,25 @@ import java.util.concurrent.TimeUnit;
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
 public class HBaseDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
   private final int reportIntervalInSec;
-
   private final MetricsCollectionService metricsService;
   private final Configuration hConf;
+  private final CConfiguration conf;
   private final HBaseTableUtil hBaseTableUtil;
-  private final DatasetNamespace userDsNamespace;
+  private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
   private HBaseAdmin hAdmin;
 
+
   @Inject
   public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                     Configuration hConf, CConfiguration cConf) {
+                                     Configuration hConf, CConfiguration conf, DatasetFramework dsFramework) {
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
-    this.reportIntervalInSec = cConf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(cConf);
+    this.conf = conf;
+    this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
+    this.dsFramework = dsFramework;
   }
 
   @Override
@@ -94,25 +100,39 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     return executor;
   }
 
-  private void reportHBaseStats() throws IOException {
-    Map<String, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
+  private void reportHBaseStats() throws IOException, DatasetManagementException {
+    Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
-    // we use "0" as runId: it is required by metrics system to provide something at this point
-    for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
-      Id.DatasetInstance datasetInstance = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetInstance == null) {
-        // not a user dataset
+  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) {
+    for (Map.Entry<TableId, HBaseTableUtil.TableStats> statEntry : tableStats.entrySet()) {
+      String namespace = statEntry.getKey().getNamespace().getId();
+      // emit metrics for only user datasets, namespaces in system and
+      // tableNames that doesn't start with user are ignored
+      if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
         continue;
       }
-      MetricsCollector collector =
-        metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.DATASET, datasetInstance.getId()));
-      // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
+      String tableName = statEntry.getKey().getTableName();
+      try {
+        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(statEntry.getKey().getNamespace());
+        for (DatasetSpecificationSummary spec : instances) {
+          dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace, spec.getName()));
+          DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
+                                                                                                  spec.getName()));
+          if (specification.isParent(tableName)) {
+            MetricsCollector collector =
+              metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                                          Constants.Metrics.Tag.DATASET, spec.getName()));
+            collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
+            break;
+          }
+        }
+      } catch (DatasetManagementException e) {
+        // No op
+      }
     }
   }
 }

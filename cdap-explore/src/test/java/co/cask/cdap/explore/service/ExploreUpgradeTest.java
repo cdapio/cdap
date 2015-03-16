@@ -64,8 +64,9 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     // create a stream and some datasets that will be upgraded. Need to create the actual instances
     // so that upgrade can find them, but we will manually create the Hive tables for them in the old style.
 
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "purchases");
     // add a stream
-    createStream(Constants.DEFAULT_NAMESPACE, "purchases");
+    createStream(streamId);
 
     // add a key-value table for record scannables
     Id.DatasetInstance kvID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, "kvtable");
@@ -98,7 +99,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
 
     // remove existing tables. will replace with manually created old-style tables
     waitForCompletion(Lists.newArrayList(
-      exploreTableManager.disableStream(Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "purchases")),
+      exploreTableManager.disableStream(streamId),
       exploreTableManager.disableDataset(kvID, datasetFramework.getDatasetSpec(kvID)),
       exploreTableManager.disableDataset(filesetID, datasetFramework.getDatasetSpec(filesetID))));
 

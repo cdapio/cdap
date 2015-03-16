@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CommandCategory;
@@ -86,7 +86,7 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public String getPattern() {
-    return String.format("search commands <%s>", ArgumentName.QUERY);
+    return String.format("cli search commands <%s>", ArgumentName.QUERY);
   }
 
   @Override

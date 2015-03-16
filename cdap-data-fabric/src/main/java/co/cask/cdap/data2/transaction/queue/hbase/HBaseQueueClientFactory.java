@@ -60,25 +60,20 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.hBaseTableUtil = hBaseTableUtil;
   }
 
-  // for testing only
-  TableId getTableId(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getDataTableId(queueName);
-  }
-
-  // for testing only
-  TableId getConfigTableId(QueueName queueName) {
-    return HBaseQueueAdmin.getConfigTableId(queueName);
-  }
-
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HTable configTable = createHTable(HBaseQueueAdmin.getConfigTableId(queueName));
-    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
-    HBaseConsumerState consumerState = stateStore.getState();
-    return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),
-                                      queueName, consumerState, stateStore, getQueueStrategy());
+    try {
+      HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName);
+      HBaseConsumerState consumerState = stateStore.getState(consumerConfig.getGroupId(),
+                                                             consumerConfig.getInstanceId());
+      return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),
+                                        queueName, consumerState, stateStore, getQueueStrategy());
+    } catch (Exception e) {
+      // If there is exception, nothing much can be done here besides propagating
+      throw new IOException(e);
+    }
   }
 
   @Override
