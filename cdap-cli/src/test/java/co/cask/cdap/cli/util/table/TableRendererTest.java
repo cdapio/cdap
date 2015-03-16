@@ -91,4 +91,37 @@ public abstract class TableRendererTest {
       .build();
     getRenderer().render(System.out, table);
   }
+
+  @Test
+  public void testOneCharLongerThanWidth() {
+    Table table = Table.builder()
+      .setHeader("c1")
+      .setRows(Table.rows()
+                 .add(Strings.repeat("z", 80) + "a")
+                 .build())
+      .build();
+    getRenderer().render(System.out, table);
+  }
+
+  @Test
+  public void testHeaderOneCharLongerThanWidth() {
+    Table table = Table.builder()
+      .setHeader(Strings.repeat("z", 80) + "a")
+      .setRows(Table.rows()
+                 .add("abc")
+                 .build())
+      .build();
+    getRenderer().render(System.out, table);
+  }
+
+  @Test
+  public void testOneCharLongerThan2Width() {
+    Table table = Table.builder()
+      .setHeader("c1")
+      .setRows(Table.rows()
+                 .add(Strings.repeat("z", 80 * 2) + "a")
+                 .build())
+      .build();
+    getRenderer().render(System.out, table);
+  }
 }

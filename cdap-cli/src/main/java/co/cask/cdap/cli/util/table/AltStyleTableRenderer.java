@@ -69,7 +69,7 @@ import java.util.List;
  */
 public class AltStyleTableRenderer implements TableRenderer {
 
-  private static final int DEFAULT_WIDTH = 80;
+  public static final int DEFAULT_WIDTH = 80;
   private static final int DEFAULT_MIN_COLUMN_WIDTH = 5;
   private static final String DEFAULT_NEWLINE = System.getProperty("line.separator");
 
@@ -204,7 +204,7 @@ public class AltStyleTableRenderer implements TableRenderer {
             endSplitIdx = startSplitIdx + width;
           }
           // add any remaining part of the splitFieldLine string
-          if (startSplitIdx < splitFieldLine.length() - 1) {
+          if (startSplitIdx < splitFieldLine.length()) {
             cellLines.add(splitFieldLine.substring(startSplitIdx, splitFieldLine.length()));
           }
           multiLines = true;
