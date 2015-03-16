@@ -48,6 +48,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -111,6 +112,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     txManager = injector.getInstance(TransactionManager.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
+    setupNamespaces(injector.getInstance(LocationFactory.class));
     txManager.startAndWait();
   }
 

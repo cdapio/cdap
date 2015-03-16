@@ -141,6 +141,7 @@ public class CLIMain {
       }
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
+    cli.getReader().setExpandEvents(false);
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(ClientConfig clientConfig) {
