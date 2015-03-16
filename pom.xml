@@ -1419,6 +1419,14 @@
       </modules>
     </profile>
 
+    <!-- Profile to turn on inclusion of all cdap-app-templates -->
+    <profile>
+      <id>templates</id>
+      <modules>
+        <module>cdap-app-templates</module>
+      </modules>
+    </profile>
+
     <!-- Profile to run fast tests only -->
     <profile>
       <id>test-fast</id>
