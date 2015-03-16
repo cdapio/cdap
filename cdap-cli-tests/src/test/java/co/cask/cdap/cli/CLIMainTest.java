@@ -22,7 +22,6 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -59,10 +58,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -404,17 +399,6 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.clear();
     propMap.put("key", "somevalue");
     testPreferencesOutput(cli, "get preferences instance", propMap);
-    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
-    writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
-      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
-    } finally {
-      writer.close();
-    }
-    testCommandOutputContains(cli, "load preferences namespace " + file.getAbsolutePath() + " xml", "successful");
-    propMap.clear();
-    propMap.put("xml", "green");
-    testPreferencesOutput(cli, "get preferences namespace", propMap);
     testCommandOutputContains(cli, "delete preferences namespace", "successfully");
     testCommandOutputContains(cli, "delete preferences instance", "successfully");
 
@@ -427,17 +411,7 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "invalid");
-
-    //Try invalid xml
-    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
-    writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
-      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
-    } finally {
-      writer.close();
-    }
-    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "invalid");
-    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " inv", "Unsupported");
+    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "Unsupported");
   }
 
   @Test
