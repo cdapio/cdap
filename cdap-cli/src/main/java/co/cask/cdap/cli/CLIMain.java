@@ -40,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jline.TerminalFactory;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -113,8 +114,8 @@ public class CLIMain {
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier()),
-        new SearchCommandsCommand(getCommandsSupplier())
+        new HelpCommand(getCommandsSupplier(), cliConfig),
+        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);

@@ -22,7 +22,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.cli.Arguments;
@@ -60,7 +59,7 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override

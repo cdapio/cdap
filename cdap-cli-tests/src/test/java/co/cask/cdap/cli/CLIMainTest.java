@@ -591,7 +591,7 @@ public class CLIMainTest extends StandaloneTestBase {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliMain.getTableRenderer().render(printStream, table);
+    cliMain.getTableRenderer().render(cliConfig, table);
     final String expectedOutput = outputStream.toString();
 
     testCommand(cli, command, new Function<String, Void>() {

@@ -54,7 +54,7 @@ public class ListDatasetModulesCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getClassName());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override

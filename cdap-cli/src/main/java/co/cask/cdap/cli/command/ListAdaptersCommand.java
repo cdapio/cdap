@@ -61,7 +61,7 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
                                     GSON.toJson(object.getProperties()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override

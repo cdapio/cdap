@@ -19,11 +19,26 @@ import com.google.common.base.Strings;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.PrintStream;
+
 /**
  *
  */
 @Ignore
 public abstract class TableRendererTest {
+
+  private static final int LINE_WIDTH = 80;
+  private static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
+    @Override
+    public PrintStream getOutput() {
+      return System.out;
+    }
+
+    @Override
+    public int getLineWidth() {
+      return LINE_WIDTH;
+    }
+  };
 
   public abstract TableRenderer getRenderer();
 
@@ -37,7 +52,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, table);
   }
 
   @Test
@@ -50,7 +65,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, table);
   }
 
   @Test
@@ -63,7 +78,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, table);
   }
 
   @Test
@@ -76,7 +91,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, table);
   }
 
   @Test
@@ -89,6 +104,6 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, table);
   }
 }

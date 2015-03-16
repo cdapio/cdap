@@ -69,27 +69,27 @@ import java.util.List;
  */
 public class AltStyleTableRenderer implements TableRenderer {
 
-  private static final int DEFAULT_WIDTH = 80;
   private static final int DEFAULT_MIN_COLUMN_WIDTH = 5;
   private static final String DEFAULT_NEWLINE = System.getProperty("line.separator");
 
-  private final int width;
   private final int minColumnWidth;
   private final Splitter newlineSplitter;
 
   @Inject
   public AltStyleTableRenderer() {
-    this(DEFAULT_WIDTH, DEFAULT_MIN_COLUMN_WIDTH, DEFAULT_NEWLINE);
+    this(DEFAULT_MIN_COLUMN_WIDTH, DEFAULT_NEWLINE);
   }
 
-  public AltStyleTableRenderer(int width, int minColumnWidth, String newline) {
-    this.width = width;
+  public AltStyleTableRenderer(int minColumnWidth, String newline) {
     this.minColumnWidth = minColumnWidth;
     this.newlineSplitter = Splitter.on(newline);
   }
 
   @Override
-  public void render(PrintStream output, Table table) {
+  public void render(TableRendererConfig config, Table table) {
+    PrintStream output = config.getOutput();
+    int width = config.getLineWidth();
+
     List<String> header = table.getHeader();
     List<Row> rows = Lists.newArrayList();
 

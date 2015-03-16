@@ -58,7 +58,7 @@ public class DescribeNamespaceCommand extends AbstractCommand {
           return ImmutableList.of(object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override

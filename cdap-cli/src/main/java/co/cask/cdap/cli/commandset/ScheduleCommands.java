@@ -213,7 +213,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
                                       GSON.toJson(object.getProperties()));
           }
         }).build();
-      cliConfig.getTableRenderer().render(printStream, table);
+      cliConfig.getTableRenderer().render(cliConfig, table);
     }
 
     private String getScheduleType(Schedule schedule) {

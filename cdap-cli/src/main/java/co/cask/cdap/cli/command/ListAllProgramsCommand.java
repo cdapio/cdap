@@ -64,7 +64,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
                                     object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override

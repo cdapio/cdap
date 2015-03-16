@@ -57,7 +57,7 @@ public class DescribeAppCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getType().getPrettyName(), object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, table);
   }
 
   @Override
