@@ -98,13 +98,5 @@ Glossary
    Apache Hadoop
       See :term:`Hadoop`.
 
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-   :ltrim:
-
-.. |(R)| unicode:: U+00AE .. registered trademark sign
-   :ltrim:
-
 .. Apache |(TM)| Hadoop |(R)|
 .. Apache™ Hadoop®
