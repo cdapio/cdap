@@ -153,7 +153,7 @@ public class StreamSizeSchedulerPollingTest {
 
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
-    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2, true);
+    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
     metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, STREAM_ID.getNamespaceId(),
                                                     Constants.Metrics.Tag.STREAM, STREAM_ID.getName()),
                                     "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),

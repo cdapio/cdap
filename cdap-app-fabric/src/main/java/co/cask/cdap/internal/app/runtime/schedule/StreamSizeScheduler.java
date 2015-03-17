@@ -102,6 +102,7 @@ public class StreamSizeScheduler implements Scheduler {
   private ScheduledExecutorService streamPollingExecutor;
 
   private ListeningExecutorService taskExecutorService;
+  private boolean schedulerStarted;
 
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
@@ -118,9 +119,10 @@ public class StreamSizeScheduler implements Scheduler {
     this.streamSubscribers = Maps.newConcurrentMap();
     this.scheduleSubscribers = new ConcurrentSkipListMap<String, StreamSubscriber>();
     this.store = null;
+    this.schedulerStarted = false;
   }
 
-  public void start() throws SchedulerException {
+  public void init() throws SchedulerException {
     sendPollingInfoExecutor = Executors.newCachedThreadPool(
       Threads.createDaemonThreadFactory("stream-size-scheduler-%d"));
     streamPollingExecutor = Executors.newScheduledThreadPool(STREAM_POLLING_THREAD_POOL_SIZE,
@@ -133,6 +135,14 @@ public class StreamSizeScheduler implements Scheduler {
     store = storeFactory.create();
 
     initializeScheduleStore();
+  }
+
+  void lazyStart() throws SchedulerException {
+    schedulerStarted = true;
+  }
+
+  boolean isStarted() {
+    return schedulerStarted;
   }
 
   /**
@@ -200,7 +210,7 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
@@ -208,7 +218,7 @@ public class StreamSizeScheduler implements Scheduler {
     StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
 
     // Add the scheduleTask to the StreamSubscriber
-    streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule, active);
+    streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule);
     scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
                                                                    streamSizeSchedule.getName()),
                             streamSubscriber);
@@ -239,18 +249,17 @@ public class StreamSizeScheduler implements Scheduler {
     StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
 
     // Add the scheduleTask to the StreamSubscriber
-    streamSubscriber.restoreScheduleFromStore(program, programType, streamSizeSchedule, active,
-                                              basePollSize, basePollTs, lastRunSize, lastRunTs);
+    streamSubscriber.restoreScheduleFromStore(program, programType, streamSizeSchedule, active, basePollSize, basePollTs, lastRunSize, lastRunTs);
     scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
                                                                    streamSizeSchedule.getName()),
                             streamSubscriber);
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                       boolean active) throws SchedulerException {
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
     for (Schedule s : schedules) {
-      schedule(program, programType, s, active);
+      schedule(program, programType, s);
     }
   }
 
@@ -266,8 +275,7 @@ public class StreamSizeScheduler implements Scheduler {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
     String programScheduleId = AbstractSchedulerService.programIdFor(program, programType);
-    return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar),
-                                                           String.format("%s%c", programScheduleId, endChar)).keySet());
+    return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar), String.format("%s%c", programScheduleId, endChar)).keySet());
   }
 
   @Override
@@ -293,7 +301,7 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
@@ -311,7 +319,7 @@ public class StreamSizeScheduler implements Scheduler {
       // not found exception
       deleteSchedule(program, programType, schedule.getName());
 
-      schedule(program, programType, schedule, active);
+      schedule(program, programType, schedule);
     } else {
       // The subscriber will take care of updating the data trigger
       subscriber.updateScheduleTask(program, programType, streamSizeSchedule);
@@ -567,7 +575,7 @@ public class StreamSizeScheduler implements Scheduler {
      * Add a new scheduling task to this {@link StreamSubscriber}.
      */
     public void createScheduleTask(Id.Program programId, SchedulableProgramType programType,
-                                   StreamSizeSchedule streamSizeSchedule, boolean active) throws SchedulerException {
+                                   StreamSizeSchedule streamSizeSchedule) throws SchedulerException {
       StreamSize streamSize;
       synchronized (this) {
         String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType,
@@ -592,7 +600,7 @@ public class StreamSizeScheduler implements Scheduler {
         StreamSizeScheduleTask newTask = new StreamSizeScheduleTask(programId, programType, streamSizeSchedule);
 
         // First time that we create this schedule, it has to be initialized with the latest polling info
-        newTask.startNewSchedule(streamSize.getSize(), streamSize.getTimestamp(), active);
+        newTask.startNewSchedule(streamSize.getSize(), streamSize.getTimestamp());
 
         // We only modify the scheduleTasks if the persistence in startSchedule() did not throw any exception
         scheduleTasks.put(scheduleId, newTask);
@@ -858,14 +866,14 @@ public class StreamSizeScheduler implements Scheduler {
      * @param basePollSize base size of the stream to start counting from. This info comes from polling the stream
      * @param basePollTs time at which the {@code basePollSize} was obtained
      */
-    public void startNewSchedule(long basePollSize, long basePollTs, boolean active) throws SchedulerException {
+    public void startNewSchedule(long basePollSize, long basePollTs) throws SchedulerException {
       LOG.debug("Starting new schedule {} with basePollSize {}, basePollTs {}",
                 streamSizeSchedule.getName(), basePollSize, basePollTs);
       this.basePollSize = basePollSize;
       this.basePollTs = basePollTs;
       this.lastRunSize = -1;
       this.lastRunTs = -1;
-      this.active.set(active);
+      this.active.set(true);
 
       try {
         scheduleStore.persist(programId, programType, streamSizeSchedule,

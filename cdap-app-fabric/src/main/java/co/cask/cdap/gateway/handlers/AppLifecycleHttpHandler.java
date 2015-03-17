@@ -192,12 +192,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
-                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
-                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      boolean suspendSchedules = Boolean.parseBoolean(suspendSchedulesStr);
-      return deployApplication(responder, namespaceId, appId, archiveName, suspendSchedules);
+      return deployApplication(responder, namespaceId, appId, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -212,13 +209,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
-                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      boolean suspendSchedules = Boolean.parseBoolean(suspendSchedulesStr);
-      return deployApplication(responder, namespaceId, null, archiveName, suspendSchedules);
+      return deployApplication(responder, namespaceId, null, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -468,7 +462,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
-                                         final String archiveName, final boolean suspendSchedules) throws IOException {
+                                         final String archiveName) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (!namespaceAdmin.hasNamespace(namespace)) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
@@ -510,7 +504,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive, suspendSchedules);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
           deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {

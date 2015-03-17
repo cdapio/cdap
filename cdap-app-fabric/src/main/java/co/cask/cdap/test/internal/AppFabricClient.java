@@ -251,11 +251,11 @@ public class AppFabricClient {
 
     String archiveName = applicationId + ".jar";
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                        "/v2/apps?suspendSchedules=true");
+                                                        "/v2/apps");
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
-    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder, "true", archiveName);
+    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder, archiveName);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);

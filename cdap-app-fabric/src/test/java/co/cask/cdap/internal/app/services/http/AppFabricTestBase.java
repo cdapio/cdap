@@ -140,7 +140,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Scheduler.TIME_SCHEDULER_LAZY_START, true);
+    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
@@ -366,11 +366,10 @@ public abstract class AppFabricTestBase {
 
     HttpEntityEnclosingRequestBase request;
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
-    String suspendSchedulesOption = String.format("?%s=true", Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION);
     if (appName == null) {
-      request = getPost(versionedApiPath + suspendSchedulesOption);
+      request = getPost(versionedApiPath);
     } else {
-      request = getPut(versionedApiPath + appName + suspendSchedulesOption);
+      request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");

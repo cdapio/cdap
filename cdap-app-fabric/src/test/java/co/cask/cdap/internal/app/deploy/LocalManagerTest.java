@@ -64,7 +64,7 @@ public class LocalManagerTest {
     Location deployedJar = lf.create(jar);
 
     Location destination = new LocalLocationFactory().create(temp.toURI());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, false);
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
 
     try {
       AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
@@ -83,7 +83,7 @@ public class LocalManagerTest {
     );
 
     Location destination = new LocalLocationFactory().create(temp.toURI()).append("test.jar");
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, false);
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
 
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
                                                                                  null, info).get();

@@ -78,7 +78,7 @@ public class AppFabricTestHelper {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
-      configuration.setBoolean(Constants.Scheduler.TIME_SCHEDULER_LAZY_START, true);
+      configuration.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(TransactionManager.class).startAndWait();
@@ -128,7 +128,7 @@ public class AppFabricTestHelper {
     throws Exception {
     Location deployedJar = createAppJar(appClass);
     Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, true);
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.

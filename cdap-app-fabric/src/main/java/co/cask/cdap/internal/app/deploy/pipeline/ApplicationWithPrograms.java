@@ -37,14 +37,12 @@ public class ApplicationWithPrograms implements Closeable {
   private final Location location;
   private final ApplicationDeployable applicationDeployable;
   private final List<Program> programs;
-  private final boolean suspendSchedules;
 
   public ApplicationWithPrograms(ApplicationDeployable applicationDeployable, Iterable<? extends Program> programs) {
     this.id = applicationDeployable.getId();
     this.specification = applicationDeployable.getSpecification();
     this.existingAppSpecification = applicationDeployable.getExistingAppSpec();
     this.location = applicationDeployable.getLocation();
-    this.suspendSchedules = applicationDeployable.isSuspendSchedules();
     this.applicationDeployable = applicationDeployable;
     this.programs = ImmutableList.copyOf(programs);
   }
@@ -56,7 +54,6 @@ public class ApplicationWithPrograms implements Closeable {
     this.location = other.location;
     this.applicationDeployable = other.applicationDeployable;
     this.programs = other.programs;
-    this.suspendSchedules = other.suspendSchedules;
   }
 
   public Id.Application getId() {
@@ -78,10 +75,6 @@ public class ApplicationWithPrograms implements Closeable {
 
   public Iterable<Program> getPrograms() {
     return programs;
-  }
-
-  public boolean isSuspendSchedules() {
-    return suspendSchedules;
   }
 
   @Override

@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
@@ -54,6 +55,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private final TimeScheduler timeScheduler;
   private final StreamSizeScheduler streamSizeScheduler;
   private final StoreFactory storeFactory;
+  private final CConfiguration cConf;
 
   private Store store;
 
@@ -65,14 +67,23 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                                            preferencesStore, cConf);
     this.streamSizeScheduler = streamSizeScheduler;
     this.storeFactory = storeFactory;
+    this.cConf = cConf;
+  }
+
+  private boolean isLazyStart() {
+    return cConf.getBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, false);
   }
 
   /**
-   * Start the quartz scheduler service.
+   * Start the scheduler services, by initializing them and starting them
+   * right away if lazy start is not active.
    */
-  protected final void startScheduler() throws SchedulerException {
+  protected final void startSchedulers() throws SchedulerException {
     try {
-      timeScheduler.start();
+      timeScheduler.init();
+      if (!isLazyStart()) {
+        timeScheduler.lazyStart();
+      }
       LOG.info("Started time scheduler");
     } catch (Throwable t) {
       LOG.error("Error starting time scheduler", t);
@@ -81,13 +92,43 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
 
     try {
-      streamSizeScheduler.start();
+      streamSizeScheduler.init();
+      if (!isLazyStart()) {
+        streamSizeScheduler.lazyStart();
+      }
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
       LOG.error("Error starting stream size scheduler", t);
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
+  }
+
+  private final void lazyStart(Scheduler scheduler) throws SchedulerException {
+    if (scheduler instanceof TimeScheduler) {
+      try {
+        timeScheduler.lazyStart();
+      } catch (Throwable t) {
+        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+        throw new SchedulerException(t);
+      }
+    } else if (scheduler instanceof StreamSizeScheduler) {
+      try {
+        streamSizeScheduler.lazyStart();
+      } catch (Throwable t) {
+        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+        throw new SchedulerException(t);
+      }
+    }
+  }
+
+  private boolean isStarted(Scheduler scheduler) {
+    if (scheduler instanceof TimeScheduler) {
+      return ((TimeScheduler) scheduler).isStarted();
+    } else if (scheduler instanceof StreamSizeScheduler) {
+      return ((StreamSizeScheduler) scheduler).isStarted();
+    }
+    throw new IllegalArgumentException("Unrecognized type of scheduler for " + scheduler.getClass().toString());
   }
 
   /**
@@ -114,20 +155,31 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule, boolean active)
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
+    Scheduler scheduler;
     if (schedule instanceof TimeSchedule) {
-      timeScheduler.schedule(programId, programType, schedule, active);
+      scheduler = timeScheduler;
     } else if (schedule instanceof StreamSizeSchedule) {
-      streamSizeScheduler.schedule(programId, programType, schedule, active);
+      scheduler = streamSizeScheduler;
     } else {
       throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
+    }
+
+    scheduler.schedule(programId, programType, schedule);
+    if (isLazyStart()) {
+      try {
+        scheduler.suspendSchedule(programId, programType, schedule.getName());
+      } catch (NotFoundException e) {
+        // Should not happen - we just created it. Could have been deleted just in between
+        LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
+      }
     }
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                       boolean active) throws SchedulerException {
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException {
     Set<Schedule> timeSchedules = Sets.newHashSet();
     Set<Schedule> streamSizeSchedules = Sets.newHashSet();
     for (Schedule schedule : schedules) {
@@ -140,10 +192,30 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
     if (!timeSchedules.isEmpty()) {
-      timeScheduler.schedule(programId, programType, timeSchedules, active);
+      timeScheduler.schedule(programId, programType, timeSchedules);
+      if (isLazyStart()) {
+        for (Schedule schedule : timeSchedules) {
+          try {
+            timeScheduler.suspendSchedule(programId, programType, schedule.getName());
+          } catch (NotFoundException e) {
+            // Should not happen - we just created it. Could have been deleted just in between
+            LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
+          }
+        }
+      }
     }
     if (!streamSizeSchedules.isEmpty()) {
-      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules, active);
+      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules);
+      if (isLazyStart()) {
+        for (Schedule schedule : streamSizeSchedules) {
+          try {
+            streamSizeScheduler.suspendSchedule(programId, programType, schedule.getName());
+          } catch (NotFoundException e) {
+            // Should not happen - we just created it. Could have been deleted just in between
+            LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
+          }
+        }
+      }
     }
   }
 
@@ -173,14 +245,17 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    if (!isStarted(scheduler) && isLazyStart()) {
+      lazyStart(scheduler);
+    }
     scheduler.resumeSchedule(program, programType, scheduleName);
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, programType, schedule.getName());
-    scheduler.updateSchedule(program, programType, schedule, active);
+    scheduler.updateSchedule(program, programType, schedule);
   }
 
   @Override

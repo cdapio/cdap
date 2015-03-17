@@ -114,12 +114,11 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule, boolean active) {
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
       }
 
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                           boolean active) {
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       }
 
       @Override
@@ -141,8 +140,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                                 boolean active) {
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
 
       }
 

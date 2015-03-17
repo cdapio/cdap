@@ -60,7 +60,7 @@ public class ProgramGenerationStageTest {
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationDeployable(configuration, DefaultId.APPLICATION, newSpec, null,
-                                               ApplicationDeployScope.USER, appArchive, false));
+                                               ApplicationDeployScope.USER, appArchive));
     Assert.assertTrue(true);
   }
 
