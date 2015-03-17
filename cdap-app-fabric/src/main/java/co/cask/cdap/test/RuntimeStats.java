@@ -164,7 +164,7 @@ public final class RuntimeStats {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached.");
+          throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
         }
       }
 
