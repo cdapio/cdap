@@ -83,41 +83,47 @@ application in the same namespace. WorkerContext can be used to discover the URL
   public void run() {
     URL url = getContext().getServiceURL("myService");
 
-    //To discover a Service in another application in the same namespace, use:
+    // To discover a Service in another application in the same namespace, use:
     url = getContext().getServiceURL("anotherAppName", "anotherServiceId");
   }
 
 Writing to Streams (Beta)
 =========================
 
-Workers can write to ``Streams`` through the ``WorkerContext``. The implementation internally issues to a HTTP request
-to the Stream Service to persist the data. Due to this, a write to a stream cannot be rolled back and thus differs in
-semantics in comparison to writing to ``Datasets`` inside the ``run`` method of a ``TxRunnable``. The write operation
-throws an ``IOException`` if it could not write to ``Streams``. Writing to streams can be performed as single event
-writes or in batch. There are two options to upload events in Batch - uploading a ``File``, writing multiple events
-through a ``StreamBatchWriter``. In the batch mode, the content type of the data must be specified. Refer to
-:ref:`Stream RESTful API <http-restful-api-stream>` for more information on the content type specification.
+Workers have the ability to write to ``Streams`` through the ``WorkerContext``. The implementation internally
+issues an HTTP request to the Stream Service to persist the data. Because of that, a write to a Stream
+cannot be rolled back, and thus differs in semantics compared to writing to ``Datasets`` from inside the
+``run`` method of a ``TxRunnable``.
+
+The write operation throws an ``IOException`` if it could not write to a ``Stream``. Writing to streams can be
+performed as either single event writes or in batch.
+
+When uploading events in batch, there are two options: uploading a ``File`` or writing multiple events
+through a ``StreamBatchWriter``. In batch mode, the content type of the data must be specified. Refer
+to the :ref:`Stream RESTful API <http-restful-api-stream>` for information on the content type specification.
+
 In case of ``StreamBatchWriter``, the ``close`` method needs to called when all the writes have been performed::
 
   @Override
   public void run() {
     try {
-      //Writing a single string event to stream myStream
+      // Writing a single string event to stream myStream
       getContext().write("myStream", "data1");
 
       Map<String, String> header = Maps.newHashMap();
       header.put("k1", "v1");
 
-      //Writing a single string event with header to stream myStream
+      // Writing a single string event with header to stream myStream
       getContext().write("myStream", "data2", header);
 
-      //Writing a set of events as one batch operation to stream myStream (with content type as text)
+      // Writing a set of events as one batch operation to stream myStream (with content type as text)
       StreamBatchWriter batchWriter = getContext().createBatchWriter("myStream", "text/string");
       batchWriter.write(ByteBuffer.wrap(Bytes.toBytes("data1\n")));
       batchWriter.write(ByteBuffer.wrap(Bytes.toBytes("data2\n")));
       batchWriter.write(ByteBuffer.wrap(Bytes.toBytes("data3")));
       batchWriter.close();
     } catch (IOException e) {
-      //Handle exception
+      // Handle exception
     }
   }
+
