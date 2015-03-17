@@ -94,7 +94,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final URI CONNECTION = URI.create("http://localhost:10000");
+  private static final URI CONNECTION = URI.create("http://localhost:11000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
@@ -108,6 +108,7 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       File adapterDir = TMP_FOLDER.newFolder("adapter");
       configuration = CConfiguration.create();
+      configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
