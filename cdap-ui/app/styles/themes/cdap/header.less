@@ -23,7 +23,7 @@ body.theme-cdap header {
 
       &:after {
         position: absolute;
-        content: 'BETA';
+        content: 'ALPHA';
         width: 77px;
         text-align: center;
         background-color: @gray-light;
@@ -54,18 +54,22 @@ body.theme-cdap header {
           li {
             width: 120px;
             overflow: hidden;
-
             text-align: center;
-            text-transform: uppercase;
+            text-transform: lowercase;
             // font-weight: 300;
 
             > a {
               border-radius: 25px;
-              padding: 8px;
-              margin: 2px;
+              padding: 9px;
+              margin: 1px;
+              color:@btn-primary-color;
               &:hover {
                 color: @cdap-orange;
               }
+            }
+
+            a:first-letter{
+              text-transform: uppercase;
             }
 
             &.active > a {
