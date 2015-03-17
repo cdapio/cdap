@@ -36,7 +36,7 @@ import java.util.Set;
  *
  * @param <T> The specification type that this codec handle.
  */
-abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>, JsonDeserializer<T> {
+public abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>, JsonDeserializer<T> {
 
   protected final <V> JsonElement serializeMap(Map<String, V> map,
                                                JsonSerializationContext context,
