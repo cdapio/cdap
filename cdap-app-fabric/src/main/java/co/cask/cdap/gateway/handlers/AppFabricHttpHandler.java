@@ -608,9 +608,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
+                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                          Constants.DEFAULT_NAMESPACE, appId, archiveName);
+                                          Constants.DEFAULT_NAMESPACE, appId, suspendSchedulesStr, archiveName);
   }
 
   /**
@@ -619,10 +621,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
+                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
+                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     return appLifecycleHttpHandler.deploy(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                          Constants.DEFAULT_NAMESPACE, null, archiveName);
+                                          Constants.DEFAULT_NAMESPACE, null, suspendSchedulesStr, archiveName);
   }
 
   /**

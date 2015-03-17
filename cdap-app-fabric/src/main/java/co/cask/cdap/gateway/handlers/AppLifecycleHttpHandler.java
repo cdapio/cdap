@@ -90,15 +90,12 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -113,6 +110,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
@@ -194,9 +192,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
+                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
+                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      boolean suspendSchedules = suspendScheduleOnDeploy(request);
+      boolean suspendSchedules = Boolean.parseBoolean(suspendSchedulesStr);
       return deployApplication(responder, namespaceId, appId, archiveName, suspendSchedules);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
@@ -212,26 +212,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
+                             @QueryParam(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION)
+                             String suspendSchedulesStr,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      boolean suspendSchedules = suspendScheduleOnDeploy(request);
+      boolean suspendSchedules = Boolean.parseBoolean(suspendSchedulesStr);
       return deployApplication(responder, namespaceId, null, archiveName, suspendSchedules);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
-  }
-
-  private boolean suspendScheduleOnDeploy(HttpRequest request) throws URISyntaxException {
-    // Optional argument to suspend schedules upon application deployment
-    Map<String, List<String>> queryParams = new QueryStringDecoder(new URI(request.getUri())).getParameters();
-    boolean suspendSchedules = false;
-    List<String> values = queryParams.get(Constants.Scheduler.SUSPEND_SCHEDULES_DEPLOY_OPTION);
-    if (values != null && values.size() == 1 && Boolean.parseBoolean(values.get(0))) {
-      suspendSchedules = true;
-    }
-    return suspendSchedules;
   }
 
   /**
