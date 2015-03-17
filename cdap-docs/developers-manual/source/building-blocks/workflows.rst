@@ -8,8 +8,16 @@
 Workflows
 ============================================
 
-**Workflows** are used to execute a series of :ref:`MapReduce <mapreduce>` or :ref:`Spark <spark>`
-programs.
+**Workflows** are used to automate the execution of a series of :ref:`MapReduce
+<mapreduce>`, :ref:`Spark <spark>` or :ref:`custom actions <workflow-custom-actions>. It
+allows for both sequential and :ref:`parallel execution <>` of programs.
+
+The workflow system allows specifying, executing, scheduling, and monitoring complex
+series of jobs and tasks in CDAP. The system can manage thousand of workflows and maintain
+millions of historic workflow logs. 
+
+Overview
+========
 
 A Workflow is given a sequence of programs that follow each other, with an optional
 schedule to run the Workflow periodically. Upon successful execution of a program, the
@@ -29,7 +37,9 @@ to the Workflow::
     addMapReduce(new AnotherMapReduce());
     addSpark(new MySpark());
     addWorkflow(new MyWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", "Schedule running every 5 hours", "0 */5 * * *"),
+    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", 
+                                                  "Schedule running every 5 hours", 
+                                                  "0 */5 * * *"),
                      "MyWorkflow");
     ...
   }
@@ -56,10 +66,10 @@ In this example, the ``MyWorkflow`` will be executed every 5 hours. During each 
 of the Workflow, the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and
 the ``MyAction`` custom action will be executed in order.
 
+.. _workflow-custom-actions:
 
 Workflow Custom Action
-======================
-
+----------------------
 In addition to MapReduce and Spark programs, Workflow can also execute custom actions.
 Custom actions are implemented in Java and can perform tasks such as sending an email. To
 define a custom action, you will need to extend the ``AbstractWorkflowAction`` and
@@ -73,17 +83,109 @@ implement the ``run()`` method::
     }
   }
 
-The custom action then can be added to the Workflow using the ``addAction()`` method as shown above.
-
+The custom action then can be added to the Workflow using the ``addAction()`` method as
+shown above.
 
 Concurrent Workflows
-====================
+--------------------
+By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run
+concurrently. To enable concurrent runs for a Workflow, set its runtime argument
+``concurrent.runs.enabled`` to ``true``.
 
-By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run concurrently. To enable
-concurrent runs for a Workflow, set its runtime argument ``concurrent.runs.enabled`` to ``true``.
+
+Parallel Workflows
+==================
+
+The control flow of a Workflow can be described as a directed, acyclic graph of actions.
+To be more precise, we require that it be a series-parallel graph. This is a graph with a
+single start node and a single finish node. In between, execution can fork into concurrent
+branches, but the graph may not have cycles. Every action can be a batch job or a custom
+action (implemented in Java; for example, making a REST call to an external system).
+
+For example, a simple control flow could be computing user and product profiles from
+purchase events. After the start, a batch job could start that joins the events with the
+product catalog. After that, execution could continue with a fork, and with two batch jobs
+running in parallel: one computing use profiles; while the other computes product
+profiles. When they are both done, execution is joined and continues with a custom action
+to upload the computed profiles to a serving system, after which the control flow
+terminates:
+
+.. image:: /_images/parallel-workflow.png
+   :width: 5in
+   :align: center
+
+Forks and Joins
+---------------
+
+To create such a Workflow, you provide a series of *forks* and *joins* in your Workflow
+specification, following these rules:
+
+- Where your control flow initially splits, you place a ``fork`` method. 
+- Every time your control flow splits, you add additional ``.fork`` methods. 
+- Every point where you have either a program or an action, you add a ``.addMapReduce``,
+  ``.addSpark``, or ``.addAction`` method. 
+- To show each fork, use a ``.also`` method to separate the different branches of the
+  control flow. 
+- Where your control flow reconnects, you add a ``.join`` method to indicate. 
+- The control flow always concludes with a ``.join`` method.
+
+The application shown above could be coded as (assuming the other classes referred to exist)::
+
+  public class ParallelWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void configure() {
+      setName("ParallelWorkflow");
+      setDescription("Demonstration of a parallel Workflow");
+      addMapReduce("JoinWithCatalogMR");
+      
+      fork()
+        .addMapReduce("BuildProductProfileMR");
+      .also()
+        .addMapReduce("BuildUserProfileMR");
+      .join();
+      
+      addAction(new UploadProfilesCA());
+    }
+  }
+
+Provided that the control flow does not have cycles or the joining of any branches that do
+not originate from the same fork, flows of different complexity can be created using these
+rules and methods.
+
+More complicated structures can be created using ``.fork``. To add another MapReduce
+that runs in parallel to the entire process described above, you could use code such as::
+
+  public class ParallelWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void configure() {
+      setName("DoubleParallelWorkflow");
+      setDescription("Demonstration of a double parallel Workflow");
+
+      fork()
+        .addMapReduce("JoinWithCatalogMR")
+        .fork()
+          .addMapReduce("BuildProductProfileMR")
+        .also()
+          .addMapReduce("BuildUserProfileMR")
+        .join()
+          .addAction(new UploadProfilesCA())
+      .also()
+        .addMapReduce("LogMonitoringMR")
+      .join();
+    }
+  }
+
+The diagram for this code would be:
+
+.. image:: /_images/double-parallel-workflow.png
+   :width: 5in
+   :align: center
+
 
 Example of Using a Workflow
 ===========================
 
-- For an example of use of **a Workflow,** see the :ref:`Purchase
+- For an example of the use of **a Workflow,** see the :ref:`Purchase
   <examples-purchase>` example.
