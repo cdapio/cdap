@@ -71,7 +71,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
                                     object.getRuntime(), object.getYarnAppId());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     if (liveInfo.getContainers() != null) {
       Table containersTable = Table.builder()
@@ -83,7 +83,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
               object.getMemory(), object.getVirtualCores(), object.getDebugPort());
           }
         }).build();
-      cliConfig.getTableRenderer().render(output, containersTable);
+      cliConfig.getTableRenderer().render(cliConfig, output, containersTable);
     }
   }
 

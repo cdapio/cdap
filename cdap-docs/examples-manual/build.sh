@@ -27,18 +27,24 @@ CHECK_INCLUDES=$TRUE
 function guide_rewrite_sed() {
   echo "Re-writing using sed $1 $2"
   # Re-writes the links in the RST file to point to a local copy of any image links.
-  INCLUDES_DIR=$1
-  GUIDE=$2
-  REDIRECT_S="../../../../.." # Source, 5 redirects
-  REDIRECT_T="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
+  local includes_dir=$1
+  local guide=$2
+  local project_version=$PROJECT_LONG_VERSION
   
-  mkdir $INCLUDES_DIR/$GUIDE
-  sed -e "s|image:: docs/images|image:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.rst > $INCLUDES_DIR/$GUIDE/README.rst
+  local source1="https://raw.githubusercontent.com/cdap-guides"
+  local source2="release/cdap-$project_version-compatible/README.rst"
+
+  local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
+  
+  mkdir $includes_dir/$guide
+  curl --silent $source1/$guide/$source2 --output $includes_dir/$guide/README_SOURCE.rst  
+  sed -e "s|image:: docs/images|image:: $redirect/$guide/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $includes_dir/$guide/README_SOURCE.rst > $includes_dir/$guide/README.rst
 }
 
 function pandoc_includes() {
-  # Re-writes all the image links...
-  guide_rewrite_sed $1 cdap-bi-guide
+  echo "Re-writes all the image links..."
+  version
+  guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
   guide_rewrite_sed $1 cdap-kafka-ingest-guide

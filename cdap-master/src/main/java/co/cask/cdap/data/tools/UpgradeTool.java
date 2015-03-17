@@ -301,6 +301,10 @@ public class UpgradeTool {
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
 
+    LOG.info("Upgrading stream state store table ...");
+    StreamStateStoreUpgrader streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
+    streamStateStoreUpgrader.upgrade();
+
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
     queueConfigUpgrader.upgrade();
