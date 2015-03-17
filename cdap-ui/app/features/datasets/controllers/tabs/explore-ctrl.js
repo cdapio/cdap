@@ -51,10 +51,10 @@ angular.module(PKG.name + '.feature.datasets')
       // FETCHING QUERIES
       $scope.getQueries();
 
-      $scope.results = {};
+      $scope.responses = {};
 
       $scope.fetchResult = function(query) {
-        $scope.results.request = query;
+        $scope.responses.request = query;
 
         // request schema
         dataSrc
@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.datasets')
                           query.query_handle + '/schema'
           })
           .then(function (result) {
-            $scope.results.schema = result;
+            $scope.responses.schema = result;
           });
 
         // request preview
@@ -74,7 +74,7 @@ angular.module(PKG.name + '.feature.datasets')
             method: 'POST'
           })
           .then(function (result) {
-            $scope.results.results = result;
+            $scope.responses.results = result;
           });
       };
 
