@@ -23,7 +23,7 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
-`Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
+`Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
 =============================================================
 
 New Features
