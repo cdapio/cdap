@@ -591,12 +591,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
               result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
             }
           }
-        } else if (type == ProgramType.WORKER) {
-          for (WorkerSpecification workerSpec : appSpec.getWorkers().values()) {
-            if (data == Data.DATASET && workerSpec.getDatasets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), workerSpec, ProgramType.WORKER));
-            }
-          }
         }
       }
     }
