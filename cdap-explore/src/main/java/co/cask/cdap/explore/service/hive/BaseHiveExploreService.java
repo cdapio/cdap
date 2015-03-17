@@ -704,7 +704,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
-        SessionState.get().setCurrentDatabase(database);
+        setCurrentDatabase(database);
 
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf,
@@ -915,6 +915,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
     }
     return listBuilder.build();
+  }
+
+  protected void setCurrentDatabase(String dbName) throws Exception {
+    SessionState.get().setCurrentDatabase(dbName);
   }
 
   /**
