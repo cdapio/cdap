@@ -71,7 +71,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
     TimeSchedule schedule;
     StreamSizeSchedule streamSchedule;
-    if (FakeApp.SCHEDULE_NAME.equals(list.get(0).getSchedule().getName())) {
+    if (list.get(0).getSchedule() instanceof TimeSchedule) {
       schedule = (TimeSchedule) list.get(0).getSchedule();
       streamSchedule = (StreamSizeSchedule) list.get(1).getSchedule();
     } else {

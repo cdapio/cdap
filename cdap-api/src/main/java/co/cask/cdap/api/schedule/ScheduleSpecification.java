@@ -27,20 +27,14 @@ import java.util.Map;
  */
 public final class ScheduleSpecification {
   private final Schedule schedule;
-  private final String scheduleType;
   private final ScheduleProgramInfo program;
   private final Map<String, String> properties;
 
   public ScheduleSpecification(Schedule schedule, ScheduleProgramInfo program, Map<String, String> properties) {
     this.schedule = schedule;
-    this.scheduleType = schedule.getClass().getName();
     this.program = program;
     this.properties = properties == null ? new HashMap<String, String>() :
       Collections.unmodifiableMap(new HashMap<String, String>(properties));
-  }
-
-  public String getScheduleType() {
-    return scheduleType;
   }
 
   /**

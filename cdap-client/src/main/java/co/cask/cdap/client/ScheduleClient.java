@@ -16,32 +16,24 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -50,7 +42,7 @@ import javax.inject.Inject;
 public class ScheduleClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationDeserializer())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
   private final RESTClient restClient;
@@ -114,33 +106,5 @@ public class ScheduleClient {
       throw new NotFoundException("schedule", scheduleId);
     }
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
-  }
-
-  /**
-   * Deserializes {@link ScheduleSpecification}.
-   */
-  private static class ScheduleSpecificationDeserializer implements JsonDeserializer<ScheduleSpecification> {
-
-    @Override
-    public ScheduleSpecification deserialize(JsonElement json, Type typeOfT,
-                                             JsonDeserializationContext context) throws JsonParseException {
-      JsonObject object = json.getAsJsonObject();
-      JsonObject scheduleJson = object.getAsJsonObject("schedule");
-      String scheduleType = object.get("scheduleType").getAsString();
-
-      Schedule schedule;
-      try {
-        Class<? extends Schedule> scheduleClass = (Class<? extends Schedule>) Class.forName(scheduleType);
-        schedule = context.deserialize(scheduleJson, scheduleClass);
-      } catch (Exception e) {
-        throw new JsonParseException("Unknown scheduleType: " + scheduleType, e);
-      }
-
-      ScheduleProgramInfo program = context.deserialize(object.get("program"), ScheduleProgramInfo.class);
-      Map<String, String> properties = context.deserialize(object.get("properties"),
-                                                           new TypeToken<Map<String, String>>() { }.getType());
-
-      return new ScheduleSpecification(schedule, program, properties);
-    }
   }
 }

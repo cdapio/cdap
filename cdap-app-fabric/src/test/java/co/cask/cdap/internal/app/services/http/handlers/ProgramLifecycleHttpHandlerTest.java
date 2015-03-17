@@ -42,7 +42,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -1181,7 +1181,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testServices() throws Exception {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    
+
     // start service in wrong namespace
     int code = getRunnableStartStop(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
                                     ProgramType.SERVICE.getCategoryName(), APP_WITH_SERVICES_SERVICE_NAME, "start");

@@ -23,7 +23,7 @@ import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;

@@ -34,7 +34,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
