@@ -54,7 +54,7 @@ public class ListNamespacesCommand extends AbstractCommand {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(cliConfig, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

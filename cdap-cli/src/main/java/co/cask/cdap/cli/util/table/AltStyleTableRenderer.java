@@ -86,8 +86,7 @@ public class AltStyleTableRenderer implements TableRenderer {
   }
 
   @Override
-  public void render(TableRendererConfig config, Table table) {
-    PrintStream output = config.getOutput();
+  public void render(TableRendererConfig config, PrintStream output, Table table) {
     // outer table width
     int width = config.getLineWidth();
 

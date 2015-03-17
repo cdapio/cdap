@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.cli.util.table;
 
+import java.io.PrintStream;
+
 /**
  * Renders a {@link Table}.
  */
@@ -22,8 +24,9 @@ public interface TableRenderer {
   /**
    * Renders the table to the output.
    *
-   * @param config specifies the output to render to and the width of the table
+   * @param config specifies the width of the table
+   * @param output the output to render to
    * @param table the table to render
    */
-  void render(TableRendererConfig config, Table table);
+  void render(TableRendererConfig config, PrintStream output, Table table);
 }

@@ -62,7 +62,7 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
                                     Joiner.on(", ").join(object.getUsedByModules()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(cliConfig, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

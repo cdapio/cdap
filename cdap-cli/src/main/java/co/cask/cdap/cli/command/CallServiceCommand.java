@@ -124,7 +124,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
                                     bodySize, getBody(byteBuffer));
         }
       }).build();
-    cliConfig.getTableRenderer().render(cliConfig, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

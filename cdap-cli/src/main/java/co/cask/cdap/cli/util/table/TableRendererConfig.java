@@ -15,12 +15,9 @@
  */
 package co.cask.cdap.cli.util.table;
 
-import java.io.PrintStream;
-
 /**
- * Configures {@link TableRenderer#render(co.cask.cdap.cli.CLIConfig, Table)}
+ * Configures {@link TableRenderer#render(TableRendererConfig, PrintStream, Table)}
  */
 public interface TableRendererConfig {
-  PrintStream getOutput();
   int getLineWidth();
 }

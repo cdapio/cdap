@@ -56,7 +56,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getApp(), object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(cliConfig, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

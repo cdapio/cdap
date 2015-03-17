@@ -582,7 +582,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream);
+    PrintStream output = new PrintStream(outputStream);
     Table table = Table.builder()
       .setHeader("name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
@@ -591,7 +591,7 @@ public class CLIMainTest extends StandaloneTestBase {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliMain.getTableRenderer().render(cliConfig, table);
+    cliMain.getTableRenderer().render(cliConfig, output, table);
     final String expectedOutput = outputStream.toString();
 
     testCommand(cli, command, new Function<String, Void>() {

@@ -188,7 +188,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
     }
 
     @Override
-    public void perform(Arguments arguments, PrintStream printStream) throws Exception {
+    public void perform(Arguments arguments, PrintStream output) throws Exception {
       String[] programIdParts = arguments.get(ElementType.WORKFLOW.getArgumentName().toString()).split("\\.");
       if (programIdParts.length < 2) {
         throw new CommandInputError(this);
@@ -213,7 +213,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
                                       GSON.toJson(object.getProperties()));
           }
         }).build();
-      cliConfig.getTableRenderer().render(cliConfig, table);
+      cliConfig.getTableRenderer().render(cliConfig, output, table);
     }
 
     private String getScheduleType(Schedule schedule) {

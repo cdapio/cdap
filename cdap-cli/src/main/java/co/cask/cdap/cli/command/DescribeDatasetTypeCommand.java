@@ -59,7 +59,7 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(cliConfig, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
