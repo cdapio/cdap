@@ -64,7 +64,6 @@ COPY cdap-notifications /Build/cdap-notifications
 COPY cdap-notifications-api /Build/cdap-notifications-api
 COPY cdap-proto /Build/cdap-proto
 COPY cdap-security /Build/cdap-security
-COPY cdap-security-service /Build/cdap-security-service
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-test /Build/cdap-test
 COPY cdap-unit-test /Build/cdap-unit-test
