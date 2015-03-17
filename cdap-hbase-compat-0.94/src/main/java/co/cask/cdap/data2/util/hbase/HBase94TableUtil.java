@@ -239,22 +239,27 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<String, HBaseTableUtil.TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, HBaseTableUtil.TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-
-    Map<String, TableStats> datasetStat = Maps.newHashMap();
+    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
     for (ServerName serverName : clusterStatus.getServers()) {
       Map<byte[], HServerLoad.RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
       for (HServerLoad.RegionLoad regionLoad : regionsLoad.values()) {
-        String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
-        TableStats stat = datasetStat.get(tableName);
+        byte[] tableNameInBytes = HRegionInfo.getTableName(regionLoad.getName());
+        String tableName = Bytes.toString(tableNameInBytes);
+        if (!admin.tableExists(tableName) || !isCDAPTable(admin.getTableDescriptor(tableNameInBytes))) {
+          continue;
+        }
+        HTableNameConverter hTableNameConverter = new HTable94NameConverter();
+        TableId tableId = hTableNameConverter.from(new HTableDescriptor(tableName));
+        TableStats stat = datasetStat.get(tableId);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          datasetStat.put(tableName, stat);
+          datasetStat.put(tableId, stat);
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
           stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());

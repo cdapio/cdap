@@ -181,7 +181,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleProgramArgs(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, DEVELOPER_ACCOUNT,
+    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, Constants.DEVELOPER_ACCOUNT,
                                                        appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
@@ -204,8 +204,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleRunRecordStarted(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {
@@ -228,8 +229,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    */
   private void handleRunRecordCompleted(final String appId, final String programId, final ProgramType programType) {
 
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {

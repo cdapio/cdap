@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -170,7 +171,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testBackwardCompatibility() throws IOException {
+  public void testBackwardCompatibility() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
@@ -202,7 +203,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testListAllInNamespace() throws IOException {
+  public void testListAllInNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
                                                         TableId.from("foo", "other.table"),
@@ -235,7 +236,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInDefaultNamespace() throws IOException {
+  public void testDropAllInDefaultNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId tableId = TableId.from("default", "some.table1");
     create(tableId);
@@ -260,7 +261,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInOtherNamespaceWithPrefix() throws IOException {
+  public void testDropAllInOtherNamespaceWithPrefix() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     createNamespace("foonamespace");
     createNamespace("barnamespace");
@@ -317,6 +318,7 @@ public abstract class AbstractHBaseTableUtilTest {
     getTableUtil().createNamespaceIfNotExists(hAdmin, Id.Namespace.from(namespace));
   }
 
+
   private void deleteNamespace(String namespace) throws IOException {
     getTableUtil().deleteNamespaceIfExists(hAdmin, Id.Namespace.from(namespace));
   }
@@ -370,7 +372,9 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
+    // todo : should support custom table-prefix
     TableId tableId = TableId.from(namespace, tableName);
-    return tableUtil.getTableStats(hAdmin).get(getTableNameAsString(tableId));
+    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(hAdmin);
+    return statsMap.get(tableId);
   }
 }

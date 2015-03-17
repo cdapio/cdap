@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -32,8 +33,9 @@ import javax.annotation.Nullable;
  * The granularity of time is in minutes, that is, any seconds or milliseconds after the
  * full minute is ignored for the partition keys. That means, there can not be be two partitions
  * in the same minute. Also, when retrieving partitions via time or time range using
- * {@link #getPartition}, {@link #getPartitionPaths}, or {@link #getPartitions}, the seconds
- * and milliseconds on the time or time range are ignored.
+ * {@link #getPartitionByTime}, {@link #getPartitionsByTime}, or when writing a partition using
+ * {@link #getPartitionOutput}, the seconds and milliseconds on the
+ * time or time range are ignored.
  * <p>
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
  * properties when the dataset is created. See {@link co.cask.cdap.api.dataset.lib.FileSetProperties}
@@ -54,22 +56,45 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   public void dropPartition(long time);
 
   /**
-   * @return the relative path of the partition for a specific time, rounded to the minute.
+   * Return the partition associated with the given time, rounded to the minute;
+   * or null if no such partition exists.
    */
   @Nullable
-  public String getPartition(long time);
+  public TimePartition getPartitionByTime(long time);
 
   /**
-   * @return the relative paths of all partitions with a time that is between startTime (inclusive)
-   *         and endTime (exclusive), both rounded to the full minute.
+   * Return all partitions within the time range given by startTime (inclusive) and endTime (exclusive),
+   * both rounded to the full minute.
    */
-  public Collection<String> getPartitionPaths(long startTime, long endTime);
+  public Set<TimePartition> getPartitionsByTime(long startTime, long endTime);
+
+  /**
+   * Return a partition output for a specific time, rounded to the minute, in preparation for creating a new partition.
+   * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
+   * to add the partition to this dataset.
+   */
+  public TimePartitionOutput getPartitionOutput(long time);
+
+  /**
+   * @return the relative path of the partition for a specific time, rounded to the minute.
+   */
+  @Deprecated
+  @Nullable
+  public String getPartition(long time);
 
   /**
    * @return a mapping from the partition time to the relative path, of all partitions with a time
    *         that is between startTime (inclusive) and endTime (exclusive), both rounded to the full minute.
    */
+  @Deprecated
   public Map<Long, String> getPartitions(long startTime, long endTime);
+
+  /**
+   * @return the relative paths of all partitions with a time that is between startTime (inclusive)
+   *         and endTime (exclusive), both rounded to the full minute.
+   */
+  @Deprecated
+  public Collection<String> getPartitionPaths(long startTime, long endTime);
 
   /**
    * @return the underlying (embedded) file set.

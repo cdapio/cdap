@@ -143,7 +143,7 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete %s preferences [<%s>]", type.getName(), type.getArgumentName());
+    return String.format("delete preferences %s [<%s>]", type.getName(), type.getArgumentName());
   }
 
   @Override

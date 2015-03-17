@@ -74,7 +74,6 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   public void postTxCommit() {
-    super.postTxCommit();
     if (commitCount > EVICTION_LIMIT && transaction != null) {
       // Fire and forget eviction.
       queueEvictor.evict(transaction);

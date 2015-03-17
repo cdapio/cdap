@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase98;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
@@ -25,7 +26,9 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable98NameConverter;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
+import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.persist.TransactionSnapshot;
+import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +46,7 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 
@@ -61,6 +65,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private Configuration conf;
   private byte[] configTableNameBytes;
   private CConfigurationReader cConfReader;
+  TransactionStateCache txStateCache;
+  private Supplier<TransactionSnapshot> txSnapshotSupplier;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -93,9 +99,17 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       conf = env.getConfiguration();
       String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
       TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
+      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
+      txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
+      txSnapshotSupplier = new Supplier<TransactionSnapshot>() {
+        @Override
+        public TransactionSnapshot get() {
+          return txStateCache.getLatestState();
+        }
+      };
       configTableNameBytes = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
-      cConfReader = new CConfigurationReader(conf, nameConverter.getSysConfigTablePrefix(tableDesc));
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader);
+      cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
     }
   }
 
@@ -125,9 +139,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
     }
     return configCache;
+  }
+
+  // need for queue unit-test
+  private TransactionStateCache getTxStateCache() {
+    return txStateCache;
   }
 
   /**
