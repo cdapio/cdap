@@ -211,7 +211,7 @@ public class CLIMainTest extends StandaloneTestBase {
     BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       for (int i = 0; i < 10; i++) {
-        writer.write("Event " + i);
+        writer.write(String.format("%s, Event %s", i, i));
         writer.newLine();
       }
     } finally {
@@ -219,7 +219,16 @@ public class CLIMainTest extends StandaloneTestBase {
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully send stream event to stream");
-    testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
+    testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              String.format("No schema found for Stream '%s'", streamId));
+    testCommandOutputContains(cli, "set stream format " + streamId + " csv",
+                              String.format("Successfully set format of stream '%s'", streamId));
+    testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              "Analyzing 100 Stream events in the time range [0, 9223372036854775807]");
+    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 50 start 50 end 500",
+                              "Analyzing 50 Stream events in the time range [50, 500]");
   }
 
   @Test
