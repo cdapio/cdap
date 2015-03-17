@@ -91,7 +91,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
             return object.getColumns();
           }
         }).build();
-      cliConfig.getTableRenderer().render(output, table);
+      cliConfig.getTableRenderer().render(cliConfig, output, table);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {

@@ -27,4 +27,5 @@ public class AltStyleTableRendererTest extends TableRendererTest {
   public TableRenderer getRenderer() {
     return new AltStyleTableRenderer();
   }
+  
 }

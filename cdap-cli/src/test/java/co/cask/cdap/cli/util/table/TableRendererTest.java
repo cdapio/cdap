@@ -19,11 +19,22 @@ import com.google.common.base.Strings;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.PrintStream;
+
 /**
  *
  */
 @Ignore
 public abstract class TableRendererTest {
+
+  private static final int LINE_WIDTH = 80;
+  private static final PrintStream OUTPUT = System.out;
+  private static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
+    @Override
+    public int getLineWidth() {
+      return LINE_WIDTH;
+    }
+  };
 
   public abstract TableRenderer getRenderer();
 
@@ -37,7 +48,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -50,7 +61,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -63,7 +74,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -76,7 +87,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -89,7 +100,7 @@ public abstract class TableRendererTest {
                  .add("r3333", "r3", "r3\n1")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -100,7 +111,7 @@ public abstract class TableRendererTest {
                  .add(Strings.repeat("z", 80) + "a")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -111,7 +122,7 @@ public abstract class TableRendererTest {
                  .add("abc")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 
   @Test
@@ -122,6 +133,6 @@ public abstract class TableRendererTest {
                  .add(Strings.repeat("z", 80 * 2) + "a")
                  .build())
       .build();
-    getRenderer().render(System.out, table);
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
   }
 }

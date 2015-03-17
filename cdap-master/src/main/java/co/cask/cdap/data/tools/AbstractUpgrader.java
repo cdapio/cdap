@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractUpgrader.class);
-  protected static final String DEVELOPER_ACCOUNT = "developer";
   protected final LocationFactory locationFactory;
 
   public AbstractUpgrader(LocationFactory locationFactory) {
@@ -67,8 +66,8 @@ public abstract class AbstractUpgrader {
         throw ioe;
       }
     } else {
-      LOG.debug("New location {} already exists and old location {} does not exists. The location might already be " +
-                  "updated.", newLocation, oldLocation);
+      LOG.debug("Failed to perform rename. Either the new location {} already exists or old location {} " +
+                  "does not exist.", newLocation, oldLocation);
       return null;
     }
   }
