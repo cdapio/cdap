@@ -19,6 +19,7 @@ Operations
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
+    Transaction Service Maintenance <tx-maintenance>
     Troubleshooting <troubleshooting>
     
 
@@ -56,6 +57,12 @@ Operations
 .. _cdap-console: cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+
+
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
 
 
 .. |troubleshooting| replace:: **Troubleshooting:**

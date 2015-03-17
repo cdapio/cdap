@@ -84,6 +84,11 @@ and introduces the CDAP Console.**
 
 - |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
 
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: operations/tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: operations/cdap-console.html
 
