@@ -32,6 +32,7 @@ import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -65,11 +66,22 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
           if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
             LOG.info("Starting scheduler, Discovered {} dataset service(s)",
                      Iterables.size(serviceDiscovered));
-            try {
-              startScheduler();
-              schedulerStarted.set(true);
-            } catch (Throwable t) {
-              LOG.error("Exception when starting scheduler.", t);
+            int retries = 0;
+            while (true) {
+              try {
+                startScheduler();
+                schedulerStarted.set(true);
+                LOG.info("Scheduler service started successfully.");
+                break;
+              } catch (Throwable t) {
+                retries++;
+                LOG.warn("Error during retry# {} - {}", retries, t);
+                try {
+                  TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                  LOG.warn("Interrupted during retry# {} - {}", retries, e.getMessage());
+                }
+              }
             }
           }
         }
