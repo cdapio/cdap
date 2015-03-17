@@ -99,7 +99,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(2, TimeUnit.MINUTES)
+      .expireAfterAccess(2, TimeUnit.HOURS)
       .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
