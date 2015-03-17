@@ -972,7 +972,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         specList.add(entry.getValue());
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJsonTree(specList));
+    responder.sendJson(HttpResponseStatus.OK, specList,
+                       new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
   }
 
   /**
