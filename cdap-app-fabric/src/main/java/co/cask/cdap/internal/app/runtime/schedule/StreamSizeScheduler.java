@@ -249,7 +249,8 @@ public class StreamSizeScheduler implements Scheduler {
     StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
 
     // Add the scheduleTask to the StreamSubscriber
-    streamSubscriber.restoreScheduleFromStore(program, programType, streamSizeSchedule, active, basePollSize, basePollTs, lastRunSize, lastRunTs);
+    streamSubscriber.restoreScheduleFromStore(program, programType, streamSizeSchedule, active,
+                                              basePollSize, basePollTs, lastRunSize, lastRunTs);
     scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
                                                                    streamSizeSchedule.getName()),
                             streamSubscriber);
@@ -275,7 +276,8 @@ public class StreamSizeScheduler implements Scheduler {
     char startChar = ':';
     char endChar = (char) (startChar + 1);
     String programScheduleId = AbstractSchedulerService.programIdFor(program, programType);
-    return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar), String.format("%s%c", programScheduleId, endChar)).keySet());
+    return ImmutableList.copyOf(scheduleSubscribers.subMap(String.format("%s%c", programScheduleId, startChar),
+                                                           String.format("%s%c", programScheduleId, endChar)).keySet());
   }
 
   @Override
