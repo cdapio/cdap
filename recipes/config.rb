@@ -76,10 +76,10 @@ end
 
 execute 'copy logback-container.xml from conf.dist' do
   command "cp /etc/cdap/conf.dist/logback-container.xml /etc/cdap/#{node['cdap']['conf_dir']}"
-  not_if {
+  not_if do
     ::File.exist?("/etc/cdap/#{node['cdap']['conf_dir']}/logback-container.xml") ||
-    node['cdap']['version'].to_f < 2.8
-  }
+      node['cdap']['version'].to_f < 2.8
+  end
 end
 
 # Update alternatives to point to our configuration
