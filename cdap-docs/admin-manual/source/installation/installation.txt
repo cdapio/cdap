@@ -127,11 +127,11 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from v0.8.16 through v0.10.32) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be v0.8.16 or greater.
+#. The version of Node.js must be from v0.8.16 through v0.10.36.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
-   `nodejs.org/download/ <http://nodejs.org/download/>`__.
+   `nodejs.org/download/ <http://nodejs.org/dist/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
