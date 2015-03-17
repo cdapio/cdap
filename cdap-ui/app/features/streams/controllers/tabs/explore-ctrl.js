@@ -4,7 +4,7 @@ angular.module(PKG.name + '.feature.streams')
 
       var dataSrc = new MyDataSource($scope);
 
-      $scope.activePanel = 2;
+      $scope.activePanel = 0;
 
 
       var now = Date.now();
