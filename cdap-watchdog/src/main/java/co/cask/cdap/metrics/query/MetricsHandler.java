@@ -186,9 +186,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       MetricDeleteQuery query = new MetricDeleteQuery(startTs, endTs, metric, tagsSliceBy);
       metricStore.delete(query);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      LOG.warn("Invalid request", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
