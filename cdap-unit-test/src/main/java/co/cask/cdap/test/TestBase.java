@@ -26,20 +26,31 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
+import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
+import co.cask.cdap.data.stream.service.StreamFileJanitorService;
+import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.stream.service.StreamHandlerV2;
+import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -51,18 +62,28 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
+import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
+import co.cask.cdap.test.internal.LocalNamespaceClient;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -74,6 +95,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
@@ -118,6 +140,7 @@ public class TestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static NamespaceAdmin namespaceAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
@@ -197,6 +220,27 @@ public class TestBase {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
+        protected void configure() {
+          bind(StreamHandlerV2.class).in(Scopes.SINGLETON);
+          bind(StreamFetchHandlerV2.class).in(Scopes.SINGLETON);
+          bind(StreamHandler.class).in(Scopes.SINGLETON);
+          bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
+          bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class).in(Scopes.SINGLETON);
+          bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
+          bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
+          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
+        }
+      },
+      // todo: do we need handler?
+      new MetricsHandlerModule(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules(),
+      new ExploreRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
         @SuppressWarnings("deprecation")
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
@@ -238,6 +282,8 @@ public class TestBase {
                                       injector.getInstance(ApplicationManagerFactory.class));
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -279,11 +325,12 @@ public class TestBase {
   }
 
   @AfterClass
-  public static final void finish() {
+  public static final void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
     if (--startCount != 0) {
       return;
     }
 
+    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();

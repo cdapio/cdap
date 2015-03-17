@@ -56,8 +56,8 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. |operations| replace:: **Operations:**
 .. _operations: installation/index.html
 
-|operations|_ Covers **logging, metrics, preferences, scaling instances and
-introduces the CDAP Console.** 
+|operations|_ Covers **logging, metrics, preferences, scaling instances, resource guarantees, 
+and introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html
@@ -79,10 +79,20 @@ introduces the CDAP Console.**
 
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
 
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: operations/resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: operations/cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: operations/tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html

@@ -30,13 +30,15 @@ import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -110,10 +112,13 @@ public class WorkflowApp extends AbstractApplication {
       File successFile = new File(outputDir, "_SUCCESS");
       Preconditions.checkState(successFile.exists());
       try {
-        FileUtils.deleteDirectory(successFile);
-      } catch (IOException e) {
+        successFile.delete();
+      } catch (Exception e) {
         Throwables.propagate(e);
       }
+      List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      distData.collect();
       Preconditions.checkState(!successFile.exists());
     }
   }

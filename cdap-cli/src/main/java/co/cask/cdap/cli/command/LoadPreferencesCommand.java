@@ -26,8 +26,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.ConversionException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -71,19 +69,12 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
     try {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-      } else if (contentType.equals("xml")) {
-        XStream xStream = new XStream();
-        xStream.alias("map", Map.class);
-        args = (Map<String, String>) xStream.fromXML(reader);
       } else {
-        throw new IllegalArgumentException("Unsupported file format. Only json and xml formats are supported");
+        throw new IllegalArgumentException("Unsupported file format. Only json format is supported");
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
         String.format("Json Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
-    } catch (ConversionException e) {
-      throw new BadRequestException(
-        String.format("XML Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
     } finally {
       reader.close();
     }

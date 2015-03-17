@@ -22,6 +22,7 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,18 +30,25 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class StreamAdminTest {
+  protected static final String FOO_NAMESPACE = "fooNamespace";
+  protected static final String OTHER_NAMESPACE = "otherNamespace";
 
   protected abstract StreamAdmin getStreamAdmin();
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
+
+  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
+    locationFactory.create(FOO_NAMESPACE).mkdirs();
+    locationFactory.create(OTHER_NAMESPACE).mkdirs();
+  }
 
   @Test
   public void testCreateExist() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     String streamName = "streamName";
-    Id.Stream streamId = Id.Stream.from("fooNamespace", streamName);
-    Id.Stream otherStreamId = Id.Stream.from("otherNamespace", streamName);
+    Id.Stream streamId = Id.Stream.from(FOO_NAMESPACE, streamName);
+    Id.Stream otherStreamId = Id.Stream.from(OTHER_NAMESPACE, streamName);
 
     Assert.assertFalse(streamAdmin.exists(streamId));
     Assert.assertFalse(streamAdmin.exists(otherStreamId));
@@ -59,12 +67,11 @@ public abstract class StreamAdminTest {
   public void testDropAllInNamespace() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
 
-    Id.Stream otherStream = Id.Stream.from("otherNamespace", "otherStream");
+    Id.Stream otherStream = Id.Stream.from(OTHER_NAMESPACE, "otherStream");
 
-    String fooNamespace = "fooNamespace";
     List<Id.Stream> fooStreams = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
-      fooStreams.add(Id.Stream.from(fooNamespace, "stream" + i));
+      fooStreams.add(Id.Stream.from(FOO_NAMESPACE, "stream" + i));
     }
 
     List<Id.Stream> allStreams = Lists.newArrayList();
@@ -78,7 +85,7 @@ public abstract class StreamAdminTest {
       Assert.assertNotEquals(0, getStreamSize(stream));
     }
 
-    streamAdmin.dropAllInNamespace(Id.Namespace.from(fooNamespace));
+    streamAdmin.dropAllInNamespace(Id.Namespace.from(FOO_NAMESPACE));
 
     // All of the streams within the default namespace should have no data in them
     for (Id.Stream defaultStream : fooStreams) {

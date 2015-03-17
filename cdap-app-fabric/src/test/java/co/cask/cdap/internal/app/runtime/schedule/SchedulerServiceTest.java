@@ -26,8 +26,10 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -42,17 +44,16 @@ import org.junit.Test;
 import java.util.List;
 
 public class SchedulerServiceTest {
-  public static SchedulerService schedulerService;
-  public static NotificationFeedManager notificationFeedManager;
-  public static Store store;
-  public static LocationFactory locationFactory;
+  private static SchedulerService schedulerService;
+  private static Store store;
+  private static LocationFactory locationFactory;
+  private static NamespaceAdmin namespaceAdmin;
 
-  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Application appId = new Id.Application(Constants.DEFAULT_NAMESPACE_ID, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(account, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "stream");
   private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule timeSchedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
   private static final Schedule dataSchedule1 =
@@ -63,13 +64,15 @@ public class SchedulerServiceTest {
   @BeforeClass
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
-    notificationFeedManager = AppFabricTestHelper.getInjector().getInstance(NotificationFeedManager.class);
     store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
+    namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
   @AfterClass
-  public static void finish() {
+  public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
+    namespaceAdmin.deleteDatasets(Constants.DEFAULT_NAMESPACE_ID);
     schedulerService.stopAndWait();
   }
 

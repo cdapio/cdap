@@ -14,12 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.util.StringStyler;
+import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -43,12 +44,13 @@ import java.util.List;
  */
 public class HelpCommand implements Command {
 
-  static final int COL_WIDTH = 80;
-
   protected final Supplier<Iterable<CommandSet<Command>>> commands;
 
-  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
+  private final TableRendererConfig tableRendererConfig;
+
+  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands, TableRendererConfig tableRendererConfig) {
     this.commands = commands;
+    this.tableRendererConfig = tableRendererConfig;
   }
 
   @Override
@@ -99,8 +101,8 @@ public class HelpCommand implements Command {
     output.println();
 
     for (Command command : commandList) {
-      printPattern(command.getPattern(), output, COL_WIDTH, 2);
-      wrappedPrint(command.getDescription(), output, COL_WIDTH, 4);
+      printPattern(command.getPattern(), output, tableRendererConfig.getLineWidth(), 2);
+      wrappedPrint(command.getDescription(), output, tableRendererConfig.getLineWidth(), 4);
       output.println();
     }
   }

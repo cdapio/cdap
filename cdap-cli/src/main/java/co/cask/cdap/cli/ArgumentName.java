@@ -79,7 +79,9 @@ public enum ArgumentName {
   ADAPTER_SINK("adapter-sink"),
   ADAPTER_SINK_PROPS("adapter-sink-config"),
   ADAPTER("adapter-name"),
-  COMMAND_CATEGORY("command-category");
+  COMMAND_CATEGORY("command-category"),
+
+  TABLE_RENDERER("table-renderer");
 
   private final String name;
 

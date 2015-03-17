@@ -46,7 +46,6 @@ import org.junit.runners.Suite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
@@ -209,7 +208,7 @@ public class GatewayFastTestsSuite {
   }
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     GatewayTestBase.beforeClass();
     GatewayTestBase.runBefore = false;
     GatewayTestBase.runAfter = false;
@@ -217,7 +216,7 @@ public class GatewayFastTestsSuite {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws Exception {
     GatewayTestBase.runAfter = true;
     GatewayTestBase.afterClass();
   }

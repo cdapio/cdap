@@ -19,9 +19,10 @@ package co.cask.cdap.cli.commandset;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.ConnectCommand;
-import co.cask.cdap.cli.command.ExitCommand;
-import co.cask.cdap.cli.command.QuitCommand;
-import co.cask.cdap.cli.command.VersionCommand;
+import co.cask.cdap.cli.command.system.ExitCommand;
+import co.cask.cdap.cli.command.system.QuitCommand;
+import co.cask.cdap.cli.command.system.RenderAsCommand;
+import co.cask.cdap.cli.command.system.VersionCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -41,6 +42,7 @@ public class GeneralCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(ExitCommand.class))
         .add(injector.getInstance(QuitCommand.class))
         .add(injector.getInstance(ConnectCommand.class))
+        .add(injector.getInstance(RenderAsCommand.class))
         .build());
   }
 
