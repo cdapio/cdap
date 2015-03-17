@@ -74,6 +74,14 @@ execute 'copy logback.xml from conf.dist' do
   not_if { ::File.exist?("/etc/cdap/#{node['cdap']['conf_dir']}/logback.xml") }
 end
 
+execute 'copy logback-container.xml from conf.dist' do
+  command "cp /etc/cdap/conf.dist/logback-container.xml /etc/cdap/#{node['cdap']['conf_dir']}"
+  not_if {
+    ::File.exist?("/etc/cdap/#{node['cdap']['conf_dir']}/logback-container.xml") ||
+    node['cdap']['version'].to_f < 2.8
+  }
+end
+
 # Update alternatives to point to our configuration
 execute 'update cdap-conf alternatives' do
   command "update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/#{node['cdap']['conf_dir']} 50"
