@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Upgrades Dataset instances MDS
@@ -181,11 +182,16 @@ public final class DatasetInstanceMDSUpgrader {
   private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
+    return migrateDatasetSpec(oldSpec, newDatasetName);
+  }
+
+  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec, String newDatasetName) {
     DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
       .properties(oldSpec.getProperties());
-    for (DatasetSpecification embeddedDsSpec : oldSpec.getSpecifications().values()) {
+    for (Map.Entry<String, DatasetSpecification> dsSpecEntry : oldSpec.getSpecifications().entrySet()) {
+      DatasetSpecification embeddedDsSpec = dsSpecEntry.getValue();
       LOG.debug("Migrating embedded Dataset spec: {}", embeddedDsSpec);
-      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
+      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec, dsSpecEntry.getKey());
       LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
       builder.datasets(migratedEmbeddedSpec);
     }

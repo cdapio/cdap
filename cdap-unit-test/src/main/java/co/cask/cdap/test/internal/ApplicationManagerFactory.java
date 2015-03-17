@@ -17,6 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.filesystem.Location;
@@ -26,6 +27,6 @@ import org.apache.twill.filesystem.Location;
  */
 public interface ApplicationManagerFactory {
 
-  ApplicationManager create(@Assisted("accountId") String accountId, @Assisted("applicationId") String applicationId,
+  ApplicationManager create(@Assisted("applicationId") Id.Application applicationId,
                             Location deployedJar, ApplicationSpecification appSpec);
 }

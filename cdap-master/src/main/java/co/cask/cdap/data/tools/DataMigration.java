@@ -80,24 +80,25 @@ public class DataMigration {
     if (action == null) {
       return;
     }
+    action.perform(getInjector());
+  }
 
+  public Injector getInjector() {
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create();
 
-    Injector injector = Guice.createInjector(
+    return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-          bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
         }
       });
-    action.perform(injector);
   }
 
   public MigrationAction getAction(String[] args) {

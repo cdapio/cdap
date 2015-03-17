@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.VersionCommand;
+import co.cask.cdap.cli.command.system.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
@@ -57,8 +57,8 @@ public class CLIConfig {
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
-  private final TableRenderer tableRenderer;
 
+  private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
 
   /**
@@ -89,11 +89,13 @@ public class CLIConfig {
     return clientConfig.getNamespace();
   }
 
+  public void setTableRenderer(TableRenderer tableRenderer) {
+    this.tableRenderer = tableRenderer;
+  }
+
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
     clientConfig.setConnectionConfig(connectionConfig);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(connectionConfig);
-    }
+    notifyConnectionChanged();
   }
 
   public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
@@ -239,6 +241,13 @@ public class CLIConfig {
     }
   }
 
+  public void setNamespace(Id.Namespace namespace) {
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(namespace)
+      .build();
+    this.setConnectionConfig(connectionConfig);
+  }
+
   public ClientConfig getClientConfig() {
     return clientConfig;
   }
@@ -251,10 +260,16 @@ public class CLIConfig {
     this.connectionChangeListeners.add(listener);
   }
 
+  private void notifyConnectionChanged() {
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig);
+    }
+  }
+
   /**
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(ConnectionConfig connectionConfig);
+    void onConnectionChanged(ClientConfig clientConfig);
   }
 }

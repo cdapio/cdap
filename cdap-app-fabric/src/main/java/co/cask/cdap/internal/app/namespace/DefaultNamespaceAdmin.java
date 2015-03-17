@@ -35,7 +35,6 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,27 +74,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * This should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
-   */
-  private void createDefaultNamespace() {
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    NamespaceMeta defaultNamespace = builder
-      .setName(Constants.DEFAULT_NAMESPACE)
-      .setDescription("Default Namespace")
-      .build();
-
-    try {
-      createNamespace(defaultNamespace);
-      LOG.info("Successfully created 'default' namespace.");
-    } catch (AlreadyExistsException e) {
-      LOG.info("'default' namespace already exists.");
-    } catch (NamespaceCannotBeCreatedException e) {
-      LOG.error("Error while creating default namespace", e);
-      Throwables.propagate(e);
-    }
-  }
-
-  /**
    * Lists all namespaces
    *
    * @return a list of {@link NamespaceMeta} for all namespaces
@@ -126,18 +104,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return true, if the specifed namespace exists, false otherwise
    */
   public boolean hasNamespace(Id.Namespace namespaceId) {
-    boolean exists = true;
     try {
       getNamespace(namespaceId);
     } catch (NotFoundException e) {
-      // TODO: CDAP-1213 do this better
-      if (Constants.DEFAULT_NAMESPACE.equals(namespaceId.getId())) {
-        createDefaultNamespace();
-      } else {
-        exists = false;
-      }
+      return false;
     }
-    return exists;
+    return true;
   }
 
   /**
@@ -149,8 +121,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public void createNamespace(NamespaceMeta metadata) throws NamespaceCannotBeCreatedException, AlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getName()));
-    if (existing != null) {
+    if (hasNamespace(Id.Namespace.from(metadata.getName()))) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getName());
     }
 

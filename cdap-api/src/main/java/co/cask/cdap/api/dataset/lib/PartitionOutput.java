@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.api.dataset.lib;
 
 /**
- * {@link ExitCommand}, but with a different command pattern.
+ * Represents a partition of a partitioned file set for writing.
  */
-public class QuitCommand extends ExitCommand {
+public interface PartitionOutput extends Partition {
 
-  @Override
-  public String getPattern() {
-    return "quit";
-  }
+  /**
+   * Add the partition to the partitioned file set.
+   */
+  void addPartition();
 }

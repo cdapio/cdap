@@ -76,8 +76,7 @@ public abstract class AbstractNamespaceClient {
     throw new IOException("Cannot delete namespace. Reason: " + "getDetails(response)");
   }
 
-  public void create(NamespaceMeta namespaceMeta) throws AlreadyExistsException, BadRequestException, IOException,
-    UnauthorizedException {
+  public void create(NamespaceMeta namespaceMeta) throws Exception {
     URL url = resolve(String.format("namespaces/%s", namespaceMeta.getName()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
