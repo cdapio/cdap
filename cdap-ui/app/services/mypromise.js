@@ -68,12 +68,12 @@ angular.module(PKG.name + '.services')
 
       this.done = function (onFulfilled, onRejected) {
         // ensure we are always asynchronous
-        setTimeout(function () {
+        //setTimeout(function () {
           handle({
             onFulfilled: onFulfilled,
             onRejected: onRejected
           });
-        }, 0);
+        //}, 0);
       }
 
 
