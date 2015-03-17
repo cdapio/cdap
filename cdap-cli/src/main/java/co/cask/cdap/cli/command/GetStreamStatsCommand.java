@@ -187,7 +187,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     }
 
     if (isInt || isLong || isFloat || isDouble) {
-      result.add(new HistogramProcessor());
+      result.add(new HistogramProcessor(cliConfig));
     }
 
     return result.build();
@@ -260,11 +260,15 @@ public class GetStreamStatsCommand extends AbstractCommand {
   private static final class HistogramProcessor implements StatsProcessor {
 
     private static final int MIN_BAR_WIDTH = 5;
-    private static final int MAX_PRINT_WIDTH = 80;
 
     // 0 -> [0, 99], 1 -> [100, 199], etc. (bucket size is BUCKET_SIZE)
     private final Multiset<Integer> buckets = HashMultiset.create();
     private static final int BUCKET_SIZE = 100;
+    private final CLIConfig cliConfig;
+
+    public HistogramProcessor(CLIConfig cliConfig) {
+      this.cliConfig = cliConfig;
+    }
 
     @Override
     public void process(Object element) {
@@ -285,7 +289,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
         int maxCount = getBiggestBucket().getCount();
         int longestPrefix = getLongestBucketPrefix();
         // max length of the bar
-        int maxBarLength = Math.max(MIN_BAR_WIDTH, MAX_PRINT_WIDTH - longestPrefix);
+        int maxBarLength = Math.max(MIN_BAR_WIDTH, cliConfig.getLineWidth() - longestPrefix);
 
         for (Integer bucketIndex : sortedBuckets) {
           Bucket bucket = new Bucket(bucketIndex, buckets.count(bucketIndex));
