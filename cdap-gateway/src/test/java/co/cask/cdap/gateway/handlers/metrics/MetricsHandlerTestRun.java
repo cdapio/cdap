@@ -58,6 +58,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static final List<String> FLOW_TAGS = ImmutableList.of(Tag.NAMESPACE, Tag.APP, Tag.FLOW, Tag.FLOWLET);
 
   private static long emitTs;
+  private static long secondEmitTs;
 
   @Before
   public void setup() throws Exception {
@@ -81,6 +82,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(1);
     collector.increment("reads", 1);
     TimeUnit.MILLISECONDS.sleep(2000);
+    secondEmitTs = System.currentTimeMillis();
     collector.increment("reads", 2);
 
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
@@ -281,6 +283,79 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&start=" + start + "&end=" + end, groupByResult);
   }
 
+
+  @Test
+  public void testDeleteMetrics() throws Exception {
+
+    //aggregate result, in the right namespace
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&aggregate=true", 3);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "counter") +
+        "&metric=system.reads&aggregate=true", 1);
+
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 4);
+
+    // delete counter flowlet metrics, check splitter data exists
+    delete("/v3/metrics/delete?context=" + getContext("yourspace", "WCount1", "WCounter", "counter") +
+             "&metric=system.reads&aggregate=true");
+
+    // check delete successful
+    verifyEmptyQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "counter") +
+        "&metric=system.reads&aggregate=true");
+
+    //splitter data should exist
+    verifyAggregateQueryResult("/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 3);
+
+    // delete some part of splitter data - time range
+
+    // note: times are in seconds, hence "divide by 1000";
+    long firstEmit = (emitTs - 60 * 1000) / 1000;
+    long secondEmit = (secondEmitTs) / 1000;
+    long end = (secondEmitTs + 60 * 1000) / 1000;
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + firstEmit + "&end="
+        + end, 2, 3);
+
+    delete("/v3/metrics/delete?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
+             "&metric=system.reads&start=" + secondEmit + "&end=" + end);
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + firstEmit + "&end="
+        + end, 1, 1);
+
+    // delete all app under "yourspace" namespace and check search context and metrics under that returns empty.
+
+    delete("/v3/metrics/delete?context=" + getContext("yourspace"));
+
+    verifySearchResultContains("/v3/metrics/search?target=childContext&context=namespace.yourspace",
+                               ImmutableList.<String>of());
+    verifySearchResultContains("/v3/metrics/search?target=metric&context=namespace.yourspace",
+                               ImmutableList.<String>of());
+    // check myspace has metrics
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=" + getContext("myspace", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&aggregate=true", 2);
+
+    //delete all data
+    delete("/v3/metrics/delete?context=ns.*");
+    verifySearchResultContains("/v3/metrics/search?target=childContext",
+                               ImmutableList.<String>of());
+    verifySearchResultContains("/v3/metrics/search?target=metric",
+                               ImmutableList.<String>of());
+
+    // delete without context, expect BAD_REQUEST
+    delete("/v3/metrics/delete", 400);
+    setupMetrics();
+  }
+
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
     MetricQueryResult result = post(url, MetricQueryResult.class);
     Assert.assertEquals(groupByResult.size(), result.getSeries().length);
@@ -396,6 +471,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
     Assert.assertEquals(0, nonZeroPointsCount);
     Assert.assertEquals(0, expectedSum);
+  }
+
+  private void delete(String url) throws Exception {
+    delete(url, 200);
+  }
+
+  private void delete(String url, long expected) throws Exception {
+    HttpResponse response = doPost(url, null);
+    Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
   private <T> T post(String url, Type type) throws Exception {

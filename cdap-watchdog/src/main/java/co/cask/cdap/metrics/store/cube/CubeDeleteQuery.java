@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.store.cube;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public class CubeDeleteQuery {
     this.startTs = startTs;
     this.endTs = endTs;
     this.measureName = measureName;
-    this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
+    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
   }
 
   public long getStartTs() {

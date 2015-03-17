@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -47,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -159,6 +161,31 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
 
       responder.sendJson(HttpResponseStatus.OK, result);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
+  }
+
+  @POST
+  @Path("/delete")
+  public void delete(HttpRequest request, HttpResponder responder,
+                    @QueryParam("context") String context,
+                    @QueryParam("metric") String metric,
+                    @QueryParam("start") @DefaultValue("0") final long startTs,
+                    @QueryParam("end") @DefaultValue("2147483647") final long endTs) throws Exception {
+    try {
+      if (context == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Please Specify context to delete");
+        return;
+      }
+      Map<String, String> tagsSliceBy = humanToTagNames(parseTagValuesAsMap(context));
+      MetricDeleteQuery query = new MetricDeleteQuery(startTs, endTs, metric, tagsSliceBy);
+      metricStore.delete(query);
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
