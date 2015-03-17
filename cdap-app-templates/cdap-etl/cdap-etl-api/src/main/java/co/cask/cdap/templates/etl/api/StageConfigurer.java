@@ -19,7 +19,7 @@ package co.cask.cdap.templates.etl.api;
 import java.util.Set;
 
 /**
- * Configure a Stage in the Adapter Pipeline.
+ * Configure a Stage in the ETL Pipeline.
  */
 public interface StageConfigurer {
 

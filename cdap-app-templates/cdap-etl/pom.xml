@@ -46,7 +46,6 @@
   <properties>
     <twitter4j.version>4.0.1</twitter4j.version>
     <mysql.jdbc.version>5.1.6</mysql.jdbc.version>
-    <camus.version>0.1.0-SNAPSHOT</camus.version>
   </properties>
 
   <dependencies>
@@ -97,19 +96,6 @@
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
         <version>${rs-api.version}</version>
-      </dependency>
-
-      <!-- Camus dependency -->
-      <dependency>
-        <groupId>com.linkedin.camus</groupId>
-        <artifactId>camus-etl-kafka</artifactId>
-        <version>${camus.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <!-- Twitter4j dependencies -->

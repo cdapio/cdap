@@ -61,10 +61,6 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.linkedin.camus</groupId>
-      <artifactId>camus-etl-kafka</artifactId>
-    </dependency>
   </dependencies>
 
 </project>

@@ -21,32 +21,58 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * State of Source.
+ * State of Source maintained.
  */
+// TODO: Improve the API as use case evolves
 public class SourceState {
 
   private final Map<String, byte[]> stateMap;
 
+  /**
+   * Construct a SourceState using a Map of String keys and byte[] values.
+   * @param stateMap {@link Map} of string keys and byte[] values
+   */
   public SourceState(Map<String, byte[]> stateMap) {
     this.stateMap = Maps.newHashMap(stateMap);
   }
 
+  /**
+   * Construct a SourceState with an empty map.
+   */
   public SourceState() {
     this.stateMap = Maps.newHashMap();
   }
 
+  /**
+   * Get the byte[] associated with a key.
+   * @param state state
+   * @return byte array
+   */
   public byte[] getState(String state) {
     return stateMap.get(state);
   }
 
+  /**
+   * Set a single key state given the key and value.
+   * @param state key
+   * @param value value
+   */
   public void setState(String state, byte[] value) {
     stateMap.put(state, value);
   }
 
+  /**
+   * Get the full state of the Source.
+   * @return {@link Map} of string keys and byte[] values
+   */
   public Map<String, byte[]> getState() {
     return Maps.newHashMap(stateMap);
   }
 
+  /**
+   * Add a Map to the state of the source.
+   * @param map {@link Map} of string keys and byte[] values
+   */
   public void setState(Map<String, byte[]> map) {
     stateMap.putAll(map);
   }
