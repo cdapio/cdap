@@ -20,6 +20,7 @@ Operations
     Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
     Transaction Service Maintenance <tx-maintenance>
+    Master Services Logback <logback>
     Troubleshooting <troubleshooting>
     
 
@@ -63,6 +64,12 @@ Operations
 .. _tx-maintenance: tx-maintenance.html
 
 - |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+
+
+.. |logback| replace:: **Master Services Logging Configuration:**
+.. _logback: logback.html
+
+- |logback|_ This section describes the logging configuration used by CDAP Master Services.
 
 
 .. |troubleshooting| replace:: **Troubleshooting:**
