@@ -16,11 +16,14 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
@@ -65,13 +68,23 @@ public class ScheduleClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     List<ScheduleSpecification> list = scheduleClient.list(FakeApp.NAME, FakeWorkflow.NAME);
     Assert.assertEquals(2, list.size());
+
+    TimeSchedule schedule;
+    StreamSizeSchedule streamSchedule;
     if (FakeApp.SCHEDULE_NAME.equals(list.get(0).getSchedule().getName())) {
-      Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(0).getSchedule().getName());
-      Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, list.get(1).getSchedule().getName());
+      schedule = (TimeSchedule) list.get(0).getSchedule();
+      streamSchedule = (StreamSizeSchedule) list.get(1).getSchedule();
     } else {
-      Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, list.get(0).getSchedule().getName());
-      Assert.assertEquals(FakeApp.SCHEDULE_NAME, list.get(1).getSchedule().getName());
+      streamSchedule = (StreamSizeSchedule) list.get(0).getSchedule();
+      schedule = (TimeSchedule) list.get(1).getSchedule();
     }
+
+    Assert.assertEquals(FakeApp.SCHEDULE_NAME, schedule.getName());
+    Assert.assertEquals(FakeApp.SCHEDULE_CRON, schedule.getCronEntry());
+
+    Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, streamSchedule.getName());
+    Assert.assertEquals(FakeApp.STREAM_NAME, streamSchedule.getStreamName());
+    Assert.assertEquals(FakeApp.STREAM_TRIGGER_MB, streamSchedule.getDataTriggerMB());
 
     String status = scheduleClient.getStatus(FakeApp.NAME, FakeApp.SCHEDULE_NAME);
     Assert.assertEquals("SCHEDULED", status);
