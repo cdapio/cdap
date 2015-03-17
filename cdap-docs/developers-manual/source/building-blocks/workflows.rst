@@ -9,8 +9,8 @@ Workflows
 ============================================
 
 **Workflows** are used to automate the execution of a series of :ref:`MapReduce
-<mapreduce>`, :ref:`Spark <spark>` or :ref:`custom actions <workflow-custom-actions>. It
-allows for both sequential and :ref:`parallel execution <>` of programs.
+<mapreduce>`, :ref:`Spark <spark>` or :ref:`custom actions <workflow-custom-actions>`. It
+allows for both sequential and :ref:`parallel execution <workflow_parallel>` of programs.
 
 The workflow system allows specifying, executing, scheduling, and monitoring complex
 series of jobs and tasks in CDAP. The system can manage thousand of workflows and maintain
@@ -92,6 +92,7 @@ By default, a Workflow runs sequentially. Multiple instances of a Workflow can b
 concurrently. To enable concurrent runs for a Workflow, set its runtime argument
 ``concurrent.runs.enabled`` to ``true``.
 
+.. _workflow_parallel:
 
 Parallel Workflows
 ==================
@@ -105,13 +106,13 @@ action (implemented in Java; for example, making a REST call to an external syst
 For example, a simple control flow could be computing user and product profiles from
 purchase events. After the start, a batch job could start that joins the events with the
 product catalog. After that, execution could continue with a fork, and with two batch jobs
-running in parallel: one computing use profiles; while the other computes product
+running in parallel: one computing product profiles; while the other computes user
 profiles. When they are both done, execution is joined and continues with a custom action
 to upload the computed profiles to a serving system, after which the control flow
 terminates:
 
 .. image:: /_images/parallel-workflow.png
-   :width: 5in
+   :width: 8in
    :align: center
 
 Forks and Joins
@@ -129,7 +130,7 @@ specification, following these rules:
 - Where your control flow reconnects, you add a ``.join`` method to indicate. 
 - The control flow always concludes with a ``.join`` method.
 
-The application shown above could be coded as (assuming the other classes referred to exist)::
+The application shown above could be coded (assuming the other classes referred to exist) as::
 
   public class ParallelWorkflow extends AbstractWorkflow {
 
@@ -137,8 +138,9 @@ The application shown above could be coded as (assuming the other classes referr
     public void configure() {
       setName("ParallelWorkflow");
       setDescription("Demonstration of a parallel Workflow");
-      addMapReduce("JoinWithCatalogMR");
       
+      addMapReduce("JoinWithCatalogMR");
+    
       fork()
         .addMapReduce("BuildProductProfileMR");
       .also()
@@ -180,7 +182,7 @@ that runs in parallel to the entire process described above, you could use code 
 The diagram for this code would be:
 
 .. image:: /_images/double-parallel-workflow.png
-   :width: 5in
+   :width: 8in
    :align: center
 
 
