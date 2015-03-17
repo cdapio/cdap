@@ -631,6 +631,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
   }
 
+  @Test(timeout = 60000L)
+  public void testFlowletMetricsReset() throws Exception {
+    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
+    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    RuntimeStats.resetAll();
+    // check the metrics were deleted after reset
+    RuntimeStats.getFlowletMetrics("DataSetInitApp",
+                                   "DataSetFlow", "Consumer").waitForProcessed(0, 5, TimeUnit.SECONDS);
+  }
 
   @Test(timeout = 60000L)
   public void testFlowletInitAndSetInstances() throws Exception {
