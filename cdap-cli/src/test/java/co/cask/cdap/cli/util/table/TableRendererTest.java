@@ -16,8 +16,11 @@
 package co.cask.cdap.cli.util.table;
 
 import com.google.common.base.Strings;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.PrintStream;
 
@@ -25,11 +28,12 @@ import java.io.PrintStream;
  *
  */
 @Ignore
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class TableRendererTest {
 
-  private static final int LINE_WIDTH = 80;
-  private static final PrintStream OUTPUT = System.out;
-  private static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
+  protected static final int LINE_WIDTH = 80;
+  protected static final PrintStream OUTPUT = System.out;
+  protected static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
     @Override
     public int getLineWidth() {
       return LINE_WIDTH;
@@ -37,6 +41,11 @@ public abstract class TableRendererTest {
   };
 
   public abstract TableRenderer getRenderer();
+
+  @Before
+  public void setUp() {
+    OUTPUT.flush();
+  }
 
   @Test
   public void testFormat() {
@@ -98,39 +107,6 @@ public abstract class TableRendererTest {
                  .add(Strings.repeat("z", 27) + "a", "2", "3")
                  .add("r2", "r2222", "z")
                  .add("r3333", "r3", "r3\n1")
-                 .build())
-      .build();
-    getRenderer().render(TEST_CONFIG, OUTPUT, table);
-  }
-
-  @Test
-  public void testOneCharLongerThanWidth() {
-    Table table = Table.builder()
-      .setHeader("c1")
-      .setRows(Table.rows()
-                 .add(Strings.repeat("z", 80) + "a")
-                 .build())
-      .build();
-    getRenderer().render(TEST_CONFIG, OUTPUT, table);
-  }
-
-  @Test
-  public void testHeaderOneCharLongerThanWidth() {
-    Table table = Table.builder()
-      .setHeader(Strings.repeat("z", 80) + "a")
-      .setRows(Table.rows()
-                 .add("abc")
-                 .build())
-      .build();
-    getRenderer().render(TEST_CONFIG, OUTPUT, table);
-  }
-
-  @Test
-  public void testOneCharLongerThan2Width() {
-    Table table = Table.builder()
-      .setHeader("c1")
-      .setRows(Table.rows()
-                 .add(Strings.repeat("z", 80 * 2) + "a")
                  .build())
       .build();
     getRenderer().render(TEST_CONFIG, OUTPUT, table);
