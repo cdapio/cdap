@@ -16,7 +16,8 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -24,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -51,26 +51,20 @@ import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,21 +82,11 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.quartz.SchedulerException;
-import org.quartz.core.JobRunShellFactory;
-import org.quartz.core.QuartzScheduler;
-import org.quartz.core.QuartzSchedulerResources;
-import org.quartz.impl.DefaultThreadExecutor;
-import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.StdJobRunShellFactory;
-import org.quartz.impl.StdScheduler;
-import org.quartz.simpl.CascadingClassLoadHelper;
-import org.quartz.spi.ClassLoadHelper;
-import org.quartz.spi.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Command line tool for the Upgrade tool
@@ -176,15 +160,7 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-
-          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
-          bind(MetricStore.class).to(DefaultMetricStore.class);
-
-          install(new KafkaClientModule());
-          install(new NotificationServiceRuntimeModule().getDistributedModules());
-          bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
-          bind(Scheduler.class).to(SchedulerService.class);
-
+          bind(Scheduler.class).toInstance(createNoopScheduler());
           bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
           bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           install(new FactoryModuleBuilder()
@@ -233,74 +209,60 @@ public class UpgradeTool {
                                                           LocationFactory locationFactory) {
           return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
         }
-
-        /**
-         * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
-         * injection. It returns a singleton of Scheduler.
-         */
-        @Provides
-        public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore
-                                                                          scheduleStore,
-                                                                        final CConfiguration cConf) {
-          return new Supplier<org.quartz.Scheduler>() {
-            private org.quartz.Scheduler scheduler;
-
-            @Override
-            public synchronized org.quartz.Scheduler get() {
-              try {
-                if (scheduler == null) {
-                  scheduler = getScheduler(scheduleStore, cConf);
-                }
-                return scheduler;
-              } catch (Exception e) {
-                throw Throwables.propagate(e);
-              }
-            }
-          };
-        }
       });
   }
 
-  /**
-   * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
-   * and turning off check for new versions.
-   * @param store JobStore.
-   * @param cConf CConfiguration.
-   * @return an instance of {@link org.quartz.Scheduler}
-   * @throws SchedulerException
-   */
-  private org.quartz.Scheduler getScheduler(JobStore store,
-                                            CConfiguration cConf) throws SchedulerException {
+  private Scheduler createNoopScheduler() {
+    return new Scheduler() {
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      }
 
-    int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE,
-                                      Constants.Scheduler.DEFAULT_THREAD_POOL_SIZE);
-    ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
-    threadPool.initialize();
-    String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
-    String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      }
 
-    QuartzSchedulerResources qrs = new QuartzSchedulerResources();
-    JobRunShellFactory jrsf = new StdJobRunShellFactory();
+      @Override
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
 
-    qrs.setName(schedulerName);
-    qrs.setInstanceId(schedulerInstanceId);
-    qrs.setJobRunShellFactory(jrsf);
-    qrs.setThreadPool(threadPool);
-    qrs.setThreadExecutor(new DefaultThreadExecutor());
-    qrs.setJobStore(store);
-    qrs.setRunUpdateCheck(false);
-    QuartzScheduler qs = new QuartzScheduler(qrs, -1, -1);
+      @Override
+      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
 
-    ClassLoadHelper cch = new CascadingClassLoadHelper();
-    cch.initialize();
+      @Override
+      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
 
-    store.initialize(cch, qs.getSchedulerSignaler());
-    org.quartz.Scheduler scheduler = new StdScheduler(qs);
+      @Override
+      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
 
-    jrsf.initialize(scheduler);
-    qs.initialize();
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
 
-    return scheduler;
+      }
+
+      @Override
+      public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      }
+
+      @Override
+      public void deleteAllSchedules(Id.Namespace namespaceId)
+        throws co.cask.cdap.internal.app.runtime.schedule.SchedulerException {
+      }
+
+      @Override
+      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+        return ScheduleState.NOT_FOUND;
+      }
+    };
   }
 
   /**
