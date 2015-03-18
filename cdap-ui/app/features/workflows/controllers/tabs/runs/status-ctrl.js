@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, $filter, myWorkFlowApi) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
@@ -7,10 +7,15 @@ angular.module(PKG.name + '.feature.workflows')
     $scope.duration = null;
     $scope.startTime = null;
     $scope.data = {};
-    dataSrc.request({
-      _cdapNsPath: basePath
-    })
-      .then(function(res) {
+
+    var params = {
+      appId: $state.params.appId,
+      workflowId: $state.params.programId,
+      scope: $scope
+    };
+
+    myWorkFlowApi.get(params)
+      .$promise.then(function(res) {
         var edges = [],
             nodes = [];
 
@@ -37,7 +42,6 @@ angular.module(PKG.name + '.feature.workflows')
         $scope.actions = programs;
       });
 
-
     $scope.goToDetailActionView = function(programId, programType) {
       // As of 2.7 only a mapreduce job is scheduled in a workflow.
       if (programType === 'MAPREDUCE') {
@@ -47,9 +51,8 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
-    }, function(res) {
+    myWorkFlowApi.runs(params)
+      .$promise.then(function(res) {
         var run, startMs;
         var runsThatWeCareAbout = filterFilter(res, { runid:$state.params.runId });
         if(runsThatWeCareAbout.length) {
@@ -59,8 +62,6 @@ angular.module(PKG.name + '.feature.workflows')
           $scope.status = run.status;
           $scope.duration = (run.end ? (run.end * 1000) - startMs : 0);
         }
-
-
       });
 
   });
