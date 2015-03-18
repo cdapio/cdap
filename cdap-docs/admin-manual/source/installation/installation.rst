@@ -309,6 +309,24 @@ recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
+Direct Parcel Access
+....................
+
+If you need to download and install the parcels directly (perhaps for a cluster that does
+not have direct network access), the parcels are available by their full URLs. As they are
+stored in a directory that does not offer browsing, they are listed here:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-trusty.parcel
+  
+If you are hosting your own internal parcel repository, you may also want the
+``manifest.json``:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/latest/manifest.json
+
 .. _install-configuration:
 
 Configuration
