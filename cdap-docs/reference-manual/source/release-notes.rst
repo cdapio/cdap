@@ -24,6 +24,34 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
+=============================================================
+
+API Changes
+-----------
+-  The property (`CDAP-xxx <https://issues.cask.co/browse/CDAP-xxx>`__).
+
+
+New Features
+------------
+
+- **Spark**
+
+  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+
+.. _known-issues-280:
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.7.1. <#known-issues-271>`_
+- If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
+  Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
+  <install-starting-services>, which will restart all services 
+  (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+
+
+
+
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
 =============================================================
 
@@ -33,13 +61,12 @@ API Changes
    ``security.auth.server.bind.address`` (`CDAP-639 <https://issues.cask.co/browse/CDAP-639>`__,
    `CDAP-1078 <https://issues.cask.co/browse/CDAP-1078>`__).
 
-
 New Features
 ------------
 
 - **Spark**
 
-  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-382>`__).
   - Spark can now run as a part of a Workflow (`CDAP-465 <https://issues.cask.co/browse/CDAP-465>`__).
 
 - **Security**
@@ -66,6 +93,8 @@ New Features
   - Schedules are now at the application level and properties can be specified for
     Schedules; these properties will be passed to the scheduled program as runtime
     arguments (`CDAP-1148 <https://issues.cask.co/browse/CDAP-1148>`__).
+
+.. _known-issues-271:
 
 Known Issues
 ------------
