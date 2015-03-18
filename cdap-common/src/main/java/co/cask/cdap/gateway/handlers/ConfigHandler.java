@@ -42,6 +42,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Handles requests to view {@link CConfiguration}.
  */
+@Path(Constants.Gateway.API_VERSION_3)
 public class ConfigHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
@@ -80,7 +81,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   public void configHBase(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @DefaultValue("json") @QueryParam("format") String format) {
     if ("json".equals(format)) {
-      responder.sendJson(HttpResponseStatus.OK, toMap(cConf));
+      responder.sendJson(HttpResponseStatus.OK, toMap(hConf));
     } else if ("xml".equals(format)) {
       try {
         StringWriter stringWriter = new StringWriter();
