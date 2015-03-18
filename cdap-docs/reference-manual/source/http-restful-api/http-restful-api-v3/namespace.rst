@@ -24,7 +24,7 @@ Create a Namespace
 ------------------
 To create a namespace, submit an HTTP PUT request::
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>
+  PUT <base-url>/namespaces/<namespace>
 
 .. list-table::
    :widths: 20 80
@@ -32,10 +32,10 @@ To create a namespace, submit an HTTP PUT request::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
-     - Namespace ID
+   * - ``<namespace>``
+     - Namespace
 
-The ``<namespace-id>`` must be of the limited character set for namespaces, as 
+The ``<namespace>`` must be of the limited character set for namespaces, as 
 described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
 Properties for the namespace are passed in the JSON request body:
 
@@ -46,15 +46,15 @@ Properties for the namespace are passed in the JSON request body:
    * - Parameter
      - Description
      - Default Value (if not defined)
-   * - ``name``
-     - Display name for the namespace
-     - The Namespace ID
    * - ``description``
      - Display description of the namespace
      - An empty string ("")
+   * - ``config``
+     - :ref:`Configuration preferences <preferences>`_ for the namespace
+     - A JSON string of configuration key-value pairs
 
-If a namespace with the same ID already exists, the method will still return ``200 OK``,
-but with a message that the ``Namespace '<namespace-id>' already exists``.
+If a namespace with the same name already exists, the method will still return ``200 OK``,
+but with a message that the ``Namespace '<namespace>' already exists``.
 
 .. rubric:: HTTP Responses
 
@@ -72,25 +72,25 @@ List Existing Namespaces
 
 To list all of the existing namespaces, issue an HTTP GET request::
 
-  GET http://<host>:<port>/v3/namespaces
+  GET <base-url>/namespaces
 
 This will return a JSON String map that lists each namespace with its name and description
 (reformatted to fit)::
 
-  [{"id":"default","name":"default","description":"default"},
-   {"id":"myNamespace","name":"My Demo Namespace","description":"Demonstration of namespaces"}]
-
+  [{"name":"default","description":"Default Namespace","config":{"scheduler.queue.name":""},
+   {"name":"demo_namespace","description":"My Demo Namespace","config":{"scheduler.queue.name":"demo"}]
 
 Details of a Namespace
 ---------------------------------
 
 For detailed information on a specific namespace, use::
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>
+  GET <base-url>/namespaces/<namespace>
 
-The information will be returned in the body of the response::
+The information (*namespace*, *description*, *config*) will be returned in the body of the
+response, such as::
 
-  {"id":"myNamespace","name":"myNamespace Demo","description":"Demonstration of the namespace"}
+  {"name":"default","description":"Default Namespace","config":{"scheduler.queue.name":""}}
 
 .. list-table::
    :widths: 20 80
@@ -98,8 +98,8 @@ The information will be returned in the body of the response::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
-     - Namespace ID
+   * - ``<namespace>``
+     - Namespace
 
 .. rubric:: HTTP Responses
 
@@ -116,7 +116,7 @@ Editing a Namespace
 -------------------
 To edit an existing namespace, submit an HTTP PUT request to::
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/properties
+  PUT <base-url>/namespaces/<namespace>/properties
 
 .. list-table::
    :widths: 20 80
@@ -124,10 +124,10 @@ To edit an existing namespace, submit an HTTP PUT request to::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
-     - Namespace ID
+   * - ``<namespace>``
+     - Namespace
 
-The ``<namespace-id>`` must be of the limited character set for namespaces, as 
+The ``<namespace>`` must be of the limited character set for namespaces, as 
 described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
 Properties for the namespace are passed in the JSON request body, as described
 for when you `Create a Namespace`_.

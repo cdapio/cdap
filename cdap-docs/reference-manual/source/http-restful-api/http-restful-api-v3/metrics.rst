@@ -68,37 +68,37 @@ enclosing context. These are the available Application contexts of CDAP:
    * - System Metric
      - Context
    * - One Flowlet of a Flow
-     - ``namespace.<namespace-id>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
+     - ``namespace.<namespace>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
    * - All Flowlets of a Flow
-     - ``namespace.<namespace-id>.apps.<app-id>.flows.<flow-id>``
+     - ``namespace.<namespace>.apps.<app-id>.flows.<flow-id>``
    * - All Flowlets of all Flows of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>.flows``
+     - ``namespace.<namespace>.apps.<app-id>.flows``
    * - One Procedure
-     - ``namespace.<namespace-id>.apps.<app-id>.procedures.<procedure-id>``
+     - ``namespace.<namespace>.apps.<app-id>.procedures.<procedure-id>``
    * - One Worker
-     - ``namespace.<namespace-id>.apps.<app-id>.workers.<worker-id>``
+     - ``namespace.<namespace>.apps.<app-id>.workers.<worker-id>``
    * - All Procedures of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>.procedures``
+     - ``namespace.<namespace>.apps.<app-id>.procedures``
    * - All Workers of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>.workers``
+     - ``namespace.<namespace>.apps.<app-id>.workers``
    * - All Mappers of a MapReduce
-     - ``namespace.<namespace-id>.apps.<app-id>.mapreduce.<mapreduce-id>.mappers``
+     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>.mappers``
    * - All Reducers of a MapReduce
-     - ``namespace.<namespace-id>.apps.<app-id>.mapreduce.<mapreduce-id>.reducers``
+     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>.reducers``
    * - One MapReduce
-     - ``namespace.<namespace-id>.apps.<app-id>.mapreduce.<mapreduce-id>``
+     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>``
    * - All MapReduce of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>.mapreduce``
+     - ``namespace.<namespace>.apps.<app-id>.mapreduce``
    * - One Spark Program
-     - ``namespace.<namespace-id>.apps.<app-id>.spark.<spark-id>``
+     - ``namespace.<namespace>.apps.<app-id>.spark.<spark-id>``
    * - One Service
-     - ``namespace.<namespace-id>.apps.<app-id>.services.<service-id>``
+     - ``namespace.<namespace>.apps.<app-id>.services.<service-id>``
    * - All Services of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>.services``
+     - ``namespace.<namespace>.apps.<app-id>.services``
    * - All components of an Application
-     - ``namespace.<namespace-id>.apps.<app-id>``
+     - ``namespace.<namespace>.apps.<app-id>``
    * - All components of all Applications
-     - ``namespace.<namespace-id>``
+     - ``namespace.<namespace>``
 
 Stream metrics are only available at the Stream level and the only available context is:
 
@@ -109,7 +109,7 @@ Stream metrics are only available at the Stream level and the only available con
    * - Stream Metric
      - Context
    * - A single Stream
-     - ``namespace.<namespace-id>.stream.<stream-id>``
+     - ``namespace.<namespace>.stream.<stream-id>``
 
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
 Flowlet, Worker, Procedure, Mapper, or Reducer level:
@@ -121,15 +121,15 @@ Flowlet, Worker, Procedure, Mapper, or Reducer level:
    * - Dataset Metric
      - Context
    * - A single Dataset in the context of a single Flowlet
-     - ``namespace.<namespace-id>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
+     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
    * - A single Dataset in the context of a single Flow
-     - ``namespace.<namespace-id>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>``
+     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>``
    * - A single Dataset in the context of a specific Application
-     - ``namespace.<namespace-id>.datasets.<dataset-id>.apps.<app-id>``
+     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>``
    * - A single Dataset across all Applications
-     - ``namespace.<namespace-id>.datasets.<dataset-id>``
+     - ``namespace.<namespace>.datasets.<dataset-id>``
    * - All Datasets across all Applications
-     - ``namespace.<namespace-id>.datasets.*``
+     - ``namespace.<namespace>.datasets.*``
 
 .. _available-metrics:
 
@@ -434,8 +434,13 @@ values only for the times where the metric was actually emitted (shown here "pre
 Each run of a flow is :ref:`identified by a run-ID <rest-program-runs>`. To retrieve the
 aggregate of events processed by the run of a flow, you can issue an HTTP POST method::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.runs.
+  POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
     bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true
+
+which will return something similar to::
+
+  {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
+   "grouping":{},"data":[{"time":0,"value":11188}]}]}
 
 If the run-ID is not specified, we aggregate the events processed for all the runs of this flow.
 
@@ -444,7 +449,6 @@ API at the Flow context::
 
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
     &metric=system.process.events.processed&start=now-5s&count=5
-
 
 Similarly, you can address the context of all flows of an Application, an entire Application, or the entire 
 namespace of a CDAP instance::
@@ -466,11 +470,10 @@ For example, to request a user-defined metric for the *HelloWorld* Application's
   POST <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver
     &metric=user.names.bytes&aggregate=true
 
-
 Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
 the request body that enumerates the name and attributes for each metric, is currently not
-supported in this API. Use the :ref:`v2 API
-<http-restful-api-v2-metrics-multiple>`instead. It will be supported in a future release.
+supported in this API. Instead, use the :ref:`v2 API
+<http-restful-api-v2-metrics-multiple>`. It will be supported in a future release.
 
 
 .. _http-restful-api-metrics-tag-list:

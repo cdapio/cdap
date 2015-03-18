@@ -21,8 +21,7 @@ In this API, *client* refers to an external application that is calling CDAP usi
 
 .. rubric:: Base URL
 
-All URLs referenced in this API (with the exception of those in the 
-Namespace API) have this base URL::
+All URLs referenced in this API have this base URL::
 
   http://<host>:<port>/v3
 
@@ -49,20 +48,20 @@ In this API, the base URL is represented as::
 
 For example::
 
-  PUT <base-url>/namespaces/<namespace-id>/streams/<new-stream-id>
+  PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
 
 means::
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
+  PUT http://<host>:<port>/v3/namespaces/<namespace>/streams/<new-stream-id>
 
 
 .. rubric:: Variable Replacement
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-  PUT <base-url>/namespaces/<namespace-id>/streams/<new-stream-id>
+  PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
 
-indicates that—in addition to the ``<base-url>``—text such as ``<namespace-id>`` and
+indicates that—in addition to the ``<base-url>``—text such as ``<namespace>`` and
 ``<new-stream-id>`` are variables and that you are to replace them with your values,
 perhaps in this case *default* and *mystream*::
 
@@ -81,8 +80,9 @@ in CDAP. Example::
 can be replaced with::
 
   PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
-
-
+  
+However, you will need to test your code, as many APIs have changed as a result of the 
+addition of namespaces.
 
 .. _http-restful-api-conventions-reserved-unsafe-characters:
 

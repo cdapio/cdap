@@ -21,7 +21,7 @@ Listing all Datasets
 
 You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace-id>/data/datasets
+  GET <base-url>/namespaces/<namespace>/data/datasets
 
 .. list-table::
    :widths: 20 80
@@ -29,7 +29,7 @@ You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
 
 The response body will contain a JSON-formatted list of the existing Datasets::
@@ -53,7 +53,7 @@ Creating a Dataset
 
 You can create a Dataset by issuing an HTTP PUT request to the URL::
 
-  PUT <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>
+  PUT <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>
 
 with JSON-formatted name of the dataset type and properties in a body::
 
@@ -69,7 +69,7 @@ with JSON-formatted name of the dataset type and properties in a body::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<dataset-name>``
      - Name of the new Dataset
@@ -111,7 +111,7 @@ Updating an Existing Dataset
 
 You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
-	PUT <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>/properties
+	PUT <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>/properties
 
 with JSON-formatted name of the dataset type and properties in the body::
 
@@ -128,7 +128,7 @@ with JSON-formatted name of the dataset type and properties in the body::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<dataset-name>``
      - Name of the existing Dataset
@@ -170,7 +170,7 @@ Deleting a Dataset
 
 You can delete a Dataset by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>
+  DELETE <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>
 
 .. list-table::
    :widths: 20 80
@@ -178,7 +178,7 @@ You can delete a Dataset by issuing an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<dataset-name>``
      - Dataset name
@@ -212,7 +212,7 @@ Deleting all Datasets
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all Datasets
 by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/namespaces/<namespace-id>/unrecoverable/data/datasets
+  DELETE <base-url>/namespaces/<namespace>/unrecoverable/data/datasets
 
 .. list-table::
    :widths: 20 80
@@ -220,7 +220,7 @@ by issuing an HTTP DELETE request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
 
 .. rubric:: HTTP Responses
@@ -244,7 +244,7 @@ Truncating a Dataset
 
 You can truncate a Dataset by issuing an HTTP POST request to the URL::
 
-  POST <base-url>/namespaces/<namespace-id>/data/datasets/<dataset-name>/admin/truncate
+  POST <base-url>/namespaces/<namespace>/data/datasets/<dataset-name>/admin/truncate
 
 This will clear the existing data from the Dataset. This cannot be undone.
 
@@ -254,7 +254,7 @@ This will clear the existing data from the Dataset. This cannot be undone.
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<dataset-name>``
      - Dataset name
