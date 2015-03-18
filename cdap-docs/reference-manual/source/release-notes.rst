@@ -29,7 +29,9 @@ Cask Data Application Platform Release Notes
 
 API Changes
 -----------
--  The property (`CDAP-xxx <https://issues.cask.co/browse/CDAP-xxx>`__).
+- The endpoint (``GET <base-url>/data/explore/datasets/<dataset-name>/schema``) that
+  retrieved the schema of a Dataset's underlying Hive table has been removed
+  (`CDAP-1603 <https://issues.cask.co/browse/CDAP-1603>`__).
 
 
 New Features
