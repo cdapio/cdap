@@ -86,7 +86,6 @@ angular.module(PKG.name+'.services')
 
       if(instances[id]) {
         // throw new Error('multiple DataSource for scope', id);
-        console.log("Matched for an instanceId", instances[id]);
         return instances[id];
 
       }
@@ -105,7 +104,11 @@ angular.module(PKG.name+'.services')
           url: data.resource.url,
           method: data.resource.method
         };
-        // console.log("Bindings: ", self.bindings);
+        // If a POST or PUT call.
+        if (data.resource.data) {
+          match.data = data.resource.data;
+        }
+
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, match)) {
@@ -118,15 +121,11 @@ angular.module(PKG.name+'.services')
         }
         angular.forEach(self.bindings, function (b) {
           if(angular.equals(b.resource, match)) {
-            console.log("Match: ", match, b.resource);
             if (angular.isFunction(b.callback)) {
               $rootScope.$applyAsync(b.callback.bind(null, data.response));
-            }
-
-            if (b && b.resolve) {
-              // console.log("Resolving for : ", match, data.response);
-              b.resolve({data: data.response});
-              // $rootScope.$applyAsync(b.resolve.bind(null, {data: data.response}));
+            } else if (b && b.resolve) {
+              // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
+              $rootScope.$applyAsync(b.resolve.bind(null, {data: data.response}));
               return;
             }
           }
@@ -134,9 +133,7 @@ angular.module(PKG.name+'.services')
       });
 
       scope.$on('$destroy', function () {
-        // console.log("Deleting instances: ", instances[id].bindings);
         delete instances[id];
-        // console.log("Instances: ", instances);
       });
 
       scope.$on(caskWindowManager.event.blur, function () {
@@ -186,12 +183,11 @@ angular.module(PKG.name+'.services')
         };
 
         self.bindings.push(a);
-        console.log("POLL: Pushing to bindings: ", self.bindings);
         self.scope.$on('$destroy', function () {
-          _pollStop(resource);
+          _pollStop(re);
         });
 
-        _pollStart(resource);
+        _pollStart(re);
       }, true);
       return prom;
     };
