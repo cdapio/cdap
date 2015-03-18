@@ -262,7 +262,7 @@
 
     <property>
       <name>stream.bind.address</name>
-      <value>127.0.0.1</value>
+      <value>0.0.0.0</value>
       <description>Default inet address for binding Stream http service</description>
     </property>
 
@@ -344,7 +344,7 @@
 
     <property>
         <name>data.tx.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>The inet address for the transaction
             service</description>
     </property>
@@ -509,7 +509,7 @@
     -->
     <property>
         <name>metadata.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the server address of metadata
             server</description>
     </property>
@@ -534,7 +534,7 @@
     -->
     <property>
         <name>log.query.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the server address of metrics frontend
             server</description>
     </property>
@@ -548,7 +548,7 @@
 
     <property>
         <name>log.collection.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the hostname where the collection service runs</description>
     </property>
 
@@ -569,7 +569,7 @@
     -->
     <property>
         <name>account.server.host</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the host for account server</description>
     </property>
 
@@ -582,7 +582,7 @@
     <!-- App Fabric related changes -->
     <property>
         <name>app.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Host address on which the app fabric server is started</description>
     </property>
 
@@ -612,7 +612,7 @@
 
     <property>
         <name>dataset.service.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>DataSet service hostname</description>
     </property>
 
@@ -653,7 +653,7 @@
     -->
     <property>
         <name>router.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 
@@ -707,7 +707,7 @@
     <!-- New Metrics system settings -->
     <property>
         <name>metrics.query.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Host address where the metrics query server is started</description>
     </property>
 
@@ -826,7 +826,7 @@
 
     <property>
         <name>metrics.processor.status.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Default inet address for binding metrics processor http service</description>
     </property>
 
@@ -894,7 +894,7 @@
 
     <property>
         <name>log.saver.status.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Default inet address for binding logsaver http service</description>
     </property>
 
@@ -983,7 +983,7 @@
 
     <property>
         <name>router.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
     </property>
 
     <!---
@@ -1110,7 +1110,7 @@
     <property>
         <name>security.server.extended.token.expiration.ms</name>
         <value>604800000</value>
-        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to 
+        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to
         1 week) (internal)</description>
     </property>
 
