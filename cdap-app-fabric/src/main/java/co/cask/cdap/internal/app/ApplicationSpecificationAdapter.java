@@ -69,14 +69,11 @@ public final class ApplicationSpecificationAdapter {
   private final Gson gson;
 
   public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
-    GsonBuilder builder = new GsonBuilder();
-    addTypeAdapters(builder);
-
-    return new ApplicationSpecificationAdapter(generator, builder.create());
+    return new ApplicationSpecificationAdapter(generator, addTypeAdapters(new GsonBuilder()).create());
   }
 
-  public static void addTypeAdapters(GsonBuilder builder) {
-    builder
+  public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
+    return builder
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
       .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
