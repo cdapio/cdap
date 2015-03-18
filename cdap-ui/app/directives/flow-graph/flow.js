@@ -198,7 +198,7 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
             { x: -defaultRadius, y: -0}, //h
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
-            .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
+            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
             .attr('class', 'workflow-shapes foundation-shape job-svg');
 
           node.intersect = function(point) {
@@ -206,7 +206,49 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
           };
 
           return shapeSvg;
-        }
+        };
+
+        shapes.start = function(parent, bbox, node) {
+          var w = bbox.width;
+          var h = bbox.height;
+          var points = [
+            // draw a triangle facing right
+            { x: -30, y: -40},
+            { x: 30, y: 0},
+            { x: -30, y: 40},
+          ];
+          var shapeSvg = parent.insert('polygon', ':first-child')
+            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
+            .attr('transform', 'translate(' + (w/6) + ')')
+            .attr('class', 'workflow-shapes foundation-shape start-svg');
+
+          node.intersect = function(point) {
+            return dagreD3.intersect.polygon(node, points, point);
+          };
+
+          return shapeSvg;
+        };
+
+        shapes.end = function(parent, bbox, node) {
+          var w = bbox.width;
+          var h = bbox.height;
+          var points = [
+            // draw a triangle facing right
+            { x: -30, y: 0},
+            { x: 30, y: 40},
+            { x: 30, y: -40},
+          ];
+          var shapeSvg = parent.insert('polygon', ':first-child')
+            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
+            .attr('transform', 'translate(' + (-w/6) + ')')
+            .attr('class', 'workflow-shapes foundation-shape end-svg');
+
+          node.intersect = function(point) {
+            return dagreD3.intersect.polygon(node, points, point);
+          };
+
+          return shapeSvg;
+        };
 
         shapes.conditional = function(parent, bbox, node) {
           var w = (bbox.width * Math.SQRT2) / 2,
@@ -218,8 +260,8 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
             { x:  0, y:  defaultRadius },
             { x:  defaultRadius, y:  0 }
           ],
-          shapeSvg = parent.insert("polygon", ":first-child")
-            .attr("points", points.map(function(p) { return p.x + "," + p.y; }).join(" "))
+          shapeSvg = parent.insert('polygon', ':first-child')
+            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
             .attr('class', 'workflow-shapes foundation-shape conditional-svg');
 
           node.intersect = function(p) {
@@ -237,6 +279,12 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
         switch(name) {
           case 'ACTION':
             shapeName = 'job';
+            break;
+          case 'START':
+            shapeName = 'start';
+            break;
+          case 'END':
+            shapeName = 'end';
             break;
           default:
             shapeName = 'conditional';
@@ -280,11 +328,7 @@ function genericRender(scope, $filter) {
     var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
     scope.instanceMap[node.name] = node;
     scope.labelMap[nodeLabel] = node;
-    if (node.type === 'ACTION') {
-      g.setNode(node.name, { shape: scope.getShape('ACTION'), label: nodeLabel});
-    } else {
-      g.setNode(node.name, { shape: scope.getShape(), label: nodeLabel});
-    }
+    g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
   });
 
   angular.forEach(edges, function (edge) {
