@@ -32,10 +32,15 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
    * - ``<type>``
      - Format for returned type, either ``json`` (default) or ``xml``
   
-The response is a string in the specified format. For example, ::
+The response is a string in the specified format. For example, using the default JSON
+format, the output would be similar to (showing the first portion, reformatted to fit)::
 
-  { "": "" }
-
+  {"security.enabled":"false","app.output.dir":"/programs","router.server.port":"10000","
+  metrics.kafka.partition.size":"10","data.tx.snapshot.local.dir":"data/tx.snapshot","
+  metrics.worker.threads":"10","security.server.maxthreads":"100","app.worker.threads":"10",
+  "security.token.digest.keylength":"128","metrics.memory.mb":"512","data.tx.server.io.
+  threads":"2","log.saver.num.instances":"1","notification.transport.system":"kafka","stream
+  .worker.threads":"10","metrics.data.table.ts.rollTime.60":"60","metrics.processor.num....
 
 .. _http-restful-api-configuration-hbase:
 
@@ -54,8 +59,37 @@ To retrieve all the configurations used by HBase, issue an HTTP GET request::
      - Description
    * - ``<type>``
      - Format for returned type, either ``json`` (default) or ``xml``
+
+.. highlight:: xml
+
+The response is a string in the specified format. For example, using the XML
+format, the output would be similar to (showing the first portion, reformatted to fit)::
+
+  <configuration>
+    <property>
+      <name>dfs.journalnode.rpc-address</name>
+        <value>0.0.0.0:8485</value>
+      <source>hdfs-default.xml</source>
+    </property>
+    <property>
+      <name>io.storefile.bloom.block.size</name>
+        <value>131072</value>
+      <source>hbase-default.xml</source>
+    </property>
+    <property>
+      <name>yarn.ipc.rpc.class</name>
+        <value>org.apache.hadoop.yarn.ipc.HadoopYarnProtoRPC</value>
+      <source>yarn-default.xml</source>
+    </property>
+    <property>
+      <name>mapreduce.job.maxtaskfailures.per.tracker</name>
+        <value>3</value>
+      <source>mapred-default.xml</source>
+    </property>
+    <property>
+      <name>hbase.rest.threads.min</name>
+        <value>2</value>
+      <source>hbase-default.xml</source>
+    </property>
+    ...
   
-The response is a string in the specified format. For example, ::
-
-  { "": "" }
-
