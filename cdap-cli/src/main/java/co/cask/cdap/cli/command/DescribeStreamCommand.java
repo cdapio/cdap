@@ -61,7 +61,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
                                     object.getNotificationThresholdMB());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

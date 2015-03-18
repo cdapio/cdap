@@ -18,6 +18,7 @@ package co.cask.cdap.cli.docs;
 
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.system.HelpCommand;
+import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -43,8 +45,9 @@ import javax.annotation.Nullable;
  */
 public class GenerateCLIDocsTableCommand extends HelpCommand {
 
-  public GenerateCLIDocsTableCommand(CommandSet commands) {
-    super(Suppliers.<Iterable<CommandSet<Command>>>ofInstance(ImmutableList.<CommandSet<Command>>of(commands)));
+  public GenerateCLIDocsTableCommand(CommandSet commands, TableRendererConfig tableRendererConfig) {
+    super(Suppliers.<Iterable<CommandSet<Command>>>ofInstance(ImmutableList.<CommandSet<Command>>of(commands)),
+          tableRendererConfig);
   }
 
   @Override

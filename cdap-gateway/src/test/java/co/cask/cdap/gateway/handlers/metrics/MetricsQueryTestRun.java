@@ -179,6 +179,42 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
+  public void testFlowAndAppLevelMetricsAggregation() throws Exception {
+
+    MetricsCollector flowCollector =
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WCFlow",
+                                                       "splitter"));
+    flowCollector.increment("reads", 2);
+
+    flowCollector =
+      collectionService.getCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WordCount", "WCFlow",
+                                                       "counter"));
+    flowCollector.increment("reads", 2);
+
+
+    MetricsCollector mrCollector =
+      collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
+                                                             MapReduceMetrics.TaskType.Mapper, "id1", "t1"));
+    mrCollector.gauge("reads", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+
+    String flowletMetric1 = "/system/apps/WordCount/flows/WCFlow/flowlets/splitter/reads?aggregate=true";
+    String flowletMetric2 = "/system/apps/WordCount/flows/WCFlow/flowlets/counter/reads?aggregate=true";
+    String flowMetric = "/system/apps/WordCount/flows/reads?aggregate=true";
+    String mrMetric = "/system/apps/WordCount/mapreduce/reads?aggregate=true";
+    String appMetric = "/system/apps/WordCount/reads?aggregate=true";
+    // test app level aggregate
+    testSingleMetric(flowletMetric1, 2);
+    testSingleMetric(flowletMetric2, 2);
+    testSingleMetric(flowMetric, 4);
+    testSingleMetric(mrMetric, 10);
+    testSingleMetric(appMetric, 14);
+  }
+
+  @Test
   public void testingMetricsWithRunIds() throws Exception {
     String runId1 = "id123";
     String runId2 = "id124";
