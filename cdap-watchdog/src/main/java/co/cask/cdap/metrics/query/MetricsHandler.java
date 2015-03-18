@@ -28,6 +28,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableBiMap;
@@ -170,8 +171,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
-    return (groupBy == null) ? Lists.<String>newArrayList() :
+    List<String> groupByTags = (groupBy == null) ? Lists.<String>newArrayList() :
       Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
+    groupByTags = Lists.transform(groupByTags, new Function<String, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable String input) {
+        return humanToTagName(input);
+      }
+    });
+    return groupByTags;
   }
 
   private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
@@ -318,9 +327,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     for (MetricTimeSeries timeSeries : series) {
       MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
-                                                       timeSeries.getTagValues(), timeValues);
+                                                       replaceTagNames(timeSeries.getTagValues()), timeValues);
     }
     return new MetricQueryResult(startTs, endTs, serieses);
+  }
+
+  private Map<String, String> replaceTagNames(Map<String, String> tagValues) {
+    Map<String, String> humanTagValues = Maps.newHashMap();
+    for (Map.Entry<String, String> tag : tagValues.entrySet()) {
+      humanTagValues.put(tagNameToHuman.get(tag.getKey()), tag.getValue());
+    }
+    return humanTagValues;
   }
 
   private MetricQueryResult.TimeValue[] decorate(List<TimeValue> points) {
