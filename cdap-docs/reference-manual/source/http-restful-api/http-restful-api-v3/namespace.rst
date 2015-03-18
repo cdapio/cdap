@@ -50,7 +50,7 @@ Properties for the namespace are passed in the JSON request body:
      - Display description of the namespace
      - An empty string ("")
    * - ``config``
-     - :ref:`Configuration preferences <preferences>`_ for the namespace
+     - :ref:`Configuration preferences <preferences>` for the namespace
      - A JSON string of configuration key-value pairs
 
 If a namespace with the same name already exists, the method will still return ``200 OK``,
