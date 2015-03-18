@@ -104,14 +104,14 @@ namespaces.
 
 .. _http-restful-api-namespace-characters:
 
-Names and Characters for Namespace IDs
-======================================
+Names and Characters for Namespace Identifiers
+==============================================
 
-Namespace IDs have a limited set of characters allowed; they are restricted to letters (a-z,
-A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit on the
-length of a namespace ID nor on the number of namespaces.
+Namespaces have a limited set of characters allowed in their identifier; they are
+restricted to letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is
+no size limit on the length of a namespace identifier nor on the number of namespaces.
 
-The three namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``cdap``
+The three namespaces ``cdap``, ``default``, and ``system`` are reserved. The ``cdap``
 and ``system`` namespaces cannot be used by users directly. The ``default`` namespace,
 however,  can be used by anyone.
 
