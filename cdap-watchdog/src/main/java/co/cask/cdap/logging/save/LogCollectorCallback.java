@@ -105,7 +105,7 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
           if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
+            LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
                      key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
 
             if (kafkaCancelCallbackLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
@@ -138,9 +138,6 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
       ++count;
     }
     LOG.trace("Got {} messages from kafka", count);
-    if (count > 0) {
-      LOG.debug("Got {} messages from kafka", count);
-    }
   }
 
   @Override

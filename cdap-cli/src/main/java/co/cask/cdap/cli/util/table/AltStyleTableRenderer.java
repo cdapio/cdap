@@ -205,7 +205,7 @@ public class AltStyleTableRenderer implements TableRenderer {
             endSplitIdx = startSplitIdx + width;
           }
           // add any remaining part of the splitFieldLine string
-          if (startSplitIdx < splitFieldLine.length() - 1) {
+          if (startSplitIdx < splitFieldLine.length()) {
             cellLines.add(splitFieldLine.substring(startSplitIdx, splitFieldLine.length()));
           }
           multiLines = true;

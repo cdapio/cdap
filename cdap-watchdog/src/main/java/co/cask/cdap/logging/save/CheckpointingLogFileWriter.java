@@ -103,7 +103,7 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
 
     // Save the max checkpoint seen for each partition
     for (Map.Entry<Integer, Long> entry : partitionOffsetMap.entrySet()) {
-      LOG.debug("Saving checkpoint offset {} for partition {}", entry.getValue(), entry.getKey());
+      LOG.trace("Saving checkpoint offset {} for partition {}", entry.getValue(), entry.getKey());
       checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
     }
     lastCheckpointTime = currentTs;
