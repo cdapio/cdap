@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -60,12 +61,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final MetricStore metricStore;
+  private final Scheduler scheduler;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               MetricStore metricStore) {
+                               MetricStore metricStore, Scheduler scheduler) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -73,6 +75,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
+    this.scheduler = scheduler;
     this.metricStore = metricStore;
   }
 
@@ -168,6 +171,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Delete queues and streams data
       queueAdmin.dropAllInNamespace(namespaceId.getId());
       streamAdmin.dropAllInNamespace(namespaceId);
+      // Delete all the schedules
+      scheduler.deleteAllSchedules(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
       // TODO: CDAP-1729 - Delete/Expire Metrics. API unavailable right now.
@@ -186,12 +191,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
       }
-    } catch (DatasetManagementException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
-    } catch (IOException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);

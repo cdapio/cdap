@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
@@ -40,9 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hive patched for CDH4 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -102,6 +106,22 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  protected void setCurrentDatabase(String dbName) throws IOException, HiveSQLException, ExploreException {
+    final OperationHandle opHandle = doExecute(getCliService().openSession("", "", startSession()), "USE " + dbName);
+    try {
+      Tasks.waitFor(QueryStatus.OpStatus.FINISHED, new Callable<QueryStatus.OpStatus>() {
+        @Override
+        public QueryStatus.OpStatus call() throws Exception {
+          return fetchStatus(opHandle).getStatus();
+        }
+      }, 5, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      // Rethrow exception and don't execute query i.e. return 500
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
