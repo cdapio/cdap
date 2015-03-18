@@ -107,8 +107,19 @@ angular
         var promise,
             myDataSrc;
         if (config.options) {
-          myDataSrc = MyDataSource(config.params.scope);
-          delete config.params.scope;
+          // Can/Should make use of my<whatever>Api service in another service.
+          // So in that case the service will not have a scope.
+          // In that case we let MyDataSource create a new $scope.
+          if (config.params && config.params.scope) {
+            myDataSrc = MyDataSource(config.params.scope);
+            delete config.params.scope;
+          } else {
+            myDataSrc = MyDataSource();
+          }
+          // We can use MyDataSource directly or through $resource'y way.
+          // If we use $resource'y way then we need to make some changes to
+          // the data we get for $resource to process.
+          config.$isResource = true;
           switch(config.options.type) {
             case 'POLL':
               promise = myDataSrc.poll(config);
