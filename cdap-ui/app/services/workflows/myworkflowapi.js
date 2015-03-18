@@ -3,8 +3,6 @@ angular.module(PKG.name + '.services')
 
     var url = myCdapUrl.constructUrl,
         basepath = '/apps/:appId/workflows/:workflowId';
-    var runsId = Date.now(),
-        statusId = Date.now() + 1;
 
     return $resource(
       url({ _cdapNsPath: basepath }),
@@ -13,27 +11,32 @@ angular.module(PKG.name + '.services')
       workflowId: '@workflowId'
     },
     {
+      get: {
+        url: url({ _cdapNsPath: basepath }),
+        method: 'GET',
+        options: { type: 'REQUEST' }
+      },
       runs: {
         url: url({ _cdapNsPath: basepath + '/runs'}),
         method: 'GET',
         isArray: true,
-        options: { type: 'POLL', id: runsId }
+        options: { type: 'POLL'}
       },
       runsStop: {
         url: url({ _cdapNsPath: basepath + '/runs'}),
         isArray: true,
         method: 'GET',
-        options: { type: 'POLL-STOP', id: runsId }
+        options: { type: 'POLL-STOP' }
       },
       status: {
         url: url({ _cdapNsPath: basepath + '/status' }),
         method: 'GET',
-        options: { type: 'POLL', id: statusId }
+        options: { type: 'POLL' }
       },
       statusStop: {
         url: url({ _cdapNsPath: basepath + '/status' }),
         method: 'GET',
-        options: { type: 'POLL-STOP', id: statusId }
+        options: { type: 'POLL-STOP' }
       },
       start: {
         url: url({ _cdapNsPath: basepath + '/start' }),

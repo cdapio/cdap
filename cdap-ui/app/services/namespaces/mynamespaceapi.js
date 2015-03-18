@@ -12,16 +12,7 @@ angular.module(PKG.name + '.services')
       {
         create: {
           method: 'PUT',
-          options: { type: 'REQUEST' },
-          user: myAuth.currentUser || null,
-          headers: {
-            authorization: (myAuth.currentUser.token ? 'Bearer ' + myAuth.currentUser.token: null)
-          },
-          interceptor: {
-            response: function(response) {
-              return response;
-            }
-          }
+          options: { type: 'REQUEST' }
         }
       }
 
