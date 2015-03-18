@@ -302,19 +302,19 @@
                     <!-- Copy cdap-ui -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/server</directory>
-                      <targetPath>web-app-new/local/server</targetPath>
+                      <targetPath>web-app/beta/server</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/dist</directory>
-                      <targetPath>web-app-new/local/dist</targetPath>
+                      <targetPath>web-app/beta/dist</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
-                      <targetPath>web-app-new/local/node_modules</targetPath>
+                      <targetPath>web-app/beta/node_modules</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/</directory>
-                      <targetPath>web-app-new/local/</targetPath>
+                      <targetPath>web-app/beta/</targetPath>
                       <includes>
                         <include>server.js</include>
                         <include>package.json</include>
