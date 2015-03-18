@@ -16,8 +16,11 @@
 package co.cask.cdap.cli.util.table;
 
 import com.google.common.base.Strings;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.PrintStream;
 
@@ -25,11 +28,12 @@ import java.io.PrintStream;
  *
  */
 @Ignore
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class TableRendererTest {
 
-  private static final int LINE_WIDTH = 80;
-  private static final PrintStream OUTPUT = System.out;
-  private static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
+  protected static final int LINE_WIDTH = 80;
+  protected static final PrintStream OUTPUT = System.out;
+  protected static final TableRendererConfig TEST_CONFIG = new TableRendererConfig() {
     @Override
     public int getLineWidth() {
       return LINE_WIDTH;
@@ -37,6 +41,11 @@ public abstract class TableRendererTest {
   };
 
   public abstract TableRenderer getRenderer();
+
+  @Before
+  public void setUp() {
+    OUTPUT.flush();
+  }
 
   @Test
   public void testFormat() {
