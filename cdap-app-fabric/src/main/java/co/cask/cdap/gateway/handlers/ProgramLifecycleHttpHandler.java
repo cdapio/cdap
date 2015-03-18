@@ -58,6 +58,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -67,6 +68,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -119,7 +121,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Json serializer.
    */
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -968,7 +972,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         specList.add(entry.getValue());
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, specList);
+    responder.sendJson(HttpResponseStatus.OK, specList,
+                       new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
   }
 
   /**

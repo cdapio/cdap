@@ -32,8 +32,11 @@ public class FakeApp extends AbstractApplication {
   public static final String NAME = "FakeApp";
   public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
+
   public static final String SCHEDULE_NAME = "someSchedule";
+  public static final String SCHEDULE_CRON = "0 0 1 1 *";
   public static final String STREAM_SCHEDULE_NAME = "streamSchedule";
+  public static final int STREAM_TRIGGER_MB = 10000;
 
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
@@ -60,9 +63,9 @@ public class FakeApp extends AbstractApplication {
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", "0 0 1 1 *"), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", SCHEDULE_CRON), FakeWorkflow.NAME);
     scheduleWorkflow(Schedules.createDataSchedule(STREAM_SCHEDULE_NAME, "", Schedules.Source.STREAM,
-                                                  STREAM_NAME, 10000), FakeWorkflow.NAME);
+                                                  STREAM_NAME, STREAM_TRIGGER_MB), FakeWorkflow.NAME);
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }
