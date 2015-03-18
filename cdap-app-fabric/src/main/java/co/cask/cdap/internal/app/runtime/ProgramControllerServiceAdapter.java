@@ -76,7 +76,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
       @Override
       public void terminated(Service.State from) {
-        if (getState() != State.STOPPING) {
+        if (from != Service.State.STOPPING) {
           // Service completed by itself. Simply signal the state change of this controller.
           complete();
         } else {
