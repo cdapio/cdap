@@ -162,7 +162,7 @@ public class TransactionManagerDebuggerMain {
       tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
         : null;
       portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                   conf.getInt(Constants.Router.ROUTER_PORT, Integer.getInteger(Constants.Router.DEFAULT_ROUTER_PORT));
+                   conf.getInt(Constants.Router.ROUTER_PORT, Integer.parseInt(Constants.Router.DEFAULT_ROUTER_PORT));
 
       // if both tokenfile and accessToken are given, just use the access token
       if (tokenFile != null) {
