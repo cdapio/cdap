@@ -23,6 +23,9 @@ angular.module(PKG.name + '.feature.workflows')
             type: item.nodeType
           }, item);
         });
+        console.log(nodes, edges);
+
+        addStartAndEndNodes(nodes, edges);
 
         $scope.data = {
           nodes: nodes,
@@ -64,6 +67,38 @@ angular.module(PKG.name + '.feature.workflows')
       });
 
   });
+
+/**
+ * Adds start and end nodes to nodes list.
+ * @param {Array} of nodes.
+ */
+function addStartAndEndNodes(nodes, edges) {
+  if (nodes.length) {
+    nodes.unshift({
+      name: 'start',
+      type: 'START',
+      nodeType: 'START'
+    });
+    edges.unshift({
+      sourceName: nodes[0].name,
+      sourceType: nodes[0].nodeType,
+      targetName: nodes[1].name
+    });
+
+    nodes.push({
+      name: 'end',
+      type: 'END',
+      nodeType: 'END'
+    });
+    edges.push({
+      sourceName: nodes[nodes.length - 2].name,
+      sourceType: nodes[nodes.length - 2].nodeType,
+      targetName: nodes[nodes.length - 1].name
+    });
+    
+  }
+
+}
 
 /**
   * Purpose: Converts a list of nodes to a list of connections
