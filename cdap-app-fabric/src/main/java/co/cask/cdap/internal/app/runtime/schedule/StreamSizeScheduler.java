@@ -23,6 +23,8 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -362,6 +364,23 @@ public class StreamSizeScheduler implements Scheduler {
         LOG.debug("Could not delete schedule, it might have been deleted already by another thread '{}'",
                   scheduleId, e);
       }
+    }
+  }
+
+  @Override
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
+      deleteAllSchedules(namespaceId, appSpec);
+    }
+  }
+
+  private void deleteAllSchedules(Id.Namespace namespaceId, ApplicationSpecification appSpec)
+    throws SchedulerException {
+    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
+      Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
+      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
     }
   }
 
