@@ -9,6 +9,4 @@ angular.module(PKG.name + '.feature.workflows')
     myWorkFlowApi.runs(params, function(res) {
       $scope.runs = res;
     });
-
-
   });

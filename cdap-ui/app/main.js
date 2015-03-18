@@ -108,8 +108,7 @@ angular
             myDataSrc;
         if (config.options) {
           // Can/Should make use of my<whatever>Api service in another service.
-          // So in that case the service will not have a scope.
-          // In that case we let MyDataSource create a new $scope.
+          // So in that case the service will not have a scope. Hence the check
           if (config.params && config.params.scope) {
             myDataSrc = MyDataSource(config.params.scope);
             delete config.params.scope;
@@ -118,7 +117,7 @@ angular
           }
           // We can use MyDataSource directly or through $resource'y way.
           // If we use $resource'y way then we need to make some changes to
-          // the data we get for $resource to process.
+          // the data we get for $resource.
           config.$isResource = true;
           switch(config.options.type) {
             case 'POLL':
@@ -138,9 +137,10 @@ angular
       }
 
       newHttp.get = $delegate.get;
-      newHttp.post = $delegate.post;
-      newHttp.put = $delegate.put;
-      newHttp.patch = $delegate.patch;
+      newHttp.delete = $delegate.delete;
+      newHttp.save = $delegate.save;
+      newHttp.query = $delegate.query;
+      newHttp.remove = $delegate.remove;
       return newHttp;
     });
   })
@@ -160,14 +160,13 @@ angular
             angular.extend({
               user: $rootScope.currentUser || null,
               headers: {
+                // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
+                // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
                 authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
               }
             }, config);
           }
           return config;
-        },
-        'response': function(response) {
-          return response;
         }
       }
     });

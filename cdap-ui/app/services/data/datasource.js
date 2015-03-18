@@ -87,7 +87,6 @@ angular.module(PKG.name+'.services')
       if(instances[id]) {
         // throw new Error('multiple DataSource for scope', id);
         return instances[id];
-
       }
 
       if (!(this instanceof DataSource)) {
@@ -112,14 +111,18 @@ angular.module(PKG.name+'.services')
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, match)) {
-              if(b.errorCallback) {
-                $rootScope.$applyAsync(b.errorCallback.bind(null, {data: data.response}));
+              if (b.errorCallback) {
+                $rootScope.$applyAsync(b.errorCallback.bind(null, data.response));
+              } else if (b.reject) {
+                $rootScope.$applyAsync(b.reject.bind(null, {data: data.response}));
               }
             }
           });
           return; // errors are handled at $rootScope level
         }
-        angular.forEach(self.bindings, function (b) {
+        // Not using angular.forEach for performance reasons.
+        for (var i=0; i<self.bindings.length; i++) {
+          var b = self.bindings[i];
           if(angular.equals(b.resource, match)) {
             if (angular.isFunction(b.callback)) {
               $rootScope.$applyAsync(b.callback.bind(null, data.response));
@@ -129,7 +132,7 @@ angular.module(PKG.name+'.services')
               return;
             }
           }
-        });
+        }
       });
 
       scope.$on('$destroy', function () {
@@ -163,31 +166,29 @@ angular.module(PKG.name+'.services')
     DataSource.prototype.poll = function (resource, cb) {
       var self = this;
       var prom = new MyPromise(function(resolve, reject) {
-        var re = {};
+        var generatedResource = {};
         if (!resource.url) {
-          re = resource;
-        }else {
-          re = {
+          generatedResource = resource;
+        } else {
+          generatedResource = {
             url: buildUrl(resource.url, resource.params || {}),
             json: true,
             method: resource.method
           };
         }
 
-        var a = {
+        self.bindings.push({
           poll: true,
-          resource: re,
+          resource: generatedResource,
           callback: cb,
           resolve: resolve,
           reject: reject
-        };
-
-        self.bindings.push(a);
+        });
         self.scope.$on('$destroy', function () {
-          _pollStop(re);
+          _pollStop(generatedResource);
         });
 
-        _pollStart(re);
+        _pollStart(generatedResource);
       }, true);
       return prom;
     };
@@ -204,26 +205,25 @@ angular.module(PKG.name+'.services')
      * fetch a resource
      */
     DataSource.prototype.request = function (resource, cb) {
-      var once = false,
-          self = this;
+      var self = this;
       var prom = new MyPromise(function(resolve, reject) {
 
-        var re = {};
+        var generatedResource = {};
         if (!resource.url) {
-          re = resource;
+          generatedResource = resource;
         } else {
-          re = {
+          generatedResource = {
             url: buildUrl(resource.url, resource.params || {}),
             json: true,
             method: resource.method
           };
           if (resource.data) {
-            re.data = resource.data;
+            generatedResource.data = resource.data;
           }
         }
 
         self.bindings.push({
-          resource: re,
+          resource: generatedResource,
           callback: cb,
           resolve: resolve,
           reject: reject
@@ -231,7 +231,7 @@ angular.module(PKG.name+'.services')
 
         mySocket.send({
           action: 'request',
-          resource: re
+          resource: generatedResource
         });
 
       }, false);

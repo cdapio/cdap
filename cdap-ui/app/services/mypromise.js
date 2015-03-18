@@ -1,3 +1,25 @@
+/*
+  Purpose:
+    TL;DR
+    MyPromise is observable promise. Sounds very disturbing but this is the initial
+    attempt at sockets + $resource in an angular app.
+
+    Longer Version:
+    We cannot use promise pattern in a socket environment as promises
+    resolve only once. In the case of sockets we might want to 'poll' for a data
+    and get updated as soon something has changed.
+    MyPromise provides an interface simillar to a Promise (not $q) and accepts
+    in addition to a function a second argument. If you create your promise to
+    be an observable then the handlers are never erased and your callback/resolve
+    handler will be called whenever the promise gets resolved.
+
+    @param {function} which gets a 'resolve' and a 'reject' methods
+    @param {boolean} is observable or not.
+
+    PS: Inspired from
+      - https://www.promisejs.org/implementing/
+      - https://github.com/kriskowal/q/blob/v1/design/README.js
+*/
 angular.module(PKG.name + '.services')
   .provider('MyPromise', function() {
     var PENDING = 0;
@@ -67,24 +89,23 @@ angular.module(PKG.name + '.services')
       }
 
       this.done = function (onFulfilled, onRejected) {
-        // ensure we are always asynchronous
-        //setTimeout(function () {
-          handle({
-            onFulfilled: onFulfilled,
-            onRejected: onRejected
-          });
-        //}, 0);
+        handle({
+          onFulfilled: onFulfilled,
+          onRejected: onRejected
+        });
       }
 
 
       this.then = function (onFulfilled, onRejected) {
         var self = this;
+        // Return a new promise for chaining.
         return new Promise(function (resolve, reject) {
           return self.done(function (result) {
             if (typeof onFulfilled === 'function') {
               try {
                 return resolve(onFulfilled(result));
               } catch (ex) {
+                (console.error)? console.error(ex): console.log(ex);
                 return reject(ex);
               }
             } else {
@@ -95,9 +116,11 @@ angular.module(PKG.name + '.services')
               try {
                 return resolve(onRejected(error));
               } catch (ex) {
+                (console.error)? console.error(ex): console.log(ex);
                 return reject(ex);
               }
             } else {
+              (console.error)? console.error(ex): console.log(ex);
               return reject(error);
             }
           });
@@ -144,6 +167,7 @@ angular.module(PKG.name + '.services')
             onRejected(reason)
           })
         } catch (ex) {
+          (console.error)? console.error(ex): console.log(ex);
           if (done) return
           done = true
           onRejected(ex)
