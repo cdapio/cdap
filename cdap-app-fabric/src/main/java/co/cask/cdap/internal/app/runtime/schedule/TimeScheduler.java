@@ -66,6 +66,7 @@ final class TimeScheduler implements Scheduler {
   private final PreferencesStore preferencesStore;
   private final CConfiguration cConf;
   private ListeningExecutorService taskExecutorService;
+  private boolean schedulerStarted;
   private final Store store;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
@@ -77,18 +78,31 @@ final class TimeScheduler implements Scheduler {
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
     this.cConf = cConf;
+    this.schedulerStarted = false;
   }
 
-  void start() throws SchedulerException {
+  void init() throws SchedulerException {
     try {
       taskExecutorService = MoreExecutors.listeningDecorator(
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-      scheduler.start();
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
+  }
+
+  void lazyStart() throws SchedulerException {
+    try {
+      scheduler.start();
+      schedulerStarted = true;
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+  }
+
+  boolean isStarted() {
+    return schedulerStarted;
   }
 
   void stop() throws SchedulerException {
