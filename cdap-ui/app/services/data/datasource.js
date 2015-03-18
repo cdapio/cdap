@@ -171,7 +171,7 @@ angular.module(PKG.name+'.services')
           re = resource;
         }else {
           re = {
-            url: resource.url,
+            url: buildUrl(resource.url, resource.params || {}),
             json: true,
             method: resource.method
           };
@@ -212,29 +212,85 @@ angular.module(PKG.name+'.services')
           self = this;
       var prom = new MyPromise(function(resolve, reject) {
 
-          // console.log("Pushing to bindings: ", resource);
-          self.bindings.push({
-            resource: resource,
-            callback: cb,
-            resolve: resolve,
-            reject: reject
-          });
+        var re = {};
+        if (!resource.url) {
+          re = resource;
+        } else {
+          re = {
+            url: buildUrl(resource.url, resource.params || {}),
+            json: true,
+            method: resource.method
+          };
+          if (resource.data) {
+            re.data = resource.data;
+          }
+        }
 
-          console.log("REQUEST: Pushing to bindings: ", self.bindings);
-          // $timeout(function() {
-            mySocket.send({
-              action: 'request',
-              resource: resource
-            });
-          //});
+        self.bindings.push({
+          resource: re,
+          callback: cb,
+          resolve: resolve,
+          reject: reject
+        });
+
+        mySocket.send({
+          action: 'request',
+          resource: re
+        });
 
       }, false);
-      prom = prom.then(function(res) {
-        res = res.data;
-        return res;
-      });
+      if (!resource.$isResource) {
+        prom = prom.then(function(res) {
+          res = res.data;
+          return res;
+        });
+      }
       return prom;
     };
 
     return DataSource;
   });
+
+function buildUrl(url, params) {
+  if (!params) return url;
+  var parts = [];
+
+  function forEachSorted(obj, iterator, context) {
+    var keys = Object.keys(params).sort();
+    for (var i = 0; i < keys.length; i++) {
+      iterator.call(context, obj[keys[i]], keys[i]);
+    }
+  return keys;
+  }
+
+  function encodeUriQuery(val, pctEncodeSpaces) {
+    return encodeURIComponent(val).
+           replace(/%40/gi, '@').
+           replace(/%3A/gi, ':').
+           replace(/%24/g, '$').
+           replace(/%2C/gi, ',').
+           replace(/%3B/gi, ';').
+           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+  }
+
+  forEachSorted(params, function(value, key) {
+    if (value === null || angular.isUndefined(value)) return;
+    if (!angular.isArray(value)) value = [value];
+
+    angular.forEach(value, function(v) {
+      if (angular.isObject(v)) {
+        if (angular.isDate(v)) {
+          v = v.toISOString();
+        } else {
+          v = toJson(v);
+        }
+      }
+      parts.push(encodeUriQuery(key) + '=' +
+                 encodeUriQuery(v));
+    });
+  });
+  if (parts.length > 0) {
+    url += ((url.indexOf('?') == -1) ? '?' : '&') + parts.join('&');
+  }
+  return url;
+}
