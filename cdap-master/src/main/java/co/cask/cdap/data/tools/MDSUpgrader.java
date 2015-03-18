@@ -263,7 +263,7 @@ public class MDSUpgrader extends AbstractUpgrader {
   private void writeTempRunRecordStart(String appId, ProgramType programType, String programId, String pId,
                                        long startTs) {
     store.setStart(Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), programType, programId),
-                   pId, Long.MAX_VALUE - startTs);
+                   pId, startTs);
   }
 
   /**
