@@ -16,6 +16,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -58,6 +59,8 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -167,6 +170,8 @@ public class UpgradeTool {
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
+          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+          bind(MetricStore.class).to(DefaultMetricStore.class);
           install(new FactoryModuleBuilder()
                     .implement(Store.class, DefaultStore.class)
                     .build(StoreFactory.class)
