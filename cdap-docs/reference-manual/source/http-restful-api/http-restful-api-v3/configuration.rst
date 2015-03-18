@@ -31,16 +31,28 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
      - Description
    * - ``<type>``
      - Format for returned type, either ``json`` (default) or ``xml``
-  
+
+.. highlight:: json
+
 The response is a string in the specified format. For example, using the default JSON
 format, the output would be similar to (showing the first portion, reformatted to fit)::
 
-  {"security.enabled":"false","app.output.dir":"/programs","router.server.port":"10000","
-  metrics.kafka.partition.size":"10","data.tx.snapshot.local.dir":"data/tx.snapshot","
-  metrics.worker.threads":"10","security.server.maxthreads":"100","app.worker.threads":"10",
-  "security.token.digest.keylength":"128","metrics.memory.mb":"512","data.tx.server.io.
-  threads":"2","log.saver.num.instances":"1","notification.transport.system":"kafka","stream
-  .worker.threads":"10","metrics.data.table.ts.rollTime.60":"60","metrics.processor.num....
+  {
+    "security.enabled": "false",
+    "app.output.dir": "\/programs",
+    "router.server.port": "10000",
+    "metrics.kafka.partition.size": "10",
+    "data.tx.snapshot.local.dir": "data\/tx.snapshot",
+    "metrics.worker.threads": "10",
+    "security.server.maxthreads": "100",
+    "app.worker.threads": "10",
+    "security.token.digest.keylength": "128",
+    "metrics.memory.mb": "256",
+    "data.tx.server.io.threads": "2",
+    ...
+  }
+
+.. highlight:: console
 
 .. _http-restful-api-configuration-hbase:
 
@@ -92,4 +104,4 @@ format, the output would be similar to (showing the first portion, reformatted t
       <source>hbase-default.xml</source>
     </property>
     ...
-  
+  </configuration>
