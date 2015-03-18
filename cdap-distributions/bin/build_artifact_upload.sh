@@ -85,10 +85,17 @@ function sync_build_artifacts_to_server () {
     _package=`echo ${i} | awk -F / '{ print $(NF) }'`
     if [[ "${_package}" == *rpm ]]
     then
-      _version=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
+      _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
     else
-      _version=`echo ${_package} | awk -F - '{ print $(NF) }'| awk -F . '{ print $1"."$2"."$3 }'`
+      if [[ "${_package}" == *_* ]]
+      then
+        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
+      else
+        _version_stub=`echo ${_package} | awk -F - '{ print $(NF) }'`
+      fi
     fi
+    _version=`echo ${_version_stub} | awk -F . '{ print $1"."$2"."$3 }'`
+    decho "version = ${_version}"
 
     OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
     mkdir -p ${OUTGOING_DIR}

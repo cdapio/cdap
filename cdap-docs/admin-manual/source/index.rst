@@ -89,6 +89,11 @@ and introduces the CDAP Console.**
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: operations/tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html
 

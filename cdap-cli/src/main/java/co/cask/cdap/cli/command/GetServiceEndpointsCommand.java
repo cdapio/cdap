@@ -67,7 +67,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
           return Lists.newArrayList(endpoint.getMethod(), endpoint.getPath());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

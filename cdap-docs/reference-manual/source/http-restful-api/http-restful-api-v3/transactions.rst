@@ -3,6 +3,8 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. highlight:: console
+
 .. _http-restful-api-transactions:
 .. _http-restful-api-v3-transactions:
 
@@ -11,6 +13,8 @@ Transaction Service HTTP RESTful API
 ====================================
 
 Certain internals of the CDAP Transaction Service are exposed via HTTP RESTful endpoints and are documented here.
+
+.. _http-restful-api-transactions-number:
 
 Number of Invalid Transactions
 ------------------------------
@@ -23,6 +27,8 @@ The response is a JSON string::
 
   { "size": <size> }
 
+
+.. _http-restful-api-transactions-truncate:
 
 Truncate Invalid Transactions by Time
 -------------------------------------

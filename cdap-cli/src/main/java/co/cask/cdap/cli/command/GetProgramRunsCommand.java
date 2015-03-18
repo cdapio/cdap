@@ -82,7 +82,7 @@ public class GetProgramRunsCommand extends AbstractCommand {
           return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

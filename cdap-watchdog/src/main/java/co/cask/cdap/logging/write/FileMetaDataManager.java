@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -62,7 +61,6 @@ public final class FileMetaDataManager {
 
   private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
-  private static final String DEVELOPER_STRING = "developer";
 
   private final TransactionExecutorFactory txExecutorFactory;
 
@@ -276,7 +274,7 @@ public final class FileMetaDataManager {
             String oldPath = Bytes.toString(entry.getValue());
             Location newPath;
             String newKey;
-            if (key.startsWith(Constants.CDAP_NAMESPACE) || key.startsWith(DEVELOPER_STRING)) {
+            if (key.startsWith(Constants.CDAP_NAMESPACE) || key.startsWith(Constants.DEVELOPER_ACCOUNT)) {
               newPath = upgradePath(key, oldPath);
               newKey = upgradeKey(key);
               try {
@@ -304,7 +302,7 @@ public final class FileMetaDataManager {
     if (key.startsWith(Constants.CDAP_NAMESPACE)) {
       return key.replace(Constants.CDAP_NAMESPACE, Constants.SYSTEM_NAMESPACE);
     }
-    return key.replace(DEVELOPER_STRING, Constants.DEFAULT_NAMESPACE);
+    return key.replace(Constants.DEVELOPER_ACCOUNT, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -326,7 +324,7 @@ public final class FileMetaDataManager {
       newLocation = updateLogLocation(location, Constants.SYSTEM_NAMESPACE);
       // newLocation will be: hdfs://blah.blah.net/cdap/system/logs/avro/services/
       // service-appfabric/2015-02-26/1424988452088.avro
-    } else if (key.startsWith(DEVELOPER_STRING)) {
+    } else if (key.startsWith(Constants.DEVELOPER_ACCOUNT)) {
       // Example of this type: hdfs://blah.blah.net/cdap/logs/avro/developer/HelloWorld/
       // flow-WhoFlow/2015-02-26/1424988484082.avro
       newLocation = updateLogLocation(location, Constants.DEFAULT_NAMESPACE);

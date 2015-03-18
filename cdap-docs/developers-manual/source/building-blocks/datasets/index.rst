@@ -28,9 +28,11 @@ higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
 The core Datasets of CDAP are Tables and FileSets:
+
 - Unlike relational database systems, CDAP **tables** are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
+  
 - CDAP **file sets** provide an abstraction over the raw file system, and associate properties such as
   the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
