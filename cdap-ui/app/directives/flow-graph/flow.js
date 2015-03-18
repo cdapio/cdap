@@ -129,7 +129,7 @@ module.directive('myFlowGraph', function ($filter, $state) {
           parent.append('text')
             .attr('x', circleXPos)
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -157,9 +157,13 @@ module.directive('myFlowGraph', function ($filter, $state) {
       };
 
       scope.handleNodeClick = function(nodeId) {
-        handleHideTip(nodeId);
-        var instance = instanceMap[nodeId];
-        $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+        scope.handleHideTip(nodeId);
+        var instance = scope.instanceMap[nodeId];
+        if (instance.type === 'STREAM') {
+          $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
+        } else {
+          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+        }
       };
 
       /**
@@ -298,8 +302,8 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
         if ($state.includes('**.workflows.**')) {
           return;
         }
-        handleHideTip(nodeId);
-        var instance = instanceMap[nodeId];
+        scope.handleHideTip(nodeId);
+        var instance = scope.instanceMap[nodeId];
         $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
       }
 
@@ -362,8 +366,8 @@ function genericRender(scope, $filter) {
 
   svg
     .selectAll('g.node text')
-    .on('mouseover', handleShowTip)
-    .on('mouseout', handleHideTip);
+    .on('mouseover', scope.handleShowTip)
+    .on('mouseout', scope.handleHideTip);
 
   // Center svg.
   var initialScale = 1.1;
@@ -377,7 +381,7 @@ function genericRender(scope, $filter) {
   /**
    * Handles showing tooltip on mouseover of node name.
    */
-  function handleShowTip(nodeId) {
+  scope.handleShowTip = function(nodeId) {
     tip
       .html(function(d) {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
@@ -388,7 +392,7 @@ function genericRender(scope, $filter) {
   /**
    * Handles hiding tooltip on mouseout of node name.
    */
-  function handleHideTip(nodeId) {
+  scope.handleHideTip = function(nodeId) {
     tip.hide();
   }
 };
