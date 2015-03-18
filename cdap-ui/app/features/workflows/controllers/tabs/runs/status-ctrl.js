@@ -23,7 +23,6 @@ angular.module(PKG.name + '.feature.workflows')
             type: item.nodeType
           }, item);
         });
-        console.log(nodes, edges);
 
         addStartAndEndNodes(nodes, edges);
 
