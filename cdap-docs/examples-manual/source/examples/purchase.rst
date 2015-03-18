@@ -27,21 +27,21 @@ and write to an ObjectStore Dataset.
     Purchase object and stores the object in the *purchases* Dataset.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
     then stored in the *userProfiles* Dataset.
-  - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
-    is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
+  - The *CatalogLookup* Service fetches the catalog id for a given product. The *CatalogLookup* Service
+    is called from the PurchaseStore Flowlet. The host and port of the *CatalogLookup* Service is discovered
     using the Service discovery framework.
-  - The ``UserProfileService`` is responsible for storing and retrieving the user information
-    for a given user id from the *userProfiles* Dataset. The host and port of the ``UserProfileService`` is
+  - The *UserProfileService* is responsible for storing and retrieving the user information
+    for a given user id from the *userProfiles* Dataset. The host and port of the *UserProfileService* is
     discovered using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
-    the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
+    the *UserProfileService* and creates a purchase history. It stores the purchase history in the
     *history* Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a Data Schedule.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the *history* Dataset.
-  - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
+  - Request the *PurchaseHistoryService* retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
@@ -159,18 +159,18 @@ Once the application is deployed:
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseHistoryService``
+      - ``$ ./bin/cdap-cli.sh start service PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.CatalogLookupService``
+      - ``$ ./bin/cdap-cli.sh start service PurchaseHistory.CatalogLookup``
     * - On Windows:
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseHistoryService``    
+      - ``> bin\cdap-cli.bat start service PurchaseHistory.PurchaseHistoryService``    
     * - 
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.CatalogLookupService``    
+      - ``> bin\cdap-cli.bat start service PurchaseHistory.CatalogLookup``    
 
 - You can send ``curl`` requests to CDAP::
 
     curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookupService/start'
+    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
   SDK in ``libexec\bin\curl.exe``
@@ -381,7 +381,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; do the same for *CatalogLookupService*; or
+  Service detail page, then click the *Stop* button; do the same for *CatalogLookup*; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -389,10 +389,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseHistoryService``
+      - ``$ ./bin/cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.CatalogLookupService``
+      - ``$ ./bin/cdap-cli.sh stop service PurchaseHistory.CatalogLookup``
     * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseHistoryService``
+      - ``> bin\cdap-cli.bat stop service PurchaseHistory.PurchaseHistoryService``
     * - 
-      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.CatalogLookupService``
+      - ``> bin\cdap-cli.bat stop service PurchaseHistory.CatalogLookup``
