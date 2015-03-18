@@ -54,6 +54,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -323,7 +324,7 @@ public class StandaloneMain {
     // Windows specific requirements
     if (OSDetector.isWindows()) {
       String userDir = System.getProperty("user.dir");
-      System.load(userDir + "/lib/native/hadoop.dll");
+      System.load(userDir + Joiner.on(File.separator).join("lib", "native", "hadoop.dll"));
     }
 
     //Run dataset service on random port
