@@ -323,8 +323,16 @@ public class StandaloneMain {
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-      String userDir = System.getProperty("user.dir");
-      System.load(userDir + Joiner.on(File.separator).join("lib", "native", "hadoop.dll"));
+      // not set anywhere by the project, expected to be set from IDEs if running from the project instead of sdk
+      // hadoop.dll is at cdap-unit-test\src\main\resources\hadoop.dll for some reason
+      String hadoopDLLPath = System.getProperty("hadoop.dll.path");
+      if (hadoopDLLPath != null) {
+        System.load(hadoopDLLPath);
+      } else {
+        // this is where it is when the standalone sdk is built
+        String userDir = System.getProperty("user.dir");
+        System.load(Joiner.on(File.separator).join(userDir, "lib", "native", "hadoop.dll"));
+      }
     }
 
     //Run dataset service on random port
