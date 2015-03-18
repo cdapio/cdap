@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  *
  */
-final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<WorkflowSpecification> {
+public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<WorkflowSpecification> {
 
   @Override
   public JsonElement serialize(WorkflowSpecification src, Type typeOfSrc, JsonSerializationContext context) {

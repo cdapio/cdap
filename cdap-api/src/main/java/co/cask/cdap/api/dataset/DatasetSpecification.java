@@ -181,9 +181,10 @@ public final class DatasetSpecification {
   }
 
   /**
-   * Returns true if the tableName corresponds to the dataset spec.
+   * Returns true if the tableName corresponds to the dataset specification.
    * @param tableName
-   * @return
+   * @return <code>true</code> if the tableName represents the dataset spec;
+   *         <code>false</code> otherwise
    */
   public boolean isParent(String tableName) {
     return isParent(tableName, this);

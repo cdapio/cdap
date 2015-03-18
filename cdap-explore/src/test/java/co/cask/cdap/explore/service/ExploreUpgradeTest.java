@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.Constants;
@@ -41,7 +42,7 @@ import org.junit.experimental.categories.Category;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -85,11 +86,12 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
       .setTableProperty("avro.schema.literal", schema.toString())
       .build());
     TimePartitionedFileSet tpfs = datasetFramework.getDataset(filesetID, Collections.<String, String>emptyMap(), null);
+    Assert.assertNotNull(tpfs);
     Transaction tx1 = transactionManager.startShort(100);
     TransactionAware txTpfs = (TransactionAware) tpfs;
     txTpfs.startTx(tx1);
     tpfs.addPartition(0L, "epoch");
-    Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
+    Set<Partition> partitions = tpfs.getPartitions(null);
     txTpfs.commitTx();
     transactionManager.canCommit(tx1, txTpfs.getTxChanges());
     transactionManager.commit(tx1);
@@ -147,8 +149,8 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     Assert.assertFalse(tableInfo.getParameters().containsKey(Constants.Explore.CDAP_VERSION));
 
     // check partition was added to tpfs dataset
-    Iterator<PartitionKey> partitionKeyIter = partitions.keySet().iterator();
-    String expected = stringify(partitionKeyIter.next());
+    Iterator<Partition> partitionIter = partitions.iterator();
+    String expected = stringify(partitionIter.next().getPartitionKey());
     runCommand(Constants.DEFAULT_NAMESPACE_ID, "show partitions dataset_myfiles", true,
                Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(expected)))

@@ -16,6 +16,8 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -49,6 +51,8 @@ import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -60,6 +64,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -81,6 +86,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Command line tool for the Upgrade tool
@@ -154,6 +160,7 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          bind(Scheduler.class).toInstance(createNoopScheduler());
           bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
           bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           install(new FactoryModuleBuilder()
@@ -203,6 +210,59 @@ public class UpgradeTool {
           return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
         }
       });
+  }
+
+  private Scheduler createNoopScheduler() {
+    return new Scheduler() {
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      }
+
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      }
+
+      @Override
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+
+      }
+
+      @Override
+      public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      }
+
+      @Override
+      public void deleteAllSchedules(Id.Namespace namespaceId)
+        throws co.cask.cdap.internal.app.runtime.schedule.SchedulerException {
+      }
+
+      @Override
+      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+        return ScheduleState.NOT_FOUND;
+      }
+    };
   }
 
   /**
@@ -300,6 +360,10 @@ public class UpgradeTool {
 
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
+
+    LOG.info("Upgrading stream state store table ...");
+    StreamStateStoreUpgrader streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
+    streamStateStoreUpgrader.upgrade();
 
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);

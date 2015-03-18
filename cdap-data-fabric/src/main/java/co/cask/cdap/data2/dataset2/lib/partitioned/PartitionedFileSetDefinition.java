@@ -112,15 +112,8 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     if (FileSetArguments.getOutputPath(arguments) == null) {
       PartitionKey key = PartitionedFileSetArguments.getOutputPartitionKey(arguments, partitioning);
       if (key != null) {
-        StringBuilder builder = new StringBuilder();
-        String sep = "";
-        for (String fieldName : partitioning.getFields().keySet()) {
-          builder.append(sep).append(key.getField(fieldName).toString());
-          sep = "/";
-        }
-        String path = builder.toString();
         arguments = Maps.newHashMap(arguments);
-        FileSetArguments.setOutputPath(arguments, path);
+        FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(partitioning, key));
       }
     }
     return arguments;

@@ -17,6 +17,14 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
@@ -40,11 +48,19 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -52,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -756,9 +773,62 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                     Constants.DEFAULT_NAMESPACE,
-                                                     appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
+    getWorkflowSpecification(responder, appId, Constants.DEFAULT_NAMESPACE, workflowId);
+  }
+
+  private void getWorkflowSpecification(HttpResponder responder, String appId, String namespaceId, String workflowId) {
+    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
+    ApplicationSpecification appSpec = store.getApplication(id.getApplication());
+    if (appSpec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
+    if (workflowSpec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    List<ScheduleProgramInfo> actions = Lists.newArrayList();
+    Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
+
+    for (WorkflowNode node : workflowSpec.getNodes()) {
+      if (node.getType() == WorkflowNodeType.ACTION) {
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        actions.add(actionNode.getProgram());
+        if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+          WorkflowActionSpecification actionSpecification = actionNode.getActionSpecification();
+          if (actionSpecification != null) {
+            customActionMap.put(actionSpecification.getName(), actionNode.getActionSpecification());
+          }
+        }
+      }
+    }
+
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(WorkflowActionSpecification.class,
+                           new WorkflowActionSpecificationCodec())
+      .create();
+
+    JsonObject jsonObj = new JsonObject();
+
+    jsonObj.add("className", new JsonPrimitive(workflowSpec.getClassName()));
+    jsonObj.add("name", new JsonPrimitive(workflowSpec.getName()));
+    jsonObj.add("description", new JsonPrimitive(workflowSpec.getDescription()));
+
+    Type mapType = new TypeToken<Map<String, WorkflowActionSpecification>>() { }.getType();
+    JsonElement mapTree = gson.toJsonTree(customActionMap, mapType);
+    jsonObj.add("customActionMap", mapTree);
+
+    Type actionType = new TypeToken<List<ScheduleProgramInfo>>() { }.getType();
+    JsonElement actionTree = gson.toJsonTree(actions, actionType);
+    jsonObj.add("actions", actionTree);
+
+    JsonElement propertyTree = gson.toJsonTree(workflowSpec.getProperties(), Map.class);
+    jsonObj.add("properties", propertyTree);
+
+    responder.sendJson(HttpResponseStatus.OK, jsonObj);
   }
 
   @GET

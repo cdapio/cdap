@@ -16,7 +16,6 @@
 # the License.
 #
 
-VERSION_HOST="docs.cask.co"
 
 # We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
@@ -72,7 +71,6 @@ done
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
-NUX_FILE="$APP_HOME/.nux_dashboard"
 
 CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
 
@@ -161,35 +159,6 @@ check_before_start() {
   fi
 }
 
-# Checks for any updates of standalone
-check_for_updates() {
-  # Check if curl is available
-  command -v curl >/dev/null 2>&1 || \
-    { echo >&2 "Require curl to check for an update to the CDAP SDK. Unable to check."; return; }
-  # Check if connected to internet
-  l=`ping -c 3 ${VERSION_HOST} 2>/dev/null | grep "64 bytes" | wc -l`
-  if [ ${l} -eq 3 ]
-  then
-    new=$(curl ${VERSION_HOST}/cdap/version 2>/dev/null)
-    if [[ "x${new}" != "x" ]]; then
-     current=`cat ${APP_HOME}/VERSION`
-     compare_versions ${new} ${current}
-     case ${?} in
-       0);;
-       1) echo ""
-          echo "UPDATE: There is a newer version of the CDAP SDK available."
-          echo "        New version: ${new}"
-          echo "        Current version: ${current}"
-          echo "        Download it from http://cask.co/downloads"
-          echo "";;
-       2);;
-     esac
-    fi
-  else
-    echo >&2 "Require internet connection to check for an update to the CDAP SDK. Unable to check."; return;
-  fi
-}
-
 compare_versions () {
   if [[ $1 == $2 ]]
   then
@@ -238,29 +207,6 @@ rotate_log () {
     fi
 }
 
-#Delete the nux file to reenable nux flow
-reenable_nux () {
- rm -f $NUX_FILE
-}
-# Checks if this is first time user is using the Standalone CDAP
-nux_enabled() {
- if [ -f $NUX_FILE ];
- then
-  return 1;
- else
-  return 0;
- fi
-}
-
-nux() {
-  version=`cat ${APP_HOME}/VERSION`
-  # Deploy apps
-  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-${version}.jar" -X POST http://127.0.0.1:10000/v2/apps
-  # Start flow and procedure
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
-}
-
 start() {
     debug=$1; shift
     port=$1; shift
@@ -280,7 +226,6 @@ start() {
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid
 
-    check_for_updates
     echo -n "Starting Standalone CDAP ..."
 
     background_process=$!
@@ -306,16 +251,6 @@ start() {
     if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
       echo "Failed to start, please check logs for more information."
     fi
-
-    # Disabling NUX
-    # TODO: Enable NUX with new example, see CDAP-22
-    #nux_enabled
-
-    #NUX_ENABLED=$?
-    #if [ "x$NUX_ENABLED" == "x0" ]; then
-    #  nux
-    #  exit 0;
-    #fi
 }
 
 stop() {
@@ -367,18 +302,13 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
-    nux=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
-        --enable-nux) shift; nux=true;;
         *) shift; break;;
       esac
     done
-    if $nux; then
-      reenable_nux
-    fi
     if $debug ; then
       shopt -s extglob
       if [ -z "$port" ]; then
@@ -408,7 +338,6 @@ case "$1" in
   *)
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
-    echo "--enable-nux  to reenable new user experience flow"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
     exit 1
   ;;

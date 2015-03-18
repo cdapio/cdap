@@ -427,7 +427,8 @@ public final class Id  {
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
       Preconditions.checkArgument(isId(streamName),
-                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+                                  String.format("Stream name can only contain alphanumeric, " +
+                                                  "'-' and '_' characters only: %s", streamName));
 
       this.namespace = namespace;
       this.streamName = streamName;
