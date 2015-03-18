@@ -16,10 +16,11 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.VersionCommand;
+import co.cask.cdap.cli.command.system.VersionCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
+import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -31,11 +32,14 @@ import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import jline.TerminalFactory;
 import jline.console.ConsoleReader;
 
 import java.io.File;
@@ -49,17 +53,30 @@ import javax.annotation.Nullable;
 /**
  * Configuration for the CDAP CLI.
  */
-public class CLIConfig {
+public class CLIConfig implements TableRendererConfig {
 
   public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
+
+  private static final int DEFAULT_LINE_WIDTH = 80;
+  private static final int MIN_LINE_WIDTH = 40;
 
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
-  private final TableRenderer tableRenderer;
 
+  private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
+  private Supplier<Integer> lineWidthSupplier = new Supplier<Integer>() {
+    @Override
+    public Integer get() {
+      try {
+        return TerminalFactory.get().getWidth();
+      } catch (Exception e) {
+        return DEFAULT_LINE_WIDTH;
+      }
+    }
+  };
 
   /**
    * @param clientConfig client configuration
@@ -89,11 +106,13 @@ public class CLIConfig {
     return clientConfig.getNamespace();
   }
 
+  public void setTableRenderer(TableRenderer tableRenderer) {
+    this.tableRenderer = tableRenderer;
+  }
+
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
     clientConfig.setConnectionConfig(connectionConfig);
-    for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(connectionConfig);
-    }
+    notifyConnectionChanged();
   }
 
   public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
@@ -239,6 +258,13 @@ public class CLIConfig {
     }
   }
 
+  public void setNamespace(Id.Namespace namespace) {
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(namespace)
+      .build();
+    this.setConnectionConfig(connectionConfig);
+  }
+
   public ClientConfig getClientConfig() {
     return clientConfig;
   }
@@ -251,10 +277,24 @@ public class CLIConfig {
     this.connectionChangeListeners.add(listener);
   }
 
+  private void notifyConnectionChanged() {
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig);
+    }
+  }
+
+  public void setLineWidth(Supplier<Integer> lineWidthSupplier) {
+    this.lineWidthSupplier = lineWidthSupplier;
+  }
+
+  public int getLineWidth() {
+    return Math.max(MIN_LINE_WIDTH, lineWidthSupplier.get());
+  }
+
   /**
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(ConnectionConfig connectionConfig);
+    void onConnectionChanged(ClientConfig clientConfig);
   }
 }

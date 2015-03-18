@@ -16,17 +16,16 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.NotificationHeartbeatPublisher;
+import co.cask.cdap.data2.util.DiscoveryNamespaceClient;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -49,6 +48,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
+        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -61,6 +61,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
+        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -73,6 +74,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(DistributedStreamService.class).in(Scopes.SINGLETON);
+        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
 
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                           Names.named(Constants.Stream.STREAM_HANDLER));

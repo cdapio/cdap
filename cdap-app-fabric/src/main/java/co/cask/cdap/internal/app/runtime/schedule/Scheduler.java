@@ -143,6 +143,14 @@ public interface Scheduler {
     throws SchedulerException;
 
   /**
+   * Deletes all schedules associated with the given namespace.
+   *
+   * @param namespaceId Id of the namespace
+   * @throws SchedulerException on unforeseen error
+   */
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException;
+
+  /**
    * Get state of a particular schedule.
    *
    * @param program the program for which the state of the schedule is queried

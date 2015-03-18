@@ -22,7 +22,6 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -59,10 +58,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.name.Names;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -99,7 +94,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final URI CONNECTION = URI.create("http://localhost:10000");
+  private static final URI CONNECTION = URI.create("http://localhost:11000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
@@ -113,6 +108,7 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       File adapterDir = TMP_FOLDER.newFolder("adapter");
       configuration = CConfiguration.create();
+      configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
@@ -215,7 +211,7 @@ public class CLIMainTest extends StandaloneTestBase {
     BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       for (int i = 0; i < 10; i++) {
-        writer.write("Event " + i);
+        writer.write(String.format("%s, Event %s", i, i));
         writer.newLine();
       }
     } finally {
@@ -223,7 +219,16 @@ public class CLIMainTest extends StandaloneTestBase {
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully send stream event to stream");
-    testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
+    testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              String.format("No schema found for Stream '%s'", streamId));
+    testCommandOutputContains(cli, "set stream format " + streamId + " csv",
+                              String.format("Successfully set format of stream '%s'", streamId));
+    testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              "Analyzing 100 Stream events in the time range [0, 9223372036854775807]");
+    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 50 start 50 end 500",
+                              "Analyzing 50 Stream events in the time range [50, 500]");
   }
 
   @Test
@@ -365,33 +370,33 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @Test
   public void testPreferences() throws Exception {
-    testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
+    testPreferencesOutput(cli, "get preferences instance", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "new instance");
     propMap.put("k1", "v1");
-    testCommandOutputContains(cli, "delete instance preferences", "successfully");
-    testCommandOutputContains(cli, String.format("set instance preferences 'key=new instance, k1=v1'"),
+    testCommandOutputContains(cli, "delete preferences instance", "successfully");
+    testCommandOutputContains(cli, String.format("set preferences instance 'key=new instance, k1=v1'"),
                               "successfully");
-    testPreferencesOutput(cli, "get instance preferences", propMap);
-    testPreferencesOutput(cli, "get instance resolved preferences", propMap);
-    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    testPreferencesOutput(cli, "get preferences instance", propMap);
+    testPreferencesOutput(cli, "get resolved preferences instance", propMap);
+    testCommandOutputContains(cli, "delete preferences instance", "successfully");
     propMap.clear();
-    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testPreferencesOutput(cli, "get preferences instance", propMap);
     propMap.put("key", "flow");
-    testCommandOutputContains(cli, String.format("set flow preferences 'key=flow' %s.%s",
+    testCommandOutputContains(cli, String.format("set preferences flow 'key=flow' %s.%s",
                                                  FakeApp.NAME, FakeFlow.NAME), "successfully");
-    testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
-    testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
+    testPreferencesOutput(cli, String.format("get preferences flow %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
+    testCommandOutputContains(cli, String.format("delete preferences flow %s.%s", FakeApp.NAME, FakeFlow.NAME),
                               "successfully");
     propMap.clear();
-    testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get namespace preferences"), propMap);
-    testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+    testPreferencesOutput(cli, String.format("get preferences app %s", FakeApp.NAME), propMap);
+    testPreferencesOutput(cli, String.format("get preferences namespace"), propMap);
+    testCommandOutputContains(cli, "get preferences app invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
     // If the file not exist or not a file, upload should fails with an error.
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "Not a file");
-    testCommandOutputContains(cli, "load instance preferences " + file.getParentFile().getAbsolutePath() + " json",
+    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "Not a file");
+    testCommandOutputContains(cli, "load preferences instance " + file.getParentFile().getAbsolutePath() + " json",
                               "Not a file");
     // Generate a file to load
     BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
@@ -400,23 +405,12 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
+    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "successful");
     propMap.clear();
     propMap.put("key", "somevalue");
-    testPreferencesOutput(cli, "get instance preferences", propMap);
-    file = new File(TMP_FOLDER.newFolder(), "xmlFile.xml");
-    writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
-      writer.write("<map><entry><string>xml</string><string>green</string></entry></map>");
-    } finally {
-      writer.close();
-    }
-    testCommandOutputContains(cli, "load namespace preferences " + file.getAbsolutePath() + " xml", "successful");
-    propMap.clear();
-    propMap.put("xml", "green");
-    testPreferencesOutput(cli, "get namespace preferences", propMap);
-    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
-    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    testPreferencesOutput(cli, "get preferences instance", propMap);
+    testCommandOutputContains(cli, "delete preferences namespace", "successfully");
+    testCommandOutputContains(cli, "delete preferences instance", "successfully");
 
     //Try invalid Json
     file = new File(TMP_FOLDER.newFolder(), "badPrefFile.txt");
@@ -426,18 +420,8 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       writer.close();
     }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
-
-    //Try invalid xml
-    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.xml");
-    writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
-      writer.write("<map><entry><string>xml</string></string>green</string></entry></map>");
-    } finally {
-      writer.close();
-    }
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "invalid");
-    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " inv", "Unsupported");
+    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "invalid");
+    testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "Unsupported");
   }
 
   @Test
@@ -608,7 +592,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream);
+    PrintStream output = new PrintStream(outputStream);
     Table table = Table.builder()
       .setHeader("name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
@@ -617,7 +601,7 @@ public class CLIMainTest extends StandaloneTestBase {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliMain.getTableRenderer().render(printStream, table);
+    cliMain.getTableRenderer().render(cliConfig, output, table);
     final String expectedOutput = outputStream.toString();
 
     testCommand(cli, command, new Function<String, Void>() {

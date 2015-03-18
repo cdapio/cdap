@@ -323,10 +323,12 @@ final class MetricQueryParser {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
 
-    if (!pathParts.hasNext()) {
-      return;
+    if (pathParts.hasNext()) {
+      tagValues.put(programType.getTagName(), pathParts.next());
+    } else {
+      // given program type, match any type name under the type
+      tagValues.put(programType.getTagName(), null);
     }
-    tagValues.put(programType.getTagName(), pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;

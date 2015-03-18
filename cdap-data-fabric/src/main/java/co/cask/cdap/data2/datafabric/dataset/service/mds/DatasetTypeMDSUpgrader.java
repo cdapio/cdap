@@ -186,7 +186,6 @@ public final class DatasetTypeMDSUpgrader {
       for (String moduleName : usedByModules) {
         newDatasetModuleMeta.addUsedByModule(moduleName);
       }
-      newDatasetModuleMeta = olddatasetModuleMeta;
       renameLocation(oldJarLocation, newJarLocation);
     }
     newDatasetTypeMDS.writeModule(Constants.DEFAULT_NAMESPACE_ID, newDatasetModuleMeta);

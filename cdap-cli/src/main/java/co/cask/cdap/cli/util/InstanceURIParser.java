@@ -61,6 +61,7 @@ public class InstanceURIParser {
       .setHostname(hostname)
       .setPort(port)
       .setSSLEnabled(sslEnabled)
+      .setNamespace(namespace)
       .build();
   }
 

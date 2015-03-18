@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithStreamSizeSchedule;
@@ -254,6 +255,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
+    deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
     Id.Stream myStream = Id.Stream.from(OTHER_NAME, "stream");
@@ -277,6 +279,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(streamAdmin.exists(myStream));
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
     Assert.assertFalse(streamAdmin.exists(myStream));
+
+    // Create the namespace again and deploy the application containing schedules.
+    // Application deployment should succeed.
+    assertResponseCode(200, createNamespace(OTHER_NAME));
+    HttpResponse response = deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   OTHER_NAME);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    assertResponseCode(200, deleteNamespace(OTHER_NAME));
   }
 
   @Test
@@ -324,10 +334,11 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testNamespaceClient() throws Exception {
     // tests the NamespaceClient's ability to interact with Namespace service/handlers.
     AbstractNamespaceClient namespaceClient = getInjector().getInstance(AbstractNamespaceClient.class);
-    // test setup creates two namespaces in @BeforeClass
+    // test setup creates two namespaces in @BeforeClass, apart from the default namespace which always exists.
     List<NamespaceMeta> namespaces = namespaceClient.list();
-    Assert.assertEquals(2, namespaces.size());
-    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(TEST_NAMESPACE_META1, TEST_NAMESPACE_META2);
+    Assert.assertEquals(3, namespaces.size());
+    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(Constants.DEFAULT_NAMESPACE_META, TEST_NAMESPACE_META1,
+                                                            TEST_NAMESPACE_META2);
     Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
 
     NamespaceMeta namespaceMeta = namespaceClient.get(TEST_NAMESPACE1);

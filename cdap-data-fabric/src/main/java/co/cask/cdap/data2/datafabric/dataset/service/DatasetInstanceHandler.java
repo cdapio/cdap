@@ -207,7 +207,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, namespaceId, name, "upgrade");
   }
 
-  private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
+  private DatasetInstanceConfiguration  getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
     if (creationProperties.getProperties().containsKey(Table.PROPERTY_TTL)) {
