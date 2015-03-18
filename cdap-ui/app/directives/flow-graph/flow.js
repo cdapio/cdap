@@ -129,7 +129,7 @@ module.directive('myFlowGraph', function ($filter, $state) {
           parent.append('text')
             .attr('x', circleXPos)
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
