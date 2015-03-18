@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
     ); // will post to <host>:<port>/v3/system/config
    */
   .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, MyPromise, $timeout) {
+    MYSOCKET_EVENT, $q, MyPromise, $timeout, myCdapUrl) {
 
     var instances = {}; // keyed by scopeid
 
@@ -125,10 +125,10 @@ angular.module(PKG.name+'.services')
           var b = self.bindings[i];
           if(angular.equals(b.resource, match)) {
             if (angular.isFunction(b.callback)) {
-              $rootScope.$applyAsync(b.callback.bind(null, data.response));
+              scope.$apply(b.callback.bind(null, data.response));
             } else if (b && b.resolve) {
               // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
-              $rootScope.$applyAsync(b.resolve.bind(null, {data: data.response}));
+              scope.$apply(b.resolve.bind(null, {data: data.response}));
               return;
             }
           }
@@ -166,15 +166,14 @@ angular.module(PKG.name+'.services')
     DataSource.prototype.poll = function (resource, cb) {
       var self = this;
       var prom = new MyPromise(function(resolve, reject) {
-        var generatedResource = {};
+        var generatedResource = {
+          json: true,
+          method: resource.method
+        };
         if (!resource.url) {
-          generatedResource = resource;
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
         } else {
-          generatedResource = {
-            url: buildUrl(resource.url, resource.params || {}),
-            json: true,
-            method: resource.method
-          };
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
 
         self.bindings.push({
@@ -208,15 +207,14 @@ angular.module(PKG.name+'.services')
       var self = this;
       var prom = new MyPromise(function(resolve, reject) {
 
-        var generatedResource = {};
+        var generatedResource = {
+          json: true,
+          method: resource.method
+        };
         if (!resource.url) {
-          generatedResource = resource;
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
         } else {
-          generatedResource = {
-            url: buildUrl(resource.url, resource.params || {}),
-            json: true,
-            method: resource.method
-          };
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
           if (resource.data) {
             generatedResource.data = resource.data;
           }

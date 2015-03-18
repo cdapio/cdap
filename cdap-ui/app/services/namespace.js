@@ -29,6 +29,9 @@ angular.module(PKG.name + '.services')
                 name: 'default'
               }];
             }
+            if (angular.equals(res, this.namespaceList)) {
+              return this.namespaceList;
+            }
 
             this.namespaceList = res;
             queryInProgress.resolve(res);
