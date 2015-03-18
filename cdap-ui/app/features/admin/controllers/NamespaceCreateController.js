@@ -6,7 +6,7 @@ angular.module(PKG.name + '.feature.admin')
     };
     $scope.submitHandler = function() {
       myNamespaceApi.create({
-        namespaceId: $scope.model.id
+        namespaceId: $scope.model.name
       },{
         id: $scope.model.id,
         name: $scope.model.name,
