@@ -165,8 +165,7 @@ public final class LoggingContextHelper {
       }
 
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
-                         new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
+        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
                          new MdcExpression(tagName, entityId)
         )
       );
