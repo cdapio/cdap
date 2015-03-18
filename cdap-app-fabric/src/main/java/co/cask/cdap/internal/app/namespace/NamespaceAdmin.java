@@ -72,6 +72,14 @@ public interface NamespaceAdmin {
   public void deleteNamespace(Id.Namespace namespaceId) throws NotFoundException, NamespaceCannotBeDeletedException;
 
   /**
+   * Deletes the metrics in specified namespace
+   *
+   * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @throws Exception if there are issues with metrics deletion
+   */
+  public void deleteMetrics(Id.Namespace namespaceId) throws Exception;
+
+  /**
    * Deletes all datasets in the specified namespace
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace

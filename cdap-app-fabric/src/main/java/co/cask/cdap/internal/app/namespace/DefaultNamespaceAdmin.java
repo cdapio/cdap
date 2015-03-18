@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -34,12 +36,14 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Admin for managing namespaces
@@ -55,11 +59,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final ProgramRuntimeService runtimeService;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final MetricStore metricStore;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
-                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               MetricStore metricStore) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -67,6 +73,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
+    this.metricStore = metricStore;
   }
 
   /**
@@ -190,6 +197,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
+  }
+
+  @Override
+  public void deleteMetrics(Id.Namespace namespaceId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+    metricStore.delete(deleteQuery);
   }
 
   @Override
