@@ -82,7 +82,7 @@ public abstract class AbstractWorker implements Worker {
    * Adds the names of {@link Dataset Datasets} used by the worker.
    * @param dataset dataset name
    * @param datasets more dataset names
-   * @deprecated datasets used in runtime need not be specified during configuration
+   * @deprecated datasets used in runtime need not be specified in {@link Worker#configure}
    */
   @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
@@ -95,7 +95,7 @@ public abstract class AbstractWorker implements Worker {
   /**
    * Adds the names of {@link Dataset Datasets} used by the worker.
    * @param datasets dataset names
-   * @deprecated datasets used in runtime need not be specified during configuration
+   * @deprecated datasets used in runtime need not be specified in {@link Worker#configure}
    */
   @Deprecated
   protected void useDatasets(Iterable<String> datasets) {

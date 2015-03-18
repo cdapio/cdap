@@ -91,7 +91,7 @@ public abstract class AbstractMapReduce implements MapReduce {
 
   /**
    * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated datasets used in runtime need not be specified during configuration
+   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
    */
   @Deprecated
   protected final void useDatasets(String dataset, String...moreDatasets) {
@@ -103,7 +103,7 @@ public abstract class AbstractMapReduce implements MapReduce {
 
   /**
    * Specifies set of Dataset names that are used by the {@link MapReduce}.
-   * @deprecated datasets used in runtime need not be specified during configuration
+   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
    */
   @Deprecated
   protected final void useDatasets(Iterable<String> datasets) {
