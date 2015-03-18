@@ -1033,7 +1033,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         datasetFramework.getInstances(Constants.DEFAULT_NAMESPACE_ID);
         LOG.info("Dataset service is up and running, proceding with explore upgrade.");
         return;
-      } catch (DatasetManagementException e) {
+      } catch (Exception e) {
         count++;
         TimeUnit.SECONDS.sleep(1);
       }
