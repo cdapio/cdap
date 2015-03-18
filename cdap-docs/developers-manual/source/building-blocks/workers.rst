@@ -92,17 +92,17 @@ Writing to Streams (Beta)
 
 Workers have the ability to write to ``Streams`` through the ``WorkerContext``. The implementation internally
 issues an HTTP request to the Stream Service to persist the data. Because of that, a write to a Stream
-cannot be rolled back, and thus differs in semantics compared to writing to ``Datasets`` from inside the
+cannot be rolled back, and thus the write differs in semantics compared to writing to ``Datasets`` from inside the
 ``run`` method of a ``TxRunnable``.
 
 The write operation throws an ``IOException`` if it could not write to a ``Stream``. Writing to streams can be
 performed as either single event writes or in batch.
 
-When uploading events in batch, there are two options: uploading a ``File`` or writing multiple events
+When uploading events in batch, there are two options: either uploading a ``File`` or writing multiple events
 through a ``StreamBatchWriter``. In batch mode, the content type of the data must be specified. Refer
 to the :ref:`Stream RESTful API <http-restful-api-stream>` for information on the content type specification.
 
-In case of ``StreamBatchWriter``, the ``close`` method needs to called when all the writes have been performed::
+With a ``StreamBatchWriter``, the ``close`` method` needs to be called after all the writes have been performed::
 
   @Override
   public void run() {
