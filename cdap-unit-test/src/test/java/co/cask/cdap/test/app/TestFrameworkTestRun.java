@@ -638,10 +638,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     flowManager.stop();
+    Assert.assertEquals(1, flowletMetrics.getProcessed());
     RuntimeStats.resetAll();
     // check the metrics were deleted after reset
-    RuntimeStats.getFlowletMetrics("DataSetInitApp",
-                                   "DataSetFlow", "Consumer").waitForProcessed(0, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0, flowletMetrics.getProcessed());
   }
 
   @Test(timeout = 60000L)
