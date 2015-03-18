@@ -138,18 +138,6 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns all mapreduce programs associated with a dataset.
-   */
-  @GET
-  @Path("/data/datasets/{dataset-id}/mapreduce")
-  public void getMapReduceByDataset(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
-                            namespaceId, datasetId);
-  }
-
-  /**
    * Returns all workers associated with a dataset.
    */
   @GET
@@ -158,6 +146,18 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("dataset-id") String datasetId) {
     programListByDataAccess(responder, store, dsFramework, ProgramType.WORKER, Data.DATASET,
+                            namespaceId, datasetId);
+  }
+
+  /**
+   * Returns all mapreduce programs associated with a dataset.
+   */
+  @GET
+  @Path("/data/datasets/{dataset-id}/mapreduce")
+  public void getMapReduceByDataset(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("dataset-id") String datasetId) {
+    programListByDataAccess(responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
                             namespaceId, datasetId);
   }
 }
