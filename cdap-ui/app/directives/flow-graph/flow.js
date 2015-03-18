@@ -159,7 +159,11 @@ module.directive('myFlowGraph', function ($filter, $state) {
       scope.handleNodeClick = function(nodeId) {
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
-        $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+        if (instance.type === 'STREAM') {
+          $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
+        } else {
+          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+        }
       };
 
       /**
