@@ -334,7 +334,6 @@ public class FileStreamAdmin implements StreamAdmin {
     Location streamBaseLocation = getStreamBaseLocation(streamId);
     doTruncate(streamBaseLocation);
     alterExploreStream(streamId, false);
-    streamBaseLocation.delete(true);
   }
 
   private Location getStreamConfigLocation(Id.Stream streamId) throws IOException {

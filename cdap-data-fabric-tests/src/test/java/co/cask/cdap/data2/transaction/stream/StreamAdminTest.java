@@ -20,7 +20,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.LocationFactory;
@@ -41,30 +40,6 @@ public abstract class StreamAdminTest {
   protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
     locationFactory.create(FOO_NAMESPACE).mkdirs();
     locationFactory.create(OTHER_NAMESPACE).mkdirs();
-  }
-
-  @Test
-  public void testRecreateAndConfig() throws Exception {
-    StreamAdmin streamAdmin = getStreamAdmin();
-
-    String streamName = "streamName";
-    Id.Stream streamId = Id.Stream.from("fooNamespace", streamName);
-    Assert.assertFalse(streamAdmin.exists(streamId));
-
-    streamAdmin.create(streamId);
-    Assert.assertTrue(streamAdmin.exists(streamId));
-
-    StreamProperties streamProperties = new StreamProperties(123L, null, null);
-    streamAdmin.updateConfig(streamId, streamProperties);
-
-    streamAdmin.drop(streamId);
-    Assert.assertFalse(streamAdmin.exists(streamId));
-
-    streamAdmin.create(streamId);
-    Assert.assertTrue(streamAdmin.exists(streamId));
-
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    Assert.assertNotEquals(123L, streamConfig.getTTL());
   }
 
   @Test

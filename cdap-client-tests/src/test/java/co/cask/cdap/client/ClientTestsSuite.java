@@ -27,12 +27,12 @@ import org.junit.runners.Suite;
  */
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
-//@Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
-//                      MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
-//                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
-//                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class,
-//                      ScheduleClientTestRun.class })
-@Suite.SuiteClasses({ ApplicationClientTestRun.class, QueryClientTestRun.class })
+@Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
+                      MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
+                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
+                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class,
+                      ScheduleClientTestRun.class })
+//@Suite.SuiteClasses({ ApplicationClientTestRun.class, QueryClientTestRun.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }
