@@ -52,7 +52,7 @@ Known Issues
 - Scaling the number of metrics processor instances doesn't automatically distribute the
   processing load to the newer instances of the metrics processor. The CDAP Master needs to be
   restarted to effectively distribute the processing across all metrics processor instances
-  (`CDAP-1852 <https://issues.cask.co/browse/CDAP-1852>`__).
+  (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
 
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
