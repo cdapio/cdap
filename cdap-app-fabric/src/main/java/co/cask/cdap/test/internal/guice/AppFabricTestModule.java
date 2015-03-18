@@ -37,6 +37,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -142,6 +143,10 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      }
+
+      @Override
+      public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
       }
 
       @Override

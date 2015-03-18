@@ -67,7 +67,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
                                     bodySize, getBody(event.getBody()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     output.printf("Fetched %d events from stream %s", events.size(), streamId);
     output.println();

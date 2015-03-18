@@ -94,7 +94,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final URI CONNECTION = URI.create("http://localhost:10000");
+  private static final URI CONNECTION = URI.create("http://localhost:11000");
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
@@ -108,6 +108,7 @@ public class CLIMainTest extends StandaloneTestBase {
     if (START_LOCAL_STANDALONE) {
       File adapterDir = TMP_FOLDER.newFolder("adapter");
       configuration = CConfiguration.create();
+      configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
@@ -210,7 +211,7 @@ public class CLIMainTest extends StandaloneTestBase {
     BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
     try {
       for (int i = 0; i < 10; i++) {
-        writer.write("Event " + i);
+        writer.write(String.format("%s, Event %s", i, i));
         writer.newLine();
       }
     } finally {
@@ -218,7 +219,16 @@ public class CLIMainTest extends StandaloneTestBase {
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully send stream event to stream");
-    testCommandOutputContains(cli, "get stream " + streamId, "Event 9");
+    testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              String.format("No schema found for Stream '%s'", streamId));
+    testCommandOutputContains(cli, "set stream format " + streamId + " csv",
+                              String.format("Successfully set format of stream '%s'", streamId));
+    testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
+    testCommandOutputContains(cli, "get stream-stats " + streamId,
+                              "Analyzing 100 Stream events in the time range [0, 9223372036854775807]");
+    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 50 start 50 end 500",
+                              "Analyzing 50 Stream events in the time range [50, 500]");
   }
 
   @Test
@@ -582,7 +592,7 @@ public class CLIMainTest extends StandaloneTestBase {
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)
     throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream);
+    PrintStream output = new PrintStream(outputStream);
     Table table = Table.builder()
       .setHeader("name", "description")
       .setRows(expected, new RowMaker<NamespaceMeta>() {
@@ -591,7 +601,7 @@ public class CLIMainTest extends StandaloneTestBase {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliMain.getTableRenderer().render(printStream, table);
+    cliMain.getTableRenderer().render(cliConfig, output, table);
     final String expectedOutput = outputStream.toString();
 
     testCommand(cli, command, new Function<String, Void>() {
