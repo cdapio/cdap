@@ -57,7 +57,7 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. _operations: installation/index.html
 
 |operations|_ Covers **logging, metrics, preferences, scaling instances, resource guarantees, 
-and introduces the CDAP Console.** 
+transaction service maintenance, troubleshooting, and introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html
@@ -72,7 +72,7 @@ and introduces the CDAP Console.**
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
+- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows, and Workers can receive **runtime arguments.**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html
@@ -84,11 +84,6 @@ and introduces the CDAP Console.**
 
 - |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
 
-.. |cdap-console| replace:: **CDAP Console:**
-.. _cdap-console: operations/cdap-console.html
-
-- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
-
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: operations/tx-maintenance.html
 
@@ -98,3 +93,8 @@ and introduces the CDAP Console.**
 .. _troubleshooting: operations/troubleshooting.html
 
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
+
+.. |cdap-console| replace:: **CDAP Console:**
+.. _cdap-console: operations/cdap-console.html
+
+- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 

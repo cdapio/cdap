@@ -64,7 +64,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |admin-manual|_ 
 
   - **Installation:** Putting CDAP into production, with installation, configuration, security setup, and monitoring
-  - **Operations:** Logging, metrics, runtime arguments, scaling instances and introduces the CDAP Console
+  - **Operations:** Logging, metrics, runtime arguments, scaling instances, resource
+    guarantees, transaction service maintenance, troubleshooting and introduces the CDAP Console
 
 
 .. |integrations| replace:: **Integrations:**
