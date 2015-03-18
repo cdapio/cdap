@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -38,6 +39,7 @@ import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test for {@link QueryClient}.
@@ -50,6 +52,7 @@ public class QueryClientTestRun extends ClientTestBase {
   private NamespaceClient namespaceClient;
   private ProgramClient programClient;
   private StreamClient streamClient;
+  private MetricsClient metricsClient;
   private ExploreClient exploreClient;
 
   private Id.Namespace otherNamespace = Id.Namespace.from("otherNamespace");
@@ -61,6 +64,7 @@ public class QueryClientTestRun extends ClientTestBase {
     queryClient = new QueryClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
     streamClient = new StreamClient(clientConfig);
+    metricsClient = new MetricsClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
     ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
     exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(),
@@ -84,7 +88,10 @@ public class QueryClientTestRun extends ClientTestBase {
       streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
       streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
 
-      Thread.sleep(3000);
+      Id.Application application = Id.Application.from(clientConfig.getNamespace(), FakeApp.NAME);
+      Id.Program flow = Id.Program.from(application, ProgramType.FLOW, FakeFlow.NAME);
+      RuntimeMetrics flowletMetrics = metricsClient.getFlowletMetrics(flow, FakeFlow.FLOWLET_NAME);
+      flowletMetrics.waitForProcessed(2, 15, TimeUnit.SECONDS);
 
       Id.Namespace namespace = getClientConfig().getNamespace();
       Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
