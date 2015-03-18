@@ -43,13 +43,16 @@ New Features
 
 Known Issues
 ------------
-- See also the *Known Issues* of `version 2.7.1. <#known-issues-271>`_
+
+- See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
 - If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
   Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
   <install-starting-services>, which will restart all services 
   (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
-
-
+- Scaling the number of metrics processor instances doesn't automatically distribute the
+  processing load to the newer instances of the metrics processor. The CDAP Master needs to be
+  restarted to effectively distribute the processing across all metrics processor instances
+  (`CDAP-1852 <https://issues.cask.co/browse/CDAP-1852>`__).
 
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
