@@ -29,13 +29,15 @@ public class CubeDeleteQuery {
 
   private final long startTs;
   private final long endTs;
+  private final int resolution;
   private final String measureName;
   private final Map<String, String> sliceByTagValues;
 
-  public CubeDeleteQuery(long startTs, long endTs, String measureName,
+  public CubeDeleteQuery(long startTs, long endTs, int resolution, String measureName,
                          Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
+    this.resolution = resolution;
     this.measureName = measureName;
     this.sliceByTagValues = ImmutableMap.copyOf(sliceByTagValues);
   }
@@ -46,6 +48,10 @@ public class CubeDeleteQuery {
 
   public long getEndTs() {
     return endTs;
+  }
+
+  public int getResolution() {
+    return resolution;
   }
 
   public String getMeasureName() {
