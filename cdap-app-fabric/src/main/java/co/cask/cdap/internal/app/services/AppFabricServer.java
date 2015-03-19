@@ -170,7 +170,7 @@ public final class AppFabricServer extends AbstractIdleService {
 
             @Override
             public InetSocketAddress getSocketAddress() {
-              return httpService.getBindAddress();
+              return socketAddress;
             }
           })));
         }

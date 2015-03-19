@@ -16,6 +16,8 @@
 package co.cask.cdap.common.discovery;
 
 import org.apache.twill.discovery.Discoverable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -26,6 +28,8 @@ import java.net.UnknownHostException;
  * Discoverable that resolves 0.0.0.0 to a routable interface.
  */
 public class ResolvingDiscoverable implements Discoverable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ResolvingDiscoverable.class);
 
   private final Discoverable discoverable;
 
@@ -48,13 +52,13 @@ public class ResolvingDiscoverable implements Discoverable {
   }
 
   private InetSocketAddress resolve(InetSocketAddress bindAddress) {
-    try {
       if (bindAddress.getAddress().isAnyLocalAddress()) {
-        return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
+        try {
+          return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
+        } catch (UnknownHostException e) {
+          LOG.warn("Unable to resolve localhost", e);
+        }
       }
-    } catch (UnknownHostException e) {
-      // IGNORE
-    }
     return bindAddress;
   }
 }
