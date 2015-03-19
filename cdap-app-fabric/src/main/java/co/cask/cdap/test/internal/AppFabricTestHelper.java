@@ -78,6 +78,7 @@ public class AppFabricTestHelper {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(TransactionManager.class).startAndWait();

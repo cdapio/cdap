@@ -69,7 +69,7 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
             int retries = 0;
             while (true) {
               try {
-                startScheduler();
+                startSchedulers();
                 schedulerStarted.set(true);
                 LOG.info("Scheduler service started successfully.");
                 break;
