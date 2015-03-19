@@ -45,7 +45,7 @@ STAGE_DIR=${TARGET_DIR}/parcel
 
 echo "REPO_HOME: ${REPO_HOME}"
 
-CDAP_HOME=${CDAP_HOME:-${REPO_HOME}/../cdap}
+CDAP_HOME=${CDAP_HOME:-${REPO_HOME}}
 
 # Source additional settings if configured
 if [ -n "${PARCEL_DELIVERY_OPTIONS_FILE}" ]; then
