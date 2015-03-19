@@ -57,7 +57,7 @@ public final class DatasetInstanceMDSUpgrader {
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                     @Named("dsFramework") final DatasetFramework dsFramework) {
+                                     final DatasetFramework dsFramework) {
 
     this.datasetInstanceMds = Transactional.of(executorFactory,
        new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
