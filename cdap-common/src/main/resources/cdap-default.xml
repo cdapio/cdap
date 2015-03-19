@@ -853,7 +853,7 @@
 
     <property>
         <name>log.publish.num.partitions</name>
-        <value>10</value>
+        <value>50</value>
         <description>Number of Kafka partitions to publish the logs to</description>
     </property>
 

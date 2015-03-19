@@ -57,7 +57,6 @@ import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;

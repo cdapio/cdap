@@ -22,7 +22,7 @@ import co.cask.cdap.api.service.ServiceWorkerConfigurer;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;

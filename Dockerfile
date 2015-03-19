@@ -64,14 +64,12 @@ COPY cdap-notifications /Build/cdap-notifications
 COPY cdap-notifications-api /Build/cdap-notifications-api
 COPY cdap-proto /Build/cdap-proto
 COPY cdap-security /Build/cdap-security
-COPY cdap-security-service /Build/cdap-security-service
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-test /Build/cdap-test
 COPY cdap-unit-test /Build/cdap-unit-test
 COPY cdap-unit-test-standalone /Build/cdap-unit-test-standalone
 COPY cdap-watchdog /Build/cdap-watchdog
 COPY cdap-watchdog-api /Build/cdap-watchdog-api
-COPY cdap-watchdog-tests /Build/cdap-watchdog-tests
 COPY cdap-web-app /Build/cdap-web-app
 
 # build cdap-standalone zip file, copy it to container and extract it

@@ -43,7 +43,6 @@ public class LogWriter implements Runnable {
   private final long maxNumberOfBucketsInTable;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
-  private int messages = 0;
 
   public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
                    RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
@@ -59,7 +58,7 @@ public class LogWriter implements Runnable {
     try {
       // Read new messages only if previous write was successful.
       if (writeListMap.isEmpty()) {
-        messages = 0;
+        int messages = 0;
 
         long limitKey = System.currentTimeMillis() / eventBucketIntervalMs;
         synchronized (messageTable) {
@@ -82,7 +81,7 @@ public class LogWriter implements Runnable {
           }
         }
 
-        LOG.debug("Got {} log messages to save", messages);
+        LOG.trace("Got {} log messages to save", messages);
 
         for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
              it.hasNext(); ) {

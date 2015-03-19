@@ -37,7 +37,7 @@ function extractConfig(param) {
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
   } else {
     try {
-      cache[param] = require('../../cdap-config.json');
+      cache[param] = require('../../../cdap-config.json');
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
@@ -69,4 +69,3 @@ function configReadFail (data) {
     console.log(textChunk);
   }
 }
-
