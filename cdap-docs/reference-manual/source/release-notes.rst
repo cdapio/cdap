@@ -57,6 +57,13 @@ Known Issues
 
 - CDAP works only with `node.js <http://nodejs.org>`__ versions 0.8.16 through 0.10.36.
 
+- When the CDAP CLI starts up, it auto-connects to localhost. After a ``connect <hostname>``
+  command is issued from within the CLI, all operations will work except for Explore queries
+  (the command ``execute 'query'``), as the Explore Client doesn't pick up the change of
+  hostname. A workaround is to start up the CLI with the environment variable CDAP_HOST
+  set to the desired hostname, so that the CLI autoconnects to that host on startup. This
+  has been fixed in an upcoming release (2.8.0) of CDAP.
+
 
 `Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
 =============================================================
