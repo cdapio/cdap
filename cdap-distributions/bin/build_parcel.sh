@@ -126,7 +126,16 @@ function stage_parcel_bits {
 
 # Create the parcel via tar
 function generate_parcel {
-  tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/ --owner=root --group=root
+  # detect bsdtar or not
+  if tar --version | grep --quiet bsdtar ; then
+    # supress extended attribute metadata
+    export COPYFILE_DISABLE=1
+    # bsdtar version prevalent on Mac OS X does not support --uname or --gname
+    cmd="tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/"
+  else
+    cmd="tar czf ${TARGET_DIR}/${PARCEL_NAME} -C ${STAGE_DIR} ${PARCEL_ROOT_DIR}/ --owner=root --group=root"
+  fi
+  $cmd
   local __ret=$?
   if [ $__ret -ne 0 ]; then
     die "Tar generation unsuccessful"
