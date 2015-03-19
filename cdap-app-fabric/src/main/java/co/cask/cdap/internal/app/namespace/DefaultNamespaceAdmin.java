@@ -175,7 +175,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       scheduler.deleteAllSchedules(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
-      // TODO: CDAP-1729 - Delete/Expire Metrics. API unavailable right now.
+
+      deleteMetrics(namespaceId);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.
@@ -198,8 +199,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
   }
 
-  @Override
-  public void deleteMetrics(Id.Namespace namespaceId) throws Exception {
+  private void deleteMetrics(Id.Namespace namespaceId) throws Exception {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());

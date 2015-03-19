@@ -1171,8 +1171,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in console settings
       consoleSettingsStore.delete();
 
-      namespaceAdmin.deleteMetrics(Constants.DEFAULT_NAMESPACE_ID);
-
       LOG.info("All data for namespace '{}' deleted.", Constants.DEFAULT_NAMESPACE);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
