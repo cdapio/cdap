@@ -13,6 +13,7 @@ Testing and Debugging
    
     Testing <testing>
     Debugging <debugging>
+    Troubleshooting <troubleshooting>
 
 ..    Packaging <packaging>
 
@@ -33,3 +34,8 @@ help with testing and debugging CDAP applications:
       - How you can **debug CDAP applications** in Standalone mode and app containers in Distributed mode.
     * - :ref:`Debugging the Transactions Manager<tx-debugger>`
       - Covers snapshotting and inspecting the state of the **Transaction Manager**.
+
+.. |troubleshooting| replace:: **Troubleshooting:**
+.. _troubleshooting: troubleshooting.html
+
+- |troubleshooting|_ Tips and hints on solving problems during development.
