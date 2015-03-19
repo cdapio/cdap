@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
@@ -31,7 +31,7 @@ import java.lang.reflect.Type;
 /**
  * Codec to serialize and deserialize {@link WorkflowNode}
  */
-final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
+public final class WorkflowNodeCodec extends AbstractSpecificationCodec<WorkflowNode> {
   @Override
   public JsonElement serialize(WorkflowNode src, Type typeOfSrc, JsonSerializationContext context) {
     return context.serialize(src);

@@ -29,7 +29,7 @@ function guide_rewrite_sed() {
   # Re-writes the links in the RST file to point to a local copy of any image links.
   local includes_dir=$1
   local guide=$2
-  local project_version=$PROJECT_LONG_VERSION
+  local project_version=$PROJECT_SHORT_VERSION
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
   local source2="release/cdap-$project_version-compatible/README.rst"
