@@ -399,7 +399,7 @@ To query a metric within a given context, perform an HTTP GET request::
      - 
    * - HTTP Method
      - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.runs.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true``
+       ``WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true``
    * - Description
      - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
@@ -483,7 +483,7 @@ Tag List
 
 In a query, the optional ``groupBy``​parameter defines a list of tags whose values are
 used to build multiple timeseries. All data points that have the same values in tags
-specified in the ``groupBy`` parameter will form a single timeseries. You define
+specified in the ``groupBy`` parameter will form a single timeseries. You can define
 multiple tags for grouping by providing a comma-separated list.
 
 .. list-table::
