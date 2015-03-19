@@ -110,8 +110,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     for (final Location streamLocation : locations) {
-      doTruncate(streamLocation);
-      alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
+      doDrop(StreamUtils.getStreamIdFromLocation(streamLocation), streamLocation);
     }
 
     // Also drop the state table
@@ -327,13 +326,12 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void truncate(Id.Stream streamId) throws Exception {
-    doTruncate(getStreamBaseLocation(streamId));
+    doTruncate(streamId, getStreamBaseLocation(streamId));
   }
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
-    // Same as truncate
-    truncate(streamId);
+    doDrop(streamId, getStreamBaseLocation(streamId));
   }
 
   private Location getStreamConfigLocation(Id.Stream streamId) throws IOException {
@@ -349,8 +347,7 @@ public class FileStreamAdmin implements StreamAdmin {
     return locationFactory.create(namespace.getId()).append(streamBaseDirPath);
   }
 
-  private void doTruncate(final Location streamLocation) {
-    final Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
+  private void doTruncate(Id.Stream streamId, final Location streamLocation) {
     try {
       streamCoordinatorClient.updateProperties(streamId, new Callable<CoordinatorStreamProperties>() {
         @Override
@@ -363,6 +360,11 @@ public class FileStreamAdmin implements StreamAdmin {
     } catch (Exception e) {
       LOG.error("Failed to truncate stream {}", streamId.getName(), e);
     }
+  }
+
+  private void doDrop(Id.Stream streamId, Location streamLocation) {
+    doTruncate(streamId, streamLocation);
+    alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
   }
 
   private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws IOException {
