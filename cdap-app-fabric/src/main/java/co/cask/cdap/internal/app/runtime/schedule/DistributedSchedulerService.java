@@ -66,7 +66,7 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
             LOG.info("Starting scheduler, Discovered {} dataset service(s)",
                      Iterables.size(serviceDiscovered));
             try {
-              startScheduler();
+              startSchedulers();
               schedulerStarted.set(true);
             } catch (Throwable t) {
               LOG.error("Exception when starting scheduler.", t);

@@ -24,7 +24,6 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.WorkflowManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,12 +43,6 @@ public class StreamConversionTest extends TestBase {
 
     // Deploy the PurchaseApp application
     ApplicationManager appManager = deployApplication(StreamConversionApp.class);
-
-    // TODO: in unit tests, all schedules should be disabled at deploy time, to avoid race conditions.
-    // make sure the workflow does not get started by the schedule.
-    WorkflowManager workflowManager =
-      appManager.startWorkflow("StreamConversionWorkflow", RuntimeArguments.NO_ARGUMENTS);
-    workflowManager.getSchedule("every5min").suspend();
 
     // send some data to the events stream
     StreamWriter streamWriter = appManager.getStreamWriter("events");
