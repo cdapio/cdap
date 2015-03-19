@@ -207,28 +207,6 @@
             <filtering>true</filtering>
             <targetPath>${project.build.directory}/local</targetPath>
           </resource>
-
-          <resource>
-            <directory>${project.parent.basedir}/cdap-ui/server</directory>
-            <targetPath>web-app/beta/server</targetPath>
-          </resource>
-          <resource>
-            <directory>${project.parent.basedir}/cdap-ui/dist</directory>
-            <targetPath>web-app/beta/dist</targetPath>
-          </resource>
-          <resource>
-            <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
-            <targetPath>web-app/beta/node_modules</targetPath>
-          </resource>
-          <resource>
-            <directory>${project.parent.basedir}/cdap-ui/</directory>
-            <targetPath>web-app/beta/</targetPath>
-            <includes>
-              <include>server.js</include>
-              <include>package.json</include>
-            </includes>
-          </resource>
-
         </resources>
 
         <plugins>
@@ -316,6 +294,27 @@
                     <copy todir="${stage.opt.dir}">
                       <fileset dir="${project.build.directory}/enterprise">
                         <include name="**"/>
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/server">
+                      <fileset dir = "${project.parent.basedir}/cdap-ui/server">
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/dist">
+                      <fileset dir = "${project.parent.basedir}/cdap-ui/dist">
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/node-modules">
+                      <fileset dir = "${project.parent.basedir}/cdap-ui/node_modules">
+                      </fileset>
+                    </copy>
+
+                    <copy todir = "${stage.opt.dir}/beta/">
+                      <fileset dir = "${project.parent.basedir}/cdap-ui">
+                        <includes>
+                          <include>server.js</include>
+                          <include>package.json</include>
+                        </includes>
                       </fileset>
                     </copy>
                   </target>
