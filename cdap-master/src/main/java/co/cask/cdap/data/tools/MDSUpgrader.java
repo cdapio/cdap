@@ -76,7 +76,7 @@ public class MDSUpgrader extends AbstractUpgrader {
 
   @Inject
   private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      @Named("dsFramework") final DatasetFramework dsFramework, CConfiguration cConf,
+                      final DatasetFramework dsFramework, CConfiguration cConf,
                       @Named("defaultStore") final Store store) {
     super(locationFactory);
     this.cConf = cConf;

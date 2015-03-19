@@ -49,18 +49,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
+ * Default implementation of {@link MetricStore}.
  */
 public class DefaultMetricStore implements MetricStore {
+  public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
+  private final int resolutions[];
   private final Supplier<Cube> cube;
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
-    this(dsFactory, new int[] {1, 60, 3600, Integer.MAX_VALUE});
+    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
   }
 
   // NOTE: should never be used apart from data migration during cdap upgrade
   public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
+    this.resolutions = resolutions;
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
@@ -207,12 +210,15 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void deleteBefore(long timestamp) throws Exception {
-    // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
-    // note: We are using 1 as start ts, so that we do not delete data from "totals". This method is applied in
-    //       in-memory and standalone modes, so it is fine to keep totals in these cases during TTL
-    //       todo: Cube and FactTable must use resolution when applying time range conditions
-    CubeDeleteQuery query = new CubeDeleteQuery(1, timestamp, null, Maps.<String, String>newHashMap());
-    cube.get().delete(query);
+    // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+    for (int resolution : resolutions) {
+      // NOTE: we do not purge on TTL the "totals" currently, as there might be system components dependent on it
+      if (TOTALS_RESOLUTION == resolution) {
+        continue;
+      }
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, null, Maps.<String, String>newHashMap());
+      cube.get().delete(query);
+    }
   }
 
   @Override
@@ -220,8 +226,19 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().delete(buildCubeDeleteQuery(query));
   }
 
+  @Override
+  public void deleteAll() throws Exception {
+    // this will delete all aggregates metrics data
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                                             Maps.<String, String>newHashMap()));
+    // this will delete all timeseries data
+    deleteBefore(System.currentTimeMillis() / 1000);
+  }
+
   private CubeDeleteQuery buildCubeDeleteQuery(MetricDeleteQuery query) {
-    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(),
+    // note: delete query currently usually executed synchronously,
+    //       so we only attempt to delete totals, to avoid timeout
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
                                query.getMetricName(), query.getSliceByTags());
   }
 
