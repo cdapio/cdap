@@ -435,6 +435,12 @@ Query Tips
 
 - If a run-ID is not specified, we aggregate the events processed for all the runs of this flow.
 
+  The resulting timeseries will represent aggregated values for the context specified.
+  Currently, summation is used as the aggregation function. So, if you query for the
+  ``system.process.events.processed`` metric for a Flow |---| thus across all Flowlets
+  |---| since this metric was actually emitted at the Flowlet level, the resulting values
+  retrieved will be a sum across all Flowlets of the Flow.
+
 - If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
   API at the Flow context::
 
@@ -497,7 +503,8 @@ multiple tags for grouping by providing a comma-separated list.
 Querying by a Time Range
 ------------------------
 The time range of a metric query can be specified in various ways: either
-``aggregate=true`` to retrieve the total aggregated since the Application was deployed, 
+``aggregate=true`` to retrieve the total aggregated since the Application was deployed
+or |---| in the case of Dataset metrics |---| since a Dataset was created; 
 or as a ``start`` and ``end`` to define a specific range and return a series of data points.
 
 .. list-table::
@@ -592,9 +599,3 @@ The last example will return something similar to::
 
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
-
-If the run-ID is not specified, we aggregate the events processed for all the runs of a program.
-
-
-
-
