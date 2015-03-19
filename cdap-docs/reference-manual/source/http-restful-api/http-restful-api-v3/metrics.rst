@@ -38,7 +38,7 @@ For example: the metrics context
 Flow. It has a parent context, ``namespace.default.app.PurchaseHistory``, which
 identifies the parent application.
 
-Each context is described by a pair, composed of a tag name and a value, such as:
+Each level of the context is described by a pair, composed of a tag name and a value, such as:
 
 - ``flow.PurchaseFlow`` (tag name: *flow*, value: *PurchaseFlow*)
 - ``app.PurchaseHistory`` (tag name: *app*, value: *PurchaseHistory*)
@@ -68,35 +68,35 @@ enclosing context. These are the available Application contexts of CDAP:
    * - System Metric
      - Context
    * - One Flowlet of a Flow
-     - ``namespace.<namespace>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
+     - ``namespace.<namespace>.app.<app-id>.flow.<flow-id>.flowlet.<flowlet-id>``
    * - All Flowlets of a Flow
-     - ``namespace.<namespace>.apps.<app-id>.flows.<flow-id>``
-   * - All Flowlets of all Flows of an Application
-     - ``namespace.<namespace>.apps.<app-id>.flows``
+     - ``namespace.<namespace>.app.<app-id>.flow.<flow-id>``
+   * - All Flowlets of all app of an Application
+     - ``namespace.<namespace>.app.<app-id>.flow.*``
    * - One Procedure
-     - ``namespace.<namespace>.apps.<app-id>.procedures.<procedure-id>``
+     - ``namespace.<namespace>.app.<app-id>.procedures.<procedure-id>``
    * - One Worker
-     - ``namespace.<namespace>.apps.<app-id>.workers.<worker-id>``
+     - ``namespace.<namespace>.app.<app-id>.workers.<worker-id>``
    * - All Procedures of an Application
-     - ``namespace.<namespace>.apps.<app-id>.procedures``
+     - ``namespace.<namespace>.app.<app-id>.procedures.*``
    * - All Workers of an Application
-     - ``namespace.<namespace>.apps.<app-id>.workers``
+     - ``namespace.<namespace>.app.<app-id>.workers.*``
    * - All Mappers of a MapReduce
-     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>.mappers``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.mappers.*``
    * - All Reducers of a MapReduce
-     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>.reducers``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.reducers.*``
    * - One MapReduce
-     - ``namespace.<namespace>.apps.<app-id>.mapreduce.<mapreduce-id>``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>``
    * - All MapReduce of an Application
-     - ``namespace.<namespace>.apps.<app-id>.mapreduce``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.*``
    * - One Spark Program
-     - ``namespace.<namespace>.apps.<app-id>.spark.<spark-id>``
+     - ``namespace.<namespace>.app.<app-id>.spark.<spark-id>``
    * - One Service
-     - ``namespace.<namespace>.apps.<app-id>.services.<service-id>``
+     - ``namespace.<namespace>.app.<app-id>.service.<service-id>``
    * - All Services of an Application
-     - ``namespace.<namespace>.apps.<app-id>.services``
+     - ``namespace.<namespace>.app.<app-id>.service.*``
    * - All components of an Application
-     - ``namespace.<namespace>.apps.<app-id>``
+     - ``namespace.<namespace>.app.<app-id>``
    * - All components of all Applications
      - ``namespace.<namespace>``
 
@@ -121,15 +121,15 @@ Flowlet, Worker, Procedure, Mapper, or Reducer level:
    * - Dataset Metric
      - Context
    * - A single Dataset in the context of a single Flowlet
-     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>.flowlets.<flowlet-id>``
+     - ``namespace.<namespace>.dataset.<dataset-id>.app.<app-id>.flow.<flow-id>.flowlet.<flowlet-id>``
    * - A single Dataset in the context of a single Flow
-     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>.flows.<flow-id>``
+     - ``namespace.<namespace>.dataset.<dataset-id>.app.<app-id>.flow.<flow-id>``
    * - A single Dataset in the context of a specific Application
-     - ``namespace.<namespace>.datasets.<dataset-id>.apps.<app-id>``
+     - ``namespace.<namespace>.dataset.<dataset-id>.app.<app-id>``
    * - A single Dataset across all Applications
-     - ``namespace.<namespace>.datasets.<dataset-id>``
+     - ``namespace.<namespace>.dataset.<dataset-id>``
    * - All Datasets across all Applications
-     - ``namespace.<namespace>.datasets.*``
+     - ``namespace.<namespace>.dataset.*``
 
 .. _available-metrics:
 
@@ -139,7 +139,7 @@ For CDAP metrics (system metrics), the available metrics depend on the context.
 User-defined metrics are available in the context that they are emitted from.
 
 Note that a user metric may have the same name as a system metric; they are distinguished 
-by the prefix.
+by prepending the respective prefix when querying: ``user`` or ``system``.
 
 These metrics are available in a Flowlet context:
 
@@ -450,7 +450,7 @@ API at the Flow context::
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
     &metric=system.process.events.processed&start=now-5s&count=5
 
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire 
+Similarly, you can address the context of all Flows of an Application, an entire Application, or the entire 
 namespace of a CDAP instance::
 
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.*
@@ -559,7 +559,7 @@ For example: to return the total number of input objects processed since the
 Application *CountRandom* was deployed, assuming that CDAP has not been stopped or
 restarted (you cannot specify a time range for aggregates)::
 
-  POST <base-url>/metrics/query?context=namespace.default.apps.
+  POST <base-url>/metrics/query?context=namespace.default.app.
       CountRandom.system.process.events.processed?aggregate=true
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
@@ -581,7 +581,7 @@ Records and Schedule <rest-program-runs>` on retrieving active and historical pr
 
 When querying by ``run-ID``, it is specified in the context after the ``program-id`` with the tag ``run``::
 
-  ...apps.<app-id>.<program-type>.<program-id>.run.<run-id>
+  ...app.<app-id>.<program-type>.<program-id>.run.<run-id>
 
 Examples (reformatted to fit)::
 

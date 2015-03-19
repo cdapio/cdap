@@ -50,7 +50,7 @@ Properties for the namespace are passed in the JSON request body:
      - Display description of the namespace
      - An empty string ("")
    * - ``config``
-     - :ref:`Configuration preferences <preferences>` for the namespace
+     - Configuration preferences for the namespace
      - A JSON string of configuration key-value pairs
 
 If a namespace with the same name already exists, the method will still return ``200 OK``,
@@ -127,7 +127,6 @@ To edit an existing namespace, submit an HTTP PUT request to::
    * - ``<namespace>``
      - Namespace
 
-The ``<namespace>`` must be of the limited character set for namespaces, as 
-described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
+The ``<namespace>`` must be the name of an existing namespace.
 Properties for the namespace are passed in the JSON request body, as described
 for when you `Create a Namespace`_.
