@@ -212,6 +212,7 @@ public class DefaultMetricStore implements MetricStore {
   public void deleteBefore(long timestamp) throws Exception {
     // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
     for (int resolution : resolutions) {
+      // NOTE: we do not purge on TTL the "totals" currently, as there might be system components dependent on it
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
