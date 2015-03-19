@@ -29,6 +29,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -70,6 +71,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   private static StreamAdmin streamAdmin;
   private static TransactionManager txManager;
   private static StreamFileWriterFactory fileWriterFactory;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -111,13 +113,16 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     txManager = injector.getInstance(TransactionManager.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
     setupNamespaces(injector.getInstance(LocationFactory.class));
     txManager.startAndWait();
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
     testHBase.stopHBase();
   }
