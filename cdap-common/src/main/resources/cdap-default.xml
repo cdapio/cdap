@@ -986,16 +986,6 @@
         <value>localhost</value>
     </property>
 
-    <property>
-      <name>beta.dashboard.bind.port</name>
-      <value>9998</value>
-    </property>
-
-    <property>
-      <name>enable.new.dashboard</name>
-      <value>false</value>
-    </property>
-
     <!---
          Explore Server Settings
      -->
