@@ -65,7 +65,7 @@
             <version>0.0.20</version>
             <executions>
               <execution>
-                <id>install-node-and-npm</id>
+                <id>dist</id>
                 <goals>
                   <goal>install-node-and-npm</goal>
                 </goals>
@@ -117,6 +117,16 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
+              <execution>
+              <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
+              <id>rpm-package</id>
+                <phase/>
+              </execution>
+              <execution>
+              <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
+              <id>deb-package</id>
+              <phase/>
+              </execution>
               <execution>
                 <id>clean-node-modules</id>
                 <phase>process-resources</phase>
