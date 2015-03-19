@@ -120,6 +120,8 @@ public class SchedulerServiceTest {
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+    schedulerService.resumeSchedule(program, programType, "Schedule1");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
     schedulerService.schedule(program, programType, timeSchedule2);
@@ -127,6 +129,7 @@ public class SchedulerServiceTest {
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(2, scheduleIds.size());
+    schedulerService.resumeSchedule(program, programType, "Schedule2");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
     schedulerService.schedule(program, programType, ImmutableList.of(dataSchedule1, dataSchedule2));
@@ -135,6 +138,8 @@ public class SchedulerServiceTest {
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(4, scheduleIds.size());
+    schedulerService.resumeSchedule(program, programType, "Schedule3");
+    schedulerService.resumeSchedule(program, programType, "Schedule4");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
     schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule1");

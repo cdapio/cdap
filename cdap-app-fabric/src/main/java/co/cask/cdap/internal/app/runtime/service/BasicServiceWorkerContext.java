@@ -96,16 +96,16 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
 
-    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
+    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
     // the same instance is always returned.
     long cacheExpiryTimeout =
-      Math.max(2, 2 * TimeUnit.SECONDS.toMinutes(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
-                                                              TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
+      Math.max(2, 2 * TimeUnit.SECONDS.toHours(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
+                                                            TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.MINUTES)
+      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.HOURS)
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
