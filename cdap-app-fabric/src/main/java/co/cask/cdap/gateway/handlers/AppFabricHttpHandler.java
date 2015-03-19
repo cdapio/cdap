@@ -40,7 +40,6 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
@@ -49,6 +48,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
@@ -1170,9 +1170,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // remove all data in console settings
       consoleSettingsStore.delete();
-
-      // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
-      appLifecycleHttpHandler.deleteMetrics(Constants.DEFAULT_NAMESPACE, null);
 
       LOG.info("All data for namespace '{}' deleted.", Constants.DEFAULT_NAMESPACE);
       responder.sendStatus(HttpResponseStatus.OK);

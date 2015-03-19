@@ -71,8 +71,8 @@ public final class DatasetTypeMDSUpgrader {
 
 
   @Inject
-  private DatasetTypeMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                 @Named("dsFramework") final DatasetFramework dsFramework,
+  private DatasetTypeMDSUpgrader(TransactionExecutorFactory executorFactory,
+                                 DatasetFramework dsFramework,
                                  LocationFactory locationFactory, Configuration hConf,
                                  HBaseTableUtil tableUtil) {
     this.executorFactory = executorFactory;
