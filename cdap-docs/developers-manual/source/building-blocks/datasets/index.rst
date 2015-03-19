@@ -84,6 +84,23 @@ interface or by extending existing Dataset types. See the
 :ref:`Purchase Example<examples-purchase>` for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets. <custom-datasets>`
 
+.. rubric::  Dataset Time-To-Live (TTL)
+
+Datasets, like :ref:`Streams <streams>`, can have a Time-To-Live (TTL) property that
+governs how long data will be persisted in a specific Dataset.
+
+When you create a Dataset, you can configure its TTL as part of the creation::
+
+  public void configure() {
+      createDataset("myCounters", Table.class, 
+                    DatasetProperties.builder().add(Table.PROPERTY_TTL, 
+                                                    "<age in milliseconds>").build());
+      ...
+  }
+
+The default TTL for all Datasets is infinite, meaning that data will never expire. The TTL
+property of an existing Dataset can be changed using the :ref:`http-restful-api-dataset`.
+
 .. rubric:: Types of Datasets
 
 A Dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
