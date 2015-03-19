@@ -6,7 +6,7 @@
 MAIN_CMD=node
 
 export NODE_ENV=production
-export CDAP_MODE=enterprise
+# export CDAP_MODE=enterprise
 
 # Arguments for MAIN_CMD
 MAIN_CMD_ARGS="$CDAP_HOME/web-app/server.js"
