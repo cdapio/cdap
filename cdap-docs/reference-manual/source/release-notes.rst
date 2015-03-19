@@ -40,6 +40,14 @@ New Features
 - **Spark**
 
   - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  
+  
+Improvement
+-----------
+
+- Improved Flow performance and scalability with a new distributed queue implementation.
+
+
 
 .. _known-issues-280:
 
