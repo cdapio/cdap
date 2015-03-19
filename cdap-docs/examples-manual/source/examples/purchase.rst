@@ -130,9 +130,13 @@ Standalone CDAP SDK directory).
 
 For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
 the actual path of ``../../bin/cdap-cli.sh``, or ``..\..\bin\cdap-cli.bat`` on Windows, as
-appropriate. Other scripts that are supplied in the examples also have Windows
-``.bat`` equivalents. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
+appropriate. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
 to simplify the commands.
+
+Other scripts that are supplied in the examples also have Windows ``.bat``
+equivalents. Note that a version of ``curl`` that works with Windows is included in the
+CDAP Standalone SDK in ``libexec\bin\curl.exe``.
+
 
 .. highlight:: console
 
@@ -146,7 +150,7 @@ Once the application is deployed:
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow``
+    $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
 
 Starting the Services
 ------------------------------
@@ -208,9 +212,6 @@ Once the sentences have been injected:
 
     $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
-  **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-  SDK in ``libexec\bin\curl.exe``
-
 Querying the Results
 ------------------------------
 
@@ -224,8 +225,6 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 
     $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
-**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-SDK in ``libexec\bin\curl.exe``
   
 Exploring the Results Using SQL
 -------------------------------
