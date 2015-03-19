@@ -138,6 +138,7 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+    public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
   }
 
   /**

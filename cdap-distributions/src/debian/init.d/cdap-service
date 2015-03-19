@@ -33,6 +33,24 @@
 
 SVC_COMMAND="/opt/cdap/@package.name@/bin/svc-@service.name@ $*"
 
+# source configuration, if it exists
+if [[ -r /etc/default/cdap-@service.name@ ]]; then
+  . /etc/default/cdap-@service.name@
+fi
+
+KRB_COMMAND="kinit -kt $CDAP_KEYTAB $CDAP_PRINCIPAL"
+
+# check for kerberos
+if [[ -r $CDAP_KEYTAB ]] && [[ -n $CDAP_PRINCIPAL ]]; then
+  if [[ $1 =~ "start" ]]; then
+    if [[ $UID -eq 0 ]]; then
+      su cdap -c "$KRB_COMMAND"
+    else
+      $KRB_COMMAND
+    fi
+  fi
+fi
+
 # drop permissions to cdap user and run service script
 
 if [[ $UID -eq 0 ]]; then

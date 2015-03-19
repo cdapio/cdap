@@ -21,6 +21,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -44,8 +45,10 @@ import java.util.Set;
 
 /**
  * Codec to serialize and deserialize {@link ServiceSpecification}
+ *
+ * TODO: Move to cdap-proto
  */
-public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification>  {
+public class ServiceSpecificationCodec extends AbstractSpecificationCodec<ServiceSpecification> {
 
   // For decoding old spec. Remove later.
   private static final Gson GSON = new Gson();
