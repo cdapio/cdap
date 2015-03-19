@@ -57,7 +57,6 @@ import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
@@ -97,10 +96,11 @@ public class UpgradeTool {
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
-  private Store store;
-  private FileMetaDataManager fileMetaDataManager;
   private final Injector injector;
   private final HBaseTableUtil hBaseTableUtil;
+
+  private Store store;
+  private FileMetaDataManager fileMetaDataManager;
 
   /**
    * Set of Action available in this tool.
@@ -121,13 +121,12 @@ public class UpgradeTool {
   }
 
   public UpgradeTool() throws Exception {
-    cConf = CConfiguration.create();
-    hConf = HBaseConfiguration.create();
-
+    this.cConf = CConfiguration.create();
+    this.hConf = HBaseConfiguration.create();
     this.injector = init();
-    txService = injector.getInstance(TransactionService.class);
-    zkClientService = injector.getInstance(ZKClientService.class);
-    hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
+    this.txService = injector.getInstance(TransactionService.class);
+    this.zkClientService = injector.getInstance(ZKClientService.class);
+    this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -345,12 +344,16 @@ public class UpgradeTool {
 
   private void performUpgrade() throws Exception {
     LOG.info("Upgrading System and User Datasets ...");
+    HBaseAdmin hBaseAdmin = new HBaseAdmin(hConf);
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
+    hBaseTableUtil.dropTable(hBaseAdmin, dsUpgrade.getDatasetInstanceMDSUpgrader().getOldDatasetInstanceTableId());
+    hBaseTableUtil.dropTable(hBaseAdmin, dsUpgrade.getDatasetTypeMDSUpgrader().getOldDatasetTypeTableId());
 
     LOG.info("Upgrading application metadata ...");
     MDSUpgrader mdsUpgrader = injector.getInstance(MDSUpgrader.class);
     mdsUpgrader.upgrade();
+    hBaseTableUtil.dropTable(hBaseAdmin, mdsUpgrader.getOldAppMetaTableId());
 
     LOG.info("Upgrading archives and files ...");
     ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
@@ -358,6 +361,7 @@ public class UpgradeTool {
 
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
+    hBaseTableUtil.dropTable(hBaseAdmin, getFileMetaDataManager().getOldLogMetaTableId());
 
     LOG.info("Upgrading stream state store table ...");
     StreamStateStoreUpgrader streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
@@ -423,10 +427,7 @@ public class UpgradeTool {
       Throwables.propagate(e);
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
-    getStore().createNamespace(new NamespaceMeta.Builder()
-                                 .setName(Constants.DEFAULT_NAMESPACE)
-                                 .setDescription(Constants.DEFAULT_NAMESPACE)
-                                 .build());
+    getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
   /**
