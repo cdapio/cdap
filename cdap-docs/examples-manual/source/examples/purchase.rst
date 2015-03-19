@@ -208,7 +208,7 @@ Once the sentences have been injected:
 
     $ cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow
 
-- Or, you can send a ``curl`` request to CDAP::
+- Or, you can send an HTTP request using the ``curl`` command::
 
     $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
@@ -217,11 +217,11 @@ Querying the Results
 
 To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET history/Alice
 
-- Or, send a query via an HTTP request using the ``curl`` command. For example::
+- Or, send a query via an HTTP request using the ``curl`` command::
 
     $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
@@ -316,7 +316,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow   
 
@@ -325,7 +325,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, then click the *Stop* button (with a red square) in the
   *Service* pane; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService
     $ cdap-cli.sh stop service PurchaseHistory.CatalogLookup
