@@ -275,6 +275,7 @@ public class FileStreamAdmin implements StreamAdmin {
       public StreamConfig call() throws Exception {
         Location configLocation = getStreamConfigLocation(streamId);
         if (configLocation.exists()) {
+          alterExploreStream(streamId, true);
           return null;
         }
 
