@@ -51,6 +51,12 @@ public interface MetricStore {
   void delete(MetricDeleteQuery query) throws Exception;
 
   /**
+   * Deletes all metrics data.
+   * @throws Exception
+   */
+  void deleteAll() throws Exception;
+
+  /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of next available tags
    * @param query specifies where to search
    * @return collection of tag value pairs in no particular order

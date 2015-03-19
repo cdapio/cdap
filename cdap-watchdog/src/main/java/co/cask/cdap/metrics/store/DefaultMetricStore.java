@@ -226,6 +226,15 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().delete(buildCubeDeleteQuery(query));
   }
 
+  @Override
+  public void deleteAll() throws Exception {
+    // this will delete all aggregates metrics data
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                                             Maps.<String, String>newHashMap()));
+    // this will delete all timeseries data
+    deleteBefore(System.currentTimeMillis() / 1000);
+  }
+
   private CubeDeleteQuery buildCubeDeleteQuery(MetricDeleteQuery query) {
     // note: delete query currently usually executed in sync way, so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,

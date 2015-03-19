@@ -56,11 +56,7 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    // this will delete all aggregates metrics data
-    metricStore.delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
-    // this will delete all timeseries data
-    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
+    metricStore.deleteAll();
   }
 
   public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
