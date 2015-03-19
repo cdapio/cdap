@@ -91,6 +91,15 @@ gulp.task('js:lib', function() {
       './bower_components/angular-strap/dist/modules/typeahead.tpl.js',
       './bower_components/angular-strap/dist/modules/select.js',
       './bower_components/angular-strap/dist/modules/select.tpl.js',
+
+
+      './bower_components/angular-strap/dist/modules/date-parser.js',
+      './bower_components/angular-strap/dist/modules/date-formatter.js',
+      './bower_components/angular-strap/dist/modules/datepicker.js',
+      './bower_components/angular-strap/dist/modules/datepicker.tpl.js',
+      './bower_components/angular-strap/dist/modules/timepicker.js',
+      './bower_components/angular-strap/dist/modules/timepicker.tpl.js',
+
       './bower_components/angular-breadcrumb/release/angular-breadcrumb.js',
 
       './bower_components/ngstorage/ngStorage.js',
@@ -109,7 +118,8 @@ gulp.task('js:lib', function() {
       './bower_components/dagre/dist/dagre.core.js',
       './bower_components/dagre-d3/dist/dagre-d3.core.js',
       './bower_components/moment/moment.js',
-      './bower_components/angular-moment/angular-moment.js'
+      './bower_components/angular-moment/angular-moment.js',
+      './bower_components/angular-bootstrap/ui-bootstrap-tpls.js'
 
 
     ].concat([
@@ -119,6 +129,16 @@ gulp.task('js:lib', function() {
     })))
     .pipe(plug.concat('lib.js'))
     .pipe(gulp.dest('./dist/assets/bundle'));
+});
+
+gulp.task('js:$modal', function() {
+  gulp.src([
+    './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+  ])
+  .pipe(plug.replace('$tooltip', '$bootstrapTooltip'))
+  .pipe(plug.ngAnnotate({rename: [{from: '$modal', to: '$bootstrapModal'}]}))
+  .pipe(plug.concat('ui-bootstrap-tpls.js'))
+  .pipe(gulp.dest('./bower_components/angular-bootstrap'));
 });
 
 
@@ -280,9 +300,9 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('lib', ['js:lib', 'css:lib']);
+gulp.task('lib', ['js:$modal', 'js:lib', 'css:lib']);
 gulp.task('app', ['js:app', 'css:app']);
-gulp.task('js', ['js:lib', 'js:app']);
+gulp.task('js', ['js:$modal', 'js:lib', 'js:app']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 

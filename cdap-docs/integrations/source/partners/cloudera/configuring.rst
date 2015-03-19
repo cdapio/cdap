@@ -41,9 +41,9 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version 0.8.16 or greater) must be installed on the node(s) where the Web-App
-   role instance will run. You can download the latest version of Node.js from `nodejs.org
-   <http://nodejs.org>`__.
+#. Node.js (version from 0.8.16 through 0.10.36) must be installed on the node(s) where the Web-App
+   role instance will run. You can download the appropriate version of Node.js from `nodejs.org
+   <http://nodejs.org/dist/>`__.
 
 #. Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
    (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 

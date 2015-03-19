@@ -16,6 +16,10 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -32,9 +36,9 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -42,24 +46,25 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -81,6 +86,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Command line tool for the Upgrade tool
@@ -147,6 +154,7 @@ public class UpgradeTool {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -154,12 +162,14 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-          bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+          bind(Scheduler.class).toInstance(createNoopScheduler());
           bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
+          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+          bind(MetricStore.class).to(DefaultMetricStore.class);
           install(new FactoryModuleBuilder()
                     .implement(Store.class, DefaultStore.class)
                     .build(StoreFactory.class)
@@ -169,17 +179,17 @@ public class UpgradeTool {
 
         @Provides
         @Singleton
-        @Named("dsFramework")
-        public DatasetFramework getDSFramework(CConfiguration cConf,
-                                               DatasetDefinitionRegistryFactory registryFactory)
+        public DatasetFramework getDSFramework(
+          CConfiguration cConf, DatasetDefinitionRegistryFactory registryFactory,
+          @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules)
           throws IOException, DatasetManagementException {
-          return createRegisteredDatasetFramework(cConf, registryFactory);
+          return createRegisteredDatasetFramework(cConf, registryFactory, defaultModules);
         }
 
         @Provides
         @Singleton
         @Named("defaultStore")
-        public Store getStore(@Named("dsFramework") DatasetFramework dsFramework,
+        public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               TransactionExecutorFactory txExecutorFactory) {
           return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
@@ -188,7 +198,7 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("logSaverTableUtil")
-        public LogSaverTableUtil getLogSaverTableUtil(@Named("dsFramework") DatasetFramework dsFramework,
+        public LogSaverTableUtil getLogSaverTableUtil(DatasetFramework dsFramework,
                                                       CConfiguration cConf) {
           return new LogSaverTableUtil(dsFramework, cConf);
         }
@@ -197,12 +207,65 @@ public class UpgradeTool {
         @Singleton
         @Named("fileMetaDataManager")
         public FileMetaDataManager getFileMetaDataManager(@Named("logSaverTableUtil") LogSaverTableUtil tableUtil,
-                                                          @Named("dsFramework") DatasetFramework dsFramework,
+                                                          DatasetFramework dsFramework,
                                                           TransactionExecutorFactory txExecutorFactory,
                                                           LocationFactory locationFactory) {
           return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
         }
       });
+  }
+
+  private Scheduler createNoopScheduler() {
+    return new Scheduler() {
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      }
+
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      }
+
+      @Override
+      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+
+      }
+
+      @Override
+      public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      }
+
+      @Override
+      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      }
+
+      @Override
+      public void deleteAllSchedules(Id.Namespace namespaceId)
+        throws co.cask.cdap.internal.app.runtime.schedule.SchedulerException {
+      }
+
+      @Override
+      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+        return ScheduleState.NOT_FOUND;
+      }
+    };
   }
 
   /**
@@ -301,6 +364,10 @@ public class UpgradeTool {
     LOG.info("Upgrading logs meta data ...");
     getFileMetaDataManager().upgrade();
 
+    LOG.info("Upgrading stream state store table ...");
+    StreamStateStoreUpgrader streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
+    streamStateStoreUpgrader.upgrade();
+
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
     queueConfigUpgrader.upgrade();
@@ -322,10 +389,10 @@ public class UpgradeTool {
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
   private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
-                                                            DatasetDefinitionRegistryFactory registryFactory)
+                                                            DatasetDefinitionRegistryFactory registryFactory,
+                                                            Map<String, DatasetModule> defaultModules)
     throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, cConf);
-    addModules(datasetFramework);
+    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, defaultModules, cConf);
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // app metadata
@@ -342,21 +409,6 @@ public class UpgradeTool {
     DefaultMetricDatasetFactory.setupDatasets(factory);
 
     return datasetFramework;
-  }
-
-  /**
-   * add module to the dataset framework
-   *
-   * @param datasetFramework the dataset framework to which the modules need to be added
-   * @throws DatasetManagementException
-   */
-  private void addModules(DatasetFramework datasetFramework) throws DatasetManagementException {
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
-                               new HBaseTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
-                               new HBaseMetricsTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
   }
 
   /**

@@ -71,8 +71,8 @@ public final class DatasetTypeMDSUpgrader {
 
 
   @Inject
-  private DatasetTypeMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                 @Named("dsFramework") final DatasetFramework dsFramework,
+  private DatasetTypeMDSUpgrader(TransactionExecutorFactory executorFactory,
+                                 DatasetFramework dsFramework,
                                  LocationFactory locationFactory, Configuration hConf,
                                  HBaseTableUtil tableUtil) {
     this.executorFactory = executorFactory;
@@ -186,7 +186,6 @@ public final class DatasetTypeMDSUpgrader {
       for (String moduleName : usedByModules) {
         newDatasetModuleMeta.addUsedByModule(moduleName);
       }
-      newDatasetModuleMeta = olddatasetModuleMeta;
       renameLocation(oldJarLocation, newJarLocation);
     }
     newDatasetTypeMDS.writeModule(Constants.DEFAULT_NAMESPACE_ID, newDatasetModuleMeta);

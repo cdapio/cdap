@@ -15,7 +15,10 @@
  */
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,4 +48,14 @@ public class DataMigrationTest {
       Assert.assertNull(DataMigration.testMigrationParsing(arguments));
     }
   }
+
+  // test injector
+  @Test
+  public void testInjector() throws Exception {
+    DataMigration migration = new DataMigration();
+    Injector injector = migration.getInjector();
+    injector.getInstance(HBaseTableUtil.class);
+    injector.getInstance(DatasetDefinitionRegistryFactory.class);
+  }
+
 }

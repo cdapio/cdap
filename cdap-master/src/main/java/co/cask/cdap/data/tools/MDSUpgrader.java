@@ -67,21 +67,16 @@ import java.util.Set;
 public class MDSUpgrader extends AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrader.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+
   private final Transactional<AppMDS, MetadataStoreDataset> appMDS;
   private final CConfiguration cConf;
   private final Store store;
   private final Set<String> appStreams;
-  private static final Gson GSON;
-
-  static {
-    GsonBuilder builder = new GsonBuilder();
-    ApplicationSpecificationAdapter.addTypeAdapters(builder);
-    GSON = builder.create();
-  }
 
   @Inject
   private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      @Named("dsFramework") final DatasetFramework dsFramework, CConfiguration cConf,
+                      final DatasetFramework dsFramework, CConfiguration cConf,
                       @Named("defaultStore") final Store store) {
     super(locationFactory);
     this.cConf = cConf;
@@ -181,7 +176,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleProgramArgs(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, DEVELOPER_ACCOUNT,
+    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, Constants.DEVELOPER_ACCOUNT,
                                                        appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
@@ -204,8 +199,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleRunRecordStarted(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {
@@ -228,8 +224,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    */
   private void handleRunRecordCompleted(final String appId, final String programId, final ProgramType programType) {
 
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {
@@ -261,7 +258,7 @@ public class MDSUpgrader extends AbstractUpgrader {
   private void writeTempRunRecordStart(String appId, ProgramType programType, String programId, String pId,
                                        long startTs) {
     store.setStart(Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), programType, programId),
-                   pId, Long.MAX_VALUE - startTs);
+                   pId, startTs);
   }
 
   /**

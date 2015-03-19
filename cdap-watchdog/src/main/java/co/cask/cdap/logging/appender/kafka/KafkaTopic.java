@@ -24,7 +24,7 @@ import java.io.IOException;
 public final class KafkaTopic {
   // Kafka topic on which log messages will get published.
   // If there is an incompatible log schema change, then the topic version needs to be updated.
-  private static final String KAFKA_TOPIC = "logs.user-v1";
+  private static final String KAFKA_TOPIC = "logs.user-v2";
 
   /**
    * @return Kafka topic with schema.

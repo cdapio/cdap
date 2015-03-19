@@ -24,6 +24,8 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
+        addStartAndEndNodes(nodes, edges);
+
         $scope.data = {
           nodes: nodes,
           edges: edges,
@@ -64,6 +66,38 @@ angular.module(PKG.name + '.feature.workflows')
       });
 
   });
+
+/**
+ * Adds start and end nodes to nodes list.
+ * @param {Array} of nodes.
+ */
+function addStartAndEndNodes(nodes, edges) {
+  if (nodes.length) {
+    nodes.unshift({
+      name: 'start',
+      type: 'START',
+      nodeType: 'START'
+    });
+    edges.unshift({
+      sourceName: nodes[0].name,
+      sourceType: nodes[0].nodeType,
+      targetName: nodes[1].name
+    });
+
+    nodes.push({
+      name: 'end',
+      type: 'END',
+      nodeType: 'END'
+    });
+    edges.push({
+      sourceName: nodes[nodes.length - 2].name,
+      sourceType: nodes[nodes.length - 2].nodeType,
+      targetName: nodes[nodes.length - 1].name
+    });
+    
+  }
+
+}
 
 /**
   * Purpose: Converts a list of nodes to a list of connections
@@ -120,7 +154,6 @@ angular.module(PKG.name + '.feature.workflows')
         }
       ];
 */
-
 function convert(nodes, connections) {
 
   for (var i=0; i+1 < nodes.length; i++) {
@@ -153,7 +186,6 @@ function convert(nodes, connections) {
   * @return [Array] of connections
 
 */
-
 function flatten(source, fork, target, connections) {
   var branches = fork.branches,
       temp = [];
@@ -176,7 +208,6 @@ function flatten(source, fork, target, connections) {
   * @return [Array] of connections
 
 */
-
 function expandForks(nodes, expandedNodes) {
   for(var i=0; i<nodes.length; i++) {
     if (nodes[i].nodeType === 'ACTION') {

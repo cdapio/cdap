@@ -125,7 +125,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Cannot delete the namespace '%s'. '%s' is a reserved namespace.",
+                           String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
                                          namespaceId, namespaceId));
       return;
     }

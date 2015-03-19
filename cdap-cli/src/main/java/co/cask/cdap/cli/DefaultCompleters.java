@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.cli.command.system.RenderAsCommand;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
 import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
@@ -57,6 +58,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
         .put(ArgumentName.NAMESPACE_NAME.getName(), injector.getInstance(NamespaceNameCompleter.class))
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
+        .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }
 

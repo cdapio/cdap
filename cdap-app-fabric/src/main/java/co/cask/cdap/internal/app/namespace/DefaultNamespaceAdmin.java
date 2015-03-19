@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -28,19 +30,21 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Admin for managing namespaces
@@ -56,11 +60,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final ProgramRuntimeService runtimeService;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final MetricStore metricStore;
+  private final Scheduler scheduler;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
-                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               MetricStore metricStore, Scheduler scheduler) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
@@ -68,27 +75,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
-  }
-
-  /**
-   * This should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
-   */
-  private void createDefaultNamespace() {
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    NamespaceMeta defaultNamespace = builder
-      .setName(Constants.DEFAULT_NAMESPACE)
-      .setDescription("Default Namespace")
-      .build();
-
-    try {
-      createNamespace(defaultNamespace);
-      LOG.info("Successfully created 'default' namespace.");
-    } catch (AlreadyExistsException e) {
-      LOG.info("'default' namespace already exists.");
-    } catch (NamespaceCannotBeCreatedException e) {
-      LOG.error("Error while creating default namespace", e);
-      Throwables.propagate(e);
-    }
+    this.scheduler = scheduler;
+    this.metricStore = metricStore;
   }
 
   /**
@@ -122,18 +110,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return true, if the specifed namespace exists, false otherwise
    */
   public boolean hasNamespace(Id.Namespace namespaceId) {
-    boolean exists = true;
     try {
       getNamespace(namespaceId);
     } catch (NotFoundException e) {
-      // TODO: CDAP-1213 do this better
-      if (Constants.DEFAULT_NAMESPACE.equals(namespaceId.getId())) {
-        createDefaultNamespace();
-      } else {
-        exists = false;
-      }
+      return false;
     }
-    return exists;
+    return true;
   }
 
   /**
@@ -145,8 +127,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public void createNamespace(NamespaceMeta metadata) throws NamespaceCannotBeCreatedException, AlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    NamespaceMeta existing = store.getNamespace(Id.Namespace.from(metadata.getName()));
-    if (existing != null) {
+    if (hasNamespace(Id.Namespace.from(metadata.getName()))) {
       throw new AlreadyExistsException(NAMESPACE_ELEMENT_TYPE, metadata.getName());
     }
 
@@ -190,9 +171,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Delete queues and streams data
       queueAdmin.dropAllInNamespace(namespaceId.getId());
       streamAdmin.dropAllInNamespace(namespaceId);
+      // Delete all the schedules
+      scheduler.deleteAllSchedules(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
-      // TODO: CDAP-1729 - Delete/Expire Metrics. API unavailable right now.
+
+      deleteMetrics(namespaceId);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.
@@ -208,17 +192,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
       }
-    } catch (DatasetManagementException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
-    } catch (IOException e) {
-      LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId.getId(), e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
+  }
+
+  private void deleteMetrics(Id.Namespace namespaceId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+    metricStore.delete(deleteQuery);
   }
 
   @Override

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.command.HelpCommand;
-import co.cask.cdap.cli.command.SearchCommandsCommand;
+import co.cask.cdap.cli.command.system.HelpCommand;
+import co.cask.cdap.cli.command.system.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
 import co.cask.cdap.cli.util.InstanceURIParser;
@@ -40,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jline.TerminalFactory;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -89,45 +90,32 @@ public class CLIMain {
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
   private final CLIConfig cliConfig;
+  private final Injector injector;
+  private final LaunchOptions options;
 
   public CLIMain(final LaunchOptions options, final CLIConfig cliConfig) throws URISyntaxException, IOException {
+    this.options = options;
     this.cliConfig = cliConfig;
 
-    final PrintStream output = cliConfig.getOutput();
-    final TableRenderer tableRenderer = cliConfig.getTableRenderer();
-
     cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
-    Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(LaunchOptions.class).toInstance(options);
           bind(CConfiguration.class).toInstance(CConfiguration.create());
-          bind(PrintStream.class).toInstance(output);
+          bind(PrintStream.class).toInstance(cliConfig.getOutput());
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
-          bind(TableRenderer.class).toInstance(tableRenderer);
         }
       }
     );
 
-    InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
-    if (options.isAutoconnect()) {
-      try {
-        ConnectionConfig connectionInfo = instanceURIParser.parse(options.getUri());
-        cliConfig.tryConnect(connectionInfo, output, options.isDebug());
-      } catch (Exception e) {
-        if (options.isDebug()) {
-          e.printStackTrace(output);
-        }
-      }
-    }
-
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier()),
-        new SearchCommandsCommand(getCommandsSupplier())
+        new HelpCommand(getCommandsSupplier(), cliConfig),
+        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
@@ -154,14 +142,30 @@ public class CLIMain {
       }
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
-
-    updateCLIPrompt(cliConfig.getClientConfig().getConnectionConfig());
+    cli.getReader().setExpandEvents(false);
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onConnectionChanged(ConnectionConfig connectionConfig) {
-        updateCLIPrompt(connectionConfig);
+      public void onConnectionChanged(ClientConfig clientConfig) {
+        updateCLIPrompt(clientConfig);
       }
     });
+  }
+
+  /**
+   * Tries to autoconnect to the provided URI in options.
+   */
+  public void tryAutoconnect() {
+    InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
+    if (options.isAutoconnect()) {
+      try {
+        ConnectionConfig connectionInfo = instanceURIParser.parse(options.getUri());
+        cliConfig.tryConnect(connectionInfo, cliConfig.getOutput(), options.isDebug());
+      } catch (Exception e) {
+        if (options.isDebug()) {
+          e.printStackTrace(cliConfig.getOutput());
+        }
+      }
+    }
   }
 
   public static String getDefaultURI() {
@@ -188,8 +192,9 @@ public class CLIMain {
     }
   }
 
-  private void updateCLIPrompt(ConnectionConfig connectionConfig) {
+  private void updateCLIPrompt(ClientConfig clientConfig) {
     try {
+      ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
       URI baseURI = connectionConfig.getURI();
       URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
       cli.getReader().setPrompt("cdap (" + uri + ")> ");
@@ -237,9 +242,13 @@ public class CLIMain {
       String[] commandArgs = command.getArgs();
 
       try {
-        final CLIConfig cliConfig = new CLIConfig(ClientConfig.builder().build(), output, new AltStyleTableRenderer());
+        ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(null).build();
+        final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
+
+        cliMain.tryAutoconnect();
+        cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
         if (commandArgs.length == 0) {
           cli.startInteractiveMode(output);

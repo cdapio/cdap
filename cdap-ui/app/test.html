@@ -17,6 +17,17 @@
 
   <hr />
 
+  <div class="container" ng-init='timestamp=1345678912345'>
+
+      <my-timestamp-picker
+        ng-model="timestamp"
+      ></my-timestamp-picker>
+
+      <p ng-bind="timestamp"></p>
+  </div>
+
+  <hr />
+
   <div class="container" ng-init='logArr=[]'>
 
       <my-log-viewer

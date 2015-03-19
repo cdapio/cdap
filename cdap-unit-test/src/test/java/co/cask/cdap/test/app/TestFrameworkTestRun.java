@@ -112,6 +112,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
+    wfmanager.getSchedule(scheduleName).resume();
 
     List<RunRecord> history;
     int workflowRuns;
@@ -216,7 +217,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test(timeout = 360000)
-  public void testApp() throws InterruptedException, IOException, TimeoutException {
+  public void testApp() throws Exception {
     testApp(WordCountApp.class, "text");
   }
 
@@ -331,7 +332,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
-                                         int expectedCount, int expectedTotalCount) {
+                                         int expectedCount, int expectedTotalCount) throws Exception {
     DataSetManager<KeyValueTable> datasetManager = applicationManager
       .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
@@ -358,7 +359,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithWorker() throws Exception {
-    ApplicationManager applicationManager = getTestManager().deployApplication(AppWithWorker.class);
+    ApplicationManager applicationManager = deployApplication(AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.startWorker(AppWithWorker.WORKER);
     TimeUnit.MILLISECONDS.sleep(200);
@@ -518,8 +519,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<? extends Application> app, String streamName)
-    throws IOException, TimeoutException, InterruptedException {
+  private void testApp(Class<? extends Application> app, String streamName) throws Exception {
 
     ApplicationManager applicationManager = deployApplication(app);
     applicationManager.startFlow("WordCountFlow");
@@ -610,7 +610,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testAppRedeployKeepsData() {
+  public void testAppRedeployKeepsData() throws Exception {
     ApplicationManager appManager = deployApplication(AppWithTable.class);
     DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
     myTableManager.get().put(new Put("key1", "column1", "value1"));
@@ -632,9 +632,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
   }
 
+  @Test(timeout = 60000L)
+  public void testFlowletMetricsReset() throws Exception {
+    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
+    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    Assert.assertEquals(1, flowletMetrics.getProcessed());
+    RuntimeStats.resetAll();
+    // check the metrics were deleted after reset
+    Assert.assertEquals(0, flowletMetrics.getProcessed());
+  }
 
   @Test(timeout = 60000L)
-  public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
+  public void testFlowletInitAndSetInstances() throws Exception {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
@@ -703,8 +715,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testDatasetWithoutApp() throws Exception {
-    // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
-    deployApplication(DummyApp.class);
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager = getDataset("myTable");
