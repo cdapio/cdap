@@ -25,7 +25,8 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Enabling Programs to write to Streams through their Context.
+ * Enabling Programs to write to Streams through their Context. This interface is marked as Beta since the API
+ * might evolve in future releases until it matures.
  */
 @Beta
 public interface StreamWriter {
