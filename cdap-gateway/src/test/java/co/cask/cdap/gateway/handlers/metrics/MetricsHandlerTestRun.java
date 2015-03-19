@@ -24,6 +24,7 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -267,42 +268,32 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyGroupByResult(
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter") +
-        "&metric=system.reads&groupBy=" + Tag.FLOWLET + "&start=" + start + "&end="
+        "&metric=system.reads&groupBy=flowlet&start=" + start + "&end="
         + end, groupByResult);
 
     groupByResult =
-      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("ns", "myspace", "flowlet", "splitter"), 2),
-                       new TimeSeriesResult(ImmutableMap.of("ns", "yourspace", "flowlet", "counter"), 1),
-                       new TimeSeriesResult(ImmutableMap.of("ns", "yourspace", "flowlet", "splitter"), 4));
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("namespace", "myspace", "flowlet", "splitter"), 2),
+                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "counter"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "splitter"), 4));
 
     verifyGroupByResult(
       "/v3/metrics/query?metric=system.reads" +
-        "&groupBy=" + Tag.NAMESPACE + "," + Tag.FLOWLET +
-        "&start=" + start + "&end=" + end, groupByResult);
+        "&groupBy=namespace,flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
     MetricQueryResult result = post(url, MetricQueryResult.class);
     Assert.assertEquals(groupByResult.size(), result.getSeries().length);
     for (MetricQueryResult.TimeSeries timeSeries : result.getSeries()) {
+      boolean timeSeriesMatchFound = false;
       for (TimeSeriesResult expectedTs : groupByResult) {
-        if (compareTagValues(expectedTs.getTagValues(), timeSeries.getGrouping())) {
+        if (expectedTs.getTagValues().equals(ImmutableMap.copyOf(timeSeries.getGrouping()))) {
           assertTimeValues(expectedTs, timeSeries);
+          timeSeriesMatchFound = true;
         }
       }
+      Assert.assertTrue(timeSeriesMatchFound);
     }
-  }
-
-  private boolean compareTagValues(Map<String, String> expected, Map<String, String> actual) {
-    for (String key : expected.keySet()) {
-      if (!actual.containsKey(key)) {
-        return false;
-      }
-      if (!expected.get(key).equals(actual.get(key))) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private void assertTimeValues(TimeSeriesResult expected, MetricQueryResult.TimeSeries actual) {

@@ -1171,9 +1171,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // remove all data in console settings
       consoleSettingsStore.delete();
 
-      // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
-      appLifecycleHttpHandler.deleteMetrics(Constants.DEFAULT_NAMESPACE, null);
-
       LOG.info("All data for namespace '{}' deleted.", Constants.DEFAULT_NAMESPACE);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {

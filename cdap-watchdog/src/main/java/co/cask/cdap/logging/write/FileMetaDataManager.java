@@ -263,7 +263,7 @@ public final class FileMetaDataManager {
     oldLogMDS.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> ctx) throws Exception {
-        Scanner rows = ctx.get().scan(null, null);
+        Scanner rows = ctx.get().scan(ROW_KEY_PREFIX, Bytes.stopKeyForPrefix(ROW_KEY_PREFIX));
         Row row;
         while ((row = rows.next()) != null) {
           String key = Bytes.toString(row.getRow(), ROW_KEY_PREFIX.length,
