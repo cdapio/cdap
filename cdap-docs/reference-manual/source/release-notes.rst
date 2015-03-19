@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -22,6 +22,48 @@ Cask Data Application Platform Release Notes
    :class: faq
    :backlinks: none
    :depth: 2
+
+`Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- Added log rotation for CDAP programs running in YARN containers
+  (`CDAP-1295 <https://issues.cask.co/browse/CDAP-1295>`__)
+
+- Added the ability to submit to non-default YARN queues to provide 
+  :ref:`resource guarantees <resource-guarantees>`
+  for CDAP Master Services, CDAP Programs, and Explore Queries
+  (`CDAP-1417 <https://issues.cask.co/browse/CDAP-1417>`__)
+
+- Added the ability to :ref:`prune invalid transactions <tx-maintenance>`
+  (`CDAP-1540 <https://issues.cask.co/browse/CDAP-1540>`__)
+
+- Added the ability to specify 
+  :ref:`custom logback file for CDAP programs <application-logback>`
+  (`CDAP-1741 <https://issues.cask.co/browse/CDAP-1741>`__)
+
+
+.. CDAP Bug Fixes
+.. --------------
+
+
+.. _known-issues-262:
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.6.1. <#known-issues-261>`_
+
+- CDAP works only with `node.js <http://nodejs.org>`__ versions 0.8.16 through 0.10.36.
+
+- When the CDAP CLI starts up, it auto-connects to localhost. After a ``connect <hostname>``
+  command is issued from within the CLI, all operations will work except for Explore queries
+  (the command ``execute 'query'``), as the Explore Client doesn't pick up the change of
+  hostname. A workaround is to start up the CLI with the environment variable CDAP_HOST
+  set to the desired hostname, so that the CLI autoconnects to that host on startup. This
+  has been fixed in an upcoming release (2.8.0) of CDAP.
+
 
 `Release 2.6.1 <http://docs.cask.co/cdap/2.6.1/index.html>`__
 =============================================================

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _admin-index:
 
@@ -11,7 +11,11 @@ CDAP Administration Manual
 
 .. rubric:: Installation
 
-**Installation:** Covers **putting CDAP into production, with installation, configuration, security setup, and
+
+.. |installation| replace:: **Installation:**
+.. _installation: installation/index.html
+
+|installation|_ Covers **putting CDAP into production, with installation, configuration, security setup, and
 monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 .. |quickstart| replace:: **Quick Start:**
@@ -21,10 +25,10 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
   configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
   :ref:`install` guide has additional details.
 
-.. |installation| replace:: **Installation and Configuration:**
-.. _installation: installation/installation.html
+.. |installation-configuration| replace:: **Installation and Configuration:**
+.. _installation-configuration: installation/installation.html
 
-- |installation|_ Covers **installing and configuring CDAP:** the system, network, and software
+- |installation-configuration|_ Covers **installing and configuring CDAP:** the system, network, and software
   requirements; packaging options; and the instructions for installation and verification of the
   CDAP components so they work with your existing Hadoop cluster.
 
@@ -49,8 +53,11 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 
 .. rubric:: Operations
 
-**Operations:** Covers **logging, metrics, runtime arguments, scaling instances and 
-introduces the CDAP Console.** 
+.. |operations| replace:: **Operations:**
+.. _operations: installation/index.html
+
+|operations|_ Covers **logging, metrics, scaling instances, resource guarantees, 
+and introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html
@@ -71,6 +78,16 @@ introduces the CDAP Console.**
 .. _scaling-instances: operations/scaling-instances.html
 
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
+
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: operations/resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: operations/tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
 
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: operations/cdap-console.html

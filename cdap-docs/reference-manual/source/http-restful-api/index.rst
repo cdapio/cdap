@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -23,6 +23,7 @@ CDAP HTTP RESTful API
     Logging <logging>
     Metrics <metrics>
     Monitor <monitor>
+    Transactions <transactions>
 
 .. highlight:: console
 
@@ -40,3 +41,4 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 - :doc:`Logging: <logging>` retrieving Application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
+- :doc:`Transactions: <transactions>` interacting with the Transaction Service
