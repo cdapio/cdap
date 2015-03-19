@@ -94,7 +94,7 @@
     <commons.cli.version>1.2</commons.cli.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cask.common.cli.version>0.5.0</cask.common.cli.version>
-    <cask.common.version>0.6.0</cask.common.version>
+    <cask.common.version>0.6.1</cask.common.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
