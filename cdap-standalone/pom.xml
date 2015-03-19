@@ -153,11 +153,6 @@
         </dependency>
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-ui</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-adapters</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
