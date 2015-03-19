@@ -93,14 +93,14 @@ This service has a ``history/{customer}`` endpoint to obtain the purchase histor
 
 This service has two endpoints:
 
-``user`` endpoint to add a user's profile information to the system::
+A ``user`` endpoint to add a user's profile information to the system::
 
-  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
-    "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+    "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
 
-``user/{id}`` endpoint to obtain profile information for a specified user::
+A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
-  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/alice
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user/Alice
 
 Building and Starting
 =================================
@@ -165,9 +165,9 @@ Once the application is deployed:
 
 - Or, you can send ``curl`` requests to CDAP::
 
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start'
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/UserProfileService/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/UserProfileService/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
   SDK in ``libexec\bin\curl.exe``.
@@ -206,7 +206,7 @@ Once the sentences have been injected:
 
 - Or, you can send a ``curl`` request to CDAP::
 
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
   SDK in ``libexec\bin\curl.exe``
@@ -222,7 +222,7 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 
 - Or, send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
+    $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
@@ -319,7 +319,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
   Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-    $ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow   
+    $ cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow   
 
 **Stopping the Services**
 
