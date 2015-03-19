@@ -125,7 +125,7 @@ Running the Example
 ===================
 
 In the commands that follow, we'll assume that you will run all commands
-from the example's base directory (``examples/``\ |literal-example|\ ``/``, in the
+from the example's base directory (``/examples/``\ |literal-example|\ , in the
 Standalone CDAP SDK directory).
 
 For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
