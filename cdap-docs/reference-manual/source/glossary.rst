@@ -6,9 +6,9 @@
 
 .. _glossary:
 
-============================================
+========
 Glossary
-============================================
+========
 
 .. glossary::
    :sorted:
@@ -130,5 +130,9 @@ Glossary
       independent of another instance of the same entity in a different namespace. The
       primary motivation for namespaces in CDAP is to achieve application and data
       isolation.
+
+   Master Services
+      CDAP system services that are run in YARN containers like Transaction Service,
+      Dataset Executor, Log Saver, Metrics Processor, etc.
   
 

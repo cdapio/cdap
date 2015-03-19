@@ -24,28 +24,37 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Migration for metrics data from 2.6 to 2.8
@@ -120,19 +129,28 @@ public class MetricsDataMigrator {
   private final DatasetFramework dsFramework;
   private final MetricStore aggMetricStore;
   private final String entityTableName;
+  private final String metricsTableNamePrefix;
   private final String metricsTableName;
+  private final CConfiguration cConf;
+  private final Configuration hConf;
 
-  public MetricsDataMigrator(final CConfiguration cConf, final DatasetFramework dsFramework,
+
+  public MetricsDataMigrator(final CConfiguration cConf, final Configuration hConf, final DatasetFramework dsFramework,
                              MetricDatasetFactory factory) {
     this.dsFramework = dsFramework;
     this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-    this.metricsTableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                      UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
+    this.metricsTableNamePrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                            UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
+    this.metricsTableName = metricsTableNamePrefix + ".agg";
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
+    this.cConf = cConf;
+    this.hConf = hConf;
   }
 
-  public void migrateMetricsTables(Version cdapVersion) {
+  public void migrateMetricsTables(HBaseTableUtil hBaseTableUtil,
+                                   boolean keepOldData) throws DataMigrationException {
+    Version cdapVersion = findMetricsTableVersion(new MetricHBaseTableUtil(hBaseTableUtil));
     if (cdapVersion == Version.VERSION_2_6_OR_LOWER) {
       migrateMetricsTableFromVersion26(cdapVersion);
     } else if (cdapVersion == Version.VERSION_2_7) {
@@ -141,21 +159,145 @@ public class MetricsDataMigrator {
       System.out.println("Unsupported version" + cdapVersion);
       return;
     }
+    if (!keepOldData) {
+      System.out.println("Performing cleanup of old metrics tables");
+      cleanUpOldTables(cdapVersion);
+    }
   }
 
-  private void migrateMetricsTableFromVersion26(Version version) {
+  @Nullable
+  private Version findMetricsTableVersion(MetricHBaseTableUtil metricHBaseTableUtil) {
+
+    // Figure out what is the latest working version of CDAP
+    // 1) if latest is 2.8.x - nothing to do, if "pre-2.8", proceed to next step.
+    // 2) find a most recent metrics table: start by looking for 2.7, then 2.6
+    // 3) if we find 2.7 - we will migrate data from 2.7 table, if not - migrate data from 2.6 metrics table
+    // todo - use UpgradeTool to figure out if version is 2.8.x, return if it is 2.8.x
+
+    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                   UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
+
+    // versions older than 2.7, has two metrics table, identified by system and user prefix
+    String tableName26 = "system." + tableName27;
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    String metricsEntityTable26 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName26);
+    String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
+                                                                    tableName27);
+
+    Version version = null;
+    try {
+      HBaseAdmin  hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(metricsEntityTable27)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_7, version);
+          if (version == null) {
+            return null;
+          }
+          break;
+        }
+        if (desc.getNameAsString().equals(metricsEntityTable26)) {
+          System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
+          version = metricHBaseTableUtil.getVersion(desc);
+          version = verifyVersion(Version.VERSION_2_6_OR_LOWER, version);
+          if (version == null) {
+            return null;
+          }
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return version;
+  }
+
+  private Version verifyVersion(Version expected, Version actual) {
+    if (expected != actual) {
+      System.out.println("Version detected based on table name does not match table configuration");
+      return null;
+    }
+    return actual;
+  }
+
+  private void migrateMetricsTableFromVersion26(Version version) throws DataMigrationException {
     for (String scope : scopes) {
       EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(String.format("%s.%s", scope, entityTableName),
                                                                         DatasetProperties.EMPTY));
-      MetricsTable metricsTable = getOrCreateMetricsTable(String.format("%s.%s", scope, metricsTableName),
-                                                          DatasetProperties.EMPTY);
+      String scopedMetricsTableName = String.format("%s.%s", scope, metricsTableName);
+      MetricsTable metricsTable = getOrCreateMetricsTable(scopedMetricsTableName, DatasetProperties.EMPTY);
+      System.out.println("Migrating Metrics Data from table : " + scopedMetricsTableName);
       migrateMetricsData(entityTable, metricsTable, scope, version);
     }
   }
 
-  private void migrateMetricsTableFromVersion27(Version version) {
+  public void cleanUpOldTables(Version version) throws DataMigrationException {
+    Set<String> tablesToDelete = Sets.newHashSet();
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+
+    // add kafka meta table to deleteList
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                                                       MetricsConstants.DEFAULT_KAFKA_META_TABLE)));
+
+    if (version == Version.VERSION_2_6_OR_LOWER) {
+      List<String> scopes = ImmutableList.of("system", "user");
+      // add user and system - entity tables , aggregates table and time series table to the list
+      for (String scope : scopes) {
+        addTableNamesToDelete(tablesToDelete, cConf, scope, ImmutableList.of(1));
+      }
+    }
+
+    if (version == Version.VERSION_2_7) {
+      addTableNamesToDelete(tablesToDelete, cConf, null, ImmutableList.of(1, 60, 3600));
+    }
+
+    System.out.println("Deleting Tables : " + tablesToDelete);
+    deleteTables(hConf, tablesToDelete);
+  }
+
+  private void deleteTables(Configuration hConf, Set<String> tablesToDelete) throws DataMigrationException {
+    HBaseAdmin hAdmin = null;
+    try {
+      hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (tablesToDelete.contains(desc.getNameAsString())) {
+          // disable the table
+          hAdmin.disableTable(desc.getName());
+          // delete the table
+          hAdmin.deleteTable(desc.getName());
+        }
+      }
+    } catch (Exception e) {
+      LOG.error("Exception while trying to delete old metrics tables", e);
+      throw new DataMigrationException("Failed deleting old metrics tables");
+    }
+  }
+
+  private String addNamespace(DatasetNamespace dsNamespace, String tableName) {
+    return addNamespace(dsNamespace, null , tableName);
+  }
+  private String addNamespace(DatasetNamespace dsNamespace, String scope, String tableName) {
+    tableName = scope == null ? tableName : scope + "." + tableName;
+    return dsNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName);
+  }
+  private void addTableNamesToDelete(Set<String> tablesToDelete, CConfiguration cConf,
+                                     String scope, List<Integer> resolutions) {
+    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, entityTableName));
+    // add aggregates table
+    tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, metricsTableName));
+
+    // add timeseries tables
+    for (int resolution : resolutions) {
+      tablesToDelete.add(addNamespace(defaultDatasetNamespace, scope, metricsTableNamePrefix + ".ts." + resolution));
+    }
+  }
+
+  private void migrateMetricsTableFromVersion27(Version version) throws DataMigrationException {
     EntityTable entityTable = new EntityTable(getOrCreateMetricsTable(entityTableName, DatasetProperties.EMPTY));
     MetricsTable metricsTable = getOrCreateMetricsTable(metricsTableName, DatasetProperties.EMPTY);
+    System.out.println("Migrating Metrics Data from table : " + metricsTableName);
     migrateMetricsData(entityTable, metricsTable, null, version);
   }
 
@@ -182,11 +324,11 @@ public class MetricsDataMigrator {
         rowCount++;
         printStatus(rowCount);
       }
-      System.out.println("Migrated " + rowCount + " records.");
-    } catch (Exception e) {
+      System.out.println("Migrated " + rowCount + " records");
+   } catch (Exception e) {
       LOG.warn("Exception during data-transfer in aggregates table", e);
-      // no-op
-    }
+      //no-op
+   }
   }
 
   private void printStatus(long rowCount) {
@@ -277,24 +419,59 @@ public class MetricsDataMigrator {
     aggMetricStore.add(new MetricValue(tags, metricName, timeStamp, value, counter));
   }
 
-  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty) {
-    System.out.println("Migrating Metrics data from table : " + tableName);
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties empty)
+    throws DataMigrationException {
     MetricsTable table = null;
     // for default namespace, we have to provide the complete table name.
     tableName = "system." + tableName;
-    System.out.println("Complete Table Name is " + tableName);
     // metrics tables are in the system namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
     } catch (DatasetManagementException e) {
-      LOG.error("Cannot access or create table {}.", tableName);
+      String msg = String.format("Cannot access or create table %s.", tableName);
+      LOG.error(msg);
+      throw new DataMigrationException(msg);
     } catch (IOException e) {
-      LOG.error("Exception while creating table {}.", tableName, e);
-      throw Throwables.propagate(e);
+      String msg = String.format("Exception while creating table %s", tableName);
+      LOG.error(msg, e);
+      throw new DataMigrationException(msg);
     }
     return table;
+  }
+
+  public void cleanupDestinationTables() throws DataMigrationException {
+    System.out.println("Cleaning up destination tables");
+    String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
+    String destEntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                            MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    destEntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(
+      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destEntityTableName));
+    String destMetricsTablePrefix =  cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                               MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
+    destMetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
+      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destMetricsTablePrefix));
+    try {
+      HBaseAdmin hAdmin = new HBaseAdmin(hConf);
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (desc.getNameAsString().equals(destEntityTableName) ||
+          desc.getNameAsString().startsWith(destMetricsTablePrefix)) {
+          System.out.println(String.format("Deleting table %s before upgrade", desc.getNameAsString()));
+          //disable the table
+          hAdmin.disableTable(desc.getName());
+          //delete the table
+          hAdmin.deleteTable(desc.getName());
+        }
+      }
+    } catch (Exception e) {
+      LOG.error("Exception during cleanup of destination tables " + e);
+      throw new DataMigrationException("Failed Cleaning up destination tables");
+    }
+  }
+
+  private String getTableName(String rootPrefix, Id.DatasetInstance instance) {
+    return  rootPrefix + instance.getNamespaceId() + ":" + instance.getId();
   }
 
   private String getMetricNameBasedOnVersion(String metricName, Version version) {

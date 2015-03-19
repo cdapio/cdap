@@ -23,6 +23,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +73,8 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   protected abstract HBaseTableUtil getTableUtil();
+
+  protected abstract HTableNameConverter getNameConverter();
 
   protected abstract String getTableNameAsString(TableId tableId);
 
@@ -167,31 +171,31 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testBackwardCompatibility() throws IOException {
+  public void testBackwardCompatibility() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableId tableId = TableId.from("default", "my.dataset");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.user.my.dataset",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     create(tableId);
-    Assert.assertEquals("default", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("cdap.system.queue.config",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     createNamespace("myspace");
     create(tableId);
-    Assert.assertEquals("cdap_myspace", HTableNameConverter.toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("cdap_myspace", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
     Assert.assertEquals("could.be.any.table.name",
-                        HTableNameConverter.getHBaseTableName(tablePrefix, tableId));
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
     drop(tableId);
@@ -199,7 +203,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testListAllInNamespace() throws IOException {
+  public void testListAllInNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
                                                         TableId.from("foo", "other.table"),
@@ -232,7 +236,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInDefaultNamespace() throws IOException {
+  public void testDropAllInDefaultNamespace() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId tableId = TableId.from("default", "some.table1");
     create(tableId);
@@ -257,7 +261,7 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInOtherNamespaceWithPrefix() throws IOException {
+  public void testDropAllInOtherNamespaceWithPrefix() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     createNamespace("foonamespace");
     createNamespace("barnamespace");
@@ -274,7 +278,12 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), "some");
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId input) {
+        return input.getTableName().startsWith("some");
+      }
+    });
     Assert.assertEquals(2, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -308,6 +317,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private void createNamespace(String namespace) throws IOException {
     getTableUtil().createNamespaceIfNotExists(hAdmin, Id.Namespace.from(namespace));
   }
+
 
   private void deleteNamespace(String namespace) throws IOException {
     getTableUtil().deleteNamespaceIfExists(hAdmin, Id.Namespace.from(namespace));
@@ -362,7 +372,9 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
+    // todo : should support custom table-prefix
     TableId tableId = TableId.from(namespace, tableName);
-    return tableUtil.getTableStats(hAdmin).get(getTableNameAsString(tableId));
+    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(hAdmin);
+    return statsMap.get(tableId);
   }
 }

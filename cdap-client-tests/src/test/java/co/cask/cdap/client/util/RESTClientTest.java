@@ -17,6 +17,7 @@
 
 package co.cask.cdap.client.util;
 
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
@@ -70,7 +71,7 @@ public class RESTClientTest {
   public void setUp() throws IOException {
     httpService = new TestHttpService();
     httpService.startAndWait();
-    restClient = new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT, RETRY_LIMIT);
+    restClient = new RESTClient();
   }
 
   @After

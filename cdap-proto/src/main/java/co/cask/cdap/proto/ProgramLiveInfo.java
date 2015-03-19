@@ -24,12 +24,14 @@ public abstract class ProgramLiveInfo {
   private final String app;
   private final String type;
   private final String id;
+  private final String name;
   private final String runtime;
 
   public ProgramLiveInfo(Id.Program programId, ProgramType type, String runtime) {
     this.app = programId.getApplicationId();
     this.type = type.getPrettyName();
     this.id = programId.getId();
+    this.name = programId.getId();
     this.runtime = runtime;
   }
 
@@ -41,8 +43,13 @@ public abstract class ProgramLiveInfo {
     return ProgramType.valueOfPrettyName(type);
   }
 
+  @Deprecated
   public String getId() {
     return id;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public String getRuntime() {

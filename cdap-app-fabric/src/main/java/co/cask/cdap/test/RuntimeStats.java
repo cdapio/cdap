@@ -21,12 +21,19 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricsConstants;
+import co.cask.cdap.common.metrics.MetricsContexts;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,11 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public final class RuntimeStats {
+
   // ugly attempt to suport existing APIs
   // todo: non-thread safe? or fine as long as in-memory datasets underneath are used?
   public static MetricStore metricStore;
@@ -47,37 +56,42 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
+    metricStore.delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                                             Maps.<String, String>newHashMap()));
+  }
+
+  public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
+                                                 String flowId, String flowletId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.FLOW, flowId);
+    return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
+                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
+                      MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.FLOW, flowId,
-      Constants.Metrics.Tag.FLOWLET, flowletId);
+    return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
+  }
 
-    return getMetrics(
-      context, "system.process.tuples.read", "system.process.events.processed", "system.process.errors");
+  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
+    return getMetrics(MetricsContexts.forProcedure(id),
+                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
+                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.PROCEDURE, procedureId);
+    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
+  }
 
-    return getMetrics(context, "system.query.requests", "system.query.processed", "system.query.failures");
+  public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    return getMetrics(MetricsContexts.forService(id),
+                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
+                      MetricsConstants.SERVICE_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
-      Constants.Metrics.Tag.APP, applicationId,
-      Constants.Metrics.Tag.SERVICE, serviceId);
-
-    return getMetrics(
-      context, "system.requests.count", "system.response.successful.count", "system.response.server.error.count");
+    return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
   }
 
   @Deprecated
@@ -97,7 +111,7 @@ public final class RuntimeStats {
   private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
-                                           final String exceptionName) {
+                                           @Nullable final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
@@ -111,6 +125,7 @@ public final class RuntimeStats {
 
       @Override
       public long getException() {
+        Preconditions.checkArgument(exceptionName != null, "exception count not supported");
         return getTotalCounter(context, exceptionName);
       }
 

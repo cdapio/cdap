@@ -42,7 +42,7 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/mapred-%s", super.getLogPathFragment(), getSystemTag(TAG_MAP_REDUCE_JOB_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/mapred-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_MAP_REDUCE_JOB_ID));
   }
 }

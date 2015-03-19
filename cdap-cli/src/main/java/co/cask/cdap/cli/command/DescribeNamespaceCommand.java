@@ -17,10 +17,11 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -35,35 +36,34 @@ import java.util.List;
 /**
  * {@link Command} to describe a namespace.
  */
-public class DescribeNamespaceCommand implements Command {
+public class DescribeNamespaceCommand extends AbstractCommand {
 
   private final NamespaceClient namespaceClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeNamespaceCommand(NamespaceClient namespaceClient, TableRenderer tableRenderer) {
+  public DescribeNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+    super(cliConfig);
     this.namespaceClient = namespaceClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_ID.getName()));
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
     NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
     Table table = Table.builder()
-      .setHeader("id", "display_name", "description")
+      .setHeader("name", "description")
       .setRows(ImmutableList.of(namespaceMeta), new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return ImmutableList.of(object.getId(), object.getName(), object.getDescription());
+          return ImmutableList.of(object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("describe namespace <%s>", ArgumentName.NAMESPACE_ID);
+    return String.format("describe namespace <%s>", ArgumentName.NAMESPACE_NAME);
   }
 
   @Override

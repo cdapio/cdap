@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.context;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -27,6 +28,7 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
@@ -35,7 +37,21 @@ import java.util.Map;
  * Helper class for LoggingContext objects.
  */
 public final class LoggingContextHelper {
+
+  private static final String ACCOUNT_ID = ".accountId";
+
   private LoggingContextHelper() {}
+
+  public static String getNamespacedBaseDir(String logBaseDir, String logPartition) {
+    Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
+    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
+    String [] partitions = logPartition.split(":");
+    Preconditions.checkArgument(partitions.length == 3,
+                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
+    // don't care about the app or the program, only need the namespace
+    GenericLoggingContext loggingContext = new GenericLoggingContext(partitions[0], partitions[1], partitions[2]);
+    return loggingContext.getNamespacedLogBaseDir(logBaseDir);
+  }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
     // Tags are empty, cannot determine logging context.
@@ -152,9 +168,14 @@ public final class LoggingContextHelper {
         throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
       }
 
+      // For backward compatibility: The old logs before namespace have .accountId and developer as value so we don't
+      // want them to get filtered out if they belong to this application and entity
+      OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
+                                                                 FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
+                                                               new MdcExpression(ACCOUNT_ID,
+                                                                                 Constants.DEVELOPER_ACCOUNT)));
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
-                         new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
+        ImmutableList.of(namespaceFilter, new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
                          new MdcExpression(tagName, entityId)
         )
       );

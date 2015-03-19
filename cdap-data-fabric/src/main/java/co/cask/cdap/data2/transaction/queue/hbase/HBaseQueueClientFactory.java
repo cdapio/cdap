@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
@@ -25,11 +26,13 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Factory for creating HBase queue producer and consumer instances.
@@ -57,25 +60,20 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.hBaseTableUtil = hBaseTableUtil;
   }
 
-  // for testing only
-  TableId getTableId(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getDataTableId(queueName);
-  }
-
-  // for testing only
-  TableId getConfigTableId(QueueName queueName) {
-    return HBaseQueueAdmin.getConfigTableId(queueName);
-  }
-
   @Override
   public QueueConsumer createConsumer(QueueName queueName,
                                       ConsumerConfig consumerConfig, int numGroups) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    HTable configTable = createHTable(HBaseQueueAdmin.getConfigTableId(queueName));
-    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, configTable);
-    HBaseConsumerState consumerState = stateStore.getState();
-    return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),
-                                      queueName, consumerState, stateStore, getQueueStrategy());
+    try {
+      HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName);
+      HBaseConsumerState consumerState = stateStore.getState(consumerConfig.getGroupId(),
+                                                             consumerConfig.getInstanceId());
+      return queueUtil.getQueueConsumer(cConf, consumerConfig, createHTable(admin.getDataTableId(queueName)),
+                                        queueName, consumerState, stateStore, getQueueStrategy());
+    } catch (Exception e) {
+      // If there is exception, nothing much can be done here besides propagating
+      throw new IOException(e);
+    }
   }
 
   @Override
@@ -86,8 +84,11 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
+
+    // TODO: Gather consumer group configs when adding sharded queue support
+    List<ConsumerGroupConfig> groupConfigs = ImmutableList.of();
     return new HBaseQueueProducer(createHTable(admin.getDataTableId(queueName)), queueName, queueMetrics,
-                                  getQueueStrategy());
+                                  getQueueStrategy(), groupConfigs);
   }
 
   protected HBaseQueueStrategy getQueueStrategy() {

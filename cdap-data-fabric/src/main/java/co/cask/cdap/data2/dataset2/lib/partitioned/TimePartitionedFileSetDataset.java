@@ -21,17 +21,19 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.lib.TimePartition;
+import co.cask.cdap.api.dataset.lib.TimePartitionOutput;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -48,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.
@@ -113,13 +116,51 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
   }
 
+  @Nullable
+  @Override
+  public TimePartition getPartitionByTime(long time) {
+    Partition partition = getPartition(partitionKeyForTime(time));
+    return partition == null ? null
+      : new BasicTimePartition(partition.getRelativePath(), partition.getPartitionKey());
+  }
+
+  @Override
+  public Set<TimePartition> getPartitionsByTime(long startTime, long endTime) {
+    final Set<TimePartition> partitions = Sets.newHashSet();
+    for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
+      super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
+        @Override
+        public void consume(PartitionKey key, String path) {
+          partitions.add(new BasicTimePartition(path, key));
+        }
+      });
+    }
+    if (isLegacyDataset) {
+      getLegacyPartitions(startTime, endTime, new PartitionConsumer() {
+        @Override
+        public void consume(byte[] row, String path) {
+          partitions.add(new BasicTimePartition(path, Bytes.toLong(row)));
+        }
+      });
+    }
+    return partitions;
+  }
+
+  @Override
+  public TimePartitionOutput getPartitionOutput(long time) {
+    PartitionKey key = partitionKeyForTime(time);
+    return new BasicTimePartitionOutput(getOutputPath(partitioning, key), key);
+  }
+
   @Override
   public String getPartition(long time) {
-    String path = getPartition(partitionKeyForTime(time));
-    if (path == null && isLegacyDataset) {
+    Partition partition = getPartition(partitionKeyForTime(time));
+    if (partition != null) {
+      return partition.getRelativePath();
+    } else if (isLegacyDataset) {
       return getLegacyPartition(time);
     }
-    return path;
+    return null;
   }
 
   @Override
@@ -143,8 +184,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public Map<Long, String> getPartitions(long startTime, long endTime) {
     final Map<Long, String> partitions = Maps.newHashMap();
     for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
-      for (Map.Entry<PartitionKey, String> entry : getPartitions(filter).entrySet()) {
-        partitions.put(timeForPartitionKey(entry.getKey()), entry.getValue());
+      for (Partition partition : getPartitions(filter)) {
+        partitions.put(timeForPartitionKey(partition.getPartitionKey()), partition.getRelativePath());
       }
     }
     if (isLegacyDataset) {
@@ -536,6 +577,41 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       return partitionTime + 1; // next scan can start after the last partition processed
     } finally {
       scanner.close();
+    }
+  }
+
+  private class BasicTimePartition extends BasicPartition implements TimePartition {
+
+    private final Long time;
+
+    private BasicTimePartition(String relativePath, PartitionKey key) {
+      super(relativePath, key);
+      this.time = timeForPartitionKey(key);
+    }
+
+    private BasicTimePartition(String relativePath, long time) {
+      super(relativePath, partitionKeyForTime(time));
+      this.time = time;
+    }
+
+    @Override
+    public long getTime() {
+      return time;
+    }
+  }
+
+  private class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
+
+    private final Long time;
+
+    private BasicTimePartitionOutput(String relativePath, PartitionKey key) {
+      super(relativePath, key);
+      this.time = timeForPartitionKey(key);
+    }
+
+    @Override
+    public long getTime() {
+      return time;
     }
   }
 

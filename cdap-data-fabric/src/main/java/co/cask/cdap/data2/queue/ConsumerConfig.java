@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,55 +19,37 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 /**
- *
+ * Contains queue consumer instance configuration.
  */
-public final class ConsumerConfig {
+public final class ConsumerConfig extends ConsumerGroupConfig {
 
-  private final long groupId;
   private final int instanceId;
-  private final int groupSize;
-  private final DequeueStrategy dequeueStrategy;
-  private final String hashKey;
 
-  public ConsumerConfig(long groupId, int instanceId, int groupSize, DequeueStrategy dequeueStrategy, String hashKey) {
-    Preconditions.checkArgument(instanceId >= 0, "Instance ID must be >= 0.");
-    Preconditions.checkArgument(instanceId < groupSize, "Instance ID must be < groupSize");
-    this.groupId = groupId;
-    this.instanceId = instanceId;
-    this.groupSize = groupSize;
-    this.dequeueStrategy = dequeueStrategy;
-    this.hashKey = dequeueStrategy == DequeueStrategy.HASH ? hashKey : null;
+  public ConsumerConfig(ConsumerGroupConfig groupConfig, int instanceId) {
+    this(groupConfig.getGroupId(), instanceId, groupConfig.getGroupSize(),
+         groupConfig.getDequeueStrategy(), groupConfig.getHashKey());
   }
 
-  public long getGroupId() {
-    return groupId;
+  public ConsumerConfig(long groupId, int instanceId, int groupSize, DequeueStrategy dequeueStrategy, String hashKey) {
+    super(groupId, groupSize, dequeueStrategy, hashKey);
+    Preconditions.checkArgument(instanceId >= 0, "Instance ID must be >= 0.");
+    Preconditions.checkArgument(instanceId < groupSize, "Instance ID must be < groupSize");
+    this.instanceId = instanceId;
   }
 
   public int getInstanceId() {
     return instanceId;
   }
 
-  public int getGroupSize() {
-    return groupSize;
-  }
-
-  public DequeueStrategy getDequeueStrategy() {
-    return dequeueStrategy;
-  }
-
-  public String getHashKey() {
-    return hashKey;
-  }
-
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-                  .add("groupId", groupId)
-                  .add("instanceId", instanceId)
-                  .add("groupSize", groupSize)
-                  .add("dequeueStrategy", dequeueStrategy)
-                  .add("hashKey", hashKey)
-                  .toString();
+      .add("groupId", getGroupId())
+      .add("instanceId", instanceId)
+      .add("groupSize", getGroupSize())
+      .add("dequeueStrategy", getDequeueStrategy())
+      .add("hashKey", getHashKey())
+      .toString();
   }
 
   @Override
@@ -80,16 +62,11 @@ public final class ConsumerConfig {
     }
 
     ConsumerConfig other = (ConsumerConfig) o;
-
-    return groupId == other.groupId
-      && groupSize == other.groupSize
-      && instanceId == other.instanceId
-      && dequeueStrategy == other.dequeueStrategy
-      && Objects.equal(hashKey, other.hashKey);
+    return super.equals(other) && instanceId == other.instanceId;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(groupId, groupSize, instanceId, dequeueStrategy, hashKey);
+    return Objects.hashCode(super.hashCode(), instanceId);
   }
 }

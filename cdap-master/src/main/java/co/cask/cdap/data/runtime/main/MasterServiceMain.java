@@ -169,9 +169,9 @@ public class MasterServiceMain extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new DataSetServiceModules().getDistributedModule(),
+      new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
       new ExploreClientModule(),
@@ -548,6 +548,13 @@ public class MasterServiceMain extends DaemonMain {
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    
+    // Add yarn queue name if defined
+    String queueName = cConf.get(Constants.Service.SCHEDULER_QUEUE);
+    if (queueName != null) {
+      LOG.info("Setting scheduler queue to {} for master services", queueName);
+      preparer.setSchedulerQueue(queueName);
+    }
 
     URL containerLogbackURL = getClass().getResource("/logback-container.xml");
     if (containerLogbackURL != null) {

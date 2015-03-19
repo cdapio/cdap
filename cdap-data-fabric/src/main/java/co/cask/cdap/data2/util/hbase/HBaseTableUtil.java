@@ -24,6 +24,8 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -442,7 +444,7 @@ public abstract class HBaseTableUtil {
    * @param namespace the {@link Id.Namespace} to delete
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract void deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
+  public abstract void  deleteNamespaceIfExists(HBaseAdmin admin, Id.Namespace namespace) throws IOException;
 
   /**
    * Disable an HBase table
@@ -500,16 +502,17 @@ public abstract class HBaseTableUtil {
   public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
 
   /**
-   * Deletes all tables in the specified namespace, that begin with a particular prefix.
+   * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
-   * @param tablePrefix pattern that is matched against a table name to check for deletion
+   * @param predicate The {@link Predicate} to decide whether to drop a table or not
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId, String tablePrefix) throws IOException {
+  public void deleteAllInNamespace(HBaseAdmin admin,
+                                   Id.Namespace namespaceId, Predicate<TableId> predicate) throws IOException {
     for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
-      if (tableId.getTableName().startsWith(tablePrefix)) {
+      if (predicate.apply(tableId)) {
         dropTable(admin, tableId);
       }
     }
@@ -523,7 +526,7 @@ public abstract class HBaseTableUtil {
    * @throws IOException
    */
   public void deleteAllInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
-    deleteAllInNamespace(admin, namespaceId, "");
+    deleteAllInNamespace(admin, namespaceId, Predicates.<TableId>alwaysTrue());
   }
 
   /**
@@ -583,7 +586,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public abstract Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
+  public abstract Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
 
   /**
    * Carries information about table stats

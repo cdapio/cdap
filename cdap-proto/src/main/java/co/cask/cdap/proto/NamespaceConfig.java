@@ -36,6 +36,23 @@ public class NamespaceConfig {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    NamespaceConfig other = (NamespaceConfig) o;
+    return Objects.equal(schedulerQueueName, other.schedulerQueueName);
+  }
+
+  @Override
+  public int hashCode() {
+    return schedulerQueueName.hashCode();
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
                   .add("scheduler.queue.name", schedulerQueueName)

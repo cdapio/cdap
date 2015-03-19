@@ -122,7 +122,7 @@ programs, Workflows, Workers, and Custom Services, and query for their status us
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ```mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
    * - ``<program-id>``
      - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
        being called
@@ -560,7 +560,7 @@ For Workflows, you can also retrieve:
 
 - the information about the specific run currently running::
 
-  GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+    GET <base-url>/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 

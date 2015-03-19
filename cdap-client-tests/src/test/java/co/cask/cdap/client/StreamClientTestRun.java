@@ -61,7 +61,7 @@ public class StreamClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     namespaceClient = new NamespaceClient(clientConfig);
-    namespaceClient.create(new NamespaceMeta.Builder().setId(namespaceId).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }

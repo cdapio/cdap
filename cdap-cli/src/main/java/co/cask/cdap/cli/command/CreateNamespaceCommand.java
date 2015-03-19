@@ -41,20 +41,19 @@ public class CreateNamespaceCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    String id = arguments.get(ArgumentName.NAMESPACE_ID.toString());
-    String name = arguments.get(ArgumentName.NAMESPACE_DISPLAY_NAME.toString(), id);
+    String name = arguments.get(ArgumentName.NAMESPACE_NAME.toString());
     String description = arguments.get(ArgumentName.NAMESPACE_DESCRIPTION.toString(), "");
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(id).setName(name).setDescription(description);
+    builder.setName(name).setDescription(description);
     namespaceClient.create(builder.build());
 
-    output.println(String.format(SUCCESS_MSG, id));
+    output.println(String.format(SUCCESS_MSG, name));
   }
 
   @Override
   public String getPattern() {
-    return String.format("create namespace <%s> [<%s>] [<%s>]", ArgumentName.NAMESPACE_ID,
-                         ArgumentName.NAMESPACE_DISPLAY_NAME, ArgumentName.NAMESPACE_DESCRIPTION);
+    return String.format("create namespace <%s> [<%s>]",
+                         ArgumentName.NAMESPACE_NAME, ArgumentName.NAMESPACE_DESCRIPTION);
   }
 
   @Override

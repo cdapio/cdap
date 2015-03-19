@@ -36,17 +36,18 @@ and write to an ObjectStore Dataset.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    *history* Dataset every morning at 4:00 A.M.
+    *history* Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
+    is ingested by the ``purchaseStream`` using a Data Schedule.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the *history* Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
-    calls, or more conveniently using the :ref:`Command Line Interface: <cli>`.
+    calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-PurchaseHistoryService will responds with *204 No Response* status code.
+PurchaseHistoryService will respond with *204 No Response* status code.
 
 Let's look at some of these components, and then run the Application and see the results.
 

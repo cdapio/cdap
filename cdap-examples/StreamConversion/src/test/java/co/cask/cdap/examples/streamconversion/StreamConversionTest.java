@@ -17,20 +17,20 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.WorkflowManager;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Calendar;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,13 +42,7 @@ public class StreamConversionTest extends TestBase {
   public void testStreamConversion() throws Exception {
 
     // Deploy the PurchaseApp application
-    ApplicationManager appManager = getTestManager().deployApplication(StreamConversionApp.class);
-
-    // TODO: in unit tests, all schedules should be disabled at deploy time, to avoid race conditions.
-    // make sure the workflow does not get started by the schedule.
-    WorkflowManager workflowManager =
-      appManager.startWorkflow("StreamConversionWorkflow", RuntimeArguments.NO_ARGUMENTS);
-    workflowManager.getSchedule("every5min").suspend();
+    ApplicationManager appManager = deployApplication(StreamConversionApp.class);
 
     // send some data to the events stream
     StreamWriter streamWriter = appManager.getStreamWriter("events");
@@ -65,11 +59,11 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    DataSetManager<TimePartitionedFileSet> fileSetManager = getTestManager().getDataset("converted");
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
     TimePartitionedFileSet converted = fileSetManager.get();
-    Map<Long, String> partitions = converted.getPartitions(startTime, System.currentTimeMillis());
+    Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
     Assert.assertEquals(1, partitions.size());
-    long partitionTime = partitions.keySet().iterator().next();
+    long partitionTime = partitions.iterator().next().getTime();
 
     // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
@@ -91,9 +85,9 @@ public class StreamConversionTest extends TestBase {
     int minute = calendar.get(Calendar.MINUTE);
 
     // query with SQL
-    Connection connection = getTestManager().getQueryClient();
+    Connection connection = getQueryClient();
     ResultSet results = connection.prepareStatement("SELECT year, month, day, hour, minute " +
-                                                      "FROM converted " +
+                                                      "FROM dataset_converted " +
                                                       "WHERE body = '17'").executeQuery();
 
     // should return only one row, with correct time fields

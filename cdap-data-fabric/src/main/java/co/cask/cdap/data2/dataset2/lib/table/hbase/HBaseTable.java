@@ -33,6 +33,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
+import co.cask.tephra.TxConstants;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
@@ -43,6 +44,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -246,7 +248,7 @@ public class HBaseTable extends BufferingTable {
       scan.setStopRow(stopRow);
     }
 
-    txCodec.addToOperation(scan, tx);
+    addToOperation(scan, tx);
 
     ResultScanner resultScanner = hTable.getScanner(scan);
     return new HBaseScanner(resultScanner, columnFamily);
@@ -268,7 +270,7 @@ public class HBaseTable extends BufferingTable {
       if (tx == null) {
         get.setMaxVersions(1);
       } else {
-        txCodec.addToOperation(get, tx);
+        addToOperation(get, tx);
       }
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
@@ -286,7 +288,7 @@ public class HBaseTable extends BufferingTable {
       return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(columnFamily);
     }
 
-    txCodec.addToOperation(get, tx);
+    addToOperation(get, tx);
 
     Result result = hTable.get(get);
     return getRowMap(result, columnFamily);
@@ -307,5 +309,9 @@ public class HBaseTable extends BufferingTable {
     }
 
     return unwrapDeletes(rowMap);
+  }
+
+  private void addToOperation(OperationWithAttributes op, Transaction tx) throws IOException {
+    op.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
   }
 }

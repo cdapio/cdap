@@ -21,7 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HTable94NameConverter;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -430,12 +431,14 @@ public class IncrementSummingScannerTest {
 
   static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
                               HColumnDescriptor cfd) throws Exception {
-    String tableName = HTable94NameConverter.toTableName(cConf, tableId);
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
+
+    String tableName = htd.getNameAsString();
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     Path oldPath = new Path("/tmp/.oldLogs-" + tableName);
@@ -443,7 +446,7 @@ public class IncrementSummingScannerTest {
     assertTrue(fs.mkdirs(tablePath));
     HLog hlog = new HLog(fs, hlogPath, oldPath, hConf);
     return new HRegion(tablePath, hlog, fs, hConf,
-                       new HRegionInfo(Bytes.toBytes(tableName)), htd, new MockRegionServerServices());
+                       new HRegionInfo(htd.getName()), htd, new MockRegionServerServices());
   }
 
   /**

@@ -103,7 +103,7 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
+      new DataSetsModules().getStandaloneModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override

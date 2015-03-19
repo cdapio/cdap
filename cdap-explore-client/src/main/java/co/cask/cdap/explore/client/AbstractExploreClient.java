@@ -276,6 +276,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     });
   }
 
+  @Override
+  public void upgrade() throws Exception {
+    // TODO: implement once explore service can be started from the upgrade tool
+    throw new UnsupportedOperationException("Remote explore upgrade is not supported.");
+  }
+
   private ListenableFuture<ExploreExecutionResult> getResultsFuture(final HandleProducer handleProducer) {
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle

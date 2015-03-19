@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sportresults;
 
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
@@ -57,7 +58,7 @@ public class SportResultsTest extends TestBase {
   public void testPartitionedCounting() throws Exception {
 
     // deploy the application and start the upload service
-    ApplicationManager appManager = getTestManager().deployApplication(SportResults.class);
+    ApplicationManager appManager = deployApplication(SportResults.class);
     ServiceManager serviceManager = appManager.startService("UploadService");
     serviceManager.waitForStatus(true);
 
@@ -72,11 +73,11 @@ public class SportResultsTest extends TestBase {
     mrManager.waitForFinish(5, TimeUnit.MINUTES); // should be much faster, though
 
     // validate the output by reading directly from the file set
-    DataSetManager<PartitionedFileSet> dataSetManager = getTestManager().getDataset("totals");
+    DataSetManager<PartitionedFileSet> dataSetManager = getDataset("totals");
     PartitionedFileSet totals = dataSetManager.get();
-    String path = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
-    Assert.assertNotNull(path);
-    Location location = totals.getEmbeddedFileSet().getLocation(path);
+    Partition partition = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
+    Assert.assertNotNull(partition);
+    Location location = partition.getLocation();
 
     // find the part file that has the actual results
     Assert.assertTrue(location.isDirectory());
@@ -103,10 +104,10 @@ public class SportResultsTest extends TestBase {
 
     // verify using SQL
     // query with SQL
-    Connection connection = getTestManager().getQueryClient();
+    Connection connection = getQueryClient();
     ResultSet results = connection
       .prepareStatement("SELECT wins, ties, losses, scored, conceded " +
-                          "FROM totals WHERE team = 'My Team' AND league = 'fantasy'")
+                          "FROM dataset_totals WHERE team = 'My Team' AND league = 'fantasy'")
       .executeQuery();
 
     // should return only one row, with correct time fields

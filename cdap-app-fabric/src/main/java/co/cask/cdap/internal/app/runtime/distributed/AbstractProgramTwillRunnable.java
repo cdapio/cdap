@@ -239,6 +239,15 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
+  /**
+   * Returns {@code true} if service error is propagated as error for this controller state.
+   * If this method returns {@code false}, service error is just getting logged and state will just change
+   * to {@link ProgramController.State#KILLED}. This method returns {@code true} by default.
+   */
+  protected boolean propagateServiceError() {
+    return true;
+  }
+
   @Override
   public void run() {
     LOG.info("Starting metrics service");
@@ -275,7 +284,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.warn("Program interrupted.", e);
     } catch (ExecutionException e) {
       LOG.error("Program execution failed.", e);
-      throw Throwables.propagate(Throwables.getRootCause(e));
+      if (propagateServiceError()) {
+        throw Throwables.propagate(Throwables.getRootCause(e));
+      }
     }
   }
 
@@ -340,7 +351,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),

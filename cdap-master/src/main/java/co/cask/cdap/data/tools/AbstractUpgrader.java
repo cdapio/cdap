@@ -31,7 +31,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractUpgrader.class);
-  protected static final String DEVELOPER_ACCOUNT = "developer";
   protected final LocationFactory locationFactory;
 
   public AbstractUpgrader(LocationFactory locationFactory) {
@@ -56,8 +55,8 @@ public abstract class AbstractUpgrader {
   @Nullable
   protected Location renameLocation(Location oldLocation, Location newLocation) throws IOException {
     // if the newLocation does not exists or the oldLocation does we try to rename. If either one of them is false then
-    // the underlying call to renameTo will throw IOException which we propagate.
-    if (!newLocation.exists() || oldLocation.exists()) {
+    // the underlying call to renameTo will throw IOException which we re-throw.
+    if (!newLocation.exists() && oldLocation.exists()) {
       Locations.getParent(newLocation).mkdirs();
       try {
         return oldLocation.renameTo(newLocation);
@@ -67,8 +66,8 @@ public abstract class AbstractUpgrader {
         throw ioe;
       }
     } else {
-      LOG.debug("New location {} already exists and old location {} does not exists. The location might already be " +
-                  "updated.", newLocation, oldLocation);
+      LOG.debug("Failed to perform rename. Either the new location {} already exists or old location {} " +
+                  "does not exist.", newLocation, oldLocation);
       return null;
     }
   }

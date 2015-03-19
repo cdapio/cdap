@@ -18,11 +18,14 @@ package co.cask.cdap.test.standalone;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.StandaloneMain;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -63,6 +66,7 @@ public class StandaloneTestBase {
         // Start without UI
         standaloneMain = StandaloneMain.create(null, configuration, new Configuration());
         standaloneMain.startUp();
+
       } catch (Exception e) {
         LOG.error("Failed to start standalone", e);
         if (standaloneMain != null) {
@@ -87,16 +91,20 @@ public class StandaloneTestBase {
     if (standaloneMain != null && testStackIndex == 0) {
       standaloneMain.shutDown();
       standaloneMain = null;
+      LevelDBTableService.getInstance().clearTables();
     }
   }
 
   protected ClientConfig getClientConfig() {
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(
+      StandaloneContainer.DEFAULT_CONNECTION_URI.toString());
+
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
-    builder.setDefaultConnectTimeoutMs(120000);
-    builder.setDefaultReadTimeoutMs(120000);
-    builder.setUploadConnectTimeoutMs(0);
-    builder.setUploadConnectTimeoutMs(0);
+    builder.setConnectionConfig(connectionConfig);
+    builder.setDefaultConnectTimeout(120000);
+    builder.setDefaultReadTimeout(120000);
+    builder.setUploadConnectTimeout(0);
+    builder.setUploadConnectTimeout(0);
 
     return builder.build();
   }

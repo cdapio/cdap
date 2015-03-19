@@ -72,7 +72,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
@@ -93,6 +93,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
 
+    setupNamespaces(injector.getInstance(LocationFactory.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

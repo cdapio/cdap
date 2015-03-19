@@ -49,13 +49,7 @@ import javax.annotation.Nullable;
 public class AppMetadataStore extends MetadataStoreDataset {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
 
-  private static final Gson GSON;
-
-  static {
-    GsonBuilder builder = new GsonBuilder();
-    ApplicationSpecificationAdapter.addTypeAdapters(builder);
-    GSON = builder.create();
-  }
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   public static final String TYPE_APP_META = "appMeta";
   public static final String TYPE_STREAM = "stream";
@@ -301,7 +295,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void createNamespace(NamespaceMeta metadata) {
-    write(getNamespaceKey(metadata.getId()), metadata);
+    write(getNamespaceKey(metadata.getName()), metadata);
   }
 
   public NamespaceMeta getNamespace(Id.Namespace id) {

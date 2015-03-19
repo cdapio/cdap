@@ -145,7 +145,7 @@ public class SandboxJVM {
       ApplicationSecurity.builder()
         .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
         .apply();
-  
+
       // Now, we call configure, which returns application specification.
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
       app.configure(configurer, new ApplicationContext());

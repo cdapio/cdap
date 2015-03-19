@@ -41,9 +41,9 @@ angular.module(PKG.name + '.services')
       return queryInProgress.promise;
     };
 
-    this.getDisplayName = function(id) {
+    this.getDisplayName = function(name) {
       var ns = this.namespaceList.filter(function(namespace) {
-        return namespace.id === id;
+        return namespace.name === name;
       });
       return ns[0].name || id;
     };

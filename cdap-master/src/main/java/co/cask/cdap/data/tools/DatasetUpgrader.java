@@ -17,8 +17,13 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDSUpgrader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
@@ -34,6 +39,7 @@ import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,13 +59,17 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final LocationFactory locationFactory;
   private final QueueAdmin queueAdmin;
   private final HBaseTableUtil hBaseTableUtil;
-  private final DatasetFramework namespacedFramework;
-  private static final Pattern USER_TABLE_PREFIX = Pattern.compile("^cdap\\.user\\..*");
+  private final DatasetFramework dsFramework;
+  private final Pattern userTablePrefix;
+  private final DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader;
+  private final DatasetTypeMDSUpgrader datasetTypeMDSUpgrader;
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          @Named("dsFramework") DatasetFramework dsFramework) {
+                          @Named("dsFramework") final DatasetFramework dsFramework,
+                          DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
+                          DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
     super(locationFactory);
     this.cConf = cConf;
@@ -67,28 +77,62 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.locationFactory = locationFactory;
     this.queueAdmin = queueAdmin;
     this.hBaseTableUtil = hBaseTableUtil;
-    this.namespacedFramework = dsFramework;
+    this.dsFramework = dsFramework;
+    this.datasetInstanceMDSUpgrader = datasetInstanceMDSUpgrader;
+    this.datasetTypeMDSUpgrader = datasetTypeMDSUpgrader;
+    this.userTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", cConf.get(Constants.Dataset.TABLE_PREFIX)));
   }
 
   @Override
   public void upgrade() throws Exception {
     // Upgrade system dataset
-    upgradeSystemDatasets(namespacedFramework);
+    upgradeSystemDatasets();
 
     // Upgrade all user hbase tables
     upgradeUserTables();
 
     // Upgrade all queue and stream tables.
     queueAdmin.upgrade();
+
+    // Upgrade the datasets meta meta table
+    datasetTypeMDSUpgrader.upgrade();
+
+    // Upgrade the datasets instance meta table
+    datasetInstanceMDSUpgrader.upgrade();
+
+    // upgrade all the filesets base paths
+    for (DatasetSpecification fileSetSpec : datasetInstanceMDSUpgrader.getFileSetsSpecs()) {
+      upgradeFileSet(fileSetSpec);
+    }
   }
 
-  private void upgradeSystemDatasets(DatasetFramework framework) throws Exception {
+  /**
+   * Upgrades the {@link FileSet} and also its embedded filesets if any by moving the base path under
+   * namespaced directory
+   *
+   * @param dsSpec the {@link DatasetSpecification} of the {@link FileSet} to be upgraded
+   * @throws IOException
+   */
+  private void upgradeFileSet(DatasetSpecification dsSpec) throws IOException {
+    String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
+    if (basePath != null) {
+      Location oldLocation = locationFactory.create(basePath);
+      Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
+        .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
+      LOG.info("Upgrading base path for dataset {} from {} to {}", dsSpec.getName(), oldLocation, newlocation);
+      renameLocation(oldLocation, newlocation);
+    } else {
+      LOG.info("The basepath for files {} is null. No files will be moved");
+    }
+  }
+
+  private void upgradeSystemDatasets() throws Exception {
 
     // Upgrade all datasets in system namespace
-    for (DatasetSpecificationSummary spec : framework.getInstances(Constants.DEFAULT_NAMESPACE_ID)) {
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(Constants.DEFAULT_NAMESPACE_ID)) {
       LOG.info("Upgrading dataset: {}, spec: {}", spec.getName(), spec.toString());
-      DatasetAdmin admin = framework.getAdmin(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName()),
-                                              null);
+      DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName()),
+                                                null);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
       LOG.info("Upgraded dataset: {}", spec.getName());
@@ -98,11 +142,10 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private void upgradeUserTables() throws Exception {
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
 
-    for (HTableDescriptor desc : hAdmin.listTables(USER_TABLE_PREFIX)) {
-      String tableName = desc.getNameAsString();
+    for (HTableDescriptor desc : hAdmin.listTables(userTablePrefix)) {
       HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
-      TableId tableId = hTableNameConverter.from(tableName);
-      LOG.info("Upgrading hbase table: {}, desc: {}", tableName, desc);
+      TableId tableId = hTableNameConverter.from(desc);
+      LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
 
       final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
       final boolean transactional = HBaseTableAdmin.isTransactional(desc);
@@ -129,7 +172,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
         }
       };
       admin.upgrade();
-      LOG.info("Upgraded hbase table: {}", tableName);
+      LOG.info("Upgraded hbase table: {}", tableId);
     }
   }
+
 }

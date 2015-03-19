@@ -79,7 +79,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
       callers = ImmutableList.copyOf(callers);
     }
     for (NotificationCaller caller : callers) {
-      Object notification = GSON.fromJson(notificationJson, caller.getNotificationFeedType());
+      Object notification = GSON.fromJson(notificationJson, caller.getNotificationType());
       Id.Namespace namespaceId = Id.Namespace.from(feed.getNamespaceId());
       caller.received(notification, new BasicNotificationContext(namespaceId, dsFramework, transactionSystemClient));
     }
@@ -127,8 +127,8 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     }
 
     @Override
-    public Type getNotificationFeedType() {
-      return handler.getNotificationFeedType();
+    public Type getNotificationType() {
+      return handler.getNotificationType();
     }
 
     @Override

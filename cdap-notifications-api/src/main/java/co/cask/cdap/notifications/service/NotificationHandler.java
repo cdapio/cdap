@@ -29,9 +29,9 @@ import java.lang.reflect.Type;
 public interface NotificationHandler<N> {
 
   /**
-   * @return Type of the Notification this handler will handle
+   * @return Type of Notifications this handler will handle
    */
-  Type getNotificationFeedType();
+  Type getNotificationType();
 
   /**
    * Method called when a notification is received by this handler.

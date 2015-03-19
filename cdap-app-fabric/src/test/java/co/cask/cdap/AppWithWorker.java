@@ -52,7 +52,6 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     public void configure() {
-      useDatasets(DATASET);
       setDescription(DESCRIPTION);
     }
 

@@ -16,8 +16,12 @@
 
 package co.cask.cdap.client.common;
 
+import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -25,6 +29,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,14 +46,14 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class ClientTestBase extends StandaloneTestBase {
   protected static final boolean START_LOCAL_STANDALONE = true;
-  protected static final String HOSTNAME = "localhost";
-  protected static final int PORT = 10000;
 
   protected ClientConfig clientConfig;
 
   @Before
   public void setUp() throws Throwable {
-    clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(
+      StandaloneContainer.DEFAULT_CONNECTION_URI.toString());
+    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
   }
 
   @Override
@@ -58,21 +63,13 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
-    for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+    for (ProgramRecord actualProgram : actual) {
+      Assert.assertTrue(expected.contains(actualProgram.getName()));
     }
   }
 
-  protected void verifyProgramNames(List<String> expected, Map<ProgramType, List<ProgramRecord>> actual) {
-    verifyProgramNames(expected, convert(actual));
-  }
-
-  private List<ProgramRecord> convert(Map<ProgramType, List<ProgramRecord>> map) {
-    List<ProgramRecord> result = Lists.newArrayList();
-    for (List<ProgramRecord> subList : map.values()) {
-      result.addAll(subList);
-    }
-    return result;
+  protected void verifyProgramRecords(List<String> expected, Map<ProgramType, List<ProgramRecord>> map) {
+    verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
   }
 
   protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
