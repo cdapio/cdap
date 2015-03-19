@@ -236,7 +236,8 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeDeleteQuery buildCubeDeleteQuery(MetricDeleteQuery query) {
-    // note: delete query currently usually executed in sync way, so we only attempt to delete totals, to avoid timeout
+    // note: delete query currently usually executed synchronously,
+    //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
                                query.getMetricName(), query.getSliceByTags());
   }

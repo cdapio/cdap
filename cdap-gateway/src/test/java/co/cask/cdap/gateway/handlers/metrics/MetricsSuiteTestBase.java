@@ -131,7 +131,6 @@ public abstract class MetricsSuiteTestBase {
     StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
     store = storeFactory.create();
     locationFactory = injector.getInstance(LocationFactory.class);
-
     metricStore = injector.getInstance(MetricStore.class);
 
     tmpFolder.create();

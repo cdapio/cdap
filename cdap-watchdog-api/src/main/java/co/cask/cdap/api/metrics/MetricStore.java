@@ -51,7 +51,7 @@ public interface MetricStore {
   void delete(MetricDeleteQuery query) throws Exception;
 
   /**
-   * Deletes all metrics data.
+   * Deletes all metrics data. NOTE: dangerous, all data will be lost. Likely you only need to use it in tests.
    * @throws Exception
    */
   void deleteAll() throws Exception;
