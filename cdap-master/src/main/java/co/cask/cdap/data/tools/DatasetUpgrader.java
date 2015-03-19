@@ -106,6 +106,14 @@ public class DatasetUpgrader extends AbstractUpgrader {
     }
   }
 
+  protected DatasetInstanceMDSUpgrader getDatasetInstanceMDSUpgrader() {
+    return datasetInstanceMDSUpgrader;
+  }
+
+  protected DatasetTypeMDSUpgrader getDatasetTypeMDSUpgrader() {
+    return datasetTypeMDSUpgrader;
+  }
+
   /**
    * Upgrades the {@link FileSet} and also its embedded filesets if any by moving the base path under
    * namespaced directory

@@ -29,9 +29,9 @@ function extractConfig(param) {
     return deferred.promise;
   }
 
-  if (process.env.CDAP_MODE === 'enterprise') {
+  if (process.env.NODE_ENV === 'production') {
     buffer = '';
-    tool = spawn(__dirname + '/../../bin/config-tool', ['--'+param]);
+    tool = spawn(__dirname + '/../../../bin/config-tool', ['--'+param]);
     tool.stderr.on('data', configReadFail.bind(this));
     tool.stdout.on('data', configRead.bind(this));
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
