@@ -34,6 +34,17 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.codec.FlowSpecificationCodec;
+import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
+import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
+import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
+import co.cask.cdap.proto.codec.ProcedureSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.SparkSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowNodeCodec;
+import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -69,14 +80,11 @@ public final class ApplicationSpecificationAdapter {
   private final Gson gson;
 
   public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
-    GsonBuilder builder = new GsonBuilder();
-    addTypeAdapters(builder);
-
-    return new ApplicationSpecificationAdapter(generator, builder.create());
+    return new ApplicationSpecificationAdapter(generator, addTypeAdapters(new GsonBuilder()).create());
   }
 
-  public static void addTypeAdapters(GsonBuilder builder) {
-    builder
+  public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
+    return builder
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
       .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())

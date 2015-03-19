@@ -37,12 +37,12 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
-import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -57,7 +57,6 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -73,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Tests for {@link AppFabricHttpHandler}.
@@ -980,6 +978,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // 7. Verify there are runs after the resume by looking at the history
 
     HttpResponse response = deploy(AppWithSchedule.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = doPost(String.format("/v2/apps/AppWithSchedule/schedules/SampleSchedule/resume"));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Map<String, String> runtimeArguments = Maps.newHashMap();

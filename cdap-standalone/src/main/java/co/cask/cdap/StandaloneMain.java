@@ -54,6 +54,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -322,8 +323,16 @@ public class StandaloneMain {
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-      String userDir = System.getProperty("user.dir");
-      System.load(userDir + "/lib/native/hadoop.dll");
+      // not set anywhere by the project, expected to be set from IDEs if running from the project instead of sdk
+      // hadoop.dll is at cdap-unit-test\src\main\resources\hadoop.dll for some reason
+      String hadoopDLLPath = System.getProperty("hadoop.dll.path");
+      if (hadoopDLLPath != null) {
+        System.load(hadoopDLLPath);
+      } else {
+        // this is where it is when the standalone sdk is built
+        String userDir = System.getProperty("user.dir");
+        System.load(Joiner.on(File.separator).join(userDir, "lib", "native", "hadoop.dll"));
+      }
     }
 
     //Run dataset service on random port

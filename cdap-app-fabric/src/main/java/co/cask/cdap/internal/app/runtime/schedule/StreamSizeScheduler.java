@@ -104,6 +104,7 @@ public class StreamSizeScheduler implements Scheduler {
   private ScheduledExecutorService streamPollingExecutor;
 
   private ListeningExecutorService taskExecutorService;
+  private boolean schedulerStarted;
 
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
@@ -120,9 +121,10 @@ public class StreamSizeScheduler implements Scheduler {
     this.streamSubscribers = Maps.newConcurrentMap();
     this.scheduleSubscribers = new ConcurrentSkipListMap<String, StreamSubscriber>();
     this.store = null;
+    this.schedulerStarted = false;
   }
 
-  public void start() throws SchedulerException {
+  public void init() throws SchedulerException {
     sendPollingInfoExecutor = Executors.newCachedThreadPool(
       Threads.createDaemonThreadFactory("stream-size-scheduler-%d"));
     streamPollingExecutor = Executors.newScheduledThreadPool(STREAM_POLLING_THREAD_POOL_SIZE,
@@ -135,6 +137,14 @@ public class StreamSizeScheduler implements Scheduler {
     store = storeFactory.create();
 
     initializeScheduleStore();
+  }
+
+  void lazyStart() throws SchedulerException {
+    schedulerStarted = true;
+  }
+
+  boolean isStarted() {
+    return schedulerStarted;
   }
 
   /**
@@ -586,8 +596,7 @@ public class StreamSizeScheduler implements Scheduler {
      * Add a new scheduling task to this {@link StreamSubscriber}.
      */
     public void createScheduleTask(Id.Program programId, SchedulableProgramType programType,
-                                   StreamSizeSchedule streamSizeSchedule)
-      throws SchedulerException {
+                                   StreamSizeSchedule streamSizeSchedule) throws SchedulerException {
       StreamSize streamSize;
       synchronized (this) {
         String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType,
@@ -890,7 +899,7 @@ public class StreamSizeScheduler implements Scheduler {
       try {
         scheduleStore.persist(programId, programType, streamSizeSchedule,
                               basePollSize, basePollTs, lastRunSize,
-                              lastRunTs, active.get());
+                              lastRunTs, this.active.get());
       } catch (Throwable t) {
         throw new SchedulerException("Error when persisting schedule " + streamSizeSchedule.getName() + "in store",
                                      t);
