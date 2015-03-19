@@ -130,8 +130,8 @@ Standalone CDAP SDK directory).
 
 For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
 the actual path of ``../../bin/cdap-cli.sh``, or ``..\..\bin\cdap-cli.bat`` on Windows, as
-appropriate. Other scripts that are supplied in teh examples will also have Windows
-``.bat`` equivalents. You can also add the CDAP ``bin`` directory to your shells' ``PATH``
+appropriate. Other scripts that are supplied in the examples also have Windows
+``.bat`` equivalents. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
 to simplify the commands.
 
 .. highlight:: console
