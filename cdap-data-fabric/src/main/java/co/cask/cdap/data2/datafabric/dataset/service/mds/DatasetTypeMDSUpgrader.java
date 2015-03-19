@@ -26,7 +26,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -39,8 +38,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -65,21 +62,16 @@ public final class DatasetTypeMDSUpgrader {
   private final DatasetFramework dsFramework;
   private Transactional<UpgradeMDSStores<DatasetTypeMDS>, DatasetTypeMDS> datasetTypeMDS;
   private final LocationFactory locationFactory;
-  private final Configuration hConf;
-  private final HBaseTableUtil tableUtil;
   private Id.DatasetInstance oldDatasetId;
 
 
   @Inject
   private DatasetTypeMDSUpgrader(TransactionExecutorFactory executorFactory,
                                  DatasetFramework dsFramework,
-                                 LocationFactory locationFactory, Configuration hConf,
-                                 HBaseTableUtil tableUtil) {
+                                 LocationFactory locationFactory) {
     this.executorFactory = executorFactory;
     this.dsFramework = dsFramework;
     this.locationFactory = locationFactory;
-    this.hConf = hConf;
-    this.tableUtil = tableUtil;
   }
 
   private void setupDatasetTypeMDS(final DatasetTypeMDS oldMds) {
@@ -149,10 +141,6 @@ public final class DatasetTypeMDSUpgrader {
       } catch (Exception e) {
         throw e;
       }
-
-      // delete the old meta table
-      tableUtil.dropTable(new HBaseAdmin(hConf),
-                          TableId.from(oldDatasetId.getNamespaceId(), oldDatasetId.getId()));
     } else {
       LOG.info("Unable to find old meta table {}. It might have already been upgraded.", oldDatasetId.getId());
     }
@@ -242,5 +230,9 @@ public final class DatasetTypeMDSUpgrader {
                   "updated.", newLocation, oldLocation);
       return null;
     }
+  }
+
+  public TableId getOldDatasetTypeTableId() {
+    return TableId.from(oldDatasetId.getNamespaceId(), oldDatasetId.getId());
   }
 }
