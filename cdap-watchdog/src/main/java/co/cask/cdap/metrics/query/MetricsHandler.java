@@ -171,16 +171,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
-    List<String> groupByTags = (groupBy == null) ? Lists.<String>newArrayList() :
-      Lists.newArrayList(Splitter.on(",").split(groupBy).iterator());
-    groupByTags = Lists.transform(groupByTags, new Function<String, String>() {
+    return  (groupBy == null) ? Lists.<String>newArrayList() :
+      humanToTagNamesGroupBy(Lists.newArrayList(Splitter.on(",").split(groupBy).iterator()));
+  }
+
+  private List<String> humanToTagNamesGroupBy(List<String> groupByTags) {
+    return Lists.transform(groupByTags, new Function<String, String>() {
       @Nullable
       @Override
       public String apply(@Nullable String input) {
         return humanToTagName(input);
       }
     });
-    return groupByTags;
   }
 
   private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
@@ -327,12 +329,12 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     for (MetricTimeSeries timeSeries : series) {
       MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
-                                                       replaceTagNames(timeSeries.getTagValues()), timeValues);
+                                                       tagNamesToHuman(timeSeries.getTagValues()), timeValues);
     }
     return new MetricQueryResult(startTs, endTs, serieses);
   }
 
-  private Map<String, String> replaceTagNames(Map<String, String> tagValues) {
+  private Map<String, String> tagNamesToHuman(Map<String, String> tagValues) {
     Map<String, String> humanTagValues = Maps.newHashMap();
     for (Map.Entry<String, String> tag : tagValues.entrySet()) {
       humanTagValues.put(tagNameToHuman.get(tag.getKey()), tag.getValue());
