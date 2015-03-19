@@ -7,6 +7,13 @@ MAIN_CMD=node
 
 export NODE_ENV=production
 
+WEB_APP_PATH="$CDAP_HOME/web-app/server/main.js"
+
+# if ENABLE_BETA_UI is set then start beta ui
+if $ENABLE_BETA_UI; then
+  WEB_APP_PATH="$CDAP_HOME/beta/server.js"
+fi
+
 # Arguments for MAIN_CMD
 MAIN_CMD_ARGS="$CDAP_HOME/web-app/server/main.js"
 
