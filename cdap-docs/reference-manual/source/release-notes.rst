@@ -63,6 +63,12 @@ Known Issues
   processing load to the newer instances of the metrics processor. The CDAP Master needs to be
   restarted to effectively distribute the processing across all metrics processor instances
   (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
+- Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric, is currently not
+  supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
+  Instead, use the :ref:`v2 API <http-restful-api-v2-metrics-multiple>`. It will be
+  supported in a future release.
+
 
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
