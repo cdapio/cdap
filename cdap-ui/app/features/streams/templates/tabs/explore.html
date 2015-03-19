@@ -1,1 +1,176 @@
-<h2> Streams -> Explore </h2>
+<section class="panel-group explore"
+     ng-controller="CdapStreamExploreController"
+     ng-model="activePanel"
+     bs-collapse>
+
+  <!-- VIEW DATA -->
+  <div class="panel panel-default">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h4 class="panel-title">
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==0,
+                     'fa-chevron-down': activePanel===0}"
+          class="fa fa-fw"
+        ></span>View Data
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <form ng-submit="doEventSearch()">
+          <div class="row">
+            <div class="col-xs-4">
+              <my-timestamp-picker
+                data-label="From:"
+                ng-model="eventSearch.startMs"
+              ></my-timestamp-picker>
+
+            </div>
+            <div class="col-xs-4">
+              <my-timestamp-picker
+                data-label="To:"
+                ng-model="eventSearch.endMs"
+              ></my-timestamp-picker>
+            </div>
+            <div class="col-xs-2">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsLimit">Limit</label>
+                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="eventSearch.limit" min="1" max="100" />
+              </div>
+            </div>
+            <div class="col-xs-2">
+              <button class="btn btn-default btn-block" type="submit">
+                <span class="fa fa-search"></span>
+                Find events
+              </button>
+            </div>
+          </div>
+        </form>
+
+
+        <ul class="list-unstyled">
+          <li ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
+            <div>
+              <small class="text-muted pull-right">{{event.timestamp | amTimeAgo}}</small>
+              <em>{{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}</em>
+            </div>
+            <pre>{{event.body | json}}</pre>
+          </li>
+        </ul>
+        <p ng-hide="eventSearch.results.length">
+          (no events)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRITE & EXECUTE SQL -->
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title" bs-collapse-toggle>
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==1,
+                     'fa-chevron-down': activePanel===1}"
+          class="fa fa-fw"
+        ></span>Write &amp; Execute SQL
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+        <p>
+          <textarea class="form-control" ng-model="query"></textarea>
+        </p>
+        <div class="text-right">
+          <button class="btn btn-primary" type="button" ng-click="execute()">
+            Execute
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW QUERIES -->
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title" bs-collapse-toggle>
+        <span
+          ng-class="{'fa-chevron-right': activePanel!==2,
+                     'fa-chevron-down': activePanel===2}"
+          class="fa fa-fw"
+        ></span>View Queries
+      </h4>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <!-- Left Panel -->
+        <div class="col-xs-6">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Start</th>
+                <th>Status</th>
+                <th>SQL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="query in queries" ng-click="fetchResult(query)">
+                <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
+                <td>{{ query.status }}</td>
+                <td>{{ query.statement }}</td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="col-xs-6 well">
+          <div ng-show="responses.results.length">
+            <p><strong>{{ responses.request.status }}</strong></p>
+            <div class='sql-statement'>
+              <p>{{ responses.request.statement }}</p>
+            </div>
+
+            <div class="text-right" ng-show="query">
+              <button class="btn btn-primary" disabled>Execute</button>
+              <button class="btn btn-default" disabled>Clone</button>
+            </div>
+
+            <div class="results">
+              <h3>Results</h3>
+              <div class="text-right">
+                <a
+                  class="btn btn-default"
+                  ng-click="download(responses.request)"
+                >
+                  Download All
+                </a>
+              </div>
+
+              <div>
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th ng-repeat="header in responses.schema">{{ header.name }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr ng-repeat="results in responses.results">
+                      <td ng-repeat="result in results.columns">{{ result }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div ng-hide="responses.results.length" class="text-center">
+            <p>(Select Query)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</section>

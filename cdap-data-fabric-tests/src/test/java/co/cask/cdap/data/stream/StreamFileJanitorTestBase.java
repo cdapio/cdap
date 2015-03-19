@@ -26,6 +26,7 @@ import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,6 +49,13 @@ public abstract class StreamFileJanitorTestBase {
   protected abstract CConfiguration getCConfiguration();
 
   protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
+
+  @Before
+  public void setup() throws IOException {
+    // FileStreamAdmin expects namespace directory to exist.
+    // Simulate namespace create
+    getLocationFactory().create(Constants.DEFAULT_NAMESPACE).mkdirs();
+  }
 
   @Test
   public void testCleanupGeneration() throws Exception {

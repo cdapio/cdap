@@ -34,11 +34,14 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -63,7 +66,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -86,6 +88,14 @@ public abstract class GatewayTestBase {
 
   private static final String hostname = "127.0.0.1";
   private static int port;
+
+  protected static final String TEST_NAMESPACE1 = "testnamespace1";
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1).build();
+  protected static final String TEST_NAMESPACE2 = "testnamespace2";
+  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE2)
+    .setDescription(TEST_NAMESPACE2).build();
+
   private static CConfiguration conf;
 
   private static Injector injector;
@@ -98,6 +108,7 @@ public abstract class GatewayTestBase {
   private static DatasetService datasetService;
   private static NotificationService notificationService;
   private static StreamService streamService;
+  protected static NamespaceAdmin namespaceAdmin;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -105,7 +116,7 @@ public abstract class GatewayTestBase {
   public static boolean runAfter = true;
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     if (!runBefore) {
       return;
     }
@@ -119,7 +130,7 @@ public abstract class GatewayTestBase {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws Exception {
     if (!runAfter) {
       return;
     }
@@ -127,7 +138,7 @@ public abstract class GatewayTestBase {
     tmpFolder.delete();
   }
 
-  public static Injector startGateway(final CConfiguration conf) {
+  public static Injector startGateway(final CConfiguration conf) throws Exception {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
@@ -184,6 +195,10 @@ public abstract class GatewayTestBase {
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
 
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
+    namespaceAdmin.createNamespace(TEST_NAMESPACE_META2);
+
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
@@ -196,7 +211,10 @@ public abstract class GatewayTestBase {
     return injector;
   }
 
-  public static void stopGateway(CConfiguration conf) {
+  public static void stopGateway(CConfiguration conf) throws Exception {
+    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE1));
+    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE2));
+    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();

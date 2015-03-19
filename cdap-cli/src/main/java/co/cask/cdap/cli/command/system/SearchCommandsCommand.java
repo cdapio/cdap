@@ -14,10 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CommandCategory;
+import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -37,8 +38,9 @@ public class SearchCommandsCommand extends HelpCommand {
 
   private final Supplier<Iterable<CommandSet<Command>>> commands;
 
-  public SearchCommandsCommand(Supplier<Iterable<CommandSet<Command>>> commands) {
-    super(commands);
+  public SearchCommandsCommand(Supplier<Iterable<CommandSet<Command>>> commands,
+                               TableRendererConfig tableRendererConfig) {
+    super(commands, tableRendererConfig);
     this.commands = commands;
   }
 
@@ -86,7 +88,7 @@ public class SearchCommandsCommand extends HelpCommand {
 
   @Override
   public String getPattern() {
-    return String.format("search commands <%s>", ArgumentName.QUERY);
+    return String.format("cli search commands <%s>", ArgumentName.QUERY);
   }
 
   @Override

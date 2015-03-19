@@ -91,6 +91,15 @@ gulp.task('js:lib', function() {
       './bower_components/angular-strap/dist/modules/typeahead.tpl.js',
       './bower_components/angular-strap/dist/modules/select.js',
       './bower_components/angular-strap/dist/modules/select.tpl.js',
+
+
+      './bower_components/angular-strap/dist/modules/date-parser.js',
+      './bower_components/angular-strap/dist/modules/date-formatter.js',
+      './bower_components/angular-strap/dist/modules/datepicker.js',
+      './bower_components/angular-strap/dist/modules/datepicker.tpl.js',
+      './bower_components/angular-strap/dist/modules/timepicker.js',
+      './bower_components/angular-strap/dist/modules/timepicker.tpl.js',
+
       './bower_components/angular-breadcrumb/release/angular-breadcrumb.js',
 
       './bower_components/ngstorage/ngStorage.js',

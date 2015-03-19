@@ -14,39 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.system;
 
-import co.cask.cdap.cli.CLIConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.inject.Inject;
 
 import java.io.PrintStream;
 
 /**
- * Prints the version.
+ * Exits the CLI.
  */
-public class VersionCommand implements Command {
-
-  private final CLIConfig cliConfig;
-
-  @Inject
-  public VersionCommand(CLIConfig cliConfig) {
-    this.cliConfig = cliConfig;
-  }
+public class ExitCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    output.println(cliConfig.getVersion());
+    System.exit(0);
   }
 
   @Override
   public String getPattern() {
-    return "version";
+    return "exit";
   }
 
   @Override
   public String getDescription() {
-    return "Prints the CLI version.";
+    return "Exits the CLI.";
   }
 }

@@ -64,22 +64,23 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 56-59
+    :lines: 57-60
 
 Let's take a closer look at the upload method:
 
-- It first creates a partition key and a relative file path from the league and season
-  received as path parameters in the request URL.
-- It then uses the ``getLocation()`` of the embedded file set of the ``results`` dataset to obtain the location
+- It first creates a partition key from the league and season received as path parameters in the request URL.
+- Then it obtains a ``PartitionOutput`` for that partition key from the ``results`` Dataset.
+- It then uses the ``getLocation()`` of the PartitionOutput to obtain the location
   for writing the file, and opens an output stream for that location to write the file contents.
   ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
   you can read more about its interface in the `Apache Twill
   Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
-- Finally, it registers the written file as a new partition in the dataset.
+- Finally, it registers the written file as a new partition in the dataset, by calling the ``addPartition``
+  method of the PartitionOutput.
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 85-115
+    :lines: 88-118
 
 MapReduce over File Partitions
 ==============================
