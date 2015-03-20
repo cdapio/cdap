@@ -16,6 +16,7 @@ CDAP HTTP RESTful API v3
     Introduction <introduction>
     Namespace <namespace>
     Lifecycle <lifecycle>
+    Configuration <configuration>
     Preferences <preferences>
     Stream <stream>
     Dataset <dataset>
@@ -37,6 +38,7 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 - :doc:`Namespace: <namespace>` creating, listing, and deleting namespaces
 - :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of Flows,
   MapReduce Programs, Spark Programs, Workflows, and Custom Services
+- :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting Preferences
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
 - :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types
