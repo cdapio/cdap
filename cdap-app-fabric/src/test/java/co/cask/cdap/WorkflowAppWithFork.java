@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class WorkflowAppWithFork extends AbstractApplication {
-  public static final String SYNCH_ON_FILE = "WorkflowAppWithFork.done";
   @Override
   public void configure() {
     setName("WorkflowAppWithFork");
@@ -57,17 +56,17 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class OneAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
-    private String doneDir = "";
+    private String doneFilePath = "";
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
-      doneDir = context.getRuntimeArguments().get("done.directory");
+      doneFilePath = context.getRuntimeArguments().get("done.file");
     }
 
     @Override
     public void run() {
       LOG.info("Ran one action");
-      File doneFile = new File(doneDir + "/" + SYNCH_ON_FILE);
+      File doneFile = new File(doneFilePath);
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);
@@ -83,17 +82,17 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class AnotherAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
-    private String doneDir = "";
+    private String doneFilePath = "";
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
-      doneDir = context.getRuntimeArguments().get("done.directory");
+      doneFilePath = context.getRuntimeArguments().get("done.file");
     }
 
     @Override
     public void run() {
       LOG.info("Ran another action");
-      File doneFile = new File(doneDir + "/" + SYNCH_ON_FILE);
+      File doneFile = new File(doneFilePath);
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);

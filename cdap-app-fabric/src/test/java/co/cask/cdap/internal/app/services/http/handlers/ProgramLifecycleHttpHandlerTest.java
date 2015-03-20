@@ -792,12 +792,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowForkApp() throws Exception {
-    File doneDir = tmpFolder.newFolder();
-
+    File doneFile = new File(tmpFolder.newFolder() + "/testWorkflowForkApp.done");
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Map<String, String> runtimeArguments = ImmutableMap.of("done.directory", doneDir.getAbsolutePath());
+    Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
     setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                           WORKFLOW_WITH_FORK, runtimeArguments);
 
@@ -844,7 +843,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
     // Signal the Workflow that execution can be continued by creating temp file
-    File doneFile = new File(doneDir + "/" + WorkflowAppWithFork.SYNCH_ON_FILE);
     doneFile.createNewFile();
 
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
