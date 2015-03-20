@@ -1,9 +1,21 @@
 @import "../../styles/variables.less";
 
-.panel-body {
-  .col-sm-4 {
-    &:not(:first-child) {
-      border-left: 1px dashed @cdap-darkness;
+body.theme-cdap.state-overview {
+  p {
+    color: @cdap-gray;
+  }
+  .panel-heading {
+    p {
+      line-height: 3em;
+      big {
+        vertical-align: middle;
+      }
+    }
+  }
+  .data-apps {
+    margin: 60px auto;
+    .fa-bars, .fa-upload {
+      margin-right: 10px;
     }
   }
 }

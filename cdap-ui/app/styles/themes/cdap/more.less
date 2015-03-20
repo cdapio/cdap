@@ -75,6 +75,26 @@ body.theme-cdap {
     }
   }
 
+  .pre-scrollable {
+    margin-top: 20px;
+    a.list-group-item {
+      background-color: #EFF0F4;
+      padding: 20px 25px;
+      &:first-child {
+        border-top-right-radius: 8px;
+        border-top-left-radius: 8px;
+      }
+      &:last-child {
+        border-bottom-right-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+      strong {
+        color: @cdap-bluegray;
+        font-size: 18px;
+        font-weight: 500;
+      }
+    }
+  }
 
   //
   // Panels
@@ -85,14 +105,29 @@ body.theme-cdap {
     background: transparent;
     border: 0;
     .box-shadow(0 8px 6px -6px @cdap-darkness);
-
-    .btn {
-      background-color: @btn-default-color;
+    margin-top: 20px;
+    big {
+      color: @cdap-header;
+      font-size: 44px;
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+    small {
+      color: @cdap-bluegray;
+      font-size: 17px;
+    }
+    .fa-close {
       color: white;
       font-size: 32px;
-      padding: 5px 10px;
-      line-height: 1.3;
-      border-radius: 24px;
+      padding: 12px 15px;
+      vertical-align: text-top;
+    }
+    .panel-body {
+      .col-sm-4 {
+        &:not(:first-child) {
+          border-left: 1px dashed @cdap-gray;
+        }
+      }
     }
   }
 
