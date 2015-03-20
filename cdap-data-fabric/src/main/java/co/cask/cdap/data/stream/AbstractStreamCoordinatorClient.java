@@ -81,6 +81,11 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
    */
   protected abstract void streamCreated(Id.Stream streamId);
 
+  /**
+   * GEts invoked when a stream is deleted.
+   */
+  protected abstract void streamDeleted(Id.Stream streamId);
+
   @Override
   public StreamConfig createStream(Id.Stream streamId, Callable<StreamConfig> action) throws Exception {
     Lock lock = getLock(streamId);
@@ -117,6 +122,18 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
             firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
         }
       }).get();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void deleteStream(Id.Stream streamId, Callable<Id.Stream> action) throws Exception {
+    Lock lock = getLock(streamId);
+    lock.lock();
+    try {
+      action.call();
+      streamDeleted(streamId);
     } finally {
       lock.unlock();
     }
