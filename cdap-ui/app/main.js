@@ -112,7 +112,7 @@ angular
   .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      myAlertQueue.add({
+      myAlert({
         title: 'Error',
         content: sockEvent.reason || 'could not connect to the server',
         type: 'danger'
@@ -143,7 +143,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, myAlert) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -173,7 +173,6 @@ angular
 
       $scope.bodyClass = classes.join(' ');
     });
-
 
     console.timeEnd(PKG.name);
   });

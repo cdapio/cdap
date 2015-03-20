@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.apps')
-  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myAppUploader, myAlertQueue, $state) {
+  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myAppUploader, myAlert, $state) {
     var data = new MyDataSource($scope);
 
     data.request({
@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.apps')
         _cdapNsPath: '/apps/' + app,
         method: 'DELETE'
       }, function(res) {
-        myAlertQueue.add({
+        myAlert({
           type: 'success',
           title: app,
           content: 'App deleted successfully'

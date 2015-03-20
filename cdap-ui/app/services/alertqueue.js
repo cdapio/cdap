@@ -6,50 +6,48 @@ angular.module(PKG.name + '.services')
     };
 
     this.$get = ['$alert', function($alert) {
-      function myAlertFactory(config) {
 
-        options = angular.extend({}, defaults, config);
-        var queue = [];
-        var count = 0;
+      console.log('singleton');
+      var queue = [];
+      var count = 0;
+      options = angular.extend({}, defaults);
 
-        function display(alert) {
-          count++;
-          var a = $alert({
-            title: alert.title || '',
-            content: alert.content || '',
-            type: alert.type || 'info'
-          });
+      function display(alert) {
+        count++;
+        var a = $alert({
+          title: alert.title || '',
+          content: alert.content || '',
+          type: alert.type || 'info'
+        });
 
-          var hide = a.hide;
-          a.hide = function() {
-            hide();
-            if (queue.length !== 0) {
-              display(queue.shift());
-            } else {
-              executing = false;
-            }
-            count--;
+        var hide = a.hide;
+        a.hide = function() {
+          hide();
+          if (queue.length !== 0) {
+            display(queue.shift());
+          } else {
+            executing = false;
           }
+          count--;
+        }
+      }
+
+      function initial() {
+        if (count > options.limit-1) {
+          return;
         }
 
-        function initial() {
-          if (count > options.limit) {
-            return;
-          }
+        while(queue.length !== 0) {
+          var alert = queue.shift();
+          display(alert);
 
-          while(queue.length !== 0) {
-            var alert = queue.shift();
-            display(alert);
-
-          }
         }
+      }
 
-        function add(item) {
-          queue.push(item);
-          initial();
-        }
-
-        return add;
+      function myAlertFactory(item) {
+        console.log('add');
+        queue.push(item);
+        initial();
       }
 
       return myAlertFactory;

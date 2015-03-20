@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceAppMetadataController',
-function ($scope, $state, myAlertQueue, $timeout, MyDataSource) {
+function ($scope, $state, myAlert, $timeout, MyDataSource) {
 
   var data = new MyDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
@@ -16,7 +16,7 @@ function ($scope, $state, myAlertQueue, $timeout, MyDataSource) {
       _cdapPath: path,
       method: 'DELETE'
     }, function(res) {
-      myAlertQueue.add({
+      myAlert({
         type: 'success',
         title: app,
         content: 'App deleted successfully'
