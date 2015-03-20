@@ -8,9 +8,9 @@
 .. _http-restful-api-configuration:
 .. _http-restful-api-v3-configuration:
 
-======================================
-Configuration Service HTTP RESTful API
-======================================
+==============================
+Configuration HTTP RESTful API
+==============================
 
 The configurations of CDAP and HBase are exposed via HTTP RESTful endpoints and are documented here.
 
