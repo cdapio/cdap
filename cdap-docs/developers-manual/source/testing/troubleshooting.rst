@@ -13,13 +13,13 @@ A collection of tips and hints on solving problems encountered during developmen
 
 .. rubric:: Setting a Classloader for Custom Classes
 
-Question:
+**Question:**
 
   I am trying to read a sequence file in a Flowlet from HDFS with a custom type in value.
-  The same code works when I run it in a Java app with proper classpaths but while using the
-  same reader code in a Flowlet, getting a "custom object not found" error. I checked in the
-  fat jar which is uploaded to CDAP by ``jar -tvf`` and the custom object occurs in the fat jar.
-  But I am seeing the following error in the Flowlet::
+  The same code works when I run it in a Java app with proper classpaths but while using
+  the same reader code in a Flowlet, getting a ``"custom object not found"`` error. I
+  checked in the fat jar which is uploaded to CDAP by ``jar -tvf`` and the custom object
+  occurs in the fat jar. But I am seeing the following error in the Flowlet::
 
     Caused by: java.lang.ClassNotFoundException: Class com.example.MyObject not found
     at org.apache.hadoop.conf.Configuration.getClassByName(Configuration.java:1953)
@@ -30,9 +30,10 @@ Question:
     at org.apache.hadoop.io.SequenceFile$Reader.<init>(SequenceFile.java:1759)
     at org.apache.hadoop.io.SequenceFile$Reader.<init>(SequenceFile.java:1773)
 
-Answer:
+**Answer:**
 
-  You need to set the classLoader for the ``Configuration`` object; otherwise, ``SequenceFile`` cannot load custom classes.
+  You need to set the classLoader for the ``Configuration`` object; otherwise,
+  ``SequenceFile`` cannot load custom classes.
 
   Try using::
 
