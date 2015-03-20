@@ -50,9 +50,12 @@ public final class SimpleKafkaProducer {
     props.setProperty("queue.buffering.max.ms",
                       configuration.get(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS,
                                         Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PROCUDER_BUFFER_MS)));
-    props.setProperty(LoggingConfiguration.NUM_PARTITIONS,
-                      configuration.get(LoggingConfiguration.NUM_PARTITIONS,
-                                        LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+    // Set number of partitions for kafka topic
+    String numPartitions =  configuration.get(LoggingConfiguration.NUM_PARTITIONS,
+                                              LoggingConfiguration.DEFAULT_NUM_PARTITIONS);
+    props.setProperty("num.partitions", numPartitions);
+    // This property is used by StringPartitioner, and not by Kafka server
+    props.setProperty(LoggingConfiguration.NUM_PARTITIONS, numPartitions);
 
     ProducerConfig config = new ProducerConfig(props);
 
