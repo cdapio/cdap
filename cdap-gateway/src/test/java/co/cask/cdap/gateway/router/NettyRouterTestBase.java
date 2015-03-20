@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
@@ -504,7 +505,7 @@ public abstract class NettyRouterTestBase {
     public void registerServer() {
       // Register services of test server
       log.info("Registering service {}", serviceNameSupplier.get());
-      cancelDiscovery = discoveryService.register(new Discoverable() {
+      cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
         @Override
         public String getName() {
           return serviceNameSupplier.get();
@@ -514,7 +515,7 @@ public abstract class NettyRouterTestBase {
         public InetSocketAddress getSocketAddress() {
           return httpService.getBindAddress();
         }
-      });
+      }));
     }
 
     public void cancelRegistration() {
