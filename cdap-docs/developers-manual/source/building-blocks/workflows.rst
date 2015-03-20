@@ -122,13 +122,13 @@ To create such a Workflow, you provide a series of *forks* and *joins* in your W
 specification, following these rules:
 
 - Where your control flow initially splits, you place a ``fork`` method. 
-- Every time your control flow splits, you add additional ``.fork`` methods. 
-- Every point where you have either a program or an action, you add a ``.addMapReduce``,
-  ``.addSpark``, or ``.addAction`` method. 
-- To show each fork, use a ``.also`` method to separate the different branches of the
+- Every time your control flow splits, you add additional ``fork`` methods. 
+- Every point where you have either a program or an action, you add a ``addMapReduce``,
+  ``addSpark``, or ``addAction`` method. 
+- To show each fork, use a ``also`` method to separate the different branches of the
   control flow. 
-- Where your control flow reconnects, you add a ``.join`` method to indicate. 
-- The control flow always concludes with a ``.join`` method.
+- Where your control flow reconnects, you add a ``join`` method to indicate. 
+- The control flow always concludes with a ``join`` method.
 
 The application shown above could be coded (assuming the other classes referred to exist) as::
 
@@ -142,9 +142,9 @@ The application shown above could be coded (assuming the other classes referred 
       addMapReduce("JoinWithCatalogMR");
     
       fork()
-        .addMapReduce("BuildProductProfileMR");
+        .addMapReduce("BuildProductProfileMR")
       .also()
-        .addMapReduce("BuildUserProfileMR");
+        .addMapReduce("BuildUserProfileMR")
       .join();
       
       addAction(new UploadProfilesCA());
@@ -155,7 +155,7 @@ Provided that the control flow does not have cycles or the joining of any branch
 not originate from the same fork, flows of different complexity can be created using these
 rules and methods.
 
-More complicated structures can be created using ``.fork``. To add another MapReduce
+More complicated structures can be created using ``fork``. To add another MapReduce
 that runs in parallel to the entire process described above, you could use code such as::
 
   public class ParallelWorkflow extends AbstractWorkflow {
