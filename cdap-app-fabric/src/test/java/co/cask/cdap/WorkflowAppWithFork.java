@@ -19,6 +19,7 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class WorkflowAppWithFork extends AbstractApplication {
-  public static final String SYNCH_ON_FILE = "/tmp/WorkflowAppWithFork.done";
+  public static final String SYNCH_ON_FILE = "WorkflowAppWithFork.done";
   @Override
   public void configure() {
     setName("WorkflowAppWithFork");
@@ -56,10 +57,17 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class OneAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
+    private String doneDir = "";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      doneDir = context.getRuntimeArguments().get("done.directory");
+    }
+
     @Override
     public void run() {
       LOG.info("Ran one action");
-      File doneFile = new File(SYNCH_ON_FILE);
+      File doneFile = new File(doneDir + "/" + SYNCH_ON_FILE);
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);
@@ -75,10 +83,17 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class AnotherAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
+    private String doneDir = "";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      doneDir = context.getRuntimeArguments().get("done.directory");
+    }
+
     @Override
     public void run() {
       LOG.info("Ran another action");
-      File doneFile = new File(SYNCH_ON_FILE);
+      File doneFile = new File(doneDir + "/" + SYNCH_ON_FILE);
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);

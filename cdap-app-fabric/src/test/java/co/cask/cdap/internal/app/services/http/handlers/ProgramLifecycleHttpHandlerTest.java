@@ -792,14 +792,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowForkApp() throws Exception {
-    // File is used to synchronized between the test case and the custom actions running in Workflow
-    File doneFile = new File(WorkflowAppWithFork.SYNCH_ON_FILE);
-    if (doneFile.exists()) {
-      doneFile.delete();
-    }
+    File doneDir = tmpFolder.newFolder();
 
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> runtimeArguments = ImmutableMap.of("done.directory", doneDir.getAbsolutePath());
+    setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
+                          WORKFLOW_WITH_FORK, runtimeArguments);
+
 
     int status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                       WORKFLOW_WITH_FORK, "start");
@@ -843,12 +844,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
     // Signal the Workflow that execution can be continued by creating temp file
+    File doneFile = new File(doneDir + "/" + WorkflowAppWithFork.SYNCH_ON_FILE);
     doneFile.createNewFile();
 
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
     scheduleHistoryRuns(180, runsUrl, 0);
-
-    doneFile.delete();
   }
 
   private String createInput(String folderName) throws IOException {
