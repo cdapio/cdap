@@ -19,9 +19,11 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -89,7 +91,7 @@ public abstract class StreamAdminTest {
 
     // All of the streams within the default namespace should have no data in them
     for (Id.Stream defaultStream : fooStreams) {
-      Assert.assertEquals(0, getStreamSize(defaultStream));
+      Assert.assertFalse(streamAdmin.exists(defaultStream));
     }
     // otherStream isn't in the foo namespace so its data is not deleted in the above call to dropAllInNamespace.
     Assert.assertNotEquals(0, getStreamSize(otherStream));
@@ -102,7 +104,10 @@ public abstract class StreamAdminTest {
   private long getStreamSize(Id.Stream streamId) throws IOException {
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamConfig config = streamAdmin.getConfig(streamId);
-    return streamAdmin.fetchStreamSize(config);
+
+    Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(),
+                                                                       StreamUtils.getGeneration(config));
+    return StreamUtils.fetchStreamFilesSize(generationLocation);
   }
 
   // simply writes a static string to a stream

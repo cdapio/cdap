@@ -109,6 +109,29 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
       });
   }
 
+  @Override
+  protected void streamDeleted(final Id.Stream streamId) {
+    resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
+      @Nullable
+      @Override
+      public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+        LOG.debug("Modifying requirement to remove stream {}", streamId);
+        if (existingRequirement == null) {
+          return null;
+        }
+
+        Set<ResourceRequirement.Partition> partitions = existingRequirement.getPartitions();
+        ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+        for (ResourceRequirement.Partition partition : partitions) {
+          if (!partition.getName().equals(streamId.toId())) {
+            builder.addPartition(partition);
+          }
+        }
+        return builder.build();
+      }
+    });
+  }
+
   private ZKClient getCoordinatorZKClient() {
     return ZKClients.namespace(zkClient, Constants.Stream.STREAM_ZK_COORDINATION_NAMESPACE);
   }
