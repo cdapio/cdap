@@ -40,15 +40,6 @@ angular.module(PKG.name + '.services')
       add: function(item) {
         queue.push(item);
         initial();
-      },
-      load: function() {
-        for (var i = 0; i < 10; i++) {
-          this.add({
-            title: "test" + i,
-            content: "test" + i,
-            type: 'danger'
-          });
-        }
       }
     };
 

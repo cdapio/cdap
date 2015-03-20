@@ -109,7 +109,7 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, $alert, myAlertQueue) {
+  .run(function ($rootScope, MYSOCKET_EVENT, myAlertQueue) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
       myAlertQueue.add({
@@ -143,7 +143,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, myAlertQueue) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT) {
 
     var activeThemeClass = caskTheme.getClassName();
 

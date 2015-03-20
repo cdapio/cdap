@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminNamespaceCreateController', function ($scope, $alert, MyDataSource, myNamespace) {
+  .controller('AdminNamespaceCreateController', function ($scope, myAlertQueue, MyDataSource, myNamespace) {
     $scope.model = {
       name: '',
       description: ''
@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
         .then(function(res) {
-          $alert({
+          myAlertQueue.add({
             title: 'Success!',
             content: 'Namespace Created!',
             type: 'success'
