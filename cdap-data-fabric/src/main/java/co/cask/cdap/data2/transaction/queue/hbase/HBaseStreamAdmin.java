@@ -19,8 +19,6 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -28,11 +26,8 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
@@ -98,38 +93,16 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Override
   public void configureInstances(Id.Stream streamId, final long groupId, final int instances) throws Exception {
-    // Do the configuration in a new TX
-    // TODO: Make StreamAdmin reconfiguration transactional
-    final QueueConfigurer queueConfigurer = getQueueConfigurer(QueueName.fromStream(streamId));
-    try {
-      Transactions.createTransactionExecutor(txExecutorFactory, queueConfigurer)
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            queueConfigurer.configureInstances(groupId, instances);
-          }
-        });
-    } finally {
-      Closeables.closeQuietly(queueConfigurer);
-    }
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class.
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override
   public void configureGroups(Id.Stream streamId, final Map<Long, Integer> groupInfo) throws Exception {
-    // Do the configuration in a new TX
-    // TODO: Make StreamAdmin reconfiguration transactional
-    final QueueConfigurer queueConfigurer = getQueueConfigurer(QueueName.fromStream(streamId));
-    try {
-      Transactions.createTransactionExecutor(txExecutorFactory, queueConfigurer)
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            queueConfigurer.configureGroups(groupInfo);
-          }
-        });
-    } finally {
-      Closeables.closeQuietly(queueConfigurer);
-    }
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override

@@ -424,7 +424,7 @@
 
     <property>
         <name>data.tx.snapshot.interval</name>
-        <value>300</value>
+        <value>60</value>
         <description>Frequency, in seconds, at which snapshots of transaction
             state should be written</description>
     </property>
