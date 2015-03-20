@@ -83,7 +83,11 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   protected abstract void streamCreated(Id.Stream streamId);
 
   /**
+<<<<<<< HEAD
+   * GEts invoked when a stream is deleted.
+=======
    * Gets invoked when a stream is deleted.
+>>>>>>> 359a461e642438f1a92497f960348a275f4302e1
    */
   protected abstract void streamDeleted(Id.Stream streamId);
 
