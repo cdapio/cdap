@@ -63,7 +63,7 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
   private final Configuration hConf;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
-  private final String kafkaTableName;
+  private final String oldKafkaMetricsTableName;
 
   @Inject
   public MetricsKafkaUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -73,41 +73,41 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
     this.hConf = hConf;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
-    this.kafkaTableName =  cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                     MetricsConstants.DEFAULT_KAFKA_META_TABLE);
+    this.oldKafkaMetricsTableName =  Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, "default",
+                                                         cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
+                                                                   MetricsConstants.DEFAULT_KAFKA_META_TABLE));
   }
 
-  private MetricsTable getOrCreateKafkaTable(String tableName, DatasetProperties props) {
-    MetricsTable table = null;
+  private MetricsTable getOrCreateKafkaTable(String tableName) {
     // old kafka table is in the default namespace
     Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, tableName);
     try {
-      table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                              MetricsTable.class.getName(), props, null, null);
+      return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
+                                              MetricsTable.class.getName(), DatasetProperties.EMPTY, null, null);
     } catch (Exception e) {
-      LOG.error("Exception while creating table {}.", tableName, e);
+      LOG.error("Exception while getting table {}.", tableName, e);
+      throw Throwables.propagate(e);
     }
-    return table;
   }
 
   @Override
   public void upgrade() throws Exception {
+    // todo : close the KafkaConsumerMetaTable after it implements closeable
     KafkaConsumerMetaTable kafkaMetaTableDestination =
       new DefaultMetricDatasetFactory(cConf, dsFramework).createKafkaConsumerMeta();
-    // copy kafka offset from old table to new kafka metrics tabl
-    String kafkaTableNameOld = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, "default", kafkaTableName);
-    try {
-      // assuming we are migrating from 2.6 or 2.7
-      HTable hTable = getHTable(kafkaTableNameOld);
-      byte[] columnFamily = getColumnFamily(kafkaTableNameOld);
+    // copy kafka offset from old table to new kafka metrics table
 
+    try {
+      // assuming we are migrating from 2.6
+      HTable hTable = getHTable(oldKafkaMetricsTableName);
       // iterate old table and copy all rows to the new kafkaConsumerMetaTable
       try {
+        byte[] columnFamily = getColumnFamily(oldKafkaMetricsTableName);
         LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
         Scan scan = getScan(columnFamily);
         ResultScanner resultScanner = hTable.getScanner(scan);
-        Result result;
         try {
+          Result result;
           while ((result = resultScanner.next()) != null) {
             TopicPartition topicPartition = getTopicPartition(result.getRow());
             if (topicPartition != null) {
@@ -128,16 +128,20 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
         hTable.close();
       }
     } catch (IOException e) {
-      LOG.info("Unable to find table {}", kafkaTableNameOld);
+      LOG.info("Unable to find table {}", oldKafkaMetricsTableName);
     }
   }
 
-  private byte[] getColumnFamily(String tableName) throws DatasetManagementException {
+  private byte[] getColumnFamily(String tableName) throws DatasetManagementException, IOException {
     // add old table for getting dataset spec
-    getOrCreateKafkaTable(tableName, DatasetProperties.EMPTY);
-    DatasetSpecification specification =
-      dsFramework.getDatasetSpec(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, tableName));
-    return HBaseTableAdmin.getColumnFamily(specification);
+    MetricsTable table = getOrCreateKafkaTable(tableName);
+    try {
+      DatasetSpecification specification =
+        dsFramework.getDatasetSpec(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, tableName));
+      return HBaseTableAdmin.getColumnFamily(specification);
+    } finally {
+      table.close();
+    }
   }
 
   private HTable getHTable(String tableName) throws IOException {
@@ -163,5 +167,9 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
       return new TopicPartition(topic, partition);
     }
     return null;
+  }
+
+  public TableId getOldKafkaMetricsTableId() {
+    return TableId.from(Constants.DEFAULT_NAMESPACE, oldKafkaMetricsTableName);
   }
 }
