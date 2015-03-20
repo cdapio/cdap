@@ -89,10 +89,12 @@ The CLI may be started with command-line options, as detailed below::
 Settings
 --------
 
-Certain commands (``connect`` and ``render``) affect how CLI works for the duration of a session.
+Certain commands (``connect`` and ``cli render as``) affect how CLI works for the duration of a session.
 
-The command ``"cli render as <table-renderer>"`` sets how table data is rendererd. Valid options are
-either ``"alt"`` (the default) and ``"csv"``.
+The command ``"cli render as <table-renderer>"`` sets how table data is rendered. Valid options are
+either ``"alt"`` (the default) and ``"csv"``. As the ``"alt"`` option may split a cell into multiple
+lines, you may need to use ``"csv"`` if you want to copy and paste the results into another
+application or include in a message.
 
 - With ``"cli render as alt"`` (the default), a command such as ``"list apps"`` will be output as::
 
