@@ -109,10 +109,10 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
+  .run(function ($rootScope, MYSOCKET_EVENT, $alert, myAlertQueue) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      $alert({
+      myAlertQueue.add({
         title: 'Error',
         content: sockEvent.reason || 'could not connect to the server',
         type: 'danger'
@@ -122,7 +122,7 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
 
       if(data.statusCode>399) {
-        $alert({
+        myAlertQueue.add({
           title: data.statusCode.toString(),
           content: data.response || 'Something went terribly wrong',
           type: 'danger'
@@ -130,7 +130,7 @@ angular
       }
 
       if(data.warning) {
-        $alert({
+        myAlertQueue.add({
           content: data.warning,
           type: 'warning'
         });
@@ -143,7 +143,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, myAlertQueue) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -173,7 +173,6 @@ angular
 
       $scope.bodyClass = classes.join(' ');
     });
-
 
 
     console.timeEnd(PKG.name);
