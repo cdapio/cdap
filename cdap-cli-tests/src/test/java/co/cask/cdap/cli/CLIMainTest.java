@@ -372,10 +372,10 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get preferences instance", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("key", "new instance");
+    propMap.put("key", "newinstance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete preferences instance", "successfully");
-    testCommandOutputContains(cli, String.format("set preferences instance 'key=new instance, k1=v1'"),
+    testCommandOutputContains(cli, String.format("set preferences instance 'key=newinstance k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get preferences instance", propMap);
     testPreferencesOutput(cli, "get resolved preferences instance", propMap);
