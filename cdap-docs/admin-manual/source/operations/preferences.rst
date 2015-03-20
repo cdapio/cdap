@@ -77,3 +77,23 @@ or provide Twitter API credentials::
       collector = new CollectingThread();
       collector.start();
     }
+
+Scoped Runtime Arguments for Workflow
+=====================================
+When Workflow is configured, you may want to pass different runtime arguments to different programs
+and datasets used inside the program. You can prefix the runtime arguments with the `<scope>.` to achieve this.
+Currently supported scopes are `dataset`, `mapreduce`, and `spark`.
+
+Example: To set the runtime argument `read.timeout=30` for MapReduce program `oneMapReduce` in the Workflow,
+argument can be provided with the scope as `mapreduce.oneMapReduce.read.timeout=30`. In this case `oneMapReduce`
+will receive two arguments - one with the scope `mapreduce.oneMapReduce.read.timeout=30`
+and another with the scope extracted `read.timeout=30`. However other programs and datasets used in the
+Workflow will receive only one argument `mapreduce.oneMapReduce.read.timeout=30`.
+
+An argument can also be prefixed with '<scope>.*' to apply it to all programs or datasets in the Workflow as
+represented by the Scope.
+
+Example: If the runtime argument is specified as `mapreduce.*.read.timeout=30`, all MapReduce programs
+in the Workflow will receive two arguments - one with the scope `mapreduce.*.read.timeout=30` and another
+with the scope extracted `read.timeout=30`. Programs other than the MapReduce and datasets used in the Workflow
+will receive only one argument `mapreduce.*.read.timeout=30`
