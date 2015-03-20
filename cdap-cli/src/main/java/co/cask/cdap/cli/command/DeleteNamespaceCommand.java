@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -31,26 +32,46 @@ import java.io.PrintStream;
 /**
  * {@link Command} to delete a namespace.
  */
-public class DeleteNamespaceCommand implements Command {
+public class DeleteNamespaceCommand extends AbstractCommand {
   private static final String SUCCESS_MSG = "Namespace '%s' deleted successfully.";
   private final NamespaceClient namespaceClient;
   private final CLIConfig cliConfig;
 
   @Inject
   public DeleteNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+    super(cliConfig);
     this.cliConfig = cliConfig;
     this.namespaceClient = namespaceClient;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream out) throws Exception {
+  public void perform(Arguments arguments, PrintStream out) throws Exception {
+    out.println("WARNING: Deleting namespace is an unrecoverable operation");
+
     Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
-    namespaceClient.delete(namespaceId.getId());
-    out.println(String.format(SUCCESS_MSG, namespaceId));
-    if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
-      cliConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
-      out.printf("Now using namespace '%s'", Constants.DEFAULT_NAMESPACE_ID.getId());
-      out.println();
+
+    if (Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
+      String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]?",
+                                    Constants.DEFAULT_NAMESPACE_ID.getId());
+      String userConfirm = cliConfig.getConsoleReader().readLine(prompt);
+      if ("y".equalsIgnoreCase(userConfirm)) {
+        namespaceClient.delete(namespaceId.getId());
+        out.printf("Contents of namespace '%s' were deleted successfully", Constants.DEFAULT_NAMESPACE_ID.getId());
+        out.println();
+      }
+    } else {
+      String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]?",
+                                    Constants.DEFAULT_NAMESPACE_ID.getId());
+      String userConfirm = cliConfig.getConsoleReader().readLine(prompt);
+      if ("y".equalsIgnoreCase(userConfirm)) {
+        namespaceClient.delete(namespaceId.getId());
+        out.println(String.format(SUCCESS_MSG, namespaceId));
+        if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
+          cliConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+          out.printf("Now using namespace '%s'", Constants.DEFAULT_NAMESPACE_ID.getId());
+          out.println();
+        }
+      }
     }
   }
 

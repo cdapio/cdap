@@ -40,7 +40,6 @@ import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import jline.TerminalFactory;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -143,6 +142,8 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
     cli.getReader().setExpandEvents(false);
+
+    cliConfig.setConsoleReader(cli.getReader());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(ClientConfig clientConfig) {
@@ -297,4 +298,5 @@ public class CLIMain {
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
+
 }

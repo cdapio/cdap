@@ -33,7 +33,6 @@ import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClie
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -64,6 +63,10 @@ public class CLIConfig implements TableRendererConfig {
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
+
+  @Nullable
+  // TODO: make not nullable
+  private ConsoleReader consoleReader;
 
   private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
@@ -177,7 +180,12 @@ public class CLIConfig implements TableRendererConfig {
 
     // obtain new access token via manual user input
     output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
-    ConsoleReader reader = new ConsoleReader();
+    ConsoleReader reader;
+    if (this.consoleReader != null) {
+      reader = this.consoleReader;
+    } else {
+      reader = new ConsoleReader();
+    }
     for (Credential credential : authenticationClient.getRequiredCredentials()) {
       String prompt = "Please, specify " + credential.getDescription() + "> ";
       String credentialValue;
@@ -289,6 +297,15 @@ public class CLIConfig implements TableRendererConfig {
 
   public int getLineWidth() {
     return Math.max(MIN_LINE_WIDTH, lineWidthSupplier.get());
+  }
+
+  public void setConsoleReader(ConsoleReader consoleReader) {
+    this.consoleReader = consoleReader;
+  }
+
+  @Nullable
+  public ConsoleReader getConsoleReader() {
+    return consoleReader;
   }
 
   /**
