@@ -41,7 +41,7 @@ and write to an ObjectStore Dataset.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the ``history`` Dataset.
-  - Request the ``PurchaseHistoryService`` retrieve from the ``history`` Dataset the purchase history of a user.
+  - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` Dataset the purchase history of a user.
   - Execute a SQL query over the ``history`` Dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
