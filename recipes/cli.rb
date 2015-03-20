@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cdap
-# Recipe:: fullstack
+# Recipe:: cli
 #
 # Copyright © 2013-2015 Cask Data, Inc.
 #
@@ -17,8 +17,9 @@
 # limitations under the License.
 #
 
-include_recipe 'cdap::default'
+include_recipe 'cdap::repo'
 
-%w(cli gateway kafka master web_app).each do |recipe|
-  include_recipe "cdap::#{recipe}"
+package 'cdap-cli' do
+  action :install
+  version node['cdap']['version']
 end
