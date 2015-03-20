@@ -104,5 +104,4 @@ corresponding program scope.
 Example: Consider the dataset ``myTable`` used by multiple programs in the Workflow. The runtime argument
 ``cache.seconds=30`` for ``myTable`` can be provided as ``dataset.myTable.cache.seconds=30``. In this case the
 the argument will be set for all the programs using ``myTable``. In order to set the argument only for MapReduce
-program ``myMR``, the dataset argument can be nested inside the program scope as
-``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
+program ``myMR``, the dataset argument can be nested inside the program scope as ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
