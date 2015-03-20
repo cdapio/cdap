@@ -115,7 +115,6 @@ public class MDSUpgrader extends AbstractUpgrader {
         List<ApplicationMeta> appsMeta = appMetaStore.mds.list(appMetaRecordPrefix, ApplicationMeta.class);
         for (ApplicationMeta curAppMeta : appsMeta) {
           handleAppSpec(curAppMeta.getId(), curAppMeta.getSpec());
-          upgradeAppMeta(curAppMeta);
         }
         return null;
       }
@@ -263,34 +262,6 @@ public class MDSUpgrader extends AbstractUpgrader {
                                        long startTs) {
     store.setStart(Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), programType, programId),
                    pId, startTs);
-  }
-
-  /**
-   * Writes the updated application metadata through the {@link DefaultStore}
-   *
-   * @param appMeta the {@link ApplicationMeta} of the app
-   * @throws URISyntaxException if failed to create {@link URI} from the archive location in metadata
-   */
-  private void upgradeAppMeta(ApplicationMeta appMeta) throws URISyntaxException, IOException {
-    store.addApplication(Id.Application.from(Constants.DEFAULT_NAMESPACE, appMeta.getId()), appMeta.getSpec(),
-                         updateAppArchiveLocation(appMeta.getId(), new URI(appMeta.getArchiveLocation())));
-    // store the stream names which belongs to this app as we want to filter out streams which do not belong to any app
-    // later
-    appStreams.addAll(appMeta.getSpec().getStreams().keySet());
-  }
-
-  /**
-   * Creates the new archive location for application with namespace
-   *
-   * @param appId : the application id
-   * @param archiveLocation : the application archive location
-   * @return {@link Location} for the new archive location with namespace
-   */
-  private Location updateAppArchiveLocation(String appId, URI archiveLocation) throws IOException {
-    String archiveFilename = locationFactory.create(archiveLocation).getName();
-
-    return locationFactory.create(Constants.DEFAULT_NAMESPACE).append(
-      cConf.get(Constants.AppFabric.OUTPUT_DIR)).append(appId).append(Constants.ARCHIVE_DIR).append(archiveFilename);
   }
 
   private static final class AppMDS implements Iterable<MetadataStoreDataset> {
