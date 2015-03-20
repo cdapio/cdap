@@ -35,6 +35,11 @@
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-ui</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -289,6 +294,26 @@
                     <copy todir="${stage.opt.dir}">
                       <fileset dir="${project.build.directory}/enterprise">
                         <include name="**"/>
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/server">
+                      <fileset dir = "../cdap-ui/server"/>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/dist">
+                      <fileset dir = "../cdap-ui/dist"/>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/node_modules">
+                      <fileset dir = "../cdap-ui/node_modules"/>
+                    </copy>
+
+                    <copy todir = "${stage.opt.dir}/beta/">
+                      <fileset dir = "../cdap-ui">
+                          <include name="package.json" />
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/beta/">
+                      <fileset dir = "../cdap-ui">
+                          <include name="server.js" />
                       </fileset>
                     </copy>
                   </target>

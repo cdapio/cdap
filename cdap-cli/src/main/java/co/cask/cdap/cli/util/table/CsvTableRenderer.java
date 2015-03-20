@@ -38,7 +38,7 @@ public class CsvTableRenderer implements TableRenderer {
   private static final Joiner CSV_JOINER = Joiner.on(",");
 
   @Override
-  public void render(PrintStream output, Table table) {
+  public void render(TableRendererConfig config, PrintStream output, Table table) {
     if (table.getHeader() != null) {
       output.println(CSV_JOINER.useForNull("").join(table.getHeader()));
     }

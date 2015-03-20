@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithStreamSizeSchedule;
@@ -254,6 +255,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
+    deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
     Id.Stream myStream = Id.Stream.from(OTHER_NAME, "stream");
@@ -277,6 +279,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(streamAdmin.exists(myStream));
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
     Assert.assertFalse(streamAdmin.exists(myStream));
+
+    // Create the namespace again and deploy the application containing schedules.
+    // Application deployment should succeed.
+    assertResponseCode(200, createNamespace(OTHER_NAME));
+    HttpResponse response = deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   OTHER_NAME);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    assertResponseCode(200, deleteNamespace(OTHER_NAME));
   }
 
   @Test

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;

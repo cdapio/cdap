@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,7 +36,7 @@ import java.util.Set;
  *
  * @param <T> The specification type that this codec handle.
  */
-abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>, JsonDeserializer<T> {
+public abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>, JsonDeserializer<T> {
 
   protected final <V> JsonElement serializeMap(Map<String, V> map,
                                                JsonSerializationContext context,

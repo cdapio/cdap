@@ -25,19 +25,24 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.MultiStreamApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -53,6 +58,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -66,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Tests for {@link AppFabricHttpHandler}.
@@ -975,6 +980,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    response = doPost(String.format("/v2/apps/AppWithSchedule/schedules/SampleSchedule/resume"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("someKey", "someWorkflowValue");
     runtimeArguments.put("workflowKey", "workflowValue");
@@ -1329,4 +1337,41 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, specification.getWorkers().values().size());
   }
 
+  @Test
+  public void testWorkflowSpecification() throws Exception {
+    deploy(WorkflowApp.class);
+    HttpResponse response = doGet("/v2/apps/WorkflowApp/workflows/FunWorkflow/");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Gson gson = new GsonBuilder().registerTypeAdapter(WorkflowActionSpecification.class,
+                                                                    new WorkflowActionSpecificationCodec()).create();
+
+    String responseString = readResponse(response);
+
+    JsonObject jsonObj = new JsonParser().parse(responseString).getAsJsonObject();
+
+    Assert.assertTrue(jsonObj.get("className").getAsString().contains("FunWorkflow"));
+    Assert.assertEquals("FunWorkflow", jsonObj.get("name").getAsString());
+    Assert.assertEquals("FunWorkflow description", jsonObj.get("description").getAsString());
+
+    Type actionType = new TypeToken<List<ScheduleProgramInfo>>() { }.getType();
+    List<ScheduleProgramInfo> actions = gson.fromJson(jsonObj.get("actions").getAsJsonArray(), actionType);
+
+    Assert.assertEquals(3, actions.size());
+
+    Assert.assertEquals(actions.get(0), new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "ClassicWordCount"));
+    Assert.assertEquals(actions.get(1), new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, "verify"));
+    Assert.assertEquals(actions.get(2), new ScheduleProgramInfo(SchedulableProgramType.SPARK, "SparkWorkflowTest"));
+
+    Type mapType = new TypeToken<Map<String, WorkflowActionSpecification>>() { }.getType();
+    Map<String, WorkflowActionSpecification> customActionMap = gson.fromJson(jsonObj.get("customActionMap")
+                                                                               .getAsJsonObject(), mapType);
+
+    Assert.assertEquals(1, customActionMap.size());
+
+    Assert.assertTrue(customActionMap.containsKey("verify"));
+    WorkflowActionSpecification actionSpec = customActionMap.get("verify");
+    Assert.assertEquals("verify", actionSpec.getName());
+    Assert.assertEquals(1, actionSpec.getProperties().size());
+  }
 }

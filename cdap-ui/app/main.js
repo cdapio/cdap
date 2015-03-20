@@ -52,6 +52,11 @@ angular
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
+
+      // 'mgcrea.ngStrap.modal',
+      'ui.bootstrap.modal',
+      'ui.bootstrap',
+
       'mgcrea.ngStrap.modal',
 
       'ncy-angular-breadcrumb',

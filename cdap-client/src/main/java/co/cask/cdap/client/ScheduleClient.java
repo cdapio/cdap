@@ -22,9 +22,12 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
@@ -37,6 +40,10 @@ import javax.inject.Inject;
  * Provides ways to interact with CDAP Schedules.
  */
 public class ScheduleClient {
+
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -64,7 +71,7 @@ public class ScheduleClient {
     }
 
     ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<ScheduleSpecification>>() { }.getType());
+      response, new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
     return objectResponse.getResponseObject();
   }
 

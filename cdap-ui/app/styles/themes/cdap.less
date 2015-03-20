@@ -64,15 +64,30 @@ body.theme-cdap {
       margin: .4rem inherit;
     }
 
+    .breadcrumb {
+      background-color: transparent;
+      padding-left: 0px;
+    }
+
+    .breadcrumb > li {
+      font-weight: bold;
+    }
+
+    .breadcrumb > li + li:before {
+      content: "<";
+      padding: 0 5px;
+      color: #cccccc;
+      font-weight: bold;
+    }
     button, .btn-default {
       .cask-btn();
     }
-
     .btn-close {
       .cask-btn(@background: fade(@btn-default-color, 50%), @border: 0, @border-radius: 28px, @padding: 0);
       cursor: pointer;
       line-height: 0;
     }
+
   } // end main.container
 
   footer {

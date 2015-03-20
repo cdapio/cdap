@@ -43,7 +43,7 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
 
   @Override
   protected void startUp() throws Exception {
-    startScheduler();
+    startSchedulers();
   }
 
   @Override

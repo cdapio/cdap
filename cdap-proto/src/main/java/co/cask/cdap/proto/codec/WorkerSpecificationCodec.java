@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * Codec to serialize and deserialize {@link WorkerSpecification}
  */
-final class WorkerSpecificationCodec extends AbstractSpecificationCodec<WorkerSpecification> {
+public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<WorkerSpecification> {
 
   @Override
   public JsonElement serialize(WorkerSpecification spec, Type typeOfSrc, JsonSerializationContext context) {

@@ -34,7 +34,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -61,14 +60,14 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final QueueAdmin queueAdmin;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
-  private static final Pattern USER_TABLE_PREFIX = Pattern.compile("^cdap\\.user\\..*");
+  private final Pattern userTablePrefix;
   private final DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader;
   private final DatasetTypeMDSUpgrader datasetTypeMDSUpgrader;
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          @Named("dsFramework") final DatasetFramework dsFramework,
+                          DatasetFramework dsFramework,
                           DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
                           DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
@@ -81,8 +80,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.dsFramework = dsFramework;
     this.datasetInstanceMDSUpgrader = datasetInstanceMDSUpgrader;
     this.datasetTypeMDSUpgrader = datasetTypeMDSUpgrader;
-
-
+    this.userTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", cConf.get(Constants.Dataset.TABLE_PREFIX)));
   }
 
   @Override
@@ -106,6 +104,14 @@ public class DatasetUpgrader extends AbstractUpgrader {
     for (DatasetSpecification fileSetSpec : datasetInstanceMDSUpgrader.getFileSetsSpecs()) {
       upgradeFileSet(fileSetSpec);
     }
+  }
+
+  protected DatasetInstanceMDSUpgrader getDatasetInstanceMDSUpgrader() {
+    return datasetInstanceMDSUpgrader;
+  }
+
+  protected DatasetTypeMDSUpgrader getDatasetTypeMDSUpgrader() {
+    return datasetTypeMDSUpgrader;
   }
 
   /**
@@ -144,7 +150,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private void upgradeUserTables() throws Exception {
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
 
-    for (HTableDescriptor desc : hAdmin.listTables(USER_TABLE_PREFIX)) {
+    for (HTableDescriptor desc : hAdmin.listTables(userTablePrefix)) {
       HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
       TableId tableId = hTableNameConverter.from(desc);
       LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);

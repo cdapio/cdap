@@ -155,10 +155,9 @@ public class DefaultCube implements Cube {
         for (String tagName : agg.getTagNames()) {
           tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
         }
-        for (FactTable factTable : resolutionToFactTable.values()) {
-          FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
-          factTable.delete(scan);
-        }
+        FactTable factTable = resolutionToFactTable.get(query.getResolution());
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+        factTable.delete(scan);
       }
     }
   }

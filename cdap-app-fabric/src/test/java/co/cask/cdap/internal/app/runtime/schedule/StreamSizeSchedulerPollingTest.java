@@ -95,9 +95,16 @@ public class StreamSizeSchedulerPollingTest extends SchedulerTestBase {
     // Test the StreamSizeScheduler behavior using polling
 
     AppFabricTestHelper.deployApplication(AppWithStreamSizeSchedule.class);
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
-
+    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
     int runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(0, runs);
 

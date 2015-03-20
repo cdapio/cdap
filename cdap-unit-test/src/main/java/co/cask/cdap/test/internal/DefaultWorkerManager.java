@@ -17,7 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.test.WorkerManager;
-import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
