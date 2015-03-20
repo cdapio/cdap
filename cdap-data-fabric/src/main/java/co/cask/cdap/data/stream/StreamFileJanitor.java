@@ -62,7 +62,11 @@ public final class StreamFileJanitor {
 
       for (Location streamLocation : streamBaseLocation.list()) {
         Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
-        clean(streamAdmin.getConfig(streamId), System.currentTimeMillis());
+        long ttl = 0L;
+        if (isStreamExists(streamId)) {
+          ttl = streamAdmin.getConfig(streamId).getTTL();
+        }
+        clean(streamLocation, ttl, System.currentTimeMillis());
       }
     }
   }
@@ -71,21 +75,22 @@ public final class StreamFileJanitor {
    * Performs deletion of unused stream file based on the given {@link StreamConfig}.
    * This method is package visible so that it can be test easily by providing a custom timestamp for current time.
    *
-   * @param config Configuration of the stream to cleanup.
+   * @param streamLocation stream location
+   * @param ttl ttl for the cleanup
    * @param currentTime Current timestamp. Used for computing timestamp for expired partitions based on TTL.
    */
   @VisibleForTesting
-  void clean(StreamConfig config, long currentTime) throws IOException {
-    LOG.debug("Cleanup stream file for {}", config);
+  void clean(Location streamLocation, long ttl, long currentTime) throws IOException {
+    LOG.debug("Cleanup stream file in {}", streamLocation);
 
     // Get the current generation and remove every generations smaller then the current one.
-    int generation = StreamUtils.getGeneration(config);
+    int generation = StreamUtils.getGeneration(streamLocation);
 
     for (int i = 0; i < generation; i++) {
-      Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(), i);
+      Location generationLocation = StreamUtils.createGenerationLocation(streamLocation, i);
 
       // Special case for generation 0
-      if (generationLocation.equals(config.getLocation())) {
+      if (generationLocation.equals(streamLocation)) {
         for (Location location : generationLocation.list()) {
           // Only delete partition directories
           if (isPartitionDirector(location)) {
@@ -98,8 +103,8 @@ public final class StreamFileJanitor {
     }
 
     // For current generation, remove all partition directories ended older than TTL
-    long expireTime = currentTime - config.getTTL();
-    Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
+    long expireTime = currentTime - ttl;
+    Location generationLocation = StreamUtils.createGenerationLocation(streamLocation, generation);
     for (Location location : generationLocation.list()) {
       // Only interested in partition directories
       if (!isPartitionDirector(location)) {
@@ -114,5 +119,13 @@ public final class StreamFileJanitor {
 
   private boolean isPartitionDirector(Location location) throws IOException {
     return (location.isDirectory() && location.getName().indexOf('.') > 0);
+  }
+
+  private boolean isStreamExists(Id.Stream streamId) throws IOException {
+    try {
+      return streamAdmin.exists(streamId);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 }
