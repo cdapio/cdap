@@ -17,75 +17,25 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.internal.app.runtime.batch.WordCount;
-import org.apache.hadoop.mapreduce.Job;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+
+import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class WorkflowAppWithFork extends AbstractApplication {
+  public static final String SYNCH_ON_FILE = "/tmp/WorkflowAppWithFork.done";
   @Override
   public void configure() {
     setName("WorkflowAppWithFork");
     setDescription("Workflow App containing fork");
-    addMapReduce(new OneWordCountMapReduce());
-    addMapReduce(new AnotherWordCountMapReduce());
     addWorkflow(new WorkflowWithFork());
-  }
-
-  /**
-   *
-   */
-  public static final class OneWordCountMapReduce extends AbstractMapReduce {
-
-    @Override
-    public void configure() {
-      setName("OneWordCountMapReduce");
-      setDescription("WordCount job from Hadoop examples");
-    }
-
-    @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String, String> args = context.getRuntimeArguments();
-      String inputPath = args.get("oneInputPath");
-      String outputPath = args.get("oneOutputPath");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      // No-op
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class AnotherWordCountMapReduce extends AbstractMapReduce {
-
-    @Override
-    public void configure() {
-      setName("AnotherWordCountMapReduce");
-      setDescription("WordCount job from Hadoop examples");
-    }
-
-    @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String, String> args = context.getRuntimeArguments();
-      String inputPath = args.get("anotherInputPath");
-      String outputPath = args.get("anotherOutputPath");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      // No-op
-    }
   }
 
   /**
@@ -97,7 +47,45 @@ public class WorkflowAppWithFork extends AbstractApplication {
     public void configure() {
       setName("WorkflowWithFork");
       setDescription("WorkflowWithFork description");
-      fork().addMapReduce("AnotherWordCountMapReduce").also().addMapReduce("OneWordCountMapReduce").join();
+      fork().addAction(new OneAction()).also().addAction(new AnotherAction()).join();
+    }
+  }
+
+  /**
+   *
+   */
+  static class OneAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
+    @Override
+    public void run() {
+      LOG.info("Ran one action");
+      File doneFile = new File(SYNCH_ON_FILE);
+      while (!doneFile.exists()) {
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+          // no-op
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  static class AnotherAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
+    @Override
+    public void run() {
+      LOG.info("Ran another action");
+      File doneFile = new File(SYNCH_ON_FILE);
+      while (!doneFile.exists()) {
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+          // no-op
+        }
+      }
     }
   }
 }
