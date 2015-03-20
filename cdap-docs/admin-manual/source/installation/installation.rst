@@ -172,7 +172,7 @@ possibly *Hive*) cluster configurations by adding your configuration to their cl
 (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
 the number of connections required is a function of usage.
 
-**Note:** If explore is enabled on secure Hadoop, the MapReduce JobHistory Server must be installed as well.
+**Note:** If Explore is enabled on secure Hadoop, the MapReduce JobHistory Server must be installed as well.
 Most Hadoop installations will already be running the MapReduce JobHistory Server.
 
 .. _deployment-architectures:
@@ -406,11 +406,11 @@ Depending on your installation, you may want to set these properties:
     </property>
 
   This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. If you have enabled the CDAP Explore Service on
+  See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. If you have enabled the CDAP Explore Service on
   a secure Hadoop cluster, you will need to add a few additional Hadoop configuration settings.
 
-  In order to allow the Hive Metastore to run operations as the cdap user,
-  add the following settings to the Hadoop ``core-site.xml`` file::
+  In order to allow the Hive Metastore to run operations as the ``cdap`` user,
+  add these settings to the Hadoop ``core-site.xml`` file::
 
     <property>
       <name>hadoop.proxyuser.hive.groups</name>
@@ -426,7 +426,7 @@ Depending on your installation, you may want to set these properties:
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
   If the CDAP Explore Service fails to start and you see a ``javax.jdo.JDODataStoreException: Communications link failure``,
-  in the log, try adding the following property to the Hive ``hive-site.xml`` file::
+  in the log, try adding this property to the Hive ``hive-site.xml`` file::
 
     <property>
       <name>datanucleus.connectionPoolingType</name>
@@ -455,8 +455,10 @@ In order to configure CDAP Master for Kerberos authentication:
   ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
 - Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+
     CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
     CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
+
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
   ``<cdap-principal>`` when adding these two properties::
 
