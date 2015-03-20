@@ -100,9 +100,9 @@ with JSON-formatted name of the dataset type and properties in a body::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"}}``
    * - Description
-     - Creates a Dataset named "mydataset" of the type "table" in the namespace *default*
+     - Creates a Dataset named *mydataset* of the type ``Table`` in the namespace *default*
        with the time-to-live property set to 1 hour
 
 
@@ -159,9 +159,9 @@ with JSON-formatted name of the dataset type and properties in the body::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/datasets/mydataset/properties``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"7200"}}``
    * - Description
-     - For the "mydataset" of type "Table" of the namespace *default*, update the Dataset
+     - For the *mydataset* of type ``Table`` of the namespace *default*, update the Dataset
        and its time-to-live property to 2 hours
 
 
