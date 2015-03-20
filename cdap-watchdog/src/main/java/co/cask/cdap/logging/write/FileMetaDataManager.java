@@ -350,16 +350,8 @@ public final class FileMetaDataManager {
     String programName = parentLocation != null ? parentLocation.getName() : null;
     parentLocation = Locations.getParent(parentLocation); // strip program name
     String programType = parentLocation != null ? parentLocation.getName() : null;
-    parentLocation = Locations.getParent(parentLocation); // strip program type
 
-    parentLocation = Locations.getParent(parentLocation); // strip old namespace
-    String avro = parentLocation != null ? parentLocation.getName() : null;
-
-    parentLocation = Locations.getParent(parentLocation); // strip avro
-
-    String logs = parentLocation != null ? parentLocation.getName() : null;
-
-    return locationFactory.create(namespace).append(logs).append(avro).append(programType).append(programName)
+    return locationFactory.create(namespace).append(logBaseDir).append(programType).append(programName)
       .append(date).append(logFilename);
   }
 
