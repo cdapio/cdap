@@ -54,7 +54,7 @@ public final class LoggingConfiguration {
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
   public static final long DEFAULT_KAFKA_PROCUDER_BUFFER_MS = 1000;
-  public static final String DEFAULT_NUM_PARTITIONS = "10";
+  public static final String DEFAULT_NUM_PARTITIONS = "50";
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
   public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;
