@@ -6,8 +6,6 @@ angular.module(PKG.name + '.services')
     };
 
     this.$get = ['$alert', function($alert) {
-
-      console.log('singleton');
       var queue = [];
       var count = 0;
       options = angular.extend({}, defaults);
@@ -45,7 +43,6 @@ angular.module(PKG.name + '.services')
       }
 
       function myAlertFactory(item) {
-        console.log('add');
         queue.push(item);
         initial();
       }
