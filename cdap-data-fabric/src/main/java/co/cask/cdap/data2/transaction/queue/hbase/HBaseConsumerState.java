@@ -62,8 +62,8 @@ public final class HBaseConsumerState {
     return Objects.toStringHelper(this)
       .add("config", consumerConfig)
       .add("start", Bytes.toStringBinary(startRow))
-      .add("barrierStart", Bytes.toStringBinary(previousBarrier))
-      .add("barrierEnd", Bytes.toStringBinary(nextBarrier))
+      .add("previousBarrier", Bytes.toStringBinary(previousBarrier))
+      .add("nextBarrier", Bytes.toStringBinary(nextBarrier))
       .toString();
   }
 }
