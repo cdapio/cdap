@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myAppUploader', function(myFileUploader, $state, myAlertQueue) {
+  .factory('myAppUploader', function(myFileUploader, $state, myAlert) {
     function upload(files, namespace) {
 
       for (var i = 0; i < files.length; i++) {
@@ -12,7 +12,7 @@ angular.module(PKG.name + '.services')
       }
 
       function success() {
-        $alert({
+        myAlert({
           type: 'success',
           title: 'Upload success!',
           content: 'The application has been uploaded successfully!'
@@ -22,7 +22,7 @@ angular.module(PKG.name + '.services')
 
       // Independent xhr request. Failure case will not be handled by $rootScope.
       function error(err) {
-        myAlertQueue.add({
+        myAlert({
           type: 'danger',
           title: 'Upload failed!',
           content: err || ''

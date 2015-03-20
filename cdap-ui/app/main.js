@@ -109,7 +109,7 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, myAlertQueue) {
+  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
       myAlertQueue.add({
@@ -122,7 +122,7 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
 
       if(data.statusCode>399) {
-        myAlertQueue.add({
+        myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Something went terribly wrong',
           type: 'danger'
@@ -130,7 +130,7 @@ angular
       }
 
       if(data.warning) {
-        myAlertQueue.add({
+        myAlert({
           content: data.warning,
           type: 'warning'
         });
