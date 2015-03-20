@@ -39,6 +39,9 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
 ### Build distributions (rpm, deb, tgz)
     mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
 
+### Build Cloudera Manager parcel
+    mvn package -DskipTests -P dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+
 ### Show dependency tree
     mvn package dependency:tree -DskipTests
 
