@@ -94,8 +94,8 @@ concurrently. To enable concurrent runs for a Workflow, set its runtime argument
 
 .. _workflow_parallel:
 
-Parallel Workflows
-==================
+Parallelizing Workflow Execution
+================================
 
 The control flow of a Workflow can be described as a directed, acyclic graph of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
@@ -111,7 +111,7 @@ profiles. When they are both done, execution is joined and continues with a cust
 to upload the computed profiles to a serving system, after which the control flow
 terminates:
 
-.. image:: /_images/parallel-workflow.png
+.. image:: /_images/parallelized-workflow.png
    :width: 8in
    :align: center
 
@@ -132,12 +132,12 @@ specification, following these rules:
 
 The application shown above could be coded (assuming the other classes referred to exist) as::
 
-  public class ParallelWorkflow extends AbstractWorkflow {
+  public class ParallelizedWorkflow extends AbstractWorkflow {
 
     @Override
     public void configure() {
-      setName("ParallelWorkflow");
-      setDescription("Demonstration of a parallel Workflow");
+      setName("ParallelizedWorkflow");
+      setDescription("Demonstration of parallelizing execution of a Workflow");
       
       addMapReduce("JoinWithCatalogMR");
     
@@ -158,12 +158,12 @@ rules and methods.
 More complicated structures can be created using ``fork``. To add another MapReduce
 that runs in parallel to the entire process described above, you could use code such as::
 
-  public class ParallelWorkflow extends AbstractWorkflow {
+  public class ComplexParallelizedWorkflow extends AbstractWorkflow {
 
     @Override
     public void configure() {
-      setName("DoubleParallelWorkflow");
-      setDescription("Demonstration of a double parallel Workflow");
+      setName("ComplexParallelizedWorkflow");
+      setDescription("Demonstration of parallelized execution using a complex fork in a Workflow");
 
       fork()
         .addMapReduce("JoinWithCatalogMR")
@@ -181,7 +181,7 @@ that runs in parallel to the entire process described above, you could use code 
 
 The diagram for this code would be:
 
-.. image:: /_images/double-parallel-workflow.png
+.. image:: /_images/complex-parallelized-workflow.png
    :width: 8in
    :align: center
 
