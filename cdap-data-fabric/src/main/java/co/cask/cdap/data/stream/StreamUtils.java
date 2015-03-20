@@ -390,15 +390,13 @@ public final class StreamUtils {
   }
 
   /**
-   * Get the size of the data persisted for the stream which config is the {@code streamConfig}.
+   * Get the size of the data persisted for the stream under the given stream location.
    *
-   * @param streamConfig stream to get data size of
+   * @param streamLocation stream to get data size of
    * @return the size of the data persisted for the stream which config is the {@code streamName}
    * @throws IOException in case of any error in fetching the size
    */
-  public static long fetchStreamFilesSize(StreamConfig streamConfig) throws IOException {
-    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(), getGeneration(streamConfig));
-
+  public static long fetchStreamFilesSize(Location streamLocation) throws IOException {
     Processor<LocationStatus, Long> processor = new Processor<LocationStatus, Long>() {
       private long size = 0;
       @Override
@@ -415,7 +413,7 @@ public final class StreamUtils {
       }
     };
 
-    List<Location> locations = streamPath.list();
+    List<Location> locations = streamLocation.list();
     // All directories are partition directories
     for (Location location : locations) {
       if (!location.isDirectory() || !isPartition(location.getName())) {

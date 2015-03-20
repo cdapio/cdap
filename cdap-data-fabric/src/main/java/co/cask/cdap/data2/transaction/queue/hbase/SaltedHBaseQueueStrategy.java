@@ -53,7 +53,9 @@ import java.util.concurrent.TimeUnit;
  * }
  * </pre>
  */
-final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
+public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
+
+  public static final int SALT_BYTES = 1;
 
   private static final Function<byte[], byte[]> ROW_KEY_CONVERTER = new Function<byte[], byte[]>() {
     @Override

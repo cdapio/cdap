@@ -62,9 +62,9 @@ Connecting to Secure CDAP Instances
 -----------------------------------
 
 When connecting to secure CDAP instances, the CLI will look for an access token located at
-~/.cdap.accesstoken.<hostname> and use it if it exists and is valid. If not, the CLI will prompt
+``~/.cdap.accesstoken.<hostname>`` and use it if it exists and is valid. If not, the CLI will prompt
 you for the required credentials to acquire an access token from the CDAP instance. Once acquired,
-the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
+the CLI will save it to ``~/.cdap.accesstoken.<hostname>"`` for later use and use it for the rest of
 the current CLI session.
 
 Options
@@ -84,6 +84,33 @@ The CLI may be started with command-line options, as detailed below::
    -u,--uri <arg>           CDAP instance URI to interact with in the format
                             "[http[s]://]<hostname>[:<port>[/<namespace>]]".
                             Defaults to "http://127.0.0.1:10000/default".
+                            
+
+Settings
+--------
+
+Certain commands (``connect`` and ``cli render as``) affect how CLI works for the duration of a session.
+
+The command ``"cli render as <table-renderer>"`` sets how table data is rendered. Valid options are
+either ``"alt"`` (the default) and ``"csv"``. As the ``"alt"`` option may split a cell into multiple
+lines, you may need to use ``"csv"`` if you want to copy and paste the results into another
+application or include in a message.
+
+- With ``"cli render as alt"`` (the default), a command such as ``"list apps"`` will be output as::
+
+    +================================+
+    | app id      | description      |
+    +=============+==================+
+    | PurchaseApp | Some description |
+    +=============+==================+
+
+- With ``"cli render as csv"``, the same ``"list apps"`` would be output as::
+
+    app id,description
+    PurchaseApp,Some description
+
+
+
 
 .. _cli-available-commands:
 

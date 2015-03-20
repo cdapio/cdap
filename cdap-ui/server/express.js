@@ -56,7 +56,7 @@ function makeApp (authAddress, cdapConfig) {
         routerServerPort: cdapConfig['router.server.port']
       },
       securityEnabled: authAddress.enabled,
-      isEnterprise: process.env.CDAP_MODE === 'enterprise'
+      isEnterprise: process.env.NODE_ENV === 'production'
     });
 
     res.header({

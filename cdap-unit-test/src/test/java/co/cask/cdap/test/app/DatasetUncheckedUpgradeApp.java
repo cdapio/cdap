@@ -24,8 +24,8 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 
 /**

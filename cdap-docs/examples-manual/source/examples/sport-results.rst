@@ -143,7 +143,7 @@ Once the application is deployed:
 
 - Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; or
+  Service detail page, then click the *Start* button;
 - Or use the Command Line Interface::
 
     cdap-cli.sh start service SportResults.UploadService
@@ -151,8 +151,8 @@ Once the application is deployed:
 Uploading Game Results
 ----------------------
 
-First, we will upload some CSV files into the ``results`` dataset. For example, to upload the results
-for the 2012 season of the NFL. From the examples ::
+Begin by uploading some CSV files into the ``results`` dataset. For example, to upload the results
+for the 2012 season of the NFL (National Football League)::
 
   cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
 

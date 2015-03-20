@@ -111,7 +111,7 @@ You'll need this software installed:
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment.
+for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
@@ -427,6 +427,9 @@ In order to configure CDAP Master for Kerberos authentication:
 - Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
   ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
+- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+    CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+    CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
   ``<cdap-principal>`` when adding these two properties::
 

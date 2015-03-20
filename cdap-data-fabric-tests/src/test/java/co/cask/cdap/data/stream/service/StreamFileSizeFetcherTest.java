@@ -62,7 +62,8 @@ public class StreamFileSizeFetcherTest {
     StreamConfig config = streamAdmin.getConfig(streamId);
 
     try {
-      StreamUtils.fetchStreamFilesSize(config);
+      StreamUtils.fetchStreamFilesSize(StreamUtils.createGenerationLocation(config.getLocation(),
+                                                                            StreamUtils.getGeneration(config)));
       Assert.fail("No stream file created yet");
     } catch (IOException e) {
       // Expected
@@ -83,7 +84,8 @@ public class StreamFileSizeFetcherTest {
 
     writer.close();
 
-    long size = streamAdmin.fetchStreamSize(config);
+    long size = StreamUtils.fetchStreamFilesSize(
+      StreamUtils.createGenerationLocation(config.getLocation(), StreamUtils.getGeneration(config)));
     Assert.assertTrue(size > 0);
     Assert.assertEquals(dataLocation.length(), size);
   }
@@ -109,11 +111,6 @@ public class StreamFileSizeFetcherTest {
     public StreamConfig getConfig(Id.Stream streamId) throws IOException {
       Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(locationFactory, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
-    }
-
-    @Override
-    public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-      return StreamUtils.fetchStreamFilesSize(streamConfig);
     }
   }
 

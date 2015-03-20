@@ -28,8 +28,8 @@ import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -56,8 +56,7 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    metricStore.delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
+    metricStore.deleteAll();
   }
 
   public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
@@ -166,7 +165,7 @@ public final class RuntimeStats {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached.");
+          throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
         }
       }
 

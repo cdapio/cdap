@@ -67,7 +67,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          @Named("dsFramework") final DatasetFramework dsFramework,
+                          DatasetFramework dsFramework,
                           DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
                           DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
@@ -104,6 +104,14 @@ public class DatasetUpgrader extends AbstractUpgrader {
     for (DatasetSpecification fileSetSpec : datasetInstanceMDSUpgrader.getFileSetsSpecs()) {
       upgradeFileSet(fileSetSpec);
     }
+  }
+
+  protected DatasetInstanceMDSUpgrader getDatasetInstanceMDSUpgrader() {
+    return datasetInstanceMDSUpgrader;
+  }
+
+  protected DatasetTypeMDSUpgrader getDatasetTypeMDSUpgrader() {
+    return datasetTypeMDSUpgrader;
   }
 
   /**

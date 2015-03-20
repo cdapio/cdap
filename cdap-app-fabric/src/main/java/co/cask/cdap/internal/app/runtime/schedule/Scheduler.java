@@ -112,7 +112,7 @@ public interface Scheduler {
    * @param program the program for which schedule needs to be updated
    * @param programType the type of the program
    * @param schedule the new schedule. The schedule with the same name will be replaced
-   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program} 
+   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */

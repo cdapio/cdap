@@ -31,7 +31,7 @@ import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

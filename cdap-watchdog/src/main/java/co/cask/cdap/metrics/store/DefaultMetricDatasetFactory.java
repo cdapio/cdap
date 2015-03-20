@@ -24,7 +24,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;

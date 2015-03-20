@@ -13,10 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+package co.cask.cdap.proto.codec;
+
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -26,34 +28,42 @@ import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Set;
 
 /**
- *
+ * Codec to serialize and deserialize {@link ProcedureSpecification}
  */
-public final class WorkflowActionSpecificationCodec extends AbstractSpecificationCodec<WorkflowActionSpecification> {
+public final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<ProcedureSpecification> {
 
   @Override
-  public JsonElement serialize(WorkflowActionSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ProcedureSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-
+    jsonObj.add("resources", context.serialize(src.getResources(), Resources.class));
+    jsonObj.addProperty("instances", src.getInstances());
     return jsonObj;
   }
 
   @Override
-  public WorkflowActionSpecification deserialize(JsonElement json, Type typeOfT,
-                                                 JsonDeserializationContext context) throws JsonParseException {
+  public ProcedureSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+    throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
 
-    return new DefaultWorkflowActionSpecification(className, name, description, properties);
+    JsonElement instanceElem = jsonObj.get("instances");
+    int instances = (instanceElem == null || instanceElem.isJsonNull()) ? 1 : jsonObj.get("instances").getAsInt();
+    return new DefaultProcedureSpecification(className, name, description, dataSets,
+                                             properties, resources, instances);
   }
 }

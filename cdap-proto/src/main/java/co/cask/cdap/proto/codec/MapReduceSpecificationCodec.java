@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  *
  */
-final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapReduceSpecification> {
+public final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapReduceSpecification> {
 
   @Override
   public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc, JsonSerializationContext context) {

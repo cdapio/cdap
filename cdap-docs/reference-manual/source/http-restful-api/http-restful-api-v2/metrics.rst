@@ -128,6 +128,8 @@ For example, to request a user-defined metric for the *HelloWorld* Application's
   GET <base-url>/metrics/user/apps/HelloWorld/flows/
     WhoFlow/flowlets/saver/names.bytes?aggregate=true
 
+.. _http-restful-api-v2-metrics-multiple:
+
 To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON list as the request body that enumerates the name and attributes for each metrics. For example::
 
   POST <base-url>/metrics

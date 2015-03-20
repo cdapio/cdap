@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -93,7 +94,7 @@ public class MetricsQueryService extends AbstractIdleService {
     httpService.startAndWait();
     LOG.info("Started Metrics HTTP Service...");
     // Register the service
-    cancelDiscovery = discoveryService.register(new Discoverable() {
+    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.METRICS;
@@ -103,7 +104,7 @@ public class MetricsQueryService extends AbstractIdleService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
 
     LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }

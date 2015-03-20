@@ -25,7 +25,7 @@ public interface WorkerManager {
    * Changes the number of instances.
    * @param instances number of instances to change to
    */
-  void setRunnableInstances(int instances);
+  void setInstances(int instances);
 
   /**
    * Stops the running worker.
@@ -37,4 +37,28 @@ public interface WorkerManager {
    * @return true if worker is running
    */
   boolean isRunning();
+
+  /**
+   * Waits for the worker to be running or stopped.
+   *
+   * @param status true to wait for running, false to wait for stopped
+   * @throws InterruptedException
+   */
+  public void waitForStatus(boolean status) throws InterruptedException;
+
+  /**
+   * Waits for the worker to be running or stopped.
+   *
+   * @param status true to wait for running, false to wait for stopped
+   * @param retries times to retry
+   * @param timeout how long to try before timing out
+   * @throws InterruptedException
+   */
+  public void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
+
+  /**
+   * Returns the number of instances.
+   *
+   */
+  int getInstances();
 }

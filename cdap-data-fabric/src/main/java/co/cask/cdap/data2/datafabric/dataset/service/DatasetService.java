@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -158,7 +159,7 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     LOG.info("Announcing DatasetService for discovery...");
     // Register the service
-    cancelDiscovery = discoveryService.register(new Discoverable() {
+    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.DATASET_MANAGER;
@@ -168,7 +169,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
 
     LOG.info("DatasetService started successfully on {}", httpService.getBindAddress());
     while (isRunning()) {
@@ -222,7 +223,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
     }
-    
+
     mdsDatasets.shutDown();
 
     typeManager.stopAndWait();
