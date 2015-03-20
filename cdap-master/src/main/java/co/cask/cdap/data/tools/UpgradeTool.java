@@ -101,6 +101,7 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final Injector injector;
   private final HBaseTableUtil hBaseTableUtil;
+  private final LocationFactory locationFactory;
 
   private Store store;
   private FileMetaDataManager fileMetaDataManager;
@@ -130,6 +131,7 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
+    this.locationFactory = injector.getInstance(LocationFactory.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -433,6 +435,7 @@ public class UpgradeTool {
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    locationFactory.create(Constants.DEFAULT_NAMESPACE);
   }
 
   /**
