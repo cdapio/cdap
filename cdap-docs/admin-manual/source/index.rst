@@ -56,8 +56,8 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. |operations| replace:: **Operations:**
 .. _operations: installation/index.html
 
-|operations|_ Covers **logging, metrics, preferences, scaling instances and
-introduces the CDAP Console.** 
+|operations|_ Covers **logging, metrics, preferences, scaling instances, resource guarantees, 
+transaction service maintenance, troubleshooting, and introduces the CDAP Console.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html
@@ -72,19 +72,29 @@ introduces the CDAP Console.**
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
+- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows, and Workers can receive **runtime arguments.**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html
 
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
 
-.. |cdap-console| replace:: **CDAP Console:**
-.. _cdap-console: operations/cdap-console.html
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: operations/resource-guarantees.html
 
-- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: operations/tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html
 
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
+
+.. |cdap-console| replace:: **CDAP Console:**
+.. _cdap-console: operations/cdap-console.html
+
+- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 

@@ -8,9 +8,9 @@
 .. _restful-v2-api:
 .. _http-restful-api-v2:
 
-===========================================================
+========================
 CDAP HTTP RESTful API v2
-===========================================================
+========================
 
 .. toctree::
    
@@ -24,6 +24,7 @@ CDAP HTTP RESTful API v2
     Logging <logging>
     Metrics <metrics>
     Monitor <monitor>
+    Transactions <transactions>
 
 .. include:: /_includes/include-v280-deprecate-http-restful-api-v2.rst
 
@@ -42,3 +43,4 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 - :doc:`Logging: <logging>` retrieving Application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
+- :doc:`Transactions: <transactions>` interacting with the Transaction Service

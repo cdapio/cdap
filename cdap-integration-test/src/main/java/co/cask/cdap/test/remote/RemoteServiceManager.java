@@ -21,6 +21,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.AbstractServiceManager;
@@ -34,25 +35,36 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteServiceManager extends AbstractServiceManager {
 
-  private final RemoteApplicationManager.ProgramId serviceId;
-  private final ServiceClient serviceClient;
-  private final ProgramClient programClient;
+  private final Id.Service serviceId;
   private final MetricsClient metricsClient;
   private final ClientConfig clientConfig;
 
-  public RemoteServiceManager(RemoteApplicationManager.ProgramId serviceId, ClientConfig clientConfig) {
+  public RemoteServiceManager(Id.Service serviceId, ClientConfig clientConfig) {
     this.serviceId = serviceId;
     this.clientConfig = clientConfig;
-    this.serviceClient = new ServiceClient(clientConfig);
-    this.programClient = new ProgramClient(clientConfig);
     this.metricsClient = new MetricsClient(clientConfig);
+  }
+
+  private ClientConfig getClientConfig() {
+    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+      .setNamespace(serviceId.getNamespace())
+      .build();
+    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
+  }
+
+  private ProgramClient getProgramClient() {
+    return new ProgramClient(getClientConfig());
+  }
+
+  private ServiceClient getServiceClient() {
+    return new ServiceClient(getClientConfig());
   }
 
   @Override
   public void setRunnableInstances(String runnable, int instances) {
     try {
-      programClient.setServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getRunnableId(),
-                                                runnable, instances);
+      getProgramClient().setServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getId(),
+                                                     runnable, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -66,8 +78,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public int getProvisionedInstances(String runnableName) {
     try {
-      return programClient.getServiceRunnableInstances(serviceId.getApplicationId(), serviceId.getRunnableId(),
-                                                       runnableName);
+      return getProgramClient().getServiceRunnableInstances(serviceId.getApplicationId(),
+                                                            serviceId.getId(), runnableName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -76,7 +88,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public void stop() {
     try {
-      programClient.stop(serviceId.getApplicationId(), ProgramType.SERVICE, serviceId.getRunnableId());
+      getProgramClient().stop(serviceId.getApplicationId(), ProgramType.SERVICE, serviceId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -85,8 +97,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public boolean isRunning() {
     try {
-      return "RUNNING".equals(programClient.getStatus(serviceId.getApplicationId(),
-                                                      ProgramType.SERVICE, serviceId.getRunnableId()));
+      return "RUNNING".equals(getProgramClient().getStatus(serviceId.getApplicationId(),
+                                                           ProgramType.SERVICE, serviceId.getId()));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -95,7 +107,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public URL getServiceURL() {
     try {
-      return serviceClient.getServiceURL(serviceId.getApplicationId(), serviceId.getRunnableId());
+      return getServiceClient().getServiceURL(serviceId.getApplicationId(), serviceId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -104,8 +116,8 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
     try {
-      // TODO: handle timeout?
-      return serviceClient.getServiceURL(serviceId.getApplicationId(), serviceId.getRunnableId());
+      // TODO: handle timeout
+      return getServiceClient().getServiceURL(serviceId.getApplicationId(), serviceId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -113,8 +125,6 @@ public class RemoteServiceManager extends AbstractServiceManager {
 
   @Override
   public RuntimeMetrics getMetrics() {
-    Id.Application app = Id.Application.from(clientConfig.getNamespace(), serviceId.getApplicationId());
-    Id.Program program = Id.Program.from(app, ProgramType.SERVICE, serviceId.getRunnableId());
-    return metricsClient.getServiceMetrics(program);
+    return metricsClient.getServiceMetrics(serviceId);
   }
 }

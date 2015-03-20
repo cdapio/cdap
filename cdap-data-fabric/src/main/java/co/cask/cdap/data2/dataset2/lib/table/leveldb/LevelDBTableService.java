@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBNameConverter;
+import co.cask.cdap.data2.util.TableId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -89,10 +91,8 @@ public class LevelDBTableService {
   /**
    * only use in unit test since the singleton may be reused for multiple tests.
    */
-  public void clearTables() throws IOException {
-    for (String name : ImmutableList.copyOf(tables.keySet())) {
-      dropTable(name);
-    }
+  public void clearTables() {
+    tables.clear();
   }
 
   public Collection<String> list() throws Exception {
@@ -114,19 +114,19 @@ public class LevelDBTableService {
    * @return map of table name -> table stats entries
    * @throws Exception
    */
-  public Map<String, TableStats> getTableStats() throws Exception {
+  public Map<TableId, TableStats> getTableStats() throws Exception {
     File baseDir = new File(basePath);
     File[] subDirs = baseDir.listFiles();
     if (subDirs == null) {
       return ImmutableMap.of();
     }
 
-    ImmutableMap.Builder<String, TableStats> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<TableId, TableStats> builder = ImmutableMap.builder();
     for (File dir : subDirs) {
       String tableName = getTableName(dir.getName());
       // NOTE: we are using recursion to traverse file tree as we know that leveldb table fs tree is couple levels deep.
       long size = getSize(dir);
-      builder.put(tableName, new TableStats(size));
+      builder.put(LevelDBNameConverter.from(tableName), new TableStats(size));
     }
     return builder.build();
   }

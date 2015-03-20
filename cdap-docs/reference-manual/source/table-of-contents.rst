@@ -10,6 +10,7 @@ CDAP Reference Manual Table of Contents
    :maxdepth: 5
 
     Introduction <index>
+    Supported Characters <characters>
     HTTP RESTful API <http-restful-api/index>
     Javadocs <javadocs/index>
     Java Client API <java-client-api>

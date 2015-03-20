@@ -21,11 +21,9 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -41,13 +39,11 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.adapterClient = adapterClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -65,7 +61,7 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
                                     GSON.toJson(object.getProperties()));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

@@ -23,17 +23,19 @@ body.theme-cdap header {
 
       &:after {
         position: absolute;
-        content: 'BETA';
-        width: 77px;
+        content: 'ALPHA';
+        width: 76px;
         text-align: center;
-        background-color: @gray-light;
-        color: @cdap-darkness;
+        background-color: @cdap-bluegray;
+        color: @cdap-white;
         font-size: 8px;
-        font-weight: bold;
+        //font-weight: bold;
         line-height: 12px;
-        border-radius: 12px;
-        bottom: 0;
+        border-radius: 2px;
+        bottom: -5px;
         left: 15px;
+        letter-spacing: 2px;
+        padding:1px 0;
       }
 
     }
@@ -54,18 +56,22 @@ body.theme-cdap header {
           li {
             width: 120px;
             overflow: hidden;
-
             text-align: center;
-            text-transform: uppercase;
+            text-transform: lowercase;
             // font-weight: 300;
 
             > a {
               border-radius: 25px;
-              padding: 8px;
-              margin: 2px;
+              padding: 9px;
+              margin: 1px;
+              color:@btn-primary-color;
               &:hover {
                 color: @cdap-orange;
               }
+            }
+
+            a:first-letter{
+              text-transform: uppercase;
             }
 
             &.active > a {
@@ -81,20 +87,22 @@ body.theme-cdap header {
 
         &.open {
           a.dropdown-toggle {
-            background-color: @cdap-darkness;
+            background-color: @cdap-white;
+            color:@cdap-header;
             border-top-left-radius: @border-radius-base;
             border-top-right-radius: @border-radius-base;
           }
         }
 
         ul.dropdown-menu {
-          background-color: @cdap-darkness;
-          border-color: @cdap-darkness;
-          border-top-right-radius: @border-radius-base;
+          background-color: @brand-primary;
+          border-color: @brand-primary;
+          border-top-right-radius:none;
           a {
             color: white;
             &:hover {
-              color: @text-color;
+              color:rgba(255, 255, 255, 0.5);;
+              background-color: @cdap-darkblue;
             }
           }
           li.divider {

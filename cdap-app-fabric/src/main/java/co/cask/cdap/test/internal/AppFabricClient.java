@@ -23,10 +23,10 @@ import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -250,7 +250,8 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = applicationId + ".jar";
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        "/v2/apps");
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
@@ -351,4 +352,4 @@ public class AppFabricClient {
 
     return createDeploymentJar(locationFactory, clz, manifest);
   }
- }
+}

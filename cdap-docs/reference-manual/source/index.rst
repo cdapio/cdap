@@ -8,6 +8,13 @@
 CDAP Reference Manual: APIs, Licenses, and Dependencies
 =======================================================
 
+
+.. |characters| replace:: **Supported Characters:**
+.. _characters: characters.html
+
+- |characters|_ Accepted naming conventions for CDAP elements.
+
+
 .. |http| replace:: **HTTP RESTful API:**
 .. _http: http-restful-api/index.html
 

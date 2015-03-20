@@ -28,6 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Upgrades Dataset instances MDS
@@ -56,8 +58,7 @@ public final class DatasetInstanceMDSUpgrader {
 
   @Inject
   private DatasetInstanceMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                     @Named("dsFramework") final DatasetFramework dsFramework) {
-
+                                     final DatasetFramework dsFramework) {
     this.datasetInstanceMds = Transactional.of(executorFactory,
        new Supplier<UpgradeMDSStores<DatasetInstanceMDS>>() {
          @Override
@@ -122,7 +123,7 @@ public final class DatasetInstanceMDSUpgrader {
       List<DatasetSpecification>>() {
       @Override
       public List<DatasetSpecification> apply(UpgradeMDSStores<DatasetInstanceMDS> ctx) throws Exception {
-        MDSKey key = new MDSKey(Bytes.toBytes(DatasetInstanceMDS.INSTANCE_PREFIX));
+        MDSKey key = new MDSKey.Builder().add(DatasetInstanceMDS.INSTANCE_PREFIX).build();
         List<DatasetSpecification> dsSpecs = ctx.getNewMds().list(key, DatasetSpecification.class);
         List<DatasetSpecification> fileSetSpecs = Lists.newArrayList();
         for (DatasetSpecification dsSpec : dsSpecs) {
@@ -181,11 +182,16 @@ public final class DatasetInstanceMDSUpgrader {
   private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec) {
     Id.DatasetInstance dsId = from(oldSpec.getName());
     String newDatasetName = dsId.getId();
+    return migrateDatasetSpec(oldSpec, newDatasetName);
+  }
+
+  private DatasetSpecification migrateDatasetSpec(DatasetSpecification oldSpec, String newDatasetName) {
     DatasetSpecification.Builder builder = DatasetSpecification.builder(newDatasetName, oldSpec.getType())
       .properties(oldSpec.getProperties());
-    for (DatasetSpecification embeddedDsSpec : oldSpec.getSpecifications().values()) {
+    for (Map.Entry<String, DatasetSpecification> dsSpecEntry : oldSpec.getSpecifications().entrySet()) {
+      DatasetSpecification embeddedDsSpec = dsSpecEntry.getValue();
       LOG.debug("Migrating embedded Dataset spec: {}", embeddedDsSpec);
-      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec);
+      DatasetSpecification migratedEmbeddedSpec = migrateDatasetSpec(embeddedDsSpec, dsSpecEntry.getKey());
       LOG.debug("New embedded Dataset spec: {}", migratedEmbeddedSpec);
       builder.datasets(migratedEmbeddedSpec);
     }
@@ -204,5 +210,10 @@ public final class DatasetInstanceMDSUpgrader {
       throw new IllegalArgumentException(String.format("Expected Dataset namespace to be either 'system' or 'user': %s",
                                                        dsId));
     }
+  }
+
+  public TableId getOldDatasetInstanceTableId() {
+    String tableName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return TableId.from(Constants.DEFAULT_NAMESPACE_ID, tableName);
   }
 }

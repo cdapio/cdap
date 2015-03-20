@@ -111,7 +111,7 @@ You'll need this software installed:
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment.
+for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
@@ -127,11 +127,11 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from v0.8.16 through v0.10.32) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be v0.8.16 or greater.
+#. The version of Node.js must be from v0.8.16 through v0.10.36.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
-   `nodejs.org/download/ <http://nodejs.org/download/>`__.
+   `nodejs.org/download/ <http://nodejs.org/dist/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
@@ -427,6 +427,9 @@ In order to configure CDAP Master for Kerberos authentication:
 - Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
   ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
+- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+    CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+    CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
   ``<cdap-principal>`` when adding these two properties::
 
