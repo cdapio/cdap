@@ -11,7 +11,7 @@ Troubleshooting a CDAP Application
 A collection of tips and hints on solving problems encountered during development.
 
 
-.. rubric:: Setting a Classloader for Custom Classes
+.. rubric:: Using Sequence Files in Programs
 
 **Question:**
 
