@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,7 +30,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
@@ -46,19 +44,14 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -72,17 +65,13 @@ public class MDSUpgrader extends AbstractUpgrader {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final Transactional<AppMDS, MetadataStoreDataset> appMDS;
-  private final CConfiguration cConf;
   private final Store store;
-  private final Set<String> appStreams;
   private final TableId appMetaTableId;
 
   @Inject
   private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      final DatasetFramework dsFramework, CConfiguration cConf,
-                      @Named("defaultStore") final Store store) {
+                      final DatasetFramework dsFramework, @Named("defaultStore") final Store store) {
     super(locationFactory);
-    this.cConf = cConf;
     this.store = store;
     final String appMetaTableName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE);
     this.appMDS = Transactional.of(executorFactory, new Supplier<AppMDS>() {
@@ -101,7 +90,6 @@ public class MDSUpgrader extends AbstractUpgrader {
         }
       }
     });
-    this.appStreams = Sets.newHashSet();
     this.appMetaTableId = TableId.from(Constants.DEFAULT_NAMESPACE_ID, appMetaTableName);
   }
 
@@ -128,12 +116,7 @@ public class MDSUpgrader extends AbstractUpgrader {
         MDSKey streamRecordPrefix = new MDSKey.Builder().add(AppMetadataStore.TYPE_STREAM).build();
         List<StreamSpecification> streamsSpec = appMetaStore.mds.list(streamRecordPrefix, StreamSpecification.class);
         for (StreamSpecification curStreamSpec : streamsSpec) {
-          // Streams which are a part of an application gets upgraded when we upgrade the application meta
-          // if this stream was not a part of any application then this stream meta was not upgraded so upgrade it
-          // separately
-          if (!appStreams.contains(curStreamSpec.getName())) {
-            store.addStream(Id.Namespace.from(Constants.DEFAULT_NAMESPACE), curStreamSpec);
-          }
+          store.addStream(Id.Namespace.from(Constants.DEFAULT_NAMESPACE), curStreamSpec);
         }
         return null;
       }
