@@ -522,7 +522,8 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
    * - ``resolution=[1 | 60 | 3600 | auto]``
-     - Time resolution in seconds, or if "auto" based on time difference.
+     - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
+       the time difference.
 
 With a specific time range, a ``resolution`` can be included to retrieve a series of data
 points for a metric. By default, 1 second resolution is used. Acceptable values are noted
