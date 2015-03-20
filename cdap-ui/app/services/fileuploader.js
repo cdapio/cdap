@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myFileUploader', function($q, $window, $alert, cfpLoadingBar, myAuth, myAlertQueue) {
+  .factory('myFileUploader', function($q, $window, cfpLoadingBar, myAuth, myAlertQueue) {
     function upload(fileObj){
       var deferred = $q.defer();
       if (!myAuth.currentUser) {
