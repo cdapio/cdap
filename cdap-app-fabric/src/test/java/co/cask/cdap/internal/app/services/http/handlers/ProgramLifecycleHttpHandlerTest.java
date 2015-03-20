@@ -115,17 +115,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_STREAM_SCHEDULE_APP_NAME = "AppWithStreamSizeSchedule";
+  private static final String APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_1 = "SampleSchedule1";
+  private static final String APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final String APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
   private static final String APP_WITH_STREAM_SCHEDULE_STREAM_NAME = "stream";
   private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
   private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
+  private static final String APP_WITH_SCHEDULE_SCHEDULE_NAME = "SampleSchedule";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
   private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
+  private static final String APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_1 = "concurrentWorkflowSchedule1";
+  private static final String APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_2 = "concurrentWorkflowSchedule2";
   private static final String CONCURRENT_WORKFLOW_NAME = "ConcurrentWorkflow";
   private static final String WORKFLOW_APP_WITH_ERROR_RUNS = "WorkflowAppWithErrorRuns";
   private static final String WORKFLOW_WITH_ERROR_RUNS = "WorkflowWithErrorRuns";
+  private static final String WORKFLOW_WITH_ERROR_RUNS_SCHEDULE = "SampleSchedule";
   private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS = "WorkflowAppWithScopedParameters";
   private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW = "OneWorkflow";
   private static final String WORKFLOW_APP_WITH_FORK = "WorkflowAppWithFork";
@@ -707,6 +713,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                    defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    Assert.assertEquals(200, resumeSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
+                                            APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_1));
+    Assert.assertEquals(200, resumeSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
+                                            APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_2));
+
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
@@ -945,6 +956,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    Assert.assertEquals(200,
+                        resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_SCHEDULE_NAME));
+
     //TODO: cannot test the /current endpoint because of CDAP-66. Enable after that bug is fixed.
 //    Assert.assertEquals(200, getWorkflowCurrentStatus(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
 //                                                      APP_WITH_SCHEDULE_WORKFLOW_NAME));
@@ -1041,6 +1055,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                            APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_1));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+                                            APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_2));
 
     // get schedules
     List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
@@ -1139,6 +1158,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(WorkflowAppWithErrorRuns.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS,
+                                            WORKFLOW_WITH_ERROR_RUNS_SCHEDULE));
 
     String runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, WORKFLOW_WITH_ERROR_RUNS, "completed");
     scheduleHistoryRuns(5, runsUrl, 0);

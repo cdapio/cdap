@@ -95,6 +95,12 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
   public void testStreamSizeSchedule() throws Exception {
     // Test the StreamSizeScheduler behavior using notifications
     AppFabricTestHelper.deployApplication(AppWithStreamSizeSchedule.class);
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
+                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
+    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,

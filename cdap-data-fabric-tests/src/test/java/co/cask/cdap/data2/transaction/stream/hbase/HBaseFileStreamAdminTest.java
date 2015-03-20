@@ -114,14 +114,15 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     txManager = injector.getInstance(TransactionManager.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
-    streamCoordinatorClient.startAndWait();
 
     setupNamespaces(injector.getInstance(LocationFactory.class));
     txManager.startAndWait();
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
     testHBase.stopHBase();
   }

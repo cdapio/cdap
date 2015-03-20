@@ -289,26 +289,27 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
+  public FlowSpecification setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
 
     LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
                 "new instances count: {}", id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    FlowSpecification flowSpec = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, FlowSpecification>() {
       @Override
-      public Void apply(AppMds mds) throws Exception {
+      public FlowSpecification apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
-        return null;
+        return appSpec.getFlows().get(id.getId());
       }
     });
 
     LOG.trace("Set flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
+    return flowSpec;
   }
 
   @Override

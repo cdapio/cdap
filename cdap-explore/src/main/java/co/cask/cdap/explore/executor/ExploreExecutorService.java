@@ -18,6 +18,7 @@ package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -90,7 +91,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     }
 
     httpService.startAndWait();
-    cancellable = discoveryService.register(new Discoverable() {
+    cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
@@ -100,7 +101,7 @@ public class ExploreExecutorService extends AbstractIdleService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
 
     // TODO: figure out how to run explore service in upgrade tool and remove from start up
     exploreService.upgrade();

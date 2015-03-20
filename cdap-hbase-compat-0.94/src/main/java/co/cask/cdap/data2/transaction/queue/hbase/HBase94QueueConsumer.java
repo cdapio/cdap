@@ -38,10 +38,10 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 final class HBase94QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
 
-  HBase94QueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+  HBase94QueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
                        HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                        HBaseQueueStrategy queueStrategy) {
-    super(cConf, consumerConfig, hTable, queueName, consumerState, stateStore, queueStrategy);
+    super(cConf, hTable, queueName, consumerState, stateStore, queueStrategy);
     this.processedStateFilter = createStateFilter();
   }
 

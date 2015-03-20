@@ -181,6 +181,7 @@ public class TestBase {
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+    cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
 

@@ -30,6 +30,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
@@ -73,32 +75,34 @@ public class MDSUpgrader extends AbstractUpgrader {
   private final CConfiguration cConf;
   private final Store store;
   private final Set<String> appStreams;
+  private final TableId appMetaTableId;
 
   @Inject
   private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      @Named("dsFramework") final DatasetFramework dsFramework, CConfiguration cConf,
+                      final DatasetFramework dsFramework, CConfiguration cConf,
                       @Named("defaultStore") final Store store) {
     super(locationFactory);
     this.cConf = cConf;
     this.store = store;
+    final String appMetaTableName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE);
     this.appMDS = Transactional.of(executorFactory, new Supplier<AppMDS>() {
       @Override
       public AppMDS get() {
         try {
-          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, Id.DatasetInstance.from
-                                                          (Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(
-                                                            Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE)),
+          Table table = DatasetsUtil.getOrCreateDataset(dsFramework,
+                                                        Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID,
+                                                                                appMetaTableName),
                                                         "table", DatasetProperties.EMPTY,
                                                         DatasetDefinition.NO_ARGUMENTS, null);
           return new AppMDS(new AppMetadataStoreDataset(table));
         } catch (Exception e) {
-          LOG.error("Failed to access {} table", Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                     DefaultStore.APP_META_TABLE), e);
+          LOG.error("Failed to access {} table", appMetaTableName, e);
           throw Throwables.propagate(e);
         }
       }
     });
-    appStreams = Sets.newHashSet();
+    this.appStreams = Sets.newHashSet();
+    this.appMetaTableId = TableId.from(Constants.DEFAULT_NAMESPACE_ID, appMetaTableName);
   }
 
   @Override
@@ -300,6 +304,10 @@ public class MDSUpgrader extends AbstractUpgrader {
     public Iterator<MetadataStoreDataset> iterator() {
       return Iterators.singletonIterator(mds);
     }
+  }
+
+  public TableId getOldAppMetaTableId() {
+    return appMetaTableId;
   }
 
   /**
