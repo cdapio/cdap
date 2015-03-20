@@ -111,4 +111,46 @@ body.theme-cdap {
   }
 
 
+  //
+  // Modals
+  // --------------------------------------------------
+  .modal {
+    background-color: fade(@cdap-darkblue, 80%);
+    .modal-dialog {
+      &.modal-lg {
+        width: 90%;
+      }
+      .modal-content {
+        background-color: transparent;
+        border: 0;
+        .box-shadow(none);
+        .modal-header {
+          border-bottom: 0;
+        }
+        .form-group {
+          label {
+            color: white;
+            font-size: 21px;
+          }
+          .form-control {
+            border: 0;
+            .box-shadow(none);
+            &:focus {
+              border-color: transparent;
+              .box-shadow(none);
+            }
+          }
+        }
+        .modal-footer {
+          border-top: 0;
+          button {
+
+          }
+        }
+      }
+    }
+
+  }
+
+
 }
