@@ -87,7 +87,8 @@ For more details, refer to :ref:`Custom Datasets. <custom-datasets>`
 .. rubric::  Dataset Time-To-Live (TTL)
 
 Datasets, like :ref:`Streams <streams>`, can have a Time-To-Live (TTL) property that
-governs how long data will be persisted in a specific Dataset.
+governs how long data will be persisted in a specific Dataset. TTL is configured as the
+maximum age (in milliseconds) that data should be retained.
 
 When you create a Dataset, you can configure its TTL as part of the creation::
 
