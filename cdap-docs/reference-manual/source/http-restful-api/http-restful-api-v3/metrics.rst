@@ -82,9 +82,9 @@ enclosing context. These are the available Application contexts of CDAP:
    * - All Workers of an Application
      - ``namespace.<namespace>.app.<app-id>.workers.*``
    * - All Mappers of a MapReduce
-     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.mappers.*``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.tasktype.m``
    * - All Reducers of a MapReduce
-     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.reducers.*``
+     - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>.tasktype.r``
    * - One MapReduce
      - ``namespace.<namespace>.app.<app-id>.mapreduce.<mapreduce-id>``
    * - All MapReduce of an Application
