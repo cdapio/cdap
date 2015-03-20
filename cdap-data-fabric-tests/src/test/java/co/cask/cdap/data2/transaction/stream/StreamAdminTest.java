@@ -89,7 +89,7 @@ public abstract class StreamAdminTest {
 
     streamAdmin.dropAllInNamespace(Id.Namespace.from(FOO_NAMESPACE));
 
-    // All of the streams within the default namespace should have no data in them
+    // All of the streams within the default namespace should no longer exist
     for (Id.Stream defaultStream : fooStreams) {
       Assert.assertFalse(streamAdmin.exists(defaultStream));
     }

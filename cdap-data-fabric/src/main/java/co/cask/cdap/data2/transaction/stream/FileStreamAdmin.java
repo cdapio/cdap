@@ -305,7 +305,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
     Location namespaceHomeLocation = Locations.getParent(getNamespaceLocation(namespaceId));
-    Preconditions.checkArgument(namespaceHomeLocation == null || namespaceHomeLocation.exists(),
+    Preconditions.checkArgument(namespaceHomeLocation != null && namespaceHomeLocation.exists(),
                                 "Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
   }
 
@@ -372,17 +372,18 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void doDrop(final Id.Stream streamId, final Location streamLocation) throws Exception {
-    streamCoordinatorClient.deleteStream(streamId, new Callable<Id.Stream>() {
+    streamCoordinatorClient.deleteStream(streamId, new Callable<CoordinatorStreamProperties>() {
       @Override
-      public Id.Stream call() throws Exception {
+      public CoordinatorStreamProperties call() throws Exception {
         Location configLocation = getConfigLocation(streamId);
-        if (configLocation.exists()) {
-          alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
-          int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
-          Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
-          configLocation.delete();
+        if (!configLocation.exists()) {
+          return null;
         }
-        return streamId;
+        alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
+        configLocation.delete();
+        int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
+        Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
+        return new CoordinatorStreamProperties(null, null, null, newGeneration);
       }
     });
   }

@@ -72,5 +72,5 @@ public interface StreamCoordinatorClient extends Service {
    * @param action action to perform.
    * @throws Exception if the action throws Exception
    */
-  void deleteStream(Id.Stream streamId, Callable<Id.Stream> action) throws Exception;
+  void deleteStream(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
 }

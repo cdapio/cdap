@@ -26,6 +26,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.common.Cancellable;
@@ -106,34 +107,22 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     Lock lock = getLock(streamId);
     lock.lock();
     try {
-      final CoordinatorStreamProperties properties = action.call();
-      propertyStore.update(streamId.toId(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
-
-        @Override
-        protected CoordinatorStreamProperties compute(@Nullable CoordinatorStreamProperties oldProperties) {
-          if (oldProperties == null) {
-            return properties;
-          }
-          // Merge the old and new properties.
-          return new CoordinatorStreamProperties(
-            firstNotNull(properties.getTTL(), oldProperties.getTTL()),
-            firstNotNull(properties.getFormat(), oldProperties.getFormat()),
-            firstNotNull(properties.getNotificationThresholdMB(), oldProperties.getNotificationThresholdMB()),
-            firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
-        }
-      }).get();
+      updateProperties(streamId, action.call()).get();
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public void deleteStream(Id.Stream streamId, Callable<Id.Stream> action) throws Exception {
+  public void deleteStream(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
-      action.call();
-      streamDeleted(streamId);
+      CoordinatorStreamProperties properties = action.call();
+      if (properties != null) {
+        updateProperties(streamId, properties).get();
+        streamDeleted(streamId);
+      }
     } finally {
       lock.unlock();
     }
@@ -180,6 +169,28 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   @Nullable
   private <T> T firstNotNull(@Nullable T first, @Nullable T second) {
     return first != null ? first : second;
+  }
+
+  /**
+   * Updates stream properties in the property store.
+   */
+  private ListenableFuture<CoordinatorStreamProperties> updateProperties(Id.Stream streamId,
+                                                                         final CoordinatorStreamProperties properties) {
+    return propertyStore.update(streamId.toId(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
+
+      @Override
+      protected CoordinatorStreamProperties compute(@Nullable CoordinatorStreamProperties oldProperties) {
+        if (oldProperties == null) {
+          return properties;
+        }
+        // Merge the old and new properties.
+        return new CoordinatorStreamProperties(
+          firstNotNull(properties.getTTL(), oldProperties.getTTL()),
+          firstNotNull(properties.getFormat(), oldProperties.getFormat()),
+          firstNotNull(properties.getNotificationThresholdMB(), oldProperties.getNotificationThresholdMB()),
+          firstNotNull(properties.getGeneration(), oldProperties.getGeneration()));
+      }
+    });
   }
 
   /**
