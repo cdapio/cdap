@@ -101,6 +101,7 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final Injector injector;
   private final HBaseTableUtil hBaseTableUtil;
+  private final LocationFactory locationFactory;
 
   private Store store;
   private FileMetaDataManager fileMetaDataManager;
@@ -130,6 +131,7 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
+    this.locationFactory = injector.getInstance(LocationFactory.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -270,7 +272,7 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() {
+  private void startUp() throws IOException {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
@@ -375,6 +377,11 @@ public class UpgradeTool {
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
     queueConfigUpgrader.upgrade();
+
+    LOG.info("Upgrading metrics.kafka.meta table ...");
+    MetricsKafkaUpgrader metricsKafkaUpgrader = injector.getInstance(MetricsKafkaUpgrader.class);
+    metricsKafkaUpgrader.upgrade();
+    hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
   }
 
   public static void main(String[] args) throws Exception {
@@ -419,7 +426,7 @@ public class UpgradeTool {
    * Creates the {@link Constants#SYSTEM_NAMESPACE} in hbase and {@link Constants#DEFAULT_NAMESPACE} namespace and also
    * adds it to the store
    */
-  private void createNamespaces() {
+  private void createNamespaces() throws IOException {
     LOG.info("Creating {} namespace in hbase", Constants.SYSTEM_NAMESPACE_ID);
     try {
       HBaseAdmin admin = new HBaseAdmin(hConf);
@@ -433,6 +440,7 @@ public class UpgradeTool {
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    locationFactory.create(Constants.DEFAULT_NAMESPACE).mkdirs();
   }
 
   /**

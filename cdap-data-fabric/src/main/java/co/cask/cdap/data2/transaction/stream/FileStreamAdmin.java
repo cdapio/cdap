@@ -103,7 +103,7 @@ public class FileStreamAdmin implements StreamAdmin {
     // is done external to this class.
     List<Location> locations;
     try {
-      locations = getNamespaceLocation(namespace).list();
+      locations = getStreamBaseLocation(namespace).list();
     } catch (FileNotFoundException e) {
       // If the stream base doesn't exists, nothing need to be deleted
       locations = ImmutableList.of();
@@ -304,7 +304,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
-    Location namespaceHomeLocation = Locations.getParent(getNamespaceLocation(namespaceId));
+    Location namespaceHomeLocation = Locations.getParent(getStreamBaseLocation(namespaceId));
     Preconditions.checkArgument(namespaceHomeLocation != null && namespaceHomeLocation.exists(),
                                 "Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
   }
@@ -350,13 +350,13 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given stream.
    */
   private Location getStreamLocation(Id.Stream streamId) throws IOException {
-    return getNamespaceLocation(streamId.getNamespace()).append(streamId.getName());
+    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getName());
   }
 
   /**
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
-  private Location getNamespaceLocation(Id.Namespace namespace) throws IOException {
+  private Location getStreamBaseLocation(Id.Namespace namespace) throws IOException {
     return locationFactory.create(namespace.getId()).append(streamBaseDirPath);
   }
 
