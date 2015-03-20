@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -82,7 +83,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -134,11 +134,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final WorkflowClient workflowClient;
 
   /**
-   * Factory for handling the location - can do both in either Distributed or Local mode.
-   */
-  private final LocationFactory locationFactory;
-
-  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -157,6 +152,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Scheduler scheduler;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -201,14 +197,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                                     WorkflowClient workflowClient, LocationFactory locationFactory,
-                                     CConfiguration configuration, ProgramRuntimeService runtimeService,
+                                     WorkflowClient workflowClient, CConfiguration configuration,
+                                     ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                     Scheduler scheduler, PreferencesStore preferencesStore) {
+                                     Scheduler scheduler, PreferencesStore preferencesStore,
+                                     NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
-    this.locationFactory = locationFactory;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
@@ -1284,7 +1281,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
           Location webappLoc = null;
           try {
-            webappLoc = Programs.programLocation(locationFactory, appFabricDir, id, ProgramType.WEBAPP);
+            webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
           } catch (FileNotFoundException e) {
             // No location found for webapp, no need to log this exception
           }

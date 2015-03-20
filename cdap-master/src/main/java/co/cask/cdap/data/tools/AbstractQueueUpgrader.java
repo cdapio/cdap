@@ -17,6 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -48,8 +49,9 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
   protected final HBaseTableUtil tableUtil;
   protected final Configuration conf;
 
-  protected AbstractQueueUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
-    super(locationFactory);
+  protected AbstractQueueUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                                  HBaseTableUtil tableUtil, Configuration conf) {
+    super(locationFactory, namespacedLocationFactory);
     this.tableUtil = tableUtil;
     this.conf = conf;
   }

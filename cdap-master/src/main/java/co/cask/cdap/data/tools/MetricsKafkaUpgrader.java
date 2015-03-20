@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -68,8 +69,9 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
 
   @Inject
   public MetricsKafkaUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                              HBaseTableUtil hBaseTableUtil, final DatasetFramework dsFramework) {
-    super(locationFactory);
+                              NamespacedLocationFactory namespacedLocationFactory, HBaseTableUtil hBaseTableUtil,
+                              final DatasetFramework dsFramework) {
+    super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hBaseTableUtil = hBaseTableUtil;

@@ -18,11 +18,11 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +36,13 @@ public class UnderlyingSystemNamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(UnderlyingSystemNamespaceAdmin.class);
 
   private final CConfiguration cConf;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final ExploreFacade exploreFacade;
 
-  protected UnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory,
+  protected UnderlyingSystemNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
                                            ExploreFacade exploreFacade) {
     this.cConf = cConf;
-    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.exploreFacade = exploreFacade;
   }
 
@@ -56,7 +56,7 @@ public class UnderlyingSystemNamespaceAdmin {
    * @throws IOException if there are errors while creating the namespace
    */
   protected void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
-    Location namespaceHome = locationFactory.create(namespaceId.getId());
+    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists()) {
       throw new IOException(String.format("Home directory '%s' for namespace '%s' already exists.",
                                           namespaceHome.toURI().toString(), namespaceId));
@@ -82,7 +82,7 @@ public class UnderlyingSystemNamespaceAdmin {
    */
   protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     // TODO: CDAP-1581: Implement soft delete
-    Location namespaceHome = locationFactory.create(namespaceId.getId());
+    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists() && !namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
                                             namespaceHome.toURI().toString(), namespaceId.getId()));

@@ -22,6 +22,7 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -73,7 +74,7 @@ public class DatasetService extends AbstractExecutionThreadService {
 
   @Inject
   public DatasetService(CConfiguration cConf,
-                        LocationFactory locationFactory,
+                        NamespacedLocationFactory namespacedLocationFactory,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
@@ -86,7 +87,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin) throws Exception {
 
     this.typeManager = typeManager;
-    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, locationFactory, cConf);
+    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
     DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
                                                                                opExecutorClient, exploreFacade, cConf);

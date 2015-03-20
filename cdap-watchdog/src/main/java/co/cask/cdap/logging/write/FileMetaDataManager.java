@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
@@ -65,6 +66,7 @@ public final class FileMetaDataManager {
 
   private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final DatasetFramework dsFramework;
   private final Transactional<DatasetContext<Table>, Table> mds;
   private final String logBaseDir;
@@ -72,8 +74,8 @@ public final class FileMetaDataManager {
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             LocationFactory locationFactory, DatasetFramework dsFramework,
-                             CConfiguration cConf) {
+                             LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                             DatasetFramework dsFramework, CConfiguration cConf) {
     this.dsFramework = dsFramework;
     this.txExecutorFactory = txExecutorFactory;
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
@@ -88,6 +90,7 @@ public final class FileMetaDataManager {
       }
     });
     this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     this.metaTableName = tableUtil.getMetaTableName();
   }
@@ -163,19 +166,19 @@ public final class FileMetaDataManager {
     return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Integer>() {
       @Override
       public Integer apply(DatasetContext<Table> ctx) throws Exception {
-        byte [] tillTimeBytes = Bytes.toBytes(tillTime);
+        byte[] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;
         Scanner scanner = ctx.get().scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
           Row row;
           while ((row = scanner.next()) != null) {
-            byte [] rowKey = row.getRow();
+            byte[] rowKey = row.getRow();
             String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(logBaseDir, getLogPartition(rowKey));
-            byte [] maxCol = getMaxKey(row.getColumns());
+            byte[] maxCol = getMaxKey(row.getColumns());
 
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              byte [] colName = entry.getKey();
+              byte[] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
                           Bytes.toLong(colName));
@@ -350,17 +353,9 @@ public final class FileMetaDataManager {
     String programName = parentLocation != null ? parentLocation.getName() : null;
     parentLocation = Locations.getParent(parentLocation); // strip program name
     String programType = parentLocation != null ? parentLocation.getName() : null;
-    parentLocation = Locations.getParent(parentLocation); // strip program type
 
-    parentLocation = Locations.getParent(parentLocation); // strip old namespace
-    String avro = parentLocation != null ? parentLocation.getName() : null;
-
-    parentLocation = Locations.getParent(parentLocation); // strip avro
-
-    String logs = parentLocation != null ? parentLocation.getName() : null;
-
-    return locationFactory.create(namespace).append(logs).append(avro).append(programType).append(programName)
-      .append(date).append(logFilename);
+    return namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(logBaseDir).append(programType)
+      .append(programName).append(date).append(logFilename);
   }
 
   public TableId getOldLogMetaTableId() {

@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -57,7 +58,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -77,7 +77,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
-  private static LocationFactory locationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -96,14 +96,15 @@ public class ExploreDisabledTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+
     // This happens when you create a namespace. However, simulating that scenario by creating a directory here instead.
-    Locations.mkdirsIfNotExists(locationFactory.create(namespaceId.getId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(namespaceId));
   }
 
   @AfterClass
   public static void stop() throws Exception {
-    Locations.deleteQuietly(locationFactory.create(namespaceId.getId()));
+    Locations.deleteQuietly(namespacedLocationFactory.get(namespaceId));
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();

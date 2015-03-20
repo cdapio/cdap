@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDSUpgrader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,7 +36,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -66,12 +66,12 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                          QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          DatasetFramework dsFramework,
+                          NamespacedLocationFactory namespacedLocationFactory, QueueAdmin queueAdmin,
+                          HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
                           DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
                           DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
-    super(locationFactory);
+    super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -125,7 +125,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
     if (basePath != null) {
       Location oldLocation = locationFactory.create(basePath);
-      Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
+      Location newlocation = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID)
         .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
       LOG.info("Upgrading base path for dataset {} from {} to {}", dsSpec.getName(), oldLocation, newlocation);
       renameLocation(oldLocation, newlocation);

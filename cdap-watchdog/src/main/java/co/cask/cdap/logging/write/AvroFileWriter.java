@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.write;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
@@ -45,6 +47,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
 
   private final FileMetaDataManager fileMetaDataManager;
+  private final CConfiguration cConf;
   private final Location rootDir;
   private final String logBaseDir;
   private final Schema schema;
@@ -58,6 +61,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   /**
    * Constructs an AvroFileWriter object.
    * @param fileMetaDataManager used to store file meta data.
+   * @param cConf the CDAP configuration
    * @param rootDir the CDAP root dir on the filesystem
    * @param logBaseDir the basedirectory for logs as defined in configuration
    * @param schema schema of the Avro data to be written.
@@ -65,9 +69,11 @@ public final class AvroFileWriter implements Closeable, Flushable {
    * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
-  public AvroFileWriter(FileMetaDataManager fileMetaDataManager, Location rootDir, String logBaseDir, Schema schema,
-                        long maxFileSize, int syncIntervalBytes, long inactiveIntervalMs) {
+  public AvroFileWriter(FileMetaDataManager fileMetaDataManager, CConfiguration cConf, Location rootDir,
+                        String logBaseDir, Schema schema, long maxFileSize, int syncIntervalBytes,
+                        long inactiveIntervalMs) {
     this.fileMetaDataManager = fileMetaDataManager;
+    this.cConf = cConf;
     this.rootDir = rootDir;
     this.logBaseDir = logBaseDir;
     this.schema = schema;
@@ -180,7 +186,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private Location createLocation(String pathFragment, long timestamp) throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     String fileName = String.format("%s.avro", timestamp);
-    return rootDir.append(pathFragment).append(date).append(fileName);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    return rootDir.append(namespacesDir).append(pathFragment).append(date).append(fileName);
   }
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {

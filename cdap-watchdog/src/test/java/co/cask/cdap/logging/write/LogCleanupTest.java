@@ -66,12 +66,15 @@ public class LogCleanupTest {
   private static Injector injector;
   private static TransactionManager txManager;
   private static String logBaseDir;
+  private static String namespacesDir;
 
   @BeforeClass
   public static void init() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -82,7 +85,6 @@ public class LogCleanupTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    logBaseDir = injector.getInstance(CConfiguration.class).get(LoggingConfiguration.LOG_BASE_DIR);
   }
 
   @AfterClass
@@ -105,7 +107,7 @@ public class LogCleanupTest {
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt");
 
-    Location namespacedLogsDir = baseDir.append("ns").append(logBaseDir);
+    Location namespacedLogsDir = baseDir.append(namespacesDir).append("ns").append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> toDelete = Lists.newArrayList();
     for (int i = 0; i < 5; ++i) {
@@ -145,7 +147,7 @@ public class LogCleanupTest {
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
       toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
-    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, namespacesDir, RETENTION_DURATION_MS);
     logCleanup.run();
     logCleanup.run();
 
@@ -168,8 +170,8 @@ public class LogCleanupTest {
     // Create base dir
     Location baseDir = injector.getInstance(LocationFactory.class).create(TEMP_FOLDER.newFolder().toURI());
     // Create namespaced logs dirs
-    Location namespacedLogsDir1 = baseDir.append("ns1").append(logBaseDir);
-    Location namespacedLogsDir2 = baseDir.append("ns2").append(logBaseDir);
+    Location namespacedLogsDir1 = baseDir.append(namespacesDir).append("ns1").append(logBaseDir);
+    Location namespacedLogsDir2 = baseDir.append(namespacesDir).append("ns2").append(logBaseDir);
 
     // Create dirs with files
     Set<Location> files = Sets.newHashSet();
@@ -205,7 +207,7 @@ public class LogCleanupTest {
       emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("hij").append("dir_" + i)));
     }
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
       logCleanup.deleteEmptyDir("ns1/" + logBaseDir, location);
       logCleanup.deleteEmptyDir("ns2/" + logBaseDir, location);
@@ -233,20 +235,20 @@ public class LogCleanupTest {
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
 
-    logCleanup.deleteEmptyDir("ns/" + logBaseDir, baseDir);
+    logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists
     Assert.assertTrue(baseDir.exists());
 
     baseDir.mkdirs();
     // Assert root exists
     Assert.assertTrue(baseDir.exists());
-    logCleanup.deleteEmptyDir("ns/" + logBaseDir, baseDir);
+    logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert root still exists
     Assert.assertTrue(baseDir.exists());
 
-    Location namespaceDir = baseDir.append("ns");
+    Location namespaceDir = baseDir.append(namespacesDir).append("ns");
     namespaceDir.mkdirs();
     Assert.assertTrue(namespaceDir.exists());
     logCleanup.deleteEmptyDir("ns/" + logBaseDir, namespaceDir);

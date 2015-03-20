@@ -32,6 +32,7 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
@@ -102,7 +103,7 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final Injector injector;
   private final HBaseTableUtil hBaseTableUtil;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   private Store store;
   private FileMetaDataManager fileMetaDataManager;
@@ -144,7 +145,7 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
-    this.locationFactory = injector.getInstance(LocationFactory.class);
+    this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -206,7 +207,7 @@ public class UpgradeTool {
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
+          return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
         @Provides
@@ -224,7 +225,8 @@ public class UpgradeTool {
                                                           DatasetFramework dsFramework,
                                                           TransactionExecutorFactory txExecutorFactory,
                                                           LocationFactory locationFactory) {
-          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, namespacedLocationFactory,
+                                         dsFramework, cConf);
         }
       });
   }
@@ -464,7 +466,7 @@ public class UpgradeTool {
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
-    locationFactory.create(Constants.DEFAULT_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
   }
 
   /**

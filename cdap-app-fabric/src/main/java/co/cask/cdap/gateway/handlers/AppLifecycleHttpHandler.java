@@ -37,6 +37,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -81,7 +82,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -99,7 +99,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -107,7 +106,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
@@ -116,16 +114,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
    * Configuration object passed from higher up.
@@ -153,11 +141,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final PreferencesStore preferencesStore;
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
   private final MetricStore metricStore;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -165,9 +153,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin,
-                                 MetricStore metricStore) {
+                                 PreferencesStore preferencesStore, AdapterService adapterService,
+                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore, NamespacedLocationFactory
+    namespacedLocationFactory) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -175,10 +163,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.locationFactory = locationFactory;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = storeFactory.create();
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
     this.metricStore = metricStore;
@@ -471,7 +459,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation.toURI().getPath(), namespaceId);
@@ -488,8 +476,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
-    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
+    File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(localDataDir, namespacesDir);
+    File tempDir = new File(new File(namespaceBase, namespaceId),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
@@ -738,7 +729,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
-        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
         location.delete();
       } catch (FileNotFoundException e) {
         LOG.warn("Program jar for program {} not found.", programId.toString(), e);
@@ -750,7 +741,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
                                              ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
+      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
+                                                   ProgramType.WEBAPP);
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.

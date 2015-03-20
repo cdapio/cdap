@@ -18,18 +18,20 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Performs deletion of unused stream files.
@@ -39,21 +41,26 @@ public final class StreamFileJanitor {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileJanitor.class);
 
   private final StreamAdmin streamAdmin;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final String streamBaseDirPath;
 
   @Inject
-  public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin, LocationFactory locationFactory) {
+  public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
+                           NamespacedLocationFactory namespacedLocationFactory) {
     this.streamAdmin = streamAdmin;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
-    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   /**
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws IOException {
-    List<Location> namespaceDirs = locationFactory.create("").list();
+    Map<Id.Namespace, Location> namespaceLocations = namespacedLocationFactory.list();
+    if (namespaceLocations.size() == 0) {
+      return;
+    }
+    Collection<Location> namespaceDirs = namespaceLocations.values();
     for (Location namespaceDir : namespaceDirs) {
       Location streamBaseLocation = namespaceDir.append(streamBaseDirPath);
       if (!streamBaseLocation.exists()) {
