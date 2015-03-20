@@ -54,16 +54,16 @@ public class DeleteNamespaceCommand extends AbstractCommand {
     ConsoleReader consoleReader = new ConsoleReader();
     if (Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
       String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
-                                    Constants.DEFAULT_NAMESPACE_ID.getId());
+                                    namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId.getId());
-        out.printf("Contents of namespace '%s' were deleted successfully", Constants.DEFAULT_NAMESPACE_ID.getId());
+        out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getId());
         out.println();
       }
     } else {
-      String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]?",
-                                    Constants.DEFAULT_NAMESPACE_ID.getId());
+      String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]? ",
+                                    namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId.getId());
