@@ -36,11 +36,11 @@ As part of release 2.8.0, a new alpha User Interface (UI) for the CDAP Console w
 
 To try out the new UI, changes are required before CDAP is started.
 
-- For CDAP Standalone SDK, pass an additional argument when starting CDAP::
+- For CDAP Standalone SDK, pass an additional argument :ref:`when starting CDAP <start-stop-cdap>`::
 
     $ ./bin/cdap.sh start --enable-alpha-ui
     
-- For CDAP Distributed, modify the :ref:`command used to start CDAP <install-starting-services>`.
+- For CDAP Distributed, modify the `command used to start CDAP </admin-manual/installation.html#starting-services>`.
   Before starting the service, an environmental variable needs to be set::
   
     export ENABLE_ALPHA_UI=true 
@@ -49,3 +49,4 @@ To try out the new UI, changes are required before CDAP is started.
   To restart just the CDAP Web App (the UI) in the new UI::
   
     export ENABLE_ALPHA_UI=true sudo /etc/init.d/cdap-web-app restart
+
