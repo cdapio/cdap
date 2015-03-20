@@ -56,8 +56,7 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    metricStore.delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
+    metricStore.deleteAll();
   }
 
   public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,

@@ -119,7 +119,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
-      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+      programClient.waitForStatus(appId, programType, programId, programStatus, 60, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
       // NO-OP
     }

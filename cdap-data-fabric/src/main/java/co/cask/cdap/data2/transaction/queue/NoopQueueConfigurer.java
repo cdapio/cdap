@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data2.transaction.queue;
 
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * A {@link QueueConfigurer} that does nothing.
@@ -34,7 +34,7 @@ public final class NoopQueueConfigurer implements QueueConfigurer {
   }
 
   @Override
-  public void configureGroups(Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(Iterable<? extends ConsumerGroupConfig> groupConfigs) throws Exception {
     // No-op
   }
 

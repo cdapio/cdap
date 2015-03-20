@@ -36,7 +36,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
@@ -60,22 +59,22 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetUpgrader.class);
   private static final byte[] OFFSET_COLUMN = Bytes.toBytes("o");
 
+  private final CConfiguration cConf;
   private final Configuration hConf;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
   private final String kafkaTableName;
-  private final KafkaConsumerMetaTable kafkaMetaTableDestination;
 
   @Inject
   public MetricsKafkaUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                              HBaseTableUtil hBaseTableUtil, @Named("dsFramework") final DatasetFramework dsFramework) {
+                              HBaseTableUtil hBaseTableUtil, final DatasetFramework dsFramework) {
     super(locationFactory);
+    this.cConf = cConf;
     this.hConf = hConf;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.kafkaTableName =  cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
                                      MetricsConstants.DEFAULT_KAFKA_META_TABLE);
-    this.kafkaMetaTableDestination = new DefaultMetricDatasetFactory(cConf, dsFramework).createKafkaConsumerMeta();
   }
 
   private MetricsTable getOrCreateKafkaTable(String tableName, DatasetProperties props) {
@@ -93,6 +92,8 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
 
   @Override
   public void upgrade() throws Exception {
+    KafkaConsumerMetaTable kafkaMetaTableDestination =
+      new DefaultMetricDatasetFactory(cConf, dsFramework).createKafkaConsumerMeta();
     // copy kafka offset from old table to new kafka metrics tabl
     String kafkaTableNameOld = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, "default", kafkaTableName);
     try {
