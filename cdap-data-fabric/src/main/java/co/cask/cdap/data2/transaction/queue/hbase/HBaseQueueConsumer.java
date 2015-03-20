@@ -75,7 +75,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
     DequeueResult<byte[]> result = super.dequeue(maxBatchSize);
 
-    if (canConsume && result.isEmpty() && state.getBarrierEndRow() != null) {
+    if (canConsume && result.isEmpty() && state.getNextBarrier() != null) {
       long groupId = state.getConsumerConfig().getGroupId();
       int instanceId = state.getConsumerConfig().getInstanceId();
       stateStore.completed(groupId, instanceId);
@@ -126,7 +126,8 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
     if (!canConsume) {
-      byte[] barrierStartRow = state.getBarrierStartRow();
+      // Need to wait if nothing every consumers reached the last barrier
+      byte[] barrierStartRow = state.getPreviousBarrier();
       canConsume = barrierStartRow == null || stateStore.isAllConsumed(getConfig().getGroupId(), barrierStartRow);
       if (!canConsume) {
         return QueueScanner.EMPTY;
@@ -193,7 +194,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);
 
   private byte[] getScanStopRow(byte[] stopRow) {
-    byte[] barrierEndRow = state.getBarrierEndRow();
+    byte[] barrierEndRow = state.getNextBarrier();
     return barrierEndRow == null || Bytes.compareTo(stopRow, barrierEndRow) < 0 ? stopRow : barrierEndRow;
   }
 }

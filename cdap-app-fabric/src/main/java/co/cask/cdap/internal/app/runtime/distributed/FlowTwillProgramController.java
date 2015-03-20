@@ -59,7 +59,8 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
                       Integer.valueOf(command.get("newInstances")),
                       GSON.fromJson(command.get("oldFlowSpec"), FlowSpecification.class));
     } catch (Throwable t) {
-      LOG.error(String.format("Fail to change instances: %s", command), t);
+      LOG.error("Fail to change instances. Terminating flow: {}", command, t);
+      stop();
     } finally {
       lock.unlock();
     }

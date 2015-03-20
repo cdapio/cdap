@@ -82,26 +82,34 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
    * Returns the consumer state as stored in the state store for the given consumer.
    */
   HBaseConsumerState getState(long groupId, int instanceId) {
+    // Lookup the start row for the given instance, also search the barriers that bound the start row
     ConsumerState consumerState = getConsumerState(groupId, instanceId);
-    QueueBarrier startBarrier = consumerState.getStartBarrier();
-    QueueBarrier endBarrier = consumerState.getEndBarrier();
-    if (startBarrier == null && endBarrier == null) {
+    QueueBarrier previousBarrier = consumerState.getPreviousBarrier();
+    QueueBarrier nextBarrier = consumerState.getNextBarrier();
+    if (previousBarrier == null && nextBarrier == null) {
       throw new IllegalStateException(
         String.format("Unable to find barrier information for consumer. Queue: %s, GroupId: %d, InstanceId:%d",
                       queueName, groupId, instanceId));
     }
 
-    ConsumerGroupConfig groupConfig = startBarrier != null ? startBarrier.getGroupConfig()
-                                                             : endBarrier.getGroupConfig();
+    // There are three possible cases:
+    // 1. previousBarrier == null. It means in old compat mode. Since in old queue we didn't record the
+    //                             consumer group config, we assume it's the same as the one recorded by
+    //                             the nextBarrier (which was written when Flow start for the first time with new queue)
+    // 2. nextBarrier == null. It means pasted the last barrier. The consumer scan is unbounded
+    // 3. both not null. The scan is bounded by the nextBarrier and
+    //                   the consumer group config is described by the previousBarrier.
+    ConsumerGroupConfig groupConfig = previousBarrier != null ? previousBarrier.getGroupConfig()
+                                                             : nextBarrier.getGroupConfig();
     ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
     return new HBaseConsumerState(consumerConfig,
                                   consumerState.getConsumerStartRow(),
-                                  startBarrier == null ? null : startBarrier.getStartRow(),
-                                  endBarrier == null ? null : endBarrier.getStartRow());
+                                  previousBarrier == null ? null : previousBarrier.getStartRow(),
+                                  nextBarrier == null ? null : nextBarrier.getStartRow());
   }
 
   /**
-   * Checks if consumers in the given group has consumed all entries up to the given start row.
+   * Checks if consumers in the given group have consumed all entries up to the given start row.
    *
    * @param groupId consumer group to check
    * @param minStartRow the minimum start row that the consumers has been consumed up to
@@ -149,8 +157,8 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
   void completed(long groupId, int instanceId) {
     // Get the current consumer state to get the end barrier info
     ConsumerState consumerState = getConsumerState(groupId, instanceId);
-    QueueBarrier endBarrier = consumerState.getEndBarrier();
-    if (endBarrier == null) {
+    QueueBarrier nextBarrier = consumerState.getNextBarrier();
+    if (nextBarrier == null) {
       // End row shouldn't be null if this method is called
       throw new IllegalArgumentException(
         String.format("No end barrier information for consumer. Queue: %s, GroupId: %d, InstanceId: %d",
@@ -160,14 +168,14 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
     byte[] stateColumn = getConsumerStateColumn(groupId, instanceId);
 
     // If the instance exists in the next barrier, set the start row to the barrier start
-    if (instanceId < endBarrier.getGroupConfig().getGroupSize()) {
-      table.put(queueName.toBytes(), stateColumn, endBarrier.getStartRow());
+    if (instanceId < nextBarrier.getGroupConfig().getGroupSize()) {
+      table.put(queueName.toBytes(), stateColumn, nextBarrier.getStartRow());
       return;
     }
 
     // If the instance has been removed in the next barrier,
     // find the next start barrier that this instance need to consumer
-    Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), endBarrier.getStartRow()), barrierScanEndRow);
+    Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), nextBarrier.getStartRow()), barrierScanEndRow);
     try {
       Row row;
       boolean found = false;
@@ -455,14 +463,14 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
    */
   private static final class ConsumerState {
     private final byte[] consumerStartRow;
-    private final QueueBarrier startBarrier;
-    private final QueueBarrier endBarrier;
+    private final QueueBarrier previousBarrier;
+    private final QueueBarrier nextBarrier;
 
     private ConsumerState(byte[] consumerStartRow,
-                          @Nullable QueueBarrier startBarrier, @Nullable QueueBarrier endBarrier) {
+                          @Nullable QueueBarrier previousBarrier, @Nullable QueueBarrier nextBarrier) {
       this.consumerStartRow = consumerStartRow;
-      this.startBarrier = startBarrier;
-      this.endBarrier = endBarrier;
+      this.previousBarrier = previousBarrier;
+      this.nextBarrier = nextBarrier;
     }
 
     public byte[] getConsumerStartRow() {
@@ -470,13 +478,13 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
     }
 
     @Nullable
-    public QueueBarrier getEndBarrier() {
-      return endBarrier;
+    public QueueBarrier getNextBarrier() {
+      return nextBarrier;
     }
 
     @Nullable
-    public QueueBarrier getStartBarrier() {
-      return startBarrier;
+    public QueueBarrier getPreviousBarrier() {
+      return previousBarrier;
     }
   }
 

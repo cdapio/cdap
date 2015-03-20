@@ -136,7 +136,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
                 List<HBaseConsumerState> consumerStates = Lists.newArrayList();
 
                 HBaseConsumerState state = stateStore.getState(groupId, consumerConfig.getInstanceId());
-                if (state.getBarrierStartRow() == null) {
+                if (state.getPreviousBarrier() == null) {
                   // Old HBase consumer (Salted based, not sharded)
                   consumerStates.add(state);
                   return consumerStates;
@@ -172,8 +172,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
 
           List<HBaseQueueConsumer> consumers = Lists.newArrayList();
           for (HBaseConsumerState state : states) {
-            QueueType queueType = (state.getBarrierStartRow() == null) ? QueueType.QUEUE : QueueType.SHARDED_QUEUE;
-            HBaseQueueStrategy strategy = (state.getBarrierStartRow() == null) ? new SaltedHBaseQueueStrategy()
+            QueueType queueType = (state.getPreviousBarrier() == null) ? QueueType.QUEUE : QueueType.SHARDED_QUEUE;
+            HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null) ? new SaltedHBaseQueueStrategy()
                                                                                  : new ShardedHBaseQueueStrategy();
             HTable hTable = createHTable(admin.getDataTableId(queueName, queueType));
             consumers.add(queueUtil.getQueueConsumer(cConf, hTable, queueName, state,

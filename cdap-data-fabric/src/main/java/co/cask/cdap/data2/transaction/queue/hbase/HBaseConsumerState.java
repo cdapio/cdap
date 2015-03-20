@@ -28,15 +28,15 @@ public final class HBaseConsumerState {
 
   private final ConsumerConfig consumerConfig;
   private final byte[] startRow;
-  private final byte[] barrierStartRow;
-  private final byte[] barrierEndRow;
+  private final byte[] previousBarrier;
+  private final byte[] nextBarrier;
 
   HBaseConsumerState(ConsumerConfig consumerConfig, byte[] startRow,
-                     @Nullable byte[] barrierStartRow, @Nullable byte[] barrierEndRow) {
+                     @Nullable byte[] previousBarrier, @Nullable byte[] nextBarrier) {
     this.consumerConfig = consumerConfig;
     this.startRow = startRow;
-    this.barrierStartRow = barrierStartRow;
-    this.barrierEndRow = barrierEndRow;
+    this.previousBarrier = previousBarrier;
+    this.nextBarrier = nextBarrier;
   }
 
   public ConsumerConfig getConsumerConfig() {
@@ -48,13 +48,13 @@ public final class HBaseConsumerState {
   }
 
   @Nullable
-  public byte[] getBarrierStartRow() {
-    return barrierStartRow;
+  public byte[] getPreviousBarrier() {
+    return previousBarrier;
   }
 
   @Nullable
-  public byte[] getBarrierEndRow() {
-    return barrierEndRow;
+  public byte[] getNextBarrier() {
+    return nextBarrier;
   }
 
   @Override
@@ -62,8 +62,8 @@ public final class HBaseConsumerState {
     return Objects.toStringHelper(this)
       .add("config", consumerConfig)
       .add("start", Bytes.toStringBinary(startRow))
-      .add("barrierStart", Bytes.toStringBinary(barrierStartRow))
-      .add("barrierEnd", Bytes.toStringBinary(barrierEndRow))
+      .add("barrierStart", Bytes.toStringBinary(previousBarrier))
+      .add("barrierEnd", Bytes.toStringBinary(nextBarrier))
       .toString();
   }
 }

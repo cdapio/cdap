@@ -68,28 +68,18 @@ final class DistributedFlowletInstanceUpdater {
     Set<String> flowlets = getUpstreamFlowlets(flowSpec, flowletId, Sets.<String>newHashSet());
     flowlets.add(flowletId);
 
-    try {
-      // Suspend all upstream flowlets and the flowlet that is going to change instances
-      for (String id : flowlets) {
-        waitForInstances(id, getInstances(flowSpec, id));
-        // Need to suspend one by one due to a bug in Twill (TWILL-123)
-        twillController.sendCommand(id, ProgramCommands.SUSPEND).get();
-      }
-      FlowUtils.reconfigure(consumerQueues.get(flowletId),
-                            FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
-                            streamAdmin, queueAdmin, txExecutorFactory);
-      twillController.changeInstances(flowletId, newInstanceCount).get();
-    } finally {
-      for (String id : flowlets) {
-        // Need to resume one by one due to TWILL-123.
-        // Also ignore any error as resuming a non-suspended flowlet is ok,
-        // except getting from exception log from the container.
-        try {
-          twillController.sendCommand(id, ProgramCommands.RESUME).get();
-        } catch (Exception e) {
-          LOG.warn("Failed to resume flowlet {}", id, e);
-        }
-      }
+    // Suspend all upstream flowlets and the flowlet that is going to change instances
+    for (String id : flowlets) {
+      waitForInstances(id, getInstances(flowSpec, id));
+      // Need to suspend one by one due to a bug in Twill (TWILL-123)
+      twillController.sendCommand(id, ProgramCommands.SUSPEND).get();
+    }
+    FlowUtils.reconfigure(consumerQueues.get(flowletId),
+                          FlowUtils.generateConsumerGroupId(program, flowletId), newInstanceCount,
+                          streamAdmin, queueAdmin, txExecutorFactory);
+    twillController.changeInstances(flowletId, newInstanceCount).get();
+    for (String id : flowlets) {
+      twillController.sendCommand(id, ProgramCommands.RESUME).get();
     }
   }
 

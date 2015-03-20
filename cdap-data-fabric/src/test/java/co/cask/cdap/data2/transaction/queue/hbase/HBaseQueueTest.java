@@ -278,7 +278,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                 // For group 1L, the start row shouldn't be changed. End row should be the same as the first barrier
                 Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
                                                        QueueEntryRow.getQueueEntryRowKey(queueName, 10L, 0)));
-                Assert.assertEquals(0, Bytes.compareTo(state.getBarrierEndRow(),
+                Assert.assertEquals(0, Bytes.compareTo(state.getNextBarrier(),
                                                        queueBarriers.get(0).getStartRow()));
               } else {
                 // For other group, they should have the start row the same as the first barrier info
@@ -338,7 +338,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           for (int instanceId = 0; instanceId < 2; instanceId++) {
             HBaseConsumerState state = stateStore.getState(2L, instanceId);
             Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(), queueBarriers.get(0).getStartRow()));
-            Assert.assertEquals(0, Bytes.compareTo(state.getBarrierEndRow(), queueBarriers.get(1).getStartRow()));
+            Assert.assertEquals(0, Bytes.compareTo(state.getNextBarrier(), queueBarriers.get(1).getStartRow()));
 
             // Complete the existing instance
             stateStore.completed(2L, instanceId);
@@ -347,7 +347,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           // For new instances, the start row should be the same as the new barrier
           HBaseConsumerState state = stateStore.getState(2L, 2);
           Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(), queueBarriers.get(1).getStartRow()));
-          Assert.assertNull(state.getBarrierEndRow());
+          Assert.assertNull(state.getNextBarrier());
 
           // All instances should be consumed up to the beginning of the last barrier info
           Assert.assertTrue(stateStore.isAllConsumed(2L, queueBarriers.get(1).getStartRow()));
@@ -394,7 +394,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           HBaseConsumerState state = stateStore.getState(2L, 0);
           Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
                                                  queueBarriers.get(2).getStartRow()));
-          Assert.assertNull(state.getBarrierEndRow());
+          Assert.assertNull(state.getNextBarrier());
 
           // For removed instances, they should throw exception when retrieving their states
           for (int i = 1; i < 3; i++) {
