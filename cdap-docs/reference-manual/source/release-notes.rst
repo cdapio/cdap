@@ -27,6 +27,32 @@ Cask Data Application Platform Release Notes
 `Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
 =============================================================
 
+General
+-------
+
+- The :ref:`HTTP RESTful API v2 <http-restful-api-v2>` is deprecated, replaced with the
+  :ref:`namespaced HTTP RESTful API v3 <http-restful-api-v3>`.
+
+- Added :ref:`Worker <workers>`, a new Program type that can be added to CDAP Applications, 
+  used to run background processes and (beta feature) can write to Streams through the
+  WorkerContext.
+
+- Added log rotation for CDAP programs running in YARN containers
+  (`CDAP-1295 <https://issues.cask.co/browse/CDAP-1295>`__).
+
+- Added the ability to submit to non-default YARN queues to provide 
+  :ref:`resource guarantees <resource-guarantees>`
+  for CDAP Master Services, CDAP Programs, and Explore Queries
+  (`CDAP-1417 <https://issues.cask.co/browse/CDAP-1417>`__).
+
+- Added the ability to :ref:`prune invalid transactions <tx-maintenance>`
+  (`CDAP-1540 <https://issues.cask.co/browse/CDAP-1540>`__).
+
+- Added the ability to specify 
+  :ref:`custom logback file for CDAP programs <application-logback>`
+  (`CDAP-1741 <https://issues.cask.co/browse/CDAP-1741>`__).
+
+
 API Changes
 -----------
 - The endpoint (``GET <base-url>/data/explore/datasets/<dataset-name>/schema``) that
@@ -39,7 +65,48 @@ New Features
 
 - **Spark**
 
-  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  - Spark now uses a configurer-style API for specifying
+    (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  
+- **Workflows**
+
+  - Users can schedule a Workflow based on increments of data being ingested into a Stream.
+  - Workflows can be stopped.
+  - The execution of a Workflow can be forked into parallelized branches.
+  - The runtime arguments for Workflow can be scoped.  
+  
+- **Preferences**
+
+  - Users can store preferences (a property map) at the instance, namespace, application, 
+    or program level.
+  
+- **Namespaces**
+
+  - Applications and Programs are now managed within namespaces.
+  - Application logs are available within namespaces.
+  - Metrics are now collected and queried within namespaces.
+  - Datasets can now created and managed within namespaces.
+  - Streams are now namespaced for ingestion, fetching, and consuming by programs.
+  - Explore operations are now namespaced.
+  
+- **Datasets**
+
+  - Added an ObjectMappedTable Dataset that maps object fields to table columns and that is also explorable.
+  - Added a PartitionedFileSet Dataset that allows addressing files by meta data and that is also explorable.
+  
+  - [unchecked forced dataset update that was in the 2.6 Release notes.]
+  
+  - Table Datasets now support a multi-get operation for batched reads
+
+- **Explore**
+
+  - Explore now works on secure Hadoop clusters.
+  
+- **Upgrade and Data Migration Tool**
+
+  - Added an automated upgrade tool which supports upgrading from 2.6.x to 2.8.0
+    (**Note:** Apps need to be both recompiled and re-deployed.)
+  - Added a metric migration tool which migrates old metrics to the new 2.8 format.
   
   
 Improvement
@@ -59,16 +126,19 @@ Known Issues
   Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
   <install-starting-services>, which will restart all services 
   (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+- User datasets with names starting with ``"system"`` can potentially cause conflicts
+  (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
 - Scaling the number of metrics processor instances doesn't automatically distribute the
   processing load to the newer instances of the metrics processor. The CDAP Master needs to be
   restarted to effectively distribute the processing across all metrics processor instances
   (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
-- Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
-  the request body that enumerates the name and attributes for each metric, is currently not
+- Creating a dataset in a non-existent namespace manifests in the RESTful API with an
+  incorrect error message (`CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__).
+- Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric |---| is currently not
   supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
   Instead, use the :ref:`v2 API <http-restful-api-v2-metrics-multiple>`. It will be
   supported in a future release.
-
 
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
