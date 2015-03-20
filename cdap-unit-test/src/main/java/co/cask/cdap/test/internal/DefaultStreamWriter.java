@@ -16,7 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.data.stream.service.StreamHandlerV2;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
@@ -43,25 +43,24 @@ import java.util.Map;
 public final class DefaultStreamWriter implements StreamWriter {
 
   private final Id.Stream streamId;
-  private final StreamHandlerV2 streamHandlerV2;
+  private final StreamHandler streamHandler;
 
   @Inject
-  public DefaultStreamWriter(StreamHandlerV2 streamHandlerV2,
+  public DefaultStreamWriter(StreamHandler streamHandler,
                              @Assisted Id.Stream streamId) throws IOException {
 
-    this.streamHandlerV2 = streamHandlerV2;
+    this.streamHandler = streamHandler;
     this.streamId = streamId;
   }
 
   @Override
   public void createStream() throws IOException {
-
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                     "/v2/streams/" + streamId.getName());
+    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getName());
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandlerV2.create(httpRequest, responder, streamId.getName());
+      streamHandler.create(httpRequest, responder, streamId.getNamespaceId(), streamId.getName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);
@@ -108,8 +107,8 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                     "/v2/streams/" + streamId.getName());
+    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getName());
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     for (Map.Entry<String, String> entry : headers.entrySet()) {
       httpRequest.setHeader(streamId.getName() + "." + entry.getKey(), entry.getValue());
@@ -120,7 +119,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandlerV2.enqueue(httpRequest, responder, streamId.getName());
+      streamHandler.enqueue(httpRequest, responder, streamId.getNamespaceId(), streamId.getName());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

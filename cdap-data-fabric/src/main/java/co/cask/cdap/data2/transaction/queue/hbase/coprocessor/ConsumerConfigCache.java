@@ -52,11 +52,12 @@ import javax.annotation.Nullable;
 public class ConsumerConfigCache {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
 
-  private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
+  // Number of bytes for consumer state column (groupId + instanceId)
+  private static final int STATE_COLUMN_SIZE = Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
-  private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
+  private static final ConcurrentMap<byte[], ConsumerConfigCache> INSTANCES =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
 
   private final byte[] queueConfigTableName;
@@ -162,8 +163,11 @@ public class ConsumerConfigCache {
             int numGroups = 0;
             Long groupId = null;
             for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
+              if (entry.getKey().length != STATE_COLUMN_SIZE) {
+                continue;
+              }
               long gid = Bytes.toLong(entry.getKey());
-              int instanceId = Bytes.toInt(entry.getKey(), LONG_BYTES);
+              int instanceId = Bytes.toInt(entry.getKey(), Bytes.SIZEOF_LONG);
               consumerInstances.put(new ConsumerInstance(gid, instanceId), entry.getValue());
 
               // Columns are sorted by groupId, hence if it change, then numGroups would get +1
@@ -221,7 +225,7 @@ public class ConsumerConfigCache {
           }
         }
         LOG.info("Config cache update for {} terminated.", Bytes.toString(queueConfigTableName));
-        instances.remove(queueConfigTableName, this);
+        INSTANCES.remove(queueConfigTableName, this);
       }
     };
     refreshThread.setDaemon(true);
@@ -231,15 +235,15 @@ public class ConsumerConfigCache {
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
                                                 CConfigurationReader cConfReader,
                                                 Supplier<TransactionSnapshot> txSnapshotSupplier) {
-    ConsumerConfigCache cache = instances.get(tableName);
+    ConsumerConfigCache cache = INSTANCES.get(tableName);
     if (cache == null) {
       cache = new ConsumerConfigCache(hConf, tableName, cConfReader, txSnapshotSupplier);
-      if (instances.putIfAbsent(tableName, cache) == null) {
+      if (INSTANCES.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();
       } else {
         // discard our instance and re-retrieve, someone else set it
-        cache = instances.get(tableName);
+        cache = INSTANCES.get(tableName);
       }
     }
     return cache;

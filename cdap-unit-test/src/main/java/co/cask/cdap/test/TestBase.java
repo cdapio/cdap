@@ -65,8 +65,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
@@ -78,6 +76,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -101,7 +100,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -140,12 +138,12 @@ public class TestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
-  private static NamespaceAdmin namespaceAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   private static TestManager testManager;
+  private static NamespaceAdmin namespaceAdmin;
 
   private static TestManager getTestManager() {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
@@ -264,10 +262,7 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
+    appFabricClient = injector.getInstance(AppFabricClient.class);
     datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
@@ -278,8 +273,8 @@ public class TestBase {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
-    testManager = new UnitTestManager(appFabricClient, datasetFramework, txSystemClient, discoveryClient,
-                                      injector.getInstance(ApplicationManagerFactory.class));
+    testManager = injector.getInstance(UnitTestManager.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
@@ -358,6 +353,26 @@ public class TestBase {
         cleanDir(file);
       }
     }
+  }
+
+  /**
+   * Creates a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void createNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+  }
+
+  /**
+   * Deletes a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().deleteNamespace(namespace);
   }
 
   /**

@@ -321,7 +321,8 @@ public class StreamClient {
       }
 
       // The response is an array of stream event object
-      JsonReader jsonReader = new JsonReader(new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8));
+      InputStream inputStream = urlConn.getInputStream();
+      JsonReader jsonReader = new JsonReader(new InputStreamReader(inputStream, Charsets.UTF_8));
       jsonReader.beginArray();
       while (jsonReader.peek() != JsonToken.END_ARRAY) {
         Boolean result = callback.apply(GSON.<StreamEvent>fromJson(jsonReader, StreamEvent.class));
@@ -329,6 +330,7 @@ public class StreamClient {
           break;
         }
       }
+      drain(inputStream);
       // No need to close reader, the urlConn.disconnect in finally will close all underlying streams
     } finally {
       urlConn.disconnect();
@@ -345,6 +347,13 @@ public class StreamClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
+    }
+  }
+
+  @SuppressWarnings("StatementWithEmptyBody")
+  private void drain(InputStream input) throws IOException {
+    while (input.skip(Long.MAX_VALUE) > 0) {
+      // empty
     }
   }
 }

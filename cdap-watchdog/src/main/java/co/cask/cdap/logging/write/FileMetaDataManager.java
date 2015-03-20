@@ -30,6 +30,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -63,13 +64,11 @@ public final class FileMetaDataManager {
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
 
   private final TransactionExecutorFactory txExecutorFactory;
-
   private final LocationFactory locationFactory;
-
   private final DatasetFramework dsFramework;
-
   private final Transactional<DatasetContext<Table>, Table> mds;
   private final String logBaseDir;
+  private final String metaTableName;
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
@@ -90,6 +89,7 @@ public final class FileMetaDataManager {
     });
     this.locationFactory = locationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    this.metaTableName = tableUtil.getMetaTableName();
   }
 
   /**
@@ -263,7 +263,7 @@ public final class FileMetaDataManager {
     oldLogMDS.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> ctx) throws Exception {
-        Scanner rows = ctx.get().scan(null, null);
+        Scanner rows = ctx.get().scan(ROW_KEY_PREFIX, Bytes.stopKeyForPrefix(ROW_KEY_PREFIX));
         Row row;
         while ((row = rows.next()) != null) {
           String key = Bytes.toString(row.getRow(), ROW_KEY_PREFIX.length,
@@ -361,5 +361,9 @@ public final class FileMetaDataManager {
 
     return locationFactory.create(namespace).append(logs).append(avro).append(programType).append(programName)
       .append(date).append(logFilename);
+  }
+
+  public TableId getOldLogMetaTableId() {
+    return TableId.from(Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, metaTableName));
   }
 }

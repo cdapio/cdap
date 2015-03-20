@@ -45,8 +45,8 @@ CDAP Developers’ Manual
 .. |testing| replace:: **Testing and Debugging:**
 .. _testing: testing/index.html
 
-- |testing|_ CDAP has a **test framework** that developers can use with their applications, **tools and procedures
-  for debugging**, and recommendations on **packaging your completed application** prior to deployment.
+- |testing|_ CDAP has a **test framework** that developers can use with their applications
+  and **tools and procedures for debugging** your application prior to deployment.
 
 
 .. |ingesting-tools| replace:: **Ingesting Data:**
@@ -68,5 +68,6 @@ CDAP Developers’ Manual
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on 
-  **Best Practices for CDAP development** and **Adapters**.
+  developers who want a deeper dive into CDAP, with presentations on the **Data
+  Exploration of Datasets,** suggested **Best Practices for CDAP Development,** and on
+  **Adding a Custom Logback** to a CDAP application.

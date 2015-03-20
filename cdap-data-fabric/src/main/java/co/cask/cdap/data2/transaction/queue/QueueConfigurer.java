@@ -16,10 +16,10 @@
 
 package co.cask.cdap.data2.transaction.queue;
 
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.tephra.TransactionAware;
 
 import java.io.Closeable;
-import java.util.Map;
 
 /**
  * Provides methods to configure queue. Configuration needs to happen inside a transaction.
@@ -37,11 +37,10 @@ public interface QueueConfigurer extends TransactionAware, Closeable {
   void configureInstances(long groupId, int instances) throws Exception;
 
   /**
-   * Changes the configuration of all consumer groups. For groups with existing states but not in the given group info,
-   * their states will be removed.
+   * Changes the configuration of all consumer groups.
    *
-   * @param groupInfo map from groupId to number of instances for that group
+   * @param groupConfigs information for all consumer groups
    * @throws Exception if failed to change consumer group configuration
    */
-  void configureGroups(Map<Long, Integer> groupInfo) throws Exception;
+  void configureGroups(Iterable<? extends ConsumerGroupConfig> groupConfigs) throws Exception;
 }

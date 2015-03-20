@@ -46,7 +46,8 @@ public abstract class AbstractCubeTest {
     Aggregation agg2 = new DefaultAggregation(ImmutableList.of("tag1", "tag2"),
                                               ImmutableList.of("tag1"));
 
-    Cube cube = getCube("myCube", new int[] {1}, ImmutableList.of(agg1, agg2));
+    int resolution = 1;
+    Cube cube = getCube("myCube", new int[] {resolution}, ImmutableList.of(agg1, agg2));
 
     // write some data
     // NOTE: we mostly use different ts, as we are interested in checking incs not at persist, but rather at query time
@@ -71,45 +72,45 @@ public abstract class AbstractCubeTest {
 
 
     // now let's query!
-    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
                      ImmutableList.of(
                        new TimeSeries("metric1", tagValues("tag2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
                        new TimeSeries("metric1", tagValues("tag2", "2"), timeValues(3, 8))));
 
-    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 2, 10, 2, 11, 3))));
 
-    verifyCountQuery(cube, 0, 15, 1, "metric1", new HashMap<String, String>(), ImmutableList.of("tag1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", new HashMap<String, String>(), ImmutableList.of("tag1"),
                      ImmutableList.of(
                        new TimeSeries("metric1", tagValues("tag1", "1"),
                                       timeValues(1, 2, 3, 8, 4, 4, 6, 6, 7, 3, 10, 2, 11, 3)),
                        new TimeSeries("metric1", tagValues("tag1", "2"),
                                       timeValues(3, 7, 12, 4))));
 
-    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag3", "3"), new ArrayList<String>(),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag3", "3"), new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(3, 5))));
 
     // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
-    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, "metric1",
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution, "metric1",
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
 
-    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      ImmutableList.<String>of(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(10, 2, 11, 3))));
 
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
-    query = new CubeDeleteQuery(0, 15,  "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"));
+    query = new CubeDeleteQuery(0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"));
     cube.delete(query);
 
-    verifyCountQuery(cube, 0, 15, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
                      ImmutableList.<String>of(), ImmutableList.<TimeSeries>of());
 
   }
@@ -118,8 +119,8 @@ public abstract class AbstractCubeTest {
   public void testInterpolate() throws Exception {
     Aggregation agg1 = new DefaultAggregation(ImmutableList.of("tag1", "tag2", "tag3"),
                                               ImmutableList.of("tag1", "tag2", "tag3"));
-
-    Cube cube = getCube("myInterpolatedCube", new int[] {1}, ImmutableList.of(agg1));
+    int resolution = 1;
+    Cube cube = getCube("myInterpolatedCube", new int[] {resolution}, ImmutableList.of(agg1));
     // test step interpolation
     long startTs = 1;
     long endTs = 10;
@@ -130,13 +131,14 @@ public abstract class AbstractCubeTest {
       expectedTimeValues.add(new TimeValue(i, 5));
     }
     expectedTimeValues.add(new TimeValue(endTs, 3));
-    verifyCountQuery(cube, startTs, endTs, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
+                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
-    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, "metric1",
+    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
                                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
     //test small-slope linear interpolation
@@ -144,20 +146,23 @@ public abstract class AbstractCubeTest {
     endTs = 5;
     writeInc(cube, "metric1",  startTs,  5,  "1",  "1",  "1");
     writeInc(cube, "metric1",  endTs,  3,  "1",  "1",  "1");
-    verifyCountQuery(cube, startTs, endTs, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
+                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 5, 2, 5, 3, 4,
                                                                                            4, 4, 5, 3))),
                      new Interpolators.Linear());
 
-    query = new CubeDeleteQuery(startTs, endTs, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
+                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
     cube.delete(query);
 
     //test big-slope linear interpolation
     writeInc(cube, "metric1",  startTs,  100,  "1",  "1",  "1");
     writeInc(cube, "metric1",  endTs,  500,  "1",  "1",  "1");
-    verifyCountQuery(cube, startTs, endTs, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
+                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 100, 2, 200, 3, 300,
@@ -176,7 +181,7 @@ public abstract class AbstractCubeTest {
       expectedTimeValues.add(new TimeValue(i, 0));
     }
     expectedTimeValues.add(new TimeValue(limit + 1, 50));
-    verifyCountQuery(cube, 0, 21, 1, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 21, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
