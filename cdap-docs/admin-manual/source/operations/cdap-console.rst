@@ -40,7 +40,7 @@ To try out the new UI, changes are required before CDAP is started.
 
     $ ./bin/cdap.sh start --enable-alpha-ui
     
-- For CDAP Distributed, modify the `command used to start CDAP </admin-manual/installation.html#starting-services>`.
+- For CDAP Distributed, modify the `command used to start CDAP <../installation/installation.html#starting-services>`__.
   Before starting the service, an environmental variable needs to be set::
   
     export ENABLE_ALPHA_UI=true 
