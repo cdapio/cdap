@@ -21,7 +21,9 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import javax.annotation.Nullable;
 
 /**
@@ -33,7 +35,19 @@ public class ConnectionConfig {
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
   private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED, false);
-  private static final String DEFAULT_HOST = CONF.get(Constants.Router.ADDRESS);
+  private static final String DEFAULT_HOST = tryResolveAddress(CONF.get(Constants.Router.ADDRESS));
+
+  private static String tryResolveAddress(String addressString) {
+    try {
+    InetAddress address = InetAddress.getByName(addressString);
+      if (address.isAnyLocalAddress()) {
+        return InetAddress.getLocalHost().getHostName();
+      }
+    } catch (UnknownHostException e) {
+      // IGNORE
+    }
+    return addressString;
+  }
 
   public static final ConnectionConfig DEFAULT = ConnectionConfig.builder().build();
 

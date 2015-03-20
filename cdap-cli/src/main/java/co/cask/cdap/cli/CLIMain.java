@@ -142,8 +142,6 @@ public class CLIMain {
     });
     cli.addCompleterSupplier(injector.getInstance(EndpointSupplier.class));
     cli.getReader().setExpandEvents(false);
-
-    cliConfig.setConsoleReader(cli.getReader());
     cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
       public void onConnectionChanged(ClientConfig clientConfig) {
@@ -170,15 +168,7 @@ public class CLIMain {
   }
 
   public static String getDefaultURI() {
-    CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    String hostname = cConf.get(Constants.Router.ADDRESS);
-    int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-      cConf.getInt(Constants.Router.ROUTER_PORT);
-    String namespace = Constants.DEFAULT_NAMESPACE;
-
-    return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
+    return ConnectionConfig.DEFAULT.getURI().toString();
   }
 
   private String limit(String string, int maxLength) {

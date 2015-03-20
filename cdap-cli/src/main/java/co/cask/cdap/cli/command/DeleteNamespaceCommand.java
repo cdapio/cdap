@@ -26,6 +26,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import jline.console.ConsoleReader;
 
 import java.io.PrintStream;
 
@@ -50,10 +51,11 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
     Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
 
+    ConsoleReader consoleReader = new ConsoleReader();
     if (Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
-      String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]?",
+      String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
                                     Constants.DEFAULT_NAMESPACE_ID.getId());
-      String userConfirm = cliConfig.getConsoleReader().readLine(prompt);
+      String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId.getId());
         out.printf("Contents of namespace '%s' were deleted successfully", Constants.DEFAULT_NAMESPACE_ID.getId());
@@ -62,7 +64,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
     } else {
       String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]?",
                                     Constants.DEFAULT_NAMESPACE_ID.getId());
-      String userConfirm = cliConfig.getConsoleReader().readLine(prompt);
+      String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId.getId());
         out.println(String.format(SUCCESS_MSG, namespaceId));

@@ -64,10 +64,6 @@ public class CLIConfig implements TableRendererConfig {
   private final String version;
   private final PrintStream output;
 
-  @Nullable
-  // TODO: make not nullable
-  private ConsoleReader consoleReader;
-
   private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
   private Supplier<Integer> lineWidthSupplier = new Supplier<Integer>() {
@@ -180,12 +176,7 @@ public class CLIConfig implements TableRendererConfig {
 
     // obtain new access token via manual user input
     output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
-    ConsoleReader reader;
-    if (this.consoleReader != null) {
-      reader = this.consoleReader;
-    } else {
-      reader = new ConsoleReader();
-    }
+    ConsoleReader reader = new ConsoleReader();
     for (Credential credential : authenticationClient.getRequiredCredentials()) {
       String prompt = "Please, specify " + credential.getDescription() + "> ";
       String credentialValue;
@@ -297,15 +288,6 @@ public class CLIConfig implements TableRendererConfig {
 
   public int getLineWidth() {
     return Math.max(MIN_LINE_WIDTH, lineWidthSupplier.get());
-  }
-
-  public void setConsoleReader(ConsoleReader consoleReader) {
-    this.consoleReader = consoleReader;
-  }
-
-  @Nullable
-  public ConsoleReader getConsoleReader() {
-    return consoleReader;
   }
 
   /**
