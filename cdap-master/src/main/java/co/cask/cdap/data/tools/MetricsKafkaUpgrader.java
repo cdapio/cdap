@@ -33,6 +33,7 @@ import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -48,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Upgrade kafka metrics meta table data
@@ -90,36 +93,41 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
 
   @Override
   public void upgrade() throws Exception {
-    // copy kafka off set from old table to new kafka metrics table
-
-    String kafkaTableNameOld = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, kafkaTableName);
-    byte[] columnFamily = getColumnFamily(kafkaTableNameOld);
-    HTable hTable = getHTable(kafkaTableNameOld);
-
-    LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
-    // iterate old table and add those rows to the new kafkaConsumerMetaTable
+    // copy kafka offset from old table to new kafka metrics tabl
+    String kafkaTableNameOld = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, "default", kafkaTableName);
     try {
-      Scan scan = getScan(columnFamily);
-      ResultScanner resultScanner = hTable.getScanner(scan);
-      Result result;
+      // assuming we are migrating from 2.6 or 2.7
+      HTable hTable = getHTable(kafkaTableNameOld);
+      byte[] columnFamily = getColumnFamily(kafkaTableNameOld);
+
+      // iterate old table and copy all rows to the new kafkaConsumerMetaTable
       try {
-        while ((result = resultScanner.next()) != null) {
-          TopicPartition topicPartition =  getTopicPartition(result.getRow());
-          if (topicPartition != null) {
-            long value  = Bytes.toLong(result.getFamilyMap(columnFamily).get(OFFSET_COLUMN));
-            kafkaMetaTableDestination.save(ImmutableMap.of(topicPartition, value));
-          } else {
-            LOG.warn("Invalid topic partition found");
+        LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
+        Scan scan = getScan(columnFamily);
+        ResultScanner resultScanner = hTable.getScanner(scan);
+        Result result;
+        try {
+          while ((result = resultScanner.next()) != null) {
+            TopicPartition topicPartition = getTopicPartition(result.getRow());
+            if (topicPartition != null) {
+              long value  = Bytes.toLong(result.getFamilyMap(columnFamily).get(OFFSET_COLUMN));
+              kafkaMetaTableDestination.save(ImmutableMap.of(topicPartition, value));
+            } else {
+              LOG.warn("Invalid topic partition found {}", Bytes.toStringBinary(result.getRow()));
+            }
           }
+          LOG.info("Successfully completed upgrade for table {}", Bytes.toString(hTable.getTableName()));
+        } finally {
+          resultScanner.close();
         }
-        LOG.info("Successfully completed upgrade for table {}", Bytes.toString(hTable.getTableName()));
+      } catch (Exception e) {
+        LOG.info("Exception during upgrading metrics-kafka table {}", e);
+        throw Throwables.propagate(e);
       } finally {
-        resultScanner.close();
+        hTable.close();
       }
-    } catch (Exception e) {
-      LOG.info("Exception during upgrading metrics-kafka table {}", e);
-    } finally {
-      hTable.close();
+    } catch (IOException e) {
+      LOG.info("Unable to find table {}", kafkaTableNameOld);
     }
   }
 
@@ -146,9 +154,12 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
 
   private TopicPartition getTopicPartition(byte[] rowKey) {
     // convert rowkey to string, split by "DOT" , create TopicPartition
-    String[] tp = Bytes.toString(rowKey).split("\\.");
-    if (tp.length == 2) {
-      return new TopicPartition(tp[0], Integer.parseInt(tp[1]));
+    List<String> tp = Arrays.asList(Bytes.toString(rowKey).split("\\."));
+    if (tp.size() > 1) {
+      int length = tp.size();
+      String topic = Joiner.on(".").join(tp.subList(0, length - 1));
+      int partition = Integer.parseInt(tp.get(length - 1));
+      return new TopicPartition(topic, partition);
     }
     return null;
   }
