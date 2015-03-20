@@ -480,7 +480,6 @@ Query Tips
 
 Querying for Multiple Time-series
 ---------------------------------
-
 In a query, the optional ``groupBy`` parameter defines a list of tags whose values are
 used to build multiple timeseries. All data points that have the same values in tags
 specified in the ``groupBy`` parameter will form a single timeseries. You can define
@@ -507,6 +506,8 @@ The time range of a metric query can be specified in various ways: either
 or |---| in the case of Dataset metrics |---| since a Dataset was created; 
 or as a ``start`` and ``end`` to define a specific range and return a series of data points.
 
+By default, queries without a time range retrieve a value based on ``aggregate=true``.
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -520,11 +521,13 @@ or as a ``start`` and ``end`` to define a specific range and return a series of 
    * - ``start=<time>&end=<time>``
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
-
+   * - ``resolution=[1 | 60 | 3600 | auto]``
+     - Time resolution in seconds, or if "auto" based on time difference.
 
 With a specific time range, a ``resolution`` can be included to retrieve a series of data
-points for a metric. By default, ``resolution=auto``, which means that the resolution will
-be determined based on a time difference calculated between the start and end times. If:
+points for a metric. By default, 1 second resolution is used. Acceptable values are noted
+above. If ``resolution=auto``, the resolution will be determined based on a time
+difference calculated between the start and end times:
 
 - ``(endTime - startTime) >= 3610``, resolution will be in hours; 
 - ``(endTime - startTime) >= 610``, resolution will be in minutes; 
