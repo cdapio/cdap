@@ -66,11 +66,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
-  }
-
-  @Override
   public boolean exists(Id.Stream streamId) throws Exception {
     return exists(QueueName.fromStream(streamId));
   }
