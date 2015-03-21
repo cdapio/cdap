@@ -22,7 +22,7 @@ import java.util.Collection;
  * Stores and provides access to metrics data.
  */
 // todo: methods should throw IOException instead of Exception
-public interface  MetricStore {
+public interface MetricStore {
   /**
    * Adds {@link MetricValue} to the store.
    * @param metricValue metric value to add.
