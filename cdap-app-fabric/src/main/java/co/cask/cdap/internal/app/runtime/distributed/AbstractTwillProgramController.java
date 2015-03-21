@@ -33,7 +33,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
 
   protected final String programName;
   protected final TwillController twillController;
-  private volatile boolean stopRequested = false;
+  private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(String programName, TwillController twillController) {
     super(programName, twillController.getRunId());
