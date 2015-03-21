@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -90,13 +91,21 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
     }
   }
 
+  public boolean tableExists() throws Exception {
+    TableId tableId = getOldKafkaMetricsTableId();
+    if (!hBaseTableUtil.tableExists(new HBaseAdmin(hConf), tableId)) {
+      LOG.info("Table does not exist: {}. No upgrade necessary.", tableId);
+      return false;
+    }
+    return true;
+  }
+
   @Override
   public void upgrade() throws Exception {
     // todo : close the KafkaConsumerMetaTable after it implements closeable
     KafkaConsumerMetaTable kafkaMetaTableDestination =
       new DefaultMetricDatasetFactory(cConf, dsFramework).createKafkaConsumerMeta();
     // copy kafka offset from old table to new kafka metrics table
-
     try {
       // assuming we are migrating from 2.6
       HTable hTable = getHTable(oldKafkaMetricsTableName);
