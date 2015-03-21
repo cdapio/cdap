@@ -199,8 +199,8 @@ When creating your queries, keep these limitations in mind:
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
 - Writing into a Stream using SQL is not supported.
 - The SQL command ``DELETE`` is not supported.
-- When addressing your streams in queries, you need to prefix the stream name with the CDAP
-  namespace ``stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
+- When addressing your streams in queries, you need to prefix the stream name with
+  ``stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
   name is ``stream_purchases``. Note that the table name is all lower-case, regardless of how it was defined.
 - CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that

@@ -601,7 +601,7 @@ and then restart CDAP.
 
 .. highlight:: console
 
-1. Stop all Flows, Services, and Programs in all your applications.
+1. Stop all Flows, Services, and other Programs in all your applications.
 
 #. Stop all CDAP processes::
 
@@ -626,6 +626,11 @@ and then restart CDAP.
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
 
+#. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
+   before the next step (upgrade tool)::
+
+     kinit -kt <keytab> <principle>
+
 #. Run the upgrade tool::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
@@ -641,13 +646,7 @@ and then restart CDAP.
    **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
    To access your previous logs, please see the section on downloading logs in the
    :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
-     
-#. If you are upgrading a secure Hadoop cluster, see the notes above about
-   :ref:`configuring secure Hadoop <install-secure-hadoop>`.
 
-   To upgrade a secure cluster, you should use ``kinit``::
-
-     kinit -kt <keytab> <principle>
 
 .. _install-troubleshooting:
 
