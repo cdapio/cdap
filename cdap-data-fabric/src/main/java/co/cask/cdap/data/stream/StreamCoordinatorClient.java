@@ -62,4 +62,15 @@ public interface StreamCoordinatorClient extends Service {
    * @throws Exception if failed to update properties
    */
   void updateProperties(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
+
+  /**
+   * Deletes a stream by performing the given action. The execution of the action is protected by a lock
+   * so that it is guaranteed that there is only only thread executing the given action for the given stream across
+   * the whole system.
+   *
+   * @param streamId name of the stream
+   * @param action action to perform.
+   * @throws Exception if the action throws Exception
+   */
+  void deleteStream(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
 }

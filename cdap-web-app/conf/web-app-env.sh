@@ -9,9 +9,9 @@ export NODE_ENV=production
 
 WEB_APP_PATH="$CDAP_HOME/web-app/server/main.js"
 
-# if ENABLE_BETA_UI is set then start beta ui
-if [ "$ENABLE_BETA_UI" == "true" ]; then
-  WEB_APP_PATH="$CDAP_HOME/web-app/beta/server.js"
+# if ENABLE_ALPHA_UI is set then start new ui
+if [ "$ENABLE_ALPHA_UI" == "true" ]; then
+  WEB_APP_PATH="$CDAP_HOME/web-app/alpha/server.js"
 fi
 
 # Arguments for MAIN_CMD

@@ -377,6 +377,11 @@ public class UpgradeTool {
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
     queueConfigUpgrader.upgrade();
+
+    LOG.info("Upgrading metrics.kafka.meta table ...");
+    MetricsKafkaUpgrader metricsKafkaUpgrader = injector.getInstance(MetricsKafkaUpgrader.class);
+    metricsKafkaUpgrader.upgrade();
+    hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
   }
 
   public static void main(String[] args) throws Exception {
