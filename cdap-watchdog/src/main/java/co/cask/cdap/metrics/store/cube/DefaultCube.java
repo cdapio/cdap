@@ -72,7 +72,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public void add(Collection<CubeFact> facts) throws Exception {
+  public void add(Collection<? extends CubeFact> facts) throws Exception {
     List<Fact> toWrite = Lists.newArrayList();
     for (CubeFact fact : facts) {
       for (Aggregation agg : aggregations) {

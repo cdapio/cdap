@@ -186,7 +186,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void add(Collection<MetricValue> metricValues) throws Exception {
+  public void add(Collection<? extends MetricValue> metricValues) throws Exception {
     List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
     for (MetricValue metricValue : metricValues) {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
