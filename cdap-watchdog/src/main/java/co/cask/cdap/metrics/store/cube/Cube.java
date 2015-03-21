@@ -38,7 +38,7 @@ public interface Cube {
    * Adds {@link CubeFact}s to this {@link Cube}.
    * @param facts facts to add.
    */
-  void add(Collection<CubeFact> facts) throws Exception;
+  void add(Collection<? extends CubeFact> facts) throws Exception;
 
   /**
    * Queries data in this {@link Cube}.
