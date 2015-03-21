@@ -472,7 +472,7 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher.
 
 .. _install-ulimit:
 
