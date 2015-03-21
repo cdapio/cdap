@@ -234,11 +234,6 @@ public class MetricsDataMigrator {
 
   public void cleanUpOldTables(Version version) throws DataMigrationException {
     Set<String> tablesToDelete = Sets.newHashSet();
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-
-    // add kafka meta table to deleteList
-    tablesToDelete.add(addNamespace(defaultDatasetNamespace, cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                                       MetricsConstants.DEFAULT_KAFKA_META_TABLE)));
 
     if (version == Version.VERSION_2_6_OR_LOWER) {
       List<String> scopes = ImmutableList.of("system", "user");

@@ -122,6 +122,7 @@ public class UpgradeTool {
               "  6. Logs Metadata\n" +
               "  7. Stream state store table\n" +
               "  8. Queue config table\n" +
+              "  9. Metrics Kafka table\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -401,8 +402,10 @@ public class UpgradeTool {
 
     LOG.info("Upgrading metrics.kafka.meta table ...");
     MetricsKafkaUpgrader metricsKafkaUpgrader = injector.getInstance(MetricsKafkaUpgrader.class);
-    metricsKafkaUpgrader.upgrade();
-    hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
+    if (metricsKafkaUpgrader.tableExists()) {
+      metricsKafkaUpgrader.upgrade();
+      hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
+    }
   }
 
   public static void main(String[] args) throws Exception {
