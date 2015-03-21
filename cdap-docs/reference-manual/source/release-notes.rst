@@ -145,7 +145,7 @@ Known Issues
 - See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
 - If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
   Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
-  <install-starting-services>, which will restart all services 
+  <install-starting-services>`, which will restart all services 
   (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
 - User datasets with names starting with ``"system"`` can potentially cause conflicts
   (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
