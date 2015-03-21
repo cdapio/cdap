@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -31,6 +33,7 @@ import javax.annotation.Nullable;
  */
 public class ConnectionConfig {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ConnectionConfig.class);
   private static final CConfiguration CONF = CConfiguration.create();
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
@@ -39,12 +42,12 @@ public class ConnectionConfig {
 
   private static String tryResolveAddress(String addressString) {
     try {
-    InetAddress address = InetAddress.getByName(addressString);
+      InetAddress address = InetAddress.getByName(addressString);
       if (address.isAnyLocalAddress()) {
         return InetAddress.getLocalHost().getHostName();
       }
     } catch (UnknownHostException e) {
-      // IGNORE
+      LOG.warn("Unable to resolve address", e);
     }
     return addressString;
   }

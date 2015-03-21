@@ -30,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -39,7 +41,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class StandaloneContainer {
 
-  public static final String HOSTNAME = "127.0.0.1";
+  public static final String HOSTNAME = tryGetLocalhostHostname();
   public static final URI DEFAULT_CONNECTION_URI = URI.create("http://" + HOSTNAME + ":10000");
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneContainer.class);
@@ -82,6 +84,15 @@ public class StandaloneContainer {
 
         throw e;
       }
+    }
+  }
+
+  private static String tryGetLocalhostHostname() {
+    try {
+      return InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      LOG.warn("Unable to resolve localhost", e);
+      return "127.0.0.1";
     }
   }
 
