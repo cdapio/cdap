@@ -39,7 +39,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class StandaloneContainer {
 
-  public static final URI DEFAULT_CONNECTION_URI = URI.create("http://127.0.0.1:10000");
+  public static final String HOSTNAME = "127.0.0.1";
+  public static final URI DEFAULT_CONNECTION_URI = URI.create("http://" + HOSTNAME + ":10000");
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneContainer.class);
 
@@ -59,7 +60,7 @@ public class StandaloneContainer {
         CConfiguration cConf = CConfiguration.create();
         tempDirectory = Files.createTempDir();
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempDirectory.getAbsolutePath());
-        cConf.set(Constants.Router.ADDRESS, "localhost");
+        cConf.set(Constants.Router.ADDRESS, HOSTNAME);
         cConf.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
 
         // Start without UI
