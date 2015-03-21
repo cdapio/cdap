@@ -55,6 +55,8 @@ New Features
 
 - **Command Line Interface (CLI)**
 
+  - CLI can now directly connect to a CDAP instance of your choice at startup by using
+    ``cdap-cli.sh --uri <uri>``.
   - Support for runtime arguments, which can be listed by running ``"cdap-cli.sh --help"``.
   - Table rendering can be configured using ``"cli render as <alt|csv>"``. 
     The option ``"alt"`` is the default, with ``"csv"`` available for copy & pasting.
