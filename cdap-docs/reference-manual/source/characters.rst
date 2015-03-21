@@ -49,7 +49,7 @@ Examples:
     - ``my-ingest``
     - ``my_ingest``
   
-  will both be converted to ``cdap_stream_my_ingest``
+  will both be converted to ``stream_my_ingest``
 
 - The Datasets
 
@@ -57,6 +57,6 @@ Examples:
     - ``my_dataset``
     - ``my.dataset``
     
-  will all be converted to ``cdap_dataset_my_dataset``
+  will all be converted to ``dataset_my_dataset``
 
 Names should be carefully constructed to avoid any collisions as a result of conversion.

@@ -472,7 +472,7 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher.
 
 .. _install-ulimit:
 
@@ -586,7 +586,9 @@ and then restart CDAP.
 
 .. highlight:: console
 
-1. Stop all CDAP processes::
+1. Stop all Flows, Services, and other Programs in all your applications.
+
+#. Stop all CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
@@ -606,23 +608,37 @@ and then restart CDAP.
                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
                             cdap-security cdap-web-app
 
+#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
+   Please see :ref:`Configuration <install-configuration>`.
+
+#. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
+   before the next step (upgrade tool)::
+
+     kinit -kt <keytab> <principle>
+
 #. Run the upgrade tool::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
-#. Run the Data Migration tool for metrics::
+#. Run the Data Migration Tool for metrics::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics  [--keep-old-metrics-data]
 
-This will migrate aggregate metrics data from CDAP 2.6 table to CDAP-2.8 metrics system. The old metrics tables
-are deleted by default unless the optional field --keep-old-metrics-data is specified.
+   This will migrate aggregate metrics data from the CDAP 2.6.x tables to the CDAP 2.8 metrics system. 
+   The old metrics tables are deleted by default unless the optional field ``--keep-old-metrics-data`` is specified.
 
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-If you are upgrading a secure Hadoop cluster, see the notes above about
-:ref:`configuring secure Hadoop <install-secure-hadoop>`. 
+#. This will allow you to see your old run history, logs, and |---| if you migrated your 
+   old metrics with the *Data Migration Tool* |---| metrics.
+
+   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
+   To access your previous logs, please see the section on downloading logs in the
+   :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
+
+#. You must recompile and then redeploy your applications. 
 
 .. _install-troubleshooting:
 
