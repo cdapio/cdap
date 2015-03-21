@@ -601,7 +601,9 @@ and then restart CDAP.
 
 .. highlight:: console
 
-1. Stop all CDAP processes::
+1. Stop all Flows, Services, and Programs in all your applications.
+
+#. Stop all CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
@@ -621,6 +623,9 @@ and then restart CDAP.
                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
                             cdap-security cdap-web-app
 
+#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
+   Please see :ref:`Configuration <install-configuration>`.
+
 #. Run the upgrade tool::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
@@ -629,8 +634,20 @@ and then restart CDAP.
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-If you are upgrading a secure Hadoop cluster, see the notes above about
-:ref:`configuring secure Hadoop <install-secure-hadoop>`. 
+#. You should recompile and redeploy your application. This will allow you to see your old run history, logs,
+   and |---| if you migrated your old metrics with the 
+   :ref:`metric migration tool <>` |---| metrics.
+
+   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
+   To access your previous logs, please see the section on downloading logs in the
+   :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
+     
+#. If you are upgrading a secure Hadoop cluster, see the notes above about
+   :ref:`configuring secure Hadoop <install-secure-hadoop>`.
+
+   To upgrade a secure cluster, you should use ``kinit``::
+
+     kinit -kt <keytab> <principle>
 
 .. _install-troubleshooting:
 
