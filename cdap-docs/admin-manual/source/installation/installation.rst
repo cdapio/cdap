@@ -172,9 +172,6 @@ possibly *Hive*) cluster configurations by adding your configuration to their cl
 (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
 the number of connections required is a function of usage.
 
-**Note:** If Explore is enabled on secure Hadoop, the MapReduce JobHistory Server must be installed as well.
-Most Hadoop installations will already be running the MapReduce JobHistory Server.
-
 .. _deployment-architectures:
 
 Deployment Architectures
@@ -406,22 +403,8 @@ Depending on your installation, you may want to set these properties:
     </property>
 
   This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. If you have enabled the CDAP Explore Service on
-  a secure Hadoop cluster, you will need to add a few additional Hadoop configuration settings.
-
-  In order to allow the Hive Metastore to run operations as the ``cdap`` user,
-  add these settings to the Hadoop ``core-site.xml`` file::
-
-    <property>
-      <name>hadoop.proxyuser.hive.groups</name>
-      <value>cdap,hadoop,hive</value>
-    </property>
-    <property>
-      <name>hadoop.proxyuser.hive.hosts</name>
-      <value>*</value>
-    </property>
-
-  If you are running CDAP as a user other than ``cdap``, replace ``cdap`` with the correct user.
+  See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
+  This feature is currently not supported on secure Hadoop clusters.
 
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
@@ -488,6 +471,8 @@ In order to configure CDAP Master for Kerberos authentication:
     echo "grant 'cdap', 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
+
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher
 
 .. _install-ulimit:
 
