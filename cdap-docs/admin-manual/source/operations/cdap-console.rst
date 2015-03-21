@@ -29,6 +29,7 @@ you to their respective explorers.
 .. at `Guides and Tutorials for CDAP. <http://cask.co/guides/>`__
 .. is available
 
+.. _cdap-console-new-ui:
 
 New User Interface
 ------------------
