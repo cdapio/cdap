@@ -12,7 +12,17 @@
 Configuration HTTP RESTful API
 ==============================
 
-The configurations of CDAP and HBase are exposed via HTTP RESTful endpoints and are documented here.
+The version of CDAP and configurations of CDAP and HBase are exposed via HTTP RESTful endpoints.
+
+.. _http-restful-api-configuration-version-cdap:
+
+CDAP Version
+------------
+
+To retrieve the version of CDAP, issue an HTTP GET request::
+
+  GET <base-url>/version
+
 
 .. _http-restful-api-configuration-cdap:
 
