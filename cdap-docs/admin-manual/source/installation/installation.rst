@@ -635,19 +635,19 @@ and then restart CDAP.
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
-#. Run the Data Migration tool for metrics::
+#. Run the Data Migration Tool for metrics::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics  [--keep-old-metrics-data]
 
-This will migrate aggregate metrics data from CDAP 2.6 table to CDAP-2.8 metrics system. The old metrics tables
-are deleted by default unless the optional field --keep-old-metrics-data is specified.
+   This will migrate aggregate metrics data from the CDAP 2.6.x tables to the CDAP 2.8 metrics system. 
+   The old metrics tables are deleted by default unless the optional field ``--keep-old-metrics-data`` is specified.
 
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
 #. This will allow you to see your old run history, logs, and |---| if you migrated your 
-   old metrics with the :ref:`metric migration tool <>` |---| metrics.
+   old metrics with the *Data Migration Tool* |---| metrics.
 
    **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
    To access your previous logs, please see the section on downloading logs in the
