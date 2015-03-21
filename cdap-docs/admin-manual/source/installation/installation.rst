@@ -634,8 +634,8 @@ and then restart CDAP.
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-#. You should recompile and redeploy your application. This will allow you to see your old run history, logs,
-   and |---| if you migrated your old metrics with the 
+#. You should recompile and redeploy your application. This will allow you to see your old
+   run history, logs, and |---| if you migrated your old metrics with the 
    :ref:`metric migration tool <>` |---| metrics.
 
    **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
