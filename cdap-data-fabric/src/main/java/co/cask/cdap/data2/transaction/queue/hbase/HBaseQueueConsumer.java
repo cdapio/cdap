@@ -42,12 +42,12 @@ import java.util.Set;
 abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   private final HTable hTable;
+  private final HBaseConsumerState state;
   private final HBaseConsumerStateStore stateStore;
   private final byte[] queueRowPrefix;
   private final HBaseQueueStrategy queueStrategy;
   private boolean closed;
   private boolean canConsume;
-  private HBaseConsumerState state;
   private boolean completed;
 
   /**
@@ -64,10 +64,10 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
     super(cConf, consumerState.getConsumerConfig(), queueName, consumerState.getStartRow());
     this.hTable = hTable;
+    this.state = consumerState;
     this.stateStore = stateStore;
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.queueStrategy = queueStrategy;
-    this.state = consumerState;
     this.canConsume = false;
   }
 
@@ -187,8 +187,10 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   protected void updateStartRow(byte[] startRow) {
-    ConsumerConfig consumerConfig = getConfig();
-    stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
+    if (canConsume && !completed) {
+      ConsumerConfig consumerConfig = getConfig();
+      stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
+    }
   }
 
   protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);

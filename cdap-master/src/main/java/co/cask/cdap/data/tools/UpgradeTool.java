@@ -87,6 +87,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 /**
  * Command line tool for the Upgrade tool
@@ -110,7 +111,18 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrade all tables."),
+    UPGRADE("Upgrades CDAP from 2.6 to 2.8\n" +
+              "  This will upgrade CDAP from 2.6 to 2.8 version. \n" +
+              "  The upgrade tool upgrades the following: \n" +
+              "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
+              "  2. System Datasets\n" +
+              "  3. Dataset Type and Instance MetadataStore\n" +
+              "  4. Application Metadata\n" +
+              "  5. Archives and Files\n" +
+              "  6. Logs Metadata\n" +
+              "  7. Stream state store table\n" +
+              "  8. Queue config table\n" +
+              "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
     private final String description;
@@ -312,7 +324,16 @@ public class UpgradeTool {
     try {
       switch (action) {
         case UPGRADE:
-          performUpgrade();
+          Scanner scan = new Scanner(System.in);
+          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          System.out.println("Do you want to continue (y/n)");
+          String response = scan.next();
+          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+            System.out.println("Starting upgrade ...");
+            performUpgrade();
+          } else {
+            System.out.println("Upgrade cancelled.");
+          }
           break;
         case HELP:
           printHelp();
@@ -337,7 +358,7 @@ public class UpgradeTool {
     System.out.println();
 
     for (Action action : Action.values()) {
-      System.out.println(String.format("  %s - %s", action.name().toLowerCase(), action.getDescription()));
+      System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
     }
   }
 
