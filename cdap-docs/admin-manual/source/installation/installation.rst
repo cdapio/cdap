@@ -596,12 +596,11 @@ Upgrading an Existing Version
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
-These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
-and then restart CDAP.
-
 .. highlight:: console
 
-1. Stop all CDAP processes::
+1. Stop all the flows, programs and services in all your apps.
+
+2. Stop all CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
@@ -621,6 +620,8 @@ and then restart CDAP.
                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
                             cdap-security cdap-web-app
 
+4. Copy logback-container.xml into your conf directory. Please see :ref:`Configuration <_install-configuration>`.
+
 #. Run the upgrade tool::
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
@@ -628,9 +629,18 @@ and then restart CDAP.
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-     
+
+You should recompile and redeploy your application. This will allow you to see your old run history, logs,
+metrics (if you migrated your old metrics with the metric migration tool).
+
+Note: You will not be able to see your old logs in CDAP UI anymore. To access your old logs please see
+Logging HTTP RESTful API.
+
 If you are upgrading a secure Hadoop cluster, see the notes above about
-:ref:`configuring secure Hadoop <install-secure-hadoop>`. 
+:ref:`configuring secure Hadoop <install-secure-hadoop>`.
+
+To upgrade a secure cluster you should use kinit::
+     kinit -kt <keytab> <principle>
 
 .. _install-troubleshooting:
 
