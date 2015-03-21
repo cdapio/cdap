@@ -171,8 +171,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 Troubleshooting
 =======================================
 
-Permissions Errors
-..................
+.. rubric:: Permissions Errors
+
 Some versions of Hive may try to create a temporary staging directory at the table
 location when executing queries. If you are seeing permissions errors when running a
 query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
@@ -183,8 +183,8 @@ Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration f
 
 .. _cloudera-direct-parcel-access:
 
-Direct Parcel Access
-....................
+.. rubric:: Direct Parcel Access
+
 If you need to download and install the parcels directly (perhaps for a cluster that does
 not have direct network access), the parcels are available by their full URLs. As they are
 stored in a directory that does not offer browsing, they are listed here:
