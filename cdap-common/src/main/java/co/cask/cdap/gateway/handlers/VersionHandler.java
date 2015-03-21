@@ -34,7 +34,7 @@ import javax.ws.rs.Path;
 /**
  * Handles version requests.
  */
-@Path(Constants.Gateway.API_VERSION_2)
+@Path(Constants.Gateway.API_VERSION_3)
 public class VersionHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(VersionHandler.class);
