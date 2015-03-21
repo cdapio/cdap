@@ -77,3 +77,32 @@ or provide Twitter API credentials::
       collector = new CollectingThread();
       collector.start();
     }
+
+Scoped Runtime Arguments for Workflow
+=====================================
+When a Workflow is configured, you may want to pass specific runtime arguments to the different programs
+and datasets used inside the Workflow. To achieve this, you can prefix the runtime arguments with a ``<scope>``.
+Currently supported scopes are ``dataset``, ``mapreduce``, and ``spark``.
+
+Example: To set a runtime argument of ``read.timeout=30`` for the MapReduce program ``oneMapReduce`` in a Workflow,
+the argument can be provided with a scope of ``mapreduce.oneMapReduce.read.timeout=30``. In this case, ``oneMapReduce``
+and the datasets used in ``oneMapReduce`` will receive two arguments: one with a scope of
+``mapreduce.oneMapReduce.read.timeout=30``, and another with the scope extracted as ``read.timeout=30``.
+Programs other than ``oneMapReduce`` and datasets used in them will receive only the single argument
+``mapreduce.oneMapReduce.read.timeout=30``.
+
+An argument can also be prefixed with ``<scope>.*`` to apply it to all programs or datasets in the Workflow as
+represented by the scope.
+
+Example: If the runtime argument is specified as ``mapreduce.*.read.timeout=30``, all MapReduce programs and
+datasets used in them will receive two arguments: one with the scope ``mapreduce.*.read.timeout=30`` and another
+with the scope extracted as ``read.timeout=30``. Programs other than the MapReduce and the datasets used by them
+will receive only the single argument ``mapreduce.*.read.timeout=30``.
+
+Since the datasets can be used by programs running inside a Workflow, a scope for them can be nested inside a
+corresponding program scope.
+
+Example: Consider the dataset ``myTable`` used by multiple programs in a Workflow. The runtime argument
+``cache.seconds=30`` for ``myTable`` can be provided as ``dataset.myTable.cache.seconds=30``. In this case,
+the argument will be set for all programs that use ``myTable``. In order to set the argument only for the MapReduce
+program ``myMR``, the dataset argument can be nested inside the program scope as ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.

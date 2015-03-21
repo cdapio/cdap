@@ -69,7 +69,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Default implementation of {@link WorkerContext}
  */
 public class BasicWorkerContext extends AbstractContext implements WorkerContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BasicServiceWorkerContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
   private final Set<String> datasets;
