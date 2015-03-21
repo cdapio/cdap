@@ -70,7 +70,7 @@ used to identify the query in subsequent requests::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Body
-     - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
+     - ``{"query":"SELECT * FROM dataset_mydataset LIMIT 5"}``
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
@@ -186,8 +186,8 @@ The type of each column is a data type as defined in the `Hive language manual
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
    * - HTTP Response
-     - ``[{"name":"cdap_user_mydataset.key","type":"array<tinyint>","position":1},``
-       ``{"name":"cdap_user_mydataset.value","type":"array<tinyint>","position":2}]``
+     - ``[{"name":"dataset_mydataset.key","type":"array<tinyint>","position":1},``
+       ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
      - Retrieve the schema of the result of the query in the namespace *default* which has
        the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
@@ -356,7 +356,7 @@ The results are returned as a JSON array, with each element containing informati
    * - HTTP Response
      - ``[{``
        ``   "timestamp": 1411266478717,``
-       ``   "statement": "SELECT * FROM cdap_user_mydataset",``
+       ``   "statement": "SELECT * FROM dataset_mydataset",``
        ``   "status": "FINISHED",``
        ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
        ``   "has_results": true,

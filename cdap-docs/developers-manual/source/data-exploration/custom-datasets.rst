@@ -239,7 +239,7 @@ Writing to Datasets with SQL
 Data can be inserted into Datasets using SQL. For example, you can write to a Dataset named
 ``ProductCatalog`` with this SQL query::
 
-  INSERT INTO TABLE cdap_user_productcatalog SELECT ...
+  INSERT INTO TABLE dataset_productcatalog SELECT ...
 
 In order for a Dataset to enable record insertion from SQL query, it simply has to expose a way to write records
 into itself.
@@ -302,8 +302,8 @@ When creating your queries, keep these limitations in mind:
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
 - The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
 - When addressing your datasets in queries, you need to prefix the data set name with the CDAP
-  namespace ``cdap_user_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
-  name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
+  namespace ``dataset_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
+  name is ``dataset_productcatalog``. Note that the table name is lower-case.
 
 For more examples of queries, please refer to the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.

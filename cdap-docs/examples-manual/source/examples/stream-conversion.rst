@@ -125,7 +125,7 @@ to send 10000 events at a rate of roughly two per second::
 You can now wait for the Workflow to run, after which you can query the partitions in the
 ``converted`` dataset::
 
-  $ cdap-cli.sh execute \"show partitions cdap_user_converted\"
+  $ cdap-cli.sh execute \"show partitions dataset_converted\"
   +============================================+
   | partition: STRING                          |
   +============================================+
@@ -139,7 +139,7 @@ than the time since the Epoch: the year, month, day of the month, hour and minut
 
 You can also query the data in the dataset. For example, to find the five most frequent body texts, issue::
 
-  $ cdap-cli.sh execute '"select count(*) as count, body from cdap_user_converted group by body order by count desc limit 5"'
+  $ cdap-cli.sh execute '"select count(*) as count, body from dataset_converted group by body order by count desc limit 5"'
   +==============================+
   | count: BIGINT | body: STRING |
   +==============================+
@@ -153,7 +153,7 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from cdap_user_converted where month=1 group by body order by count desc limit 5
+  select count(*) as count, body from dataset_converted where month=1 group by body order by count desc limit 5
 
 Stopping the Application
 ------------------------
