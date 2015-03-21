@@ -98,11 +98,6 @@ New Features
   - Spark now uses a configurer-style API for specifying
     (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
   
-- **CDAP Console (UI)**
-
-  - A new alpha :ref:`User Interface (UI) <cdap-console-new-ui>` for the CDAP Console has
-    been introduced.
-  
 - **Workflows**
 
   - Users can schedule a Workflow based on increments of data being ingested into a Stream.
