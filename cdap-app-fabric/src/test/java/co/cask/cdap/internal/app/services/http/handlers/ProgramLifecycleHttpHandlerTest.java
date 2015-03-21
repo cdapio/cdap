@@ -790,36 +790,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Category(XSlowTests.class)
-  @Ignore
   @Test
   public void testWorkflowForkApp() throws Exception {
-    // Steps for the test
-    // 1. Deploy the Workflow app containing fork node
-    // 2. Check the current run of the Workflow. It should return 404
-    // 3. Start the Workflow
-    // 4. Check the current run of the workflow. It should have 2 programs running in parallel
-    // 5. Stop the workflow
-    // 6. Check workflow runs. Since the workflow was stopped, it should be marked as failed
-    // 7. Start the workflow again
-    // 8. Check the current run of the workflow. It should have 2 programs running in parallel
-    // 9. Allow workflow to complete and make sure that one run is marked as complete
+    File doneFile = new File(tmpFolder.newFolder() + "/testWorkflowForkApp.done");
+    File oneActionFile = new File(tmpFolder.newFolder() + "/oneAction.done");
+    File anotherActionFile = new File(tmpFolder.newFolder() + "/anotherAction.done");
 
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    final String oneInputPathRun1 = createInput("oneInputPathRun1");
-    final java.io.File oneOutputPathRun1 = new java.io.File(tmpFolder.newFolder(), "outputRun1");
-    final String anotherInputPathRun1 = createInput("anotherInputPathRun1");
-    final java.io.File anotherOutputPathRun1 = new java.io.File(tmpFolder.newFolder(), "outputRun1");
-
-    Map<String, String> runtimeArgumentsRun1 = Maps.newHashMap();
-    runtimeArgumentsRun1.put("oneInputPath", oneInputPathRun1);
-    runtimeArgumentsRun1.put("oneOutputPath", oneOutputPathRun1.getAbsolutePath());
-    runtimeArgumentsRun1.put("anotherInputPath", anotherInputPathRun1);
-    runtimeArgumentsRun1.put("anotherOutputPath", anotherOutputPathRun1.getAbsolutePath());
+    Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath(),
+                                                           "oneaction.file", oneActionFile.getAbsolutePath(),
+                                                           "anotheraction.file", anotherActionFile.getAbsolutePath());
 
     setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
-                          WORKFLOW_WITH_FORK, runtimeArgumentsRun1);
+                          WORKFLOW_WITH_FORK, runtimeArguments);
+
 
     int status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                       WORKFLOW_WITH_FORK, "start");
@@ -834,6 +820,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String currentUrl = String.format("apps/%s/workflows/%s/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK,
                                       runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    while (!oneActionFile.exists() && !anotherActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
     int currentRunningProgramsExpected = 2;
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
@@ -847,31 +836,30 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "killed");
     scheduleHistoryRuns(10, runsUrl, 0);
 
-    final String oneInputPathRun2 = createInput("oneInputPathRun2");
-    final java.io.File oneOutputPathRun2 = new java.io.File(tmpFolder.newFolder(), "outputRun2");
-    final String anotherInputPathRun2 = createInput("anotherInputPathRun2");
-    final java.io.File anotherOutputPathRun2 = new java.io.File(tmpFolder.newFolder(), "outputRun2");
-
-    Map<String, String> runtimeArgumentsRun2 = Maps.newHashMap();
-    runtimeArgumentsRun2.put("oneInputPath", oneInputPathRun2);
-    runtimeArgumentsRun2.put("oneOutputPath", oneOutputPathRun2.getAbsolutePath());
-    runtimeArgumentsRun2.put("anotherInputPath", anotherInputPathRun2);
-    runtimeArgumentsRun2.put("anotherOutputPath", anotherOutputPathRun2.getAbsolutePath());
-
-    setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
-                          WORKFLOW_WITH_FORK, runtimeArgumentsRun2);
+    oneActionFile.delete();
+    anotherActionFile.delete();
 
     status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                   WORKFLOW_WITH_FORK, "start");
     Assert.assertEquals(200, status);
+
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "running");
     historyRuns = scheduleHistoryRuns(60, runsUrl, 0);
     Assert.assertTrue(historyRuns.size() == 1);
+
     runId = historyRuns.get(0).get("runid");
+
+    while (!oneActionFile.exists() && !anotherActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
+
     currentUrl = String.format("apps/%s/workflows/%s/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, runId);
     versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     currentRunningProgramsExpected = 2;
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    // Signal the Workflow that execution can be continued by creating temp file
+    doneFile.createNewFile();
 
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "completed");
     scheduleHistoryRuns(180, runsUrl, 0);
