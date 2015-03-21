@@ -19,7 +19,7 @@ Listing all Services
 
 You can list all Services in CDAP by issuing an HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace-id>/services
+  GET <base-url>/namespaces/<namespace>/services
 
 .. list-table::
    :widths: 20 80
@@ -27,7 +27,7 @@ You can list all Services in CDAP by issuing an HTTP GET request to the URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
      
 The response body will contain a JSON-formatted list of the existing Services::
@@ -50,7 +50,7 @@ as part of the request URL along with any additional headers, body and query par
 
 The request type is defined by the Service's method::
 
-  <request-type> <base-url>/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
+  <request-type> <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
 **Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`. See the
@@ -63,7 +63,7 @@ encoding parameters.
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<request-type>``
      - One of GET, POST, PUT and DELETE. This is defined by the handler method.

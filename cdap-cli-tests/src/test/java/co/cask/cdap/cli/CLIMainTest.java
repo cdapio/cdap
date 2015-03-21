@@ -64,7 +64,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -372,10 +371,10 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get preferences instance", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
-    propMap.put("key", "new instance");
+    propMap.put("key", "newinstance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete preferences instance", "successfully");
-    testCommandOutputContains(cli, String.format("set preferences instance 'key=new instance, k1=v1'"),
+    testCommandOutputContains(cli, String.format("set preferences instance 'key=newinstance k1=v1'"),
                               "successfully");
     testPreferencesOutput(cli, "get preferences instance", propMap);
     testPreferencesOutput(cli, "get resolved preferences instance", propMap);
@@ -425,7 +424,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testNamespaces() throws Exception {
     final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
@@ -434,7 +432,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // initially only default namespace should be present
     NamespaceMeta defaultNs = new NamespaceMeta.Builder()
-      .setName("default").setDescription("default").build();
+      .setName("default").setDescription("Default Namespace").build();
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
 

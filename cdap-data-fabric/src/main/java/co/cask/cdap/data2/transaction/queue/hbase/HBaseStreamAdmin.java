@@ -116,11 +116,6 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    return 0;
-  }
-
-  @Override
   public boolean exists(Id.Stream streamId) throws Exception {
     return exists(QueueName.fromStream(streamId));
   }

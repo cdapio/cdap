@@ -74,7 +74,7 @@ public abstract class StreamFileJanitorTestBase {
       writer.close();
 
       // Call cleanup before truncate. The current generation should stand.
-      janitor.clean(streamConfig, System.currentTimeMillis());
+      janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
       verifyGeneration(streamConfig, i);
 
       streamAdmin.truncate(streamId);
@@ -83,7 +83,7 @@ public abstract class StreamFileJanitorTestBase {
     int generation = StreamUtils.getGeneration(streamConfig);
     Assert.assertEquals(5, generation);
 
-    janitor.clean(streamConfig, System.currentTimeMillis());
+    janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
 
     // Verify the stream directory should only contains the generation directory
     for (Location location : streamConfig.getLocation().list()) {
@@ -126,13 +126,37 @@ public abstract class StreamFileJanitorTestBase {
 
     // Perform clean with current time = 10000 (10 seconds since epoch).
     // Since TTL = 5 seconds, 2 partitions will be remove (Ends at 2000 and ends at 4000).
-    janitor.clean(config, 10000);
+    janitor.clean(config.getLocation(), config.getTTL(), 10000);
 
     Assert.assertEquals(3, generationLocation.list().size());
 
     // Cleanup again with current time = 16000, all partitions should be deleted.
-    janitor.clean(config, 16000);
+    janitor.clean(config.getLocation(), config.getTTL(), 16000);
     Assert.assertTrue(generationLocation.list().isEmpty());
+  }
+
+  @Test
+  public void testCleanupDeletedStream() throws Exception {
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "cleanupDelete");
+    StreamAdmin streamAdmin = getStreamAdmin();
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getLocationFactory());
+    streamAdmin.create(streamId);
+
+    // Write some data
+    FileWriter<StreamEvent> writer = createWriter(streamId);
+    try {
+      for (int i = 0; i < 10; i++) {
+        writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
+      }
+    } finally {
+      writer.close();
+    }
+
+    // Delete the stream
+    streamAdmin.drop(streamId);
+
+    // Run janitor. Should be running fine without exception.
+    janitor.cleanAll();
   }
 
   private void verifyGeneration(StreamConfig config, int generation) throws IOException {
