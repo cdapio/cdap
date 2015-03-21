@@ -625,6 +625,13 @@ and then restart CDAP.
 
      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
+#. Run the Data Migration tool for metrics::
+
+     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics  [--keep-old-metrics-data]
+
+This will migrate aggregate metrics data from CDAP 2.6 table to CDAP-2.8 metrics system. The old metrics tables
+are deleted by default unless the optional field --keep-old-metrics-data is specified.
+
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
