@@ -31,6 +31,13 @@ public interface MetricStore {
   void add(MetricValue metricValue) throws Exception;
 
   /**
+   * Adds {@link MetricValue}s to the store.
+   * @param metricValues metric values to add.
+   * @throws Exception
+   */
+  void add(Collection<MetricValue> metricValues) throws Exception;
+
+  /**
    * Queries metrics data.
    * @param query query to execute
    * @return time series that satisfy the query

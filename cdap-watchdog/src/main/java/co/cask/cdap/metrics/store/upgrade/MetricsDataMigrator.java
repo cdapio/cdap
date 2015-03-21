@@ -343,6 +343,7 @@ public class MetricsDataMigrator {
                                   UpgradeMetricsConstants.DEFAULT_TAG_DEPTH);
   }
 
+  // todo: batch writing metrics to a store, see MetricStore.add(Collection<MetricValue>)
   private void addMetrics(Map<byte[], byte[]> columns, String metricName,
                           Map<String, String> tagMap, String metricTagType) throws Exception {
     for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {

@@ -35,6 +35,12 @@ public interface Cube {
   void add(CubeFact fact) throws Exception;
 
   /**
+   * Adds {@link CubeFact}s to this {@link Cube}.
+   * @param facts facts to add.
+   */
+  void add(Collection<CubeFact> facts) throws Exception;
+
+  /**
    * Queries data in this {@link Cube}.
    * @param query query to perform.
    * @return {@link List} of {@link TimeSeries} that are result of the query.

@@ -63,13 +63,17 @@ public abstract class AbstractCubeTest {
     writeInc(cube, "metric1",  7,  3,  "1",  "1", null);
     writeInc(cube, "metric1",  8,  2, null,  "1", null);
     writeInc(cube, "metric1",  9,  1, null, null, null);
-    writeInc(cube, "metric1", 10,  2,  "1",  "1",  "1",  "1");
-    writeInc(cube, "metric1", 11,  3,  "1",  "1",  "1", null);
-    writeInc(cube, "metric1", 12,  4,  "2",  "1",  "1",  "1");
-    writeInc(cube, "metric1", 13,  5, null, null, null,  "1");
+    // writing in batch
+    cube.add(ImmutableList.of(
+      getFact("metric1", 10,  2,  "1",  "1",  "1",  "1"),
+      getFact("metric1", 11,  3,  "1",  "1",  "1", null),
+      getFact("metric1", 12,  4,  "2",  "1",  "1",  "1"),
+      getFact("metric1", 13,  5, null, null, null,  "1")
+    ));
 
     writeInc(cube, "metric2",  1,  1,  "1",  "1",  "1");
 
+    // todo: do some write instead of increments - test those as well
 
     // now let's query!
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
@@ -191,7 +195,11 @@ public abstract class AbstractCubeTest {
 
 
   private void writeInc(Cube cube, String measureName, long ts, long value, String... tags) throws Exception {
-    cube.add(new CubeFact(tagValuesByValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value)));
+    cube.add(getFact(measureName, ts, value, tags));
+  }
+
+  private CubeFact getFact(String measureName, long ts, long value, String... tags) {
+    return new CubeFact(tagValuesByValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value));
   }
 
   private Map<String, String> tagValuesByValues(String... tags) {
