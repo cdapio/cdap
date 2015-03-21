@@ -118,8 +118,8 @@ New Features
     
 - **Upgrade and Data Migration Tool**
 
-  - Added an automated upgrade tool which supports upgrading from 2.6.x to 2.8.0
-    (**Note:** Apps need to be both recompiled and re-deployed.)
+  - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
+    2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
   - Added a metric migration tool which migrates old metrics to the new 2.8 format.
 
 
