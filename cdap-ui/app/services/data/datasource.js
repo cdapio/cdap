@@ -98,15 +98,7 @@ angular.module(PKG.name+'.services')
       this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
-        var match = {
-          json: data.resource.json || true,
-          url: data.resource.url,
-          method: data.resource.method
-        };
-        // If a POST or PUT call.
-        if (data.resource.data) {
-          match.data = data.resource.data;
-        }
+        var match = data.resource;
 
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
@@ -168,7 +160,7 @@ angular.module(PKG.name+'.services')
       var prom = new MyPromise(function(resolve, reject) {
         var generatedResource = {
           json: true,
-          method: resource.method
+          method: resource.method || 'GET'
         };
         if (!resource.url) {
           generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
@@ -216,7 +208,7 @@ angular.module(PKG.name+'.services')
         } else {
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           if (resource.data) {
-            generatedResource.data = resource.data;
+            angular.extend(generatedResource, resource.data);
           }
         }
 

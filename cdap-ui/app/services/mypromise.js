@@ -66,6 +66,7 @@ angular.module(PKG.name + '.services')
           }
           fulfill(result);
         } catch (e) {
+          (console.error)? console.error(ex): console.log(ex);
           reject(e);
         }
       }
@@ -120,7 +121,7 @@ angular.module(PKG.name + '.services')
                 return reject(ex);
               }
             } else {
-              (console.error)? console.error(ex): console.log(ex);
+              (console.error)? console.error(error): console.log(error);
               return reject(error);
             }
           });
