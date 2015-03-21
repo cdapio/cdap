@@ -793,10 +793,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testWorkflowForkApp() throws Exception {
     File doneFile = new File(tmpFolder.newFolder() + "/testWorkflowForkApp.done");
+    File oneActionFile = new File(tmpFolder.newFolder() + "/oneAction.done");
+    File anotherActionFile = new File(tmpFolder.newFolder() + "/anotherAction.done");
+
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
+    Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath(),
+                                                           "oneaction.file", oneActionFile.getAbsolutePath(),
+                                                           "anotheraction.file", anotherActionFile.getAbsolutePath());
+
     setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                           WORKFLOW_WITH_FORK, runtimeArguments);
 
@@ -814,6 +820,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String currentUrl = String.format("apps/%s/workflows/%s/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK,
                                       runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    while (!oneActionFile.exists() && !anotherActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
     int currentRunningProgramsExpected = 2;
     checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
 
@@ -827,6 +836,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     runsUrl = getRunsUrl(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, "killed");
     scheduleHistoryRuns(10, runsUrl, 0);
 
+    oneActionFile.delete();
+    anotherActionFile.delete();
+
     status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                   WORKFLOW_WITH_FORK, "start");
     Assert.assertEquals(200, status);
@@ -836,6 +848,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(historyRuns.size() == 1);
 
     runId = historyRuns.get(0).get("runid");
+
+    while (!oneActionFile.exists() && !anotherActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
 
     currentUrl = String.format("apps/%s/workflows/%s/%s/current", WORKFLOW_APP_WITH_FORK, WORKFLOW_WITH_FORK, runId);
     versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);

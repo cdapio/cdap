@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,23 +57,27 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class OneAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
+    private String filePath = "";
     private String doneFilePath = "";
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
+      filePath = context.getRuntimeArguments().get("oneaction.file");
       doneFilePath = context.getRuntimeArguments().get("done.file");
     }
 
     @Override
     public void run() {
       LOG.info("Ran one action");
-      File doneFile = new File(doneFilePath);
-      while (!doneFile.exists()) {
-        try {
+      try {
+        File file = new File(filePath);
+        file.createNewFile();
+        File doneFile = new File(doneFilePath);
+        while (!doneFile.exists()) {
           TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-          // no-op
         }
+      } catch (Exception e) {
+        // no-op
       }
     }
   }
@@ -82,23 +87,27 @@ public class WorkflowAppWithFork extends AbstractApplication {
    */
   static class AnotherAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
+    private String filePath = "";
     private String doneFilePath = "";
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
+      filePath = context.getRuntimeArguments().get("anotheraction.file");
       doneFilePath = context.getRuntimeArguments().get("done.file");
     }
 
     @Override
     public void run() {
       LOG.info("Ran another action");
-      File doneFile = new File(doneFilePath);
-      while (!doneFile.exists()) {
-        try {
+      try {
+        File file = new File(filePath);
+        file.createNewFile();
+        File doneFile = new File(doneFilePath);
+        while (!doneFile.exists()) {
           TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-          // no-op
         }
+      } catch (Exception e) {
+        // no-op
       }
     }
   }
