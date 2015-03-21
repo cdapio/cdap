@@ -135,6 +135,8 @@ API Changes
 - The endpoint (``GET <base-url>/data/explore/datasets/<dataset-name>/schema``) that
   retrieved the schema of a Dataset's underlying Hive table has been removed
   (`CDAP-1603 <https://issues.cask.co/browse/CDAP-1603>`__).
+- Endpoints have been added to retrieve the CDAP version and the current configurations of
+  CDAP and HBase (:ref:`Configuration HTTP RESTful API <http-restful-api-configuration>`).
 
 
 .. _known-issues-280:
