@@ -21,7 +21,7 @@ package co.cask.cdap.templates.etl.api;
  * @param <I> input
  * @param <O> output
  */
-public abstract class AbstractTransform<I, O> implements StageLifecycle {
+public abstract class Transform<I, O> implements StageLifecycle {
 
   private TransformContext context;
 

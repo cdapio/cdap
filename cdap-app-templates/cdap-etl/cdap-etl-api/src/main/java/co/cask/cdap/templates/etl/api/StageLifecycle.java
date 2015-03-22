@@ -16,11 +16,23 @@
 
 package co.cask.cdap.templates.etl.api;
 
+import co.cask.cdap.api.RuntimeContext;
+
 /**
  * Provides lifecycle methods for ETL Pipeline Stages.
+ * @param <T> type of the stage runtime context
  */
-public interface StageLifecycle {
+public interface StageLifecycle<T extends RuntimeContext> {
 
+  /**
+   * Initializes a Stage.
+   *  <p>
+   *    This method will be called only once per {@link StageLifecycle} instance.
+   *  </p>
+   *  @param context An instance of {@link RuntimeContext}
+   *  @throws Exception If there is any error during initialization.
+   */
+  void initialize(T context) throws Exception;
   /**
    * Destroy the Pipeline Stage.
    */

@@ -39,5 +39,5 @@ public interface StageConfigurer {
    * Set the properties this stage requires during runtime.
    * @param properties {@link Set} of properties
    */
-  void setReqdProperties(Set<String> properties);
+  void setExpectedProperties(Set<String> properties);
 }
