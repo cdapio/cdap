@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.util.InstanceURIParser;
@@ -93,7 +94,10 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final String PREFIX = "123ff1_";
   private static final boolean START_LOCAL_STANDALONE = true;
-  private static final URI CONNECTION = URI.create("http://localhost:11000");
+
+  private static final int PORT = 11000;
+  private static final String HOSTNAME = StandaloneContainer.HOSTNAME;
+  private static final URI CONNECTION = URI.create("http://" + HOSTNAME + ":" + PORT);
 
   private static ProgramClient programClient;
   private static AdapterClient adapterClient;
@@ -108,6 +112,7 @@ public class CLIMainTest extends StandaloneTestBase {
       File adapterDir = TMP_FOLDER.newFolder("adapter");
       configuration = CConfiguration.create();
       configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
+      configuration.set(Constants.Router.ADDRESS, HOSTNAME);
       configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
