@@ -18,6 +18,8 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -76,6 +78,13 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
       return;
     }
     HTable hTable = tableUtil.createHTable(conf, tableId);
+    ProjectInfo.Version tableVersion = AbstractHBaseDataSetAdmin.getVersion(hTable.getTableDescriptor());
+    // Only upgrade if Upgrader's version is greater than table's version.
+    if (ProjectInfo.getVersion().compareTo(tableVersion) <= 0) {
+      LOG.info("Table {} has already been upgraded. Its version is: {}", tableId, tableVersion);
+      return;
+    }
+
     LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
     try {
       Scan scan = new Scan();
