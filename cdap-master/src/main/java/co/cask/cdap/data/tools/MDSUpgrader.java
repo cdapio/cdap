@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
@@ -69,9 +70,10 @@ public class MDSUpgrader extends AbstractUpgrader {
   private final TableId appMetaTableId;
 
   @Inject
-  private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      final DatasetFramework dsFramework, @Named("defaultStore") final Store store) {
-    super(locationFactory);
+  private MDSUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                      TransactionExecutorFactory executorFactory, final DatasetFramework dsFramework,
+                      @Named("defaultStore") final Store store) {
+    super(locationFactory, namespacedLocationFactory);
     this.store = store;
     final String appMetaTableName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE);
     this.appMDS = Transactional.of(executorFactory, new Supplier<AppMDS>() {

@@ -15,16 +15,15 @@
  */
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * Factory helper to create {@link Program}.
@@ -59,24 +58,22 @@ public final class Programs {
   /**
    * Get program location
    *
-   * @param factory  location factory
+   * @param namespacedLocationFactory the namespaced location on the file system
    * @param appFabricDir app fabric output directory path
-   * @param id       program id
-   * @param type     type of the program
-   * @return         Location corresponding to the program id
+   * @param id program id
+   * @param type type of the program    @return Location corresponding to the program id
    * @throws IOException incase of errors
    */
-  public static Location programLocation(LocationFactory factory, String appFabricDir, Id.Program id, ProgramType type)
-                                         throws IOException {
-    Location namespaceHome = factory.create(id.getNamespaceId());
+  public static Location programLocation(NamespacedLocationFactory namespacedLocationFactory, String appFabricDir,
+                                         Id.Program id, ProgramType type) throws IOException {
+    Location namespaceHome = namespacedLocationFactory.get(id.getApplication().getNamespace());
     if (!namespaceHome.exists()) {
       throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
                                         namespaceHome.toURI().getPath());
     }
     Location appFabricLocation = namespaceHome.append(appFabricDir);
 
-    String name = String.format(Locale.ENGLISH, "%s/%s", id.getApplicationId(), type.toString());
-    Location applicationProgramsLocation = appFabricLocation.append(name);
+    Location applicationProgramsLocation = appFabricLocation.append(id.getApplicationId()).append(type.toString());
     if (!applicationProgramsLocation.exists()) {
       throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: " +
                                         applicationProgramsLocation.toURI().getPath());

@@ -18,6 +18,7 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.util.TableId;
@@ -38,8 +39,9 @@ public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(StreamStateStoreUpgrader.class);
 
   @Inject
-  public StreamStateStoreUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
-    super(locationFactory, tableUtil, conf);
+  public StreamStateStoreUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                                  HBaseTableUtil tableUtil, Configuration conf) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf);
   }
 
   @Override

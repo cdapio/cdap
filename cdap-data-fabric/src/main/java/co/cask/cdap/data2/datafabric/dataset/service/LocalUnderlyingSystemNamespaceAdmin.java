@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -27,8 +28,8 @@ import org.apache.twill.filesystem.LocationFactory;
 public final class LocalUnderlyingSystemNamespaceAdmin extends UnderlyingSystemNamespaceAdmin {
 
   @Inject
-  public LocalUnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory,
+  public LocalUnderlyingSystemNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
                                              ExploreFacade exploreFacade) {
-    super(cConf, locationFactory, exploreFacade);
+    super(cConf, namespacedLocationFactory, exploreFacade);
   }
 }

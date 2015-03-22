@@ -92,6 +92,12 @@
     </property>
 
     <property>
+        <name>namespaces.dir</name>
+        <value>namespaces</value>
+        <description>The sub-directory of ${hdfs.namespace} in which namespaces are stored.</description>
+    </property>
+
+    <property>
         <name>local.data.dir</name>
         <value>data</value>
         <description>Data directory for local mode</description>

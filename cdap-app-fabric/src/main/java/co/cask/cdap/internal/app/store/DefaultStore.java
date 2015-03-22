@@ -38,6 +38,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -91,6 +92,7 @@ public class DefaultStore implements Store {
     Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, APP_META_TABLE);
 
   private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
 
@@ -99,11 +101,12 @@ public class DefaultStore implements Store {
   @Inject
   public DefaultStore(CConfiguration conf,
                       LocationFactory locationFactory,
+                      NamespacedLocationFactory namespacedLocationFactory,
                       TransactionExecutorFactory txExecutorFactory,
                       DatasetFramework framework) {
-
-    this.locationFactory = locationFactory;
     this.configuration = conf;
+    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.dsFramework = framework;
 
     txnl = Transactional.of(txExecutorFactory, new Supplier<AppMds>() {
@@ -933,7 +936,7 @@ public class DefaultStore implements Store {
   private Location getProgramLocation(Id.Program id, ProgramType type) throws IOException {
     String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                   System.getProperty("java.io.tmpdir"));
-    return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
+    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id, type);
   }
 
   private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) {
