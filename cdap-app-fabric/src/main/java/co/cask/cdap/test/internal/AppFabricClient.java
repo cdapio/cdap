@@ -131,25 +131,23 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
 
-  public void setRunnableInstances(String applicationId, String serviceName, String runnableName, int instances) {
+  public void setServiceInstances(String applicationId, String serviceName, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                               applicationId, serviceName, runnableName);
+    String uri = String.format("/v2/apps/%s/services/%s/instances", applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
-    serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
+    httpHandler.setServiceInstances(request, responder, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
   }
 
-  public ServiceInstances getRunnableInstances(String applicationId, String serviceName, String runnableName) {
+  public ServiceInstances getServiceInstances(String applicationId, String serviceName) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                               applicationId, serviceName, runnableName);
+    String uri = String.format("/v2/apps/%s/services/%s/instances", applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
+    httpHandler.getServiceInstances(request, responder, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
     return responder.decodeResponseContent(new TypeToken<ServiceInstances>() { });
   }

@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -55,33 +54,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllServices(HttpRequest request, HttpResponder responder) {
     programLifecycleHttpHandler.getAllServices(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                Constants.DEFAULT_NAMESPACE);
-  }
-
-  /**
-   * Return the number of instances for the given runnable of a service.
-   */
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
-  public void getInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") String appId,
-                           @PathParam("service-id") String serviceId,
-                           @PathParam("runnable-name") String runnableName) {
-    programLifecycleHttpHandler.getServiceInstances(responder,
-                                                    Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
-  }
-
-  /**
-   * Set instances.
-   */
-  @PUT
-  @Path("/apps/{app-id}/services/{service-id}/runnables/{runnable-name}/instances")
-  public void setInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") String appId,
-                           @PathParam("service-id") String serviceId,
-                           @PathParam("runnable-name") String runnableName) {
-
-    programLifecycleHttpHandler.setServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                    Constants.DEFAULT_NAMESPACE, appId, serviceId, runnableName);
   }
 
   @GET

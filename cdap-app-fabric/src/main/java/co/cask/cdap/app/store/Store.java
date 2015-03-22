@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -208,24 +207,6 @@ public interface Store {
   int getServiceInstances(Id.Program id);
 
   /**
-   * Sets the number of instances of a {@link ServiceWorker}.
-   *
-   * @param id program id
-   * @param workerName name of the {@link ServiceWorker}
-   * @param instances number of instances
-   */
-  void setServiceWorkerInstances(Id.Program id, String workerName, int instances);
-
-  /**
-   * Returns the number of instances of a {@link ServiceWorker}.
-   *
-   * @param id program id
-   * @param workerName name of the {@link ServiceWorker}.
-   * @return number of instances
-   */
-  int getServiceWorkerInstances(Id.Program id, String workerName);
-
-  /**
    * Sets the number of instances of a {@link Worker}
    *
    * @param id program id
@@ -355,7 +336,7 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added

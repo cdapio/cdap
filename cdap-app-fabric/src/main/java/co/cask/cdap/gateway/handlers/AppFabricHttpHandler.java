@@ -394,6 +394,28 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Gets number of instances for a service.
+   */
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void getServiceInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                  @PathParam("service-id") final String serviceId) {
+    programLifecycleHttpHandler.getServiceInstance(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                   Constants.DEFAULT_NAMESPACE, appId, serviceId);
+  }
+
+  /**
+   * Sets number of instances for a service.
+   */
+  @PUT
+  @Path("/apps/{app-id}/services/{service-id}/instances")
+  public void setServiceInstances(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                                  @PathParam("service-id") final String serviceId) {
+    programLifecycleHttpHandler.setServiceInstances(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+                                                    Constants.DEFAULT_NAMESPACE, appId, serviceId);
+  }
+
+  /**
    * Returns number of instances for a procedure.
    */
   @GET

@@ -25,7 +25,7 @@ public interface WorkerManager {
    * Changes the number of instances.
    * @param instances number of instances to change to
    */
-  void setRunnableInstances(int instances);
+  void setInstances(int instances);
 
   /**
    * Stops the running worker.

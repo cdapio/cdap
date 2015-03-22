@@ -238,13 +238,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
 
     // Test serviceWorker's getServiceURL
-    ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-    serviceWithWorker.waitForStatus(true);
-    // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping
+    WorkerManager pingWorkerManager = applicationManager.startWorker(AppUsingGetServiceURL.PINGING_WORKER);
+
+    // Since the worker is passive (we can not ping it), allow the worker 2 seconds to ping
     // the CentralService, get the appropriate response, and write to to a dataset.
     Thread.sleep(2000);
-    serviceWithWorker.stop();
-    serviceWithWorker.waitForStatus(false);
+    pingWorkerManager.stop();
 
     result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
                                                                   AppUsingGetServiceURL.DATASET_KEY));
@@ -257,18 +256,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   /**
-   * Checks to ensure that a particular runnable of the {@param serviceManager} has {@param expected} number of
-   * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
+   * Checks to ensure that the {@param serviceManager} has {@param expected} number of instances.
+   * If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
    * successive attempt.
    */
-  private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
-                                      int expected, int retries, String instanceType) throws InterruptedException {
+  private void runnableInstancesCheck(ServiceManager serviceManager, int expected, int retries,
+                                      String instanceType) throws InterruptedException {
     for (int i = 0; i <= retries; i++) {
       int actualInstances;
       if ("requested".equals(instanceType)) {
-        actualInstances = serviceManager.getRequestedInstances(runnableName);
+        actualInstances = serviceManager.getRequestedInstances();
       } else if ("provisioned".equals(instanceType)) {
-        actualInstances = serviceManager.getProvisionedInstances(runnableName);
+        actualInstances = serviceManager.getProvisionedInstances();
       } else {
         String error = String.format("instanceType can be 'requested' or 'provisioned'. Found %s.", instanceType);
         throw new IllegalArgumentException(error);
@@ -287,37 +286,40 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testServiceRunnableInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
-    ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+    ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
+    WorkerManager pingWorkerManager = applicationManager.startWorker(AppUsingGetServiceURL.PINGING_WORKER);
+    WorkerManager lifecycleWorker = applicationManager.startWorker(AppUsingGetServiceURL.LIFECYCLE_WORKER);
     serviceManager.waitForStatus(true);
 
-    String runnableName = AppUsingGetServiceURL.SERVICE_WITH_WORKER;
+    // Set 5 instances for the LifecycleWorker
+    lifecycleWorker.setInstances(5);
+
     int retries = 5;
 
     // Should be 1 instance when first started.
-    runnableInstancesCheck(serviceManager, runnableName, 1, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 1, retries, "provisioned");
 
     // Test increasing instances.
-    serviceManager.setRunnableInstances(runnableName, 5);
-    runnableInstancesCheck(serviceManager, runnableName, 5, retries, "provisioned");
+    serviceManager.setRunnableInstances(5);
+    runnableInstancesCheck(serviceManager, 5, retries, "provisioned");
 
     // Test decreasing instances.
-    serviceManager.setRunnableInstances(runnableName, 2);
-    runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
+    serviceManager.setRunnableInstances(2);
+    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
 
     // Test requesting same number of instances.
-    serviceManager.setRunnableInstances(runnableName, 2);
-    runnableInstancesCheck(serviceManager, runnableName, 2, retries, "provisioned");
-
-    // Set 5 instances for the LifecycleWorker
-    serviceManager.setRunnableInstances(AppUsingGetServiceURL.LIFECYCLE_WORKER, 5);
-    runnableInstancesCheck(serviceManager, AppUsingGetServiceURL.LIFECYCLE_WORKER, 5, retries, "provisioned");
+    serviceManager.setRunnableInstances(2);
+    runnableInstancesCheck(serviceManager, 2, retries, "provisioned");
 
     serviceManager.stop();
     serviceManager.waitForStatus(false);
 
+    lifecycleWorker.stop();
+    pingWorkerManager.stop();
+
     // Should be 0 instances when stopped.
-    runnableInstancesCheck(serviceManager, runnableName, 0, retries, "provisioned");
-    runnableInstancesCheck(serviceManager, AppUsingGetServiceURL.LIFECYCLE_WORKER, 0, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
+    runnableInstancesCheck(serviceManager, 0, retries, "provisioned");
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
@@ -420,6 +422,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                         AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
     ServiceManager datasetWorkerServiceManager = applicationManager
       .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
+    WorkerManager datasetWorker = applicationManager.startWorker(AppWithServices.DATASET_UPDATE_WORKER, args);
     datasetWorkerServiceManager.waitForStatus(true);
 
     ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
@@ -438,6 +441,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
+    datasetWorker.stop();
     datasetWorkerServiceManager.stop();
     datasetWorkerServiceManager.waitForStatus(false);
     LOG.info("DatasetUpdateService Stopped");

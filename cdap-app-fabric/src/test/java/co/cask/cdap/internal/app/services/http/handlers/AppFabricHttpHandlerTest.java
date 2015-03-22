@@ -1334,7 +1334,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals("NoOpService", specification.getName());
     Assert.assertTrue(returnedEndpoints.equals(expectedEndpoints));
-    Assert.assertEquals(0, specification.getWorkers().values().size());
   }
 
   @Test

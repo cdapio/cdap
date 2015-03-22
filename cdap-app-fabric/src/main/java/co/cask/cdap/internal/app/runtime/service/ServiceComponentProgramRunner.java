@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -30,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
-import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -95,26 +93,14 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
 
     // By convention, the Http service always has the same name as the service itself.
     Service component;
-    if (componentName.equals(program.getName())) {
-      // HTTP service
-      String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
-      Preconditions.checkArgument(host != null, "No hostname is provided");
+    // HTTP service
+    String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
+    Preconditions.checkArgument(host != null, "No hostname is provided");
 
-      component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
-                                        instanceId, instanceCount, serviceAnnouncer,
-                                        metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                        txClient, discoveryServiceClient);
-    } else {
-      ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
-      Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());
-
-      BasicServiceWorkerContext context = new BasicServiceWorkerContext(workerSpec, program, runId,
-                                                                        instanceId, instanceCount,
-                                                                        options.getUserArguments(), cConf,
-                                                                        metricsCollectionService, datasetFramework,
-                                                                        txClient, discoveryServiceClient);
-      component = new ServiceWorkerDriver(program, workerSpec, context);
-    }
+    component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
+                                      instanceId, instanceCount, serviceAnnouncer,
+                                      metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
+                                      txClient, discoveryServiceClient);
 
     ProgramControllerServiceAdapter controller =
       new ServiceComponentProgramControllerAdapter(component, componentName, runId);

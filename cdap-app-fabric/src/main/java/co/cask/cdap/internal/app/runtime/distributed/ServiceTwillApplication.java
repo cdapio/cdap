@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
@@ -28,7 +27,6 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * TwillApplication for service. Used to localize program jar location before running the TwillApplication.
@@ -70,18 +68,6 @@ public class ServiceTwillApplication implements TwillApplication {
                                     .add(programName, programLocation.toURI())
                                     .add("hConf.xml", hConfig.toURI())
                                     .add("cConf.xml", cConfig.toURI()).apply();
-
-    // Add runnables for all workers
-    for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-      ServiceWorkerSpecification workerSpec = entry.getValue();
-      runnableSetter = runnableSetter.add(workerSpec.getName(),
-                                          new ServiceTwillRunnable(workerSpec.getName(), "hConf.xml", "cConf.xml"),
-                                          createResourceSpec(workerSpec.getResources(), workerSpec.getInstances()))
-                                     .withLocalFiles()
-                                       .add(programName, programLocation.toURI())
-                                       .add("hConf.xml", hConfig.toURI())
-                                       .add("cConf.xml", cConfig.toURI()).apply();
-    }
 
     return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
   }

@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.service;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
-import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
@@ -40,12 +39,7 @@ public class ServiceComponentProgramControllerAdapter extends ProgramControllerS
     if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
       return;
     }
-    if (service instanceof ServiceWorkerDriver) {
-      ((ServiceWorkerDriver) service).setInstanceCount((Integer) value);
-    } else if (service instanceof ServiceHttpServer) {
-      ((ServiceHttpServer) service).setInstanceCount((Integer) value);
-    } else {
-      throw new IllegalArgumentException("Can not increase instances for an unknown service type.");
-    }
+
+    ((ServiceHttpServer) service).setInstanceCount((Integer) value);
   }
 }

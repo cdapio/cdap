@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -101,13 +100,6 @@ public class ServiceProgramRunner extends AbstractInMemoryProgramRunner {
       // Starts the http service. The name is the same as the service name.
       startComponent(program, program.getName(), spec.getInstances(), runId, userArguments, components,
                      ProgramRunnerFactory.Type.SERVICE_COMPONENT);
-
-      // Starts all Workers
-      for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-        ServiceWorkerSpecification workerSpec = entry.getValue();
-        startComponent(program, workerSpec.getName(), workerSpec.getInstances(), runId, userArguments, components,
-                       ProgramRunnerFactory.Type.SERVICE_COMPONENT);
-      }
     } catch (Throwable t) {
       LOG.error("Failed to start all service components upon startup failure.", t);
       try {

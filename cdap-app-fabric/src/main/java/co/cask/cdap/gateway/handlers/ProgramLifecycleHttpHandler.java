@@ -23,7 +23,6 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -981,15 +980,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/services/{service-id}/instances")
-  public void getServiceInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId) {
-    getServiceInstances(responder, namespaceId, appId, serviceId, serviceId);
+  public void getServiceInstance(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appId,
+                                 @PathParam("service-id") String serviceId) {
+    getServiceInstances(responder, namespaceId, appId, serviceId);
   }
 
-  void getServiceInstances(HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
+  void getServiceInstances(HttpResponder responder, String namespaceId, String appId, String serviceId) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1005,21 +1003,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
-      int instances;
-      if (specification.getName().equals(runnableName)) {
-        instances = specification.getInstances();
-      } else {
-        ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
-        if (workerSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          return;
-        }
-        instances = workerSpec.getInstances();
-      }
-
+      int instances = specification.getInstances();
       responder.sendJson(HttpResponseStatus.OK,
                          new ServiceInstances(instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE,
-                                                                          serviceId, runnableName)));
+                                                                          serviceId, serviceId)));
 
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1034,15 +1021,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/instances")
-  public void setServiceInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId) {
-    setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
+  public void setServiceInstance(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appId,
+                                 @PathParam("service-id") String serviceId) {
+    setServiceInstances(request, responder, namespaceId, appId, serviceId);
   }
 
   void setServiceInstances(HttpRequest request, HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
+                           String namespaceId, String appId, String serviceId) {
 
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
@@ -1066,24 +1053,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      // If the runnable name is the same as the service name, it's setting the service instances
-      // TODO: This REST API is bad, need to update (CDAP-388)
-      int oldInstances = (runnableName.equals(serviceId)) ? store.getServiceInstances(programId)
-        : store.getServiceWorkerInstances(programId, runnableName);
+      int oldInstances = store.getServiceInstances(programId);
       if (oldInstances != instances) {
-        if (runnableName.equals(serviceId)) {
-          store.setServiceInstances(programId, instances);
-        } else {
-          store.setServiceWorkerInstances(programId, runnableName, instances);
-        }
-
+        store.setServiceInstances(programId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
                                                                         ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(runnableName, String.valueOf(instances))).get();
+                                              ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1194,19 +1173,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           return;
         }
 
-        if (serviceSpec.getName().equals(runnableId)) {
-          // If runnable name is the same as the service name, returns the service http server instances
-          requested = serviceSpec.getInstances();
-        } else {
-          // Otherwise, get it from the worker
-          ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
-          if (workerSpec == null) {
-            addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                         "Runnable: " + runnableId + " not found");
-            return;
-          }
-          requested = workerSpec.getInstances();
-        }
+        requested = serviceSpec.getInstances();
       }
     }
     // use the pretty name of program types to be consistent
@@ -1768,23 +1735,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // Doing this only for services to keep it consistent with the existing contract for flowlets right now.
     // The get instances contract for both flowlets and services should be re-thought and fixed as part of CDAP-1091
     if (programType == ProgramType.SERVICE) {
-      return getRequestedServiceInstances(id, runnableId);
+      return getRequestedServiceInstances(id);
     }
 
     // Not running on YARN default 1
     return 1;
   }
 
-  private int getRequestedServiceInstances(Id.Program serviceId, String runnableId) {
+  private int getRequestedServiceInstances(Id.Program serviceId) {
     // Not running on YARN, get it from store
-    // If the runnable name is the same as the service name, get the instances from service spec.
-    // Otherwise get it from worker spec.
-    // TODO: This is due to the improper REST API design that treats everything in service as Runnable
-    if (runnableId.equals(serviceId.getId())) {
-      return store.getServiceInstances(serviceId);
-    } else {
-      return store.getServiceWorkerInstances(serviceId, runnableId);
-    }
+    return store.getServiceInstances(serviceId);
   }
 
   private boolean isValidAction(String action) {

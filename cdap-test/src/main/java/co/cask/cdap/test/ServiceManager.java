@@ -26,26 +26,21 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ServiceManager {
   /**
-   * Changes the number of runnable instances.
+   * Changes the number of instances of the service.
    *
-   * @param runnable Name of the runnable (can be either handler or worker).
    * @param instances Number of instances to change to.
    */
-  void setRunnableInstances(String runnable, int instances);
+  void setRunnableInstances(int instances);
 
   /**
-   * Returns the number of requested runnable instances.
-   *
-   * @param runnableName Name of the runnable (can be either handler or worker).
+   * Returns the number of requested instances of the service.
    */
-  int getRequestedInstances(String runnableName);
+  int getRequestedInstances();
 
   /**
-   * Returns the number of requested runnable instances.
-   *
-   * @param runnableName Name of the runnable (can be either handler or worker).
+   * Returns the number of provisioned instances.
    */
-  int getProvisionedInstances(String runnableName);
+  int getProvisionedInstances();
 
   /**
    * Stops the running service.

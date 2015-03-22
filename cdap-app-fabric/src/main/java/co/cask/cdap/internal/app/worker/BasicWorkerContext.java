@@ -37,7 +37,6 @@ import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.service.BasicServiceWorkerContext;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
@@ -69,7 +68,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Default implementation of {@link WorkerContext}
  */
 public class BasicWorkerContext extends AbstractContext implements WorkerContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BasicServiceWorkerContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
   private final Set<String> datasets;

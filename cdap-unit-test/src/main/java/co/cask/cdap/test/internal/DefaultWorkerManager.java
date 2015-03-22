@@ -48,7 +48,7 @@ public class DefaultWorkerManager implements WorkerManager {
   }
 
   @Override
-  public void setRunnableInstances(int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
       appFabricClient.setWorkerInstances(appId, workerId, instances);

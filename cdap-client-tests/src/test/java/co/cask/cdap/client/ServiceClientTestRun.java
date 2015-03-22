@@ -73,7 +73,6 @@ public class ServiceClientTestRun extends ClientTestBase {
     ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, PingService.NAME);
     assertEquals(serviceSpecification.getName(), PingService.NAME);
     assertEquals(serviceSpecification.getHandlers().size(), 1);
-    assertEquals(serviceSpecification.getWorkers().size(), 0);
   }
 
   @Test

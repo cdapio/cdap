@@ -307,7 +307,7 @@ public class RemoteApplicationManager implements ApplicationManager {
     final ProgramId workerId = new ProgramId(workerName, ProgramType.WORKER);
     return new WorkerManager() {
       @Override
-      public void setRunnableInstances(int instances) {
+      public void setInstances(int instances) {
         Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
         try {
           getProgramClient().setWorkerInstances(application.getId(), workerName, instances);
