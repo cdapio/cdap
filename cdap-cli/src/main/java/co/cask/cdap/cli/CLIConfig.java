@@ -33,7 +33,6 @@ import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClie
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;

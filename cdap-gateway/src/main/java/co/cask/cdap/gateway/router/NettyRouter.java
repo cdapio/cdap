@@ -258,7 +258,7 @@ public class NettyRouter extends AbstractIdleService {
     InetAddress address = hostname;
     if (address.isAnyLocalAddress()) {
       try {
-        address = InetAddress.getLocalHost();
+        address = InetAddress.getByName(InetAddress.getLocalHost().getHostName());
       } catch (UnknownHostException e) {
         throw Throwables.propagate(e);
       }
