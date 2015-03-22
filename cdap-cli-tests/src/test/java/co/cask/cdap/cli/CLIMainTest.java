@@ -65,6 +65,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -429,6 +430,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  @Ignore
   public void testNamespaces() throws Exception {
     final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
