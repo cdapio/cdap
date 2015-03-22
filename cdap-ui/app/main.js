@@ -13,6 +13,7 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
+      PKG.name+'.feature.error',
       PKG.name+'.feature.foo'
     ]).name,
 
@@ -143,7 +144,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval, myAlert) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -196,7 +197,11 @@ angular
     pingBackend(); // execute immediately when initially opening a page
     $interval(pingBackend, 60000); // ping every 60 seconds
 
+    $scope.emptyError = function() {
+      return myAlert.isEmpty();
+    };
 
+    $scope.alerts = myAlert.list;
 
     console.timeEnd(PKG.name);
   });

@@ -26,6 +26,18 @@
       <div class="container"></div>
     </div>
 
+    <div class="container">
+      <button class="btn btn-danger"
+            title="Error"
+            ng-hide="emptyError()"
+            data-placement="top"
+            data-template="features/error/error.html"
+            data-auto-close="1"
+            bs-popover>
+        <i class="fa fa-exclamation-circle"></i>
+      </button>
+    </div>
+
     <footer>
       <div class="container">
         <div class="text-muted text-center text-uppercase" ng-cloak>
