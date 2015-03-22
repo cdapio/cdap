@@ -83,7 +83,7 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     //Set instances to numRequested, and then check with a get that the instances were indeed set.
-    String instancesUrl = "/v2/apps/AppWithServices/services/NoOpService/runnables/NoOpService/instances";
+    String instancesUrl = "/v2/apps/AppWithServices/services/NoOpService/instances";
     String numRequested = "13";
 
     JsonObject jsonData = new JsonObject();
