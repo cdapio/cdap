@@ -117,7 +117,7 @@ public class UpgradeTool {
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
               "  2. System Datasets\n" +
-              "  3. Dataset Type and Instance MetadataStore\n" +
+              "  3. Dataset Type and Instance Metadata\n" +
               "  4. Application Metadata\n" +
               "  5. Archives and Files\n" +
               "  6. Logs Metadata\n" +
@@ -333,7 +333,12 @@ public class UpgradeTool {
           String response = scan.next();
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
-            performUpgrade();
+            try {
+              startUp();
+              performUpgrade();
+            } finally {
+              stop();
+            }
           } else {
             System.out.println("Upgrade cancelled.");
           }
@@ -410,15 +415,12 @@ public class UpgradeTool {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    UpgradeTool upgradeTool = new UpgradeTool();
-    upgradeTool.startUp();
+  public static void main(String[] args) {
     try {
+      UpgradeTool upgradeTool = new UpgradeTool();
       upgradeTool.doMain(args);
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
-    } finally {
-      upgradeTool.stop();
     }
   }
 
