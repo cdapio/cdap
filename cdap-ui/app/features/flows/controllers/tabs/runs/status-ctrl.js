@@ -44,11 +44,10 @@ angular.module(PKG.name + '.feature.flows')
 
         // Requesting Metrics data
         angular.forEach(nodes, function (node) {
-          dataSrc.request({
+          dataSrc.poll({
             _cdapPath: metricsPath + node.name,
             method: 'POST'
-          })
-            .then(function (data) {
+          }, function (data) {
               // $scope.data.metrics[node.name] = data.series[0] ? data.series[0].data[0].value : 0;
               $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
             });
