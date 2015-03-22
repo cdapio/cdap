@@ -306,52 +306,16 @@ public class UpgradeTool {
     }
   }
 
-  private void doMain(String[] args) throws Exception {
-    System.out.println(String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
+  private static void printVersion() {
+    System.out.println(String.format("%s - version %s.", UpgradeTool.class.getSimpleName(), ProjectInfo.getVersion()));
     System.out.println();
-
-    if (args.length < 1) {
-      printHelp();
-      return;
-    }
-
-    Action action = parseAction(args[0]);
-    if (action == null) {
-      System.out.println(String.format("Unsupported action : %s", args[0]));
-      printHelp(true);
-      return;
-    }
-
-    try {
-      switch (action) {
-        case UPGRADE:
-          Scanner scan = new Scanner(System.in);
-          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
-          System.out.println("Do you want to continue (y/n)");
-          String response = scan.next();
-          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
-            System.out.println("Starting upgrade ...");
-            performUpgrade();
-          } else {
-            System.out.println("Upgrade cancelled.");
-          }
-          break;
-        case HELP:
-          printHelp();
-          break;
-      }
-    } catch (Exception e) {
-      System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
-      e.printStackTrace(System.out);
-      throw e;
-    }
   }
 
-  private void printHelp() {
+  private static void printHelp() {
     printHelp(false);
   }
 
-  private void printHelp(boolean beginNewLine) {
+  private static void printHelp(boolean beginNewLine) {
     if (beginNewLine) {
       System.out.println();
     }
@@ -360,14 +324,6 @@ public class UpgradeTool {
 
     for (Action action : Action.values()) {
       System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
-    }
-  }
-
-  private Action parseAction(String action) {
-    try {
-      return Action.valueOf(action.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      return null;
     }
   }
 
@@ -409,14 +365,52 @@ public class UpgradeTool {
   }
 
   public static void main(String[] args) throws Exception {
-    UpgradeTool upgradeTool = new UpgradeTool();
-    upgradeTool.startUp();
+    if (args.length < 1) {
+      printVersion();
+      printHelp();
+      return;
+    }
+
+    Action action;
     try {
-      upgradeTool.doMain(args);
-    } catch (Throwable t) {
-      LOG.error("Failed to upgrade ...", t);
+      action = Action.valueOf(args[0].toUpperCase());
+    } catch (IllegalArgumentException e) {
+      System.out.println(String.format("Unsupported action : %s", args[0]));
+      printHelp(true);
+      return;
+    }
+
+    UpgradeTool upgradeTool = null;
+    try {
+      switch (action) {
+        case UPGRADE:
+          printVersion();
+          Scanner scan = new Scanner(System.in);
+          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          System.out.println("Do you want to continue (y/n)");
+          String response = scan.next();
+          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+            System.out.println("Starting upgrade ...");
+            upgradeTool = new UpgradeTool();
+            upgradeTool.startUp();
+            upgradeTool.performUpgrade();
+          } else {
+            System.out.println("Upgrade cancelled.");
+          }
+          break;
+        case HELP:
+          printVersion();
+          printHelp();
+          break;
+      }
+    } catch (Exception e) {
+      System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
+      e.printStackTrace(System.out);
+      throw e;
     } finally {
-      upgradeTool.stop();
+      if (upgradeTool != null) {
+        upgradeTool.stop();
+      }
     }
   }
 
