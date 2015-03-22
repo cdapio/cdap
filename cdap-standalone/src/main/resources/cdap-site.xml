@@ -119,17 +119,4 @@
       <description>Directory where all archives for adapters are stored</description>
     </property>
 
-    <!--
-        Frontend Configuration
-    -->
-    <property>
-        <name>accounts.server.address</name>
-        <value>accounts.continuuity.com</value>
-    </property>
-
-    <property>
-        <name>accounts.server.port</name>
-        <value>443</value>
-    </property>
-
 </configuration>
