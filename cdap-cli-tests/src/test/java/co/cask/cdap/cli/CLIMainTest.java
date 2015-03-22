@@ -430,7 +430,6 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
-  @Ignore
   public void testNamespaces() throws Exception {
     final String name = PREFIX + "testNamespace";
     final String description = "testDescription";
@@ -447,8 +446,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, String.format("describe namespace %s", doesNotExist),
                               String.format("Error: namespace '%s' was not found", doesNotExist));
     // delete non-existing namespace
-    testCommandOutputContains(cli, String.format("delete namespace %s", doesNotExist),
-                              String.format("Error: namespace '%s' was not found", doesNotExist));
+    // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
+//    testCommandOutputContains(cli, String.format("delete namespace %s", doesNotExist),
+//                              String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
     String command = String.format("create namespace %s %s", name, description);
@@ -483,8 +483,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testNamespacesOutput(cli, String.format("describe namespace %s", defaultFields), expectedNamespaces);
 
     // delete namespace and verify
-    command = String.format("delete namespace %s", name);
-    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
+    // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
+//    command = String.format("delete namespace %s", name);
+//    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
   @Test
