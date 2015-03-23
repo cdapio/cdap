@@ -1,12 +1,16 @@
 @import "../variables.less";
 @import "../../../bower_components/bootstrap/less/mixins.less";
 
+// Mixins specific to the CDAP theme
+@import "../../styles/themes/cdap/mixins.less";
 @import "cdap/header.less";
 @import "cdap/buttons.less";
 @import "cdap/more.less";
 
 
+html { font-size: 100%; }
 body.theme-cdap {
+  font-size: 100%;
   visibility: visible;
 
   .container {
@@ -45,23 +49,16 @@ body.theme-cdap {
 
     @media (max-width: @screen-sm-max) {
       > div { display: none; }
-      &:before {
-        font-size: 200%;
-        margin-top: 1em;
-        display: block;
-        padding: 8px 15px;
-        border-radius: 25px;
-        background-color: @cdap-orange;
-        color: white;
-        content: "Please resize your browser!";
-      }
-      &:after {
-        padding: 16px;
-        font-style: italic;
-        content: "Mobile devices are not supported.";
-      }
+      &:before { background-color: @cdap-orange; }
     }
 
+    h1, h2, h3, h4, h5, h6 { font-family: @heading-font; font-weight: 600; }
+    h1 { font-size: 2em; }
+    h2 { color: @cdap-header; font-size: 1.5em; }
+    h3 { color: @cdap-header; font-size: 1.17em; }
+    h4 { color: @cdap-header; font-size: 1em; }
+    h5 { color: @brand-primary; font-size: .83em; }
+    h6 { font-size: .67em; }
 
     h3, .h3 {
       margin: .4rem inherit;
@@ -82,12 +79,18 @@ body.theme-cdap {
       color: #cccccc;
       font-weight: bold;
     }
-
+    button, .btn-default {
+      .cask-btn();
+    }
+    .btn-close {
+      .cask-btn(@background: fade(@btn-default-color, 50%), @border: 0, @border-radius: 28px, @padding: 0);
+      cursor: pointer;
+      line-height: 0;
+    }
 
   } // end main.container
 
   footer {
     border-top: 1px dashed lighten(@cdap-orange, 33%);
   }
-
 }

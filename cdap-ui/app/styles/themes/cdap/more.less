@@ -75,6 +75,26 @@ body.theme-cdap {
     }
   }
 
+  .pre-scrollable {
+    margin-top: 20px;
+    a.list-group-item {
+      background-color: #EFF0F4;
+      padding: 20px 25px;
+      &:first-child {
+        border-top-right-radius: 8px;
+        border-top-left-radius: 8px;
+      }
+      &:last-child {
+        border-bottom-right-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+      strong {
+        color: @cdap-bluegray;
+        font-size: 18px;
+        font-weight: 500;
+      }
+    }
+  }
 
   //
   // Panels
@@ -82,7 +102,33 @@ body.theme-cdap {
 
   // Common styles
   .panel {
-    .box-shadow(0 1px 2px rgba(0,0,0,.05));
+    background: transparent;
+    border: 0;
+    .box-shadow(0 8px 6px -6px @cdap-darkness);
+    margin-top: 20px;
+    big {
+      color: @cdap-header;
+      font-size: 44px;
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+    small {
+      color: @cdap-bluegray;
+      font-size: 17px;
+    }
+    .fa-close {
+      color: white;
+      font-size: 32px;
+      padding: 12px 15px;
+      vertical-align: text-top;
+    }
+    .panel-body {
+      .col-sm-4 {
+        &:not(:first-child) {
+          border-left: 1px dashed @cdap-gray;
+        }
+      }
+    }
   }
 
   // Mixin for generating new styles
@@ -91,7 +137,7 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the panel headings only
-  .panel-default > .panel-heading   { .panel-heading-styles(@panel-default-heading-bg); }
+  .panel-default > .panel-heading   { background: transparent; border: 0; }
   .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
   .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
   .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }
@@ -109,6 +155,5 @@ body.theme-cdap {
     @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
     .box-shadow(@shadow);
   }
-
 
 }
