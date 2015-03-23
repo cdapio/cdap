@@ -18,6 +18,8 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.client.util.VersionMigrationUtils;
@@ -33,6 +35,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -41,6 +44,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -58,7 +62,9 @@ import javax.inject.Inject;
  */
 public class ProgramClient {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+    .create();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -525,6 +531,33 @@ public class ProgramClient {
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
   }
+
+  /**
+   * Get the current run information for the Workflow based on the runid
+   * @param appId ID of the application
+   * @param workflowId ID of the workflow
+   * @param runId ID of the run for which the details are to be returned
+   * @return list of {@link WorkflowActionNode} currently running for the given runid
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, workflow, or runid could not be found
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<WorkflowActionNode> getWorkflowCurrent(String appId, String workflowId, String runId)
+    throws IOException, NotFoundException, UnauthorizedException {
+    String path = String.format("/apps/%s/workflows/%s/%s/current", appId, workflowId, runId);
+    URL url = VersionMigrationUtils.resolveURL(config, ProgramType.WORKFLOW, path);
+
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application, workflow, or workflow runid", appId + "/" + workflowId + "/" + runId);
+    }
+
+    ObjectResponse<List<WorkflowActionNode>> objectResponse = ObjectResponse.fromJsonBody(
+      response, new TypeToken<List<WorkflowActionNode>>() { }.getType(), GSON);
+
+    return objectResponse.getResponseObject();
+}
 
   /**
    * Gets the run records of a program.

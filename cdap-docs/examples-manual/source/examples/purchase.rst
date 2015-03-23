@@ -26,28 +26,28 @@ and write to an ObjectStore Dataset.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
-    then stored in the *userProfiles* Dataset.
-  - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
-    is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
+    then stored in the ``userProfiles`` Dataset.
+  - The ``CatalogLookup`` Service fetches the catalog id for a given product. The ``CatalogLookup`` Service
+    is called from the PurchaseStore Flowlet. The host and port of the ``CatalogLookup`` Service is discovered
     using the Service discovery framework.
   - The ``UserProfileService`` is responsible for storing and retrieving the user information
-    for a given user id from the *userProfiles* Dataset. The host and port of the ``UserProfileService`` is
+    for a given user id from the ``userProfiles`` Dataset. The host and port of the ``UserProfileService`` is
     discovered using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
+    reads the ``purchases`` Dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    *history* Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
+    ``history`` Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a Data Schedule.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
-    customers' purchase history in the *history* Dataset.
-  - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
-  - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
+    customers' purchase history in the ``history`` Dataset.
+  - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` Dataset the purchase history of a user.
+  - Execute a SQL query over the ``history`` Dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
-**Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
+**Note:** Because the ``PurchaseHistoryWorkFlow`` is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-PurchaseHistoryService will respond with *204 No Response* status code.
+``PurchaseHistoryService`` will respond with a ``204 No Response`` status code.
 
 Let's look at some of these components, and then run the Application and see the results.
 
@@ -93,14 +93,14 @@ This service has a ``history/{customer}`` endpoint to obtain the purchase histor
 
 This service has two endpoints:
 
-``user`` endpoint to add a user's profile information to the system::
+A ``user`` endpoint to add a user's profile information to the system::
 
-  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
-    "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+    "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
 
-``user/{id}`` endpoint to obtain profile information for a specified user::
+A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
-  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/alice
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user/Alice
 
 Building and Starting
 =================================
@@ -116,12 +116,27 @@ Running CDAP Applications
 ============================================
 
 .. |example| replace:: Purchase
+.. |literal-example| replace:: ``Purchase``
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
 
 Running the Example
 ===================
+
+In the commands that follow, we'll assume that you will run all commands
+from the example's base directory (``/examples/``\ |literal-example|\ , in the
+Standalone CDAP SDK directory).
+
+For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
+the actual path of ``../../bin/cdap-cli.sh``, or ``..\..\bin\cdap-cli.bat`` on Windows, as
+appropriate. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
+to simplify the commands.
+
+Other scripts that are supplied in the examples also have Windows ``.bat``
+equivalents. Note that a version of ``curl`` that works with Windows is included in the
+CDAP Standalone SDK in ``libexec\bin\curl.exe``.
+
 
 .. highlight:: console
 
@@ -133,16 +148,9 @@ Once the application is deployed:
 - Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseFlow``    
+    $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
 
 Starting the Services
 ------------------------------
@@ -151,45 +159,41 @@ Once the application is deployed:
 
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; do the same for the *CatalogLookupService*; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+  Service detail page, then click the *Start* button; do the same for the *CatalogLookupService*
+  and *UserProfileService*; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh start service PurchaseHistory.PurchaseHistoryService
+    $ cdap-cli.sh start service PurchaseHistory.CatalogLookup
+    $ cdap-cli.sh start service PurchaseHistory.UserProfileService
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseHistoryService``
-    * - 
-      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.CatalogLookupService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseHistoryService``    
-    * - 
-      - ``> bin\cdap-cli.bat start flow PurchaseHistory.CatalogLookupService``    
+- Or, you can send ``curl`` requests to CDAP::
 
-- You can send ``curl`` requests to CDAP::
-
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookupService/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start'
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/UserProfileService/start'
 
   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-  SDK in ``libexec\bin\curl.exe``
+  SDK in ``libexec\bin\curl.exe``.
 
+
+Add A Profile
+-------------
+
+Add a *User Profile* for the user *Alice*, by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface::
+
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+    "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+    
 
 Injecting Sentences
 ------------------------------
 
 Run this script (from within ``/examples/Purchase``) to inject sentences 
-to the Stream named *purchaseStream* in the ``PurchaseHistory`` application:
+to the Stream named *purchaseStream* in the ``PurchaseHistory`` application::
 
-.. list-table::
-  :widths: 20 80
-  :stub-columns: 1
-
-  * - On Linux:
-    - ``$ ./bin/inject-data.sh``
-  * - On Windows:
-    - ``> bin\inject-data.bat``    
+  $ ./bin/inject-data.sh
 
 
 Starting the Workflow
@@ -200,46 +204,27 @@ Once the sentences have been injected:
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryWorkflow* in the *Workflow* pane to get to the
   Workflow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start workflow PurchaseHistory.PurchaseHistoryWorkflow``    
+- Or, you can send an HTTP request using the ``curl`` command::
 
-- You can send a ``curl`` request to CDAP::
-
-    curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
-
-  **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-  SDK in ``libexec\bin\curl.exe``
+    $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
 Querying the Results
 ------------------------------
 
 To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET history/Alice
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET history/Alice``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat call service PurchaseHistory.PurchaseHistoryService GET history/Alice``
+- Or, send a query via an HTTP request using the ``curl`` command::
 
-- Send a query via an HTTP request using the ``curl`` command. For example::
+    $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
-    curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
-
-**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-SDK in ``libexec\bin\curl.exe``
   
 Exploring the Results Using SQL
 -------------------------------
@@ -247,93 +232,58 @@ Exploring the Results Using SQL
 You can use SQL to formulate ad-hoc queries over the *history* and *purchases* Datasets. This is done by a series of
 ``curl`` calls, as described in the :ref:`RESTful API <http-restful-api-query>` section of the 
 :ref:`CDAP Reference Manual. <reference-index>`
-For your convenience, the SDK includes a script, ``bin/cdap-cli.sh``, that can execute the series of calls.
+For your convenience, the SDK's Command Line Interface can execute the series of calls.
 
 From within the SDK root directory::
 
-  ./bin/cdap-cli.sh execute "\"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')\""
+  $ cdap-cli.sh execute "\"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')\""
   
-(On Windows, use ``bin\cdap-cli.bat ...``)
-
 This will submit the query, using the *history* table in the ``cdap_user`` namespace, wait
 for its completion and then retrieve and print all results, one by one (example
 reformatted to fit)::
 
+  +===========================================================================================================================+
+  | dataset_history.customer: | dataset_history.userprofile: struct<id:string | dataset_history.purchases: array<struct<custo |
+  | STRING                    | ,firstname:string,lastname:string,categories: | mer:string,product:string,quantity:int,price: |
+  |                           | array<string>>                                | int,purchasetime:bigint,catalogid:string>>    |
+  +===========================================================================================================================+
+  | Alice                     | {"id":"Alice","firstname":"Alice","lastname": | [{"customer":"Alice","product":"coconut","qua |
+  |                           | "Bernard","categories":["fruits"]}            | ntity":2,"price":5,"purchasetime":14267198729 |
+  |                           |                                               | 86,"catalogid":"Catalog-coconut"},{"customer" |
+  |                           |                                               | :"Alice","product":"grapefruit","quantity":12 |
+  |                           |                                               | ,"price":10,"purchasetime":1426719872968,"cat |
+  |                           |                                               | alogid":"Catalog-grapefruit"}]                |
+  |---------------------------------------------------------------------------------------------------------------------------|
+  | Bob                       |                                               | [{"customer":"Bob","product":"coffee","quanti |
+  |                           |                                               | ty":1,"price":1,"purchasetime":1426719873005, |
+  |                           |                                               | "catalogid":"Catalog-coffee"},{"customer":"Bo |
+  |                           |                                               | b","product":"orange","quantity":6,"price":12 |
+  |                           |                                               | ,"purchasetime":1426719872970,"catalogid":"Ca |
+  |                           |                                               | talog-orange"}]                               |
+  +===========================================================================================================================+
 
-  +========================================================================================+
-  | cdap_user_history.customer: STRING | cdap_user_history.purchases:                      |
-  |                                    |   array<struct<customer:string,                   |
-  |                                    |                userProfile:<struct<               |
-  |                                    |                          id:string,               |
-  |                                    |                          firstName:string,        |
-  |                                    |                          lastName:string,         |
-  |                                    |                          categories:array<string> |
-  |                                    |                          >> optional,             |
-  |                                    |                product:string,                    |
-  |                                    |                quantity:int,                      |
-  |                                    |                price:int,                         |
-  |                                    |                purchasetime:bigint,               |
-  |                                    |                catalogid:string>>                 |
-  +========================================================================================+
-  | Alice                              | [{"customer":"Alice",                             |
-  |                                    |                "userProfile":{                    |
-  |                                    |                    "id":"alice",                  |
-  |                                    |                    "firstName":"Alice",           |
-  |                                    |                    "lastName":"Bernard",          |
-  |                                    |                    "categories":[                 |
-  |                                    |                          "fruits"                 |
-  |                                    |                          ]                        |
-  |                                    |                },                                 |
-  |                                    |                "product":"coconut",               |
-  |                                    |                "quantity":2,                      |
-  |                                    |                "price":5,                         |
-  |                                    |                "purchasetime":1415237567039,      |
-  |                                    |                "catalogid":"Catalog-coconut"},    |
-  |                                    |  {"customer":"Alice",                             |
-  |                                    |                "userProfile":{                    |
-  |                                    |                    "id":"alice",                  |
-  |                                    |                    "firstName":"Alice",           |
-  |                                    |                    "lastName":"Bernard",          |
-  |                                    |                    "categories":[                 |
-  |                                    |                          "fruits"                 |
-  |                                    |                          ]                        |
-  |                                    |                },                                 |
-  |                                    |                "product":"grapefruit",            |
-  |                                    |                "quantity":12,                     |
-  |                                    |                "price":10,                        |
-  |                                    |                "purchasetime":1415237567016,      |
-  |                                    |                "catalogid":"Catalog-grapefruit"}] |
-  | Bob                                | [{"customer":"Bob",                               |
-  |                                    |                "product":"coffee",                |
-  |                                    |                "quantity":1,                      |
-  |                                    |                "price":1,                         | 
-  |                                    |                "purchasetime":1415237567056,      |
-  |                                    |                "catalogid":"Catalog-coffee"},     |
-  |                                    |  {"customer":"Bob",                               |
-  |                                    |                "product":"orange",                |
-  |                                    |                "quantity":6,                      |
-  |                                    |                "price":12,                        |  
-  |                                    |                "purchasetime":1415237567025,      |
-  |                                    |                "catalogid":"Catalog-orange"}]     |
-  | . . .                              |  . . .                                            |
-  +========================================================================================+
+Note that because we only submitted a single User Profile, only one result |---| for
+*Alice* |---| is returned.
 
-If you prefer to use ``curl`` directly, here is the sequence of steps to execute:
+Explore the Results Using curl and SQL
+......................................
+
+If you prefer to use ``curl`` directly, here are the sequence of steps to execute:
 
 First, submit the query for execution::
 
-  curl -w'\n' -v http://localhost:10000/v3/namespaces/default/data/explore/queries \
-    -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}'
+  $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/data/explore/queries \
+    -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}'
     
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
 
-  {"handle":"363f8ceb-29fe-493d-810f-858ed0440782"}
+  {"handle":"07fd9b6a-95b3-4831-992c-7164f11c3754"}
 
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
 status, issue a GET to the query's URL using the handle::
 
-  curl -w'\n' -v -X GET http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
+  $ curl -w'\n' -v -X GET http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -341,7 +291,7 @@ Because a SQL query can run for several minutes, you may have to repeat the call
 
 Once execution has finished, you can retrieve the results of the query using the handle::
 
-  curl -w'\n' -v -X POST http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
+  $ curl -w'\n' -v -X POST http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next
 
 This will return—up to a limited number—the results in JSON format::
 
@@ -354,7 +304,7 @@ This will return—up to a limited number—the results in JSON format::
 You repeat this step until the ``curl`` call returns an empty list. That means you have
 retrieved all of the results and you can now close the query::
 
-  curl -v -X DELETE http://localhost:10000/v3/namespaces/default/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
+  $ curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
 
 Stopping the Application
 -------------------------------
@@ -366,33 +316,17 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseFlow``    
+    $ cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow   
 
 **Stopping the Services**
 
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
-  Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; do the same for *CatalogLookupService*; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+  Application detail page, then click the *Stop* button (with a red square) in the
+  *Service* pane; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseHistoryService``
-    * - 
-      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.CatalogLookupService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseHistoryService``
-    * - 
-      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.CatalogLookupService``
+    $ cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService
+    $ cdap-cli.sh stop service PurchaseHistory.CatalogLookup
+    $ cdap-cli.sh stop service PurchaseHistory.UserProfileService

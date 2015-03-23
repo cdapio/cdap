@@ -53,6 +53,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.AdapterSpecification;
@@ -70,7 +71,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -96,8 +96,9 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     store.clear();
-    LocationFactory locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
-    locationFactory.create(Constants.DEFAULT_NAMESPACE).delete(true);
+    NamespacedLocationFactory namespacedLocationFactory =
+      AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
+    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     admin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }

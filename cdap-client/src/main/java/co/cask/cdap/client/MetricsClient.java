@@ -162,7 +162,7 @@ public class MetricsClient {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached.");
+          throw new TimeoutException("Time limit reached. Got '" + value + "' instead of '" + count + "'");
         }
       }
 

@@ -32,6 +32,7 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
@@ -87,6 +88,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 /**
  * Command line tool for the Upgrade tool
@@ -101,6 +103,7 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final Injector injector;
   private final HBaseTableUtil hBaseTableUtil;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   private Store store;
   private FileMetaDataManager fileMetaDataManager;
@@ -109,7 +112,19 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrade all tables."),
+    UPGRADE("Upgrades CDAP from 2.6 to 2.8\n" +
+              "  This will upgrade CDAP from 2.6 to 2.8 version. \n" +
+              "  The upgrade tool upgrades the following: \n" +
+              "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
+              "  2. System Datasets\n" +
+              "  3. Dataset Type and Instance Metadata\n" +
+              "  4. Application Metadata\n" +
+              "  5. Archives and Files\n" +
+              "  6. Logs Metadata\n" +
+              "  7. Stream state store table\n" +
+              "  8. Queue config table\n" +
+              "  9. Metrics Kafka table\n" +
+              "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
     private final String description;
@@ -130,6 +145,7 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
+    this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -191,7 +207,7 @@ public class UpgradeTool {
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, txExecutorFactory, dsFramework);
+          return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
         @Provides
@@ -209,7 +225,8 @@ public class UpgradeTool {
                                                           DatasetFramework dsFramework,
                                                           TransactionExecutorFactory txExecutorFactory,
                                                           LocationFactory locationFactory) {
-          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, dsFramework, cConf);
+          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, namespacedLocationFactory,
+                                         dsFramework, cConf);
         }
       });
   }
@@ -270,7 +287,7 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() {
+  private void startUp() throws IOException {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
@@ -310,7 +327,21 @@ public class UpgradeTool {
     try {
       switch (action) {
         case UPGRADE:
-          performUpgrade();
+          Scanner scan = new Scanner(System.in);
+          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          System.out.println("Do you want to continue (y/n)");
+          String response = scan.next();
+          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+            System.out.println("Starting upgrade ...");
+            try {
+              startUp();
+              performUpgrade();
+            } finally {
+              stop();
+            }
+          } else {
+            System.out.println("Upgrade cancelled.");
+          }
           break;
         case HELP:
           printHelp();
@@ -335,7 +366,7 @@ public class UpgradeTool {
     System.out.println();
 
     for (Action action : Action.values()) {
-      System.out.println(String.format("  %s - %s", action.name().toLowerCase(), action.getDescription()));
+      System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
     }
   }
 
@@ -375,17 +406,21 @@ public class UpgradeTool {
     LOG.info("Upgrading queue.config table ...");
     QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
     queueConfigUpgrader.upgrade();
+
+    LOG.info("Upgrading metrics.kafka.meta table ...");
+    MetricsKafkaUpgrader metricsKafkaUpgrader = injector.getInstance(MetricsKafkaUpgrader.class);
+    if (metricsKafkaUpgrader.tableExists()) {
+      metricsKafkaUpgrader.upgrade();
+      hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
+    }
   }
 
-  public static void main(String[] args) throws Exception {
-    UpgradeTool upgradeTool = new UpgradeTool();
-    upgradeTool.startUp();
+  public static void main(String[] args) {
     try {
+      UpgradeTool upgradeTool = new UpgradeTool();
       upgradeTool.doMain(args);
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
-    } finally {
-      upgradeTool.stop();
     }
   }
 
@@ -419,7 +454,7 @@ public class UpgradeTool {
    * Creates the {@link Constants#SYSTEM_NAMESPACE} in hbase and {@link Constants#DEFAULT_NAMESPACE} namespace and also
    * adds it to the store
    */
-  private void createNamespaces() {
+  private void createNamespaces() throws IOException {
     LOG.info("Creating {} namespace in hbase", Constants.SYSTEM_NAMESPACE_ID);
     try {
       HBaseAdmin admin = new HBaseAdmin(hConf);
@@ -433,6 +468,7 @@ public class UpgradeTool {
     }
     LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
     getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
   }
 
   /**

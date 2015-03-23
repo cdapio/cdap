@@ -177,7 +177,7 @@ Dataset:
 You can then run SQL queries against the Dataset. Let's try to find the top five IP
 addresses that visited the site by running a SQL query::
 
-  SELECT * FROM cdap_user_uniquevisitcount ORDER BY value DESC LIMIT 5
+  SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
 
 You can copy and paste the above SQL into the **Query** box as shown below (replacing the
 default query that is there) and click the **Execute** button to run it. It may take a

@@ -15,12 +15,12 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -45,7 +45,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -80,7 +79,6 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     Configuration hConf = testHBase.getConfiguration();
-    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
@@ -112,7 +110,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
 
-    setupNamespaces(injector.getInstance(LocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass

@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.client.HTable;
  *
  */
 public abstract class HBaseQueueUtil {
-  public abstract HBaseQueueConsumer getQueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig,
+  public abstract HBaseQueueConsumer getQueueConsumer(CConfiguration cConf,
                                                       HTable hTable, QueueName queueName,
                                                       HBaseConsumerState consumerState,
                                                       HBaseConsumerStateStore stateStore,

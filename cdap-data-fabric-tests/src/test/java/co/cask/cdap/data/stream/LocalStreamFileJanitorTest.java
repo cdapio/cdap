@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -46,15 +47,14 @@ import java.io.IOException;
  */
 public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
-  private static CConfiguration cConf;
   private static LocationFactory locationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
-    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -78,6 +78,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -92,6 +93,11 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
+  }
+
+  @Override
+  protected NamespacedLocationFactory getNamespacedLocationFactory() {
+    return namespacedLocationFactory;
   }
 
   @Override

@@ -83,7 +83,8 @@ Install, Setup, and Startup
 .. rubric:: Install the CSD
 
 #. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
-#. Download and distribute the CDAP-|version| parcel.
+#. Download and distribute the CDAP-|version| parcel. If the Cask parcel repo is
+   inaccessible to your cluster, please see :ref:`these suggestions <cloudera-direct-parcel-access>`.
 
 .. rubric:: Setup using the Cloudera Manager Admin Console *Add Service* Wizard
 
@@ -170,6 +171,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 Troubleshooting
 =======================================
 
+.. rubric:: Permissions Errors
+
 Some versions of Hive may try to create a temporary staging directory at the table
 location when executing queries. If you are seeing permissions errors when running a
 query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
@@ -177,3 +180,25 @@ query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
 
 This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
+
+.. _cloudera-direct-parcel-access:
+
+.. rubric:: Direct Parcel Access
+
+If you need to download and install the parcels directly (perhaps for a cluster that does
+not have direct network access), the parcels are available by their full URLs. As they are
+stored in a directory that does not offer browsing, they are listed here:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-trusty.parcel
+  |http:|//repository.cask.co/parcels/cdap/latest/CDAP-|version|-1-wheezy.parcel
+  
+If you are hosting your own internal parcel repository, you may also want the
+``manifest.json``:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/latest/manifest.json
+
+The ``manifest.json`` can always be referred to for the list of latest available parcels.

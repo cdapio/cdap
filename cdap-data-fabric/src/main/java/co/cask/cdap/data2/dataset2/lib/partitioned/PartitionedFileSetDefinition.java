@@ -83,9 +83,10 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(
-      filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
-      tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+    return new PartitionedFileSetAdmin(
+        datasetContext, spec, getExploreProvider(),
+        filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
+        tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
   }
 
   @Override

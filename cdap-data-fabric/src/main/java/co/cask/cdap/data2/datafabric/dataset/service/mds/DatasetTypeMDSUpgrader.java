@@ -18,8 +18,10 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,18 +62,22 @@ public final class DatasetTypeMDSUpgrader {
     "co.cask.cdap.data2.dataset2.lib.table.ACLTableModule");
   private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework dsFramework;
-  private Transactional<UpgradeMDSStores<DatasetTypeMDS>, DatasetTypeMDS> datasetTypeMDS;
   private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final String dataFabricDir;
+  private Transactional<UpgradeMDSStores<DatasetTypeMDS>, DatasetTypeMDS> datasetTypeMDS;
   private Id.DatasetInstance oldDatasetId;
 
 
   @Inject
-  private DatasetTypeMDSUpgrader(TransactionExecutorFactory executorFactory,
-                                 DatasetFramework dsFramework,
-                                 LocationFactory locationFactory) {
+  private DatasetTypeMDSUpgrader(CConfiguration cConf, TransactionExecutorFactory executorFactory,
+                                 DatasetFramework dsFramework, LocationFactory locationFactory,
+                                 NamespacedLocationFactory namespacedLocationFactory) {
     this.executorFactory = executorFactory;
     this.dsFramework = dsFramework;
     this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.dataFabricDir = cConf.get(Constants.Dataset.Manager.OUTPUT_DIR);
   }
 
   private void setupDatasetTypeMDS(final DatasetTypeMDS oldMds) {
@@ -164,7 +170,7 @@ public final class DatasetTypeMDSUpgrader {
     } else {
       Location oldJarLocation = locationFactory.create(olddatasetModuleMeta.getJarLocation());
       Location newJarLocation = updateUserDatasetModuleJarLocation(oldJarLocation, olddatasetModuleMeta.getClassName(),
-                                                                   Constants.DEFAULT_NAMESPACE);
+                                                                   Constants.DEFAULT_NAMESPACE_ID);
 
       newDatasetModuleMeta = new DatasetModuleMeta(olddatasetModuleMeta.getName(), olddatasetModuleMeta.getClassName(),
                                                    newJarLocation.toURI(), olddatasetModuleMeta.getTypes(),
@@ -189,18 +195,10 @@ public final class DatasetTypeMDSUpgrader {
    * @throws IOException
    */
   private Location updateUserDatasetModuleJarLocation(Location location, String datasetClassname,
-                                                      String namespace) throws IOException {
+                                                      Id.Namespace namespace) throws IOException {
     String jarFilename = location.getName();
-    Location parentLocation = Locations.getParent(location);  // strip jarFilename
-    parentLocation = Locations.getParent(parentLocation); // strip account_placeholder
-    Preconditions.checkNotNull(parentLocation, "failed to get parent on {}", location);
-    String archive = parentLocation.getName();
-    parentLocation = Locations.getParent(parentLocation); // strip archive
-    Preconditions.checkNotNull(parentLocation, "failed to get parent on {}", location);
-    String datasets = parentLocation.getName();
-
-    return locationFactory.create(namespace).append(datasets).append(datasetClassname).append(archive)
-      .append(jarFilename);
+    return namespacedLocationFactory.get(namespace).append(dataFabricDir).append(datasetClassname)
+      .append(Constants.ARCHIVE_DIR).append(jarFilename);
   }
 
 

@@ -100,9 +100,12 @@ public final class DatasetInstanceMDSUpgrader {
         for (DatasetSpecification dsSpec: dsSpecs) {
           LOG.info("Migrating Dataset Spec: {}", dsSpec);
           Id.Namespace namespace = namespaceFromDatasetName(dsSpec.getName());
-          DatasetSpecification migratedDsSpec = migrateDatasetSpec(dsSpec);
-          LOG.info("Writing new Dataset Spec: {}", migratedDsSpec);
-          newMds.write(namespace, migratedDsSpec);
+          // Only upgrade meta for user datasets. System datasets' meta will get created when the tables are created.
+          if (namespace == Constants.DEFAULT_NAMESPACE_ID) {
+            DatasetSpecification migratedDsSpec = migrateDatasetSpec(dsSpec);
+            LOG.info("Writing new Dataset Spec: {}", migratedDsSpec);
+            newMds.write(namespace, migratedDsSpec);
+          }
         }
         return null;
       }

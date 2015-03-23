@@ -22,8 +22,10 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -54,7 +56,6 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -91,6 +92,7 @@ public class DFSStreamHeartbeatsTest {
   private static StreamFetchHandler streamFetchHandler;
   private static StreamHandler streamHandler;
   private static StreamMetaStore streamMetaStore;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -100,16 +102,16 @@ public class DFSStreamHeartbeatsTest {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
-    conf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
 
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       Modules.override(
         new ZKClientModule(),
         new DataFabricModules().getInMemoryModules(),
-        new ConfigModule(conf, new Configuration()),
+        new ConfigModule(cConf, new Configuration()),
         new AuthModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
@@ -156,11 +158,13 @@ public class DFSStreamHeartbeatsTest {
     streamFetchHandler = injector.getInstance(StreamFetchHandler.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
 
-    injector.getInstance(LocationFactory.class).create(Constants.DEFAULT_NAMESPACE).mkdirs();
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws IOException {
+    Locations.deleteQuietly(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID), true);
     streamService.stopAndWait();
     streamHttpService.stopAndWait();
     zkClient.stopAndWait();

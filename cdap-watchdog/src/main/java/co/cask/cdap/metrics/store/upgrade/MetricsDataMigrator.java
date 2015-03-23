@@ -234,11 +234,6 @@ public class MetricsDataMigrator {
 
   public void cleanUpOldTables(Version version) throws DataMigrationException {
     Set<String> tablesToDelete = Sets.newHashSet();
-    DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-
-    // add kafka meta table to deleteList
-    tablesToDelete.add(addNamespace(defaultDatasetNamespace, cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                                       MetricsConstants.DEFAULT_KAFKA_META_TABLE)));
 
     if (version == Version.VERSION_2_6_OR_LOWER) {
       List<String> scopes = ImmutableList.of("system", "user");
@@ -343,6 +338,7 @@ public class MetricsDataMigrator {
                                   UpgradeMetricsConstants.DEFAULT_TAG_DEPTH);
   }
 
+  // todo: batch writing metrics to a store, see MetricStore.add(Collection<MetricValue>)
   private void addMetrics(Map<byte[], byte[]> columns, String metricName,
                           Map<String, String> tagMap, String metricTagType) throws Exception {
     for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
