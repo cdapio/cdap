@@ -26,8 +26,12 @@ angular.module(PKG.name + '.commons')
       }
     });
 
+    $scope.emptyError = function() {
+      return myAlert.isEmpty();
+    };
+
     $scope.doSearch = function () {
-      myAlert({
+      myAlert.add({
         title: 'Sorry!',
         content: 'Search is not yet implemented.',
         type: 'danger'

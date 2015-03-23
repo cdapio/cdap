@@ -197,10 +197,6 @@ angular
     pingBackend(); // execute immediately when initially opening a page
     $interval(pingBackend, 60000); // ping every 60 seconds
 
-    $scope.emptyError = function() {
-      return myAlert.isEmpty();
-    };
-
 
     console.timeEnd(PKG.name);
   });
