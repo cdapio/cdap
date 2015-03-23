@@ -32,6 +32,11 @@
 
   <dependencies>
     <dependency>
+       <groupId>io.thekraken</groupId>
+       <artifactId>grok</artifactId>
+       <version>0.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
