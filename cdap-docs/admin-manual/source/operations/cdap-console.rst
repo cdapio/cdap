@@ -37,6 +37,10 @@ As part of release 2.8.0, a new alpha User Interface (UI) for the CDAP Console w
 
 To try out the new UI, changes are required before CDAP is started.
 
+- The version of Node.js used must be in the range of v0.10.25 through v0.10.37 in order to
+  use the New UI. (These versions will also work with the current CDAP Console, so you can
+  use either console version.)
+
 - For CDAP Standalone SDK, pass an additional argument :ref:`when starting CDAP <start-stop-cdap>`::
 
     $ ./bin/cdap.sh start --enable-alpha-ui
