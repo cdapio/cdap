@@ -46,7 +46,7 @@ General
 
 - Added the ability to specify 
   :ref:`custom logback file for CDAP programs <application-logback>`
-  (`CDAP-1741 <https://issues.cask.co/browse/CDAP-1741>`__).
+  (`CDAP-1100 <https://issues.cask.co/browse/CDAP-1100>`__).
 
 - System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.
 
