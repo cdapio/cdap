@@ -18,7 +18,9 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -36,10 +38,19 @@ import javax.annotation.Nullable;
  */
 public class QueueConfigUpgrader extends AbstractQueueUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(QueueConfigUpgrader.class);
+  private final QueueAdmin queueAdmin;
 
   @Inject
-  public QueueConfigUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
-    super(locationFactory, tableUtil, conf);
+  public QueueConfigUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                             HBaseTableUtil tableUtil, Configuration conf, QueueAdmin queueAdmin) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf);
+    this.queueAdmin = queueAdmin;
+  }
+
+  @Override
+  void upgrade() throws Exception {
+    super.upgrade();
+    queueAdmin.upgrade();
   }
 
   @Override

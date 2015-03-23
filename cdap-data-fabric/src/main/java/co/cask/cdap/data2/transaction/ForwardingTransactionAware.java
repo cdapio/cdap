@@ -18,47 +18,45 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import com.google.common.collect.ForwardingObject;
 
 import java.util.Collection;
 
 /**
  * A {@link TransactionAware} that forwards every methods to another {@link TransactionAware}.
  */
-public abstract class ForwardingTransactionAware implements TransactionAware {
+public abstract class ForwardingTransactionAware extends ForwardingObject implements TransactionAware {
 
-  private final TransactionAware txAware;
-
-  protected ForwardingTransactionAware(TransactionAware txAware) {
-    this.txAware = txAware;
-  }
+  @Override
+  protected abstract TransactionAware delegate();
 
   @Override
   public void startTx(Transaction tx) {
-    txAware.startTx(tx);
+    delegate().startTx(tx);
   }
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    return txAware.getTxChanges();
+    return delegate().getTxChanges();
   }
 
   @Override
   public boolean commitTx() throws Exception {
-    return txAware.commitTx();
+    return delegate().commitTx();
   }
 
   @Override
   public void postTxCommit() {
-    txAware.postTxCommit();
+    delegate().postTxCommit();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    return txAware.rollbackTx();
+    return delegate().rollbackTx();
   }
 
   @Override
   public String getTransactionAwareName() {
-    return txAware.getTransactionAwareName();
+    return delegate().getTransactionAwareName();
   }
 }

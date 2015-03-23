@@ -16,12 +16,16 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.client.config.ConnectionConfig;
+
 /**
  * Contains the options that the user can pass to the CLI upon launch.
  */
 public class LaunchOptions {
 
-  public static final LaunchOptions DEFAULT = builder().build();
+  public static final LaunchOptions DEFAULT = builder()
+    .setUri(ConnectionConfig.DEFAULT.getURI().toString())
+    .build();
 
   private final String uri;
   private final boolean autoconnect;

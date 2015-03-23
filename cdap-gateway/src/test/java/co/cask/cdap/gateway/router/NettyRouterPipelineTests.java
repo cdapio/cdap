@@ -22,6 +22,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -295,7 +296,7 @@ public class NettyRouterPipelineTests {
     public void registerServer() {
       // Register services of test server
       LOG.info("Registering service {}", serviceNameSupplier.get());
-      cancelDiscovery = discoveryService.register(new Discoverable() {
+      cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
         @Override
         public String getName() {
           return serviceNameSupplier.get();
@@ -305,7 +306,7 @@ public class NettyRouterPipelineTests {
         public InetSocketAddress getSocketAddress() {
           return httpService.getBindAddress();
         }
-      });
+      }));
     }
 
     public void cancelRegistration() {

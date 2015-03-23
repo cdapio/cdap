@@ -41,7 +41,6 @@ import javax.annotation.Nullable;
  * A default implementation of {@link ServiceManager}.
  */
 public class DefaultServiceManager extends AbstractServiceManager {
-
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
@@ -68,10 +67,10 @@ public class DefaultServiceManager extends AbstractServiceManager {
   }
 
   @Override
-  public void setRunnableInstances(int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setServiceInstances(applicationId, serviceName, instances);
+      appFabricClient.setServiceInstances(namespace, applicationId, serviceName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -79,19 +78,19 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   @Override
   public int getRequestedInstances() {
-    ServiceInstances instances = getRunnableInstances();
+    ServiceInstances instances = getInstances();
     return instances.getRequested();
   }
 
   @Override
   public int getProvisionedInstances() {
-    ServiceInstances instances = getRunnableInstances();
+    ServiceInstances instances = getInstances();
     return instances.getProvisioned();
   }
 
-  private ServiceInstances getRunnableInstances() {
+  private ServiceInstances getInstances() {
     try {
-      return appFabricClient.getServiceInstances(applicationId, serviceName);
+      return appFabricClient.getServiceInstances(namespace, applicationId, serviceName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

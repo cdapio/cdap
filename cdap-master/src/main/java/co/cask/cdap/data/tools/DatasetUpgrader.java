@@ -22,12 +22,12 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDSUpgrader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
@@ -35,7 +35,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -57,7 +56,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
-  private final QueueAdmin queueAdmin;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
   private final Pattern userTablePrefix;
@@ -66,16 +64,15 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                          QueueAdmin queueAdmin, HBaseTableUtil hBaseTableUtil,
-                          DatasetFramework dsFramework,
+                          NamespacedLocationFactory namespacedLocationFactory,
+                          HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
                           DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
                           DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
 
-    super(locationFactory);
+    super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
-    this.queueAdmin = queueAdmin;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.datasetInstanceMDSUpgrader = datasetInstanceMDSUpgrader;
@@ -90,9 +87,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     // Upgrade all user hbase tables
     upgradeUserTables();
-
-    // Upgrade all queue and stream tables.
-    queueAdmin.upgrade();
 
     // Upgrade the datasets meta meta table
     datasetTypeMDSUpgrader.upgrade();
@@ -125,7 +119,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
     if (basePath != null) {
       Location oldLocation = locationFactory.create(basePath);
-      Location newlocation = locationFactory.create(Constants.DEFAULT_NAMESPACE)
+      Location newlocation = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID)
         .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
       LOG.info("Upgrading base path for dataset {} from {} to {}", dsSpec.getName(), oldLocation, newlocation);
       renameLocation(oldLocation, newlocation);

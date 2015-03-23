@@ -23,13 +23,13 @@ Set Preferences
 ---------------
 To set preferences for the CDAP Instance, Namespace, Application, or Program, submit an HTTP PUT request::
 
-  PUT http://<host>:<port>/v3/preferences/
+  PUT <base-url>/preferences/
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
+  PUT <base-url>/namespaces/<namespace>/preferences
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
+  PUT <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
 
-  PUT http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  PUT <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80
@@ -37,7 +37,7 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
      - Application ID
@@ -72,13 +72,13 @@ Get Preferences
 
 To retrieve the current preferences, issue an HTTP GET request::
 
-  GET http://<host>:<port>/v3/preferences/
+  GET <base-url>/preferences/
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
+  GET <base-url>/namespaces/<namespace>/preferences
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 This will return a JSON String map of the preferences::
 
@@ -87,13 +87,13 @@ This will return a JSON String map of the preferences::
 To retrieve the Resolved Preferences (collapsing Preferences from higher levels into a single level), set the
 ``resolved`` query parameter to ``true``::
 
-  GET http://<host>:<port>/v3/preferences?resolved=true
+  GET <base-url>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/preferences?resolved=true
+  GET <base-url>/namespaces/<namespace>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences?resolved=true
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/preferences?resolved=true
 
-  GET http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences?resolved=true
 
 .. list-table::
    :widths: 20 80
@@ -101,7 +101,7 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
      - Application ID
@@ -127,13 +127,13 @@ Delete Preferences
 ------------------
 To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at one level with each request::
 
-  DELETE http://<host>:<port>/v3/preferences/
+  DELETE <base-url>/preferences/
 
-  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/preferences
+  DELETE <base-url>/namespaces/<namespace>/preferences
 
-  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/preferences
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/preferences
 
-  DELETE http://<host>:<port>/v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/preferences
 
 .. list-table::
    :widths: 20 80
@@ -141,7 +141,7 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
      - Application ID

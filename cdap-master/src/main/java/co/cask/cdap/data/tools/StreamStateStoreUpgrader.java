@@ -18,8 +18,10 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
@@ -36,10 +38,19 @@ import javax.annotation.Nullable;
  */
 public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(StreamStateStoreUpgrader.class);
+  private final StreamAdmin streamAdmin;
 
   @Inject
-  public StreamStateStoreUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
-    super(locationFactory, tableUtil, conf);
+  public StreamStateStoreUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                                  HBaseTableUtil tableUtil, Configuration conf, StreamAdmin streamAdmin) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf);
+    this.streamAdmin = streamAdmin;
+  }
+
+  @Override
+  void upgrade() throws Exception {
+    super.upgrade();
+    streamAdmin.upgrade();
   }
 
   @Override

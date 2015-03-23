@@ -61,10 +61,10 @@ import java.util.concurrent.TimeUnit;
  * </pre>
  *
  */
-final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Closeable {
+public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Closeable {
 
   // Number of bytes as the row key prefix, including salt bytes added by the row key distributor
-  static final int PREFIX_BYTES = HBaseQueueAdmin.SALT_BYTES + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
+  public static final int PREFIX_BYTES = SaltedHBaseQueueStrategy.SALT_BYTES + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
 
   private static final Function<byte[], byte[]> ROW_KEY_CONVERTER = new Function<byte[], byte[]>() {
     @Override
@@ -147,8 +147,8 @@ final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Closeable {
 
   private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId, byte[] originalRowKey) {
     // Need to subtract the SALT_BYTES as the row key distributor will prefix the key with salted bytes
-    byte[] result = new byte[PREFIX_BYTES - HBaseQueueAdmin.SALT_BYTES + originalRowKey.length];
-    Bytes.putBytes(result, PREFIX_BYTES - HBaseQueueAdmin.SALT_BYTES,
+    byte[] result = new byte[PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES + originalRowKey.length];
+    Bytes.putBytes(result, PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES,
                    originalRowKey, 0, originalRowKey.length);
 
     // Default for FIFO case.

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableSet;
@@ -72,7 +73,7 @@ public class MockHttpService extends AbstractIdleService {
   public void registerServer() {
     // Register services of test server
     log.info("Registering service {}", serviceName);
-    cancelDiscovery = discoveryService.register(new Discoverable() {
+    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return serviceName;
@@ -82,6 +83,6 @@ public class MockHttpService extends AbstractIdleService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
   }
 }

@@ -53,8 +53,8 @@ import javax.ws.rs.Path;
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
   public static final String CENTRAL_SERVICE = "CentralService";
-  public static final String PINGING_WORKER = "PingingWorker";
   public static final String LIFECYCLE_WORKER = "LifecycleWorker";
+  public static final String PINGING_WORKER = "PingingWorker";
   public static final String PROCEDURE = "ForwardingProcedure";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
@@ -73,7 +73,9 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     createDataset(WORKER_INSTANCES_DATASET, KeyValueTable.class);
   }
 
-
+  /**
+   *
+   */
   public static final class ForwardingProcedure extends AbstractProcedure {
 
     @UseDataSet(DATASET_NAME)
@@ -125,13 +127,17 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     });
   }
 
-  private static final class LifecycleWorker extends AbstractWorker {
+  /**
+   *
+   */
+  public static final class LifecycleWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
     private volatile boolean isRunning;
 
     @Override
     protected void configure() {
       setName(LIFECYCLE_WORKER);
+      useDatasets(WORKER_INSTANCES_DATASET);
       setInstances(3);
     }
 
@@ -166,12 +172,17 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     }
   }
 
-  private static final class PingingWorker extends AbstractWorker {
+  /**
+   *
+   */
+  public static final class PingingWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
 
     @Override
     protected void configure() {
       setName(PINGING_WORKER);
+      useDatasets(DATASET_NAME);
+      setInstances(5);
     }
 
     @Override

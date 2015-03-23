@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -40,7 +41,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -245,8 +245,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, createNamespace(OTHER_NAME));
     assertResponseCode(200, getNamespace(OTHER_NAME));
 
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    Location nsLocation = locationFactory.create(NAME);
+    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
+    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
@@ -296,8 +296,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, createNamespace(NAME));
     assertResponseCode(200, getNamespace(NAME));
 
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    Location nsLocation = locationFactory.create(NAME);
+    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
+    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);

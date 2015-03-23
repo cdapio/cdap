@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.logging.common.LocalLogWriter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -151,7 +152,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     @Override
     public Cancellable announce(final String serviceName, final int port) {
-      return discoveryService.register(new Discoverable() {
+      return discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
         @Override
         public String getName() {
           return serviceName;
@@ -161,7 +162,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
         public InetSocketAddress getSocketAddress() {
           return new InetSocketAddress(hostname, port);
         }
-      });
+      }));
     }
   }
 }

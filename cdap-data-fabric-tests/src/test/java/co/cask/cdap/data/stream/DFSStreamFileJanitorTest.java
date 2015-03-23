@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -52,8 +54,8 @@ import java.io.IOException;
  */
 public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
-  private static CConfiguration cConf;
   private static LocationFactory locationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
   private static StreamAdmin streamAdmin;
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
@@ -64,9 +66,9 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    final FileSystem fileSystem = dfsCluster.getFileSystem();
-
-    cConf = CConfiguration.create();
+    FileSystem fileSystem = dfsCluster.getFileSystem();
+    final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -74,7 +76,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
+          bind(LocationFactory.class).toInstance(lf);
+          bind(NamespacedLocationFactory.class).toInstance(nlf);
         }
       },
       new TransactionMetricsModule(),
@@ -100,6 +103,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -115,6 +119,11 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
+  }
+
+  @Override
+  protected NamespacedLocationFactory getNamespacedLocationFactory() {
+    return namespacedLocationFactory;
   }
 
   @Override

@@ -61,7 +61,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
   }
 
   @Override
-  public void setRunnableInstances(int instances) {
+  public void setInstances(int instances) {
     try {
       getProgramClient().setServiceInstances(serviceId.getApplicationId(), serviceId.getId(), instances);
     } catch (Exception e) {

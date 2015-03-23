@@ -41,8 +41,8 @@ function extractConfig(mode, configParam, isSecure) {
       }
       deferred.resolve();
     }.bind(this));
-    
-    this.securityConfig = require("../../cdap-security-config.json");
+
+    this.securityConfig = require("../../conf/generated/cdap-security-config.json");
     this.configSet = true;
   }
   return deferred.promise;

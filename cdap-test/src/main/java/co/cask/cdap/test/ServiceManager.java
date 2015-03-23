@@ -26,14 +26,14 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ServiceManager {
   /**
-   * Changes the number of instances of the service.
+   * Changes the number of instances.
    *
    * @param instances Number of instances to change to.
    */
-  void setRunnableInstances(int instances);
+  void setInstances(int instances);
 
   /**
-   * Returns the number of requested instances of the service.
+   * Returns the number of requested instances.
    */
   int getRequestedInstances();
 

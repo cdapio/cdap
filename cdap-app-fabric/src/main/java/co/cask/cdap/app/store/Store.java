@@ -18,6 +18,7 @@ package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -160,8 +161,9 @@ public interface Store {
    * @param id flow id
    * @param flowletId flowlet id
    * @param count new number of instances
+   * @return The {@link FlowSpecification} before the instance change
    */
-  void setFlowletInstances(Id.Program id, String flowletId, int count);
+  FlowSpecification setFlowletInstances(Id.Program id, String flowletId, int count);
 
   /**
    * Gets number of instances of specific flowlet.

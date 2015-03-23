@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import com.google.common.primitives.Ints;
@@ -38,10 +37,10 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 final class HBase98QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
 
-  HBase98QueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+  HBase98QueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
                        HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                        HBaseQueueStrategy queueStrategy) {
-    super(cConf, consumerConfig, hTable, queueName, consumerState, stateStore, queueStrategy);
+    super(cConf, hTable, queueName, consumerState, stateStore, queueStrategy);
     this.processedStateFilter = createStateFilter();
   }
 

@@ -24,10 +24,13 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -44,6 +47,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -305,7 +309,7 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
     final ProgramId workerId = new ProgramId(workerName, ProgramType.WORKER);
-    return new WorkerManager() {
+    return new AbstractWorkerManager() {
       @Override
       public void setInstances(int instances) {
         Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
@@ -326,6 +330,15 @@ public class RemoteApplicationManager implements ApplicationManager {
         try {
           String status = getProgramClient().getStatus(application.getId(), ProgramType.WORKER, workerName);
           return "RUNNING".equals(status);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+
+      @Override
+      public int getInstances() {
+        try {
+          return getProgramClient().getWorkerInstances(application.getId(), workerName);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

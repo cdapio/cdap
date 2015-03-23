@@ -69,9 +69,20 @@ The best practices with using namespaces would be to create desired namespaces a
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
 undertaken.
 
-Once a namespace has been created, you can edit its display name and description, either 
-by using a :ref:`RESTful API <http-restful-api-namespace>` or the 
+Once a namespace has been created, you can edit its description and configuration
+preferences, either by using a :ref:`RESTful API <http-restful-api-namespace>` or the 
 :ref:`Command Line Interface <cli>`.
+
+CDAP includes the ``default`` namespace out-of-the-box. It is guaranteed to always be
+present, and is recommended for:
+
+1. Proof-of-concept or sandbox applications for trying out CDAP; and
+
+2. Testing your apps before deploying them in development, QA, or production environments.
+
+It is the namespace used when no other namespace is specified. However, for most usecases
+beyond the proof-of-concept stage, we recommend that you create appropriate namespaces and
+operate CDAP within them.
 
 
 .. rubric::  Examples of Using Namespaces
