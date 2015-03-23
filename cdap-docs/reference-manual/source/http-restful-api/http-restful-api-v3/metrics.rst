@@ -534,8 +534,8 @@ points for a metric. By default, 1 second resolution is used. Acceptable values 
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) >= 3610``, resolution will be 3600 seconds (effectively in hours); 
-- ``(endTime - startTime) >= 610``, resolution will be 60 seconds (effectively in minutes); 
+- ``(endTime - startTime) >= 3610 seconds``, resolution will be 3600 seconds (effectively in hours); 
+- ``(endTime - startTime) >= 610 seconds``, resolution will be 60 seconds (effectively in minutes); 
 - otherwise, resolution will be in seconds.
 
 
