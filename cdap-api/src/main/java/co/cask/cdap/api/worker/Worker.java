@@ -29,6 +29,16 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
   void configure(WorkerConfigurer configurer);
 
   /**
+   * Logic executed when Worker is suspended.
+   */
+  void onSuspend();
+
+  /**
+   * Logic executed when Worker is resumed.
+   */
+  void onResume();
+
+  /**
    * Request to stop the running worker.
    * This method will be invoked from a different thread than the one calling the {@link #run()} method.
    */

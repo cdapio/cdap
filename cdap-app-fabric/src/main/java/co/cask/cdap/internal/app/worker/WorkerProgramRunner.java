@@ -108,8 +108,19 @@ public class WorkerProgramRunner implements ProgramRunner {
       if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
         return;
       }
-
       workerDriver.setInstanceCount((Integer) value);
+    }
+
+    @Override
+    protected void doSuspend() throws Exception {
+      super.doSuspend();
+      workerDriver.doSuspend();
+    }
+
+    @Override
+    protected void doResume() throws Exception {
+      super.doResume();
+      workerDriver.doResume();
     }
   }
 }

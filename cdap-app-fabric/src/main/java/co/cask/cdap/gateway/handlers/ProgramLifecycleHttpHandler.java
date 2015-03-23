@@ -745,7 +745,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                         ProgramType.WORKER, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
+                                              ImmutableMap.of("newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);

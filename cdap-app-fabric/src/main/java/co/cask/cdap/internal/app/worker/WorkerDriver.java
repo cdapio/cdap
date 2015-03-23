@@ -67,6 +67,24 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     initialize();
   }
 
+  public void doSuspend() {
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    try {
+      worker.onSuspend();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
+  }
+
+  public void doResume() {
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    try {
+      worker.onResume();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
+  }
+
   @Override
   protected void run() throws Exception {
     ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());

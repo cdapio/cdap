@@ -164,6 +164,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         return;
       }
 
+      // Pause all runnables
+      List<ListenableFuture<ProgramController>> pauseFuture = Lists.newArrayListWithCapacity(liveCount);
+      for (int i = 0; i < liveCount; i++) {
+        pauseFuture.add(components.get(runnableName, i).suspend());
+      }
+      Futures.allAsList(pauseFuture).get();
+
       // stop any extra runnables
       if (liveCount > newCount) {
         List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
@@ -173,17 +180,25 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         Futures.allAsList(futures).get();
       }
 
+      liveRunnables = components.row(runnableName);
+      // Update total instance count for all running runnables
+      for (Map.Entry<Integer, ProgramController> entry : liveRunnables.entrySet()) {
+        entry.getValue().command(ProgramOptionConstants.INSTANCES, newCount);
+      }
+
+      // Resume all runnables
+      List<ListenableFuture<ProgramController>> resumeFuture = Lists.newArrayListWithCapacity(
+        components.row(runnableName).size());
+      for (int i = 0; i < components.row(runnableName).size(); i++) {
+        resumeFuture.add(components.get(runnableName, i).resume());
+      }
+      Futures.allAsList(resumeFuture).get();
+
       // create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
         ProgramOptions options = createComponentOptions(runnableName, instanceId, newCount, getRunId(), userArguments);
         ProgramController controller = programRunnerFactory.create(type).run(program, options);
         components.put(runnableName, instanceId, controller);
-      }
-
-      liveRunnables = components.row(runnableName);
-      // Update total instance count for all running runnables
-      for (Map.Entry<Integer, ProgramController> entry : liveRunnables.entrySet()) {
-        entry.getValue().command(ProgramOptionConstants.INSTANCES, newCount);
       }
     }
   }

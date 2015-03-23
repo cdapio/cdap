@@ -22,13 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A ProgramController for Workers that are launched through Twill.
  */
 public class WorkerTwillProgramController extends AbstractTwillProgramController {
-
   private static final Logger LOG = LoggerFactory.getLogger(WorkerTwillProgramController.class);
+  private static final int MAX_WAIT_SECONDS = 30;
+  private static final int SECONDS_PER_WAIT = 1;
 
   private final TwillController controller;
 
@@ -48,7 +51,8 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
     try {
       for (Map.Entry<String, String> entry : command.entrySet()) {
         LOG.info("Changing worker instance count: {} new count is: {}", entry.getKey(), entry.getValue());
-        changeInstances(entry.getKey(), Integer.valueOf(entry.getValue()));
+        changeInstances(entry.getKey(), getNumberOfProvisionedInstances(entry.getKey()),
+                        Integer.valueOf(entry.getValue()));
         LOG.info("Worker instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
       }
     } catch (Throwable t) {
@@ -56,8 +60,33 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
     }
   }
 
-  private synchronized void changeInstances(String runnableId, int newInstanceCount)
+  private synchronized void changeInstances(String workerId, int oldInstanceCount, int newInstanceCount)
     throws Exception {
-    controller.changeInstances(runnableId, newInstanceCount).get();
+    waitForInstances(workerId, oldInstanceCount);
+    twillController.sendCommand(workerId, ProgramCommands.SUSPEND).get();
+    controller.changeInstances(workerId, newInstanceCount).get();
+    twillController.sendCommand(workerId, ProgramCommands.RESUME).get();
+  }
+
+  private void waitForInstances(String workerId, int expectedInstances) throws InterruptedException, TimeoutException {
+    int numRunningFlowlets = getNumberOfProvisionedInstances(workerId);
+    int secondsWaited = 0;
+    while (numRunningFlowlets != expectedInstances) {
+      LOG.debug("waiting for {} instances of {} before suspending flowlets", expectedInstances, workerId);
+      TimeUnit.SECONDS.sleep(SECONDS_PER_WAIT);
+      secondsWaited += SECONDS_PER_WAIT;
+      if (secondsWaited > MAX_WAIT_SECONDS) {
+        String errmsg =
+          String.format("waited %d seconds for instances of %s to reach expected count of %d, but %d are running",
+                        secondsWaited, workerId, expectedInstances, numRunningFlowlets);
+        LOG.error(errmsg);
+        throw new TimeoutException(errmsg);
+      }
+      numRunningFlowlets = getNumberOfProvisionedInstances(workerId);
+    }
+  }
+
+  private int getNumberOfProvisionedInstances(String flowletId) {
+    return twillController.getResourceReport().getRunnableResources(flowletId).size();
   }
 }

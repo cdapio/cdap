@@ -16,12 +16,12 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -45,8 +45,13 @@ public class AppWithWorker extends AbstractApplication {
   }
 
   private static class TableWriter extends AbstractWorker {
-
+    private static final Logger LOG = LoggerFactory.getLogger(TableWriter.class);
     private volatile boolean running;
+
+    @Override
+    public void configure() {
+      setInstances(3);
+    }
 
     @Override
     public void initialize(WorkerContext context) throws Exception {
@@ -56,6 +61,7 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     public void run() {
+      LOG.error("Running Worker Instance : {} : {}", getContext().getInstanceId(), getContext().getInstanceCount());
       running = true;
       writeToTable(RUN, RUN);
       while (running) {
@@ -68,19 +74,39 @@ public class AppWithWorker extends AbstractApplication {
     }
 
     @Override
+    public void onSuspend() {
+      if (getContext().getInstanceId() == 0) {
+        LOG.error("Starting suspension of Worker Instance : {} : {}",
+                  getContext().getInstanceId(), getContext().getInstanceCount());
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+          LOG.error("Error while suspending Worker Instance : {} : {}",
+                    getContext().getInstanceId(), getContext().getInstanceCount());
+        }
+      }
+      LOG.error("Suspending Worker Instance : {} : {}", getContext().getInstanceId(), getContext().getInstanceCount());
+    }
+
+    @Override
+    public void onResume() {
+      LOG.error("Resuming Worker Instance : {} : {}", getContext().getInstanceId(), getContext().getInstanceCount());
+    }
+
+    @Override
     public void stop() {
       running = false;
       writeToTable(STOP, STOP);
     }
 
     private void writeToTable(final String key, final String value) {
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable table = context.getDataset(DATASET);
-          table.write(key, value);
-        }
-      });
+//      getContext().execute(new TxRunnable() {
+//        @Override
+//        public void run(DatasetContext context) throws Exception {
+//          KeyValueTable table = context.getDataset(DATASET);
+//          table.write(key, value);
+//        }
+//      });
     }
   }
 }

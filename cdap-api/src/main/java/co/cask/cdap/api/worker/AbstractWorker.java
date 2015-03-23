@@ -126,6 +126,16 @@ public abstract class AbstractWorker implements Worker {
   }
 
   @Override
+  public void onSuspend() {
+    // default no-op
+  }
+
+  @Override
+  public void onResume() {
+    // default no-op
+  }
+
+  @Override
   public void stop() {
     // default no-op
   }
