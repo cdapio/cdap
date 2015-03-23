@@ -134,17 +134,25 @@ body.theme-cdap {
           }
           .form-control {
             border: 0;
+            border-radius: 8px;
             .box-shadow(none);
+            font-size: 18px;
             &:focus {
               border-color: transparent;
               .box-shadow(none);
             }
           }
+          input.form-control {
+            height: 50px;
+          }
+          textarea.form-control {
+            min-height: 100px;
+          }
         }
         .modal-footer {
           border-top: 0;
-          button {
-
+          .btn-primary {
+            .cask-btn(@color: white, @background: @brand-success, @border: 0);
           }
         }
       }
