@@ -127,9 +127,9 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from v0.8.16 through v0.10.32) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from v0.8.16 through v0.10.37) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from v0.8.16 through v0.10.36.
+#. The version of Node.js must be from v0.8.16 through v0.10.37.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
