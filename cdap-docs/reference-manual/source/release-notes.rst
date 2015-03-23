@@ -117,6 +117,8 @@ New Features
 
   - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
     2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+    Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
+    please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
   - Added a metric migration tool which migrates old metrics to the new 2.8 format.
 
 

@@ -584,6 +584,11 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
+These steps will upgrade from CDAP 2.6.x to 2.8.0. (**Note:** Apps need to be both
+recompiled and re-deployed.) An upgrade from 2.7.x to 2.8.0 is not currently supported. If
+you have a use case for it, please reach out to us at `cdap-user@googlegroups.com
+<https://groups.google.com/d/forum/cdap-user>`__.
+
 .. highlight:: console
 
 1. Stop all Flows, Services, and other Programs in all your applications.
