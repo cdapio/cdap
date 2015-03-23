@@ -523,9 +523,9 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
    * - ``count=<count>``
      - Number of seconds since the *start time*.
-   * - ``resolution=[1|60|3600|auto]``
-     - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
-       the time difference.
+   * - ``resolution=[1s|1m|1h|auto]``
+     - Time resolution in seconds, minutes or hours; or if "auto", one of ``{1s, 1m, 1h}``
+       is used based on the time difference.
 
 With a specific time range, a ``resolution`` can be included to retrieve a series of data
 points for a metric. By default, 1 second resolution is used. Acceptable values are noted
@@ -551,12 +551,12 @@ difference calculated between the start and end times:
    * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        both given as since the start of the Epoch
-   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1``
+   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
      - The same as before, the count given as a number of seconds
-   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=60``
+   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
-   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=3600``
+   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=1h``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
