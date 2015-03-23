@@ -34,7 +34,6 @@ import javax.ws.rs.Path;
 /**
  * Handles version requests.
  */
-@Path(Constants.Gateway.API_VERSION_2)
 public class VersionHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(VersionHandler.class);
@@ -45,7 +44,13 @@ public class VersionHandler extends AbstractHttpHandler {
     this.version = determineVersion();
   }
 
-  @Path("/version")
+  @Path(Constants.Gateway.API_VERSION_2 + "/version")
+  @GET
+  public void oldVersion(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+    responder.sendJson(HttpResponseStatus.OK, new Version(version));
+  }
+
+  @Path(Constants.Gateway.API_VERSION_3 + "/version")
   @GET
   public void version(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, new Version(version));
