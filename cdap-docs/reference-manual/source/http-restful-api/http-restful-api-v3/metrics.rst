@@ -509,7 +509,7 @@ or as a ``start`` and ``end`` to define a specific range and return a series of 
 By default, queries without a time range retrieve a value based on ``aggregate=true``.
 
 .. list-table::
-   :widths: 20 80
+   :widths: 30 70
    :header-rows: 1
 
    * - Parameter
