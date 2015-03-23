@@ -10,7 +10,7 @@ angular.module(PKG.name + '.feature.flows')
     $scope.runs = null;
 
     dataSrc.poll({
-      _cdapNsPath: basePath + '/runs11'
+      _cdapNsPath: basePath + '/runs'
     }, function(res) {
         $scope.runs = res;
         var count = 0;

@@ -58,8 +58,9 @@
 
   </ul>
 
-  <div class="nav navbar-nav navbar-right" ng-class="{disabled: emptyError()}">
-    <button class="btn btn-lg btn-danger"
+  <div class="nav navbar-nav navbar-right error-button">
+    <button class="btn"
+          ng-class="{'btn-danger': !emptyError(), disabled: emptyError()}"
           data-placement="bottom"
           data-template="/error-template"
           bs-popover>

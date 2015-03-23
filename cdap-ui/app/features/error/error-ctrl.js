@@ -3,6 +3,7 @@ angular.module(PKG.name + '.feature.error')
     $scope.alerts = myAlert.getAlerts();
 
     $scope.clear = function () {
+      $scope.$hide();
       myAlert.clear();
       $scope.alerts = myAlert.getAlerts();
     };
