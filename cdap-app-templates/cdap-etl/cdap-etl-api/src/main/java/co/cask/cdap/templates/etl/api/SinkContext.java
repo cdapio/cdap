@@ -16,12 +16,24 @@
 
 package co.cask.cdap.templates.etl.api;
 
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
 
 /**
  * Context passed to the Sink stages.
  */
-public interface SinkContext extends SourceContext, StreamWriter, DatasetContext {
+public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
 
+  /**
+   * Get Instance Id.
+   * @return instance id
+   */
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   * @return instance count
+   */
+  int getInstanceCount();
 }

@@ -16,9 +16,22 @@
 
 package co.cask.cdap.templates.etl.api;
 
+import co.cask.cdap.api.RuntimeContext;
+
 /**
  * Context passed to the Source stages.
  */
-public interface SourceContext extends TransformContext {
+public interface SourceContext extends RuntimeContext {
 
+  /**
+   * Get Instance Id.
+   * @return instance id
+   */
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   * @return instance count
+   */
+  int getInstanceCount();
 }

@@ -37,6 +37,10 @@
       <artifactId>cdap-etl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
