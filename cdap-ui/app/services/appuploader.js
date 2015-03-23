@@ -22,7 +22,7 @@ angular.module(PKG.name + '.services')
 
       // Independent xhr request. Failure case will not be handled by $rootScope.
       function error(err) {
-        myAlert.add({
+        myAlert({
           type: 'danger',
           title: 'Upload failed!',
           content: err || ''

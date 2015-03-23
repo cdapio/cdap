@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.userprofile')
           $scope.reAuthenticated = true;
         })
         .error(function(res) {
-          myAlert.add({
+          myAlert({
             title: 'User Authentication Error!',
             content: 'Either Username or Password is wrong. Please try again',
             type: 'danger'

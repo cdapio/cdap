@@ -44,7 +44,7 @@ angular.module(PKG.name+'.feature.login')
     });
 
     $rootScope.$on(MYAUTH_EVENT.notAuthorized, function () {
-      myAlert.add({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
+      myAlert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
     });
 
     if(MY_CONFIG.securityEnabled) {

@@ -21,7 +21,7 @@ function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT
 
   $scope.$on('$viewContentLoaded', function() {
     if(myAuth.isAuthenticated()) {
-      myAlert.add({
+      myAlert({
         content: 'You are already logged in!',
         type: 'warning'
       });

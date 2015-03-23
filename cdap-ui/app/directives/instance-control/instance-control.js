@@ -17,7 +17,7 @@ angular.module(PKG.name + '.commons')
           scope.processing = true;
 
           if (scope.model.requested === undefined || scope.model.requested < 0) {
-            myAlert.add({
+            myAlert({
               title: 'Invalid instances: ',
               content: 'you must request a valid number of instances.',
               type: 'danger'

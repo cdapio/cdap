@@ -4,7 +4,7 @@ angular.module(PKG.name + '.services')
       var deferred = $q.defer();
       if (!myAuth.currentUser) {
         deferred.reject(400);
-        myAlert.add({
+        myAlert({
           title: 'Must specify user: ',
           content: 'Could not find user.',
           type: 'danger'

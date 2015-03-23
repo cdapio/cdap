@@ -113,7 +113,7 @@ angular
   .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      myAlert.add({
+      myAlert({
         title: 'Error',
         content: sockEvent.reason || 'could not connect to the server',
         type: 'danger'
@@ -123,7 +123,7 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
 
       if(data.statusCode>399) {
-        myAlert.add({
+        myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Something went terribly wrong',
           type: 'danger'
@@ -131,7 +131,7 @@ angular
       }
 
       if(data.warning) {
-        myAlert.add({
+        myAlert({
           content: data.warning,
           type: 'warning'
         });
