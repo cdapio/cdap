@@ -162,8 +162,9 @@
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
+                  <executable>${project.basedir}/node/node</executable>
                   <arguments>
+                    <argument>${project.basedir}/node/npm/bin/npm-cli.js</argument>
                     <argument>install</argument>
                     <argument>--production</argument>
                   </arguments>
