@@ -521,6 +521,8 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
    * - ``start=<time>&end=<time>``
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
+   * - ``count=<count>``
+     - Number of seconds since the *start time*.
    * - ``resolution=[1 | 60 | 3600 | auto]``
      - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
        the time difference.
@@ -549,12 +551,12 @@ difference calculated between the start and end times:
    * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        both given as since the start of the Epoch
-   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
+   * - ``start=1385625600&`` ``count=3600&`` ``resolution=1``
      - The same as before, the count given as a number of seconds
-   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
+   * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=60``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
-   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=1h``
+   * - ``start=1385625600&`` ``end=1385632800&`` ``resolution=3600``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
@@ -599,7 +601,7 @@ Examples of using a run-ID (reformatted to fit)::
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
     bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true
 
-The last example will return something similar to::
+The last example will return something similar to (where ``time=0`` means aggregated total number)::
 
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}

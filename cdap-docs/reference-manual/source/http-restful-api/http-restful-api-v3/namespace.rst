@@ -141,8 +141,10 @@ for when you `Create a Namespace`_.
      - Description
    * - ``description``
      - Display description of the namespace
-   * - ``scheduler.queue.name``
-     - :ref:`Scheduler queue <resource-guarantees>` for CDAP Programs and Explore Queries in the namespace
+   * - ``config``
+     - Configuration properties, with a JSON map of name-value pairs. Currently, the only
+       supported configuration property is ``scheduler.queue.name``: 
+       :ref:`Scheduler queue <resource-guarantees>` for CDAP Programs and Explore Queries in the namespace.
     
 .. rubric:: HTTP Responses
 .. list-table::
