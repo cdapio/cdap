@@ -340,7 +340,7 @@ QueryClient
   //
   // Perform an ad-hoc query using the Purchase example
   //
-  String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  String query = "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"
   QueryHandle queryHandle = queryClient.execute(query);
   QueryStatus status = new QueryStatus(null, false);
 

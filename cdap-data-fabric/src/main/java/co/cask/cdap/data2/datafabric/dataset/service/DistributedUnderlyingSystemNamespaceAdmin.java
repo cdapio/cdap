@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
@@ -40,9 +41,10 @@ public final class DistributedUnderlyingSystemNamespaceAdmin extends UnderlyingS
   private HBaseAdmin hBaseAdmin;
 
   @Inject
-  public DistributedUnderlyingSystemNamespaceAdmin(CConfiguration cConf, LocationFactory locationFactory,
+  public DistributedUnderlyingSystemNamespaceAdmin(CConfiguration cConf,
+                                                   NamespacedLocationFactory namespacedLocationFactory,
                                                    ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
-    super(cConf, locationFactory, exploreFacade);
+    super(cConf, namespacedLocationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
   }

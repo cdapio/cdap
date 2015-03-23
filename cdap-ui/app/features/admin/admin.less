@@ -1,6 +1,6 @@
 @import "../../styles/variables.less";
 
-body.state-admin {
+body.theme-cdap.state-admin {
   main.container {
     .clickable {
       cursor: pointer;
@@ -59,7 +59,6 @@ body.state-admin {
           padding: 0;
           a {
             color: @primary-menu-link-color;
-            display: block;
             font-size: 14px;
             font-weight: 500;
             padding: 15px;
@@ -71,16 +70,11 @@ body.state-admin {
                 border-left: 4px solid @cdap-orange;
                 color: @cdap-orange;
               }
-              &.pull-left {
-                width: 80%;
-              }
               // Create namespace "+"
               + a {
                 border-left: 1px solid @body-bg;
                 color: @cdap-orange;
-                display: inline-block;
                 font-size: 16px;
-                width: 20%;
               }
             }
           }

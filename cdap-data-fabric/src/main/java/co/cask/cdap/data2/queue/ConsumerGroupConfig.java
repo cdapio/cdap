@@ -35,6 +35,10 @@ public class ConsumerGroupConfig {
     this.hashKey = dequeueStrategy == DequeueStrategy.HASH ? hashKey : null;
   }
 
+  public ConsumerGroupConfig(ConsumerGroupConfig other) {
+    this(other.getGroupId(), other.getGroupSize(), other.getDequeueStrategy(), other.getHashKey());
+  }
+
   public long getGroupId() {
     return groupId;
   }

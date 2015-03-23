@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.http.AbstractHttpHandler;
@@ -85,7 +86,7 @@ public class ProcedureHandlerTestRun extends GatewayTestBase {
 
     // Register services of test server
     DiscoveryService discoveryService = GatewayTestBase.getInjector().getInstance(DiscoveryService.class);
-    discoveryService.register(new Discoverable() {
+    discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return String.format("procedure.%s.%s.%s", Constants.DEFAULT_NAMESPACE, "testApp1", "testProc1");
@@ -95,7 +96,7 @@ public class ProcedureHandlerTestRun extends GatewayTestBase {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
 
     discoveryService.register(new Discoverable() {
       @Override
@@ -126,7 +127,7 @@ public class ProcedureHandlerTestRun extends GatewayTestBase {
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
 
-    HttpResponse response = 
+    HttpResponse response =
       doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
              new Header[]{new BasicHeader("X-Test", "1234")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());

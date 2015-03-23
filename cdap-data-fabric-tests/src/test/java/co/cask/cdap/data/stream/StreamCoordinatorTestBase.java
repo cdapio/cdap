@@ -15,13 +15,14 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Throwables;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -46,14 +47,16 @@ public abstract class StreamCoordinatorTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamCoordinatorTestBase.class);
 
+  protected static CConfiguration cConf = CConfiguration.create();
+
   protected abstract StreamCoordinatorClient getStreamCoordinator();
 
   protected abstract StreamAdmin getStreamAdmin();
 
-  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    locationFactory.create(Constants.DEFAULT_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
   }
 
   @Test

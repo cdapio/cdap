@@ -182,13 +182,22 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void add(MetricValue metricValue) throws Exception {
-    String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
-    String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+    add(ImmutableList.of(metricValue));
+  }
 
-    CubeFact fact = new CubeFact(metricValue.getTags(),
-                                 toMeasureType(metricValue.getType()), measureName,
-                                 new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
-    cube.get().add(fact);
+  @Override
+  public void add(Collection<? extends MetricValue> metricValues) throws Exception {
+    List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
+    for (MetricValue metricValue : metricValues) {
+      String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
+      String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+
+      CubeFact fact = new CubeFact(metricValue.getTags(),
+                                   toMeasureType(metricValue.getType()), measureName,
+                                   new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
+      facts.add(fact);
+    }
+    cube.get().add(facts);
   }
 
   @Override

@@ -44,13 +44,13 @@ public class StreamUtilsTest {
   @Test
   public void testStreamIdFromLocation() {
     LocationFactory locationFactory = new LocalLocationFactory();
-    String path = "/cdap/default/streams/fooStream";
+    String path = "/cdap/namespaces/default/streams/fooStream";
     Location streamBaseLocation = locationFactory.create(path);
     Id.Stream expectedId = Id.Stream.from("default", "fooStream");
     Assert.assertEquals(expectedId, StreamUtils.getStreamIdFromLocation(streamBaseLocation));
 
 
-    path = "/cdap/othernamespace/streams/otherstream";
+    path = "/cdap/namespaces/othernamespace/streams/otherstream";
     streamBaseLocation = locationFactory.create(path);
     expectedId = Id.Stream.from("othernamespace", "otherstream");
     Assert.assertEquals(expectedId, StreamUtils.getStreamIdFromLocation(streamBaseLocation));

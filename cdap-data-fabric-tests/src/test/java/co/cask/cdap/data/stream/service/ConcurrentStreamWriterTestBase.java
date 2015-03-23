@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
@@ -67,13 +68,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class ConcurrentStreamWriterTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriterTestBase.class);
+  private static final CConfiguration cConf = CConfiguration.create();
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final StreamCoordinatorClient COORDINATOR_CLIENT = new InMemoryStreamCoordinatorClient();
 
-  protected abstract LocationFactory getLocationFactory();
+  protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
 
   @BeforeClass
   public static void startUp() {
@@ -90,7 +92,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     final String streamName = "testConcurrentWrite";
     String namespace = "namespace";
     Id.Stream streamId = Id.Stream.from(namespace, streamName);
-    StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
+    StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
@@ -136,14 +138,14 @@ public abstract class ConcurrentStreamWriterTestBase {
     final String streamName = "testConcurrentFile";
     String namespace = "namespace";
     Id.Stream streamId = Id.Stream.from(namespace, streamName);
-    StreamAdmin streamAdmin = new TestStreamAdmin(getLocationFactory(), Long.MAX_VALUE, 1000);
+    StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = 20;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
     final ConcurrentStreamWriter streamWriter = createStreamWriter(streamId, streamAdmin, threads, fileWriterFactory);
 
     int msgCount = 10000;
-    LocationFactory locationFactory = getLocationFactory();
+    NamespacedLocationFactory locationFactory = getNamespacedLocationFactory();
     // Half of the threads will be calling appendFile, then other half append event one by one
 
     // Prepare the files first, each file has 10000 events.
@@ -283,9 +285,10 @@ public abstract class ConcurrentStreamWriterTestBase {
     return new LocationStreamFileWriterFactory(cConf);
   }
 
-  private FileInfo generateFile(LocationFactory locationFactory, int id, int events) throws IOException {
-    Location eventLocation = locationFactory.create(UUID.randomUUID().toString());
-    Location indexLocation = locationFactory.create(UUID.randomUUID().toString());
+  private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {
+    Id.Namespace dummyNs = Id.Namespace.from("dummy");
+    Location eventLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
+    Location indexLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
 
     StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventLocation),
                                                            Locations.newOutputSupplier(indexLocation),
@@ -316,12 +319,13 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final class TestStreamAdmin extends NoopStreamAdmin {
 
-    private final LocationFactory locationFactory;
+    private final NamespacedLocationFactory namespacedLocationFactory;
     private final long partitionDuration;
     private final long indexInterval;
 
-    private TestStreamAdmin(LocationFactory locationFactory, long partitionDuration, long indexInterval) {
-      this.locationFactory = locationFactory;
+    private TestStreamAdmin(NamespacedLocationFactory namespacedLocationFactory, long partitionDuration,
+                            long indexInterval) {
+      this.namespacedLocationFactory = namespacedLocationFactory;
       this.partitionDuration = partitionDuration;
       this.indexInterval = indexInterval;
     }
@@ -333,7 +337,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
     @Override
     public StreamConfig getConfig(Id.Stream streamId) throws IOException {
-      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(locationFactory, streamId);
+      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }

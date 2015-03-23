@@ -22,12 +22,14 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.archive.ArchiveBundler;
-import co.cask.cdap.common.conf.Configuration;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import com.google.common.base.Preconditions;
@@ -41,7 +43,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,13 +55,13 @@ import java.util.concurrent.Executors;
  *
  */
 public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable> {
-  private final LocationFactory locationFactory;
-  private final Configuration configuration;
+  private final CConfiguration configuration;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
-  public ProgramGenerationStage(Configuration configuration, LocationFactory locationFactory) {
+  public ProgramGenerationStage(CConfiguration configuration, NamespacedLocationFactory namespacedLocationFactory) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.configuration = configuration;
-    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   @Override
@@ -72,16 +73,15 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     final ArchiveBundler bundler = new ArchiveBundler(input.getLocation());
 
     // Make sure the namespace directory exists
-    String namespace = input.getId().getNamespaceId();
-    Location namespaceDir = locationFactory.create(namespace);
+    Id.Namespace namespaceId = input.getId().getNamespace();
+    Location namespacedLocation = namespacedLocationFactory.get(namespaceId);
     // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
     // Make sure we have a directory to store the original artifact.
-    Location appFabricDir = namespaceDir.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
-    final Location newOutputDir = appFabricDir;
+    final Location appFabricDir = namespacedLocation.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
 
     // Check exists, create, check exists again to avoid failure due to race condition.
-    if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {
-      throw new IOException(String.format("Failed to create directory %s", newOutputDir.toURI().getPath()));
+    if (!appFabricDir.exists() && !appFabricDir.mkdirs() && !appFabricDir.exists()) {
+      throw new IOException(String.format("Failed to create directory %s", appFabricDir.toURI().getPath()));
     }
 
     // Now, we iterate through all ProgramSpecification and generate programs
@@ -116,7 +116,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
           public Location call() throws Exception {
             ProgramType type = ProgramTypes.fromSpecification(spec);
             String name = String.format(Locale.ENGLISH, "%s/%s", applicationName, type);
-            Location programDir = newOutputDir.append(name);
+            Location programDir = appFabricDir.append(name);
             if (!programDir.exists()) {
               programDir.mkdirs();
             }

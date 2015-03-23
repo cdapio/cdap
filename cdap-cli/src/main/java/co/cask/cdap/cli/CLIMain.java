@@ -27,7 +27,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -40,7 +39,6 @@ import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import jline.TerminalFactory;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -72,7 +70,7 @@ public class CLIMain {
   private static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
-    " Defaults to \"" + getDefaultURI() + "\".");
+    " Defaults to \"" + getDefaultURI().toString() + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
     "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
@@ -168,16 +166,8 @@ public class CLIMain {
     }
   }
 
-  public static String getDefaultURI() {
-    CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    String hostname = cConf.get(Constants.Router.ADDRESS);
-    int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-      cConf.getInt(Constants.Router.ROUTER_PORT);
-    String namespace = Constants.DEFAULT_NAMESPACE;
-
-    return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
+  public static URI getDefaultURI() {
+    return ConnectionConfig.DEFAULT.getURI();
   }
 
   private String limit(String string, int maxLength) {
@@ -233,7 +223,7 @@ public class CLIMain {
       }
 
       LaunchOptions launchOptions = LaunchOptions.builder()
-        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI()))
+        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
@@ -297,4 +287,5 @@ public class CLIMain {
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
+
 }

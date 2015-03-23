@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
@@ -84,7 +85,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
 
   @Inject
-  public LogSaver(CheckpointManager checkpointManager,
+  public LogSaver(CConfiguration cConf, CheckpointManager checkpointManager,
                   FileMetaDataManager fileMetaDataManager, KafkaClientService kafkaClient,
                   CConfiguration cConfig, LocationFactory locationFactory) throws Exception {
     LOG.info("Initializing LogSaver...");
@@ -149,7 +150,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, locationFactory.create(""),
+    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
@@ -158,7 +159,9 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     this.scheduledExecutor =
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
-    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), retentionDurationMs);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
+                                     retentionDurationMs);
 
     this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
     this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();

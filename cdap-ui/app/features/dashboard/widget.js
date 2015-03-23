@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.dashboard')
       if(!this.metric) {
         return;
       }
-      dataSrc.request(
+      dataSrc.poll(
         {
           _cdapPath: '/metrics/query' +
             '?context=' + encodeURIComponent(this.metric.context) +
@@ -29,7 +29,7 @@ angular.module(PKG.name+'.feature.dashboard')
         },
         (function (result) {
           if(result.series && result.series.length) {
-            var data = result.series[0];
+            var data = result.series[0].data;
             data.splice(data.length-1, 1);
             this.data = data;
           }
