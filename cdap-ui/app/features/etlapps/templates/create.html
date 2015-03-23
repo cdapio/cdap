@@ -1,0 +1,67 @@
+<h3> Create ETL Adapter</h3>
+<form class="form-horizontal">
+  <section class="panel-group" bs-collapse>
+    <div class="panel panel-default">
+      <div class="panel-heading" bs-collapse-toggle>
+        <h4 class="panel-title">
+          <span
+            ng-class="{'fa-chevron-right': activePanel!==0,
+                       'fa-chevron-down': activePanel===0}"
+            class="fa fa-fw"
+          ></span>Metadata
+        </h4>
+      </div>
+      <div class="panel-collapse" bs-collapse-target>
+        <div class="panel-body">
+          <div ng-include="'/assets/features/etlapps/templates/create/metadata.html'"></div>
+        </div>
+      </div>
+
+      <div class="panel-heading" bs-collapse-toggle>
+        <h4 class="panel-title">
+          <span
+            ng-class="{'fa-chevron-right': activePanel!==0,
+                       'fa-chevron-down': activePanel===0}"
+            class="fa fa-fw"
+          ></span>Input
+        </h4>
+      </div>
+      <div class="panel-collapse" bs-collapse-target>
+        <div class="panel-body">
+          <div ng-include="'/assets/features/etlapps/templates/create/source.html'"></div>
+        </div>
+      </div>
+
+      <div class="panel-heading" bs-collapse-toggle>
+        <h4 class="panel-title">
+          <span
+            ng-class="{'fa-chevron-right': activePanel!==0,
+                       'fa-chevron-down': activePanel===0}"
+            class="fa fa-fw"
+          ></span>Output
+        </h4>
+      </div>
+      <div class="panel-collapse" bs-collapse-target>
+        <div class="panel-body">
+          <div ng-include="'/assets/features/etlapps/templates/create/sink.html'"></div>
+        </div>
+      </div>
+
+      <div class="panel-heading" bs-collapse-toggle>
+        <h4 class="panel-title">
+          <span
+            ng-class="{'fa-chevron-right': activePanel!==0,
+                       'fa-chevron-down': activePanel===0}"
+            class="fa fa-fw"
+          ></span>Transformation
+        </h4>
+      </div>
+      <div class="panel-collapse" bs-collapse-target>
+        <div class="panel-body">
+          <div ng-include="'/assets/features/etlapps/templates/create/transforms.html'"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</form>
