@@ -522,7 +522,6 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
    * - ``count=<count>``
-     - Number of seconds since the *start time*.
      - Number of time intervals since start with length of time interval defined by *resolution*. 
        If ``count=60`` and ``resolution=1s``, the time range would be 60 seconds in length.
    * - ``resolution=[1s|1m|1h|auto]``
