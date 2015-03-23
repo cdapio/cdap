@@ -201,7 +201,6 @@ angular
       return myAlert.isEmpty();
     };
 
-    $scope.alerts = myAlert.list;
 
     console.timeEnd(PKG.name);
   });

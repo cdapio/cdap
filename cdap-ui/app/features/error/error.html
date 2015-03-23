@@ -1,4 +1,14 @@
-<div class="popover">
+<div class="popover" ng-controller="errorPopoverController">
   <div class="arrow"></div>
-  <h1>TEST</h1>
+  <h3 class="popover-title">Errors</h3>
+  <div class="popover-content">
+    <div class="text-right">
+      <button class="btn btn-sm btn-default" ng-click="clear()">Clear All</button>
+    </div>
+    <div class="clearfix">
+      <p ng-repeat="alert in alerts">
+        <strong>{{ alert.title }}</strong> {{ alert.content }}
+      </p>
+    </div>
+  </div>
 </div>

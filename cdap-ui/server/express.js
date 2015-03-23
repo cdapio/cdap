@@ -146,6 +146,12 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
+  app.get('/error-template', [
+    function (req, res){
+      res.sendFile(DIST_PATH + '/assets/features/error/error.html');
+    }
+  ]);
+
   app.get('/backendstatus', [
     function (req, res) {
 

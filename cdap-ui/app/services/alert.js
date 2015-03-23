@@ -1,17 +1,16 @@
 angular.module(PKG.name+'.services')
   .factory('myAlert', function(){
-    var list = ['test'];
 
     return {
-      list: list,
+      list: [],
       isEmpty: function() {
-        return list.length === 0;
+        return this.list.length === 0;
       },
       add: function(alert) {
-        list.push(alert);
+        this.list.push(alert);
       },
       clear: function() {
-        list = [];
+        this.list = [];
       }
 
     };

@@ -26,13 +26,10 @@
       <div class="container"></div>
     </div>
 
-    <div class="container">
-      <button class="btn btn-danger"
-            title="Error"
-            ng-hide="emptyError()"
+    <div class="container" ng-hide="emptyError()">
+      <button class="btn btn-lg btn-danger"
             data-placement="top"
-            data-template="features/error/error.html"
-            data-auto-close="1"
+            data-template="/error-template"
             bs-popover>
         <i class="fa fa-exclamation-circle"></i>
       </button>
