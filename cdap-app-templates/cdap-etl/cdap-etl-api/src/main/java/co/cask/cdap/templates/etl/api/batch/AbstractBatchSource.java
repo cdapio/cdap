@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -30,7 +29,7 @@ import co.cask.cdap.templates.etl.api.StageLifecycle;
  */
 public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecycle {
 
-  private MapReduce context;
+  private MapReduceContext context;
 
   /**
    * Configure the Batch Source stage.
@@ -44,13 +43,13 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
    * Setup MapReduce configuration related to the Batch Source.
    * @param context {@link MapReduceContext}
    */
-  public abstract void prepareJob(MapReduce context);
+  public abstract void prepareJob(MapReduceContext context);
 
   /**
    * Initialize the Batch Source.
    * @param context {@link MapReduceContext}
    */
-  public void initialize(MapReduce context) {
+  public void initialize(MapReduceContext context) {
     this.context = context;
   }
 
@@ -74,4 +73,8 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
    * @throws Exception
    */
   public abstract void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
+
+  protected MapReduceContext getContext() {
+    return context;
+  }
 }
