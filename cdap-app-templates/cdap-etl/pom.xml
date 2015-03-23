@@ -50,17 +50,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>
@@ -92,6 +81,18 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-unit-test</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+
       <dependency>
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
