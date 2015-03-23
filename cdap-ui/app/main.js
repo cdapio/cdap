@@ -144,7 +144,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval, myAlert) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval) {
 
     var activeThemeClass = caskTheme.getClassName();
 

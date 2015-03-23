@@ -13,7 +13,7 @@ function ($scope, $state, myAlert, MyDataSource, myNamespace) {
     });
 
   $scope.doSave = function () {
-    myAlert({
+    myAlert.add({
       title: 'it doesn\'t work yet!',
       content: 'there is no content yet',
       type: 'warning'
