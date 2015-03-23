@@ -523,7 +523,7 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
    * - ``count=<count>``
      - Number of seconds since the *start time*.
-   * - ``resolution=[1 | 60 | 3600 | auto]``
+   * - ``resolution=[1|60|3600|auto]``
      - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
        the time difference.
 
