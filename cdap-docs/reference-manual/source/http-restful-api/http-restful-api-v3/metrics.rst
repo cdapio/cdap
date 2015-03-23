@@ -493,7 +493,6 @@ multiple tags for grouping by providing a comma-separated list.
      - Description
    * - ``groupBy=app``
      - Retrieves the time series for each application. 
-       For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``groupBy=app,flow``
      - Retrieves a time series for each app and flow combination
 
@@ -533,9 +532,9 @@ points for a metric. By default, 1 second resolution is used. Acceptable values 
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) >= 3610 seconds``, resolution will be 3600 seconds (effectively in hours); 
-- ``(endTime - startTime) >= 610 seconds``, resolution will be 60 seconds (effectively in minutes); 
-- otherwise, resolution will be in seconds.
+- ``(endTime - startTime) >= 3610``, resolution will be 1 hour; 
+- ``(endTime - startTime) >= 610``, resolution will be 1 minute; 
+- otherwise, resolution will be 1 second.
 
 
 .. list-table::
