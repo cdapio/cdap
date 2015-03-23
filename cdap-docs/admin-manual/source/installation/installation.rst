@@ -127,9 +127,9 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from v0.8.16 through v0.10.32) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from v0.8.16 through v0.10.37) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from v0.8.16 through v0.10.36.
+#. The version of Node.js must be from v0.8.16 through v0.10.37.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
@@ -583,6 +583,11 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
+
+These steps will upgrade from CDAP 2.6.x to 2.8.0. (**Note:** Apps need to be both
+recompiled and re-deployed.) An upgrade from 2.7.x to 2.8.0 is not currently supported. If
+you have a use case for it, please reach out to us at `cdap-user@googlegroups.com
+<https://groups.google.com/d/forum/cdap-user>`__.
 
 .. highlight:: console
 
