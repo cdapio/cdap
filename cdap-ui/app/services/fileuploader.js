@@ -1,10 +1,10 @@
 angular.module(PKG.name + '.services')
-  .factory('myFileUploader', function($q, $window, $alert, cfpLoadingBar, myAuth) {
+  .factory('myFileUploader', function($q, $window, $alert, cfpLoadingBar, myAuth, myAlert) {
     function upload(fileObj){
       var deferred = $q.defer();
       if (!myAuth.currentUser) {
         deferred.reject(400);
-        $alert({
+        myAlert({
           title: 'Must specify user: ',
           content: 'Could not find user.',
           type: 'danger'
