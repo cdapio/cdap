@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="CDAP Docker Image" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Docker Image &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../../index.html" />
+    <link rel="up" title="CDAP Software Development Kit (SDK)" href="index.html" />
+    <link rel="next" title="Quick Start" href="../quick-start.html" />
+    <link rel="prev" title="Virtual Machine Image" href="virtual-machine.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../quick-start.html" title="Quick Start"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="virtual-machine.html" title="Virtual Machine Image"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Getting Started with CDAP</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP Software Development Kit (SDK)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="docker-image">
+<h1>Docker Image<a class="headerlink" href="#docker-image" title="Permalink to this headline">¶</a></h1>
+<p>A Docker image with CDAP pre-installed is available on the Docker Hub for download.</p>
+<p>To use the <strong>Docker image</strong>:</p>
+<ul>
+<li><p class="first">Docker is available for a variety of platforms. Download and install Docker in your environment by
+following the <a class="reference external" href="https://docs.docker.com/installation">platform-specific installation instructions</a>
+from <a class="reference external" href="https://docker.com">Docker.com</a> to verify that Docker is working and has
+started correctly.</p>
+</li>
+<li><p class="first">Once Docker has started, pull down the <em>CDAP Docker Image</em> from the Docker hub using:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> docker pull caskdata/cdap-standalone
+</pre></div>
+</div>
+</li>
+<li><p class="first">Start the <em>Docker CDAP Container</em> with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
+</pre></div>
+</div>
+</li>
+</ul>
+<ul class="simple">
+<li>CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
+Directory is under <tt class="docutils literal"><span class="pre">/Software/cdap-sdk-2.6.2</span></tt>.</li>
+<li>Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
+at <tt class="docutils literal"><span class="pre">http://&lt;container-hostname&gt;:9999</span></tt>, such as <tt class="docutils literal"><span class="pre">http://6f0162922c37:9999</span></tt>. However, we
+publish the container ports to our local machine. Start a browser and connect to
+<tt class="docutils literal"><span class="pre">http://localhost:9999</span></tt> to access the CDAP Console.</li>
+<li>In order to begin building CDAP applications, have our <a class="reference internal" href="index.html#system-requirements"><em>recommended software and tools</em></a> installed in your environment.</li>
+<li>For a full list of Docker Commands, see the <a class="reference external" href="https://docs.docker.com/reference/commandline/cli/">Docker Command Line Documentation.</a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Getting Started</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CDAP SDK</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="zip.html">Binary Zip File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtual-machine.html">Virtual Machine Image</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Docker Image</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quick-start.html">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev-env.html">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start-stop-cdap.html">Starting and Stopping CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../building-apps.html">Building and Running Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="virtual-machine.html"
+                        title="Previous Chapter">Virtual Machine Image</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../quick-start.html"
+                        title="Next Chapter">Quick Start</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Virtual Machine Image" href="virtual-machine.html" />Virtual Machine Image</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Quick Start" href="../quick-start.html" />Quick Start</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

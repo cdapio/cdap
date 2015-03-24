@@ -1,0 +1,437 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Preferences HTTP RESTful API &mdash; Cask Data Application Platform 2.8.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.8.0 Documentation" href="../../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Stream HTTP RESTful API" href="stream.html" />
+    <link rel="prev" title="Configuration HTTP RESTful API" href="configuration.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="stream.html" title="Stream HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Configuration HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.8.0');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Reference Manual</a> &raquo;</li>
+          <li><a href="../index.html" >CDAP HTTP RESTful API</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="preferences-http-restful-api">
+<span id="http-restful-api-v3-preferences"></span><span id="http-restful-api-preferences"></span><h1>Preferences HTTP RESTful API<a class="headerlink" href="#preferences-http-restful-api" title="Permalink to this headline">¶</a></h1>
+<p>Use the CDAP Preferences HTTP RESTful API to save, retrieve, and delete preferences in CDAP.</p>
+<p>Preferences, their use and examples of using them, are described in the <a class="reference external" href="../../source/../../admin-manual/operations/preferences.html#preferences" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Administration Manual: Preferences</em></a>.</p>
+<p>For the remainder of this API, it is assumed that the preferences you are using are defined
+by the <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></tt>, as described under <a class="reference internal" href="introduction.html#http-restful-api-conventions"><em>Conventions</em></a>.</p>
+<div class="section" id="set-preferences">
+<h2>Set Preferences<a class="headerlink" href="#set-preferences" title="Permalink to this headline">¶</a></h2>
+<p>To set preferences for the CDAP Instance, Namespace, Application, or Program, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/preferences/</span>
+
+<span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/preferences</span>
+
+<span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/preferences</span>
+
+<span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/preferences</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Application ID</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Program ID</td>
+</tr>
+</tbody>
+</table>
+<p>Properties, as a map of string-string pairs, are passed in the JSON request body.</p>
+<p>Preferences can be set only for entities that exist. For example, Preferences cannot be set for a Namespace
+that does not exist or an application that has not yet been deployed.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event successfully called the method, and the preferences were set</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">BAD</span> <span class="pre">REQUEST</span></tt></td>
+<td>The JSON body has an invalid format</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<td>The entity for which Preferences are being set was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="get-preferences">
+<h2>Get Preferences<a class="headerlink" href="#get-preferences" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve the current preferences, issue an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/preferences/</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/preferences</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/preferences</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/preferences</span>
+</pre></div>
+</div>
+<p>This will return a JSON String map of the preferences:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;key1&quot;:&quot;value1&quot;, &quot;key2&quot;:&quot;value2&quot;}</span>
+</pre></div>
+</div>
+<p>To retrieve the Resolved Preferences (collapsing Preferences from higher levels into a single level), set the
+<tt class="docutils literal"><span class="pre">resolved</span></tt> query parameter to <tt class="docutils literal"><span class="pre">true</span></tt>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/preferences?resolved=true</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/preferences?resolved=true</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/preferences?resolved=true</span>
+
+<span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/preferences?resolved=true</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Application ID</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Program ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event successfully called the method, and the preferences were retrieved</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<td>The entity for which Preferences are being set was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="delete-preferences">
+<h2>Delete Preferences<a class="headerlink" href="#delete-preferences" title="Permalink to this headline">¶</a></h2>
+<p>To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at one level with each request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE &lt;base-url&gt;/preferences/</span>
+
+<span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace&gt;/preferences</span>
+
+<span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/preferences</span>
+
+<span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/preferences</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Application ID</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Program ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event successfully called the method, and the preferences were retrieved</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<td>The entity for which Preferences are being set was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.8.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">v3</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Preferences</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#set-preferences">Set Preferences</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#get-preferences">Get Preferences</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#delete-preferences">Delete Preferences</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transactions.html">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../http-restful-api-v2/index.html">v2 (Deprecated)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="configuration.html"
+                        title="Previous Chapter">Configuration HTTP RESTful API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="stream.html"
+                        title="Next Chapter">Stream HTTP RESTful API</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.8.0/cdap-docs-2.8.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Configuration HTTP RESTful API" href="configuration.html" />Configuration HTTP RESTful API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Stream HTTP RESTful API" href="stream.html" />Stream HTTP RESTful API</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

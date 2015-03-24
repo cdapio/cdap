@@ -1,0 +1,658 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform WordCount Application" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Sport Results &mdash; Cask Data Application Platform 2.8.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.8.0 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Stream Conversion" href="stream-conversion.html" />
+    <link rel="prev" title="Spark Page Rank Example" href="spark-page-rank.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="stream-conversion.html" title="Stream Conversion"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="spark-page-rank.html" title="Spark Page Rank Example"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.8.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sport-results">
+<span id="examples-sport-results"></span><h1>Sport Results<a class="headerlink" href="#sport-results" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) Example demonstrating partitioned file sets through sport results analytics.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This Application demonstrates the use of the PartitionedFileSet dataset:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Game results are stored in the PartitionedFileSet <tt class="docutils literal"><span class="pre">results</span></tt>. It is partitioned by league and season,
+and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
+for example, the 2014 season of the NFL (National Football League).</li>
+<li>Results are uploaded into the file set using the <tt class="docutils literal"><span class="pre">UploadService</span></tt>.</li>
+<li>The <tt class="docutils literal"><span class="pre">ScoreCounter</span></tt> MapReduce program reads game results for a given league and
+aggregates total counts such as games won and lost, or points scored and conceded, across all
+seasons, and writes these totals to the partitioned file set <tt class="docutils literal"><span class="pre">totals</span></tt> that is partitioned by league.</li>
+<li>Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.</li>
+</ul>
+</div></blockquote>
+<p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
+<div class="section" id="the-sportresults-application">
+<h3>The SportResults Application<a class="headerlink" href="#the-sportresults-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples</em></a>, the components
+of the Application are tied together by the class <tt class="docutils literal"><span class="pre">SportResults</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SportResults</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadService</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">ScoreCounter</span><span class="o">());</span>
+
+    <span class="c1">// Create the &quot;results&quot; partitioned file set, configure it to work with MapReduce and with Explore</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">).</span><span class="na">addIntField</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+      <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;csv&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="c1">// Create the aggregates partitioned file set, configure it to work with MapReduce and with Explore</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;totals&quot;</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+      <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;csv&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;team STRING, wins INT, ties INT, losses INT, scored INT, conceded INT&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">configure()</span></tt> method creates the two PartitionedFileSet datasets used in this example.</p>
+<ul>
+<li><p class="first">Both datasets use CSV as the format: For MapReduce, they use the TextInputFormat and TextOutputFormat
+with &#8221;,&#8221; as the field separator, and for Explore they use the <tt class="docutils literal"><span class="pre">csv</span></tt> format.</p>
+</li>
+<li><p class="first">The first dataset (<tt class="docutils literal"><span class="pre">results</span></tt>) is partitioned by league and season. Each record represents
+a single game with a date, a winning and a losing team, and the winner&#8217;s and the loser&#8217;s points, for example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="mi">2011</span><span class="o">/</span><span class="mi">9</span><span class="o">/</span><span class="mi">5</span><span class="o">,</span><span class="n">Dallas</span> <span class="n">Cowboys</span><span class="o">,</span><span class="n">New</span> <span class="n">York</span> <span class="n">Giants</span><span class="o">,</span><span class="mi">24</span><span class="o">,</span><span class="mi">17</span>
+<span class="mi">2011</span><span class="o">/</span><span class="mi">9</span><span class="o">/</span><span class="mi">9</span><span class="o">,</span><span class="n">Philadelphia</span> <span class="n">Eagles</span><span class="o">,</span><span class="n">Cleveland</span> <span class="n">Browns</span><span class="o">,</span><span class="mi">17</span><span class="o">,</span><span class="mi">16</span>
+<span class="mi">2011</span><span class="o">/</span><span class="mi">9</span><span class="o">/</span><span class="mi">9</span><span class="o">,</span><span class="n">New</span> <span class="n">England</span> <span class="n">Patriots</span><span class="o">,</span><span class="n">Tennessee</span> <span class="n">Titans</span><span class="o">,</span><span class="mi">34</span><span class="o">,</span><span class="mi">13</span>
+</pre></div>
+</div>
+<p>We have included some sample data in the <tt class="docutils literal"><span class="pre">resources</span></tt> directory.</p>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">totals</span></tt> dataset stores aggregates across all seasons and thus has the league as its single
+partitioning field. Each record has, for an individual team, the total number of games won and lost
+and the total number of points scored and conceded.</p>
+</li>
+</ul>
+<p>We will use the <tt class="docutils literal"><span class="pre">UploadService</span></tt> to upload the sample data files into the <tt class="docutils literal"><span class="pre">results</span></tt> dataset,
+then compute the <tt class="docutils literal"><span class="pre">totals</span></tt> aggregates using MapReduce, and we will explore both datasets using SQL.</p>
+</div>
+<div class="section" id="uploadservice">
+<h3>UploadService<a class="headerlink" href="#uploadservice" title="Permalink to this headline">¶</a></h3>
+<p>This service has two handler methods: one to upload and another to download a partition of the <tt class="docutils literal"><span class="pre">results</span></tt>
+dataset as a file. It declares its use of the dataset using a <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt> annotation:</p>
+<div class="highlight-java"><div class="highlight"><pre>   <span class="o">*/</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">UploadHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+
+    <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s take a closer look at the upload method:</p>
+<ul class="simple">
+<li>It first creates a partition key from the league and season received as path parameters in the request URL.</li>
+<li>Then it obtains a <tt class="docutils literal"><span class="pre">PartitionOutput</span></tt> for that partition key from the <tt class="docutils literal"><span class="pre">results</span></tt> Dataset.</li>
+<li>It then uses the <tt class="docutils literal"><span class="pre">getLocation()</span></tt> of the PartitionOutput to obtain the location
+for writing the file, and opens an output stream for that location to write the file contents.
+<tt class="docutils literal"><span class="pre">Location</span></tt> is a file system abstraction from <a class="reference external" href="http://twill.incubator.apache.org">Apache™ Twill®</a>;
+you can read more about its interface in the <a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">Apache Twill
+Javadocs</a>.</li>
+<li>Finally, it registers the written file as a new partition in the dataset, by calling the <tt class="docutils literal"><span class="pre">addPartition</span></tt>
+method of the PartitionOutput.</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="nd">@PUT</span>
+    <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;leagues/{league}/seasons/{season}&quot;</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                      <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">league</span><span class="o">,</span> <span class="nd">@PathParam</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">)</span> <span class="kt">int</span> <span class="n">season</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="n">PartitionKey</span> <span class="n">key</span> <span class="o">=</span> <span class="n">PartitionKey</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="n">league</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addIntField</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">,</span> <span class="n">season</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+      <span class="k">if</span> <span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">getPartition</span><span class="o">(</span><span class="n">key</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendString</span><span class="o">(</span><span class="mi">409</span><span class="o">,</span> <span class="s">&quot;Partition exists.&quot;</span><span class="o">,</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
+        <span class="k">return</span><span class="o">;</span>
+      <span class="o">}</span>
+
+      <span class="n">PartitionOutput</span> <span class="n">output</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="na">getPartitionOutput</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+      <span class="k">try</span> <span class="o">{</span>
+        <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="na">getLocation</span><span class="o">().</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;file&quot;</span><span class="o">);</span>
+        <span class="n">WritableByteChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">Channels</span><span class="o">.</span><span class="na">newChannel</span><span class="o">(</span><span class="n">location</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="n">channel</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">request</span><span class="o">.</span><span class="na">getContent</span><span class="o">());</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+          <span class="n">channel</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="o">}</span>
+      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">responder</span><span class="o">.</span><span class="na">sendError</span><span class="o">(</span><span class="mi">400</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;Unable to write path &#39;%s&#39;&quot;</span><span class="o">,</span> <span class="n">output</span><span class="o">.</span><span class="na">getRelativePath</span><span class="o">()));</span>
+        <span class="k">return</span><span class="o">;</span>
+      <span class="o">}</span>
+      <span class="n">output</span><span class="o">.</span><span class="na">addPartition</span><span class="o">();</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">sendStatus</span><span class="o">(</span><span class="mi">200</span><span class="o">);</span>
+    <span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="mapreduce-over-file-partitions">
+<h2>MapReduce over File Partitions<a class="headerlink" href="#mapreduce-over-file-partitions" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">ScoreCounter</span></tt> is a simple MapReduce that reads from the <tt class="docutils literal"><span class="pre">results</span></tt> PartitionedFileSet and writes to
+the <tt class="docutils literal"><span class="pre">totals</span></tt> PartitionedFileSet. The <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method prepares the MapReduce program for this:</p>
+<ul class="simple">
+<li>It reads the league that it is supposed to process from the runtime arguments.</li>
+<li>It constructs a partition filter for the input using the league as the only condition, and instantiates
+the <tt class="docutils literal"><span class="pre">results</span></tt> dataset with arguments that contain this filter.</li>
+<li>It constructs an output partition key for the new partition, and instantiates the <tt class="docutils literal"><span class="pre">totals</span></tt> dataset
+with arguments specifying that partition key.</li>
+</ul>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">ResultsMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">TeamCounter</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+
+    <span class="n">String</span> <span class="n">league</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">);</span>
+    <span class="n">Preconditions</span><span class="o">.</span><span class="na">checkNotNull</span><span class="o">(</span><span class="n">league</span><span class="o">);</span>
+
+    <span class="c1">// Configure the input to read all seasons for the league</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">inputArgs</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+    <span class="n">PartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputPartitionFilter</span><span class="o">(</span>
+      <span class="n">inputArgs</span><span class="o">,</span> <span class="n">PartitionFilter</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addValueCondition</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="n">league</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="n">PartitionedFileSet</span> <span class="n">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">inputArgs</span><span class="o">);</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">setInput</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">);</span>
+
+    <span class="c1">// Each run writes its output to a partition for the league</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">outputArgs</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+    <span class="n">outputKey</span> <span class="o">=</span> <span class="n">PartitionKey</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="n">league</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="n">PartitionedFileSetArguments</span><span class="o">.</span><span class="na">setOutputPartitionKey</span><span class="o">(</span><span class="n">outputArgs</span><span class="o">,</span> <span class="n">outputKey</span><span class="o">);</span>
+    <span class="n">outputFileSet</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;totals&quot;</span><span class="o">,</span> <span class="n">outputArgs</span><span class="o">);</span>
+    <span class="n">outputPath</span> <span class="o">=</span> <span class="n">FileSetArguments</span><span class="o">.</span><span class="na">getOutputPath</span><span class="o">(</span><span class="n">outputFileSet</span><span class="o">.</span><span class="na">getEmbeddedFileSet</span><span class="o">().</span><span class="na">getRuntimeArguments</span><span class="o">());</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">setOutput</span><span class="o">(</span><span class="s">&quot;totals&quot;</span><span class="o">,</span> <span class="n">outputFileSet</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>After the MapReduce has completed, the <tt class="docutils literal"><span class="pre">onFinish()</span></tt> method finalizes the addition of the new partition.
+Note that this is only needed due to a current limitation in the <tt class="docutils literal"><span class="pre">PartitionedFileSet</span></tt> implementation:
+the partition should be added by the output committer of the dataset&#8217;s output format (this will be
+addressed in a future CDAP release):</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">succeeded</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// TODO: This should be done by the output committer of the partitioned file set&#39;s output format (CDAP-1227)</span>
+      <span class="n">outputFileSet</span><span class="o">.</span><span class="na">addPartition</span><span class="o">(</span><span class="n">outputKey</span><span class="o">,</span> <span class="n">outputPath</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>It is worth mentioning that nothing else in <tt class="docutils literal"><span class="pre">ScoreCounter</span></tt> is specifically programmed to use file partitions.
+Instead of <tt class="docutils literal"><span class="pre">results</span></tt> and <tt class="docutils literal"><span class="pre">totals</span></tt>, it could use any other dataset as long as the key and value types match.</p>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>) or use the pre-built JAR file included in the CDAP SDK.</li>
+<li>Start CDAP, deploy and start the application and its component as described below in
+<a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
+Make sure you start the Service as described below.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
+running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
+the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">namespace</em></a>; if not, you will need to adjust commands
+accordingly. For example, in a URL such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
+</pre></div>
+</div>
+<p>to use the namespace <em>my_namespace</em>, you would replace <tt class="docutils literal"><span class="pre">default</span></tt> with <tt class="docutils literal"><span class="pre">my_namespace</span></tt>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
+</pre></div>
+</div>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file:</p>
+<pre class="literal-block">
+example/target/SportResults-2.8.0.jar
+</pre>
+<p>onto the CDAP Console running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface (CLI)</em></a>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Java Client API</em></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<p>In the examples that follow, for brevity we will simply use <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt> for the Command Line Interface.
+Substitute the actual path for <tt class="docutils literal"><span class="pre">bin/cdap-cli.sh</span></tt>, or <tt class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></tt> on Windows, as appropriate. We
+assume that you will run all commands from the example&#8217;s base directory (<tt class="docutils literal"><span class="pre">examples/SportResults</span></tt> under the
+Standalone CDAP SDK directory).</p>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">SportResults</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click <tt class="docutils literal"><span class="pre">UploadService</span></tt> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Start</em> button;</p>
+</li>
+<li><p class="first">Or use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh start service SportResults.UploadService</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="uploading-game-results">
+<h3>Uploading Game Results<a class="headerlink" href="#uploading-game-results" title="Permalink to this headline">¶</a></h3>
+<p>Begin by uploading some CSV files into the <tt class="docutils literal"><span class="pre">results</span></tt> dataset. For example, to upload the results
+for the 2012 season of the NFL (National Football League):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv</span>
+</pre></div>
+</div>
+<p>Feel free to add more seasons and sport leagues:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv</span>
+<span class="go">cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-the-mapreduce">
+<h3>Starting the MapReduce<a class="headerlink" href="#starting-the-mapreduce" title="Permalink to this headline">¶</a></h3>
+<p>To run the <tt class="docutils literal"><span class="pre">ScoreCounter</span></tt> over all seasons of the NFL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh start mapreduce SportResults.ScoreCounter \&quot;league=nfl\&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploring-with-ad-hoc-sql">
+<h3>Exploring with Ad-hoc SQL<a class="headerlink" href="#exploring-with-ad-hoc-sql" title="Permalink to this headline">¶</a></h3>
+<p>Both of the partitioned file sets are registered as external tables in Hive and can be explored with SQL. To
+see the existing partitions of a dataset, use the <tt class="docutils literal"><span class="pre">show</span> <span class="pre">partitions</span></tt> query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh execute \&quot;show partitions results\&quot;</span>
+</pre></div>
+</div>
+<p>For example, to find the three games with the highest point difference in the 2012 NFL season, over all
+seasons (that have been uploaded), and for all seasons of all sport leagues:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh execute &quot;\&quot;select * from results where league=&#39;nfl&#39; and season=2012 order by winnerpoints-loserpoints desc limit 3\&quot;&quot;</span>
+<span class="go">cdap-cli.sh execute &quot;\&quot;select * from results where league=&#39;nfl&#39; order by winnerpoints-loserpoints desc limit 3\&quot;&quot;</span>
+<span class="go">cdap-cli.sh execute &quot;\&quot;select * from results order by winnerpoints-loserpoints desc limit 3\&quot;&quot;</span>
+</pre></div>
+</div>
+<p>You can also explore the <tt class="docutils literal"><span class="pre">totals</span></tt> dataset. For example, to find the NFL teams team that, over their history,
+have scored the least points compared to the points they conceded:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh execute &quot;\&quot;select * from totals where league = &#39;nfl&#39; order by conceded - scored desc limit 3\&quot;&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application</a>. Here is an example-specific description of the step:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Click on <tt class="docutils literal"><span class="pre">SportResults</span></tt> in the Overview page of the CDAP Console to get to the
+Application detail page, click <tt class="docutils literal"><span class="pre">UploadService</span></tt> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh stop service SportResults.UploadService``</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.8.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Sport Results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mapreduce-over-file-partitions">MapReduce over File Partitions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="spark-page-rank.html"
+                        title="Previous Chapter">Spark Page Rank Example</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="stream-conversion.html"
+                        title="Next Chapter">Stream Conversion</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.8.0/cdap-docs-2.8.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Spark Page Rank Example" href="spark-page-rank.html" />Spark Page Rank Example</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Stream Conversion" href="stream-conversion.html" />Stream Conversion</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

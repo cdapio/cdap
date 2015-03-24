@@ -1,0 +1,611 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc" name="author" />
+<meta content="Release notes for the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Cask Data Application Platform Release Notes &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+        <link rel="stylesheet" href="_static/hide-nav.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <span class="target" id="overview-release-notes"></span><div class="section" id="cask-data-application-platform-release-notes">
+<span id="release-notes"></span><span id="index-0"></span><h1>Cask Data Application Platform Release Notes<a class="headerlink" href="#cask-data-application-platform-release-notes" title="Permalink to this headline">¶</a></h1>
+<div class="contents faq local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#release-2-6-2" id="id15">Release 2.6.2</a><ul>
+<li><a class="reference internal" href="#new-features" id="id16">New Features</a></li>
+<li><a class="reference internal" href="#known-issues" id="id17">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-2-6-1" id="id18">Release 2.6.1</a><ul>
+<li><a class="reference internal" href="#cdap-bug-fixes" id="id19">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-261" id="id20">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-2-6-0" id="id21">Release 2.6.0</a><ul>
+<li><a class="reference internal" href="#api-changes" id="id22">API Changes</a></li>
+<li><a class="reference internal" href="#id2" id="id23">New Features</a></li>
+<li><a class="reference internal" href="#id3" id="id24">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-260" id="id25">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-2-5-2" id="id26">Release 2.5.2</a><ul>
+<li><a class="reference internal" href="#id5" id="id27">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#other-changes" id="id28">Other Changes</a></li>
+<li><a class="reference internal" href="#id6" id="id29">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-2-5-1" id="id30">Release 2.5.1</a><ul>
+<li><a class="reference internal" href="#id8" id="id31">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#id9" id="id32">Other Changes</a></li>
+<li><a class="reference internal" href="#id10" id="id33">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-2-5-0" id="id34">Release 2.5.0</a><ul>
+<li><a class="reference internal" href="#id12" id="id35">New Features</a></li>
+<li><a class="reference internal" href="#major-cdap-bug-fixes" id="id36">Major CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-250" id="id37">Known Issues</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-6-2">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.6.2/index.html">Release 2.6.2</a><a class="headerlink" href="#release-2-6-2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="new-features">
+<h3>New Features<a class="headerlink" href="#new-features" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added log rotation for CDAP programs running in YARN containers
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1295">CDAP-1295</a>)</li>
+<li>Added the ability to submit to non-default YARN queues to provide
+<a class="reference external" href="source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">resource guarantees</em></a>
+for CDAP Master Services, CDAP Programs, and Explore Queries
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1417">CDAP-1417</a>)</li>
+<li>Added the ability to <a class="reference external" href="source/../../admin-manual/operations/tx-maintenance.html#tx-maintenance" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">prune invalid transactions</em></a>
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1540">CDAP-1540</a>)</li>
+<li>Added the ability to specify
+<a class="reference external" href="source/../../developers-manual/advanced/application-logback.html#application-logback" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">custom logback file for CDAP programs</em></a>
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1741">CDAP-1741</a>)</li>
+</ul>
+</div>
+<div class="section" id="known-issues">
+<span id="known-issues-262"></span><h3>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-261">version 2.6.1.</a></li>
+<li>CDAP works only with <a class="reference external" href="http://nodejs.org">node.js</a> versions 0.8.16 through 0.10.36.</li>
+<li>When the CDAP CLI starts up, it auto-connects to localhost. After a <tt class="docutils literal"><span class="pre">connect</span> <span class="pre">&lt;hostname&gt;</span></tt>
+command is issued from within the CLI, all operations will work except for Explore queries
+(the command <tt class="docutils literal"><span class="pre">execute</span> <span class="pre">'query'</span></tt>), as the Explore Client doesn&#8217;t pick up the change of
+hostname. A workaround is to start up the CLI with the environment variable CDAP_HOST
+set to the desired hostname, so that the CLI autoconnects to that host on startup. This
+has been fixed in an upcoming release (2.8.0) of CDAP.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="release-2-6-1">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.6.1/index.html">Release 2.6.1</a><a class="headerlink" href="#release-2-6-1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cdap-bug-fixes">
+<h3>CDAP Bug Fixes<a class="headerlink" href="#cdap-bug-fixes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Allow an unchecked Dataset upgrade upon application deployment
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1253">CDAP-1253</a>).</li>
+<li>Update the Hive Dataset table when a Dataset is updated
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-71">CDAP-71</a>).</li>
+<li>Use Hadoop configuration files bundled with the Explore Service
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1250">CDAP-1250</a>).</li>
+</ul>
+</div>
+<div class="section" id="known-issues-261">
+<span id="id1"></span><h3>Known Issues<a class="headerlink" href="#known-issues-261" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-260">version 2.6.0.</a></p>
+</li>
+<li><p class="first">Typically Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
+any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
+and an incompatible schema change can break other applications that are using the Dataset.
+A workaround (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1253">CDAP-1253</a>) is to allow unchecked Dataset upgrades.
+Upgrades cause the Dataset metadata i.e. it&#8217;s specification, including properties, to be updated. The Dataset
+runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as is.</p>
+<p>You can allow unchecked Dataset upgrades by setting the configuration property <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>
+to <tt class="docutils literal"><span class="pre">true</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>. This will ensure that Datasets are upgraded when the Application is redeployed.
+When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
+all Applications that are using the Dataset before deploying the new version of the Application.
+This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
+When Datasets are upgraded using <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>, no schema compatibility checks are performed by the
+system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+other Applications that are using the Dataset can work with the new changes.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="release-2-6-0">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.6.0/index.html">Release 2.6.0</a><a class="headerlink" href="#release-2-6-0" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="api-changes">
+<h3>API Changes<a class="headerlink" href="#api-changes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>API for specifying Services and MapReduce Jobs has been changed to use a &#8220;configurer&#8221;
+style; this will require modification of user classes implementing either MapReduce
+or Service as the interfaces have changed (<a class="reference external" href="https://issues.cask.co/browse/CDAP-335">CDAP-335</a>).</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>New Features<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>General</strong><ul>
+<li>Health checks are now available for CDAP system services
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-663">CDAP-663</a>).</li>
+</ul>
+</li>
+<li><strong>Applications</strong><ul>
+<li>Jar deployment now uses a chunked request and writes to a local temp file
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-91">CDAP-91</a>).</li>
+</ul>
+</li>
+<li><strong>MapReduce</strong><ul>
+<li>MapReduce jobs can now read binary stream data
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-331">CDAP-331</a>).</li>
+</ul>
+</li>
+<li><strong>Datasets</strong><ul>
+<li>Added <a class="reference external" href="source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">FileSet</em></a>, a new core dataset type for working with sets of files
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1">CDAP-1</a>).</li>
+</ul>
+</li>
+<li><strong>Spark</strong><ul>
+<li>Spark programs now emit system and custom user metrics
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-346">CDAP-346</a>).</li>
+<li>Services can be called from Spark programs and its worker nodes
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-348">CDAP-348</a>).</li>
+<li>Spark programs can now read from Streams
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-403">CDAP-403</a>).</li>
+<li>Added Spark support to the CDAP CLI (Command-line Interface)
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-425">CDAP-425</a>).</li>
+<li>Improved speed of Spark unit tests
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-600">CDAP-600</a>).</li>
+<li>Spark Programs now display system metrics in the CDAP Console
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-652">CDAP-652</a>).</li>
+</ul>
+</li>
+<li><strong>Procedures</strong><ul>
+<li>Procedures have been deprecated in favor of Services
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-413">CDAP-413</a>).</li>
+</ul>
+</li>
+<li><strong>Services</strong><ul>
+<li>Added an HTTP endpoint that returns the endpoints a particular Service exposes
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-412">CDAP-412</a>).</li>
+<li>Added an HTTP endpoint that lists all Services
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-469">CDAP-469</a>).</li>
+<li>Default metrics for Services have been added to the CDAP Console
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-512">CDAP-512</a>).</li>
+<li>The annotations <tt class="docutils literal"><span class="pre">&#64;QueryParam</span></tt> and <tt class="docutils literal"><span class="pre">&#64;DefaultValue</span></tt> are now supported in custom Service handlers
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-664">CDAP-664</a>).</li>
+</ul>
+</li>
+<li><strong>Metrics</strong><ul>
+<li>System and User Metrics now support gauge metrics
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-484">CDAP-484</a>).</li>
+<li>Metrics can be queried using a Program’s run-ID
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-620">CDAP-620</a>).</li>
+</ul>
+</li>
+<li><strong>Documentation</strong><ul>
+<li>A <a class="reference external" href="source/../../admin-manual/installation/quick-start.html#installation-quick-start" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Quick Start Guide</em></a> has been added to the
+<a class="reference external" href="source/../../admin-manual/index.html#admin-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">CDAP Administration Manual</em></a>
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-695">CDAP-695</a>).</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>CDAP Bug Fixes<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixed a problem with readless increments not being used when they were enabled in a Dataset
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-383">CDAP-383</a>).</li>
+<li>Fixed a problem with applications, whose Spark or Scala user classes were not extended
+from either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt>, failing with a class loading error
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-599">CDAP-599</a>).</li>
+<li>Fixed a problem with the <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-upgrade" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">CDAP upgrade tool</em></a> not preserving—for
+tables with readless increments enabled—the coprocessor configuration during an upgrade
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-1044">CDAP-1044</a>).</li>
+<li>Fixed a problem with the readless increment implementation dropping increment cells when
+a region flush or compaction occurred (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1062">CDAP-1062</a>).</li>
+</ul>
+</div>
+<div class="section" id="known-issues-260">
+<span id="id4"></span><h3>Known Issues<a class="headerlink" href="#known-issues-260" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+not available (<a class="reference external" href="https://issues.cask.co/browse/CDAP-64">CDAP-64</a> and <a class="reference external" href="https://issues.cask.co/browse/CDAP-797">CDAP-797</a>).</p>
+</li>
+<li><p class="first">When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
+the master log indicating that in-transit (emitted, but not yet processed) metrics
+system messages could not be decoded (<em>Failed to decode message to MetricsRecord</em>). This
+is because of a change in the format of emitted metrics, and can result in a small
+amount of metrics data points being lost (<a class="reference external" href="https://issues.cask.co/browse/CDAP-745">CDAP-745</a>).</p>
+</li>
+<li><p class="first">Writing to datasets through Hive is not supported in CDH4.x
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-988">CDAP-988</a>).</p>
+</li>
+<li><p class="first">Currently, when a CDAP application is deleted, all metrics are deleted along with the
+application. Depending on the amount of metrics data to be deleted, an application
+deletion timeout can result. A recent change (<a class="reference external" href="https://github.com/caskdata/cdap/pull/928">CDAP PR-928</a>) attempts to address this problem by only
+deleting aggregated metrics when an application is deleted. A side effect of this change
+is that if you re-deploy an application immediately after deletion, you may still see
+metrics from the previous session on timeseries charts. (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1124">CDAP-1124</a>).</p>
+</li>
+<li><p class="first">A race condition resulting in a deadlock can occur when a TwillRunnable container
+shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
+running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
+<tt class="docutils literal"><span class="pre">ThreadPoolExecutor</span></tt> implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
+command to list all running applications and their <tt class="docutils literal"><span class="pre">app-id</span></tt>s is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">yarn</span> <span class="n">application</span> <span class="o">-</span><span class="n">list</span> <span class="o">-</span><span class="n">appStates</span> <span class="n">RUNNING</span>
+</pre></div>
+</div>
+<p>The command to kill a process is:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">yarn</span> <span class="n">application</span> <span class="o">-</span><span class="n">kill</span> <span class="o">&lt;</span><span class="n">app</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>All versions of CDAP running Twill version 0.4.0 with this configuration can exhibit this
+problem (<a class="reference external" href="https://issues.apache.org/jira/browse/TWILL-110">TWILL-110</a>).</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="release-2-5-2">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.5.2/index.html">Release 2.5.2</a><a class="headerlink" href="#release-2-5-2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3>CDAP Bug Fixes<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixed a problem with a Coopr-provisioned secure cluster failing to start due to a classpath
+issue (<a class="reference external" href="https://issues.cask.co/browse/CDAP-478">CDAP-478</a>).</li>
+<li>Fixed a problem with the WISE app zip distribution not packaged correctly; a new version
+(0.2.1) has been released (<a class="reference external" href="https://issues.cask.co/browse/CDAP-533">CDAP-533</a>).</li>
+<li>Fixed a problem with the examples and tests incorrectly using the ByteBuffer.array
+method when reading a Stream event (<a class="reference external" href="https://issues.cask.co/browse/CDAP-549">CDAP-549</a>).</li>
+<li>Fixed a problem with the Authentication Server so that it can now communicate with an LDAP
+instance over SSL (<a class="reference external" href="https://issues.cask.co/browse/CDAP-556">CDAP-556</a>).</li>
+<li>Fixed a problem with the program class loader to allow applications to use a different
+version of a library than the one that the CDAP platform uses; for example, a different
+Kafka library (<a class="reference external" href="https://issues.cask.co/browse/CDAP-559">CDAP-559</a>).</li>
+<li>Fixed a problem with CDAP master not obtaining new delegation tokens after running for
+<tt class="docutils literal"><span class="pre">hbase.auth.key.update.interval</span></tt> milliseconds (<a class="reference external" href="https://issues.cask.co/browse/CDAP-562">CDAP-562</a>).</li>
+<li>Fixed a problem with the transaction not being rolled back when a user service handler throws an exception
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-607">CDAP-607</a>).</li>
+</ul>
+</div>
+<div class="section" id="other-changes">
+<h3>Other Changes<a class="headerlink" href="#other-changes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Improved the CDAP documentation:<ul>
+<li>Re-organized the documentation into three manuals—Developers&#8217; Manual, Administration
+Manual, Reference Manual—and a set of examples, how-to guides and tutorials;</li>
+<li>Documents are now in smaller chapters, with numerous updates and revisions;</li>
+<li>Added a link for downloading an archive of the documentation for offline use;</li>
+<li>Added links to examples relevant to a particular component;</li>
+<li>Added suggested deployment architectures for Distributed CDAP installations;</li>
+<li>Added a glossary;</li>
+<li>Added navigation aids at the bottom of each page; and</li>
+<li>Tested and updated the Standalone CDAP examples and their documentation.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>Known Issues<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Currently, applications that include Spark or Scala classes in user classes not extended
+from either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt> (depending upon the language)
+fail with a class loading error. Spark or Scala classes should not be used outside of the
+Spark program. (<a class="reference external" href="https://issues.cask.co/browse/CDAP-599">CDAP-599</a>)</li>
+<li>See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-250">version 2.5.0.</a></li>
+<li>See also the <em>TWILL-110 Known Issue</em> of <a class="reference external" href="#known-issues-260">version 2.6.0.</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="release-2-5-1">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.5.1/index.html">Release 2.5.1</a><a class="headerlink" href="#release-2-5-1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id8">
+<h3>CDAP Bug Fixes<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.</li>
+<li>Fixed problems with the CDAP Command Line Interface (CLI):<ul>
+<li>Did not work in non-interactive mode;</li>
+<li>Printed excessive debug log messages;</li>
+<li>Relative paths did not work as expected; and</li>
+<li>Failed to execute SQL queries.</li>
+</ul>
+</li>
+<li>Removed dependencies on SNAPSHOT artifacts for <em>netty-http</em> and <em>auth-clients</em>.</li>
+<li>Corrected an error in the message printed by the startup script <tt class="docutils literal"><span class="pre">cdap.sh</span></tt>.</li>
+<li>Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
+without first checking if authentication was enabled.</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>Other Changes<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The scripts <tt class="docutils literal"><span class="pre">send-query.sh</span></tt>, <tt class="docutils literal"><span class="pre">access-token.sh</span></tt> and <tt class="docutils literal"><span class="pre">access-token.bat</span></tt> has been replaced by the
+<a class="reference internal" href="cli-api.html#cli"><em>CDAP Command Line Interface,</em></a> <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt>.</li>
+<li>The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.</li>
+<li>The CDAP Java Stream Client now allows empty String events to be sent.</li>
+<li>The CDAP Python Authentication Client&#8217;s <tt class="docutils literal"><span class="pre">configure()</span></tt> method now takes a dictionary rather than a filepath.</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>Known Issues<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>See <em>Known Issues</em> of <a class="reference external" href="#known-issues-250">the previous version.</a></li>
+<li>See also the <em>TWILL-110 Known Issue</em> of <a class="reference external" href="#known-issues-260">version 2.6.0.</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="release-2-5-0">
+<h2><a class="reference external" href="http://docs.cask.co/cdap/2.5.0/index.html">Release 2.5.0</a><a class="headerlink" href="#release-2-5-0" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id12">
+<h3>New Features<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="ad-hoc-querying">
+<h4>Ad-hoc querying<a class="headerlink" href="#ad-hoc-querying" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Capability to write to Datasets using SQL</li>
+<li>Added a CDAP JDBC driver allowing connections from Java applications and third-party business intelligence tools</li>
+<li>Ability to perform ad-hoc queries from the CDAP Console:<ul>
+<li>Execute a SQL query from the Console</li>
+<li>View list of active, completed queries</li>
+<li>Download query results</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="datasets">
+<h4>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Datasets can be tested with TestBase outside of the context of an Application</li>
+<li>CDAP now checks Datasets for compatibility in a verification stage</li>
+<li>The Transaction engine uses server-side filtering for efficient transactional reads</li>
+<li>Dataset specifications can now be dynamically reconfigured through the use of RESTful endpoints</li>
+<li>The Bundle jar format is now used for Dataset libs</li>
+<li>Increments on Datasets are now read-less</li>
+</ul>
+</div>
+<div class="section" id="services">
+<h4>Services<a class="headerlink" href="#services" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Added simplified APIs for using Services from other programs such as MapReduce, Flows and Procedures</li>
+<li>Added an API for creating Services and handlers that can use Datasets transactionally</li>
+<li>Added a RESTful API to make requests to a Service via the Router</li>
+</ul>
+</div>
+<div class="section" id="security">
+<h4>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Added authorization logging</li>
+<li>Added Kerberos authentication to Zookeeper secret keys</li>
+<li>Added support for SSL</li>
+</ul>
+</div>
+<div class="section" id="spark-integration">
+<h4>Spark Integration<a class="headerlink" href="#spark-integration" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Supports running Spark programs as a part of CDAP applications in Standalone mode</li>
+<li>Supports running Spark programs written with Spark versions 1.0.1 or 1.1.0</li>
+<li>Supports Spark&#8217;s <em>MLib</em> and <em>GraphX</em> modules</li>
+<li>Includes three examples demonstrating CDAP Spark programs</li>
+<li>Adds display of Spark program logs and history in the CDAP Console</li>
+</ul>
+</div>
+<div class="section" id="streams">
+<h4>Streams<a class="headerlink" href="#streams" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Added a collection of applications, tools and APIs specifically for the ETL (Extract, Transform and Loading) of data</li>
+<li>Added support for asynchronously writing to Streams</li>
+</ul>
+</div>
+<div class="section" id="clients">
+<h4>Clients<a class="headerlink" href="#clients" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Added a Command Line Interface</li>
+<li>Added a Java Client Interface</li>
+</ul>
+</div>
+</div>
+<div class="section" id="major-cdap-bug-fixes">
+<h3>Major CDAP Bug Fixes<a class="headerlink" href="#major-cdap-bug-fixes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application</li>
+<li>Fixed an issue with Hive creating directories in /tmp in the Standalone and unit-test frameworks</li>
+<li>Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings</li>
+<li>Fixed an issue with the premature expiration of long-term Authentication Tokens</li>
+<li>Fixed an issue with the Dataset size metric showing data operations size instead of resource usage</li>
+</ul>
+</div>
+<div class="section" id="known-issues-250">
+<span id="id13"></span><h3>Known Issues<a class="headerlink" href="#known-issues-250" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Metrics for MapReduce jobs aren&#8217;t populated on secure Hadoop clusters</li>
+<li>The metric for the number of cores shown in the Resources view of the CDAP Console will be zero
+unless YARN has been configured to enable virtual cores</li>
+<li>See also the <em>TWILL-110 Known Issue</em> of <a class="reference external" href="#known-issues-260">version 2.6.0.</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><b><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html"> License and Dependencies</a></li>
+</ul>
+
+</nav>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

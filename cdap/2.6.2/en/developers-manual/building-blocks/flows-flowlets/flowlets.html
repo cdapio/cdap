@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Flowlets &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Flows and Flowlets" href="index.html" />
+    <link rel="next" title="Input Context" href="input-context.html" />
+    <link rel="prev" title="Flows and Flowlets" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="input-context.html" title="Input Context"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Flows and Flowlets"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Flows and Flowlets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="flowlets">
+<span id="id1"></span><h1>Flowlets<a class="headerlink" href="#flowlets" title="Permalink to this headline">¶</a></h1>
+<p><strong>Flowlets</strong>, the basic building blocks of a Flow, represent each
+individual processing node within a Flow. Flowlets consume data objects
+from their inputs and execute custom logic on each data object, allowing
+you to perform data operations as well as emit data objects to the
+Flowlet’s outputs. Flowlets specify an <tt class="docutils literal"><span class="pre">initialize()</span></tt> method, which is
+executed at the startup of each instance of a Flowlet before it receives
+any data.</p>
+<p>The example below shows a Flowlet that reads <em>Double</em> values, rounds
+them, and emits the results. It has a simple configuration method and
+doesn&#8217;t do anything for initialization or destruction:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">RoundingFlowlet</span> <span class="kd">implements</span> <span class="n">Flowlet</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">FlowletSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">FlowletSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;round&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;A rounding Flowlet&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">destroy</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">}</span>
+
+  <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The most interesting method of this Flowlet is <tt class="docutils literal"><span class="pre">round()</span></tt>, the method
+that does the actual processing. It uses an output emitter to send data
+to its output. This is the only way that a Flowlet can emit output to
+another connected Flowlet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
+<span class="nd">@ProcessInput</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the Flowlet declares the output emitter but does not
+initialize it. The Flow system initializes and injects its
+implementation at runtime.</p>
+<p>The method is annotated with <tt class="docutils literal"><span class="pre">&#64;ProcessInput</span></tt> — this tells the Flow
+system that this method can process input data.</p>
+<p>You can overload the process method of a Flowlet by adding multiple
+methods with different input types. When an input object comes in, the
+Flowlet will call the method that matches the object’s type:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
+
+<span class="nd">@ProcessInput</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Double</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
+<span class="o">}</span>
+<span class="nd">@ProcessInput</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">round</span><span class="o">(</span><span class="n">Float</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">((</span><span class="kt">long</span><span class="o">)</span><span class="n">Math</span><span class="o">.</span><span class="na">round</span><span class="o">(</span><span class="n">number</span><span class="o">));</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>If you define multiple process methods, a method will be selected based
+on the input object’s origin; that is, the name of a Stream or the name
+of an output of a Flowlet.</p>
+<p>A Flowlet that emits data can specify this name using an annotation on
+the output emitter. In the absence of this annotation, the name of the
+output defaults to “out”:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Output</span><span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">)</span>
+<span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">out</span><span class="o">;</span>
+</pre></div>
+</div>
+<p>Data objects emitted through this output can then be directed to a
+process method of a receiving Flowlet by annotating the method with the
+origin name:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@ProcessInput</span><span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">tokenizeCode</span><span class="o">(</span><span class="n">String</span> <span class="n">text</span><span class="o">)</span> <span class="o">{</span>
+  <span class="o">...</span> <span class="c1">// perform fancy code tokenization</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Flows and Flowlets</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href=""> Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input-context.html"> Input Context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="type-projection.html"> Type Projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream-event.html"> Stream Event</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tick-methods.html"> Tick Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="connecting-flowlets.html"> Connecting Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="batch-execution.html"> Batch Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="flowlets-instances.html"> Flowlets and Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="partitioning-strategies.html"> Partitioning Strategies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Flows and Flowlets</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="input-context.html"
+                        title="Next Chapter">Input Context</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Flows and Flowlets" href="index.html" />Flows and Flowlets</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Input Context" href="input-context.html" />Input Context</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

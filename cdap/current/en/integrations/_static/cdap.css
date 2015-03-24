@@ -47,7 +47,7 @@ div.body {
     color: #3E4349;
     padding: 0 30px 30px 30px;
     font-size: 0.9em;
-    min-height: 1200px;
+    min-height: 1300px;
 }
 
 div.footer {
@@ -129,7 +129,10 @@ div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin: 10px 20px;
+    margin-top:    10px;
+    margin-bottom: 10px;
+    margin-right:  10px;
+    margin-left:   20px;
     padding: 0;
     color: #000;
 }
@@ -137,6 +140,18 @@ div.sphinxsidebar ul {
 div.sphinxsidebar a {
     color: #444;
 }
+
+div.sphinxsidebar a tt.docutils.literal {
+    font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
+    font-style: italic;
+    font-weight: normal;
+    font-size: 1.0em;
+}
+
+div.sphinxsidebar a:hover tt.docutils.literal {
+	  font-weight: bold;
+}
+
 
 div.sphinxsidebar input {
     border: 1px solid #ccc;
@@ -190,15 +205,9 @@ div.body h6 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
 
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
-div.body h3 { background-color: #E0E0E0; }
-div.body h4 { 
-    background-color: #F2F2F2;
-    margin: 30px 0px 10px 0px;
-}
-div.body h5 { 
-    background-color: #F2F2F2;
-    margin: 30px 0px 10px 0px;
-}
+div.body h3 { background-color: #E0E0E0; margin: 30px 0px 10px 0px; }
+div.body h4 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
+div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
 
 a.headerlink {
     color: #c60f0f;
@@ -213,9 +222,12 @@ a.headerlink:hover {
     color: white;
 }
 
+h2>a.reference.external {
+    color: #111;
+}
+
 div.body p, div.body dd, div.body li {
     line-height: 1.5em;
-    margin-right: 15px;
 }
 
 div.admonition p.admonition-title + p {
@@ -234,9 +246,22 @@ div.note {
     border: 1px solid #ccc;
 }
 
+div.related ul {
+    margin-left: -5px;
+    padding-left: 0px;
+}
+
 div.seealso {
     background-color: #ffc;
     border: 1px solid #ff6;
+}
+
+li.versions {
+    width: 120px;
+    position: absolute;
+    margin-left: -135px;
+    text-align: right;
+    top: 6px;
 }
 
 div.topic {
@@ -249,14 +274,14 @@ div.warning {
 }
 
 div.new-icon {
-  position:absolute;
-  z-index: 5;
-  background-image: url(./ico_new.png);
-  display: inline-block;
-  margin-left: -18px;
-  width: 22px;
-  height: 22px;
-  background-repeat: no-repeat
+    position:absolute;
+    z-index: 5;
+    background-image: url(./ico_new.png);
+    display: inline-block;
+    margin-left: -18px;
+    width: 22px;
+    height: 22px;
+    background-repeat: no-repeat
 }
 
 p.admonition-title {
@@ -272,9 +297,19 @@ p.rubric {
     font-size: 120%;
     font-weight: normal;
     color: #111;
-    margin: 30px 0px 10px -15px;
+    margin: 30px 0px 10px 0px;
     padding: 5px 0 5px 15px;
     text-shadow: 0px 1px 0 white
+}
+
+.sidebar20.sidebar {
+  width: 20%;
+  text-align: center;
+}
+
+.sidebar30.sidebar {
+  width: 30%;
+  text-align: center;
 }
 
 em {
@@ -296,9 +331,7 @@ pre {
 }
 
 tt {
-    /* background-color: #ecf0f3; */
     color: #222;
-    /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
 }
@@ -317,4 +350,8 @@ img.bordered-image {
     border:2px outset #708091;
     display: inline-block; 
     margin-top: 20px; 
+}
+
+.toctree-l3.current {
+  margin-right: -20px;
 }

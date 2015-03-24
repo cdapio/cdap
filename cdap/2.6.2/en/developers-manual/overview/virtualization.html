@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP Virtualization &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="up" title="Cask Data Application Platform Overview" href="index.html" />
+    <link rel="next" title="CDAP Programming Interfaces" href="interfaces.html" />
+    <link rel="prev" title="Concepts and Components of CDAP" href="concepts.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="interfaces.html" title="CDAP Programming Interfaces"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Concepts and Components of CDAP"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cask Data Application Platform Overview</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-virtualization">
+<h1>CDAP Virtualization<a class="headerlink" href="#cdap-virtualization" title="Permalink to this headline">¶</a></h1>
+<p>CDAP lets you virtualize your data and applications by injecting abstraction layers over various components
+of the Hadoop ecosystem. To access and manipulate data, you use CDAP&#8217;s Datasets rather than actual
+storage engines such as HDFS or HBase. Similarly, you write your applications using CDAP&#8217;s developer interface
+and run them inside application containers. These containers are a logical abstraction that can be realized
+differently in several runtime environments, such as in-memory, standalone, or distributed cluster.
+You can deploy and run in different environments without the need to change a single line of application
+code.</p>
+<a class="reference internal image-reference" href="../_images/arch_logical_view.png"><img alt="../_images/arch_logical_view.png" class="align-center" src="../_images/arch_logical_view.png" style="width: 5in;" /></a>
+<p>In this diagram, CDAP System components are in orange and non-system components are in yellow, with Hadoop
+infrastructure in grey.</p>
+<div class="section" id="data-virtualization">
+<h2>Data Virtualization<a class="headerlink" href="#data-virtualization" title="Permalink to this headline">¶</a></h2>
+<p>In CDAP applications, you interact with data through Datasets. Datasets provide virtualization through:</p>
+<ul class="simple">
+<li>Abstraction of the actual representation of data in storage. You can write your code or queries without
+having to know where and how your data is stored—be it in HBase, LevelDB or a relational database.</li>
+<li>Encapsulation of data access patterns and business logic as reusable, managed Java code.</li>
+<li>Consistency of your data under highly concurrent access using Cask&#8217;s
+<a class="reference external" href="https://github.com/caskdata/tephra/">Tephra transaction system.</a></li>
+<li>Injection of datasets into different programming paradigms and runtimes. As soon as your data is in a
+dataset, you can immediately use it: in real-time programs; in batch processing applications such as Map/Reduce
+and Spark; in ad-hoc SQL queries.</li>
+</ul>
+</div>
+<div class="section" id="application-virtualization">
+<h2>Application Virtualization<a class="headerlink" href="#application-virtualization" title="Permalink to this headline">¶</a></h2>
+<p>CDAP&#8217;s programming interfaces have multiple implementations in different runtime environments. You build
+your applications against the CDAP Developer API. The API hides the low-level details of individual
+programming paradigms and execution environments. It enriches the infrastructure with numerous useful
+services that are typically needed by Big Data applications, such as service discovery, log and metrics
+collection, and configuration. The environment-specific implementations of these services are injected
+by CDAP into the program containers in which the application is run—the application itself does not
+need to change based on the environment. This allows you to develop applications in one environment—on
+your laptop using a Standalone CDAP for testing—and then seamlessly deploy them in the different
+environment of a distributed staging cluster.</p>
+<p>Deployment of an application as well as its lifecycle management, monitoring and scaling are done
+through CDAP&#8217;s Client API. Similarly to the Developer API, it is the same in every environment. The
+experience of managing your application does not change when moving from one environment to another.</p>
+</div>
+<div class="section" id="developer-focus">
+<h2>Developer Focus<a class="headerlink" href="#developer-focus" title="Permalink to this headline">¶</a></h2>
+<p>CDAP supports developers through the entire application development lifecycle:
+development, debugging, testing, continuous integration and production. Using familiar
+development tools such as <em>IntelliJ</em> and <em>Eclipse</em>, you can build, test and debug your
+application right on your laptop with a <em>Standalone CDAP</em>. Utilize the application unit
+test framework (which embeds an <em>In-Memory CDAP</em>) for continuous integration. Deploy
+to a development cloud or production cloud (<em>Distributed CDAP</em>) with a push of a button.
+No matter which environment you are in, the experience of managing the application remains
+largely the same.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Overview</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="anatomy.html"> Anatomy of a Big Data Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html"> Concepts and Components</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Virtualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-virtualization">Data Virtualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-virtualization">Application Virtualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#developer-focus">Developer Focus</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html"> Programming Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="concepts.html"
+                        title="Previous Chapter">Concepts and Components of CDAP</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="interfaces.html"
+                        title="Next Chapter">CDAP Programming Interfaces</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Concepts and Components of CDAP" href="concepts.html" />Concepts and Components of CDAP</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Programming Interfaces" href="interfaces.html" />CDAP Programming Interfaces</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

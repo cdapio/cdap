@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Datasets &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../../index.html" />
+    <link rel="up" title="Building Blocks" href="../index.html" />
+    <link rel="next" title="Table API" href="table.html" />
+    <link rel="prev" title="Streams" href="../streams.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="table.html" title="Table API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../streams.html" title="Streams"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="datasets">
+<span id="datasets-index"></span><h1>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="table.html"> Table API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fileset.html"> File Sets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets-mapreduce.html"> Datasets and MapReduce</a></li>
+</ul>
+</div>
+<p class="rubric">Introduction</p>
+<p><strong>Datasets</strong> store and retrieve data. Datasets are your means of reading
+from and writing to the CDAP’s storage capabilities. Instead of
+forcing you to manipulate data with low-level APIs, Datasets provide
+higher-level abstractions and generic, reusable implementations of
+common data patterns.</p>
+<p>The core Dataset of the CDAP is a Table. Unlike relational database
+systems, these tables are not organized into rows with a fixed schema.
+They are optimized for efficient storage of semi-structured data, data
+with unknown or variable schema, or sparse data.</p>
+<p>Other Datasets are built on top of Tables. A Dataset can implement
+specific semantics around a Table, such as a key/value Table or a
+counter Table. A Dataset can also combine multiple Datasets to create a
+complex data pattern. For example, an indexed Table can be implemented
+by using one Table for the data and a second Table for the index of that data.</p>
+<p>A number of useful Datasets—we refer to them as system Datasets—are
+included with CDAP, including key/value tables, indexed tables and
+time series. You can implement your own data patterns as custom
+Datasets on top of Tables.</p>
+<p class="rubric">Creating a Dataset</p>
+<p>You can create a Dataset in CDAP using either the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.6.2)"><em>Dataset HTTP RESTful API</em></a>, the
+<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface</em></a>, or in an <a class="reference internal" href="../applications.html#applications"><em>Application specification.</em></a></p>
+<p>You tell Applications to create a Dataset if it does not already
+exist by declaring the Dataset details in the Application specification.
+For example, to create a DataSet named <em>myCounters</em> of type
+<a class="reference external" href="../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html">KeyValueTable</a>, write:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>To use the Dataset in a Program, instruct the runtime
+system to inject an instance of the Dataset with the <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt>
+annotation:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">MyFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">counters</span><span class="o">;</span>
+  <span class="o">...</span>
+  <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">counters</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">key</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(),</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The runtime system reads the Dataset specification for the key/value
+table <em>myCounters</em> from the metadata store and injects an
+instance of the Dataset class into the Application.</p>
+<p>You can also implement custom Datasets by implementing the <tt class="docutils literal"><span class="pre">Dataset</span></tt>
+interface or by extending existing Dataset types. See the
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase Example</em></a> for an implementation of a Custom Dataset.
+For more details, refer to <a class="reference internal" href="system-custom.html#custom-datasets"><em>Custom Datasets.</em></a></p>
+<p class="rubric">Types of Datasets</p>
+<p>A Dataset abstraction is defined by a Java class that implements the <tt class="docutils literal"><span class="pre">DatasetDefinition</span></tt> interface.
+The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
+For example, the <tt class="docutils literal"><span class="pre">IndexedTable</span></tt> Dataset can be implemented by two underlying Table Datasets –
+one holding the data and one holding the index.</p>
+<p>We distinguish three categories of Datasets: <em>core</em>, <em>system</em>, and <em>custom</em> Datasets:</p>
+<ul>
+<li><p class="first">The <a class="reference external" href="index.html#core-datasets"><strong>core</strong></a> Dataset of the CDAP is a Table. Its implementation may use internal
+CDAP classes hidden from developers.</p>
+<p><strong>Note</strong>: The latest version of CDAP added support for a new core Dataset that represents
+sets of files. See <em>FileSets</em> below for details.</p>
+</li>
+<li><p class="first">A <a class="reference external" href="system-custom.html#system-datasets"><strong>system</strong></a> Dataset is bundled with the CDAP and is built around
+one or more underlying core or system Datasets to implement a specific data pattern.</p>
+</li>
+<li><p class="first">A <a class="reference external" href="system-custom.html#custom-datasets"><strong>custom</strong></a> Dataset is implemented by you and can have arbitrary code and methods.
+It is typically built around one or more Tables (or other Datasets)
+to implement a specific data pattern.</p>
+</li>
+</ul>
+<p>Each Dataset is associated with exactly one Dataset implementation to
+manipulate it. Every Dataset has a unique name and metadata that defines its behavior.
+For example, every <tt class="docutils literal"><span class="pre">IndexedTable</span></tt> has a name and indexes a particular column of its primary table:
+the name of that column is a metadata property of each Dataset of this type.</p>
+<p class="rubric" id="core-datasets">Core Datasets</p>
+<p><strong>Tables</strong> are the only core Datasets, and all other Datasets are built using one or more
+Tables. These Tables are similar to tables in a relational database with a few key differences:</p>
+<ul class="simple">
+<li>Tables have no fixed schema. Unlike relational database tables where every
+row has the same schema, every row of a Table can have a different set of columns.</li>
+<li>Because the set of columns is not known ahead of time, the columns of
+a row do not have a rich type. All column values are byte arrays and
+it is up to the application to convert them to and from rich types.
+The column names and the row key are also byte arrays.</li>
+<li>When reading from a Table, one need not know the names of the columns:
+The read operation returns a map from column name to column value.
+It is, however, possible to specify exactly which columns to read.</li>
+<li>Tables are organized in a way that the columns of a row can be read
+and written independently of other columns, and columns are ordered
+in byte-lexicographic order. They are also known as <em>Ordered Columnar Tables</em>.</li>
+</ul>
+<p><a class="reference external" href="fileset.html"><strong>FileSet</strong></a> is a core Dataset type that was added as an experimental feature in CDAP 2.6.0.</p>
+<p class="rubric">Examples of Using Datasets</p>
+<p>Datasets are included in just about every CDAP <a class="reference external" href="../../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">application</em></a>,
+<a class="reference external" href="../../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">tutorial</em></a>, <a class="reference external" href="../../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">guide</em></a> or <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">example</em></a>.</p>
+<ul class="simple">
+<li>The simplest example, <a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Hello World</em></a>, demonstrates using a
+stream to <strong>ingest a name into a dataset.</strong></li>
+<li>For examples of <strong>custom datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Word Count</em></a>
+and <a class="reference external" href="../../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Web Analytics</em></a> examples.</li>
+<li>For an example of <strong>a dataset and a Map Reduce Job,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase</em></a> example.</li>
+<li>For an example of a <strong>Table dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Word Count</em></a> example.</li>
+<li>For an example of a <strong>FileSet dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset.html#examples-fileset" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">FileSet</em></a> example.</li>
+<li>For examples of <strong>key-value Table datasets,</strong> see the
+<a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Hello World</em></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Count Random</em></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Word Count</em></a>, and
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase</em></a> examples.</li>
+<li>For examples of <strong>ObjectStore datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Spark K-Means</em></a>
+and <a class="reference external" href="../../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Spark Page Rank</em></a> examples.</li>
+<li>For an example of a <strong>Timeseries Table dataset,</strong> see the how-to guide <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v2.6.2)"><em>Storing Timeseries Data</em></a>.</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="table.html"> Table API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fileset.html"> File Sets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets-mapreduce.html"> Datasets and MapReduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="../streams.html"
+                        title="Previous Chapter">Streams</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="table.html"
+                        title="Next Chapter">Table API</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Streams" href="../streams.html" />Streams</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Table API" href="table.html" />Table API</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

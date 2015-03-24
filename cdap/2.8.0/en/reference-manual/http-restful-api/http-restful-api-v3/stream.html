@@ -1,0 +1,769 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Stream HTTP RESTful API &mdash; Cask Data Application Platform 2.8.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.8.0 Documentation" href="../../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Dataset HTTP RESTful API" href="dataset.html" />
+    <link rel="prev" title="Preferences HTTP RESTful API" href="preferences.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="dataset.html" title="Dataset HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="preferences.html" title="Preferences HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.8.0');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Reference Manual</a> &raquo;</li>
+          <li><a href="../index.html" >CDAP HTTP RESTful API</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="stream-http-restful-api">
+<span id="http-restful-api-stream"></span><h1>Stream HTTP RESTful API<a class="headerlink" href="#stream-http-restful-api" title="Permalink to this headline">¶</a></h1>
+<p>This interface supports creation of a <a class="reference external" href="../../source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Stream;</em></a> sending, reading, and truncating events to
+and from a Stream; and setting the TTL property of a Stream.</p>
+<p>Streams may have multiple consumers (for example, multiple Flows), each of which may be a
+group of different agents (for example, multiple instances of a Flowlet).</p>
+<div class="section" id="creating-a-stream">
+<h2>Creating a Stream<a class="headerlink" href="#creating-a-stream" title="Permalink to this headline">¶</a></h2>
+<p>A Stream can be created with an HTTP PUT method to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;new-stream-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt></td>
+<td>Name of the Stream to be created</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event either successfully created a Stream or the Stream already exists</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Create a new Stream named <em>mystream</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">&lt;new-stream-id&gt;</span></tt> should only contain ASCII letters, digits and hyphens.</li>
+<li>If the Stream already exists, no error is returned, and the existing Stream remains in place.</li>
+</ul>
+</div>
+<div class="section" id="sending-events-to-a-stream">
+<h2>Sending Events to a Stream<a class="headerlink" href="#sending-events-to-a-stream" title="Permalink to this headline">¶</a></h2>
+<p>An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;</span>
+</pre></div>
+</div>
+<p>In cases where it is acceptable to have some events lost, events can be transmitted
+asynchronously to a Stream with higher throughput by sending an HTTP POST method to the
+<tt class="docutils literal"><span class="pre">async</span></tt> URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/async</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></td>
+<td>Name of an existing Stream</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event was successfully received and persisted</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">202</span> <span class="pre">ACCEPTED</span></tt></td>
+<td>The event was successfully received but may not be persisted; only the asynchronous endpoint will return this status code</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>The Stream does not exist</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Send an event to the existing Stream named <em>mystream</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>You can pass headers for the event as HTTP headers by prefixing them with the <em>stream-id</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;stream-id&gt;.&lt;property&gt;:&lt;string value&gt;</span>
+</pre></div>
+</div>
+<p>After receiving the request, the HTTP handler transforms it into a Stream event:</p>
+<ul class="simple">
+<li>The body of the event is an identical copy of the bytes found in the body of the HTTP post request.</li>
+<li>If the request contains any headers prefixed with the <em>stream-id</em>,
+the <em>stream-id</em> prefix is stripped from the header name and
+the header is added to the event.</li>
+</ul>
+</div>
+<div class="section" id="sending-events-to-a-stream-in-batch">
+<h2>Sending Events to a Stream in Batch<a class="headerlink" href="#sending-events-to-a-stream-in-batch" title="Permalink to this headline">¶</a></h2>
+<p>Multiple events can be sent to a Stream in batch by sending an HTTP POST method to the URL of the Stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/batch</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">Content-Type</span></tt> header must be specified to describe the data type in the POST body. Currently, these
+types are supported:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Content-Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">text/&lt;sub-type&gt;</span></tt></td>
+<td>Text content with one line per event; the <tt class="docutils literal"><span class="pre">&lt;sub-type&gt;</span></tt> can be anything</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">avro/binary</span></tt></td>
+<td>Avro Object Container File format; each Avro record in the file becomes a single event in the stream</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>All events were successfully received and persisted</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>The Stream does not exist</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream/batch</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">Content type header</th>
+<td><tt class="docutils literal"><span class="pre">Content-type:</span> <span class="pre">text/csv</span></tt></td>
+</tr>
+<tr class="row-odd"><th class="stub">POST body</th>
+<td><p class="first">A comma-separated record per line:</p>
+<div class="last highlight-console"><div class="highlight"><pre><span class="go">1,Sam,Smith,18</span>
+<span class="go">2,Max,Johnson,28</span>
+<span class="go">3,Bill,Jones,20</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Writes three comma-separated events to the Stream named <em>mystream</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Comments</p>
+<p>You can pass headers that apply to all events as HTTP headers by prefixing them with the <em>stream-id</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;stream-id&gt;.&lt;property&gt;:&lt;string-value&gt;</span>
+</pre></div>
+</div>
+<p>After receiving the request, if the request contains any headers prefixed with the <em>stream-id</em>,
+the <em>stream-id</em> prefix is stripped from the header name and the header is added to each event sent
+in the request body.</p>
+</div>
+<div class="section" id="reading-events-from-a-stream">
+<h2>Reading Events from a Stream<a class="headerlink" href="#reading-events-from-a-stream" title="Permalink to this headline">¶</a></h2>
+<p>Reading events from an existing Stream is performed with an HTTP GET method to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/events?start=&lt;startTime&gt;&amp;end=&lt;endTime&gt;&amp;limit=&lt;limit&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></td>
+<td>Name of an existing Stream</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;startTime&gt;</span></tt></td>
+<td>Optional timestamp in milliseconds to start reading events from (inclusive); default is 0</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;endTime&gt;</span></tt></td>
+<td>Optional timestamp in milliseconds for the last event to read (exclusive); default is the maximum timestamp (2^63)</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;limit&gt;</span></tt></td>
+<td>Optional maximum number of events to read; default is unlimited</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The event was successfully received and the result of the read was returned</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">204</span> <span class="pre">No</span> <span class="pre">Content</span></tt></td>
+<td>The Stream exists but there are no events that satisfy the request</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>The Stream does not exist</td>
+</tr>
+</tbody>
+</table>
+<p>The response body is a JSON array with the Stream event objects as array elements:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {&quot;timestamp&quot; : ... , &quot;headers&quot;: { ... }, &quot;body&quot; : ... },</span>
+<span class="go">  {&quot;timestamp&quot; : ... , &quot;headers&quot;: { ... }, &quot;body&quot; : ... }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Field</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">timestamp</span></tt></td>
+<td>Timestamp in milliseconds of the Stream event at ingestion time</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">headers</span></tt></td>
+<td>A JSON map of all custom headers associated with the Stream event</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">body</span></tt></td>
+<td>A printable string representing the event body; non-printable bytes are hex escaped in the format <tt class="docutils literal"><span class="pre">\x[hex-digit][hex-digit]</span></tt>, e.g. <tt class="docutils literal"><span class="pre">\x05</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream/events?limit=1</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Read the initial event from an existing Stream named <em>mystream</em> in the namespace <em>default</em></td>
+</tr>
+<tr class="row-odd"><th class="stub">Response body</th>
+<td><tt class="docutils literal"><span class="pre">[</span> <span class="pre">{&quot;timestamp&quot;</span> <span class="pre">:</span> <span class="pre">1407806944181,</span> <span class="pre">&quot;headers&quot;</span> <span class="pre">:</span> <span class="pre">{</span> <span class="pre">},</span> <span class="pre">&quot;body&quot;</span> <span class="pre">:</span> <span class="pre">&quot;Hello</span> <span class="pre">World&quot;</span> <span class="pre">}</span> <span class="pre">]</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="truncating-a-stream">
+<h2>Truncating a Stream<a class="headerlink" href="#truncating-a-stream" title="Permalink to this headline">¶</a></h2>
+<p>Truncating means deleting all events that were ever written to the Stream.
+This is permanent and cannot be undone.
+A Stream can be truncated with an HTTP POST method to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/truncate</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></td>
+<td>Name of an existing Stream</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>The Stream was successfully truncated</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>The Stream <tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt> does not exist</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream/truncate</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Delete all events in the Stream named <em>mystream</em> in the namespace <em>default</em></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="setting-stream-properties">
+<h2>Setting Stream Properties<a class="headerlink" href="#setting-stream-properties" title="Permalink to this headline">¶</a></h2>
+<p>There are a number of Stream properties that can be specified.
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since
+it was written to the Stream.
+The default TTL for all Streams is infinite, meaning that events will never expire.
+The format property defines how Stream event bodies should be read for data exploration.
+Different formats support different types of schemas. Schemas are used to determine
+the table schema used for running ad-hoc SQL-like queries on the Stream.
+See <a class="reference external" href="../../source/../../developers-manual/data-exploration/streams.html#stream-exploration" title="(in Cask Data Application Platform v2.8.0)"><em>Stream Exploration</em></a> for more information about formats and schemas.
+The notification threshold defines the increment of data that a Stream has to receive before
+publishing a notification.</p>
+<p>Stream properties can be changed with an HTTP PUT method to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/properties</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></tt></td>
+<td>Name of an existing Stream</td>
+</tr>
+</tbody>
+</table>
+<p>New properties are passed in the JSON request body.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">ttl</span></tt></td>
+<td>Number of seconds that an event will be valid for since ingested</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">format</span></tt></td>
+<td>JSON Object describing the format name, schema, and settings</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">notification.threshold.mb</span></tt></td>
+<td>Increment of data, in MB, that a Stream has to receive before
+publishing a notification.</td>
+</tr>
+</tbody>
+</table>
+<p>If a property is not given in the request body, no change will be made to the value.
+For example, setting format but not TTL will preserve the current value for TTL.
+Changing the schema attached to a Stream will drop the Hive table associated with
+the Stream and re-create it with the new schema.</p>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td>Stream properties were changed successfully</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<td>The TTL value is not a non-negative integer, the format was not known,
+the schema was malformed, or the schema is not supported by the format</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>The Stream does not exist</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><p class="first"><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/streams/mystream/properties</span></tt>:</p>
+<div class="last highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;ttl&quot; : 86400,</span>
+<span class="go">  &quot;format&quot;: {</span>
+<span class="go">    &quot;name&quot;: &quot;csv&quot;,</span>
+<span class="go">    &quot;schema&quot;: {</span>
+<span class="go">      &quot;type&quot;: &quot;record&quot;,</span>
+<span class="go">      &quot;name&quot;: &quot;event&quot;,</span>
+<span class="go">      &quot;fields&quot;: [</span>
+<span class="go">        { &quot;name&quot;: &quot;f1&quot;, &quot;type&quot;: &quot;string&quot; },</span>
+<span class="go">        { &quot;name&quot;: &quot;f2&quot;, &quot;type&quot;: &quot;int&quot; },</span>
+<span class="go">        { &quot;name&quot;: &quot;f3&quot;, &quot;type&quot;: &quot;double&quot; }</span>
+<span class="go">      ]</span>
+<span class="go">    },</span>
+<span class="go">    &quot;settings&quot;: { &quot;delimiter&quot;: &quot; &quot; }</span>
+<span class="go">  },</span>
+<span class="go">  &quot;notification.threshold.mb&quot; : 1000</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Change the TTL property of the Stream named <em>mystream</em> in the namespace <em>default</em> to 1 day,
+and the format to CSV (comma separated values) with a three field schema
+that uses a space delimiter instead of a comma delimiter.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.8.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">v3</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Stream</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-a-stream">Creating a Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sending-events-to-a-stream">Sending Events to a Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sending-events-to-a-stream-in-batch">Sending Events to a Stream in Batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reading-events-from-a-stream">Reading Events from a Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#truncating-a-stream">Truncating a Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-stream-properties">Setting Stream Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l3"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transactions.html">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../http-restful-api-v2/index.html">v2 (Deprecated)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="preferences.html"
+                        title="Previous Chapter">Preferences HTTP RESTful API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="dataset.html"
+                        title="Next Chapter">Dataset HTTP RESTful API</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.8.0/cdap-docs-2.8.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Preferences HTTP RESTful API" href="preferences.html" />Preferences HTTP RESTful API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Dataset HTTP RESTful API" href="dataset.html" />Dataset HTTP RESTful API</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

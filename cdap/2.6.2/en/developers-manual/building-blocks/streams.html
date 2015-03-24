@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Streams &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Datasets" href="datasets/index.html" />
+    <link rel="prev" title="Applications" href="applications.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="datasets/index.html" title="Datasets"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="applications.html" title="Applications"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="streams">
+<span id="id1"></span><h1>Streams<a class="headerlink" href="#streams" title="Permalink to this headline">¶</a></h1>
+<p><strong>Streams</strong> are the primary means of bringing data from external systems into the CDAP in realtime.
+They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.</p>
+<p>They can be created programmatically within your application, using the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.6.2)"><em>Stream HTTP RESTful API</em></a>, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#stream-client" title="(in Cask Data Application Platform v2.6.2)"><em>StreamClient</em></a> of the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v2.6.2)"><em>Java Client API</em></a>, or by
+using the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">CDAP Command Line Interface.</em></a></p>
+<p>Data written to a Stream can be consumed in real-time by <a class="reference internal" href="flows-flowlets/index.html#flows"><em>Flows</em></a> or in batch
+by <a class="reference internal" href="mapreduce-programs.html#mapreduce"><em>MapReduce Jobs.</em></a>.</p>
+<p class="rubric">Creating a Stream</p>
+<p>You specify a Stream in your <a class="reference internal" href="applications.html#applications"><em>Application</em></a> specification:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;myStream&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+<p>This specifies a new Stream named <em>myStream</em>.</p>
+<p>Streams are uniquely identified by the ID string (a &#8220;name&#8221;) and are explicitly created
+before being used. Names used for Streams need to be unique across the CDAP instance, as
+Streams are shared between applications.</p>
+<p class="rubric">Writing To a Stream</p>
+<p>You can write to Streams either one operation at a time or in batches, using either the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.6.2)"><em>Stream HTTP RESTful API</em></a> or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface.</em></a></p>
+<p>Each individual signal sent to a Stream is stored as a <tt class="docutils literal"><span class="pre">StreamEvent</span></tt>, which is comprised
+of a header (a map of strings for metadata) and a body (a blob of binary data).</p>
+<p class="rubric">Reading From a Stream</p>
+<p>To convert the binary data into a string, you need to take into account the character
+encoding of the data, such as shown in this code fragment:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@ProcessInput</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">myStreamEvent</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">String</span> <span class="n">event</span> <span class="o">=</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">myStreamEvent</span><span class="o">.</span><span class="na">getBody</span><span class="o">()).</span><span class="na">toString</span><span class="o">();</span>
+<span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p class="rubric">Stream Time-To-Live (TTL)</p>
+<p>Streams are persisted by CDAP, and once an event has been sent to a Stream, by default it
+never expires. The Time-To-Live (TTL) property governs how long an event is valid for
+consumption since it was written to the Stream. The default TTL for all Streams is
+infinite, meaning that events will never expire. The TTL property of a Stream can be
+changed, using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.6.2)"><em>Stream HTTP RESTful API</em></a>, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#stream-client" title="(in Cask Data Application Platform v2.6.2)"><em>StreamClient</em></a> of the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v2.6.2)"><em>Java Client API</em></a>, or by using the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface.</em></a></p>
+<p class="rubric">Truncating a Stream</p>
+<p>Streams can be truncated, which means deleting all events that were ever written to the
+Stream. This is permanent and cannot be undone. They can be truncated through the using
+the <a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.6.2)"><em>Stream HTTP RESTful API</em></a>, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#stream-client" title="(in Cask Data Application Platform v2.6.2)"><em>StreamClient</em></a> of the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v2.6.2)"><em>Java Client API</em></a>, or
+by using the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface.</em></a></p>
+<p class="rubric">Examples of Using Streams</p>
+<p>Streams are included in just about every CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">application</em></a>,
+<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">tutorial</em></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">guide</em></a> or <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">example</em></a>.</p>
+<ul class="simple">
+<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Hello World</em></a>, demonstrates <strong>using a
+stream to ingest</strong> a name into a dataset.</li>
+<li>For an example of <strong>pushing events to a Stream from the Command Line,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase
+example</em></a>, and its script <tt class="docutils literal"><span class="pre">inject-data</span></tt> that injects data to a stream.</li>
+<li>For an example of <strong>reading events from a Stream,</strong> see the
+<a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase example</em></a>, where the class <tt class="docutils literal"><span class="pre">PurchaseStreamReader</span></tt>
+reads events from a stream.</li>
+<li>For an example of <strong>reading from a Stream with a Map Reduce Job,</strong> see the
+<a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-mapreduce-guide.html#cdap-mapreduce-guide" title="(in Cask Data Application Platform v2.6.2)"><em>Batch Data Processing With CDAP</em></a>, where the class <tt class="docutils literal"><span class="pre">TopClientsMapReduce</span></tt> uses the method
+<tt class="docutils literal"><span class="pre">StreamBatchReadable</span></tt> to read events from a stream.</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="applications.html"
+                        title="Previous Chapter">Applications</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="datasets/index.html"
+                        title="Next Chapter">Datasets</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Applications" href="applications.html" />Applications</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Datasets" href="datasets/index.html" />Datasets</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
