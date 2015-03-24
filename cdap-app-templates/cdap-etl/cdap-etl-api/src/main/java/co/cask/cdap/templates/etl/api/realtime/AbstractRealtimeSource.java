@@ -17,8 +17,6 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.SourceConfigurer;
-import co.cask.cdap.templates.etl.api.SourceContext;
 import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 import javax.annotation.Nullable;

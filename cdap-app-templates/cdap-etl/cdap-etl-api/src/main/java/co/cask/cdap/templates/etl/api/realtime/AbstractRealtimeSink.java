@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.templates.etl.api.SinkContext;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageLifecycle;
 

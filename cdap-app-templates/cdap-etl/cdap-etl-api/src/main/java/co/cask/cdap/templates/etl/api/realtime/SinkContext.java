@@ -14,16 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.realtime;
+
+import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.stream.StreamWriter;
 
 /**
- * Configurer for the Source stage of the Pipeline.
+ * Context passed to the Sink stages.
  */
-public interface SourceConfigurer extends StageConfigurer {
+public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
 
   /**
-   * Source can limit the scaling of ETL Pipeline instances and thus has the ability to limit the max instances.
-   * @param count max instance count
+   * Get Instance Id.
+   * @return instance id
    */
-  void setMaxInstances(int count);
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   * @return instance count
+   */
+  int getInstanceCount();
 }

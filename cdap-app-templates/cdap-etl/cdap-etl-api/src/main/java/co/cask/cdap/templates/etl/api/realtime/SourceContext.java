@@ -14,16 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamWriter;
 
 /**
- * Context passed to the Sink stages.
+ * Context passed to the Source stages.
  */
-public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
+public interface SourceContext extends RuntimeContext {
 
   /**
    * Get Instance Id.
