@@ -22,6 +22,7 @@ import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline.
+ *
  * @param <KEY> Batch Input Key class
  * @param <VALUE> Batch Input Value class
  * @param <O> Object that BatchSource emits
@@ -32,6 +33,7 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
 
   /**
    * Configure the Batch Source stage.
+   *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
@@ -39,13 +41,15 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
   }
 
   /**
-   * Setup configuration related to the Batch Source.
+   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
+   *
    * @param context {@link BatchContext}
    */
   public abstract void prepareJob(BatchContext context);
 
   /**
-   * Initialize the Batch Source.
+   * Initialize the Batch Source. Invoked at the start of the Batch Job.
+   *
    * @param context {@link BatchContext}
    */
   public void initialize(BatchContext context) {
@@ -54,6 +58,7 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
 
   /**
    * Process data.
+   *
    * @param key Key class from Input
    * @param value Value class from Input
    * @param data Emit data
@@ -67,6 +72,7 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
 
   /**
    * Operation to be performed at the end of the Batch job.
+   *
    * @param succeeded true if Batch operation succeeded, false otherwise
    * @param context {@link BatchContext}
    * @throws Exception

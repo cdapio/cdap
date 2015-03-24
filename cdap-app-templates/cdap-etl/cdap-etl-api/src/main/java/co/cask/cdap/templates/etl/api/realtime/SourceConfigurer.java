@@ -25,6 +25,7 @@ public interface SourceConfigurer extends StageConfigurer {
 
   /**
    * Source can limit the scaling of ETL Pipeline instances and thus has the ability to limit the max instances.
+   *
    * @param count max instance count
    */
   void setMaxInstances(int count);

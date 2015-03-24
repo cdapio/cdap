@@ -18,12 +18,14 @@ package co.cask.cdap.templates.etl.api;
 
 /**
  * Emit data.
+ *
  * @param <O> Object that Emitter emits
  */
 public interface Emitter<O> {
 
   /**
    * Emit data.
+   *
    * @param obj data object
    */
   void emit(O obj);

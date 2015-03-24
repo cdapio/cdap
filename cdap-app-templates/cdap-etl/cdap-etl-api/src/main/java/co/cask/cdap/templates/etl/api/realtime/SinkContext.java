@@ -27,12 +27,14 @@ public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContex
 
   /**
    * Get Instance Id.
+   *
    * @return instance id
    */
   int getInstanceId();
 
   /**
    * Get Instance Count.
+   *
    * @return instance count
    */
   int getInstanceCount();

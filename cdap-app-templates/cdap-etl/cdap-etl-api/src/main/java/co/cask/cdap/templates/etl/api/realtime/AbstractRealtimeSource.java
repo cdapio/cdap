@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 
 /**
  * Realtime Source.
+ *
  * @param <O> Object that source emits
  */
 public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
@@ -31,6 +32,7 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
 
   /**
    * Configure the Source.
+   *
    * @param configurer {@link SourceConfigurer}
    */
   public void configure(SourceConfigurer configurer) {
@@ -40,6 +42,7 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
 
   /**
    * Initialize the Source.
+   *
    * @param context {@link SourceContext}
    */
   public void initialize(SourceContext context) {
@@ -48,6 +51,7 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
 
   /**
    * Poll for new data.
+   *
    * @param writer {@link Emitter}
    * @param currentState {@link SourceState} current state of the source
    * @return {@link SourceState} state of the source after poll, will be persisted when all data from poll are processed
@@ -62,6 +66,7 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
 
   /**
    * Resume/reconfigure from the state of suspension.
+   *
    * @param oldInstance old instance count
    * @param newInstance new instance count
    */

@@ -23,6 +23,7 @@ import java.io.IOException;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
+ *
  * @param <I> Object sink operates on
  * @param <KEY> Batch Output Key class
  * @param <VALUE> Batch Output Value class
@@ -33,6 +34,7 @@ public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle
 
   /**
    * Configure the Sink.
+   *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
@@ -40,13 +42,15 @@ public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle
   }
 
   /**
-   * Prepare the Batch Job.
+   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
+   *
    * @param context {@link BatchContext}
    */
   public abstract void prepareJob(BatchContext context);
 
   /**
-   * Initialize the Sink.
+   * Initialize the Sink. Invoked during at the start of the Batch Job.
+   *
    * @param context {@link BatchContext}
    */
   public void initialize(BatchContext context) {
@@ -55,6 +59,7 @@ public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle
 
   /**
    * Write the given object.
+   *
    * @param object object to be written
    * @param writer Writer to persist data to Batch Output
    * @throws IOException
@@ -69,6 +74,7 @@ public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle
 
   /**
    * Invoked after Batch Job is completed.
+   *
    * @param succeeded true if batch job completed successfully
    * @param context {@link BatchContext}
    */

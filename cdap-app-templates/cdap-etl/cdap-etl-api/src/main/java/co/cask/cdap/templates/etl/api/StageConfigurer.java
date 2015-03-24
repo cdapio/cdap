@@ -25,18 +25,21 @@ public interface StageConfigurer {
 
   /**
    * Set the name of the Stage.
+   *
    * @param name name
    */
   void setName(String name);
 
   /**
    * Set the description of the Stage.
+   *
    * @param description description
    */
   void setDescription(String description);
 
   /**
    * Set the properties this stage requires during runtime.
+   *
    * @param properties {@link Set} of properties
    */
   void setExpectedProperties(Set<String> properties);

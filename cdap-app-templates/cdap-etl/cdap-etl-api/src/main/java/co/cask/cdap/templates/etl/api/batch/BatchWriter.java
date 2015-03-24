@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.api.batch;
 
 /**
  * Used to write data to Batch Output.
+ *
  * @param <K> Batch Output key class
  * @param <V> Batch Output value class
  */
@@ -25,6 +26,7 @@ public interface BatchWriter<K, V> {
 
   /**
    * Takes in the key and value objects to persist to Batch Output.
+   *
    * @param key Key object
    * @param value Value object
    */

@@ -23,15 +23,4 @@ import co.cask.cdap.api.RuntimeContext;
  */
 public interface TransformContext extends RuntimeContext {
 
-  /**
-   * Get Instance Id.
-   * @return instance id
-   */
-  int getInstanceId();
-
-  /**
-   * Get Instance Count.
-   * @return instance count
-   */
-  int getInstanceCount();
 }

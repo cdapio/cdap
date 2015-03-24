@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 
 /**
  * Provides lifecycle methods for ETL Pipeline Stages.
+ *
  * @param <T> type of the stage runtime context
  */
 public interface StageLifecycle<T extends RuntimeContext> {
@@ -29,10 +30,12 @@ public interface StageLifecycle<T extends RuntimeContext> {
    *  <p>
    *    This method will be called only once per {@link StageLifecycle} instance.
    *  </p>
+   *
    *  @param context An instance of {@link RuntimeContext}
    *  @throws Exception If there is any error during initialization.
    */
   void initialize(T context) throws Exception;
+
   /**
    * Destroy the Pipeline Stage.
    */

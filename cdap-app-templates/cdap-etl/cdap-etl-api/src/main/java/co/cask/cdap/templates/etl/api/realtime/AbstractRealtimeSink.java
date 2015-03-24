@@ -21,6 +21,7 @@ import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
  * Realtime Sink.
+ *
  * @param <I> Object sink operates on
  */
 public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
@@ -29,6 +30,7 @@ public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
 
   /**
    * Configure the Sink.
+   *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
@@ -37,6 +39,7 @@ public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
 
   /**
    * Initialize the Sink.
+   *
    * @param context {@link SinkContext}
    */
   public void initialize(SinkContext context) {
@@ -45,6 +48,7 @@ public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
 
   /**
    * Write the given object.
+   *
    * @param object object to be written
    */
   public abstract void write(I object);

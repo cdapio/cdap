@@ -17,7 +17,8 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Transform Stage
+ * Transform Stage.
+ *
  * @param <I> input
  * @param <O> output
  */
@@ -26,7 +27,8 @@ public abstract class Transform<I, O> implements StageLifecycle {
   private TransformContext context;
 
   /**
-   * Configure the Transform stage.
+   * Configure the Transform stage. Used to provide information about the Transform.
+   *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
@@ -34,7 +36,8 @@ public abstract class Transform<I, O> implements StageLifecycle {
   }
 
   /**
-   * Initialize the Transform Stage.
+   * Initialize the Transform Stage. Called during the runtime with context of the Transform.
+   *
    * @param context {@link TransformContext}
    */
   public void initialize(TransformContext context) {
@@ -42,7 +45,8 @@ public abstract class Transform<I, O> implements StageLifecycle {
   }
 
   /**
-   * Process I input and emit O output using {@link Emitter}
+   * Process I input and emit O output using {@link Emitter}.
+   *
    * @param input input data
    * @param output {@link Emitter} emit output
    */
