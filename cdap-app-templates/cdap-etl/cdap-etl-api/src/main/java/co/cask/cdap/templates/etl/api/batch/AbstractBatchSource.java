@@ -57,13 +57,13 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
   }
 
   /**
-   * Process data.
+   * Process key, value and emit an object for subsequent stages to process.
    *
    * @param key Key class from Input
    * @param value Value class from Input
    * @param data Emit data
    */
-  public abstract void combine(KEY key, VALUE value, Emitter<O> data);
+  public abstract void process(KEY key, VALUE value, Emitter<O> data);
 
   @Override
   public void destroy() {

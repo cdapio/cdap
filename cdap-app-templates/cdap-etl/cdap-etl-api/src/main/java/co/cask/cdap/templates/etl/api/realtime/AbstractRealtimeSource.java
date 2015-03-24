@@ -67,10 +67,10 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
   /**
    * Resume/reconfigure from the state of suspension.
    *
-   * @param oldInstance old instance count
-   * @param newInstance new instance count
+   * @param oldInstanceCount old instance count
+   * @param newInstanceCount new instance count
    */
-  public abstract void onResume(int oldInstance, int newInstance);
+  public abstract void onResume(int oldInstanceCount, int newInstanceCount);
 
   @Override
   public void destroy() {
