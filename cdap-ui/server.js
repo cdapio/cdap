@@ -45,7 +45,7 @@ parser.extractConfig('cdap')
     else {
       server = http.createServer(app);
       port = cdapConfig['dashboard.bind.port'];
-      port = 8080; // so we can have old UI running while developing
+      // port = 8080; // so we can have old UI running while developing
     }
 
     server.listen(port, cdapConfig['dashboard.bind.address'], function () {
