@@ -30,6 +30,8 @@ angular.module(PKG.name + '.commons')
       return myAlert.isEmpty();
     };
 
+    $scope.errorCount = myAlert.count;
+
     $scope.doSearch = function () {
       myAlert({
         title: 'Sorry!',

@@ -65,6 +65,7 @@
           data-template="/error-template"
           bs-popover>
       <i class="fa fa-exclamation-triangle"></i>
+      <span class="badge" ng-hide="emptyError()">{{ errorCount() }}</span>
     </button>
   </div>
 </div>

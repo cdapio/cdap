@@ -19,5 +19,9 @@ angular.module(PKG.name+'.services')
       return __list;
     }
 
+    alert['count'] = function() {
+      return __list.length;
+    };
+
     return alert;
   });
