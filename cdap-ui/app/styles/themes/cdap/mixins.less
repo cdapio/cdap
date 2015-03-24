@@ -3,15 +3,36 @@
 // Mixins
 // --------------------------------------------------
 .cask-btn(@color: @btn-default-color, @background: white, @border: 1px solid #CCC, @border-radius: 8px, @padding: 6px 24px) {
-      background-color: @background;
-      border: @border;
-      border-radius: @border-radius;
-      color: @color;
+  background-color: @background;
+  border: @border;
+  border-radius: @border-radius;
+  color: @color;
+  outline: none;
+  padding: @padding;
+  white-space: normal;
+  &:hover, &:focus {
+      text-decoration: none;
       outline: none;
-      padding: @padding;
-      white-space: normal;
-      &:hover, &:focus {
-          text-decoration: none;
-          outline: none;
-      }
   }
+}
+
+.btn-close(@color: white, @background: fade(@btn-default-color, 50%)) {
+  background: @background;
+  border: 0;
+  border-radius: 28px;
+  color: @color;
+  cursor: pointer;
+  line-height: 0;
+  outline: none;
+  padding: 0;
+  &:hover, &:focus {
+      text-decoration: none;
+      outline: none;
+  }
+  .fa-close {
+    color: @color;
+    font-size: 32px;
+    padding: 12px 15px;
+    vertical-align: text-top;
+  }
+}

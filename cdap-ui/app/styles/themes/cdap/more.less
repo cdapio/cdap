@@ -116,11 +116,8 @@ body.theme-cdap {
       color: @cdap-bluegray;
       font-size: 17px;
     }
-    .fa-close {
-      color: white;
-      font-size: 32px;
-      padding: 12px 15px;
-      vertical-align: text-top;
+    .btn-close {
+      .btn-close();
     }
     .panel-body {
       .col-sm-4 {
@@ -162,16 +159,25 @@ body.theme-cdap {
   .modal {
     background-color: fade(@cdap-darkblue, 80%);
     .modal-dialog {
-      &.modal-lg {
-        width: 90%;
-      }
+      &.modal-lg { width: 90%; }
       .modal-content {
         background-color: transparent;
         border: 0;
         .box-shadow(none);
         .modal-header {
           border-bottom: 0;
+          .modal-title {
+            color: white;
+            font-weight: bold;
+          }
+          .fa-times { .cask-btn(@color: @cdap-orange, @background: white, @border: 0, @border-radius: 28px, @padding: 15px); }
         }
+        .fa {
+          cursor: pointer;
+          &:before { font-size: 24px; }
+        }
+        .fa-plus { .cask-btn(@color: white, @background: @brand-primary, @border: 0, @padding: 15px 35px); }
+        a.fa-times { .cask-btn(@color: #923C49, @background: #D15668, @border: 0, @padding: 15px 15px); }
         .form-group {
           label {
             color: white;
@@ -182,22 +188,31 @@ body.theme-cdap {
             border-radius: 8px;
             .box-shadow(none);
             font-size: 18px;
+            height: 50px;
+            text-indent: 5px;
             &:focus {
               border-color: transparent;
               .box-shadow(none);
             }
+            &:disabled { background-color: #B9C4E2; }
           }
-          input.form-control {
+          textarea.form-control { min-height: 100px; }
+          select.form-control {
+            background-color: @cdap-darkness;
+            color: white;
             height: 50px;
-          }
-          textarea.form-control {
-            min-height: 100px;
           }
         }
         .modal-footer {
           border-top: 0;
+          .btn {
+            .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 6px 32px);
+            font-size: 16px;
+            line-height: 2;
+          }
           .btn-primary {
-            .cask-btn(@color: white, @background: @brand-success, @border: 0);
+            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 6px 32px);
+            margin-left: 30px;
           }
         }
       }
