@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 /**
  * Abstract App Template that provides additional functionality required for App Templates.
  */
-public abstract class AbstractAppTemplate extends AbstractApplication {
+public abstract class ApplicationTemplate extends AbstractApplication {
 
   /**
    * Given the manifest configuration, provides the {@link ManifestSpecification}
@@ -41,5 +41,7 @@ public abstract class AbstractAppTemplate extends AbstractApplication {
    * @return {@link HttpServiceHandler}
    */
   @Nullable
-  public abstract Class<? extends HttpServiceHandler> getServiceHandler();
+  public Class<? extends HttpServiceHandler> getServiceHandler() {
+    return null;
+  }
 }
