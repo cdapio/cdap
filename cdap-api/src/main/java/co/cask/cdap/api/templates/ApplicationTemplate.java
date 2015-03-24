@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.templates;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Abstract App Template that provides additional functionality required for App Templates.
  */
+@Beta
 public abstract class ApplicationTemplate extends AbstractApplication {
 
   /**
