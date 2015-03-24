@@ -66,6 +66,7 @@ COPY cdap-proto /Build/cdap-proto
 COPY cdap-security /Build/cdap-security
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-test /Build/cdap-test
+COPY cdap-ui /Build/cdap-ui
 COPY cdap-unit-test /Build/cdap-unit-test
 COPY cdap-unit-test-standalone /Build/cdap-unit-test-standalone
 COPY cdap-watchdog /Build/cdap-watchdog
