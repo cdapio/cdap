@@ -24,11 +24,9 @@ RUN apt-get update && \
     apt-get install -y software-properties-common python-software-properties && \
     add-apt-repository ppa:chris-lea/node.js && \
     apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl nodejs unzip git \
     apt-get install -y --no-install-recommends openjdk-7-jdk && \
-    apt-get install -y nodejs && \
-    apt-get install -y maven && \
-    apt-get install -y unzip
+    apt-get install -y maven
 
 # create Software directory
 RUN mkdir /Build /Software
