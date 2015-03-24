@@ -26,12 +26,6 @@ angular.module(PKG.name + '.commons')
       }
     });
 
-    $scope.emptyError = function() {
-      return myAlert.isEmpty();
-    };
-
-    $scope.errorCount = myAlert.count;
-
     $scope.doSearch = function () {
       myAlert({
         title: 'Sorry!',
