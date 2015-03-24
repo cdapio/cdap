@@ -16,20 +16,19 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline.
- * @param <KEY> Mapper Key class
- * @param <VALUE> Mapper Value class
+ * @param <KEY> Batch Input Key class
+ * @param <VALUE> Batch Input Value class
  * @param <O> Object that BatchSource emits
  */
 public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecycle {
 
-  private MapReduceContext context;
+  private BatchContext context;
 
   /**
    * Configure the Batch Source stage.
@@ -40,26 +39,26 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
   }
 
   /**
-   * Setup MapReduce configuration related to the Batch Source.
-   * @param context {@link MapReduceContext}
+   * Setup configuration related to the Batch Source.
+   * @param context {@link BatchContext}
    */
-  public abstract void prepareJob(MapReduceContext context);
+  public abstract void prepareJob(BatchContext context);
 
   /**
    * Initialize the Batch Source.
-   * @param context {@link MapReduceContext}
+   * @param context {@link BatchContext}
    */
-  public void initialize(MapReduceContext context) {
+  public void initialize(BatchContext context) {
     this.context = context;
   }
 
   /**
    * Process data.
-   * @param key Key from Mapper
-   * @param value Value from Mapper
+   * @param key Key class from Input
+   * @param value Value class from Input
    * @param data Emit data
    */
-  public abstract void read(KEY key, VALUE value, Emitter<O> data);
+  public abstract void combine(KEY key, VALUE value, Emitter<O> data);
 
   @Override
   public void destroy() {
@@ -69,12 +68,12 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
   /**
    * Operation to be performed at the end of the Batch job.
    * @param succeeded true if Batch operation succeeded, false otherwise
-   * @param context {@link MapReduceContext}
+   * @param context {@link BatchContext}
    * @throws Exception
    */
-  public abstract void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
+  public abstract void onFinish(boolean succeeded, BatchContext context) throws Exception;
 
-  protected MapReduceContext getContext() {
+  protected BatchContext getContext() {
     return context;
   }
 }

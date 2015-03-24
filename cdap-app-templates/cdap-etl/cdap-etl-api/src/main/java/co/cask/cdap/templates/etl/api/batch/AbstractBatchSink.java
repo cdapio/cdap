@@ -16,20 +16,20 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageLifecycle;
-import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
  * @param <I> Object sink operates on
+ * @param <KEY> Batch Output Key class
+ * @param <VALUE> Batch Output Value class
  */
-public abstract class AbstractBatchSink<I> implements StageLifecycle {
+public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle {
 
-  private MapReduceContext context;
+  private BatchContext context;
 
   /**
    * Configure the Sink.
@@ -40,27 +40,27 @@ public abstract class AbstractBatchSink<I> implements StageLifecycle {
   }
 
   /**
-   * Prepare the Batch Job
-   * @param context {@link MapReduceContext}
+   * Prepare the Batch Job.
+   * @param context {@link BatchContext}
    */
-  public abstract void prepareJob(MapReduceContext context);
+  public abstract void prepareJob(BatchContext context);
 
   /**
    * Initialize the Sink.
-   * @param context {@link MapReduceContext}
+   * @param context {@link BatchContext}
    */
-  public void initialize(MapReduceContext context) {
+  public void initialize(BatchContext context) {
     this.context = context;
   }
 
   /**
-   * Write the given object
-   * @param context {@link Mapper.Context}
+   * Write the given object.
    * @param object object to be written
+   * @param writer Writer to persist data to Batch Output
    * @throws IOException
    * @throws InterruptedException
    */
-  public abstract void write(Mapper.Context context, I object) throws IOException, InterruptedException;
+  public abstract void write(I object, BatchWriter<KEY, VALUE> writer) throws IOException, InterruptedException;
 
   @Override
   public void destroy() {
@@ -68,13 +68,13 @@ public abstract class AbstractBatchSink<I> implements StageLifecycle {
   }
 
   /**
-   * Invoked after Batch Job is completed
+   * Invoked after Batch Job is completed.
    * @param succeeded true if batch job completed successfully
-   * @param context {@link MapReduceContext}
+   * @param context {@link BatchContext}
    */
-  public abstract void onFinish(boolean succeeded, MapReduceContext context);
+  public abstract void onFinish(boolean succeeded, BatchContext context);
 
-  protected MapReduceContext getContext() {
+  protected BatchContext getContext() {
     return context;
   }
 }
