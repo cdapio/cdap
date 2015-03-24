@@ -59,6 +59,25 @@ public final class Interpolators {
   }
 
   /**
+   * Timestamps between 2 data points will take on the 0 value.
+   */
+  public static final class Zero extends BaseInterpolator {
+
+    public Zero() {
+      super(DEFAULT_MAX_ALLOWED_GAP);
+    }
+
+    public Zero(long maxAllowedGap) {
+      super(maxAllowedGap);
+    }
+
+    @Override
+    protected long limitedInterpolate(TimeValue start, TimeValue end, long ts) {
+      return 0;
+    }
+  }
+
+  /**
    * Timestamps between 2 data points will take on the value of the previous point.
    * If the timestamp is before the start, return a 0.  If the timestamp is after the end,
    * return the end value.

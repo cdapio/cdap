@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.metrics.Interpolator;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -62,6 +63,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   public static final String ANY_TAG_VALUE = "*";
   public static final String TAG_DELIM = ".";
   public static final String DOT_ESCAPE_CHAR = "~";
+  // Had limit on returned metric values to avoid bad queries affect on cluster
+  // NOTE: must be greater than: maximum on CDAP Console we show 24 * 31 data points (31 days of 1-hour granularity)
+  public static final int METRIC_POINTS_HARD_LIMIT = 10000;
 
   private final MetricStore metricStore;
 
@@ -151,10 +155,12 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
+      int resolution = queryTimeParams.getResolution();
+      Interpolator interpolator = queryTimeParams.getInterpolator();
 
-      MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
+      MetricDataQuery query = new MetricDataQuery(startTs, endTs, resolution, METRIC_POINTS_HARD_LIMIT, metric,
                                                   // todo: figure out MetricType
-                                                  MetricType.COUNTER, tagsSliceBy, groupByTags);
+                                                  MetricType.COUNTER, tagsSliceBy, groupByTags, interpolator);
 
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);

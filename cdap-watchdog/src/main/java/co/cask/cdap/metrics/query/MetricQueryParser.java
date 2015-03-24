@@ -51,6 +51,7 @@ final class MetricQueryParser {
   private static final String INTERPOLATE = "interpolate";
   private static final String STEP_INTERPOLATOR = "step";
   private static final String LINEAR_INTERPOLATOR = "linear";
+  private static final String ZERO_INTERPOLATOR = "zero";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String TRANSACTION_METRICS_CONTEXT = "transactions";
   private static final String AUTO_RESOLUTION = "auto";
@@ -529,7 +530,9 @@ final class MetricQueryParser {
         ? Long.parseLong(queryParams.get(MAX_INTERPOLATE_GAP).get(0))
         : Long.MAX_VALUE;
 
-      if (STEP_INTERPOLATOR.equals(interpolatorType)) {
+      if (ZERO_INTERPOLATOR.equals(interpolatorType)) {
+        interpolator = new Interpolators.Zero(timeLimit);
+      } else if (STEP_INTERPOLATOR.equals(interpolatorType)) {
         interpolator = new Interpolators.Step(timeLimit);
       } else if (LINEAR_INTERPOLATOR.equals(interpolatorType)) {
         interpolator = new Interpolators.Linear(timeLimit);

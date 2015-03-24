@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.api.metrics.Interpolators;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
 import co.cask.cdap.api.metrics.TimeValue;
@@ -27,6 +28,7 @@ import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -39,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -290,7 +293,16 @@ public class DefaultCube implements Cube {
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
     List<TimeSeries> result = Lists.newArrayList();
-    for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
+
+    // todo: should not be hacked specifically for zero interpolator
+    boolean zeroInterpolator = query.getInterpolator() instanceof Interpolators.Zero;
+    Map<Map<String, String>, Map<Long, Long>> rowMap = aggValuesToTimeValues.rowMap();
+    // if nothing found, let's return empty time series (if non-aggregated was asked) for zero interpolator
+    if (rowMap.isEmpty() && query.getGroupByTags().isEmpty() && zeroInterpolator) {
+      rowMap =
+        ImmutableMap.<Map<String, String>, Map<Long, Long>>of(new HashMap<String, String>(), new HashMap<Long, Long>());
+    }
+    for (Map.Entry<Map<String, String>, Map<Long, Long>> row : rowMap.entrySet()) {
       List<TimeValue> timeValues = Lists.newArrayList();
       for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
         timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
@@ -299,9 +311,25 @@ public class DefaultCube implements Cube {
       PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
         new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
       List<TimeValue> resultTimeValues = Lists.newArrayList();
-      while (timeValueItor.hasNext()) {
-        TimeValue timeValue = timeValueItor.next();
-        resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+
+      if (zeroInterpolator) {
+        long resultTimeStamp = (query.getStartTs() / query.getResolution()) * query.getResolution();
+        // return all data points if not more than limit
+        int limit = (int) Math.min(query.getLimit(), (query.getEndTs() - query.getStartTs()) / query.getResolution());
+        for (int i = 0; i < limit; i++) {
+          if (timeValueItor.hasNext() && timeValueItor.peek().getTimestamp() == resultTimeStamp) {
+            resultTimeValues.add(new TimeValue(resultTimeStamp, timeValueItor.next().getValue()));
+          } else {
+            // If the scan result doesn't have value for a timestamp, we add 0 to the result-returned for that timestamp
+            resultTimeValues.add(new TimeValue(resultTimeStamp, 0));
+          }
+          resultTimeStamp += query.getResolution();
+        }
+      } else {
+        while (timeValueItor.hasNext()) {
+          TimeValue timeValue = timeValueItor.next();
+          resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+        }
       }
       result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }
