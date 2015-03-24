@@ -271,7 +271,7 @@ Search for Contexts
 
 To search for the available contexts, perform an HTTP request::
 
-  POST <base-url>/metrics/search?target=childContext[&context=<context>]
+  POST '<base-url>/metrics/search?target=childContext[&context=<context>]'
 
 The optional ``<context>`` defines a metrics context to search within. If it is not
 provided, the search is performed across all data. The available contexts that are returned
@@ -298,7 +298,7 @@ examples below for its use.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext``
+     - ``POST '<base-url>/metrics/search?target=childContext'``
    * - Returns
      - ``[ "namespace.default", "namespace.system" ]``
    * - Description
@@ -309,7 +309,7 @@ examples below for its use.
      - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default'``
    * - Returns
      - ``[ "namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
-       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", "namespace.default.stream.who" ]``
+       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", ..., "namespace.default.stream.who" ]``
    * - Description
      - Returns all child contexts of the given parent context; in this case, all entities in the default namespace.
    * - 
@@ -329,7 +329,7 @@ Search for Metrics
 
 To search for the available metrics within a given context, perform an HTTP POST request::
 
-  POST <base-url>/metrics/search?target=metric&context=<context>
+  POST '<base-url>/metrics/search?target=metric&context=<context>'
 
 
 .. list-table::
@@ -348,10 +348,10 @@ To search for the available metrics within a given context, perform an HTTP POST
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory``
+     - ``POST '<base-url>/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory'``
    * - Returns
-     - ``[ "user.customers.count”, “system.events.processed” ]``
-       ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.reads",...,"user.purchases.John"]
+     - ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.reads",``
+       ``"system.dataset.store.writes","system.process.bytes",...,"user.customers.count"]``
    * - Description
      - Returns all metrics in the context of the application *PurchaseHistory* of the
        *default* namespace; in this case, returns a list of system and user-defined metrics.
@@ -365,7 +365,7 @@ metrics data.
 
 To query a metric within a given context, perform an HTTP GET request::
 
-  POST <base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>
+  POST '<base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'
 
 
 .. list-table::
@@ -407,7 +407,7 @@ To query a metric within a given context, perform an HTTP GET request::
      - 
    * - HTTP Method
      - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.services``
-       ``WhoService.runnables.WhoRun&metric=user.names.bytes?aggregate=true'``
+       ``WhoService.runnables.WhoRun&metric=user.names.bytes'``
    * - Description
      - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
@@ -588,13 +588,21 @@ difference calculated between the start and end times:
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
+Example::
 
-As an example, to return the total number of input objects processed since the
-Application *CountRandom* was deployed, assuming that CDAP has not been stopped or
-restarted (you cannot specify a time range for aggregates)::
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom&
+    metric=system.process.events.processed&start=now-1h&end=now&resolution=1m'
 
-  POST '<base-url>/metrics/query?context=namespace.default.app.
-      CountRandom.system.process.events.processed?aggregate=true'
+This will return the value of the metric *system.process.events.processed* for the last
+hour at one-second intervals; potentially 61 entries may be returned, though only entries
+where there is data will be returned.
+
+For aggregates, you cannot specify a time range. As an example, to return the total number
+of input objects processed since the Application *CountRandom* was deployed, assuming that
+CDAP has not been stopped or restarted::
+
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom
+    &metric=system.process.events.processed?aggregate=true'
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
@@ -623,13 +631,13 @@ Examples of using a run-ID (reformatted to fit)::
   POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
       MyFlow.run.364-789-1636765&metric=system.process.completion'
   
-  POST ''<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion'
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion'
 
-  POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
     bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true'
 
-The last example will return something similar to (where ``time=0`` means aggregated total number)::
+The last example will return something similar to (where ``"time"=0`` means aggregated total number)::
 
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
