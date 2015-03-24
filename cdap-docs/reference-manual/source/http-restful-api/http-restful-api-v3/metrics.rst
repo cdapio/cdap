@@ -349,7 +349,8 @@ To search for the available metrics within a given context, perform an HTTP POST
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory'``
+     - ``POST '<base-url>/metrics/search?target=metric&``
+       ``context=namespace.default.app.PurchaseHistory'``
    * - Returns
      - ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.reads",``
        ``"system.dataset.store.writes","system.process.bytes",...,"user.customers.count"]``
