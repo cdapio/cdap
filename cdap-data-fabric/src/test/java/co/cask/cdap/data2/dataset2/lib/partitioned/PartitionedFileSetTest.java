@@ -62,8 +62,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     .addStringField("x")
     .build();
 
-  private static final Id.DatasetInstance pfsInstance =
-    DS_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "pfs"));
+  private static final Id.DatasetInstance pfsInstance = Id.DatasetInstance.from(NAMESPACE_ID, "pfs");
 
   @Before
   public void before() throws Exception {
