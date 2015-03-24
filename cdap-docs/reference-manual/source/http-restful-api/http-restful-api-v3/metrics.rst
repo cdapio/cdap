@@ -145,7 +145,7 @@ These metrics are available in a Flowlet context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Flowlet Metric
      - Description
@@ -173,7 +173,7 @@ These metrics are available in a Mappers and Reducers context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Mappers and Reducers Metric
      - Description
@@ -189,7 +189,7 @@ depends on the Spark program being queried:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Spark Metric
      - Description
@@ -216,7 +216,7 @@ These metrics are available in a Procedures context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Procedures Metric
      - Description
@@ -229,7 +229,7 @@ These metrics are available in a Streams context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Streams Metric
      - Description
@@ -242,7 +242,7 @@ These metrics are available in a Datasets context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Datasets Metric
      - Description
@@ -287,7 +287,7 @@ examples below for its use.
 
    * - Parameter
      - Description
-   * - ``<context>`` (Optional)
+   * - ``<context>`` *[Optional]*
      - Metrics context to search within. If not provided, the search is provided across
        all contexts.
        
@@ -300,7 +300,7 @@ examples below for its use.
    * - HTTP Method
      - ``POST '<base-url>/metrics/search?target=childContext'``
    * - Returns
-     - ``[ "namespace.default", "namespace.system" ]``
+     - ``["namespace.default", "namespace.system"]``
    * - Description
      - Returns all first-level contexts; in this case, two namespaces.
    * - 
@@ -308,17 +308,18 @@ examples below for its use.
    * - HTTP Method
      - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default'``
    * - Returns
-     - ``[ "namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
-       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", ..., "namespace.default.stream.who" ]``
+     - ``["namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
+       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", ..., "namespace.default.stream.who"]``
    * - Description
      - Returns all child contexts of the given parent context; in this case, all entities in the default namespace.
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*'``
+     - ``POST '<base-url>/metrics/search?target=childContext&context=``
+       ``namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*'``
    * - Returns
-     - ``[ "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector", 
-       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader" ]``
+     - ``["namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector", 
+       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader"]``
    * - Description
      - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any dataset and any run; 
        in this case, it returns all available Flowlets.
