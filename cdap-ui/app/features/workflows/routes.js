@@ -114,6 +114,7 @@ angular.module(PKG.name + '.feature.workflows')
           .state('workflows.detail.history', {
             url: '/history',
             templateUrl: '/assets/features/workflows/templates/tabs/history.html',
+            controller: 'WorkflowsHistoryController',
             ncyBreadcrumb: {
               parent: 'apps.detail.overview',
               label: '{{$state.params.programId}} < History'

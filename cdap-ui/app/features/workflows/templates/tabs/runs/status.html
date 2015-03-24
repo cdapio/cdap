@@ -19,7 +19,7 @@
       <span class="fa fa-stop"> </span>
     </div>
 
-    <div ng-show="status == 'STOPPED' || status == 'COMPLETED'"
+    <div ng-show="status == 'STOPPED' || status == 'COMPLETED' || status == 'KILLED'"
          disabled="true"
          class="btn btn-default btn-md"
          ng-click="toggleFlow('start')">

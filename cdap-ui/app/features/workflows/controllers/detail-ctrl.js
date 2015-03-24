@@ -1,38 +1,33 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource) {
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' +
-            $state.params.appId +
-            '/workflows/' +
-            $state.params.programId;
+  .controller('WorkflowsDetailController', function($scope, $state, myWorkFlowApi) {
+    var params = {
+      appId: $state.params.appId,
+      workflowId: $state.params.programId,
+      scope: $scope
+    };
+
+
+    var prom = myWorkFlowApi.runs(angular.extend({status: 'running'}, params))
+    prom.$promise.then(function(res) {
+      $scope.activeRuns = res.length || 0;
+    });
 
     $scope.activeRuns = 0;
     $scope.runs = null;
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
-    }, function(res) {
-        $scope.runs = res;
-        var count = 0;
-        angular.forEach(res, function(runs) {
-          if (runs.status === 'RUNNING') {
-            count += 1;
-          }
-        });
-        $scope.activeRuns = count;
-      });
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/status'
-    }, function(res) {
-      $scope.status = res.status;
-    });
+    myWorkFlowApi.status(params)
+      .$promise.then(function(res) {
+        $scope.status = res.status;
+      });
 
     $scope.toggleFlow = function(action) {
       $scope.status = action;
-      dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
-      });
+      myWorkFlowApi[action](params, {});
     };
+
+    $scope.$on('$destroy', function() {
+      myWorkFlowApi.runsStop(params);
+      myWorkFlowApi.statusStop(params);
+    });
 
 });

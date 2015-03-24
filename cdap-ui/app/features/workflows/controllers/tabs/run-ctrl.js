@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailRunController', function($scope, $state, MyDataSource, $timeout) {
+  .controller('WorkflowsDetailRunController', function($scope, $state, MyDataSource, myWorkFlowApi, $timeout) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
 
@@ -9,11 +9,14 @@ angular.module(PKG.name + '.feature.workflows')
     $scope.runTabs = ['status'];
     $scope.runs = null;
     $scope.currentRun = null;
+    var params = {
+      appId: $state.params.appId,
+      workflowId: $state.params.programId,
+      scope: $scope
+    };
 
-    dataSrc.request({
-      _cdapNsPath: basePath + '/runs'
-    })
-      .then(function(res) {
+    myWorkFlowApi.runs(params)
+      .$promise.then(function(res) {
         $scope.runs = res;
         if (res.length === 0) {
           $scope.currentRun = 'dormant-run';
