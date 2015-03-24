@@ -32,7 +32,11 @@ function guide_rewrite_sed() {
   local project_version=$PROJECT_SHORT_VERSION
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  local source2="release/cdap-$project_version-compatible/README.rst"
+  if [ "x$GIT_BRANCH_TYPE" == "xfeature" ]; then
+    local source2="develop/README.rst"
+  else
+    local source2="release/cdap-$project_version-compatible/README.rst"
+  fi
 
   local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
   
