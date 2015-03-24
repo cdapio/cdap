@@ -19,11 +19,11 @@ function myErrorDirective (myAlert) {
   return {
     restrict: 'E',
     templateUrl: 'error/error-template.html',
-    link: function(scope) {
-      scope.emptyError = function() {
+    controller: function($scope, myAlert) {
+      $scope.emptyError = function() {
         return myAlert.isEmpty();
       };
-      scope.errorCount = myAlert.count;
+      $scope.errorCount = myAlert.count;
     }
   };
 
