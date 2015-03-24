@@ -41,7 +41,7 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version from 0.8.16 through 0.10.36) must be installed on the node(s) where the Web-App
+#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the Web-App
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 

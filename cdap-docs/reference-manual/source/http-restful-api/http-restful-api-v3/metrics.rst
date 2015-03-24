@@ -493,7 +493,6 @@ multiple tags for grouping by providing a comma-separated list.
      - Description
    * - ``groupBy=app``
      - Retrieves the time series for each application. 
-       For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``groupBy=app,flow``
      - Retrieves a time series for each app and flow combination
 
@@ -509,7 +508,7 @@ or as a ``start`` and ``end`` to define a specific range and return a series of 
 By default, queries without a time range retrieve a value based on ``aggregate=true``.
 
 .. list-table::
-   :widths: 20 80
+   :widths: 30 70
    :header-rows: 1
 
    * - Parameter
@@ -521,18 +520,21 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
    * - ``start=<time>&end=<time>``
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
-   * - ``resolution=[1 | 60 | 3600 | auto]``
-     - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
-       the time difference.
+   * - ``count=<count>``
+     - Number of time intervals since start with length of time interval defined by *resolution*. 
+       If ``count=60`` and ``resolution=1s``, the time range would be 60 seconds in length.
+   * - ``resolution=[1s|1m|1h|auto]``
+     - Time resolution in seconds, minutes or hours; or if "auto", one of ``{1s, 1m, 1h}``
+       is used based on the time difference.
 
 With a specific time range, a ``resolution`` can be included to retrieve a series of data
 points for a metric. By default, 1 second resolution is used. Acceptable values are noted
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) >= 3610``, resolution will be 3600 seconds (effectively in hours); 
-- ``(endTime - startTime) >= 610``, resolution will be 60 seconds (effectively in minutes); 
-- otherwise, resolution will be in seconds.
+- ``(endTime - startTime) >= 3610 seconds``, resolution will be 1 hour; 
+- ``(endTime - startTime) >= 610 seconds``, resolution will be 1 minute; 
+- otherwise, resolution will be 1 second.
 
 
 .. list-table::
@@ -548,9 +550,9 @@ difference calculated between the start and end times:
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
-       both given as since the start of the Epoch
+       both given as since the start of the Epoch.
    * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
-     - The same as before, the count given as a number of seconds
+     - The same as before, the count given as a number of time intervals, each 1 second.
    * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
@@ -599,7 +601,7 @@ Examples of using a run-ID (reformatted to fit)::
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
     bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true
 
-The last example will return something similar to::
+The last example will return something similar to (where ``time=0`` means aggregated total number)::
 
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
