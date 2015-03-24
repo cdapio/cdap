@@ -17,7 +17,11 @@
         <div class="panel-collapse" bs-collapse-target>
           <div class="panel-body">
 
-            <div class="form-group">
+            <div class="text-center bg-danger" ng-show="error">
+              <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
+            </div>
+
+            <!-- <div class="form-group">
               <label class="col-sm-2 control-label">Type</label>
               <div class="col-sm-10">
                 <input type="text" class="form-control" disabled ng-model="type" placeholder="type">
@@ -29,7 +33,7 @@
               <div class="col-sm-10">
                 <input type="text" class="form-control" disabled ng-model="ID" placeholder="id">
               </div>
-            </div>
+            </div> -->
 
             <div class="form-group">
               <label class="col-sm-2 control-label">Display Name</label>
@@ -38,14 +42,14 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <!-- <div class="form-group">
               <label class="col-sm-2 control-label">Description</label>
               <div class="col-sm-10">
-                <textarea class="form-control" ng-model="displayName" placeholder="Display Name"> </textarea>
+                <textarea class="form-control" ng-model="description" placeholder="description"> </textarea>
               </div>
-            </div>
+            </div> -->
 
-            <div class="form-group">
+            <!-- <div class="form-group">
               <label class="col-sm-2 control-label">Properties</label>
               <div class="col-sm-10">
 
@@ -73,7 +77,7 @@
 
 
               </div>
-            </div>
+            </div> -->
 
           </div>
         </div>
@@ -82,6 +86,6 @@
   </form>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-default">Cancel</button>
-    <button class="btn btn-success">Create</button>
+    <button class="btn btn-default" ng-click="closeModal()">Cancel</button>
+    <button class="btn btn-success" ng-click="createStream()" ng-class="{disabled: emptyInput()}">Create</button>
 </div>
