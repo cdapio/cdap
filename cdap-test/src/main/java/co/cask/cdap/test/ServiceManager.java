@@ -72,7 +72,7 @@ public interface ServiceManager {
   URL getServiceURL(long timeout, TimeUnit timeoutUnit);
 
   /**
-   * Wait for the status of the Service with default retries of 5 and a timeout of 1 second between retry attempts.
+   * Wait for the status of the Service with 5 seconds timeout.
    * @param status true if waiting for started, false if waiting for stopped.
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */
