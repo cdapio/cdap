@@ -29,13 +29,13 @@ describe 'cdap::default' do
     end
   end
 
-  context 'using cdap 2.7.0' do
+  context 'using cdap 2.8.0' do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
-        node.override['cdap']['version'] = '2.7.0-1'
+        node.override['cdap']['version'] = '2.8.0-1'
         node.override['cdap']['cdap_env']['log_dir'] = '/test/logs/cdap'
         stub_command(/update-alternatives --display /).and_return(false)
         stub_command(/test -L /).and_return(false)
