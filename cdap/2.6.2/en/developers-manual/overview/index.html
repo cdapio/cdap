@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Architecture of the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Cask Data Application Platform Overview &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+        <link rel="stylesheet" href="../_static/hide-toc.css" type="text/css" />
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="next" title="Anatomy of a Big Data Application" href="anatomy.html" />
+    <link rel="prev" title="Building and Running CDAP Applications" href="../getting-started/building-apps.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="anatomy.html" title="Anatomy of a Big Data Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../getting-started/building-apps.html" title="Building and Running CDAP Applications"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cask-data-application-platform-overview">
+<span id="cdap-overview"></span><h1>Cask Data Application Platform Overview<a class="headerlink" href="#cask-data-application-platform-overview" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="anatomy.html"> Anatomy of a Big Data Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html"> Concepts and Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="virtualization.html"> Virtualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html"> Programming Interfaces</a></li>
+</ul>
+</div>
+<p><strong>Cask Data Application Platform (CDAP)</strong> is a developer-centric middleware for developing and running
+Big Data applications. Before you learn how to develop and operate applications, this chapter will
+explain the concepts and architecture of CDAP.</p>
+<ul class="simple">
+<li><a class="reference external" href="anatomy.html"><strong>Anatomy of a Big Data Application:</strong></a> Explains the <strong>areas of concern in developing a Big Data application,</strong> and how you use CDAP to address these.</li>
+<li><a class="reference external" href="concepts.html"><strong>Concepts and Components:</strong></a> Covers the <strong>components of CDAP and their interactions.</strong></li>
+<li><a class="reference external" href="virtualization.html"><strong>Virtualization:</strong></a> Describes how CDAP lets you <strong>virtualize your data and applications.</strong></li>
+<li><a class="reference external" href="interfaces.html"><strong>Programming Interfaces:</strong></a> CDAP interfaces can be described as either <strong>Developer or Clients interfaces.</strong></li>
+</ul>
+<p class="rubric">Where to Go Next</p>
+<p>Now that you&#8217;ve seen the concepts and the architecture of CDAP, you are ready to start writing an application.</p>
+<p>Here are some places to start:</p>
+<ul class="simple">
+<li>If you haven&#8217;t already, go through our <a class="reference internal" href="../getting-started/quick-start.html#quick-start"><em>Quick Start example</em></a>, which guides you
+through the development and the components of a complete web log analytics application;</li>
+<li>There are additional <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">examples,</em></a> <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">how-to guides,</em></a> and
+<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">tutorials</em></a> on building CDAP applications; and</li>
+<li><a class="reference internal" href="../building-blocks/index.html#building-blocks"><em>Building Blocks</em></a> describes in detail the components of CDAP, and how they interact.</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="anatomy.html"> Anatomy of a Big Data Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html"> Concepts and Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtualization.html"> Virtualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html"> Programming Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="../getting-started/building-apps.html"
+                        title="Previous Chapter">Building and Running CDAP Applications</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="anatomy.html"
+                        title="Next Chapter">Anatomy of a Big Data Application</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Building and Running CDAP Applications" href="../getting-started/building-apps.html" />Building and Running CDAP Applications</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Anatomy of a Big Data Application" href="anatomy.html" />Anatomy of a Big Data Application</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

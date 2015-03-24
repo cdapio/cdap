@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Preferences and Runtime Arguments &mdash; Cask Data Application Platform 2.8.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.8.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.8.0 Documentation" href="../index.html" />
+    <link rel="up" title="Operations" href="index.html" />
+    <link rel="next" title="Scaling Instances" href="scaling-instances.html" />
+    <link rel="prev" title="Metrics" href="metrics.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="scaling-instances.html" title="Scaling Instances"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="metrics.html" title="Metrics"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.8.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Operations</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="preferences-and-runtime-arguments">
+<span id="preferences"></span><h1>Preferences and Runtime Arguments<a class="headerlink" href="#preferences-and-runtime-arguments" title="Permalink to this headline">¶</a></h1>
+<p>Preferences provide the ability to save configuration information at various levels of the system, including the
+CDAP Instance, Namespace, Application, and Program levels. A configuration is represented by a map of string-string
+pairs. Preferences can be retrieved, saved, and deleted through a RESTful API and through the Command Line Interface.
+When programs are started, all the Preferences at the different levels are collapsed into a single map. Preferences
+are persisted across a restart of either Programs or CDAP itself.</p>
+<div class="section" id="order-of-preferences">
+<h2>Order of Preferences<a class="headerlink" href="#order-of-preferences" title="Permalink to this headline">¶</a></h2>
+<p>The overriding order of Preferences is (from lowest to highest precedence):</p>
+<p>CDAP Instance &lt; Namespace &lt; Application &lt; Program &lt; Runtime Arguments (passed in during start of the Program)</p>
+<p>Example: A configuration preference <tt class="docutils literal"><span class="pre">SAMPLE_KEY</span></tt> is set to 20 at the Namespace level and is set to 10 at the
+Program level. When the Program is started, the value set at the Program level overrides the value set at
+the Namespace level and thus the value for the preference <tt class="docutils literal"><span class="pre">SAMPLE_KEY</span></tt> will be 10.</p>
+<p>Programs such as Flows, MapReduce programs, Services, Workflows and Workers will receive the resolved preferences
+and can be accessed through the <tt class="docutils literal"><span class="pre">getRuntimeArguments</span></tt> method of the context:</p>
+<ul class="simple">
+<li>For Flows, Services, and Workers: preferences are available to the <tt class="docutils literal"><span class="pre">initialize</span></tt> method in the context.</li>
+<li>For MapReduce and Spark: preferences are available to the <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> and <tt class="docutils literal"><span class="pre">onFinish</span></tt> methods in the context.
+The <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> method can pass them to the Mappers and Reducers through the job configuration.</li>
+<li>When a Workflow receives preferences, it passes them to each MapReduce in the Workflow.</li>
+</ul>
+</div>
+<div class="section" id="preferences-example">
+<h2>Preferences Example<a class="headerlink" href="#preferences-example" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">initialize()</span></tt> method in this example accepts a configuration key <tt class="docutils literal"><span class="pre">disable.public</span></tt> for the
+<tt class="docutils literal"><span class="pre">TweetCollector</span></tt> Flowlet. For example, we can disable using the Public Twitter Source
+or provide Twitter API credentials:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetCollector</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">TweetCollector</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="n">OutputEmitter</span><span class="o">&lt;</span><span class="n">Tweet</span><span class="o">&gt;</span> <span class="n">output</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="n">CollectingThread</span> <span class="n">collector</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="n">BlockingQueue</span><span class="o">&lt;</span><span class="n">Tweet</span><span class="o">&gt;</span> <span class="n">queue</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="n">Metrics</span> <span class="n">metrics</span><span class="o">;</span>
+
+  <span class="kd">private</span> <span class="n">TwitterStream</span> <span class="n">twitterStream</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">FlowletContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">args</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">();</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;disable.public&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Public Twitter source turned off&quot;</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="k">if</span> <span class="o">(!</span><span class="n">args</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;oauth.consumerKey&quot;</span><span class="o">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">args</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;oauth.consumerSecret&quot;</span><span class="o">)</span>
+     <span class="o">||</span> <span class="o">!</span><span class="n">args</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;oauth.accessToken&quot;</span><span class="o">)</span> <span class="o">||</span> <span class="o">!</span><span class="n">args</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;oauth.accessTokenSecret&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="kd">final</span> <span class="n">String</span> <span class="n">CREDENTIALS_MISSING</span> <span class="o">=</span> <span class="s">&quot;Twitter API credentials not provided in runtime arguments.&quot;</span><span class="o">;</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="n">CREDENTIALS_MISSING</span><span class="o">);</span>
+<span class="c1">//      throw new IllegalArgumentException(CREDENTIALS_MISSING);</span>
+    <span class="o">}</span>
+
+    <span class="n">queue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;</span><span class="n">Tweet</span><span class="o">&gt;(</span><span class="mi">10000</span><span class="o">);</span>
+    <span class="n">collector</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CollectingThread</span><span class="o">();</span>
+    <span class="n">collector</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scoped-runtime-arguments-for-workflow">
+<h2>Scoped Runtime Arguments for Workflow<a class="headerlink" href="#scoped-runtime-arguments-for-workflow" title="Permalink to this headline">¶</a></h2>
+<p>When a Workflow is configured, you may want to pass specific runtime arguments to the different programs
+and datasets used inside the Workflow. To achieve this, you can prefix the runtime arguments with a <tt class="docutils literal"><span class="pre">&lt;scope&gt;</span></tt>.
+Currently supported scopes are <tt class="docutils literal"><span class="pre">dataset</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, and <tt class="docutils literal"><span class="pre">spark</span></tt>.</p>
+<p>Example: To set a runtime argument of <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt> for the MapReduce program <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> in a Workflow,
+the argument can be provided with a scope of <tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>. In this case, <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt>
+and the datasets used in <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> will receive two arguments: one with a scope of
+<tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>, and another with the scope extracted as <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt>.
+Programs other than <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> and datasets used in them will receive only the single argument
+<tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>.</p>
+<p>An argument can also be prefixed with <tt class="docutils literal"><span class="pre">&lt;scope&gt;.*</span></tt> to apply it to all programs or datasets in the Workflow as
+represented by the scope.</p>
+<p>Example: If the runtime argument is specified as <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt>, all MapReduce programs and
+datasets used in them will receive two arguments: one with the scope <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt> and another
+with the scope extracted as <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt>. Programs other than the MapReduce and the datasets used by them
+will receive only the single argument <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt>.</p>
+<p>Since the datasets can be used by programs running inside a Workflow, a scope for them can be nested inside a
+corresponding program scope.</p>
+<p>Example: Consider the dataset <tt class="docutils literal"><span class="pre">myTable</span></tt> used by multiple programs in a Workflow. The runtime argument
+<tt class="docutils literal"><span class="pre">cache.seconds=30</span></tt> for <tt class="docutils literal"><span class="pre">myTable</span></tt> can be provided as <tt class="docutils literal"><span class="pre">dataset.myTable.cache.seconds=30</span></tt>. In this case,
+the argument will be set for all programs that use <tt class="docutils literal"><span class="pre">myTable</span></tt>. In order to set the argument only for the MapReduce
+program <tt class="docutils literal"><span class="pre">myMR</span></tt>, the dataset argument can be nested inside the program scope as <tt class="docutils literal"><span class="pre">mapreduce.myMR.dataset.myTable.cache.seconds=30</span></tt>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.8.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Operations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="logging.html"> Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html"> Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Preferences and Runtime Arguments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#order-of-preferences">Order of Preferences</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#preferences-example">Preferences Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scoped-runtime-arguments-for-workflow">Scoped Runtime Arguments for Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scaling-instances.html"> Scaling Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resource-guarantees.html"> Resource Guarantees in YARN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-console.html"> CDAP Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logback.html"> Master Services Logback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tx-maintenance.html"> Transaction Service Maintenance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html"> Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="metrics.html"
+                        title="Previous Chapter">Metrics</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="scaling-instances.html"
+                        title="Next Chapter">Scaling Instances</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.8.0/cdap-docs-2.8.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Metrics" href="metrics.html" />Metrics</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Scaling Instances" href="scaling-instances.html" />Scaling Instances</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

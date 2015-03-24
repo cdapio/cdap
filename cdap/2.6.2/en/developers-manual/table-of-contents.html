@@ -1,0 +1,417 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP Developers’ Manual Table of Contents &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="index.html" />
+    <link rel="next" title="CDAP Developers’ Manual" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="index.html" title="CDAP Developers’ Manual"
+             accesskey="N">Next</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="#">CDAP Developers’ Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-developers-manual-table-of-contents">
+<h1>CDAP Developers’ Manual Table of Contents<a class="headerlink" href="#cdap-developers-manual-table-of-contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/index.html"> Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/standalone/index.html">CDAP SDK</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/standalone/zip.html">Binary Zip File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/standalone/virtual-machine.html">Virtual Machine Image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/standalone/docker.html">Docker Image</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/quick-start.html">Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#download-install-and-start-cdap">Download, Install and Start CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#your-first-cdap-application">Your First CDAP Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#downloading-the-application">Downloading the Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#deploying-the-application">Deploying the Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#starting-realtime-processing">Starting Realtime Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#injecting-data">Injecting Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#inspecting-the-injected-data">Inspecting the Injected Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#monitoring-with-the-cdap-console">Monitoring with the CDAP Console</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#retrieving-the-results-of-processing">Retrieving the Results of Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#processing-in-batch">Processing in Batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/quick-start.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/dev-env.html">Development Environment Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/dev-env.html#creating-an-application">Creating an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/dev-env.html#using-intellij">Using IntelliJ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/dev-env.html#using-eclipse">Using Eclipse</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/start-stop-cdap.html">Starting and Stopping CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/building-apps.html">Building and Running Applications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#building-an-example-application">Building an Example Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#starting-cdap">Starting CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#deploying-an-application">Deploying an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#starting-an-application">Starting an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#stopping-an-application">Stopping an Application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started/building-apps.html#removing-an-application">Removing an Application</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/index.html"> Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/anatomy.html"> Anatomy of a Big Data Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/concepts.html"> Concepts and Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/virtualization.html"> Virtualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview/virtualization.html#data-virtualization">Data Virtualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview/virtualization.html#application-virtualization">Application Virtualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview/virtualization.html#developer-focus">Developer Focus</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview/interfaces.html"> Programming Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building-blocks/index.html"> Building Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/datasets/index.html"> Datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/datasets/table.html"> Table API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/datasets/fileset.html"> File Sets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/datasets/system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/datasets/datasets-mapreduce.html"> Datasets and MapReduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/flows-flowlets/index.html"> Flows and Flowlets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/flowlets.html"> Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/input-context.html"> Input Context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/type-projection.html"> Type Projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/stream-event.html"> Stream Event</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/tick-methods.html"> Tick Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/connecting-flowlets.html"> Connecting Flowlets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/batch-execution.html"> Batch Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/flowlets-instances.html"> Flowlets and Instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/flows-flowlets/partitioning-strategies.html"> Partitioning Strategies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/mapreduce-programs.html"> MapReduce Programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/mapreduce-programs.html#mapreduce-and-datasets">MapReduce and Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/spark-programs.html"> Spark Programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/spark-programs.html#cdap-sparkcontext">CDAP SparkContext</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/spark-programs.html#spark-and-datasets">Spark and Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/spark-programs.html#spark-and-streams">Spark and Streams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/spark-programs.html#spark-and-services">Spark and Services</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/spark-programs.html#spark-metrics">Spark Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/procedures.html"> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/services.html"> Services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/services.html#service-handlers">Service Handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/services.html#about-path-parameters">About Path Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/services.html#service-discovery">Service Discovery</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="building-blocks/transaction-system.html"> Transaction System</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/transaction-system.html#the-need-for-transactions">The Need for Transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/transaction-system.html#occ-optimistic-concurrency-control">OCC: Optimistic Concurrency Control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/transaction-system.html#the-need-for-disabling-transactions">The Need for Disabling Transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/transaction-system.html#disabling-transactions">Disabling Transactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="building-blocks/transaction-system.html#transactions-in-mapreduce">Transactions in MapReduce</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="security/index.html"> Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="security/client-authentication.html">Client Authentication</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security/client-authentication.html#cdap-authentication-process">CDAP Authentication Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/client-authentication.html#supported-authentication-mechanisms">Supported Authentication Mechanisms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/client-authentication.html#obtaining-an-access-token">Obtaining an Access Token</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/client-authentication.html#authentication-with-restful-endpoints">Authentication with RESTful Endpoints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security/cdap-authentication-clients-java.html">CDAP Authentication Client for Java</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#custom-authentication-mechanism">Custom Authentication Mechanism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#build">Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-java.html#interactive-applications">Interactive Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security/cdap-authentication-clients-python.html">CDAP Authentication Client for Python</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#custom-authentication-mechanism">Custom Authentication Mechanism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#interactive-applications">Interactive Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security/cdap-authentication-clients-python.html#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security/custom-authentication.html">Custom Authentication</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing/index.html"> Testing and Debugging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing/testing.html"> Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing/testing.html#strategies-in-testing-applications-test-framework">Strategies in Testing Applications: Test Framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/testing.html#strategies-in-testing-flows">Strategies in Testing Flows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/testing.html#strategies-in-testing-mapreduce-jobs">Strategies in Testing MapReduce Jobs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/testing.html#strategies-in-testing-spark-programs">Strategies in Testing Spark Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/testing.html#validating-test-data-with-sql">Validating Test Data with SQL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing/debugging.html"> Debugging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing/debugging.html#debugging-an-application-in-standalone-cdap">Debugging an Application in Standalone CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/debugging.html#debugging-an-application-in-distributed-cdap">Debugging an Application in Distributed CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/debugging.html#attaching-a-debugger">Attaching a Debugger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing/debugging.html#debugging-the-transaction-manager-advanced-use">Debugging the Transaction Manager (Advanced Use)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ingesting-tools/index.html"> Ingesting Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-java.html">CDAP Stream Client for Java</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-java.html#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-java.html#build">Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-java.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-java.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-python.html">CDAP Stream Client for Python</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-python.html#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-python.html#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-python.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-stream-clients-python.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html">CDAP File DropZone</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html#uploading-a-file-directly">Uploading A File Directly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html#authentication-client">Authentication Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-drop-zone.html#example-configuration">Example Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html">CDAP File Tailer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html#example-configuration">Example Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html#authentication-client">Authentication Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-file-tailer.html#additional-notes">Additional Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ingesting-tools/cdap-flume.html">CDAP Flume</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-flume.html#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-flume.html#authentication-client">Authentication Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ingesting-tools/cdap-flume.html#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/index.html"> Advanced Topics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced/data-exploration.html"> Data Exploration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#defining-the-record-schema">Defining the Record Schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#limitations">Limitations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#parameterized-types">Parameterized Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#complex-types">Complex Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#scanning-records">Scanning Records</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#writing-to-datasets-with-sql">Writing to Datasets with SQL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#connecting-to-cdap-datasets-using-cdap-jdbc-driver">Connecting to CDAP Datasets using CDAP JDBC driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#accessing-cdap-datasets-through-business-intelligence-tools">Accessing CDAP Datasets through Business Intelligence Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/data-exploration.html#formulating-queries">Formulating Queries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/best-practices.html"> Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced/best-practices.html#initializing-instance-fields">Initializing Instance Fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced/best-practices.html#scanning-over-tables-with-byte-keys">Scanning Over Tables with <tt class="docutils literal"><span class="pre">byte[]</span></tt> Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/application-logback.html"> Application Logback</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="#">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Next Chapter">CDAP Developers’ Manual</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Developers’ Manual" href="index.html" />CDAP Developers’ Manual</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="An example Cask Data Application Platform application" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Web Analytics Application &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="How-To Guides" href="../how-to-guides/index.html" />
+    <link rel="prev" title="Spark Page Rank Example" href="spark-page-rank.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../how-to-guides/index.html" title="How-To Guides"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="spark-page-rank.html" title="Spark Page Rank Example"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="web-analytics-application">
+<span id="examples-web-analytics"></span><h1>Web Analytics Application<a class="headerlink" href="#web-analytics-application" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) Tutorial demonstrating how to perform analytics
+using access logs.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This tutorial provides the basic steps for the development of a data application using the
+Cask Data Application Platform (CDAP). We will use a Web Analytics Application to
+demonstrate how to develop with CDAP and how CDAP helps when building data applications
+that run in the Hadoop ecosystem.</p>
+<p>Web analytics applications are commonly used to generate statistics and to provide insights
+about web usage through the analysis of web traffic. A typical web analytics application
+consists of three components:</p>
+<ul class="simple">
+<li><strong>Data Collection:</strong> Collects and persists web logs for further processing;</li>
+<li><strong>Data Analysis:</strong> Analyses the collected data and produces different measurements; and</li>
+<li><strong>Insights Discovery:</strong> Extracts insights from the analysis results.</li>
+</ul>
+<p>Additionally, it&#8217;s important that the application be scalable, fault tolerant, and
+easy-to-operate. It needs to support ever-increasing amounts of data as well as be flexible
+in its design to accomodate new application requirements.</p>
+<p>In this tutorial, we&#8217;ll show how easy it is to build a web analytics application with CDAP.
+In particular, we&#8217;ll use these CDAP components:</p>
+<ul class="simple">
+<li>A <strong>Stream</strong> for web server log collection and persistence to the file system;</li>
+<li>A <strong>Flow</strong> for realtime data analysis over collected logs; and</li>
+<li><strong>SQL Queries</strong> to explore and develop insights from the data.</li>
+</ul>
+</div>
+<div class="section" id="how-it-works">
+<h2>How It Works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we’ll go through the details about how to develop a Web Analytics Application using CDAP.</p>
+<div class="section" id="data-collection-with-a-stream">
+<h3>Data Collection with a Stream<a class="headerlink" href="#data-collection-with-a-stream" title="Permalink to this headline">¶</a></h3>
+<p>The sole data source that the Web Analytics Application uses is web server logs. Log events are ingested to
+a <strong>Stream</strong> called <em>log</em> using the RESTful API provided by CDAP.</p>
+<p>Once an event is ingested into a Stream, it is persisted and available for processing.</p>
+</div>
+<div class="section" id="data-analysis-using-a-flow">
+<h3>Data Analysis using a Flow<a class="headerlink" href="#data-analysis-using-a-flow" title="Permalink to this headline">¶</a></h3>
+<p>The Web Analytics Application uses a <strong>Flow</strong>, the realtime data processor in CDAP,
+to produce realtime analytics from the web server logs. A <strong>Flow</strong> contains one or more
+<strong>Flowlets</strong> that are wired together into a directed acyclic graph or DAG.</p>
+<p>To keep the example simple, we only compute the total visit count for each IP visiting the site.
+We use a Flowlet of type <tt class="docutils literal"><span class="pre">UniqueVisitor</span></tt> to keep track of the unique visit counts from each client.
+It is done in three steps:</p>
+<ol class="arabic simple">
+<li>Read a log event from the <em>log</em> Stream;</li>
+<li>Parse the client IP from the log event; and</li>
+<li>Increment the visit count of that client IP by 1 and persist the change.</li>
+</ol>
+<p>The result of the increment is persisted to a custom <strong>Dataset</strong> <tt class="docutils literal"><span class="pre">UniqueVisitCount</span></tt>.</p>
+<p>Here is what the <tt class="docutils literal"><span class="pre">UniqueVisitor</span></tt> Flowlet looks like:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueVisitor</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+
+  <span class="c1">// Request an instance of UniqueVisitCount Dataset</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;UniqueVisitCount&quot;</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">UniqueVisitCount</span> <span class="n">table</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">streamEvent</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Decode the log line as String</span>
+    <span class="n">String</span> <span class="n">event</span> <span class="o">=</span> <span class="n">Charset</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;UTF-8&quot;</span><span class="o">).</span><span class="na">decode</span><span class="o">(</span><span class="n">streamEvent</span><span class="o">.</span><span class="na">getBody</span><span class="o">()).</span><span class="na">toString</span><span class="o">();</span>
+
+    <span class="c1">// The first entry in the log event is the IP address</span>
+    <span class="n">String</span> <span class="n">ip</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">event</span><span class="o">.</span><span class="na">indexOf</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">));</span>
+
+    <span class="c1">// Increments the visit count of a given IP by 1</span>
+    <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">ip</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">UniqueVisitCount</span></tt> Dataset provides an abstraction of the data logic for incrementing the visit count for a
+given IP. It exposes an <tt class="docutils literal"><span class="pre">increment</span></tt> method, implemented as:</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">increment</span><span class="o">(</span><span class="n">String</span> <span class="n">ip</span><span class="o">,</span> <span class="kt">long</span> <span class="n">amount</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Delegates to the system KeyValueTable for actual storage operation</span>
+    <span class="n">keyValueTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">ip</span><span class="o">),</span> <span class="n">amount</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>The complete source code of the <tt class="docutils literal"><span class="pre">UniqueVisitCount</span></tt> class can be found in the example in
+<tt class="docutils literal"><span class="pre">src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java</span></tt></p>
+<p>To connect the <tt class="docutils literal"><span class="pre">UniqueVisitor</span></tt> Flowlet to read from the <em>log</em> Stream, we define a <tt class="docutils literal"><span class="pre">WebAnalyticsFlow</span></tt> class
+that specifies the Flow:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WebAnalyticsFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">FlowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">FlowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">&quot;WebAnalyticsFlow&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Web Analytics Flow&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;UniqueVisitor&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">UniqueVisitor</span><span class="o">())</span>  <span class="c1">// Only one Flowlet in this Flow</span>
+      <span class="o">.</span><span class="na">connect</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">fromStream</span><span class="o">(</span><span class="s">&quot;log&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;UniqueVisitor&quot;</span><span class="o">)</span>      <span class="c1">// Feed events written to the &quot;log&quot; Stream to UniqueVisitor</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Lastly, we bundle up the Dataset and the Flow we&#8217;ve defined together to form an <tt class="docutils literal"><span class="pre">Application</span></tt> that can be deployed
+and executed in CDAP:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WebAnalytics</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;log&quot;</span><span class="o">));</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">WebAnalyticsFlow</span><span class="o">());</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;UniqueVisitCount&quot;</span><span class="o">,</span> <span class="n">UniqueVisitCount</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;WebAnalytics&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Web Analytics Application&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>) or use the pre-built JAR file included in the CDAP SDK.</li>
+<li>Start CDAP, deploy and start the application as described below in
+<a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
+Make sure you start the Flow as described below.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the
+example code that is running on it as an &#8220;Application&#8221;.</p>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file (<tt class="docutils literal"><span class="pre">example/target/&lt;example&gt;-&lt;version&gt;.jar</span></tt>) onto the CDAP Console
+running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface (CLI):</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface</em></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
+<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce Jobs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Java Client API</em></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-flow">
+<h3>Starting the Flow<a class="headerlink" href="#starting-the-flow" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <tt class="docutils literal"><span class="pre">WebAnalyticsFlow</span></tt> in the <em>Process</em> page to get to the
+Flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WebAnalytics.WebAnalyticsFlow</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WebAnalytics.WebAnalyticsFlow</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="injecting-log-events">
+<h3>Injecting Log Events<a class="headerlink" href="#injecting-log-events" title="Permalink to this headline">¶</a></h3>
+<p>To inject a log event, you can use the <tt class="docutils literal"><span class="pre">curl</span></tt> command:</p>
+<div class="highlight-console"><div class="highlight"><pre>$ curl -d &#39;192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] &quot;GET /products HTTP/1.1&quot; 500 182 \
+     &quot;http://www.example.org&quot; &quot;Mozilla/5.0&quot;&#39; http://localhost:10000/v2/streams/log
+</pre></div>
+</div>
+<p><strong>Note:</strong> A version of <tt class="docutils literal"><span class="pre">curl</span></tt> that works with Windows is included in the CDAP Standalone
+SDK in <tt class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></tt></p>
+<p>This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
+<tt class="docutils literal"><span class="pre">localhost</span></tt> and listening on port <tt class="docutils literal"><span class="pre">10000</span></tt>.</p>
+<p>The Application includes sample logs, located in <tt class="docutils literal"><span class="pre">test/resources/access.log</span></tt> that you can inject by running
+a provided script:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/inject-data.sh</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\inject-data.bat</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="query-the-unique-visitor-page-views">
+<h3>Query the Unique Visitor Page Views<a class="headerlink" href="#query-the-unique-visitor-page-views" title="Permalink to this headline">¶</a></h3>
+<p>Once the log data has been processed by the <tt class="docutils literal"><span class="pre">WebAnalyticsFlow</span></tt>, we can explore the
+Dataset <tt class="docutils literal"><span class="pre">UniqueVisitCount</span></tt> with a SQL query. You can easily execute SQL queries against
+Datasets using the CDAP Console by simply selecting <strong>Store</strong> on the left sidebar, then
+clicking the <strong>Explore</strong> button on the right, and then selecting the <strong>UniqueVisitCount</strong>
+Dataset:</p>
+<a class="reference internal image-reference" href="../_images/wa_explore_store.png"><img alt="../_images/wa_explore_store.png" src="../_images/wa_explore_store.png" style="width: 8in;" /></a>
+<p>You can then run SQL queries against the Dataset. Let&#8217;s try to find the top five IP
+addresses that visited the site by running a SQL query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">SELECT * FROM cdap_user_uniquevisitcount ORDER BY value DESC LIMIT 5</span>
+</pre></div>
+</div>
+<p>You can copy and paste the above SQL into the <strong>Query</strong> box as shown below (replacing the
+default query that is there) and click the <strong>Execute</strong> button to run it. It may take a
+while for the query to finish.</p>
+<a class="reference internal image-reference" href="../_images/wa_explore_query.png"><img alt="../_images/wa_explore_query.png" src="../_images/wa_explore_query.png" style="width: 8in;" /></a>
+<p>Once it&#8217;s finished, click on the disclosure triangle on the left side of the <strong>Results</strong>
+table line to expand the display and see the query results:</p>
+<a class="reference internal image-reference" href="../_images/wa_explore_result.png"><img alt="../_images/wa_explore_result.png" src="../_images/wa_explore_result.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Flow</strong></p>
+<ul>
+<li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <em>WebAnalyticsFlow</em> in the <em>Process</em> page to get to the
+Flow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WebAnalytics.WebAnalyticsFlow</span></tt></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WebAnalytics.WebAnalyticsFlow</span></tt></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Web Analytics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-it-works">How It Works</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="spark-page-rank.html"
+                        title="Previous Chapter">Spark Page Rank Example</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../how-to-guides/index.html"
+                        title="Next Chapter">How-To Guides</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Spark Page Rank Example" href="spark-page-rank.html" />Spark Page Rank Example</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="How-To Guides" href="../how-to-guides/index.html" />How-To Guides</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Procedures &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Services" href="services.html" />
+    <link rel="prev" title="Spark Programs (Beta, Standalone CDAP only)" href="spark-programs.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="services.html" title="Services"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="spark-programs.html" title="Spark Programs (Beta, Standalone CDAP only)"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="procedures">
+<span id="id1"></span><h1>Procedures<a class="headerlink" href="#procedures" title="Permalink to this headline">¶</a></h1>
+<div class="topic">
+<p class="topic-title first"><strong>Note: Procedures Deprecated</strong></p>
+<p>As of <em>CDAP v2.6.0</em>, <em>Procedures</em> have been deprecated, pending removal in a later
+version. Replace all use of <em>Procedures</em> with <em>Services</em>. <em>Services</em> will have
+feature-parity with <em>Procedures</em> as of the version in which Procedures are removed.</p>
+</div>
+<p>To query CDAP and its Datasets and retrieve results, you can use Procedures.</p>
+<p>Procedures allow you to make synchronous calls into CDAP from an external system
+and perform server-side processing on-demand, similar to a stored procedure in a
+traditional database.</p>
+<p>Procedures are typically used to post-process data at query time. This
+post-processing can include filtering, aggregating, or joins over
+multiple Datasets—in fact, a Procedure can perform all the same
+operations as a Flowlet with the same consistency and durability
+guarantees. They are deployed into the same pool of application
+containers as Flows, and you can run multiple instances to increase the
+throughput of requests.</p>
+<p>A Procedure implements and exposes a very simple API: a method name
+(String) and arguments (map of Strings). This implementation is then
+bound to a REST endpoint and can be called from any external system.</p>
+<p>To create a Procedure you implement the <tt class="docutils literal"><span class="pre">Procedure</span></tt> interface, or more
+conveniently, extend the <tt class="docutils literal"><span class="pre">AbstractProcedure</span></tt> class.</p>
+<p>A Procedure is configured and initialized similarly to a Flowlet, but
+instead of a process method you’ll define a handler method. Upon
+external call, the handler method receives the request and sends a
+response.</p>
+<p>The initialize method is called when the Procedure handler is created.
+It is not created until the first request is received for it.</p>
+<p>The most generic way to send a response is to obtain a
+<tt class="docutils literal"><span class="pre">Writer</span></tt> and stream out the response as bytes. Make sure to close the
+<tt class="docutils literal"><span class="pre">Writer</span></tt> when you are done:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">static</span> <span class="n">co</span><span class="o">.</span><span class="na">cask</span><span class="o">.</span><span class="na">cdap</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">procedure</span><span class="o">.</span><span class="na">ProcedureResponse</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SUCCESS</span><span class="o">;</span>
+<span class="o">...</span>
+<span class="kd">class</span> <span class="nc">HelloWorld</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
+
+  <span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">)</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">wave</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span>
+                   <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">hello</span> <span class="o">=</span> <span class="s">&quot;Hello &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;who&quot;</span><span class="o">);</span>
+    <span class="n">ProcedureResponse</span><span class="o">.</span><span class="na">Writer</span> <span class="n">writer</span> <span class="o">=</span>
+      <span class="n">responder</span><span class="o">.</span><span class="na">stream</span><span class="o">(</span><span class="k">new</span> <span class="n">ProcedureResponse</span><span class="o">(</span><span class="n">SUCCESS</span><span class="o">));</span>
+    <span class="n">writer</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">ByteBuffer</span><span class="o">.</span><span class="na">wrap</span><span class="o">(</span><span class="n">hello</span><span class="o">.</span><span class="na">getBytes</span><span class="o">())).</span><span class="na">close</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This uses the most generic way to create the response, which allows you
+to send arbitrary byte content as the response body. In many cases, you
+will actually respond with JSON. A CDAP
+<tt class="docutils literal"><span class="pre">ProcedureResponder</span></tt> has convenience methods for returning JSON maps:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Return a JSON map</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TreeMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;();</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">,</span> <span class="n">totalWords</span><span class="o">);</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;uniqueWords&quot;</span><span class="o">,</span> <span class="n">uniqueWords</span><span class="o">);</span>
+<span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;averageLength&quot;</span><span class="o">,</span> <span class="n">averageLength</span><span class="o">);</span>
+<span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">results</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>There is also a convenience method to respond with an error message:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Handle</span><span class="o">(</span><span class="s">&quot;getCount&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getCount</span><span class="o">(</span><span class="n">ProcedureRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">ProcedureResponder</span> <span class="n">responder</span><span class="o">)</span>
+                     <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+  <span class="n">String</span> <span class="n">word</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="na">getArgument</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">word</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="n">Code</span><span class="o">.</span><span class="na">CLIENT_ERROR</span><span class="o">,</span>
+                    <span class="s">&quot;Method &#39;getCount&#39; requires argument &#39;word&#39;&quot;</span><span class="o">);</span>
+    <span class="k">return</span><span class="o">;</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p class="rubric">Examples of Using Procedures</p>
+<p>Procedures are included in many CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">applications</em></a>,
+<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">tutorials</em></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">guides</em></a> and <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">examples</em></a>.</p>
+<ul class="simple">
+<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Hello World</em></a>, demonstrates using a
+procedure to <strong>retrieve a name from a dataset.</strong></li>
+<li>For <strong>additional procedure examples,</strong> see the
+<a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase</em></a>,
+<a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Spark K-Means</em></a>, and
+<a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Spark Page Rank</em></a>
+examples.</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Virtualizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="spark-programs.html"
+                        title="Previous Chapter">Spark Programs <em>(Beta, Standalone CDAP only)</em></a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="services.html"
+                        title="Next Chapter">Services</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Spark Programs (Beta, Standalone CDAP only)" href="spark-programs.html" />Spark Programs <em>(Beta, Standalone CDAP only)</em></a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Services" href="services.html" />Services</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

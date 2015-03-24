@@ -1,0 +1,458 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Testing a CDAP Application &mdash; Cask Data Application Platform 2.6.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.2 Documentation" href="../index.html" />
+    <link rel="up" title="Testing and Debugging" href="index.html" />
+    <link rel="next" title="Debugging a CDAP Application" href="debugging.html" />
+    <link rel="prev" title="Testing and Debugging" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="debugging.html" title="Debugging a CDAP Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Testing and Debugging"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Testing and Debugging</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="testing-a-cdap-application">
+<span id="test-cdap"></span><h1>Testing a CDAP Application<a class="headerlink" href="#testing-a-cdap-application" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="strategies-in-testing-applications-test-framework">
+<span id="test-framework"></span><h2>Strategies in Testing Applications: Test Framework<a class="headerlink" href="#strategies-in-testing-applications-test-framework" title="Permalink to this headline">¶</a></h2>
+<p>CDAP comes with a convenient way to unit test your Applications with CDAP’s Test Framework.
+The base for these tests is <tt class="docutils literal"><span class="pre">TestBase</span></tt>, which is packaged
+separately from the API in its own artifact because it depends on the
+CDAP’s runtime classes. You can include it in your test dependencies
+in one of two ways:</p>
+<ul>
+<li><p class="first">include all JAR files in the <tt class="docutils literal"><span class="pre">lib</span></tt> directory of the CDAP SDK installation,
+or</p>
+</li>
+<li><p class="first">include the <tt class="docutils literal"><span class="pre">cdap-unit-test</span></tt> artifact in your Maven test dependencies
+(as shown in the <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file of the <a class="reference internal" href="../getting-started/standalone/index.html#standalone-index"><em>CDAP SDK examples</em></a>):</p>
+<div class="highlight-xml"><div class="highlight"><pre>. . .
+<span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>co.cask.cdap<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>cdap-unit-test<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>${project.version}<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+. . .
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Note that for building an application, you only need to include the CDAP API in your
+dependencies. For testing, however, you need the CDAP run-time. To build your test case,
+extend the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class.</p>
+<div class="section" id="running-tests-from-an-ide">
+<h3>Running Tests from an IDE<a class="headerlink" href="#running-tests-from-an-ide" title="Permalink to this headline">¶</a></h3>
+<p>When running tests from an IDE such IntelliJ or Eclipse, set the memory setting for the
+<tt class="docutils literal"><span class="pre">JUnit</span></tt> tests that are run from the IDE to an increased amount of memory. We suggest
+starting with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">-Xmx1024m -XX:MaxPermSize=128m</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="strategies-in-testing-flows">
+<h2>Strategies in Testing Flows<a class="headerlink" href="#strategies-in-testing-flows" title="Permalink to this headline">¶</a></h2>
+<p>Let’s write a test case for the <em>WordCount</em> example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testWordCount</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The first thing we do in this test is deploy the application,
+then we’ll start the Flow and the Procedure:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy the Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">WordCount</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="c1">// Start the Flow and the Procedure</span>
+<span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;WordCounter&quot;</span><span class="o">);</span>
+<span class="n">ProcedureManager</span> <span class="n">procManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startProcedure</span><span class="o">(</span><span class="s">&quot;RetrieveCount&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Now that the Flow is running, we can send some events to the Stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Send a few events to the Stream</span>
+<span class="n">StreamWriter</span> <span class="n">writer</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">getStreamWriter</span><span class="o">(</span><span class="s">&quot;wordStream&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;hello world&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;a wonderful world&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;the world says hello&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>To wait for all events to be processed, we can get a metrics observer
+for the last Flowlet in the pipeline (the &#8220;word associator&#8221;) and wait for
+its processed count to either reach 3 or time out after 5 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Wait for the events to be processed, or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+  <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="s">&quot;WordCounter&quot;</span><span class="o">,</span> <span class="s">&quot;associator&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Now we can start verifying that the processing was correct by obtaining
+a client for the Procedure, and then submitting a query for the global
+statistics:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Call the Procedure</span>
+<span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Query global statistics</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;getStats&quot;</span><span class="o">,</span> <span class="n">Collections</span><span class="o">.</span><span class="na">EMPTY_MAP</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>If the query fails for any reason this method would throw an exception.
+In case of success, the response is a JSON string. We must deserialize
+the JSON string to verify the results:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">stringMapType</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;9&quot;</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;6&quot;</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;uniqueWords&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(((</span><span class="kt">double</span><span class="o">)</span><span class="mi">42</span><span class="o">)/</span><span class="mi">9</span><span class="o">,</span>
+  <span class="o">(</span><span class="kt">double</span><span class="o">)</span><span class="n">Double</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;averageLength&quot;</span><span class="o">)),</span> <span class="mf">0.001</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Then we ask for the statistics of one of the words in the test events.
+The verification is a little more complex, because we have a nested map
+as a response, and the value types in the top-level map are not uniform:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Verify some statistics for one of the words</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;getCount&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span><span class="s">&quot;world&quot;</span><span class="o">));</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">omap</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">objectMapType</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;world&quot;</span><span class="o">,</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mf">3.0</span><span class="o">,</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">));</span>
+
+<span class="c1">// The associations are a map within the map</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">assocs</span> <span class="o">=</span> <span class="o">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;)</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;assocs&quot;</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mf">2.0</span><span class="o">,</span> <span class="o">(</span><span class="kt">double</span><span class="o">)</span><span class="n">assocs</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">),</span> <span class="mf">0.000001</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">assocs</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="strategies-in-testing-mapreduce-jobs">
+<h2>Strategies in Testing MapReduce Jobs<a class="headerlink" href="#strategies-in-testing-mapreduce-jobs" title="Permalink to this headline">¶</a></h2>
+<p>In a fashion similar to <a class="reference internal" href="#strategies-in-testing-flows">Strategies in Testing Flows</a>, we can write
+unit testing for MapReduce jobs. Let&#8217;s write a test case for an
+application that uses MapReduce. Complete source code and test can be
+found in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Purchase Example</em></a> included in the CDAP SDK.</p>
+<p>The <tt class="docutils literal"><span class="pre">PurchaseTest</span></tt> class should extend from
+<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">PurchaseApp</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
+method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">PurchaseApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The MapReduce job reads from the <tt class="docutils literal"><span class="pre">purchases</span></tt> Dataset. As a first
+step, the data to the <tt class="docutils literal"><span class="pre">purchases</span></tt> should be populated by running
+the <tt class="docutils literal"><span class="pre">PurchaseFlow</span></tt> and sending the data to the <tt class="docutils literal"><span class="pre">purchaseStream</span></tt>
+Stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;PurchaseFlow&quot;</span><span class="o">);</span>
+<span class="c1">// Send data to the Stream</span>
+<span class="n">sendData</span><span class="o">(</span><span class="n">appManager</span><span class="o">,</span> <span class="n">now</span><span class="o">);</span>
+
+<span class="c1">// Wait for the last Flowlet to process 3 events or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+    <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;PurchaseApp&quot;</span><span class="o">,</span> <span class="s">&quot;PurchaseFlow&quot;</span><span class="o">,</span> <span class="s">&quot;collector&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Start the MapReduce job and wait for a maximum of 60 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Start the MapReduce job.</span>
+<span class="n">MapReduceManager</span> <span class="n">mrManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startMapReduce</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">);</span>
+<span class="n">mrManager</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">(</span><span class="mi">60</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>We can start verifying that the MapReduce job was run correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the counts:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Verify the query.</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;history&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;customer&quot;</span><span class="o">,</span> <span class="s">&quot;joe&quot;</span><span class="o">));</span>
+
+<span class="c1">// Deserialize the JSON string.</span>
+<span class="n">PurchaseHistory</span> <span class="n">result</span> <span class="o">=</span> <span class="n">GSON</span><span class="o">.</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">PurchaseHistory</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">getPurchases</span><span class="o">().</span><span class="na">size</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>The assertion will verify that the correct result was received.</p>
+</div>
+<div class="section" id="strategies-in-testing-spark-programs">
+<h2>Strategies in Testing Spark Programs<a class="headerlink" href="#strategies-in-testing-spark-programs" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s write a test case for an application that uses a Spark program.
+Complete source code for this test can be found at <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.6.2)"><em class="xref std std-ref">Spark PageRank</em></a>.</p>
+<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> class should extend from
+<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkPageRankTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
+method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The Spark program reads from the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> Dataset. As a first
+step, data in the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> should be populated by running
+the <tt class="docutils literal"><span class="pre">BackLinkFlow</span></tt> and sending the data to the Stream <tt class="docutils literal"><span class="pre">backlinkURLStream</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;BackLinkFlow&quot;</span><span class="o">);</span>
+<span class="c1">// Send data to the Stream</span>
+<span class="n">sendData</span><span class="o">(</span><span class="n">appManager</span><span class="o">);</span>
+
+<span class="c1">// Wait for the last Flowlet to process 4 events or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+    <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;SparkPageRank&quot;</span><span class="o">,</span> <span class="s">&quot;BackLinkFlow&quot;</span><span class="o">,</span> <span class="s">&quot;reader&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">4</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Start the Spark program and wait for a maximum of 60 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Start the Spark program.</span>
+<span class="n">SparkManager</span> <span class="n">sparkManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startSpark</span><span class="o">(</span><span class="s">&quot;SparkPageRankProgram&quot;</span><span class="o">);</span>
+<span class="n">sparkManager</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">(</span><span class="mi">60</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>We verify that the Spark program ran correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the ranks:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Verify the query.</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;rank&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;url&quot;</span><span class="o">,</span> <span class="s">&quot;http://example.com/page1&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;1.3690036520596678&quot;</span><span class="o">,</span> <span class="n">response</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The assertion will verify that the correct result was received.</p>
+</div>
+<div class="section" id="validating-test-data-with-sql">
+<h2>Validating Test Data with SQL<a class="headerlink" href="#validating-test-data-with-sql" title="Permalink to this headline">¶</a></h2>
+<p>Often the easiest way to verify that a test produced the right data is to run a SQL query—if the data sets involved
+in the test case are record-scannable as described in <a class="reference internal" href="../advanced/data-exploration.html#data-exploration"><em>Data Exploration</em></a>.
+This can be done using a JDBC connection obtained from the test base:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Obtain a JDBC connection</span>
+<span class="n">Connection</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">getQueryClient</span><span class="o">();</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="c1">// Run a query over the dataset</span>
+  <span class="n">results</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="na">prepareStatement</span><span class="o">(</span><span class="s">&quot;SELECT key FROM mytable WHERE value = &#39;1&#39;&quot;</span><span class="o">).</span><span class="na">executeQuery</span><span class="o">();</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;a&quot;</span><span class="o">,</span> <span class="n">results</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;c&quot;</span><span class="o">,</span> <span class="n">results</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertFalse</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+  <span class="n">results</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+  <span class="n">connection</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
+or prepare statements and execute queries, then iterate over the results set and validate its correctness.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Testing and Debugging</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-applications-test-framework">Strategies in Testing Applications: Test Framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-flows">Strategies in Testing Flows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-mapreduce-jobs">Strategies in Testing MapReduce Jobs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-spark-programs">Strategies in Testing Spark Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validating-test-data-with-sql">Validating Test Data with SQL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="debugging.html"> Debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Testing and Debugging</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="debugging.html"
+                        title="Next Chapter">Debugging a CDAP Application</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.2/cdap-docs-2.6.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Testing and Debugging" href="index.html" />Testing and Debugging</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Debugging a CDAP Application" href="debugging.html" />Debugging a CDAP Application</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
