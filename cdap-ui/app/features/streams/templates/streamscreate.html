@@ -3,35 +3,16 @@
 </div>
 <div class="modal-body">
   <form class="form-horizontal">
-    <section class="panel-group" bs-collapse>
-      <div class="panel panel-default">
-        <div class="panel-heading" bs-collapse-toggle>
-          <h4 class="panel-title">
-            <span
-              ng-class="{'fa-chevron-right': activePanel!==0,
-                         'fa-chevron-down': activePanel===0}"
-              class="fa fa-fw"
-            ></span>Standard Settings
-          </h4>
-        </div>
-        <div class="panel-collapse" bs-collapse-target>
-          <div class="panel-body">
+    <div class="text-center bg-danger" ng-show="error">
+      <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
+    </div>
 
-            <div class="text-center bg-danger" ng-show="error">
-              <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label">Stream ID</label>
-              <div class="col-sm-10">
-                <input type="text" class="form-control" ng-model="streamId" placeholder="Stream ID">
-              </div>
-            </div>
-
-          </div>
-        </div>
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Stream ID</label>
+      <div class="col-sm-10">
+        <input type="text" class="form-control" ng-model="streamId" placeholder="Stream ID">
       </div>
-    </section>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
