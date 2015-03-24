@@ -34,13 +34,13 @@ Configurations for submitting to non-default YARN queues can be specified in two
     <property>
       <name>app.scheduler.queue</name>
       <value>app</value>
-      <description>Scheduler queue for CDAP Programs and Explore Queries </description>
+      <description>Scheduler queue for CDAP Programs and Explore Queries</description>
     </property>
 
 2. Using a Namespace-level property: 
 
    The queue name to submit programs and Hive queries in YARN can be specified at a
-   Namespace-level by using the :ref:`RESTful API <http-restful-api-lifecycle>` to
+   Namespace-level by using the v3 :ref:`RESTful API <http-restful-api-namespace-editing>` to
    configure the property ``scheduler.queue.name``.
    
    The configuration specified at the Namespace-level will override the configuration
@@ -49,7 +49,7 @@ Configurations for submitting to non-default YARN queues can be specified in two
    For example, to set ``A`` as the queue name to be used for the namespace
    *<namespace-id>*, you use this HTTP PUT method::
    
-      PUT <base-url>/v3/namespaces/<namespace-id>/properties
+      PUT <base-url>/namespaces/<namespace-id>/properties
    
    with the property as a JSON string in the body::
    
