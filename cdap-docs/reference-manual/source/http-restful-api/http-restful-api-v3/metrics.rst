@@ -306,7 +306,7 @@ examples below for its use.
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext&context=namespace.default``
+     - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default'``
    * - Returns
      - ``[ "namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
        "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", "namespace.default.stream.who" ]``
@@ -315,7 +315,7 @@ examples below for its use.
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext&context=namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*``
+     - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*'``
    * - Returns
      - ``[ "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector", 
        "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader" ]``
@@ -351,9 +351,10 @@ To search for the available metrics within a given context, perform an HTTP POST
      - ``POST <base-url>/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory``
    * - Returns
      - ``[ "user.customers.count”, “system.events.processed” ]``
+       ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.reads",...,"user.purchases.John"]
    * - Description
      - Returns all metrics in the context of the application *PurchaseHistory* of the
-       *default* namespace; in this case, returns a user-defined metric and a system metric.
+       *default* namespace; in this case, returns a list of system and user-defined metrics.
 
 
 Querying A Metric
@@ -391,22 +392,22 @@ To query a metric within a given context, perform an HTTP GET request::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.flowlet.saver&metric=system.process.busyness?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.flowlet.saver&metric=system.process.busyness?aggregate=true'``
    * - Description
      - Using a *System* metric, *system.process.busyness*
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true'``
    * - Description
      - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.services``
-       ``WhoService.runnables.WhoRun&metric=user.names.bytes?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.services``
+       ``WhoService.runnables.WhoRun&metric=user.names.bytes?aggregate=true'``
    * - Description
      - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
@@ -417,20 +418,47 @@ Query Tips
   in the Flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
   POST method::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.
-      flowlet.splitter&metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.
+      flowlet.splitter&metric=system.process.events.processed&start=now-5s&count=5'
 
   This returns a JSON response that has one entry for every second in the requested time interval. It will have
   values only for the times where the metric was actually emitted (shown here "pretty-printed")::
 
-    {"start":1382637108,"end":1382637112,"series":[
-      {"time":1382637108,"value":6868},
-      {"time":1382637109,"value":6895},
-      {"time":1382637110,"value":6856},
-      {"time":1382637111,"value":6816},
-      {"time":1382637112,"value":6765}]
+    {
+      "startTime": 1427225350,
+      "endTime": 1427225354,
+      "series": [
+        {
+          "metricName": "system.process.events.processed",
+          "grouping": {
+        
+          },
+          "data": [
+            {
+              "time": 1427225350,
+              "value": 760
+            },
+            {
+              "time": 1427225351,
+              "value": 774
+            },
+            {
+              "time": 1427225352,
+              "value": 792
+            },
+            {
+              "time": 1427225353,
+              "value": 756
+            },
+            {
+              "time": 1427225354,
+              "value": 766
+            }
+          ]
+        }
+      ]
     }
-
+    
 - You can retrieve :ref:`results based on a run-id <http-restful-api-metrics-querying-by-run-id>`.
 
 - If a run-ID is not specified, we aggregate the events processed for all the runs of this flow.
@@ -444,28 +472,28 @@ Query Tips
 - If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
   API at the Flow context::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
 - Similarly, you can address the context of all Flows of an Application, an entire Application, or the entire 
   namespace of a CDAP instance::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.*
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.*
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
-    POST <base-url>/metrics/query?context=namespace.default
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
 - To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
   and specify the user-defined metric at the end of the request.
 
   For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver
-      &metric=user.names.bytes&aggregate=true
+    POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver
+      &metric=user.names.bytes&aggregate=true'
 
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
@@ -565,15 +593,15 @@ As an example, to return the total number of input objects processed since the
 Application *CountRandom* was deployed, assuming that CDAP has not been stopped or
 restarted (you cannot specify a time range for aggregates)::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.
-      CountRandom.system.process.events.processed?aggregate=true
+  POST '<base-url>/metrics/query?context=namespace.default.app.
+      CountRandom.system.process.events.processed?aggregate=true'
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
 ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder`` (reformatted to fit)::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true'
   
 .. _http-restful-api-metrics-querying-by-run-id:
 
@@ -592,14 +620,14 @@ When querying by ``run-ID``, it is specified in the context after the ``program-
 
 Examples of using a run-ID (reformatted to fit)::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
-      MyFlow.run.364-789-1636765&metric=system.process.completion
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
+      MyFlow.run.364-789-1636765&metric=system.process.completion'
   
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion
+  POST ''<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion'
 
   POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
-    bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true
+    bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true'
 
 The last example will return something similar to (where ``time=0`` means aggregated total number)::
 
