@@ -46,36 +46,6 @@ public class GrokRecordFormatTest {
   }
 
   @Test
-  public void testSyslog() throws UnsupportedTypeException {
-    Schema schema = Schema.recordOf(
-      "streamEvent",
-      Schema.Field.of("timestamp", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("logsource", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("program", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("message", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("pid", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
-    GrokRecordFormat format = createGrokFormat(schema, "%{SYSLOGLINE}");
-
-    String message = "Oct 17 08:59:00 suod newsyslog[6215]: logfile turned over";
-    StructuredRecord record = applyFormat(format, message);
-    Assert.assertEquals("Oct 17 08:59:00", record.get("timestamp"));
-    Assert.assertEquals("suod", record.get("logsource"));
-    Assert.assertEquals("newsyslog", record.get("program"));
-    Assert.assertEquals("6215", record.get("pid"));
-    Assert.assertEquals("logfile turned over", record.get("message"));
-
-    message = "Oct 17 08:59:04 cdr.cs.colorado.edu amd[29648]: " +
-      "noconn option exists, and was turned on! (May cause NFS hangs on some systems...)";
-    record = applyFormat(format, message);
-    Assert.assertEquals("Oct 17 08:59:04", record.get("timestamp"));
-    Assert.assertEquals("cdr.cs.colorado.edu", record.get("logsource"));
-    Assert.assertEquals("amd", record.get("program"));
-    Assert.assertEquals("29648", record.get("pid"));
-    Assert.assertEquals("noconn option exists, and was turned on! (May cause NFS hangs on some systems...)",
-                        record.get("message"));
-  }
-
-  @Test
   public void testDefault() throws UnsupportedTypeException {
     GrokRecordFormat format = createGrokFormat(null, "%{GREEDYDATA:body}");
 

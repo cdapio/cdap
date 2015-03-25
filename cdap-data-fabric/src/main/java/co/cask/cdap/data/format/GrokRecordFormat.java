@@ -46,9 +46,9 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
   private static final Logger LOG = LoggerFactory.getLogger(GrokRecordFormat.class);
   private static final String DEFAULT_PATTERN = "%{GREEDYDATA:body}";
 
-  private String pattern = null;
-  private Charset charset = Charsets.UTF_8;
+  private final Charset charset = Charsets.UTF_8;
   private final Grok grok = new Grok();
+  private String pattern = null;
 
   public static Map<String, String> settings(String pattern) {
     return ImmutableMap.of(PATTERN_SETTING, pattern);
@@ -118,6 +118,17 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
 
   @Override
   protected void configure(Map<String, String> settings) {
+    addPatterns(grok);
+
+    try {
+      this.pattern = determinePattern(settings);
+      grok.compile(pattern);
+    } catch (GrokException e) {
+      LOG.error("Failed to compile grok pattern '{}'", pattern, e);
+    }
+  }
+
+  protected void addPatterns(Grok grok) {
     addPattern(grok, "cdap/grok/patterns/firewalls");
     addPattern(grok, "cdap/grok/patterns/grok-patterns");
     addPattern(grok, "cdap/grok/patterns/haproxy");
@@ -131,21 +142,17 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
     addPattern(grok, "cdap/grok/patterns/postgresql");
     addPattern(grok, "cdap/grok/patterns/redis");
     addPattern(grok, "cdap/grok/patterns/ruby");
+  }
 
+  protected String determinePattern(Map<String, String> settings) {
     if (!settings.containsKey(PATTERN_SETTING)) {
-      this.pattern = DEFAULT_PATTERN;
+      return DEFAULT_PATTERN;
     } else {
-      this.pattern = settings.get(PATTERN_SETTING);
-    }
-
-    try {
-      grok.compile(pattern);
-    } catch (GrokException e) {
-      e.printStackTrace();
+      return settings.get(PATTERN_SETTING);
     }
   }
 
-  private void addPattern(Grok grok, String resource) {
+  protected void addPattern(Grok grok, String resource) {
     URL url = this.getClass().getClassLoader().getResource(resource);
     if (url == null) {
       LOG.error("Resource '{}' for grok pattern was not found", resource);
