@@ -9,7 +9,19 @@ angular.module(PKG.name+'.feature.login')
       .state('login', {
         url: '/login?next',
         templateUrl: '/assets/features/login/login.html',
-        controller: 'LoginCtrl'
+        controller: 'LoginCtrl',
+        onEnter: function(MY_CONFIG, myLoadingService, myAuth) {
+          if(!MY_CONFIG.securityEnabled) {
+            myLoadingService
+              .showLoadingIcon()
+              .then(function() {
+                return myAuth.login({username:'admin'});
+              })
+              .then(function() {
+                myLoadingService.hideLoadingIcon();
+              });
+          }
+        }
       })
 
       ;
