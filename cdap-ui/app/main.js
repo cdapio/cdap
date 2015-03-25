@@ -109,10 +109,10 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
+  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      $alert({
+      myAlert({
         title: 'Error',
         content: sockEvent.reason || 'could not connect to the server',
         type: 'danger'
@@ -122,7 +122,7 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
 
       if(data.statusCode>399) {
-        $alert({
+        myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Something went terribly wrong',
           type: 'danger'
@@ -130,7 +130,7 @@ angular
       }
 
       if(data.warning) {
-        $alert({
+        myAlert({
           content: data.warning,
           type: 'warning'
         });
@@ -195,7 +195,6 @@ angular
 
     pingBackend(); // execute immediately when initially opening a page
     $interval(pingBackend, 60000); // ping every 60 seconds
-
 
 
     console.timeEnd(PKG.name);

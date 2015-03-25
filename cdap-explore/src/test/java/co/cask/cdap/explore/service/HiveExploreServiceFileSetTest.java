@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetDataset;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
@@ -59,7 +58,6 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
                                                        Schema.Field.of("key", Schema.of(Schema.Type.STRING)),
                                                        Schema.Field.of("value", Schema.of(Schema.Type.STRING)));
   private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-  private static final DefaultDatasetNamespace DATASET_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
 
   @BeforeClass
   public static void start() throws Exception {
@@ -74,11 +72,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCreateAddDrop() throws Exception {
-
-    final String datasetName = "files";
-    final Id.DatasetInstance datasetInstanceId =
-      DATASET_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, datasetName));
-
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "files");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -135,8 +129,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testPartitionedFileSet() throws Exception {
-    final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parted");
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "parted");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -257,8 +250,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   // this tests mainly the support for different text formats. Other features (partitioning etc.) are tested above.
   private void testPartitionedTextFile(String name, String format, String delim, String fileDelim) throws Exception {
-    final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, name);
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
     final String tableName = getDatasetHiveName(datasetInstanceId);
     // create a time partitioned file set
     PartitionedFileSetProperties.Builder builder = (PartitionedFileSetProperties.Builder)
@@ -320,8 +312,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testTimePartitionedFileSet() throws Exception {
-    final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "parts");
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "parts");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -438,8 +429,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
   // this tests that the TPFS is backward-compatible after upgrade to 2.8, and correctly manages partitions in Hive.
   @Test
   public void testTimePartitionedFileSetBackwardsCompatibility() throws Exception {
-    final String datasetName = DATASET_NAMESPACE.namespace(NAMESPACE_ID, "backward");
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, datasetName);
+    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "backward");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
