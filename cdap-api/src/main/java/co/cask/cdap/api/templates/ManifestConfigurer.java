@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * Configurer used to configure program used in the execution of the Manifest.
+ * Currently, only Worker or Workflow can be used in the execution.
  */
 @Beta
 public interface ManifestConfigurer {
