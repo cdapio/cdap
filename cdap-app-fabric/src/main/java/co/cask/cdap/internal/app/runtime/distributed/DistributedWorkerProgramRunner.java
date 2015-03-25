@@ -24,7 +24,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;

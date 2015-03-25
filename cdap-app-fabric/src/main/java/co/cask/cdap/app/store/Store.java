@@ -25,12 +25,12 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
 

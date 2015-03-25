@@ -23,11 +23,11 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 

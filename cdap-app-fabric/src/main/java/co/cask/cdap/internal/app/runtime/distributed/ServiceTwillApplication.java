@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;

@@ -16,8 +16,8 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 

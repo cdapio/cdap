@@ -18,7 +18,7 @@ package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import com.google.common.base.Preconditions;
 
 import java.net.MalformedURLException;

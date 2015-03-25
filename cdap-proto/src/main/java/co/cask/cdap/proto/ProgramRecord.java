@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.internal.ProgramType;
+
 /**
  * Represents a program in an HTTP response.
  */

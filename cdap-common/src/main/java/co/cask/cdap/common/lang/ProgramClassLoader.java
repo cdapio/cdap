@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;

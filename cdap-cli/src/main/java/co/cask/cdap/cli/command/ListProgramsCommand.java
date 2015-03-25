@@ -22,8 +22,8 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 

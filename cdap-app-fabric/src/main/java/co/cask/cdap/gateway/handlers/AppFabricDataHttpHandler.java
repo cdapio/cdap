@@ -25,7 +25,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;

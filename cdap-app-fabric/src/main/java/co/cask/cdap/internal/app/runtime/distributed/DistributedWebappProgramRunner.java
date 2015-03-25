@@ -20,7 +20,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;

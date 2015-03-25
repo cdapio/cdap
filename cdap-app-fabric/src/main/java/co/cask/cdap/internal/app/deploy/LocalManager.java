@@ -47,7 +47,6 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import javax.annotation.Nullable;
 

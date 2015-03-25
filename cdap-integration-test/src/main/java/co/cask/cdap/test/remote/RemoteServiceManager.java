@@ -22,8 +22,8 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.AbstractServiceManager;
 import com.google.common.base.Throwables;
 

@@ -19,9 +19,9 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.TwillContext;
 

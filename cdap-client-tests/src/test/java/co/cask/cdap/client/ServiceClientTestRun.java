@@ -21,7 +21,7 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;

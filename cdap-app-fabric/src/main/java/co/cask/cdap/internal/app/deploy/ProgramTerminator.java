@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 
 /**
  * Interface that is responsible to stopping programs. Used while stop programs that are being deleted during

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.internal.ProgramType;
 import com.google.common.collect.Lists;
 
 import java.util.List;
