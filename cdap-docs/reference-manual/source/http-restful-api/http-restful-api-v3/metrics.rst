@@ -526,6 +526,40 @@ multiple tags for grouping by providing a comma-separated list.
    * - ``groupBy=app,flow``
      - Retrieves a time series for each app and flow combination
 
+.. rubric:: Example
+
+The method::
+
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory&
+    groupBy=flow&metric=user.customers.count&start=now-2s&end=now'
+
+returns the *user.customers.count* metric in the context of the application
+*PurchaseHistory* of the *default* namespace, for the specified time range, and grouped by
+``flow`` (results reformatted to fit)::
+
+  {
+    "startTime": 1421188775,
+    "endTime": 1421188777,
+    "series": [
+      {
+        "metricName": "user.customers.count",
+        "grouping": { "flow": "PurchaseHistoryFlow" },
+        "data": [
+          { "time": 1421188776, "value": 3 },
+          { "time": 1421188777, "value": 2 }
+        ]
+      },
+      {
+        "metricName": "user.customers.count",
+        "grouping": { "flow": "PurchaseAnalysisFlow" },
+        "data": [
+          { "time": 1421188775, "value": 1 },
+          { "time": 1421188777, "value": 2 }
+        ]
+      }
+    ]
+  }
+
 .. _http-restful-api-metrics-time-range:
 
 Querying by a Time Range
