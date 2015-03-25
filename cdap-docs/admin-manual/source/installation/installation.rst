@@ -252,6 +252,10 @@ Add the Cask Public GPG Key to your repository::
 
   sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/2.6/pubkey.gpg
 
+Update your Yum cache::
+
+  sudo yum makecache
+
 Debian using APT
 ................
 Download the Cask Apt repo definition file::
@@ -265,6 +269,10 @@ This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
 Add the Cask Public GPG Key to your repository::
 
   curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/2.6/pubkey.gpg | sudo apt-key add -
+
+Update your apt-cache::
+
+  sudo apt-get update
 
 Installation
 ------------
@@ -281,7 +289,6 @@ Using Yum::
 
 Using APT::
 
-  sudo apt-get update
   sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
