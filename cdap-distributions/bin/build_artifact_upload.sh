@@ -98,7 +98,7 @@ function sync_build_artifacts_to_server () {
         _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
         ;;
 
-      *_* )                                   ## default debian case
+      *_*deb )                                   ## default debian case
         _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
         ;;
 
