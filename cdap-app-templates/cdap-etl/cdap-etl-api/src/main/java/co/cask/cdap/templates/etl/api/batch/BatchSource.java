@@ -24,7 +24,7 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
  * @param <KEY> Batch Input Key class
  * @param <VALUE> Batch Input Value class
  */
-public abstract class AbstractBatchSource<KEY, VALUE> {
+public abstract class BatchSource<KEY, VALUE> {
 
   /**
    * Configure the Batch Source stage.
@@ -32,7 +32,7 @@ public abstract class AbstractBatchSource<KEY, VALUE> {
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
+    // no-op
   }
 
   /**

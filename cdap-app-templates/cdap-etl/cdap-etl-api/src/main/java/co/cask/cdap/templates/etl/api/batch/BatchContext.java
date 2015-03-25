@@ -26,7 +26,7 @@ import co.cask.cdap.api.data.DatasetContext;
 public interface BatchContext extends RuntimeContext, DatasetContext {
 
   /**
-   * Returns the logical start time of the Batch Job.  Logical start time is the time when this MapReduce
+   * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
    * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
    * job runs.
    *

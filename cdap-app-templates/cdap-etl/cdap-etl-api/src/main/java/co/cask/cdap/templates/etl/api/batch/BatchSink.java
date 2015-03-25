@@ -24,7 +24,7 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
  * @param <KEY> Batch Output Key class
  * @param <VALUE> Batch Output Value class
  */
-public abstract class AbstractBatchSink<KEY, VALUE> {
+public abstract class BatchSink<KEY, VALUE> {
 
   /**
    * Configure the Sink.
@@ -32,7 +32,7 @@ public abstract class AbstractBatchSink<KEY, VALUE> {
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
+    // no-op
   }
 
   /**

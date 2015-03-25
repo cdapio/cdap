@@ -19,12 +19,12 @@ package co.cask.cdap.templates.etl.api;
 /**
  * Transform Stage.
  *
- * @param <KI> Type of KeyInput object
- * @param <VI> Type of ValueInput object
- * @param <KO> Type of KeyOutput object
- * @param <VO> Type of ValueOutput object
+ * @param <KEY_IN> Type of KeyInput object
+ * @param <VALUE_IN> Type of ValueInput object
+ * @param <KEY_OUT> Type of KeyOutput object
+ * @param <VALUE_OUT> Type of ValueOutput object
  */
-public abstract class Transform<KI, VI, KO, VO> implements StageLifecycle {
+public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements StageLifecycle<TransformContext> {
 
   private TransformContext context;
 
@@ -34,7 +34,7 @@ public abstract class Transform<KI, VI, KO, VO> implements StageLifecycle {
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
+    // no-op
   }
 
   /**
@@ -54,8 +54,19 @@ public abstract class Transform<KI, VI, KO, VO> implements StageLifecycle {
    * @param emitter {@link Emitter} to emit data to the next stage
    * @throws Exception
    */
-  public void transform(KI inputKey, VI inputValue, Emitter<KO, VO> emitter) throws Exception {
-    throw new Exception();
+  public void transform(final KEY_IN inputKey, VALUE_IN inputValue, final Emitter<KEY_OUT, VALUE_OUT> emitter)
+    throws Exception {
+    transform(inputValue, new ValueEmitter<VALUE_OUT>() {
+      @Override
+      public void emit(VALUE_OUT value) {
+        emitter.emit((KEY_OUT) inputKey, value);
+      }
+
+      @Override
+      public void emit(Void key, VALUE_OUT value) {
+        emitter.emit(null, value);
+      }
+    });
   }
 
   /**
@@ -63,9 +74,10 @@ public abstract class Transform<KI, VI, KO, VO> implements StageLifecycle {
    *
    * @param input input
    * @param emitter {@link ValueEmitter} to emit data to the next stage
+   * @throws Exception
    */
-  public void transform(VI input, ValueEmitter<VO> emitter) throws Exception {
-    throw new Exception();
+  public void transform(VALUE_IN input, ValueEmitter<VALUE_OUT> emitter) throws Exception {
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -24,7 +24,7 @@ import co.cask.cdap.templates.etl.api.StageLifecycle;
  *
  * @param <I> Object sink operates on
  */
-public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
+public abstract class RealtimeSink<I> implements StageLifecycle<SinkContext> {
 
   private SinkContext context;
 
@@ -34,7 +34,7 @@ public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
+    // no-op
   }
 
   /**
@@ -52,6 +52,20 @@ public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
    * @param object object to be written
    */
   public abstract void write(I object);
+
+  /**
+   * Invoked when source is suspended.
+   */
+  public void onSuspend() {
+    // no-op
+  }
+
+  /**
+   * Resume/reconfigure from the state of suspension.
+   */
+  public void onResume() {
+    // no-op
+  }
 
   @Override
   public void destroy() {
