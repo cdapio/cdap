@@ -35,15 +35,17 @@ public abstract class ApplicationTemplate extends AbstractApplication {
    * @param configurer {@link ManifestConfigurer}
    * @throws Exception if the configuration is not valid
    */
-  public abstract void configureManifest(String configuration, ManifestConfigurer configurer) throws Exception;
+  public void configureManifest(String configuration, ManifestConfigurer configurer) throws Exception {
+    // no-op
+  }
 
   /**
-   * Provide a Service Handler class that provides HTTP endpoints
+   * Provide a Service Handler class that provides HTTP endpoints.
    *
-   * @return {@link HttpServiceHandler}
+   * @return {@link HttpServiceHandler} or null if no custom HTTP endpoints are required.
    */
   @Nullable
-  public Class<? extends HttpServiceHandler> getServiceHandler() {
+  public Class<? extends HttpServiceHandler> getServiceHandlerClass() {
     return null;
   }
 }

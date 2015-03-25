@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.templates;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.schedule.Schedule;
 
 import java.util.Map;
@@ -23,21 +24,8 @@ import java.util.Map;
 /**
  * Configurer used to configure program used in the execution of the Manifest.
  */
+@Beta
 public interface ManifestConfigurer {
-
-  /**
-   * Set the program type.
-   *
-   * @param type program type
-   */
-  public void setProgramType(String type);
-
-  /**
-   * Set the name of the program.
-   *
-   * @param name program name
-   */
-  public void setProgramName(String name);
 
   /**
    * Set the schedule for the program.
@@ -54,9 +42,17 @@ public interface ManifestConfigurer {
   public void setInstances(int instances);
 
   /**
-   * Set the arguments to be passed to the program as runtime arguments.
+   * Add arguments to be passed to the program as runtime arguments.
    *
-   * @param programArgs
+   * @param arguments runtime arguments
    */
-  public void setProgramArgs(Map<String, String> programArgs);
+  public void addRuntimeArguments(Map<String, String> arguments);
+
+  /**
+   * Add argument to be passed to the program as runtime arguments.
+   *
+   * @param key key
+   * @param value value
+   */
+  public void addRuntimeArgument(String key, String value);
 }
