@@ -10,7 +10,7 @@ angular.module(PKG.name + '.commons')
           size: 'lg',
           backdrop: 'static',
           keyboard: true,
-          backdropClass: 'custom-login-backdrop'
+          windowClass: 'custom-loading-modal'
         }, modal;
         scope.$on('hideLoadingIcon', function() {
           // Just making it smooth instead of being too 'speedy'
