@@ -16,6 +16,8 @@
 
 package co.cask.cdap.templates.etl.api;
 
+import co.cask.cdap.api.ProgramLifecycle;
+
 /**
  * Transform Stage.
  *
@@ -24,7 +26,7 @@ package co.cask.cdap.templates.etl.api;
  * @param <KEY_OUT> Type of KeyOutput object
  * @param <VALUE_OUT> Type of ValueOutput object
  */
-public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements StageLifecycle<TransformContext> {
+public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements ProgramLifecycle<TransformContext> {
 
   private TransformContext context;
 

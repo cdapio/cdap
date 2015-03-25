@@ -16,8 +16,8 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
 import co.cask.cdap.templates.etl.api.ValueEmitter;
 
 import javax.annotation.Nullable;
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  *
  * @param <O> Object that source emits
  */
-public abstract class RealtimeSource<O> implements StageLifecycle<SourceContext> {
+public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContext> {
 
   private SourceContext context;
 

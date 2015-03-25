@@ -16,15 +16,15 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
  * Realtime Sink.
  *
  * @param <I> Object sink operates on
  */
-public abstract class RealtimeSink<I> implements StageLifecycle<SinkContext> {
+public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
 
   private SinkContext context;
 
