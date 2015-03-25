@@ -31,6 +31,17 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   };
 
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
+  // Testing if myLoadingService really works async.
+  // $timeout(function() {
+  //   myLoadingService
+  //     .showLoadingIcon()
+  //     .then(function() {
+  //       myLoadingService
+  //         .hideLoadingIcon();
+  //     });
+  //
+  // });
+
 
   dataSrc.request({
     _cdapNsPath: '/apps'
