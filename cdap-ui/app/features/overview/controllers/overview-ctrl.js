@@ -57,6 +57,9 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   }, function(res) {
     if (angular.isArray(res) && res.length) {
       $scope.streams = res;
+      var isValidArray = angular.isArray($scope.streams) && $scope.streams.length;
+      $scope.dataTemplate = partialPath +
+        (isValidArray ? 'data-section.html': 'data-empty-section.html');
     }
   });
 
