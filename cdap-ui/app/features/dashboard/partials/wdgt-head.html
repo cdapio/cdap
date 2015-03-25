@@ -1,21 +1,12 @@
-<div class="btn-group btn-group-xs" role="toolbar" no-drag>
-
-  <a class="btn btn-default"
-    title="rename widget"
-    ng-click="caskPrompt('Widget name', wdgt.title)"
-    cask-promptable="currentBoard.renameWidget(wdgt, $value)">
-    <span class="fa fa-pencil"></span>
+<div ng-controller="DropdownCtrl">
+  <a role="tab"
+     data-toggle="tab"
+     ng-click="activeTabClick($event)"
+     data-index="{{ $index }}"
+     ng-class="{open: isOpen}"
+     class="dropdown-toggle">
+    <span class="fa fa-ellipsis-h"></span>
   </a>
-
-  <a class="btn btn-default"
-    title="remove widget"
-    ng-click="caskConfirm()"
-    cask-confirmable="currentBoard.removeWidget(wdgt)"
-    data-confirmable-content="Really delete the widget?">
-    <span class="fa fa-close"></span>
-  </a>
-
+  <span ng-bind="wdgt.title"></span>
 </div>
 
-
-<span ng-bind="wdgt.title"></span>

@@ -1,13 +1,35 @@
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
 
 body.state-dashboard {
-
   .widget {
-
+    .panel-heading {
+      position: relative;
+      a.dropdown-toggle {
+        border-radius: 6px 6px 0 0;
+        position: relative;
+        bottom: -5px;
+        height: 30px;
+        display: inline-block;
+        width: 30px;
+        left: 0;
+        &.open { background-color: @cdap-header; }
+        span.fa-ellipsis-h {
+          color: white;
+          cursor: pointer;
+          vertical-align: middle;
+          text-align: center;
+          width: 100%;
+          line-height: 30px;
+        }
+      }
+      .dropdown-menu {
+        .dropdown()
+      }
+    }
     .panel-body {
       overflow-x: scroll;
     }
-
     .panel-footer dl {
       margin: 0;
       white-space: nowrap;

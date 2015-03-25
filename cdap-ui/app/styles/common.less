@@ -31,11 +31,12 @@ body {
 header.navbar {
   border-bottom-color: @body-bg;
 }
-
 main.container {
   margin-top: 40px;
-  margin-bottom: 40px;
   padding-top: 1em;
+  > div {
+    margin-bottom: 80px;
+  }
   @media (max-width: @screen-sm-max) {
     > div { display: none; }
     &:before {
@@ -45,7 +46,7 @@ main.container {
       padding: 8px 15px;
       border-radius: 25px;
       color: white;
-      content: "Please resize your browser!";
+      content: "Please RESIZE your browser!";
     }
     &:after {
       padding: 16px;
