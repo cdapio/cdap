@@ -116,9 +116,12 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
   private StreamInputSplitFinder.Builder setupBuilder(Configuration conf, StreamConfig streamConfig,
                                                       StreamInputSplitFinder.Builder builder) {
     // the conf contains a 'hive.io.filter.expr.serialized' key which contains the serialized form of ExprNodeDesc
+    long startTime = Math.max(0L, System.currentTimeMillis() - streamConfig.getTTL());
+    long endTime = System.currentTimeMillis();
+
     String serializedExpr = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
     if (serializedExpr == null) {
-      return builder;
+      return builder.setStartTime(startTime).setEndTime(endTime);
     }
 
     // Analyze the query to extract predicates that can be used for indexing (i.e. setting start/end time)
@@ -135,9 +138,6 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
 
     List<IndexSearchCondition> conditions = Lists.newArrayList();
     analyzer.analyzePredicate(expr, conditions);
-
-    long startTime = Math.max(0L, System.currentTimeMillis() - streamConfig.getTTL());
-    long endTime = System.currentTimeMillis();
 
     for (IndexSearchCondition condition : conditions) {
       CompareOp op = CompareOp.from(condition.getComparisonOp());
