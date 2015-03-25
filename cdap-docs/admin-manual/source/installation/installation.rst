@@ -238,33 +238,41 @@ RPM using Yum
 .............
 Download the Cask Yum repo definition file::
 
-  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
+  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/2.6/cask.repo
 
 This will create the file ``/etc/yum.repos.d/cask.repo`` with::
 
   [cask]
   name=Cask Packages
-  baseurl=http://repository.cask.co/centos/6/x86_64/releases
+  baseurl=http://repository.cask.co/centos/6/x86_64/cdap/2.6
   enabled=1
   gpgcheck=1
 
 Add the Cask Public GPG Key to your repository::
 
-  sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
+  sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/2.6/pubkey.gpg
+
+Update your Yum cache::
+
+  sudo yum makecache
 
 Debian using APT
 ................
 Download the Cask Apt repo definition file::
 
-  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
+  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/2.6/cask.list
 
 This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
 
-  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
+  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/2.6 precise cdap
 
 Add the Cask Public GPG Key to your repository::
 
-  curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
+  curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/2.6/pubkey.gpg | sudo apt-key add -
+
+Update your apt-cache::
+
+  sudo apt-get update
 
 Installation
 ------------
@@ -281,7 +289,6 @@ Using Yum::
 
 Using APT::
 
-  sudo apt-get update
   sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
