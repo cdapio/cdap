@@ -38,7 +38,7 @@ public final class RecordFormats {
       .put(Formats.TSV, DelimitedStringsRecordFormat.class)
       .put(Formats.AVRO, AvroRecordFormat.class)
       .put(Formats.COMBINED_LOG_FORMAT, CombinedLogRecordFormat.class)
-      .put(Formats.PATTERN, PatternRecordFormat.class)
+      .put(Formats.GROK, GrokRecordFormat.class)
       .build();
   private static final Map<String, Map<String, String>> NAME_SETTINGS_MAP =
     ImmutableMap.<String, Map<String, String>>builder()

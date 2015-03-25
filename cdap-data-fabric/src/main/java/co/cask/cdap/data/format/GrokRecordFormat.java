@@ -22,46 +22,53 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import oi.thekraken.grok.api.exception.GrokException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
- * PatternRecordFormat
+ * GrokRecordFormat
  */
-public class PatternRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(PatternRecordFormat.class);
-  public static final String PATTERN = "pattern";
-  private String pattern = "%{GREEDYDATA}";
+public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+
+  public static final String PATTERN_SETTING = "pattern";
+  private static final Logger LOG = LoggerFactory.getLogger(GrokRecordFormat.class);
+  private static final String DEFAULT_PATTERN = "%{GREEDYDATA:body}";
+
+  private String pattern = null;
   private Charset charset = Charsets.UTF_8;
   private final Grok grok = new Grok();
 
-  public PatternRecordFormat() {
-    try {
-      grok.addPatternFromFile("/tmp/patterns");
-      grok.addPatternFromFile("/tmp/java");
-      grok.addPatternFromFile("/tmp/linux-syslog");
-    } catch (GrokException e) {
-      e.printStackTrace();
-    }
+  public static Map<String, String> settings(String pattern) {
+    return ImmutableMap.of(PATTERN_SETTING, pattern);
   }
 
   @Override
   public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
     String bodyAsStr = Bytes.toString(event.getBody(), charset);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+
     Match gm = grok.match(bodyAsStr);
     gm.captures();
     Map<String, Object> x = gm.toMap();
+
     for (Schema.Field field : schema.getFields()) {
       String fieldName = field.getName();
-      builder.convertAndSet(fieldName, x.get(fieldName).toString());
+      Object value = x.get(fieldName);
+      if (value != null) {
+        builder.convertAndSet(fieldName, value.toString());
+      }
     }
 
     return builder.build();
@@ -111,11 +118,55 @@ public class PatternRecordFormat extends StreamEventRecordFormat<StructuredRecor
 
   @Override
   protected void configure(Map<String, String> settings) {
-    pattern = settings.get(PATTERN);
+    addPattern(grok, "cdap/grok/patterns/firewalls");
+    addPattern(grok, "cdap/grok/patterns/grok-patterns");
+    addPattern(grok, "cdap/grok/patterns/haproxy");
+    addPattern(grok, "cdap/grok/patterns/java");
+    addPattern(grok, "cdap/grok/patterns/junos");
+    addPattern(grok, "cdap/grok/patterns/linux-syslog");
+    addPattern(grok, "cdap/grok/patterns/mcollective");
+    addPattern(grok, "cdap/grok/patterns/mcollective-patterns");
+    addPattern(grok, "cdap/grok/patterns/mongodb");
+    addPattern(grok, "cdap/grok/patterns/nagios");
+    addPattern(grok, "cdap/grok/patterns/postgresql");
+    addPattern(grok, "cdap/grok/patterns/redis");
+    addPattern(grok, "cdap/grok/patterns/ruby");
+
+    if (!settings.containsKey(PATTERN_SETTING)) {
+      this.pattern = DEFAULT_PATTERN;
+    } else {
+      this.pattern = settings.get(PATTERN_SETTING);
+    }
+
     try {
       grok.compile(pattern);
     } catch (GrokException e) {
       e.printStackTrace();
     }
+  }
+
+  private void addPattern(Grok grok, String resource) {
+    URL url = this.getClass().getClassLoader().getResource(resource);
+    if (url == null) {
+      LOG.error("Resource '{}' for grok pattern was not found", resource);
+      return;
+    }
+
+    try {
+      InputStream input = url.openStream();
+      try {
+        grok.addPatternFromReader(new InputStreamReader(input));
+      } catch (GrokException e) {
+        LOG.error("Invalid grok pattern from resource '{}'", resource, e);
+      } finally {
+        input.close();
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to load resource '{}' for grok pattern", resource, e);
+    }
+  }
+
+  public String getPattern() {
+    return pattern;
   }
 }
