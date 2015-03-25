@@ -83,22 +83,35 @@ function sync_build_artifacts_to_server () {
   do
     decho "PACKAGE=${i}"
     _package=`echo ${i} | awk -F / '{ print $(NF) }'`
-    if [[ "${_package}" == *rpm ]]
-    then
-      _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
-    else
-      if [[ "${_package}" == *_* ]]
-      then
+
+    case $_package in
+
+      cdap.*_[0-9]\.[0-9]\.[0-9]\.[0-9]+.*deb | cdap.*-[0-9]\.[0-9]\.[0-9]\.[0-9]+.*rpm )  ## snapshots with timestamp
         _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
-      else
+        ;;
+
+      *_all.deb )                             ## debian standard
+        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }' | awk -F - '{ print $1 }'`
+        ;;
+
+      *noarch.rpm )                           ## rpm standard
+        _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
+        ;;
+
+      *_* )                                   ## default debian case
+        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
+        ;;
+
+      *rpm | * )                              ## default RPM case and catchall
         _version_stub=`echo ${_package} | awk -F - '{ print $(NF) }'`
-      fi
-    fi
+        ;;
+
+    esac
+
     _version=`echo ${_version_stub} | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
-
     OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
-    mkdir -p ${OUTGOING_DIR}
+
     decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1"
     rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
     decho ""
