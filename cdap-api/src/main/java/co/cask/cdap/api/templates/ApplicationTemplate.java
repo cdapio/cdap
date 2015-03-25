@@ -23,10 +23,13 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import javax.annotation.Nullable;
 
 /**
- * Abstract App Template that provides additional functionality required for App Templates.
+ * Abstract App Template class that provides additional functionality required for App Templates.
+ *
+ * @param <T> type of the configuration object
  */
+//TODO: Add more description about what an app template is.
 @Beta
-public abstract class ApplicationTemplate extends AbstractApplication {
+public abstract class ApplicationTemplate<T> extends AbstractApplication {
 
   /**
    * Given the manifest configuration, configures the Manifest.
@@ -35,14 +38,14 @@ public abstract class ApplicationTemplate extends AbstractApplication {
    * @param configurer {@link ManifestConfigurer}
    * @throws Exception if the configuration is not valid
    */
-  public void configureManifest(String configuration, ManifestConfigurer configurer) throws Exception {
+  public void configureManifest(T configuration, ManifestConfigurer configurer) throws Exception {
     // no-op
   }
 
   /**
    * Provide a Service Handler class that provides HTTP endpoints.
    *
-   * @return {@link HttpServiceHandler} or null if no custom HTTP endpoints are required.
+   * @return {@link HttpServiceHandler} or null if no HTTP endpoint is supported.
    */
   @Nullable
   public Class<? extends HttpServiceHandler> getServiceHandlerClass() {

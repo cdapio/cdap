@@ -38,9 +38,16 @@ public interface StageConfigurer {
   void setDescription(String description);
 
   /**
-   * Set the properties this stage requires during runtime.
+   * Add properties this stage requires during runtime.
    *
    * @param properties {@link List} of {@link Property}
    */
-  void setExpectedProperties(List<Property> properties);
+  void addProperties(List<Property> properties);
+
+  /**
+   * Add a property this stage requires during runtime.
+   *
+   * @param property {@link Property}
+   */
+  void addProperty(Property property);
 }
