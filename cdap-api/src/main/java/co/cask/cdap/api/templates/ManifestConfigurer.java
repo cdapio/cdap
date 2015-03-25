@@ -29,14 +29,14 @@ import java.util.Map;
 public interface ManifestConfigurer {
 
   /**
-   * Set the schedule for the program.
+   * Set the schedule for the program. Must be set for Workflows and is not valid for other program types.
    *
    * @param schedule {@link Schedule}
    */
   public void setSchedule(Schedule schedule);
 
   /**
-   * Set the number of instances of the program.
+   * Set the number of instances of the program. Valid only for Workers and defaults to 1.
    *
    * @param instances number of instances
    */
