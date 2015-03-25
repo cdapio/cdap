@@ -14,21 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.batch;
+package co.cask.cdap.templates.etl.api;
 
 /**
- * Used to write data to Batch Output.
+ * Used to emit data from pipeline stages.
  *
- * @param <K> Batch Output key class
- * @param <V> Batch Output value class
+ * @param <V> Type of the data object emitted
  */
-public interface BatchWriter<K, V> {
+public interface ValueEmitter<V> extends Emitter<Void, V> {
 
   /**
-   * Takes in the key and value objects to persist to Batch Output.
+   * Emit objects to the next stage of the pipeline.
    *
-   * @param key Key object
-   * @param value Value object
+   * @param value data object.
    */
-  void write(K key, V value);
+  void emit(V value);
 }

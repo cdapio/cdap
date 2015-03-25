@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageLifecycle;
+import co.cask.cdap.templates.etl.api.ValueEmitter;
 
 import javax.annotation.Nullable;
 
@@ -57,7 +58,7 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
    * @return {@link SourceState} state of the source after poll, will be persisted when all data from poll are processed
    */
   @Nullable
-  public abstract SourceState poll(Emitter<O> writer, @Nullable SourceState currentState);
+  public abstract SourceState poll(ValueEmitter<O> writer, @Nullable SourceState currentState);
 
   /**
    * Invoked when source is suspended.

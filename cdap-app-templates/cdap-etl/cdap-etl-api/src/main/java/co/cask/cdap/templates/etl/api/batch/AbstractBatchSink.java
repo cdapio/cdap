@@ -17,20 +17,14 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
-
-import java.io.IOException;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
  *
- * @param <I> Object sink operates on
  * @param <KEY> Batch Output Key class
  * @param <VALUE> Batch Output Value class
  */
-public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle {
-
-  private BatchContext context;
+public abstract class AbstractBatchSink<KEY, VALUE> {
 
   /**
    * Configure the Sink.
@@ -44,43 +38,7 @@ public abstract class AbstractBatchSink<I, KEY, VALUE> implements StageLifecycle
   /**
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
-   * @param context {@link BatchContext}
+   * @param context {@link BatchSinkContext}
    */
-  public abstract void prepareJob(BatchContext context);
-
-  /**
-   * Initialize the Sink. Invoked during at the start of the Batch Job.
-   *
-   * @param context {@link BatchContext}
-   */
-  public void initialize(BatchContext context) {
-    this.context = context;
-  }
-
-  /**
-   * Write the given object.
-   *
-   * @param object object to be written
-   * @param writer Writer to persist data to Batch Output
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  public abstract void write(I object, BatchWriter<KEY, VALUE> writer) throws IOException, InterruptedException;
-
-  @Override
-  public void destroy() {
-    // no-op
-  }
-
-  /**
-   * Invoked after Batch Job is completed.
-   *
-   * @param succeeded true if batch job completed successfully
-   * @param context {@link BatchContext}
-   */
-  public abstract void onFinish(boolean succeeded, BatchContext context);
-
-  protected BatchContext getContext() {
-    return context;
-  }
+  public abstract void prepareJob(BatchSinkContext context);
 }

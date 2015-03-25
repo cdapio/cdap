@@ -29,13 +29,13 @@ import javax.annotation.Nullable;
 public abstract class ApplicationTemplate extends AbstractApplication {
 
   /**
-   * Given the manifest configuration, provides the {@link ManifestSpecification}
+   * Given the manifest configuration, configures the Manifest.
    *
    * @param configuration manifest configuration
-   * @return {@link ManifestSpecification}
+   * @param configurer {@link ManifestConfigurer}
    * @throws Exception if the configuration is not valid
    */
-  public abstract ManifestSpecification configureManifest(String configuration) throws Exception;
+  public abstract void configureManifest(String configuration, ManifestConfigurer configurer) throws Exception;
 
   /**
    * Provide a Service Handler class that provides HTTP endpoints

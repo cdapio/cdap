@@ -16,20 +16,15 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline.
  *
  * @param <KEY> Batch Input Key class
  * @param <VALUE> Batch Input Value class
- * @param <O> Object that BatchSource emits
  */
-public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecycle {
-
-  private BatchContext context;
+public abstract class AbstractBatchSource<KEY, VALUE> {
 
   /**
    * Configure the Batch Source stage.
@@ -43,43 +38,7 @@ public abstract class AbstractBatchSource<KEY, VALUE, O> implements StageLifecyc
   /**
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
-   * @param context {@link BatchContext}
+   * @param context {@link BatchSourceContext}
    */
-  public abstract void prepareJob(BatchContext context);
-
-  /**
-   * Initialize the Batch Source. Invoked at the start of the Batch Job.
-   *
-   * @param context {@link BatchContext}
-   */
-  public void initialize(BatchContext context) {
-    this.context = context;
-  }
-
-  /**
-   * Process key, value and emit an object for subsequent stages to process.
-   *
-   * @param key Key class from Input
-   * @param value Value class from Input
-   * @param data Emit data
-   */
-  public abstract void process(KEY key, VALUE value, Emitter<O> data);
-
-  @Override
-  public void destroy() {
-    // no-op
-  }
-
-  /**
-   * Operation to be performed at the end of the Batch job.
-   *
-   * @param succeeded true if Batch operation succeeded, false otherwise
-   * @param context {@link BatchContext}
-   * @throws Exception
-   */
-  public abstract void onFinish(boolean succeeded, BatchContext context) throws Exception;
-
-  protected BatchContext getContext() {
-    return context;
-  }
+  public abstract void prepareJob(BatchSourceContext context);
 }

@@ -19,10 +19,12 @@ package co.cask.cdap.templates.etl.api;
 /**
  * Transform Stage.
  *
- * @param <I> input
- * @param <O> output
+ * @param <KI> Type of KeyInput object
+ * @param <VI> Type of ValueInput object
+ * @param <KO> Type of KeyOutput object
+ * @param <VO> Type of ValueOutput object
  */
-public abstract class Transform<I, O> implements StageLifecycle {
+public abstract class Transform<KI, VI, KO, VO> implements StageLifecycle {
 
   private TransformContext context;
 
@@ -45,12 +47,26 @@ public abstract class Transform<I, O> implements StageLifecycle {
   }
 
   /**
-   * Process I input and emit O output using {@link Emitter}.
+   * Process input Key and Value and emit output using {@link Emitter}.
    *
-   * @param input input data
-   * @param output {@link Emitter} emit output
+   * @param inputKey input key
+   * @param inputValue input value
+   * @param emitter {@link Emitter} to emit data to the next stage
+   * @throws Exception
    */
-  public abstract void transform(I input, Emitter<O> output);
+  public void transform(KI inputKey, VI inputValue, Emitter<KO, VO> emitter) throws Exception {
+    throw new Exception();
+  }
+
+  /**
+   * Process input and emit output using {@link ValueEmitter}
+   *
+   * @param input input
+   * @param emitter {@link ValueEmitter} to emit data to the next stage
+   */
+  public void transform(VI input, ValueEmitter<VO> emitter) throws Exception {
+    throw new Exception();
+  }
 
   @Override
   public void destroy() {

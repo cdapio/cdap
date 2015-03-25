@@ -17,18 +17,29 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Emit data.
- *
- * @param <K> Type of the key object emitted
- * @param <V> Type of the value object emitted
+ * Properties that are required by a Stage. Specified while configuring a Stage through {@link StageConfigurer}.
  */
-public interface Emitter<K, V> {
+public class Property {
 
-  /**
-   * Emit data.
-   *
-   * @param key key object
-   * @param value value object
-   */
-  void emit(K key, V value);
+  private final String name;
+  private final String description;
+  private final boolean required;
+
+  public Property(String name, String description, boolean required) {
+    this.name = name;
+    this.description = description;
+    this.required = required;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public boolean isRequired() {
+    return required;
+  }
+
+  public String getDescription() {
+    return description;
+  }
 }

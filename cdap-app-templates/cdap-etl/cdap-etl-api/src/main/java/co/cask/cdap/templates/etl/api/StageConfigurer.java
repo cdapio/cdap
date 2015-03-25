@@ -16,7 +16,7 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * Configure a Stage in the ETL Pipeline.
@@ -40,7 +40,7 @@ public interface StageConfigurer {
   /**
    * Set the properties this stage requires during runtime.
    *
-   * @param properties {@link Set} of properties
+   * @param properties {@link List} of {@link Property}
    */
-  void setExpectedProperties(Set<String> properties);
+  void setExpectedProperties(List<Property> properties);
 }
