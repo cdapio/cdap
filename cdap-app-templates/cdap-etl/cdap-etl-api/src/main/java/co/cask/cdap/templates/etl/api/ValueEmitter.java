@@ -17,14 +17,14 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Used to emit data from pipeline stages.
+ * Used to emit data to next stage.
  *
  * @param <V> Type of the data object emitted
  */
 public interface ValueEmitter<V> extends Emitter<Void, V> {
 
   /**
-   * Emit objects to the next stage of the pipeline.
+   * Emit objects to the next stage.
    *
    * @param value data object.
    */

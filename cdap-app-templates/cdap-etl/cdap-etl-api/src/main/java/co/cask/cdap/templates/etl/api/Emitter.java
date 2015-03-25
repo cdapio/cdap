@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Emit data.
+ * Used to emit one or more key, value pairs to the next stage.
  *
  * @param <K> Type of the key object emitted
  * @param <V> Type of the value object emitted
@@ -25,7 +25,7 @@ package co.cask.cdap.templates.etl.api;
 public interface Emitter<K, V> {
 
   /**
-   * Emit data.
+   * Emit a key, value pair.
    *
    * @param key key object
    * @param value value object
