@@ -316,12 +316,12 @@ examples below for its use.
      - 
    * - HTTP Method
      - ``POST '<base-url>/metrics/search?target=childContext&context=``
-       ``namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*'``
+       ``namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*'``
    * - Returns
-     - ``["namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector", 
-       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader"]``
+     - ``["namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.collector", 
+       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.reader"]``
    * - Description
-     - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any dataset and any run; 
+     - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any run; 
        in this case, it returns all available Flowlets.
 
 
@@ -596,8 +596,7 @@ Example::
     metric=system.process.events.processed&start=now-1h&end=now&resolution=1m'
 
 This will return the value of the metric *system.process.events.processed* for the last
-hour at one-second intervals; potentially 61 entries may be returned, though only entries
-where there is data will be returned.
+hour at one-second intervals.
 
 For aggregates, you cannot specify a time range. As an example, to return the total number
 of input objects processed since the Application *CountRandom* was deployed, assuming that
