@@ -16,7 +16,7 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title_toc = 'Tutorials'
-html_short_title = u'CDAP %s' % html_short_title_toc
+html_short_title_toc = 'CDAP Tutorials'
+html_short_title = u'%s' % html_short_title_toc
 
 html_context = {'html_short_title_toc': html_short_title_toc}

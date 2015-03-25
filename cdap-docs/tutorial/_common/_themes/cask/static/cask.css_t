@@ -141,6 +141,11 @@ div.sphinxsidebar a {
     color: #444;
 }
 
+div.sphinxsidebar a:hover {
+    color: #ff6600;
+    text-decoration: underline;
+}
+
 div.sphinxsidebar a tt.docutils.literal {
     font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
     font-style: italic;
@@ -148,10 +153,11 @@ div.sphinxsidebar a tt.docutils.literal {
     font-size: 1.0em;
 }
 
+/* 
 div.sphinxsidebar a:hover tt.docutils.literal {
 	  font-weight: bold;
 }
-
+*/
 
 div.sphinxsidebar input {
     border: 1px solid #ccc;
@@ -170,16 +176,13 @@ a.current {
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #005B81;
     color: #ff6600;
     text-decoration: none;
 }
 
 a:hover {
-    color: #E32E00;
     color: #005B81;
     text-decoration: underline;
-    font-weight: bold;
 }
 
 div.body h1,
@@ -192,8 +195,8 @@ div.body h6 {
     font-weight: normal;
     color: #111;
     margin: 30px 0px 10px -15px;
-    padding: 5px 0 5px 15px;
-    text-shadow: 0px 1px 0 white
+    padding: 5px 0px  5px  15px;
+    text-shadow: 0px 1px 0px white;
 }
 
 div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}

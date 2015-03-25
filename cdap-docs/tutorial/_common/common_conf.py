@@ -96,15 +96,19 @@ else:
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinxcontrib.googleanalytics',
-    'sphinx.ext.todo',
-    'sphinx.ext.pngmath',
+    'sphinx.ext.extlinks',
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.pngmath',
+    'sphinx.ext.todo',
+    'sphinxcontrib.googleanalytics',
 ]
 
+extlinks = {}
+if CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP or CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP_TUTORIAL:
+    extlinks = {'doclink': ('http://docs.cask.co/cdap/current/en/%s', '')}
+    
 intersphinx_mapping = {}
-
 if CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP:
     intersphinx_mapping = {
       'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
@@ -284,7 +288,7 @@ for manual in manuals_list:
     manual_titles_list.append(manual[1])
     manual_icons_list.append(manual[2])
 
-if CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP:
+if CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP or CASK_PROJECT_TYPE == CASK_PROJECT_TYPE_CDAP_TUTORIAL:
     html_theme_options = {
       "manuals": manual_dirs_list,
       "manual_titles": manual_titles_list,
