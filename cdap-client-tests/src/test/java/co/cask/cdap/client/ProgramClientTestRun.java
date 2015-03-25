@@ -16,13 +16,13 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;

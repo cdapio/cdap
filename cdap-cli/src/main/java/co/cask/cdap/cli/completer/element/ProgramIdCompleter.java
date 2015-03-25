@@ -16,10 +16,10 @@
 
 package co.cask.cdap.cli.completer.element;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;

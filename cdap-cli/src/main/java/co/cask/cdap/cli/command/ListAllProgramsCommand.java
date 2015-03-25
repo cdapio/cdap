@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
@@ -24,7 +25,6 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;

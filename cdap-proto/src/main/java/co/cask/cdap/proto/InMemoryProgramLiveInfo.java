@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.internal.ProgramType;
+import co.cask.cdap.api.ProgramType;
 
 import java.util.List;
 

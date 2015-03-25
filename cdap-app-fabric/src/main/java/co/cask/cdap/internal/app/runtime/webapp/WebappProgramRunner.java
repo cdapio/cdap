@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

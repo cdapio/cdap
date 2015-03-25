@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
-import co.cask.cdap.internal.ProgramType;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.proto.Id;
 
 /**

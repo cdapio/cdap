@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.webapp.WebappSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.ProgramType;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

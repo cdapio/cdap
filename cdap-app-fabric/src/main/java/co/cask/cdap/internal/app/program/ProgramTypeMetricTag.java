@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.ProgramType;
 
 /**
  * Helper class for getting the program type id to use when emitting metrics.

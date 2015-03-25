@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
@@ -32,7 +33,6 @@ import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;

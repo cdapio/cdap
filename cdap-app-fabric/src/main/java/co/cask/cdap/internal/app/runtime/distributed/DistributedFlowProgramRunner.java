@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;

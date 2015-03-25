@@ -18,11 +18,7 @@ package co.cask.cdap.data2.transaction.stream.leveldb;
 
 
 import co.cask.cdap.data2.util.TableId;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-
-import java.util.List;
 
 /**
  * Utility Class for LevelDB Table names.

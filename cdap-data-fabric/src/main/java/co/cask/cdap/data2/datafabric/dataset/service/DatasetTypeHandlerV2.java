@@ -27,7 +27,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.IOException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

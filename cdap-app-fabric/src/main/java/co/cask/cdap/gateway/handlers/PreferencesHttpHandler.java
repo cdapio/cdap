@@ -16,13 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.Id;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;

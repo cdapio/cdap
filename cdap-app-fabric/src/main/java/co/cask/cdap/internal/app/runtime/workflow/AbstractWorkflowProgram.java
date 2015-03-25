@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.internal.app.program.ForwardingProgram;
 import co.cask.cdap.proto.Id;
 

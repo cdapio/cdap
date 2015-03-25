@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.internal.ProgramType;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.collect.ImmutableMap;

@@ -16,11 +16,11 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;

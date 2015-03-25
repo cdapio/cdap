@@ -18,8 +18,6 @@ package co.cask.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 
-import javax.annotation.Nullable;
-
 /**
  * This class records information for a particular run.
  */

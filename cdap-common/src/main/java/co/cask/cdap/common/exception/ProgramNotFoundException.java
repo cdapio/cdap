@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.internal.ProgramType;
+import co.cask.cdap.api.ProgramType;
 
 /**
  * Thrown when a program is not found

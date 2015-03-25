@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.ProgramType;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
