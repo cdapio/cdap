@@ -13,13 +13,13 @@ Advanced Tutorial: Wise (Web Insights Engine Application)
 
 Introduction
 ============
-Performing analytics on a Web application using access logs is a common use
-case when managing a Web site. A system capable of that needs to ingest logs, and
-implement real-time or batch processing computations to process the data. The information
-has to be stored somewhere in the system, and the system should expose ways to retrieve
-it. Even in this case where the system performs very simple analytics, like counting the
-number of visits made to a website in a day, the components needed to make it possible
-demand a lot of work.
+Performing analytics on a Web application using access logs is a common use case when
+managing a Web site. A system capable of analytics needs to ingest logs, and implement
+real-time or batch processing computations to process the data. The information has to be
+stored somewhere in the system, and the system should expose ways to retrieve it. Even in
+this case where the system performs very simple analytics, such as counting the number of
+visits made to a website in a day, the components needed to make it possible demand a lot
+of work.
 
 Using the **Web Insights Engine Application** or *Wise*, we’ll show you how to build
 such a system on CDAP that is easy, concise, and powerful. Wise extracts value from Web
@@ -37,20 +37,31 @@ analyze web server logs:
 - **Service:** Exposes HTTP APIs to query the page visit counts per IP address 
 - **Explore:** Runs SQL queries on the data stored in Datasets 
 
+Conventions
+-----------
+
+In the examples and commands that follow, for brevity we will use these conventions:
+
+- ``$CDAP_SDK_HOME`` is the directory that you have installed the CDAP Standalone SDK, either
+  on a UNIX-type system or Windows.
+- The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
+  on Windows |---| ``bin\cdap-cli.bat``. In the examples given, substitute the actual path
+  as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
+  environment.
+- The ``curl`` command, common on UNIX-type systems, is included in the CDAP SDK in the
+  ``libexec\bin`` directory as ``curl.exe``.
+- Other scripts referenced below are included either in the SDK or downloaded zips as ``.bat``
+  versions for Windows. Substitute these versions as appropriate in the examples below.
+
+
 Running Wise 
 ============
 .. highlight:: console
 
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the CDAP
-Command Line Interface. Substitute the actual path for ``bin/cdap-cli.sh``, or
-``bin\cdap-cli.bat`` on Windows, as appropriate. Similarly, other scripts referenced are
-available in version for Windows, either as ``.bat`` files, or |---| in the case of the
-``curl`` command |---| as an executable included in the Standalone CDAP SDK in its
-``libexec\bin`` directory.
-
 Building and running Wise is straightforward. We’ll assume that you have already
 downloaded, installed, and have started an instance of CDAP, as described in the 
-:ref:Tutorial Introduction <tutorial-intro>`.
+:ref:`Tutorial Introduction <tutorial-intro>`.
 
 Change to the directory where you have installed the CDAP SDK Standalone, and download the
 Wise source code:
@@ -93,7 +104,7 @@ Wise application uses. Let’s first have a look at a diagram showing an overvie
 Wise application’s architecture:
 
 .. image:: _images/wise_architecture_diagram.png
-   :width: 6in
+   :width: 8in
    :align: center
 
 - The Wise application has one Stream, ``logEventStream``, which receives Web server
@@ -370,7 +381,7 @@ Here is how WiseFlow looks in the CDAP Console:
    :width: 8in
    :align: center
 
-Batch Processing of Logs with WiseWorkflow
+Batch Processing with WiseWorkflow
 ==========================================
 Wise executes every ten minutes a MapReduce program that computes the bounce counts of the
 web pages seen in the Web server access logs.
@@ -395,8 +406,8 @@ type ``KeyValueTable`` |---| to store xxx.
 
 .. We will talk about the useOutputDataset() method in only a minute.
 
-Plugging the Stream to the Input of the MapReduce Program
----------------------------------------------------------
+Plugging a Stream to the Input of the MapReduce
+-----------------------------------------------
 Traditionally in a MapReduce program, a Job configuration is set before each run. This is
 done in the beforeSubmit() method of the BounceCountsMapReduce class::
 
@@ -416,11 +427,11 @@ connection is made above using the ``StreamBatchReadable.useStreamInput()`` meth
 The startTime is computed using the last value stored in the *bounceCountsMapReduceLastRun*
 Dataset, which can be accessed using the ``MapReduceContext.getDataSet()`` method.
 
-Writing to the *bounceCountStore* Dataset from the MapReduce Job 
-----------------------------------------------------------------
+Writing to the *bounceCountStore* Dataset from the MapReduce 
+------------------------------------------------------------
 In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``useOutputDataset``
-method sets the Dataset with the specified ID that will be used as the output of the job.
-It means that the key/value pairs output by the reducer of the job will be directly
+method sets the Dataset with the specified ID that will be used as the output of the MapReduce.
+It means that the key/value pairs output by the reducer of the MapReduce will be directly
 written to that Dataset.
 
 To understand how this is possible, let’s go back to the definition of the
@@ -486,9 +497,9 @@ Each generic parameter of the Mapper and the Reducer contains:
 - Reducer output key ``Void``: this is not used; and 
 - Reducer output value ``PageBounce``: bounce counts of a web page. 
 
-Scheduling the MapReduce Job
-----------------------------
-To schedule the ``BounceCountsMapReduce`` job to run every ten minute, we define it in the
+Scheduling the MapReduce
+------------------------
+To schedule the ``BounceCountsMapReduce`` to run every ten minutes, we define it in the
 ``WiseWorkflow`` as::
 
   public class WiseWorkflow implements Workflow { @Override public WorkflowSpecification
@@ -503,8 +514,8 @@ To schedule the ``BounceCountsMapReduce`` job to run every ten minute, we define
    :language: java
    :lines: 24-32   
 
-Accessing Wise Data through WiseService
----------------------------------------
+Accessing Data through WiseService
+----------------------------------
 ``WiseService`` is a Wise component that exposes specific HTTP endpoints to retrieve the
 content of the *pageViewStore* Dataset. For example, ``WiseService`` defines this endpoint
 (re-formatted to fit)::
@@ -563,8 +574,8 @@ root of the Wise application, execute::
   $ bin/call-service.sh --ip 255.255.255.154 --uri /index.html
   
   
-Exploring Wise Datasets through SQL
------------------------------------
+Exploring Datasets through SQL
+------------------------------
 With Wise, you can explore the Datasets using SQL
 queries. The SQL interface on CDAP, called Explore, can be accessed through the CDAP
 Console:
@@ -573,14 +584,14 @@ After deploying Wise in your Standalone CDAP instance, go to the Store page, whi
 of the five pages you can access from the left pane of CDAP Console:
 
 .. image:: _images/wise_store_page.png 
-   :width: 6in
+   :width: 8in
    :align: center
 
 Click on the Explore button in the top-right corner of the page. You will land on this
 page:
 
 .. image:: _images/wise_explore_page.png
-   :width: 6in
+   :width: 8in
    :align: center
 
 This is the Explore page, where you can run ad-hoc SQL queries and see information about
@@ -624,8 +635,8 @@ The bounceCountStore Dataset’s Record type is PageBounce, which is a POJO obje
 containing three attributes: uri, totalVisits, and bounces. It explains where the schema
 of the bounceCountStore is derived.
 
-Bringing the Wise Components Together 
--------------------------------------
+Bringing the Components Together 
+--------------------------------
 To create the Wise application with all these
 components mentioned above, define a class that extends ``AbstractApplication``::
 
