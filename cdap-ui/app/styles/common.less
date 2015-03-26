@@ -37,23 +37,6 @@ main.container {
   > div {
     margin-bottom: 80px;
   }
-  @media (max-width: @screen-sm-max) {
-    > div { display: none; }
-    &:before {
-      font-size: 200%;
-      margin-top: 1em;
-      display: block;
-      padding: 8px 15px;
-      border-radius: 25px;
-      color: white;
-      content: "Please RESIZE your browser!";
-    }
-    &:after {
-      padding: 16px;
-      font-style: italic;
-      content: "Mobile devices are not supported.";
-    }
-  }
   .sidebar {
     ul li a {
       display: block;
