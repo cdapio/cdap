@@ -5,7 +5,6 @@
     <tr ng-class="{'sort-enabled': streams.length>0}">
       <th data-predicate="name" data-predicate-default="reverse"> Name </th>
       <th> Type </th>
-      <th> Edit </th>
     </tr>
   </thead>
   <tbody>
@@ -16,7 +15,6 @@
         </a>
       </td>
       <td ng-bind="stream.type">  </td>
-      <td><a ui-sref="streams.list.properties({streamId: stream.name})" href=""><i class="fa fa-cogs"></i></a></td>
     </tr>
   <tbody>
 </table>
