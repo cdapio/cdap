@@ -4,27 +4,17 @@
 body.state-dashboard {
   .widget {
     .panel-heading {
-      position: relative;
-      a.dropdown-toggle {
-        border-radius: 6px 6px 0 0;
-        position: relative;
-        bottom: -5px;
-        height: 30px;
-        display: inline-block;
-        width: 30px;
-        left: 0;
-        &.open { background-color: @cdap-header; }
-        span.fa-ellipsis-h {
-          color: white;
-          cursor: pointer;
-          vertical-align: middle;
-          text-align: center;
-          width: 100%;
-          line-height: 30px;
-        }
+      padding: 15px;
+      .btn-group {
+        top: -5px;
+        right: -5px;
       }
-      .dropdown-menu {
-        .dropdown()
+      > span {
+        max-width: 60%;
+        display: inline-block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        vertical-align: middle;
       }
     }
     .panel-body {

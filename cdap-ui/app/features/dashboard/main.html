@@ -24,10 +24,8 @@
   </div>
 </div>
 
-
 <div class="row">
-
-  <div ng-class="'col-sm-'+(12/currentBoard.columns.length)"
+  <div class="col-xs-12 col-sm-6 col-md-4"
     ng-repeat="column in currentBoard.columns"
     ng-model="column"
     as-sortable="dragdrop">
