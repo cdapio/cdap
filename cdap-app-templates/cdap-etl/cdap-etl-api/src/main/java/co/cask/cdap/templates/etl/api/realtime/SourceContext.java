@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 
 /**
@@ -44,11 +43,4 @@ public interface SourceContext extends RuntimeContext {
    * @return instance count
    */
   int getInstanceCount();
-
-  /**
-   * Overrides the resources, such as memory and virtual cores, to use for the execution.
-   *
-   * @param resources Resources to be used for execution
-   */
-  void setResources(Resources resources);
 }
