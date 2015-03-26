@@ -117,6 +117,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final WorkflowHttpHandler workflowHttpHandler;
   private final AppFabricDataHttpHandler appFabricDataHttpHandler;
   private final TransactionHttpHandler transactionHttpHandler;
 
@@ -132,7 +133,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                               AppFabricDataHttpHandler appFabricDataHttpHandler,
                               PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
-                              NamespaceAdmin namespaceAdmin, TransactionHttpHandler transactionHttpHandler) {
+                              NamespaceAdmin namespaceAdmin, TransactionHttpHandler transactionHttpHandler,
+                              WorkflowHttpHandler workflowHttpHandler) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
@@ -147,6 +149,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.transactionHttpHandler = transactionHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
+    this.workflowHttpHandler = workflowHttpHandler;
   }
 
   /**
@@ -650,7 +653,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId,
                                   @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getScheduledRunTime(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    workflowHttpHandler.getScheduledRunTime(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                     Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
@@ -662,7 +665,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    workflowHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                      Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
@@ -909,7 +912,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       String runId = runRecordList.get(0).getPid();
-      programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+      workflowHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                  Constants.DEFAULT_NAMESPACE, appId, workflowName, runId);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

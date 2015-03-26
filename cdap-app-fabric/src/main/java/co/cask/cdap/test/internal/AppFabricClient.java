@@ -26,6 +26,7 @@ import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
@@ -81,6 +82,7 @@ public class AppFabricClient {
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceAdmin namespaceAdmin;
   private final StreamAdmin streamAdmin;
@@ -92,7 +94,7 @@ public class AppFabricClient {
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceAdmin namespaceAdmin, StreamAdmin streamAdmin,
-                         StreamMetaStore streamMetaStore) {
+                         StreamMetaStore streamMetaStore, WorkflowHttpHandler workflowHttpHandler) {
     this.httpHandler = httpHandler;
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
@@ -101,6 +103,7 @@ public class AppFabricClient {
     this.namespaceAdmin = namespaceAdmin;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
+    this.workflowHttpHandler = workflowHttpHandler;
   }
 
   public void reset() throws Exception {
@@ -256,7 +259,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v3/namespaces/%s/apps/%s/workflows/%s/schedules", namespaceId, appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
+    workflowHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
 
     List<ScheduleSpecification> schedules = responder.decodeResponseContent(
       new TypeToken<List<ScheduleSpecification>>() { }, GSON);
