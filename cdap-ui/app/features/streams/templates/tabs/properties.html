@@ -58,10 +58,10 @@
             <div ng-repeat="property in properties" class="h4">
               <div class="row">
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" ng-model="property.name" placeholder="key"/>
+                  <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
                 </div>
                 <div class="col-sm-6">
-                  <input type="text" class="form-control" ng-model="property.type" placeholder="value"/>
+                  <input type="text" class="form-control" ng-model="property.type" placeholder="type"/>
 
                 </div>
                 <div class="col-sm-2">
@@ -91,6 +91,5 @@
 
   <button class="btn btn-danger" ng-click="reload()">Reset</button>
   <button class="btn btn-success" ng-click="save()">Save</button>
-
 
 </div>

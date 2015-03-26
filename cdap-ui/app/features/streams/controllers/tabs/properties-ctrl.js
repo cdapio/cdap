@@ -13,7 +13,6 @@ angular.module(PKG.name + '.feature.streams')
           _cdapNsPath: basePath
         })
         .then(function(res) {
-          console.log('response', res);
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.type = myHelpers.objectQuery(res, 'format', 'schema', 'type');
@@ -39,8 +38,8 @@ angular.module(PKG.name + '.feature.streams')
         }
       };
 
-      var param = {
-        ttl: $scope.ttl || null,
+      var params = {
+        ttl: $scope.ttl,
         format: obj,
         "notification.threshold.mb": $scope.threshold
       };
@@ -49,7 +48,7 @@ angular.module(PKG.name + '.feature.streams')
         .request({
           _cdapNsPath: basePath + '/properties',
           method: 'PUT',
-          body: param
+          body: params
         })
         .then(function(res) {
           $alert({
@@ -58,7 +57,6 @@ angular.module(PKG.name + '.feature.streams')
           });
           $scope.reload();
         });
-
     };
 
     $scope.addProperties = function() {
