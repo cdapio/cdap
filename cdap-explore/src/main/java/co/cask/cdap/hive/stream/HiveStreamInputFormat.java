@@ -46,6 +46,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +57,7 @@ import javax.annotation.Nullable;
  * Stream input format for use in hive queries and only hive queries. Will not work outside of hive.
  */
 public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> {
+  private static final Logger LOG = LoggerFactory.getLogger(HiveStreamInputFormat.class);
   private static final StreamInputSplitFactory<InputSplit> SPLIT_FACTORY = new StreamInputSplitFactory<InputSplit>() {
     @Override
     public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
@@ -134,7 +137,21 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     analyzer.clearAllowedColumnNames();
     analyzer.allowColumnName("ts");
 
-    ExprNodeGenericFuncDesc expr = Utilities.deserializeExpression(serializedExpr);
+    ExprNodeGenericFuncDesc expr;
+    // Hack to deal with the fact that older versions of Hive use
+    // Utilities.deserializeExpression(String, Configuration),
+    // whereas newer versions use Utilities.deserializeExpression(String).
+    try {
+      expr = Utilities.deserializeExpression(serializedExpr);
+    } catch (NoSuchMethodError e) {
+      try {
+        expr = (ExprNodeGenericFuncDesc) Utilities.class.getMethod(
+          "deserializeExpression", String.class, Configuration.class).invoke(null, serializedExpr, conf);
+      } catch (Exception e1) {
+        LOG.warn("Could not deserialize query predicate. A full table scan will be performed.", e1);
+        return builder.setStartTime(startTime).setEndTime(endTime);
+      }
+    }
 
     List<IndexSearchCondition> conditions = Lists.newArrayList();
     analyzer.analyzePredicate(expr, conditions);
