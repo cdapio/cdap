@@ -1,5 +1,7 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsCreateController', function($scope, MyDataSource, $modalInstance) {
+  .controller('StreamsCreateController', function($scope, MyDataSource, $modalInstance, caskFocusManager) {
+
+    caskFocusManager.focus('streamId');
 
     var dataSrc = new MyDataSource($scope);
 
