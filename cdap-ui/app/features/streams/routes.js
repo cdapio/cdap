@@ -36,20 +36,6 @@ angular.module(PKG.name + '.feature.streams')
           });
         }
       })
-      // .state('streams.list.properties', {
-      //   url: '/:streamId/properties',
-      //   onEnter: function($bootstrapModal, $state) {
-      //     $bootstrapModal.open({
-      //       templateUrl:'/assets/features/streams/templates/streamproperties.html',
-      //       size: 'lg',
-      //       backdrop: true,
-      //       keyboard: true,
-      //       controller: 'StreamPropertiesController'
-      //     }).result.finally(function() {
-      //       $state.go('streams.list', {}, { reload: true });
-      //     });
-      //   }
-      // })
 
       .state('streams.detail', {
         url: '/:streamId',
