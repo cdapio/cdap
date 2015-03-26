@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 
 /**
  * Realtime Sink.
@@ -31,9 +30,9 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
   /**
    * Configure the Sink.
    *
-   * @param configurer {@link StageConfigurer}
+   * @param configurer {@link RealtimeConfigurer}
    */
-  public void configure(StageConfigurer configurer) {
+  public void configure(RealtimeConfigurer configurer) {
     // no-op
   }
 

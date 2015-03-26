@@ -25,6 +25,13 @@ import co.cask.cdap.api.RuntimeContext;
 public interface SourceContext extends RuntimeContext {
 
   /**
+   * Get the specification of the source stage, set during the configuration.
+   *
+   * @return {@link RealtimeSpecification}
+   */
+  RealtimeSpecification getSpecification();
+
+  /**
    * Get Instance Id.
    *
    * @return instance id

@@ -19,8 +19,14 @@ package co.cask.cdap.templates.etl.api;
 import co.cask.cdap.api.RuntimeContext;
 
 /**
- * Context passed to the Pipeline Stages.
+ * Context passed to the Transform stages.
  */
 public interface TransformContext extends RuntimeContext {
 
+  /**
+   * Return the specification of this state.
+   *
+   * @return {@link StageSpecification}
+   */
+  StageSpecification getSpecification();
 }

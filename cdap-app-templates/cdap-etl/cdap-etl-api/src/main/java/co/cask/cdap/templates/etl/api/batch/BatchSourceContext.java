@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import java.util.List;
 
 /**
- * Context of a BatchSource.
+ * Context of a Batch Source.
  */
 public interface BatchSourceContext extends BatchContext {
 

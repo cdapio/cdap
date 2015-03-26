@@ -34,9 +34,9 @@ public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContex
   /**
    * Configure the Source.
    *
-   * @param configurer {@link SourceConfigurer}
+   * @param configurer {@link RealtimeConfigurer}
    */
-  public void configure(SourceConfigurer configurer) {
+  public void configure(RealtimeConfigurer configurer) {
     // no-op
   }
 

@@ -16,15 +16,23 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 
 /**
- * Configurer for the Source stage of the Pipeline.
+ * Configurer for the Source/Sink stage of the Realtime Pipeline.
  */
-public interface SourceConfigurer extends StageConfigurer {
+public interface RealtimeConfigurer extends StageConfigurer {
 
   /**
-   * Source can limit the scaling of ETL Pipeline instances and thus has the ability to limit the max instances.
+   * Overrides the resources, such as memory and virtual cores, to use for the execution.
+   *
+   * @param resources Resources to be used for execution
+   */
+  void setResources(Resources resources);
+
+  /**
+   * Source/Sink can limit the scaling of instances.
    *
    * @param count max instance count
    */

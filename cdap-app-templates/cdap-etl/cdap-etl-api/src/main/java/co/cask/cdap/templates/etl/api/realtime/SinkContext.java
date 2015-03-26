@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
@@ -25,6 +24,13 @@ import co.cask.cdap.api.data.stream.StreamWriter;
  * Context passed to the Sink stages.
  */
 public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
+
+  /**
+   * Get the specification of this stage, set during the configuration.
+   *
+   * @return {@link RealtimeSpecification}
+   */
+  RealtimeSpecification getSpecification();
 
   /**
    * Get Instance Id.
@@ -39,11 +45,4 @@ public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContex
    * @return instance count
    */
   int getInstanceCount();
-
-  /**
-   * Overrides the resources, such as memory and virtual cores, to use for the execution.
-   *
-   * @param resources Resources to be used for execution
-   */
-  void setResources(Resources resources);
 }
