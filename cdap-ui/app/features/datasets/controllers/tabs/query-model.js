@@ -5,6 +5,9 @@ angular.module(PKG.name+'.feature.datasets')
         this.dataSrc = dataSrc;
         this.key = key;
         this.data = data || [];
+        if (this.data.length) {
+          this.sync();
+        }
       }
 
       QueryModel.prototype.add = function (entry) {
@@ -19,7 +22,7 @@ angular.module(PKG.name+'.feature.datasets')
           this.data = entries;
           this.sync();
         }
-      }
+      };
 
       QueryModel.prototype.get = function () {
         var self = this;
@@ -60,14 +63,6 @@ angular.module(PKG.name+'.feature.datasets')
           queries.push(query);
         }
         return queries;
-      };
-
-      QueryModel.prototype.remove = function (entry) {
-        var index = this.data.indexOf(entry);
-        if(index != -1) {
-          this.data.splice(index, 1);
-          this.sync();
-        }
       };
 
       QueryModel.prototype.clear = function () {
