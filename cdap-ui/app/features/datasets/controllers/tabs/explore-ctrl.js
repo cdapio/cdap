@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetExploreController',
-    function($scope, MyDataSource, QueryModel, $state, myHelpers, $log, $q) {
+    function($scope, MyDataSource, QueryModel, $state, myHelpers, $log) {
       
 
       var dataSrc = new MyDataSource($scope);
