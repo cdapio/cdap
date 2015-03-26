@@ -50,43 +50,6 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  .controller('DropdownCtrl', function ($rootScope, $scope, $state, $dropdown) {
-
-    $scope.activeTabClick = function (event) {
-      var toggle = angular.element(event.target).parent();
-
-      if(toggle.hasClass('open')) {
-        $rootScope.$broadcast('widget-tab-dd.hide');
-        console.log(toggle);
-      }
-      $scope.isOpen = !$scope.isOpen;
-
-      console.log('toggle', toggle);
-
-      var scope = $scope.$new(),
-          dd = $dropdown(toggle, {
-            template: 'assets/features/dashboard/partials/widget-dd.html',
-            animation: 'am-flip-x',
-            trigger: 'manual',
-            prefixEvent: 'widget-tab-dd',
-            scope: scope
-          });
-
-      dd.$promise.then(function(){
-        if ($scope.isOpen) {
-          dd.show();
-        }
-      });
-
-      scope.$on('widget-tab-dd.hide', function () {
-        $scope.isOpen = false;
-        console.log('destroy');
-        dd.destroy();
-      });
-
-    };
-  })
-
   .controller('WidgetTimeseriesCtrl', function ($scope) {
 
     $scope.wdgt.fetchData();
