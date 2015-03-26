@@ -1,8 +1,10 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetExploreController',
-    function($scope, MyDataSource, $state, myHelpers, $log) {
+    function($scope, MyDataSource, QueryModel, $state, myHelpers, $log, $q) {
+      
 
       var dataSrc = new MyDataSource($scope);
+      var dataModel = new QueryModel(dataSrc, 'exploreQueries');
 
       $scope.activePanel = 0;
 
@@ -36,11 +38,7 @@ angular.module(PKG.name + '.feature.datasets')
       $scope.queries = [];
 
       $scope.getQueries = function() {
-        dataSrc
-          .request({
-            _cdapNsPath: '/data/explore/queries',
-            method: 'GET'
-          })
+        dataModel.get()
           .then(function (queries) {
             $scope.queries = queries;
           });
