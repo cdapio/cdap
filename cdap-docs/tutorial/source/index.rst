@@ -48,7 +48,7 @@ Follow one of the above links for download and installation instructions.
 
 .. rubric:: CDAP Tutorials
 
-Two tutorials are currently available to get you started with developing CDAP Applications:
+Two tutorials are currently available to get you started with running and developing CDAP Applications:
 
 .. |basic| replace:: **Basic Tutorial:**
 .. _basic: tutorial1.html
