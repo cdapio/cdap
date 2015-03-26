@@ -179,7 +179,6 @@ angular
 
 
     $scope.$on('$stateChangeSuccess', function (event, state) {
-      console.log("still in body controller");
       var classes = [];
       if(state.data && state.data.bodyClass) {
         classes = [state.data.bodyClass];
