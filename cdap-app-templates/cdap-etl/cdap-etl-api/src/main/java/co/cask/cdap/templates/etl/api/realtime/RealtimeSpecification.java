@@ -27,17 +27,11 @@ import java.util.List;
  */
 public class RealtimeSpecification extends StageSpecification {
   private final Resources resources;
-  private final int maxInstances;
 
   public RealtimeSpecification(String className, String name, String description, List<Property> properties,
-                               Resources resources, int maxInstances) {
+                               Resources resources) {
     super(className, name, description, properties);
     this.resources = resources;
-    this.maxInstances = maxInstances;
-  }
-
-  public int getMaxInstances() {
-    return maxInstances;
   }
 
   public Resources getResources() {

@@ -30,11 +30,4 @@ public interface RealtimeConfigurer extends StageConfigurer {
    * @param resources Resources to be used for execution
    */
   void setResources(Resources resources);
-
-  /**
-   * Source/Sink can limit the scaling of instances.
-   *
-   * @param count max instance count
-   */
-  void setMaxInstances(int count);
 }
