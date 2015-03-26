@@ -21,7 +21,7 @@ include_recipe 'cdap::default'
 
 # We also need the configuration, so we can run HDFS commands
 execute 'initaction-create-hdfs-cdap-dir' do
-  not_if  "hdfs dfs -test -d #{node['cdap']['cdap_site']['hdfs.namespace']}", :user => 'hdfs'
+  not_if  "hdfs dfs -test -d #{node['cdap']['cdap_site']['hdfs.namespace']}", :user => node['cdap']['cdap_site']['hdfs.user']
   command "hdfs dfs -mkdir -p #{node['cdap']['cdap_site']['hdfs.namespace']} && hdfs dfs -chown #{node['cdap']['cdap_site']['hdfs.user']} #{node['cdap']['cdap_site']['hdfs.namespace']}"
   timeout 300
   user 'hdfs'
@@ -29,9 +29,26 @@ execute 'initaction-create-hdfs-cdap-dir' do
 end
 
 execute 'initaction-create-hdfs-cdap-user-dir' do
-  not_if  "hdfs dfs -test -d /user/#{node['cdap']['cdap_site']['hdfs.user']}", :user => 'hdfs'
+  not_if  "hdfs dfs -test -d /user/#{node['cdap']['cdap_site']['hdfs.user']}", :user => node['cdap']['cdap_site']['hdfs.user']
   command "hdfs dfs -mkdir -p /user/#{node['cdap']['cdap_site']['hdfs.user']} && hdfs dfs -chown #{node['cdap']['cdap_site']['hdfs.user']} /user/#{node['cdap']['cdap_site']['hdfs.user']}"
   timeout 300
   user 'hdfs'
   group 'hdfs'
+end
+
+%w(cdap yarn).each do |u|
+  execute "initaction-create-hdfs-mr-jhs-staging-intermediate-done-dir-#{u}" do
+    not_if "hdfs dfs -test -d /tmp/hadoop-yarn/staging/history/done_intermediate/#{p}", :user => p
+    command "hdfs dfs -mkdir -p /tmp/hadoop-yarn/staging/history/done_intermediate/#{p} && hdfs dfs -chown #{p} /tmp/hadoop-yarn/staging/history/done_intermediate/#{p} && hdfs dfs -chmod ugo+rx /tmp/hadoop-yarn/staging/history/done_intermediate/#{p}"
+    timeout 300
+    user 'hdfs'
+    group 'hdfs'
+  end
+  execute "initaction-create-hdfs-mr-jhs-staging-done-dir-#{u}" do
+    not_if "hdfs dfs -test -d /tmp/hadoop-yarn/staging/history/done/#{p}", :user => p
+    command "hdfs dfs -mkdir -p /tmp/hadoop-yarn/staging/history/done/#{p} && hdfs dfs -chown #{p} /tmp/hadoop-yarn/staging/history/done/#{p} && hdfs dfs -chmod ugo+rx /tmp/hadoop-yarn/staging/history/done/#{p}"
+    timeout 300
+    user 'hdfs'
+    group 'hdfs'
+  end
 end
