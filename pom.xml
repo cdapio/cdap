@@ -1301,6 +1301,7 @@
                   <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>cdap-docs/**</exclude>
+                  <exclude>**/grok/patterns/**</exclude>
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
