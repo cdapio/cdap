@@ -3,6 +3,8 @@
     :description: Advanced Tutorial, Web Analytics Application
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
+.. |wise-version| replace:: 0.3.0
+
 .. _cdap-tutorial-advanced:
 
 =========================================================
@@ -27,7 +29,7 @@ server access logs, counts visits made by different IP addresses seen in the log
 real-time, and computes the bounce ratio of each web page encountered using batch
 processing.
 
-The Wise application uses these Cask Data Application Platform (CDAP) constructs to
+The Wise v\ |wise-version| application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:
 
 - **Stream:** Ingests log data in real-time 
@@ -59,33 +61,31 @@ Running Wise
 ============
 .. highlight:: console
 
-Building and running Wise is straightforward. We’ll assume that you have already
-downloaded, installed, and have started an instance of CDAP, as described in the 
+Building and running Wise v\ |wise-version| is straightforward. We’ll assume that you have
+already downloaded, installed, and have started an instance of CDAP, as described in the
 :ref:`Tutorial Introduction <tutorial-intro>`.
 
 Change to the directory where you have installed the CDAP SDK Standalone, and download the
 Wise source code:
 
-.. |wise-version| replace:: 0.1.0
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| cd $CDAP_SDK_HOME/examples    
+    |$| curl |https:|//codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible --output cdap-apps-release-cdap-|short-version|-compatible.zip
+
+Unzip the directory and build the application (without running the self-test) by executing:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cd $CDAP_SDK_HOME
-    |$| curl --remote-name |http:|//repository.cask.co/downloads/co/cask/cdap/apps/|wise-version|/cdap-wise-|wise-version|.zip
-    
-Unzip the directory and build the application by executing:
+    |$| unzip cdap-apps-release-cdap-|short-version|-compatible.zip
+    |$| cd cdap-apps-release-cdap-|short-version|-compatible/Wise
+    |$| mvn clean package -DskipTests
 
-.. container:: highlight
+To build and run the Wise Example Tests, you can use::
 
-  .. parsed-literal::
-    |$| unzip cdap-wise-|wise-version|.zip
-    |$| cd cdap-wise-|wise-version|
-    |$| mvn package 
-
-To build without running the Wise Example Tests, you can use::
-
-    $ mvn package -DskipTests
+    $ mvn clean package
     
 To deploy and start the application, make sure CDAP is running and then execute:
 
@@ -93,10 +93,15 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
   .. parsed-literal::
     |$| cd $CDAP_SDK_HOME
-    |$| ./bin/cdap-cli.sh deploy app examples/cdap-wise-|wise-version|/target/Wise-|wise-version|.jar
-    |$| ./bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow 
-  
-  
+    |$| ./bin/cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|wise-version|.jar
+    |$| ./bin/cdap-cli.sh start flow Wise.WiseFlow 
+
+You should get a response similar to::
+
+  Successfully connected CDAP instance at http://MacBook-Pro.local:10000
+  Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
+
+
 Overview of Wise
 ================
 Throughout this case study, we will present and explain the different constructs that the
@@ -109,7 +114,7 @@ Wise application’s architecture:
 
 - The Wise application has one Stream, ``logEventStream``, which receives Web server
   access logs. It sends the events it receives to two CDAP components: the
-  ``WiseFlow`` Flow and the ``WiseWorkflow`` Workflow.
+  Flow ``WiseFlow`` and the Workflow ``WiseWorkflow``.
   
 - ``WiseFlow`` has two Flowlets. The first, ``parser``, extracts information from the logs
   received from the Stream. It then sends the information to the second Flowlet,
@@ -133,29 +138,30 @@ Now let’s talk about each of these components in more detail.
 
 Wise Data Patterns
 ==================
-Here’s a sample access log::
+Here’s a sample access log (reformatted to fit)::
 
-  47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1" 404 1490 " "
-    "Mozilla/2.0 (compatible; Ask Jeeves)"
-    
+  255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" 401 2969 " " 
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"
+
 Wise is only interested in three parts of a log:
 
-- The IP address: **47.41.156.173** 
-- The time the log was saved: **18/Sep/2014:12:52:52 -0400**
-- The web page visited: **/index.html**
+- The IP address: **255.255.255.185** 
+- The time the log was saved: **23/Sep/2014:11:45:38 -0400**
+- The web page visited: **/cdap.html**
 
 Wise has two Datasets, *pageViewStore* and *bounceCountStore*, which both store
 information about the access logs, but according to different patterns.
 
-..rubric:: The *pageViewStore* Dataset 
+.. rubric:: The *pageViewStore* Dataset 
 
 The *pageViewStore* custom Dataset stores, for each IP address,
 the number of times that address has visited a web page. For example, *pageViewStore* could
 contain this entry::
 
-  47.41.156.173  -> {
+  255.255.255.185  -> {
     /index.html  -> 3, 
     /career.html -> 1, 
+    /cdap.html   -> 3, 
     /team.html   -> 4,
     ...
   }
@@ -228,9 +234,9 @@ The ``increment()`` method adds to a web page the number of “visits” and “
 To retrieve the number of “visits” and “bounces” for a particular web page, we define a
 ``get()`` method:
 
-.. literalinclude:: /../build/_includes/PageViewStore.java
+.. literalinclude:: /../build/_includes/BounceCountStore.java
    :language: java
-   :lines: 79-89   
+   :lines: 71-79   
 
 The ``get()`` method reads the two columns ``COL_VISITS`` and ``COL_BOUNCES`` of a web page. Once
 again, we use the ``Table.get()`` method which returns a ``Row`` object. From the information
@@ -252,9 +258,13 @@ this format (broken on two lines to fit)::
     "Mozilla/2.0 (compatible; Ask Jeeves)" 
   
 We have already prepared a sample of Web server access logs for you to inject into the
-*logEventStream*. Run this command at the root of the Wise application::
+*logEventStream*. Run this command at the root of the Wise application:
 
-  $ ./bin/inject-data.sh 
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| cd $CDAP_SDK_HOME/examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/
+    |$| ./bin/inject-data.sh 
 
 This requires that a Standalone CDAP instance be running with the Wise application already
 deployed.
@@ -267,30 +277,10 @@ number of visits they made to different web pages.
 
 This work is realized by two Flowlets, *parser* and *pageViewCount*.
 
-The parser Flowlet parser receives the raw log data from the Stream and extracts useful
-information from it. Here is its implementation::
-
-  public static class LogEventParserFlowlet extends AbstractFlowlet { private static final
-  Logger LOG = LoggerFactory.getLogger(LogEventParserFlowlet.class);
-
-    // Emitter for emitting a LogInfo instance to the next Flowlet
-    private OutputEmitter<LogInfo> output;
-
-    // Annotation indicates that this method can process incoming data
-    @ProcessInput public void processFromStream(StreamEvent event) throws
-    CharacterCodingException {
-
-      // Get a log event in String format from a StreamEvent instance
-      String log = Charsets.UTF_8.decode(event.getBody()).toString();
-
-      try { LogInfo logInfo = LogInfo.parse(log); if (logInfo != null) {
-      output.emit(logInfo, "ip", logInfo.getIp().hashCode());
-        }
-      } catch (IOException e) {
-        LOG.info("Could not parse log event {}", log);
-      }
-      }  }
-      }  }}
+The *parser* Flowlet
+--------------------
+The *parser* Flowlet (of type ``LogEventParserFlowlet``) receives the raw log data from
+the Stream and extracts useful information from it. Here is its implementation:
 
 .. literalinclude:: /../build/_includes/WiseFlow.java
    :language: java
@@ -313,19 +303,10 @@ see below why this is useful.
 
 The *pageViewCount* Flowlet 
 ---------------------------
-The *pageViewCount* Flowlet receives ``LogInfo`` objects and updates
-the *pageViewStore* Dataset with the information they contain.
+The *pageViewCount* Flowlet (of type ``PageViewCounterFlowlet``) receives ``LogInfo``
+objects and updates the *pageViewStore* Dataset with the information they contain.
 
-Its implementation is very brief::
-
-  public static class PageViewCounterFlowlet extends AbstractFlowlet {
-  @UseDataSet("pageViewStore") private PageViewStore pageViewStore;
-
-    @Batch(10) @HashPartition("ip") @ProcessInput public void count(LogInfo logInfo) {
-      // Increment the count of a logInfo by 1
-      pageViewStore.incrementCount(logInfo);
-    }
-    }}
+Its implementation is very brief:
 
 .. literalinclude:: /../build/_includes/WiseFlow.java
    :language: java
@@ -336,30 +317,24 @@ Here’s what to note about the ``PageViewCounterFlowlet`` Flowlet class:
 - The ``@ProcessInput`` annotation on the ``count()`` method indicates that ``count()`` will process
   incoming data. 
 - The ``@UseDataSet`` annotation gives a reference to the *pageViewStore* Dataset
-  inside the *pageViewStore* attribute. The Dataset APIs can then be used inside the ``count()``
+  above the *pageViewStore* attribute. The Dataset APIs can then be used inside the ``count()``
   method to store logs analytics. 
 - The ``@Batch`` annotation indicates that data is processed in batches of ten ``LogInfo`` 
   objects, which increases the throughput of the Flowlet.
 - The ``@HashPartition`` annotation ensures, in the case that several instances of this Flowlet are
   running, all ``LogInfo`` objects with the same IP address information will be sent to
   the same Flowlet instance. This prevents two Flowlet instances from writing to the same
-  row key of the pageViewStore Dataset at the same time, which would cause a transaction
-  conflict. (See the advanced guide for more information about transactions and conflicts.)
+  row key of the *pageViewStore* Dataset at the same time, which would cause a transaction
+  conflict. (See the `CDAP Developers’ Manual: Transaction System 
+  <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/transaction-system.html>`__
+  for more information about transactions and conflicts.)
 
 Building the WiseFlow 
 ---------------------
 Now that we have had a look at the core of the *parser* and *pageViewCount* Flowlets,
-let’s see how they are connected together and to *logEventStream*.
+let’s see how they are connected together and to the *logEventStream*.
 
 The Flowlets are defined in the ``WiseFlow`` Flow, which is defined by this small class::
-
-  public class WiseFlow implements Flow { @Override public FlowSpecification configure() {
-  return FlowSpecification.Builder.with() .setName("WiseFlow") .setDescription("Wise Flow")
-  .withFlowlets() .add("parser", new LogEventParserFlowlet()) .add("pageViewCount", new
-  PageViewCounterFlowlet()) .connect() .fromStream("logEventStream").to("parser")
-  .from("parser").to("pageViewCount") .build();
-    }
-    }}
 
 .. literalinclude:: /../build/_includes/WiseFlow.java
    :language: java

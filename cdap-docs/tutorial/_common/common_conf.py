@@ -159,6 +159,7 @@ rst_epilog = """
 .. |$| replace:: :gp:`$`
 
 .. |http:| replace:: http:
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
