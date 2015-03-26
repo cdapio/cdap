@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -612,5 +613,66 @@ public abstract class AppFabricTestBase {
     response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
                                       TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  protected void setAndTestRuntimeArgs(String namespace, String appId, String runnableType, String runnableId,
+                                     Map<String, String> args) throws Exception {
+    HttpResponse response;
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
+    String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
+                                                           "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                         namespace);
+    response = doPut(versionedRuntimeArgsUrl, argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doGet(versionedRuntimeArgsUrl);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String responseEntity = EntityUtils.toString(response.getEntity());
+    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+  }
+
+  protected String getRunnableStatus(String namespaceId, String appId, String runnableType, String runnableId)
+    throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
+                                                        "/status", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
+    return o.get("status");
+  }
+
+  protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
+    String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           namespace);
+    HttpResponse response = doPost(versionedScheduledSuspend);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
+    HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                       namespace));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  protected List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
+    throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
+    }.getType());
+  }
+
+  protected int getRuns(String runsUrl) throws Exception {
+    HttpResponse response = doGet(runsUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    return history.size();
   }
 }

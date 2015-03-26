@@ -85,8 +85,14 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
         sendInvalidResponse(responder, id);
         return;
       }
-      AppFabricServiceStatus status = suspendResumeProgram(runtimeInfo.getController(), "suspend");
-      responder.sendString(status.getCode(), status.getMessage());
+      ProgramController controller = runtimeInfo.getController();
+      if (controller.getState() == ProgramController.State.SUSPENDED) {
+        responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getCode(),
+                             AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getMessage());
+        return;
+      }
+      controller.suspend().get();
+      responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
     }  catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -108,8 +114,14 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
         sendInvalidResponse(responder, id);
         return;
       }
-      AppFabricServiceStatus status = suspendResumeProgram(runtimeInfo.getController(), "resume");
-      responder.sendString(status.getCode(), status.getMessage());
+      ProgramController controller = runtimeInfo.getController();
+      if (controller.getState() == ProgramController.State.ALIVE) {
+        responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getCode(),
+                             AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getMessage());
+        return;
+      }
+      controller.resume().get();
+      responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
     }  catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -121,19 +133,15 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private void sendInvalidResponse(HttpResponder responder, Id.Program id) {
     try {
       AppFabricServiceStatus status;
-      try {
-        ProgramStatus programStatus = getProgramStatus(id, ProgramType.WORKFLOW);
-        if (programStatus.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
-          status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-        } else if (ProgramController.State.COMPLETED.toString().equals(programStatus.getStatus())
+      ProgramStatus programStatus = getProgramStatus(id, ProgramType.WORKFLOW);
+      if (programStatus.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
+        status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      } else if (ProgramController.State.COMPLETED.toString().equals(programStatus.getStatus())
           || ProgramController.State.KILLED.toString().equals(programStatus.getStatus())
           || ProgramController.State.ERROR.toString().equals(programStatus.getStatus())) {
-          status = AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
-        } else {
-          status = AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
-        }
-      } catch (Exception e) {
-        status = AppFabricServiceStatus.INTERNAL_ERROR;
+        status = AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
+      } else {
+        status = AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
       }
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
@@ -144,27 +152,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
   }
 
-  private AppFabricServiceStatus suspendResumeProgram(ProgramController controller, String action) {
-    try {
-      if (action.equals("suspend")) {
-        if (controller.getState() == ProgramController.State.SUSPENDED) {
-          return AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED;
-        }
-        controller.suspend().get();
-      } else if (action.equals("resume")) {
-        if (controller.getState() == ProgramController.State.ALIVE) {
-          return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
-        }
-        controller.resume().get();
-      }
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      return AppFabricServiceStatus.INTERNAL_ERROR;
-    }
-    return AppFabricServiceStatus.OK;
-  }
-
-  /**************************** Workflow/schedule APIs *****************************************************/
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
