@@ -50,13 +50,11 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.twill.api.RunId;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -359,20 +357,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       }
     }
     return null;
-  }
-
-  protected Map<RunId, ProgramRuntimeService.RuntimeInfo> findAllRuntimeInfos(String namespaceId, String appId,
-                                                                              ProgramType type, String programName,
-                                                                              ProgramRuntimeService runtimeService) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfoMap = Maps.newHashMap();
-    Id.Program programId = Id.Program.from(namespaceId, appId, type, programName);
-    for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(type).entrySet()) {
-      if (programId.equals(entry.getValue().getProgramId())) {
-        runtimeInfoMap.put(entry.getKey(), entry.getValue());
-      }
-    }
-
-    return runtimeInfoMap;
   }
 
   protected void getLiveInfo(HttpResponder responder, String namespaceId,

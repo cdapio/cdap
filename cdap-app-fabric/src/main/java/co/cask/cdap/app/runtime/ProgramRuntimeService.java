@@ -68,6 +68,13 @@ public interface ProgramRuntimeService extends Service {
   Map<RunId, RuntimeInfo> list(ProgramType type);
 
   /**
+   * Get {@link RuntimeInfo} for a specified program.
+   * @param program The program for which the {@link RuntimeInfo} needs to be determined
+   * @return An immutable map from {@link RunId} to {@link ProgramController}
+   */
+  Map<RunId, RuntimeInfo> list(Id.Program program);
+
+  /**
    * Get runtime information about a running program. The content of this information is different
    * for each runtime environment. For example, in a distributed environment, this would contain the
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.

@@ -80,9 +80,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                  @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findAllRuntimeInfos(namespaceId, appId,
-                                                                          ProgramType.WORKFLOW, workflowName,
-                                                                          runtimeService).get(RunIds.fromString(runId));
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
         sendInvalidResponse(responder, id);
         return;
@@ -105,9 +103,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findAllRuntimeInfos(namespaceId, appId,
-                                                                          ProgramType.WORKFLOW, workflowName,
-                                                                          runtimeService).get(RunIds.fromString(runId));
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
         sendInvalidResponse(responder, id);
         return;
