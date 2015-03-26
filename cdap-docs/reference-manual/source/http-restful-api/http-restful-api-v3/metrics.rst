@@ -73,12 +73,8 @@ enclosing context. These are the available Application contexts of CDAP:
      - ``namespace.<namespace>.app.<app-id>.flow.<flow-id>``
    * - All Flowlets of all app of an Application
      - ``namespace.<namespace>.app.<app-id>.flow.*``
-   * - One Procedure
-     - ``namespace.<namespace>.app.<app-id>.procedure.<procedure-id>``
    * - One Worker
      - ``namespace.<namespace>.app.<app-id>.worker.<worker-id>``
-   * - All Procedures of an Application
-     - ``namespace.<namespace>.app.<app-id>.procedure.*``
    * - All Workers of an Application
      - ``namespace.<namespace>.app.<app-id>.workers.*``
    * - All Mappers of a MapReduce
@@ -149,9 +145,6 @@ These metrics are available in a Flowlet context:
 
    * - Flowlet Metric
      - Description
-   * - ``system.process.busyness``
-     - A number from 0 to 100 indicating how “busy” the Flowlet is;
-       note that you cannot aggregate over this metric
    * - ``system.process.errors``
      - Number of errors while processing
    * - ``system.process.events.processed``
@@ -262,7 +255,7 @@ Searches and Queries
 The process of retrieving a metric involves these steps:
 
 1. Obtain (usually through a search) the correct context for a metric;
-#. Obtain (usually through a search of the context) the available metrics;
+#. Obtain (usually through a search within the context) the available metrics;
 #. Querying for a specific metric, supplying the context and any parameters.
 
 
@@ -395,9 +388,9 @@ To query a metric within a given context, perform an HTTP GET request::
 
    * - HTTP Method
      - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.flowlet.saver&metric=system.process.busyness?aggregate=true'``
+       ``WhoFlow.flowlet.saver&metric=system.process.events.processed?aggregate=true'``
    * - Description
-     - Using a *System* metric, *system.process.busyness*
+     - Using a *System* metric, *system.process.events.processed*
    * - 
      - 
    * - HTTP Method
