@@ -143,7 +143,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $http, $interval, EventPipe) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -175,21 +175,13 @@ angular
 
 
     // verify backend server is running
-    var modalInstance = $modal({
-          scope: $scope,
-          template: '/assets/features/backendstatus/errorModal.html',
-          show: false,
-          backdrop: 'static',
-          keyboard: false
-        });
-
     function pingBackend() {
       $http.get('/backendstatus')
         .success(function() {
-          modalInstance.$promise.then(modalInstance.hide);
+          EventPipe.emit('backendUp');
         })
         .error (function() {
-          modalInstance.$promise.then(modalInstance.show);
+          EventPipe.emit('backendDown');
         });
     }
 
