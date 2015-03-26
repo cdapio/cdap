@@ -76,6 +76,20 @@ public interface Store {
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
 
   /**
+   * Logs suspend of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setSuspend(Id.Program id, String pid);
+
+  /**
+   * Logs resume of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setResume(Id.Program id, String pid);
+
+  /**
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *

@@ -24,6 +24,7 @@ import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.DummyAppWithTrackingTable;
+import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
@@ -136,6 +137,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW = "OneWorkflow";
   private static final String WORKFLOW_APP_WITH_FORK = "WorkflowAppWithFork";
   private static final String WORKFLOW_WITH_FORK = "WorkflowWithFork";
+  private static final String PAUSE_RESUME_WORKFLOW_APP = "PauseResumeWorkflowApp";
+  private static final String PAUSE_RESUME_WORKFLOW = "PauseResumeWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
@@ -780,13 +783,187 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       if (response.getStatusLine().getStatusCode() == 200) {
         json = EntityUtils.toString(response.getEntity());
         output = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-        Assert.assertTrue(output.size() == currentRunningProgramsExpected);
-        return;
+        if (output.size() == currentRunningProgramsExpected) {
+          break;
+        }
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertNotNull(output);
     Assert.assertTrue(output.size() == currentRunningProgramsExpected);
+  }
+
+  protected int getWorkflowSuspendResume(String namespaceId, String appId, String workflowId, String runId,
+                                          String action) throws Exception {
+    HttpResponse response = doPost(getVersionedAPIPath("apps/" + appId + "/workflows/" + workflowId + "/" + runId + "/"
+                                                         + action, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowPauseResume() throws Exception {
+    // Files used to synchronize between this test and workflow execution
+    File firstSimpleActionFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file");
+    File firstSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file.done");
+
+    File forkedSimpleActionFile = new File(tmpFolder.newFolder() + "/forkedsimpleaction.file");
+    File forkedSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/forkedsimpleaction.file.done");
+
+    File anotherForkedSimpleActionFile = new File(tmpFolder.newFolder() + "/anotherforkedsimpleaction.file");
+    File anotherForkedSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/anotherforkedsimpleaction.file.done");
+
+    File lastSimpleActionFile = new File(tmpFolder.newFolder() + "/lastsimpleaction.file");
+    File lastSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/lastsimpleaction.file.done");
+
+    HttpResponse response = deploy(PauseResumeWorklowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    runtimeArguments.put("first.simple.action.file", firstSimpleActionFile.getAbsolutePath());
+    runtimeArguments.put("first.simple.action.donefile", firstSimpleActionDoneFile.getAbsolutePath());
+    runtimeArguments.put("forked.simple.action.file", forkedSimpleActionFile.getAbsolutePath());
+    runtimeArguments.put("forked.simple.action.donefile", forkedSimpleActionDoneFile.getAbsolutePath());
+    runtimeArguments.put("anotherforked.simple.action.file", anotherForkedSimpleActionFile.getAbsolutePath());
+    runtimeArguments.put("anotherforked.simple.action.donefile", anotherForkedSimpleActionDoneFile.getAbsolutePath());
+    runtimeArguments.put("last.simple.action.file", lastSimpleActionFile.getAbsolutePath());
+    runtimeArguments.put("last.simple.action.donefile", lastSimpleActionDoneFile.getAbsolutePath());
+
+    setAndTestRuntimeArgs(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, ProgramType.WORKFLOW.getCategoryName(),
+                          PAUSE_RESUME_WORKFLOW, runtimeArguments);
+
+    // Start the Workflow
+    int status = getRunnableStartStop(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                      ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW, "start");
+    Assert.assertEquals(200, status);
+
+    // Workflow should be running
+    String runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "running");
+    List<Map<String, String>> historyRuns = scheduleHistoryRuns(60, runsUrl, 0);
+    Assert.assertTrue(historyRuns.size() == 1);
+
+    String runId = historyRuns.get(0).get("runid");
+
+    while (!firstSimpleActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
+
+    // Only one Workflow node should be running
+    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", PAUSE_RESUME_WORKFLOW_APP,
+                                      PAUSE_RESUME_WORKFLOW, runId);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    int currentRunningProgramsExpected = 1;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    // Suspend the Workflow
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW,
+                                      runId, "suspend");
+    Assert.assertEquals(200, status);
+
+    // Workflow status hould be SUSPENDED
+    Assert.assertEquals("SUSPENDED",
+                        getRunnableStatus(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                          ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW));
+
+    // Meta store information for this Workflow should reflect suspended run
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "suspended");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    // Suspending the already suspended Workflow should give CONFLICT
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW,
+                                      runId, "suspend");
+    Assert.assertEquals(409, status);
+
+    // Signal the FirstSimpleAction in the Workflow to continue
+    firstSimpleActionDoneFile.createNewFile();
+
+    // Even if the Workflow is suspended, currently executing action will complete and currently running nodes
+    // should be zero
+    currentRunningProgramsExpected = 0;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    // Verify that Workflow is still suspended
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "suspended");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    // Resume the execution of the Workflow
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, runId,
+                                      "resume");
+    Assert.assertEquals(200, status);
+
+    // Workflow should be running
+    Assert.assertEquals("RUNNING",
+                        getRunnableStatus(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                          ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW));
+
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "running");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    // Resume on already running Workflow should give conflict
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW,
+                                      runId, "resume");
+    Assert.assertEquals(409, status);
+
+    // Wait till fork execution in the Workflow starts
+    while (!forkedSimpleActionFile.exists() && !anotherForkedSimpleActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
+
+    // Workflow should have 2 nodes running because of the fork
+    currentRunningProgramsExpected = 2;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    // Suspend the Workflow
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, runId,
+                                      "suspend");
+    Assert.assertEquals(200, status);
+
+    // Status of the Workflow should be suspended
+    Assert.assertEquals("SUSPENDED",
+                        getRunnableStatus(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                          ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW));
+
+    // Store should reflect the suspended status of the Workflow
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "suspended");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    // Allow currently executing actions to complete
+    forkedSimpleActionDoneFile.createNewFile();
+    anotherForkedSimpleActionDoneFile.createNewFile();
+
+    // Workflow should have zero actions running
+    currentRunningProgramsExpected = 0;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "suspended");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    Assert.assertTrue(!lastSimpleActionFile.exists());
+
+    status = getWorkflowSuspendResume(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, runId,
+                                      "resume");
+    Assert.assertEquals(200, status);
+
+    Assert.assertEquals("RUNNING",
+                        getRunnableStatus(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                          ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW));
+
+    while (!lastSimpleActionFile.exists()) {
+      TimeUnit.SECONDS.sleep(1);
+    }
+
+    currentRunningProgramsExpected = 1;
+    checkCurrentRuns(10, versionedUrl, currentRunningProgramsExpected);
+
+    lastSimpleActionDoneFile.createNewFile();
+
+    runsUrl = getRunsUrl(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, PAUSE_RESUME_WORKFLOW, "completed");
+    scheduleHistoryRuns(10, runsUrl, 0);
+
+    Assert.assertEquals("STOPPED",
+                        getRunnableStatus(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP,
+                                          ProgramType.WORKFLOW.getCategoryName(), PAUSE_RESUME_WORKFLOW));
+
   }
 
   @Category(XSlowTests.class)
@@ -805,7 +982,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     setAndTestRuntimeArgs(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                           WORKFLOW_WITH_FORK, runtimeArguments);
-
 
     int status = getRunnableStartStop(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW.getCategoryName(),
                                       WORKFLOW_WITH_FORK, "start");

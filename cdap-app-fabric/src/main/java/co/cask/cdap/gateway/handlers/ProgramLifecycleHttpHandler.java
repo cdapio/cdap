@@ -83,6 +83,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.RunIds;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -884,6 +885,101 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/suspend")
+  public void suspendWorkflowRun(HttpRequest request, final HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
+    try {
+      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findAllRuntimeInfos(namespaceId, appId,
+                                                                          ProgramType.WORKFLOW, workflowName,
+                                                                          runtimeService).get(RunIds.fromString(runId));
+      if (runtimeInfo == null) {
+        sendInvalidResponse(responder, id);
+        return;
+      }
+      AppFabricServiceStatus status = suspendResumeProgram(runtimeInfo.getController(), "suspend");
+      responder.sendString(status.getCode(), status.getMessage());
+    }  catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/resume")
+  public void resumeWorkflowRun(HttpRequest request, final HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
+
+    try {
+      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findAllRuntimeInfos(namespaceId, appId,
+                                                                          ProgramType.WORKFLOW, workflowName,
+                                                                          runtimeService).get(RunIds.fromString(runId));
+      if (runtimeInfo == null) {
+        sendInvalidResponse(responder, id);
+        return;
+      }
+      AppFabricServiceStatus status = suspendResumeProgram(runtimeInfo.getController(), "resume");
+      responder.sendString(status.getCode(), status.getMessage());
+    }  catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void sendInvalidResponse(HttpResponder responder, Id.Program id) {
+    try {
+      AppFabricServiceStatus status;
+      try {
+        ProgramStatus programStatus = getProgramStatus(id, ProgramType.WORKFLOW);
+        if (programStatus.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
+          status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+        } else if (ProgramController.State.COMPLETED.toString().equals(programStatus.getStatus())
+          || ProgramController.State.KILLED.toString().equals(programStatus.getStatus())
+          || ProgramController.State.ERROR.toString().equals(programStatus.getStatus())) {
+          status = AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
+        } else {
+          status = AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
+        }
+      } catch (Exception e) {
+        status = AppFabricServiceStatus.INTERNAL_ERROR;
+      }
+      responder.sendString(status.getCode(), status.getMessage());
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private AppFabricServiceStatus suspendResumeProgram(ProgramController controller, String action) {
+    try {
+      if (action.equals("suspend")) {
+        if (controller.getState() == ProgramController.State.SUSPENDED) {
+          return AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED;
+        }
+        controller.suspend().get();
+      } else if (action.equals("resume")) {
+        if (controller.getState() == ProgramController.State.ALIVE) {
+          return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
+        }
+        controller.resume().get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      return AppFabricServiceStatus.INTERNAL_ERROR;
+    }
+    return AppFabricServiceStatus.OK;
+  }
+
   /**************************** Workflow/schedule APIs *****************************************************/
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
@@ -1454,6 +1550,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           if (state == ProgramController.State.ERROR) {
             error(controller.getFailureCause());
           }
+        }
+
+        @Override
+        public void suspended() {
+          store.setSuspend(id, runId);
+        }
+
+        @Override
+        public void resuming() {
+          store.setResume(id, runId);
         }
 
         @Override
