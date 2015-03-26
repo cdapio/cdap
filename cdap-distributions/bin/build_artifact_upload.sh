@@ -33,7 +33,6 @@ REMOTE_INCOMING_DIR=${3}                                ### target directory on 
 REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
-
 #############################
 # find top of repo
 find_repo_root() {
@@ -82,36 +81,47 @@ function sync_build_artifacts_to_server () {
   for i in ${PACKAGES}
   do
     decho "PACKAGE=${i}"
-    _package=`echo ${i} | awk -F / '{ print $(NF) }'`
+    _package=`basename ${i}`
 
-    case $_package in
+    ## 
+    # most CDAP Debian packages will look like this: (typical, not just in CDAP)
+    #      cdap-blah-blah-blah_2.8.0-1_all.deb
+    #      cdap-blah-blah-blah_2.8.0.1427234000548-1_all.deb
+    #    Pattern: <package name>_<version>all.deb  
+    #
+    # most CDAP RPM packages will look like this: 
+    #      cdap-blah-blah-blah-2.8.0-1.noarch.rpm
+    #      cdap-blah-blah-blah-2.8.0.1427234000548-1.noarch.rpm
+    #    Pattern: <package name>-<version>.noarch.rpm 
+    #
+    # Where version = <Major>.<Minor>.<Revision>(.optional time stamp)(-optional subrevision)
+    ##
 
-      cdap.*_[0-9]\.[0-9]\.[0-9]\.[0-9]+.*deb | cdap.*-[0-9]\.[0-9]\.[0-9]\.[0-9]+.*rpm )  ## snapshots with timestamp
-        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
-        ;;
+    # grab version stub
+    if [[ $_package == *_all.deb ]]
+    then
+      _version_stub=`echo $_package | sed 's/cdap.*_\(.*\)_all.deb/\1/'`
+    elif [[ $_package == *.noarch.rpm ]]
+    then
+      _version_stub=`echo $_package | sed 's/cdap.*-\(.*-.*\).noarch.rpm/\1/'`
+    else # send failure notification because package file has an unexpected format/pattern
+      decho "something wrong this this package"
+      die "package $_package has the wrong format: ${!}"
+    fi
 
-      *_all.deb )                             ## debian standard
-        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }' | awk -F - '{ print $1 }'`
-        ;;
-
-      *noarch.rpm )                           ## rpm standard
-        _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
-        ;;
-
-      *_*deb )                                   ## default debian case
-        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
-        ;;
-
-      *rpm | * )                              ## default RPM case and catchall
-        _version_stub=`echo ${_package} | awk -F - '{ print $(NF) }'`
-        ;;
-
-    esac
-
-    _version=`echo ${_version_stub} | awk -F . '{ print $1"."$2"."$3 }'`
+    # filter out version in 2 steps: 
+    #   remove trailing '-<digit(s)>' (e.g. -1)
+    #   keep just the first 3 digits in case name includes timestamp
+    decho "version stub=${_version_stub}"
+    _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
-    OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
 
+    # identify and create remote incoming directory
+    OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    echo "Creating remote directory"
+    ssh -l ${REMOTE_USER} ${REMOTE_HOST} "sudo mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
+
+    # sync package(s) to remote server
     decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1"
     rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
     decho ""
