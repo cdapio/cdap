@@ -496,7 +496,7 @@ Query Tips
 - Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
   the request body that enumerates the name and attributes for each metric, is currently not
   supported in this API. Instead, use the :ref:`v2 API
-  <http-restful-api-v2-metrics-multiple>`. It will be supported in a future release.
+  <http-restful-api-v2-metrics-multiple>` until it is supported in a future release.
 
 
 .. _http-restful-api-metrics-groupby:
