@@ -32,7 +32,7 @@ is part of the :ref:`HTTP RESTful API v3 <http-restful-api-v3>`.
 Namespace Components
 ====================
 
-A Namespace has a namespace identifier (the namespace ID), a display name, and a description.
+A Namespace has a namespace identifier (the namespace 'name') and a description.
 
 Namespace IDs are composed from a limited set of characters; they are restricted to
 letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
@@ -43,8 +43,8 @@ namespace, however, can be used by anyone, though like all reserved namespaces, 
 be deleted.
 
 
-Independent and Non-hierarchal
-==============================
+Independent and Non-hierarchical
+================================
 
 Namespaces are flat, with no hierarchy inside them. (Namespaces are not allowed inside
 another namespace.)
