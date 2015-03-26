@@ -138,12 +138,35 @@ angular
     });
   })
 
+  .run(function(MyDataSource, EventPipe, MY_CONFIG, $rootScope) {
+    // verify backend server is running
+    var dataSrc = new MyDataSource($rootScope.$new());
+    function pingBackend() {
+      dataSrc.poll({
+        url: ['http://',
+              MY_CONFIG.cdap.routerServerUrl,
+              ':',
+              MY_CONFIG.cdap.routerServerPort,
+              '/status'].join('')
+      }, function(res) {
+        EventPipe.emit('backendUp');
+      }, function(res) {
+        if (res.error.code === 'ECONNREFUSED') {
+          EventPipe.emit('backendDown');
+        }
+      });
+    }
+
+    pingBackend(); // execute immediately when initially opening a page
+
+  })
+
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $http, $interval, EventPipe) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -156,6 +179,7 @@ angular
 
 
     $scope.$on('$stateChangeSuccess', function (event, state) {
+      console.log("still in body controller");
       var classes = [];
       if(state.data && state.data.bodyClass) {
         classes = [state.data.bodyClass];
@@ -172,22 +196,6 @@ angular
 
       $scope.bodyClass = classes.join(' ');
     });
-
-
-    // verify backend server is running
-    function pingBackend() {
-      $http.get('/backendstatus')
-        .success(function() {
-          EventPipe.emit('backendUp');
-        })
-        .error (function() {
-          EventPipe.emit('backendDown');
-        });
-    }
-
-    pingBackend(); // execute immediately when initially opening a page
-    $interval(pingBackend, 60000); // ping every 60 seconds
-
 
     console.timeEnd(PKG.name);
   });
