@@ -30,6 +30,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -83,19 +84,18 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
+                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory, Store store) {
     this.program = program;
     this.runId = runId;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
     this.logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-      ? Long.parseLong(options.getArguments()
-                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+      ? Long.parseLong(options.getArguments().getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
                                                                          runId, options.getUserArguments(),
-                                                                         logicalStartTime);
+                                                                         logicalStartTime, store);
   }
 
   @Override

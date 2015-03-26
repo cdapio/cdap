@@ -66,7 +66,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -85,7 +84,6 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -900,12 +898,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                            if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
                                              responder.sendStatus(HttpResponseStatus.NOT_FOUND);
                                            } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
+                                             responder.sendJson(HttpResponseStatus.OK, status.getResult());
                                            } else {
                                              responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                                                   status.getResult());
