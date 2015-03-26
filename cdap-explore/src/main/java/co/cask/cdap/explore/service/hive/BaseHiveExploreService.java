@@ -19,7 +19,6 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
@@ -27,7 +26,6 @@ import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
@@ -766,13 +764,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
-    Lock nextLock = getOperationInfo(handle).getNextLock();
-    nextLock.lock();
     try {
-      // Fetch results from Hive
-      LOG.trace("Getting results for handle {}", handle);
-      OperationHandle opHandle = getOperationHandle(handle);
-      List<QueryResult> results = fetchNextResults(opHandle, size);
+      List<QueryResult> results = fetchNextResults(handle, size);
       QueryStatus status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
@@ -781,16 +774,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
-    } finally {
-      nextLock.unlock();
     }
   }
 
-  protected List<QueryResult> fetchNextResults(OperationHandle operationHandle, int size)
+  @SuppressWarnings("unchecked")
+  protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     startAndWait();
 
+    Lock nextLock = getOperationInfo(handle).getNextLock();
+    nextLock.lock();
     try {
+      // Fetch results from Hive
+      LOG.trace("Getting results for handle {}", handle);
+      OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
@@ -831,6 +828,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw Throwables.propagate(e);
     } catch (IllegalAccessException e) {
       throw Throwables.propagate(e);
+    } finally {
+      nextLock.unlock();
     }
   }
 
@@ -867,7 +866,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         previewFile = new File(previewsDir, handle.getHandle());
         FileWriter fileWriter = new FileWriter(previewFile);
         try {
-          List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
+          List<QueryResult> results = fetchNextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
           operationInfo.setPreviewFile(previewFile);
           return results;
