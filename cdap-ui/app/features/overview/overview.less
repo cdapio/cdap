@@ -1,9 +1,9 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
 
-body.state-overview {
-  p {
-    color: @cdap-gray;
-  }
+body.state-overview.theme-cdap {
+
   .panel-heading {
     p {
       line-height: 3em;
@@ -12,9 +12,32 @@ body.state-overview {
       }
     }
   }
-  .data-apps {
-    .fa-bars, .fa-upload {
-      margin-right: 10px;
+  section.data-apps {
+    .fa-bars, .fa-upload { margin-right: 10px; }
+    .list-group {
+      background-color: white;
+      border: 1px solid @cdap-lightgray;
+      margin-top: 20px;
+      padding: 10px;
+      .border-radius(8px);
+    }
+    .list-group-item {
+      background-color: @cdap-bluegray;
+      color: white;
+      padding: 0;
+      .border-radius(8px);
+      .transition(background-color 0.2s ease-in-out);
+      &:not(:last-child) { margin-bottom: 10px; }
+      &:hover, &:focus { background-color: @brand-primary; }
+      a {
+        color: white;
+        display: block;
+        padding: 10px 25px;
+        &:hover, &:focus { text-decoration: none; }
+      }
+      strong { font-size: 18px; font-weight: 500; }
+      p { color: white; }
     }
   }
+
 }
