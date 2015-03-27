@@ -3,10 +3,13 @@
  */
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
-function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager) {
+function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout,
+   MYAUTH_EVENT, MY_CONFIG, caskFocusManager) {
 
   $scope.credentials = myAuth.remembered();
   $scope.submitting = false;
+
+  $scope.isAuthenticated = MY_CONFIG.securityEnabled;
 
   $scope.doLogin = function (c) {
     $scope.submitting = true;
@@ -31,8 +34,6 @@ function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT
 
       if(MY_CONFIG.securityEnabled) {
         focusLoginField();
-      } else { // auto-login
-        myAuth.login({username:'admin'});
       }
 
     }
