@@ -61,8 +61,8 @@ the SDK:
 
   .. parsed-literal::
     |$| mvn package 
-    |$| ./../bin/cdap-cli.sh deploy app target/WebAnalytics-|version|.jar
-    |$| ./../bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow 
+    |$| ./../../bin/cdap-cli.sh deploy app target/WebAnalytics-|version|.jar
+    |$| ./../../bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow 
 
 On Windows, replace ``cdap-cli.sh`` with ``cdap-cli.bat`` in the above commands.
 
