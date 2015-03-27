@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -77,7 +76,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   @Inject
   public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                       NamespacedLocationFactory namespacedLocationFactory,
-                      StoreFactory storeFactory, StreamConsumerFactory streamConsumerFactory,
+                      Store store, StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
                       @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
@@ -88,7 +87,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.store = storeFactory.create();
+    this.store = store;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
