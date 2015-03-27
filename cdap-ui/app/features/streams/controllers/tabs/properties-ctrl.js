@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $filter, $state, myHelpers, $alert) {
+  .controller('StreamDetailPropertiesController', function($scope, MyDataSource, $filter, $state, myHelpers, $alert) {
 
     var basePath = '/streams/' + $state.params.streamId;
 

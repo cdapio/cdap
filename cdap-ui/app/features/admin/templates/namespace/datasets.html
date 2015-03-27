@@ -16,12 +16,16 @@
   </thead>
   <tbody>
     <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
-      <td ng-bind="dataset.name"></td>
+      <td>
+        <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})" ng-bind="dataset.name"></a>
+      </td>
       <td ng-bind="dataset.type"></td>
 
     </tr>
     <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
-      <td ng-bind="stream.name"></td>
+      <td>
+        <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})" ng-bind="stream.name"></a>
+      </td>
       <td ng-bind="stream.type"></td>
       <td>
         <a ui-sref="admin.namespace.detail.datasets.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
