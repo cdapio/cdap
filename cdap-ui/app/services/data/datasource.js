@@ -73,7 +73,7 @@ angular.module(PKG.name+'.services')
           angular.forEach(self.bindings, function (b) {
             if(angular.equals(b.resource, data.resource)) {
               if(b.errorCallback) {
-                scope.$apply(b.errorCallback.bind(null, data.response));
+                scope.$apply(b.errorCallback.bind(null, data));
               }
             }
           });
@@ -114,11 +114,12 @@ angular.module(PKG.name+'.services')
     /**
      * poll a resource
      */
-    DataSource.prototype.poll = function (resource, cb) {
+    DataSource.prototype.poll = function (resource, cb, errorCb) {
       this.bindings.push({
         poll: true,
         resource: resource,
-        callback: cb
+        callback: cb,
+        errorCallback: errorCb
       });
 
       this.scope.$on('$destroy', function () {

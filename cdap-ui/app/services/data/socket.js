@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl) {
+  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl, EventPipe) {
 
     var self = this,
         socket = null,
@@ -38,7 +38,7 @@ angular.module(PKG.name+'.services')
       };
 
       socket.onopen = function (event) {
-
+        EventPipe.emit('backendUp');
         if(attempt>1) {
           $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
           attempt = 1;
@@ -51,6 +51,7 @@ angular.module(PKG.name+'.services')
 
       socket.onclose = function (event) {
         $log.error(event.reason);
+        EventPipe.emit('backendDown');
 
         if(attempt<2) {
           $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
