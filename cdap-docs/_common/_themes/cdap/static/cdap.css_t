@@ -153,12 +153,6 @@ div.sphinxsidebar a tt.docutils.literal {
     font-size: 1.0em;
 }
 
-/* 
-div.sphinxsidebar a:hover tt.docutils.literal {
-	  font-weight: bold;
-}
-*/
-
 div.sphinxsidebar input {
     border: 1px solid #ccc;
     font-family: sans-serif;
