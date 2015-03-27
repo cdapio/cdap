@@ -24,13 +24,15 @@ body.state-overview.theme-cdap {
     .list-group-item {
       background-color: @cdap-bluegray;
       color: white;
-      padding: 10px 25px;
+      padding: 0;
       .border-radius(8px);
       .transition(background-color 0.2s ease-in-out);
       &:not(:last-child) { margin-bottom: 10px; }
       &:hover, &:focus { background-color: @brand-primary; }
       a {
         color: white;
+        display: block;
+        padding: 10px 25px;
         &:hover, &:focus { text-decoration: none; }
       }
       strong { font-size: 18px; font-weight: 500; }
