@@ -131,7 +131,11 @@ rst_epilog = """
 .. role:: gp
 .. |$| replace:: :gp:`$`
 
+.. |copyright| replace:: %(copyright)s
+
 .. |http:| replace:: http:
+
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
@@ -139,9 +143,8 @@ rst_epilog = """
 .. |(R)| unicode:: U+00AE .. registered trademark sign
    :ltrim:
 
-.. |copyright| replace:: %(copyright)s
-
 .. |--| unicode:: U+2013   .. en dash
+
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
 
