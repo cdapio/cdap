@@ -553,35 +553,34 @@ Exploring Datasets through SQL
 With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
 called *Explore*, can be accessed through the CDAP Console:
 
-#. After deploying Wise in your Standalone CDAP instance, go to the **Store** page, which is one
+1. After deploying Wise in your Standalone CDAP instance, go to the **Store** page, which is one
    of the five pages you can access from the left pane of the CDAP Console:
 
-   .. image:: _images/wise_store_page.png 
-       :width: 8in
-       :align: center
+.. image:: _images/wise_store_page.png 
+    :width: 8in
+    :align: center
 
-#. Click on the **Explore** button in the top-right corner of the page. You will land on this
-   page:
+2. Click on the **Explore** button in the top-right corner of the page. You will land on this page:
 
-   .. image:: _images/wise_explore_page.png
-       :width: 8in
-       :align: center
+.. image:: _images/wise_explore_page.png
+    :width: 8in
+    :align: center
 
 This is the **Explore** page, where you can run ad-hoc SQL queries and see information about
 the Datasets that expose a SQL interface.
 
-You will notice that the Datasets have unusual names, such as *dataset_bouncecounts*.
+You will notice that the Datasets have unusual names, such as *dataset_bouncecountstore*.
 Those are the SQL table names of the Datasets which have a SQL interface.
 
 Here are some of the SQL queries that you can run:
 
 - Retrieve the web pages from which IP addresses have bounced more than 10% of the time::
 
-    SELECT uri FROM dataset_bouncecounts WHERE bounces > 0.1 * totalvisits
+    SELECT uri FROM dataset_bouncecountstore WHERE bounces > 0.1 * totalvisits
 
 - Retrieve all the IP addresses which visited the page ‘/contact.html’::
 
-    SELECT key FROM dataset_pageviewstore WHERE array_contains(map_keys(value),‘/contact.html’)=TRUE
+    SELECT key FROM dataset_pageviewstore WHERE array_contains(map_keys(value),'/contact.html')=TRUE
 
 As the SQL engine that CDAP runs internally is Hive, the SQL language used to submit
 queries is HiveQL. A description of it is in the `Hive language manual
@@ -596,6 +595,7 @@ have another look at the Dataset’s class definition:
 .. literalinclude:: /../build/_includes/BounceCountStore.java
    :language: java
    :lines: 39-41   
+   :append:     . . .  
 
 The ``RecordScannable`` interface allows a Dataset to be queried using SQL. It exposes a
 Dataset as a table of ``Record`` objects, and the schema of the ``Record`` defines the schema of
@@ -608,7 +608,7 @@ of the *bounceCountStore* is derived.
 Bringing the Components Together 
 ================================
 To create the Wise application with all these components mentioned above, define a class
-that extends ``AbstractApplication``::
+that extends ``AbstractApplication``:
 
 .. literalinclude:: /../build/_includes/WiseApp.java
    :language: java
@@ -623,42 +623,54 @@ Unit tests are a major part of the development of an application. As
 developers ourselves, we have created a full unit testing framework for CDAP applications.
 In a CDAP application unit tests, all CDAP components run in-memory.
 
-The WiseAppTest class, which extends the unit-testing framework’s TestBase, tests all the
-components of the WiseApp. The first step is to obtain an ApplicationManager object::
+The ``WiseAppTest`` class, which extends the unit-testing framework’s ``TestBase``, tests all the
+components of the *WiseApp*. The first step is to obtain an ``ApplicationManager`` object:
 
-  ApplicationManager appManager = deployApplication(WiseApp.class);
-  
+.. literalinclude:: /../build/_includes/WiseAppTest.java
+   :language: java
+   :start-after: // Deploy an App
+   :end-before: // Start a Flow
+   
 With this object, we can:
 
-- Test log event injection::
+- Test log event injection:
 
-    StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
-    streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:03:43 -0400] " + 
-      "\"GET /product.html HTTP/1.0\" 404 208 \"http://www.example.org\" \"Mozilla/5.0\"");
+  .. literalinclude:: /../build/_includes/WiseAppTest.java
+     :language: java
+     :lines: 98-101
+     :prepend:     . . .  
+     :append:     . . .  
 
-- Test the call to a Service endpoint::
+- Test the call to a Service endpoint:
 
-    ServiceManager serviceManager = appManager.startService("WiseService");
-    URL url = new URL(serviceManager.getServiceURL(), "ip/1.202.218.8/count");
-    HttpRequest request = HttpRequest.get(url).build(); 
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode()); 
-    Assert.assertEquals("3", Bytes.toString(response.getResponseBody()));
+  .. literalinclude:: /../build/_includes/WiseAppTest.java
+     :language: java
+     :lines: 122-138
+     :prepend:     . . .  
+     :append:     . . .  
 
-- Start a MapReduce::
+- Start a MapReduce:
 
-    MapReduceManager mrManager = appManager.startMapReduce("WiseWorkflow_BounceCountsMapReduce");
-    mrManager.waitForFinish(3, TimeUnit.MINUTES);
+  .. literalinclude:: /../build/_includes/WiseAppTest.java
+     :language: java
+     :lines: 66-67
+     :prepend:     . . .  
+     :append:     . . .  
 
-- Test the output of the MapReduce::
+- Test the output of the MapReduce:
 
-    DataSetManager<BounceCountStore> dsManager = appManager.getDataSet("bounceCountStore");
-    BounceCountStore bounceCountStore = dsManager.get();
-    Assert.assertEquals(new PageBounce("/product.html", 3, 2), bounceCountStore.get("/product.html"));
+  .. literalinclude:: /../build/_includes/WiseAppTest.java
+     :language: java
+     :lines: 70-73
+     :prepend:     . . .  
+     :append:     . . .  
 
-- Test a SQL query on Datasets::
+- Test a SQL query on Datasets:
 
-    Connection exploreConnection = getQueryClient(); 
-    ResultSet resultSet = exploreConnection.prepareStatement("SELECT * FROM cdap_user_bouncecountstore ORDER BY uri").executeQuery(); 
+  .. literalinclude:: /../build/_includes/WiseAppTest.java
+     :language: java
+     :lines: 76-86
+     :prepend:     . . .  
+     :append:     . . .  
 
 A complete example of the test is included in the downloaded zip.
