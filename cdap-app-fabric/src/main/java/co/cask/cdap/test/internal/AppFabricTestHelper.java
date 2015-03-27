@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Program;
@@ -33,7 +34,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;

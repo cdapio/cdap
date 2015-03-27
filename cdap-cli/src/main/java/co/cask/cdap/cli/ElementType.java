@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.api.ProgramType;
 import com.google.common.collect.Sets;
 
 import java.util.Set;

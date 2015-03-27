@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.lang.ProgramClassLoader;
@@ -23,7 +24,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;

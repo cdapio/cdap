@@ -23,7 +23,6 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
-
 import com.google.inject.Inject;
 
 import java.io.PrintStream;

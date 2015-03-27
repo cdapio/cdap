@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;

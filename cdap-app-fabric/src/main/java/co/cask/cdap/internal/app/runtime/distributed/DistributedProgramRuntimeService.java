@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
@@ -43,7 +44,6 @@ import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;

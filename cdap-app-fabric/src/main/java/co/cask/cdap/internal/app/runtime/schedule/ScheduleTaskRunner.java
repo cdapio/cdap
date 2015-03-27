@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;

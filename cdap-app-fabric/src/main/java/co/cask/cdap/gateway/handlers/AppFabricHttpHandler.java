@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -46,7 +47,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.BodyConsumer;

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
@@ -34,7 +35,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -41,7 +41,6 @@ import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutor;

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -28,7 +29,6 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;

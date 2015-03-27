@@ -18,12 +18,12 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WebCrawlApp;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;

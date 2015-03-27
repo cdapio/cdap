@@ -22,16 +22,6 @@
 
 package $package
 
-import breeze.linalg.DenseVector
-import breeze.linalg.squaredDistance
-import breeze.linalg.Vector
-import co.cask.cdap.api.spark.ScalaSparkProgram
-import co.cask.cdap.api.spark.SparkContext
-import org.apache.spark.SparkContext._
-import org.apache.spark.rdd.NewHadoopRDD
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
 /**
  * Implementation of KMeans Clustering Spark Program.
  */

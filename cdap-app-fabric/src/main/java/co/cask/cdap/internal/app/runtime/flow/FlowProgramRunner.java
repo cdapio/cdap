@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -32,7 +33,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;

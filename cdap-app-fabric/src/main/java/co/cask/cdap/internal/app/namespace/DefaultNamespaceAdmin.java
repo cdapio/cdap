@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -34,7 +35,6 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;

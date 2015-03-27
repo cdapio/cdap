@@ -15,10 +15,10 @@
  */
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
 /**

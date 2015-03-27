@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Throwables;

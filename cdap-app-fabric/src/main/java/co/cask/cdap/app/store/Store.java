@@ -17,6 +17,7 @@
 package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -30,7 +31,6 @@ import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
 

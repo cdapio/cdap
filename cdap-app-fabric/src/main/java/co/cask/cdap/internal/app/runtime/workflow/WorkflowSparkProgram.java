@@ -15,13 +15,13 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

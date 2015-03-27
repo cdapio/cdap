@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.webapp.WebappSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -30,7 +31,6 @@ import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

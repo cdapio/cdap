@@ -15,12 +15,12 @@
  */
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;

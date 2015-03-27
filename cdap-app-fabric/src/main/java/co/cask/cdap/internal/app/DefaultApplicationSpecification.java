@@ -27,7 +27,6 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

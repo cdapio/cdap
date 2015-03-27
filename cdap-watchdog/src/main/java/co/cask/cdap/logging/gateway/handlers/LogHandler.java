@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -26,7 +27,6 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
 import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
@@ -36,7 +36,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.client.util.VersionMigrationUtils;
@@ -25,7 +26,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;

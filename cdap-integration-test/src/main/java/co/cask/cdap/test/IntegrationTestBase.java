@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
@@ -36,7 +37,6 @@ import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Function;

@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.store.Store;
@@ -28,7 +29,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;

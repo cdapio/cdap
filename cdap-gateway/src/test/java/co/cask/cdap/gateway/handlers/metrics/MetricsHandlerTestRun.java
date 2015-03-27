@@ -24,7 +24,6 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;

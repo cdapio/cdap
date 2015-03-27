@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -41,7 +42,6 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;

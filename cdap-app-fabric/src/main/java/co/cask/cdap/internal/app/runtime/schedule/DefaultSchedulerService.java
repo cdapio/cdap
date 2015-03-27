@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
@@ -26,7 +27,6 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;

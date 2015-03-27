@@ -16,7 +16,7 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeWorkflow;
@@ -24,7 +24,6 @@ import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
 import org.junit.Assert;

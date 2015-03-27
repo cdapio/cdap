@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service;

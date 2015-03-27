@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 
 /**

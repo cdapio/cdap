@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.remote;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ApplicationClient;
@@ -24,11 +25,8 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.ApplicationManager;
@@ -47,7 +45,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

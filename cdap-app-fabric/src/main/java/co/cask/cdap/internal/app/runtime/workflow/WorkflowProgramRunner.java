@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -24,7 +25,6 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

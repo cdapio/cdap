@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
@@ -46,7 +47,6 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import com.google.common.annotations.VisibleForTesting;

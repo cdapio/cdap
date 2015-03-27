@@ -22,7 +22,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Admin class for managing a namespace's lifecycle

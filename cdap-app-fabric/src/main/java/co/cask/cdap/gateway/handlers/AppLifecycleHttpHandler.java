@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -64,7 +65,6 @@ import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;

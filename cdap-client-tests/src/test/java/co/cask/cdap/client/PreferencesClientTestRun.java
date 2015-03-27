@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -24,7 +25,6 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;

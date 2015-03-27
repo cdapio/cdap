@@ -16,12 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;

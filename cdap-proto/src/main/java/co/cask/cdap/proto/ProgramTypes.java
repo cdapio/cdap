@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;

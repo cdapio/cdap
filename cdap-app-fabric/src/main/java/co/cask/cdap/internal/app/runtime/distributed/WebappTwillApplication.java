@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;

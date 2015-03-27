@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;

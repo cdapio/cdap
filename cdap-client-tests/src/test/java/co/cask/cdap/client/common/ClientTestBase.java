@@ -17,6 +17,7 @@
 package co.cask.cdap.client.common;
 
 import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -25,7 +26,6 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.Iterables;

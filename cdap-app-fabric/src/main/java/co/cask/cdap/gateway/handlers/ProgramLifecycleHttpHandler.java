@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -58,7 +59,6 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;

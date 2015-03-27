@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -25,7 +26,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;

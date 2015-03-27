@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
@@ -43,7 +44,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;

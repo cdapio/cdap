@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
@@ -30,7 +31,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;

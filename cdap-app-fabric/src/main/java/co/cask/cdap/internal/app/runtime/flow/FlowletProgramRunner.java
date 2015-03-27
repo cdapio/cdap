@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
@@ -75,7 +76,6 @@ import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;

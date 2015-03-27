@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;

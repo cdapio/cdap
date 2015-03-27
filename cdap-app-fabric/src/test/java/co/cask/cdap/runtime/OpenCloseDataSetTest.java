@@ -18,6 +18,7 @@ package co.cask.cdap.runtime;
 
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -32,7 +33,6 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -38,7 +39,6 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

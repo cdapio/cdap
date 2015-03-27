@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -41,7 +42,6 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

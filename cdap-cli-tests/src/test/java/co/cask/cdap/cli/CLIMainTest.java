@@ -17,6 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.util.InstanceURIParser;
@@ -45,7 +46,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;

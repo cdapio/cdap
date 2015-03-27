@@ -16,9 +16,9 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;

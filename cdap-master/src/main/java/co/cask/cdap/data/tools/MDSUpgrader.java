@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -37,7 +38,6 @@ import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.ProgramArgs;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;

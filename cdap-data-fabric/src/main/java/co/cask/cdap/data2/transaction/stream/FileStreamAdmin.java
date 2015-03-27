@@ -44,7 +44,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

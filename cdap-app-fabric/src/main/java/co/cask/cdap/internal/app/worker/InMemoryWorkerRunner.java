@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.worker;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -28,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

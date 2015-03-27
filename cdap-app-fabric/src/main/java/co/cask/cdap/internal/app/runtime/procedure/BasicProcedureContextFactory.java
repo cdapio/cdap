@@ -20,7 +20,6 @@ import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import org.apache.twill.api.RunId;

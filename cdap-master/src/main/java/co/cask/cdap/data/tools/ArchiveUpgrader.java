@@ -18,7 +18,6 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.LoggingConfiguration;
 import com.google.inject.Inject;

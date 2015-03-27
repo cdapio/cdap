@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AdapterApp;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -26,7 +27,6 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterSpecification;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.Sink;
 import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;

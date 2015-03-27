@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithWorkflow;
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -32,7 +33,6 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

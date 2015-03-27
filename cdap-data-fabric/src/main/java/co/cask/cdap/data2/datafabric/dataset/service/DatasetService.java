@@ -42,7 +42,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

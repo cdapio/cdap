@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.ProgramType;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -33,7 +34,6 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.common.http.HttpMethod;
