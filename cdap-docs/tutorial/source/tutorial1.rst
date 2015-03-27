@@ -9,6 +9,8 @@
 Basic Tutorial: A Simple Web Analytics Application
 ==================================================
 
+Introduction
+=============
 This tutorial provides the basic steps for the development of a data application using the
 Cask Data Application Platform (CDAP). We will use a simple Web Analytics Application to
 demonstrate how to develop with CDAP and how CDAP helps when building data applications
