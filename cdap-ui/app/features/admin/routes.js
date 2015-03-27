@@ -139,7 +139,7 @@ angular.module(PKG.name + '.feature.admin')
             })
 
             .state('admin.namespace.detail.data', {
-              url: '/datasets',
+              url: '/data',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
               controller: 'AdminDatasetsController'
             })
@@ -153,7 +153,7 @@ angular.module(PKG.name + '.feature.admin')
                     keyboard: true,
                     controller: 'StreamsCreateController'
                   }).result.finally(function() {
-                    $state.go('admin.namespace.detail.datasets', {}, { reload: true });
+                    $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
                 }
               })
@@ -167,7 +167,7 @@ angular.module(PKG.name + '.feature.admin')
                     keyboard: true,
                     controller: 'StreamPropertiesController'
                   }).result.finally(function() {
-                    $state.go('admin.namespace.detail.datasets', {}, { reload: true });
+                    $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
                 }
               })
