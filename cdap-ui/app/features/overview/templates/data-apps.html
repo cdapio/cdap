@@ -1,0 +1,95 @@
+<div class="row">
+  <div class="col-xs-6">
+    <div ng-if="datasets.length > 0 || streams.length > 0">
+      <h2 class="text-uppercase"> Data </h2>
+      <div class="row">
+        <div class="col-xs-6">
+          <h3> Deployed datasets: </h3>
+        </div>
+        <div class="col-xs-6">
+          <div class="pull-right">
+            <a ui-sref="data.list" class="btn btn-default">
+              <span class="fa fa-bars"></span>
+              All Data
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group" >
+        <li class="list-group-item" ng-repeat="stream in streams track by $index">
+          <a ui-sref="streams.detail.overview({streamId: stream.name})">
+            <strong ng-bind="stream.name | caskCapitalizeFilter">  </strong>
+            <div> <p ng-bind="'Type: ' + (stream.type)"></p> </div>
+          </a>
+        </li>
+        <li class="list-group-item" ng-repeat="dataset in datasets track by $index">
+          <a ui-sref="datasets.detail.overview({datasetId: dataset.name})">
+            <strong ng-bind="dataset.name | caskCapitalizeFilter">  </strong>
+            <div> <p ng-bind="'Type: ' + (dataset.type)"></p> </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="datasets.length === 0 && streams.length === 0">
+      <div class="clearfix">
+        <h2 class="text-uppercase"> Data </h2>
+        <p> You haven't deployed any datasets. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-center" ng-controller="AppsSectionCtrl">
+        <my-file-select
+            data-button-label="Add Data"
+            data-button-disabled="true"
+            data-button-icon="fa-plus"
+            data-button-class="btn-lg"
+            on-file-select="onFileSelected($files)">
+        </my-file-select>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-6">
+    <div ng-if="apps.length > 0">
+      <h2 class="text-uppercase"> Apps </h2>
+      <div class="row">
+        <div class="col-xs-6">
+          <h3> Deployed apps: </h3>
+        </div>
+        <div class="col-xs-6">
+          <div class="pull-right">
+            <a ui-sref="apps.list" class="btn btn-default">
+              <span class="fa fa-bars"></span>
+               All Apps
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="app in apps">
+          <a ui-sref="apps.detail.overview({appId: app.id})">
+            <strong ng-bind="app.name">  </strong>
+            <div><p ng-bind="app.description"> </p></div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="apps.length === 0">
+      <div class="clearfix">
+        <h2 class="text-uppercase"> Apps </h2>
+        <p> You haven't deployed any apps. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-center" ng-controller="AppsSectionCtrl">
+        <my-file-select
+            data-button-label="Add App"
+            data-button-icon="fa-plus"
+            data-button-class="btn-lg"
+            on-file-select="onFileSelected($files)">
+        </my-file-select>
+      </div>
+    </div>
+  </div>
+</div>

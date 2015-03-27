@@ -5,14 +5,13 @@
 @import "../../styles/themes/cdap/mixins.less";
 @import "cdap/header.less";
 @import "cdap/buttons.less";
-@import "cdap/more.less";
+@import "cdap/theme.less";
 
 html { font-size: 100%; }
 body.theme-cdap {
   font-size: 100%;
   visibility: visible;
 
-  .container { max-width: 1170px; }
   main.container {
     margin-top: 80px;
 
@@ -78,6 +77,7 @@ body.theme-cdap {
   } // end main.container
 
   footer {
-    border-top: 1px dashed lighten(@cdap-orange, 33%);
+    background-color: white;
+    font-weight: 600;
   }
 }

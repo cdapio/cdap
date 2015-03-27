@@ -11,15 +11,15 @@ body.theme-cdap header {
 
     .navbar-brand {
       position: relative;
-      top: -5px;
+      top: -10px;
 
       > strong {
         display: inline-block;
         visibility: hidden;
-        width: 77px;
+        width: 84px;
       }
       background: url('@{img-path}/cdap.png') no-repeat 15px center;
-      background-size: 77px auto;
+      background-size: 100px auto;
 
       &:after {
         position: absolute;
@@ -29,11 +29,10 @@ body.theme-cdap header {
         background-color: @cdap-bluegray;
         color: @cdap-white;
         font-size: 8px;
-        //font-weight: bold;
         line-height: 12px;
-        border-radius: 2px;
+        .border-radius(2px);
         bottom: -5px;
-        left: 15px;
+        left: 24px;
         letter-spacing: 2px;
         padding:1px 0;
       }
@@ -44,47 +43,38 @@ body.theme-cdap header {
     @media (min-width: @screen-sm-min) {
       nav {
         position: absolute;
-        top: 19px;
+        top: 15px;
         left: 50%;
         margin-left: -180px;
 
         > ul.nav {
           background-color: @cdap-darkness;
-          border-radius: 25px;
-          height: 37px;
+          .border-radius(25px);
 
           li {
-            width: 120px;
+            width: 140px;
             overflow: hidden;
             text-align: center;
-            text-transform: lowercase;
-            // font-weight: 300;
-
-            > a {
-              border-radius: 25px;
-              padding: 9px;
-              margin: 1px;
-              color:@btn-primary-color;
-              &:hover {
-                color: @cdap-orange;
-              }
-            }
-
-            a:first-letter{
-              text-transform: uppercase;
-            }
-
             &.active > a {
               cursor: default;
               color: @cdap-orange;
               background-color: @gray-lighter;
+            }
+            > a {
+              .border-radius(25px);
+              font-size: 15px;
+              letter-spacing: 0.5px;
+              margin: 1px;
+              padding: 15px;
+              color: lightgray;
+              text-transform: capitalize;
+              &:hover, &:focus { color: @cdap-orange; }
             }
           }
         }
       }
 
       li.dropdown {
-
         &.open {
           a.dropdown-toggle {
             background-color: @cdap-white;
@@ -96,31 +86,67 @@ body.theme-cdap header {
 
         ul.dropdown-menu {
           background-color: @brand-primary;
-          border-color: @brand-primary;
-          border-top-right-radius:none;
-          a {
-            color: white;
+          border: 0;
+          margin: 0;
+          padding: 0;
+          li {
+            padding: 10px 20px;
+            &:hover, &:focus {
+              &:not(.dropdown-header) {
+                background-color: @cdap-darkblue;
+              }
+            }
             &:hover {
-              color:rgba(255, 255, 255, 0.5);;
-              background-color: @cdap-darkblue;
+              a { color: lightgray; }
+            }
+            &.dropdown-header, &.disabled a { color: lightgray; }
+            &.divider {
+              background-color: @cdap-header;
+              margin: 0;
+              padding: 0;
             }
           }
-          li.divider {
-            background-color: @cdap-header;
-          }
-          li.disabled {
-            a {
-              color: @gray-light;
+          a {
+            color: white;
+            padding: 0;
+            &:hover, &:focus {
+              background-color: transparent;
+              outline: none;
             }
           }
         }
       }
-
-      .navbar-right li.dropdown {
-        ul.dropdown-menu {
-          border-top-right-radius: 0;
-          border-top-left-radius: @border-radius-base;
+      .nav:first-child {
+        ul.dropdown-menu { .border-radius(0 4px 4px 4px); }
+        li.dropdown {
+          a.dropdown-toggle {
+            margin-left: 10px;
+            span {
+              color: lightgray;
+              &:first-child { letter-spacing: 1px; }
+              &.fa-caret-down {
+                background-color: #252831;
+                width: 18px;
+                height: 18px;
+                font-size: 14px;
+                margin-left: 10px;
+                text-align: center;
+                .border-radius(10px);
+                &:before { line-height: 18px; }
+              }
+            }
+          }
+          &.open {
+            a.dropdown-toggle span {
+              color: @cdap-darkness;
+              &.fa-caret-down { background-color: transparent; }
+            }
+          }
         }
+
+      }
+      .navbar-right li.dropdown {
+        ul.dropdown-menu { .border-radius(4px 0 4px 4px); }
       }
 
     }
