@@ -19,6 +19,12 @@
 source _common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
+CDAP_TUTORIAL="cdap-tutorial"
+PROJECT=$CDAP_TUTORIAL
+
+ARG_1="$1"
+ARG_2="$2"
+ARG_3="$3"
 
 function download_java_file() {
   # Downloads a Java file to the includes directory, and checks that it hasn't changed.
@@ -59,6 +65,73 @@ function pandoc_includes() {
   download_java_file $1 $project_main WiseFlow              2deba0633a0dcca14ef426929f543872
   download_java_file $1 $project_main WiseWorkflow          8fe51eed165e85d95c4f5e25953e3489
   download_java_file $1 $project_main WiseService           ed54e1e9952e4a880a9fc4216fdf7b4e
+}
+
+
+function build_docs_cdap_tutorial() {
+  _build_docs "docs" $GOOGLE_ANALYTICS_WEB $WEB $FALSE
+}
+
+function _build_docs() {
+  build $1
+  build_zip $3
+  display_version
+  bell "Building $1 completed."
+}
+
+function clean() {
+  cd $SCRIPT_PATH
+  rm -rf $SCRIPT_PATH/$BUILD/*
+  mkdir -p $SCRIPT_PATH/$BUILD/$HTML
+  echo "Cleaned $BUILD directory"
+}
+
+function build_zip() {
+  cd $SCRIPT_PATH
+  make_zip $1
+}
+
+function make_zip() {
+  version
+  if [ "x$1" == "x" ]; then
+    ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION"
+  else
+    ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
+  fi
+  echo "ZIP_DIR_NAME: $ZIP_DIR_NAME"
+  cd $SCRIPT_PATH/$BUILD
+  mkdir $PROJECT_VERSION
+  mv $HTML $PROJECT_VERSION/en
+  # Add a redirect index.html file
+  echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
+  # Zip everything
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/* --exclude .DS_Store
+}
+
+function bell() {
+  # Pass a message as $1
+  echo -e "\a$1"
+}
+
+function usage() {
+  cd $PROJECT_PATH
+  PROJECT_PATH=`pwd`
+  echo "Build script for '$PROJECT_CAPS' docs"
+  echo "Usage: $SCRIPT < option > [source]"
+  echo ""
+  echo "  Options (select one)"
+  echo "    docs-zip       Clean build of HTML docs, zipped for placing on docs.cask.co webserver"
+  echo ""
+  echo "  with"
+  echo "    source         Path to $PROJECT source, if not $PROJECT_PATH"
+  echo ""
+}
+
+function run_command() {
+  case "$1" in
+    docs-zip )          build_docs_cdap_tutorial; exit 1;;
+    * )                 usage; exit 1;;
+  esac
 }
 
 run_command $1
