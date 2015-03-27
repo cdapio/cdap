@@ -17,8 +17,6 @@ angular.module(PKG.name + '.feature.admin')
     dataSrc.request({
       _cdapPath: '/namespaces/' + $stateParams.nsadmin + '/streams'
     }, function(res) {
-      if (angular.isArray(res) && res.length) {
-        $scope.streams = res;
-      }
+      $scope.streams = res;
     });
   });
