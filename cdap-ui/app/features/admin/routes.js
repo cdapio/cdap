@@ -138,12 +138,12 @@ angular.module(PKG.name + '.feature.admin')
               controller: 'AdminDatatypesController'
             })
 
-            .state('admin.namespace.detail.datasets', {
+            .state('admin.namespace.detail.data', {
               url: '/datasets',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
               controller: 'AdminDatasetsController'
             })
-              .state('admin.namespace.detail.datasets.streamcreate', {
+              .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
                 onEnter: function($bootstrapModal, $state) {
                   $bootstrapModal.open({
@@ -157,7 +157,7 @@ angular.module(PKG.name + '.feature.admin')
                   });
                 }
               })
-              .state('admin.namespace.detail.datasets.streamproperties', {
+              .state('admin.namespace.detail.data.streamproperties', {
                 url: '/streams/:streamid/properties',
                 onEnter: function($bootstrapModal, $state) {
                   $bootstrapModal.open({

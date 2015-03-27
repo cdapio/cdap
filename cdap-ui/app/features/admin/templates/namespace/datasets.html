@@ -5,7 +5,7 @@
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Add Dataset</button>
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button> -->
-  <button class="btn btn-default" ui-sref="admin.namespace.detail.datasets.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+  <button class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
 </div>
 
 <table class="table table-striped table-responsive">
@@ -28,7 +28,7 @@
       </td>
       <td ng-bind="stream.type"></td>
       <td>
-        <a ui-sref="admin.namespace.detail.datasets.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
+        <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
       </td>
     </tr>
   </tbody>
