@@ -33,17 +33,26 @@ CDAP. In particular, we’ll use these CDAP components:
 - A **Flow** for real-time data analysis over collected logs; and 
 - A **SQL Query** to explore and develop insights from the data.
 
+Conventions
+-----------
+
+In the examples and commands that follow, for brevity we will use these conventions:
+
+- ``$CDAP_SDK_HOME`` is the directory that you have installed the CDAP Standalone SDK, either
+  on a UNIX-type system or Windows.
+- The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
+  on Windows |---| ``bin\cdap-cli.bat``. In the examples given, substitute the actual path
+  as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
+  environment.
+- The ``curl`` command, common on UNIX-type systems, is included in the CDAP SDK in the
+  ``libexec\bin`` directory as ``curl.exe``.
+- Other scripts referenced below are included either in the SDK or downloaded zips as ``.bat``
+  versions for Windows. Substitute these versions as appropriate in the examples below.
 
 Build and Run
 =============
 .. highlight:: console
-
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the CDAP
-Command Line Interface. Substitute the actual path for ``bin/cdap-cli.sh``, or
-``bin\cdap-cli.bat`` on Windows, as appropriate. Similarly, other scripts referenced are
-available in version for Windows, either as ``.bat`` files, or |---| in the case of the
-``curl`` command |---| as an executable included in the Standalone CDAP SDK in its
-``libexec\bin`` directory.
 
 We’ll assume that you have already downloaded, installed, and have started an instance of
 CDAP, as described in the :ref:Tutorial Introduction <tutorial-intro>`.
@@ -54,15 +63,17 @@ commands from the example’s base directory (``examples/WebAnalytics`` under th
 CDAP SDK directory).
 
 When the Standalone CDAP instance is running, you can build and start the Web Analytics
-Application with these commands, executed from the ``examples/WebAnalytics`` directory of
-the SDK:
+Application with these commands, starting from the directory where you have installed the
+CDAP SDK Standalone:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| mvn package 
-    |$| ./../../bin/cdap-cli.sh deploy app target/WebAnalytics-|version|.jar
-    |$| ./../../bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow 
+    |$| cd $CDAP_SDK_HOME/examples/WebAnalytics 
+    |$| mvn package
+    |$| cd $CDAP_SDK_HOME
+    |$| ./bin/cdap-cli.sh deploy app target/WebAnalytics-|version|.jar
+    |$| ./bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow 
 
 On Windows, replace ``cdap-cli.sh`` with ``cdap-cli.bat`` in the above commands.
 
@@ -92,7 +103,7 @@ located at ``localhost`` and listening on port ``10000``.
 The Application includes sample logs, located in ``test/resources/access.log`` that you can
 inject by running a provided script::
 
-  $ ./bin/inject-data.sh
+  $ ./$CDAP_SDK_HOME/examples/WebAnalytics/bin/inject-data.sh
     
 Once an event is ingested into a Stream, it is persisted and available for processing.
 

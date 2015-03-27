@@ -139,6 +139,7 @@ Wise application’s architecture:
 
 Now let’s talk about each of these components in more detail.
 
+
 Wise Data Patterns
 ==================
 Here’s a sample access log (reformatted to fit)::
@@ -274,6 +275,7 @@ We have already prepared a sample of Web server access logs for you to inject in
 This requires that a Standalone CDAP instance be running with the Wise application already
 deployed.
 
+
 Realtime Log Analytics with WiseFlow 
 =====================================
 The goal of ``WiseFlow`` is to perform realtime analytics on the Web server access logs
@@ -336,7 +338,6 @@ Here’s what to note about the ``PageViewCounterFlowlet`` Flowlet class:
   <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/transaction-system.html>`__
   for more information about transactions and conflicts.)
 
-
 Building the WiseFlow 
 ---------------------
 Now that we have had a look at the core of the *parser* and *pageViewCount* Flowlets,
@@ -363,6 +364,7 @@ Here is how ``WiseFlow`` looks in the CDAP Console:
 .. image:: _images/wise_flow.png
    :width: 8in
    :align: center
+
 
 Batch Processing with WiseWorkflow
 ==========================================
@@ -674,3 +676,9 @@ With this object, we can:
      :append:     . . .  
 
 A complete example of the test is included in the downloaded zip.
+
+Next Up
+=======
+Follow up this tutorial with the our other training resources, available at
+`CDAP Examples, Guides and Tutorials <http://docs.cask.co/cdap/current/en/examples-manual/index.html>`__.
+
