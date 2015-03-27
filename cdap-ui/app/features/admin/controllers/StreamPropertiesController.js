@@ -52,11 +52,8 @@ angular.module(PKG.name + '.feature.admin')
           body: params
         })
         .then(function(res) {
-          console.log('success');
           $modalInstance.close(res);
         }, function(err) {
-
-          console.log(err);
           $scope.error = err;
         });
     };
