@@ -7,7 +7,6 @@
 @import "cdap/buttons.less";
 @import "cdap/theme.less";
 
-
 html { font-size: 100%; }
 body.theme-cdap {
   font-size: 100%;
@@ -41,39 +40,31 @@ body.theme-cdap {
         margin-top: -(@cdap-subnav-height);
       }
     }
-
-    @media (max-width: @screen-sm-max) {
-      > div { display: none; }
-      &:before { background-color: @cdap-orange; }
-    }
-
+    blockquote { border: 0; }
     h1, h2, h3, h4, h5, h6 { font-family: @heading-font; font-weight: 600; }
     h1 { font-size: 2em; }
     h2 { color: @cdap-header; font-size: 1.5em; }
     h3 { color: @cdap-header; font-size: 1.17em; }
-    h4 { color: @cdap-header; font-size: 1em; }
+    h4 { color: white; font-size: 1em; }
     h5 { color: @brand-primary; font-size: .83em; }
     h6 { font-size: .67em; }
 
-    h3, .h3 {
-      margin: .4rem inherit;
-    }
+    h3, .h3 { margin: .4rem inherit; }
 
     .breadcrumb {
       background-color: transparent;
       padding-left: 0px;
+      > li {
+        font-weight: bold;
+        + li:before {
+          content: "<";
+          padding: 0 5px;
+          color: #cccccc;
+          font-weight: bold;
+        }
+      }
     }
 
-    .breadcrumb > li {
-      font-weight: bold;
-    }
-
-    .breadcrumb > li + li:before {
-      content: "<";
-      padding: 0 5px;
-      color: #cccccc;
-      font-weight: bold;
-    }
     button, .btn-default {
       .cask-btn();
     }

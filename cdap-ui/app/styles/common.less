@@ -31,27 +31,11 @@ body {
 header.navbar {
   border-bottom-color: @body-bg;
 }
-
 main.container {
   margin-top: 40px;
-  margin-bottom: 40px;
   padding-top: 1em;
-  @media (max-width: @screen-sm-max) {
-    > div { display: none; }
-    &:before {
-      font-size: 200%;
-      margin-top: 1em;
-      display: block;
-      padding: 8px 15px;
-      border-radius: 25px;
-      color: white;
-      content: "Please resize your browser!";
-    }
-    &:after {
-      padding: 16px;
-      font-style: italic;
-      content: "Mobile devices are not supported.";
-    }
+  > div {
+    margin-bottom: 80px;
   }
   .sidebar {
     ul li a {

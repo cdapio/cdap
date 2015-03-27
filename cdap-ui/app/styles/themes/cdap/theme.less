@@ -76,8 +76,8 @@ body.theme-cdap {
   // Panels
   // --------------------------------------------------
 
-  // Common styles
-  .panel {
+  // Message panel
+  .panel-message {
     background: transparent;
     border: 0;
     .box-shadow(0 8px 6px -6px @cdap-darkness);
@@ -113,7 +113,7 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the panel headings only
-  .panel-default > .panel-heading   { background: transparent; border: 0; }
+  .panel-default > .panel-heading   { background: @cdap-lightgray; border: 0; }
   .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
   .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
   .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }

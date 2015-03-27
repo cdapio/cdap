@@ -50,6 +50,13 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
+  .controller('WidgetColCtrl', function ($scope) {
+    $scope.colWidth = {
+      fullWidth: false,
+      oneThird: true
+    };
+  })
+
   .controller('WidgetTimeseriesCtrl', function ($scope) {
 
     $scope.wdgt.fetchData();
