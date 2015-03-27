@@ -24,7 +24,7 @@
       <td ng-bind="stream.name"></td>
       <td ng-bind="stream.type"></td>
       <td>
-        <a><i class="fa fa-cogs"></i></a>
+        <a ui-sref="admin.namespace.detail.datasets.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
       </td>
     </tr>
   </tbody>

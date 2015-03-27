@@ -157,6 +157,20 @@ angular.module(PKG.name + '.feature.admin')
                   });
                 }
               })
+              .state('admin.namespace.detail.datasets.streamproperties', {
+                url: '/streams/:streamid/properties',
+                onEnter: function($bootstrapModal, $state) {
+                  $bootstrapModal.open({
+                    templateUrl: '/assets/features/admin/templates/namespace/streamproperties.html',
+                    size: 'lg',
+                    backdrop: true,
+                    keyboard: true,
+                    controller: 'StreamPropertiesController'
+                  }).result.finally(function() {
+                    $state.go('admin.namespace.detail.datasets', {}, { reload: true });
+                  });
+                }
+              })
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',
