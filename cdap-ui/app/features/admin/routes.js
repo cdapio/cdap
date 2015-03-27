@@ -143,6 +143,20 @@ angular.module(PKG.name + '.feature.admin')
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
               controller: 'AdminDatasetsController'
             })
+              .state('admin.namespace.detail.datasets.streamcreate', {
+                url:'/streams/create',
+                onEnter: function($bootstrapModal, $state) {
+                  $bootstrapModal.open({
+                    templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
+                    size: 'lg',
+                    backdrop: true,
+                    keyboard: true,
+                    controller: 'StreamsCreateController'
+                  }).result.finally(function() {
+                    $state.go('admin.namespace.detail.datasets', {}, { reload: true });
+                  });
+                }
+              })
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',
