@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.admin')
 
     function getApps (namespace) {
       return dataSrc.request({
-        _cdapPath: '/namespaces/' + namespace.id + '/apps'
+        _cdapPath: '/namespaces/' + namespace.name + '/apps'
       });
     }
   });
