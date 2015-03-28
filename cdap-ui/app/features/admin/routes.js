@@ -138,11 +138,39 @@ angular.module(PKG.name + '.feature.admin')
               controller: 'AdminDatatypesController'
             })
 
-            .state('admin.namespace.detail.datasets', {
-              url: '/datasets',
+            .state('admin.namespace.detail.data', {
+              url: '/data',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
               controller: 'AdminDatasetsController'
             })
+              .state('admin.namespace.detail.data.streamcreate', {
+                url:'/streams/create',
+                onEnter: function($bootstrapModal, $state) {
+                  $bootstrapModal.open({
+                    templateUrl: '/assets/features/admin/templates/namespace/streamscreate.html',
+                    size: 'lg',
+                    backdrop: true,
+                    keyboard: true,
+                    controller: 'StreamsCreateController'
+                  }).result.finally(function() {
+                    $state.go('admin.namespace.detail.data', {}, { reload: true });
+                  });
+                }
+              })
+              .state('admin.namespace.detail.data.streamproperties', {
+                url: '/streams/:streamid/properties',
+                onEnter: function($bootstrapModal, $state) {
+                  $bootstrapModal.open({
+                    templateUrl: '/assets/features/admin/templates/namespace/streamproperties.html',
+                    size: 'lg',
+                    backdrop: true,
+                    keyboard: true,
+                    controller: 'StreamPropertiesController'
+                  }).result.finally(function() {
+                    $state.go('admin.namespace.detail.data', {}, { reload: true });
+                  });
+                }
+              })
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',

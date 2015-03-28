@@ -1,15 +1,17 @@
-angular.module(PKG.name + '.feature.streams')
-  .controller('StreamDetailPropertiesController', function($scope, MyDataSource, $filter, $state, myHelpers, $alert) {
+angular.module(PKG.name + '.feature.admin')
+  .controller('StreamPropertiesController', function($scope, MyDataSource, $modalInstance, $filter, $stateParams, myHelpers) {
 
-    var basePath = '/streams/' + $state.params.streamId;
-
-    var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
+
+    $scope.activePanel = 0;
+    var filterFilter = $filter('filter');
+
+    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamid;
 
     $scope.reload = function () {
       dataSrc
         .request({
-          _cdapNsPath: basePath
+          _cdapPath: basePath
         })
         .then(function(res) {
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
@@ -45,16 +47,14 @@ angular.module(PKG.name + '.feature.streams')
 
       dataSrc
         .request({
-          _cdapNsPath: basePath + '/properties',
+          _cdapPath: basePath + '/properties',
           method: 'PUT',
           body: params
         })
         .then(function(res) {
-          $alert({
-            content: 'Your changes have been successfully saved',
-            type: 'success'
-          });
-          $scope.reload();
+          $modalInstance.close(res);
+        }, function(err) {
+          $scope.error = err;
         });
     };
 
@@ -70,6 +70,11 @@ angular.module(PKG.name + '.feature.streams')
       if (match.length) {
         $scope.properties.splice($scope.properties.indexOf(match[0]), 1);
       }
+    };
+
+    $scope.closeModal = function() {
+      $modalInstance.close();
+
     };
 
   });
