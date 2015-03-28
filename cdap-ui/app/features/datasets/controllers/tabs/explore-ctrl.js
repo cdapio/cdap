@@ -29,7 +29,8 @@ angular.module(PKG.name + '.feature.datasets')
               query: $scope.query
             }
           })
-          .then(function () {
+          .then(function (queryHandle) {
+            dataModel.addHandle(queryHandle.handle);
             $scope.getQueries();
             $scope.activePanel = 2;
           });
@@ -45,9 +46,11 @@ angular.module(PKG.name + '.feature.datasets')
       };
 
 
+      dataModel.init().then(function () {
+        // FETCHING QUERIES
+        $scope.getQueries();
+      });
 
-      // FETCHING QUERIES
-      $scope.getQueries();
 
       $scope.responses = {};
 

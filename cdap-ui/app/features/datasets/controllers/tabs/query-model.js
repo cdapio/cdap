@@ -2,19 +2,40 @@ angular.module(PKG.name+'.feature.datasets')
   .factory('QueryModel', function ($q, mySettings) {
 
       function QueryModel(dataSrc, key, data) {
+        var self = this;
         this.dataSrc = dataSrc;
         this.key = key;
+        this.queryHandles = {};
         this.data = data || [];
         if (this.data.length) {
           this.sync();
         }
       }
 
+      QueryModel.prototype.init = function () {
+        var self = this;
+        var deferred = $q.defer();
+        mySettings.get(this.key).then(function (resp) {
+          self.data = resp;
+          resp.forEach(function (entry) {
+            self.queryHandles[entry.query_handle] = true;
+          });
+          deferred.resolve();
+        }, function (err) {
+          deferred.reject(err);
+        });
+        return deferred.promise;
+      };
+
       QueryModel.prototype.add = function (entry) {
         if(this.data.indexOf(entry) == -1) {
           this.data.push(entry);
           this.sync();
         }
+      };
+
+      QueryModel.prototype.addHandle = function (queryHandle) {
+        this.queryHandles[queryHandle] = true;
       };
 
       QueryModel.prototype.set = function (entries) {
@@ -50,7 +71,7 @@ angular.module(PKG.name+'.feature.datasets')
         if (userQueries) {
           userQueries.forEach(function (query) {
             queryMap[query.query_handle] = query;
-          });  
+          });
         }
         if (apiQueries) {
           apiQueries.forEach(function (query) {
@@ -59,8 +80,10 @@ angular.module(PKG.name+'.feature.datasets')
         }
         var queries = [];
         for (var handle in queryMap) {
-          var query = queryMap[handle];
-          queries.push(query);
+          if (this.queryHandles.hasOwnProperty(handle)) {
+            var query = queryMap[handle];
+            queries.push(query);  
+          }
         }
         return queries;
       };
