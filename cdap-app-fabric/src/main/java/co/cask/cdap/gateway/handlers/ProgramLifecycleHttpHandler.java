@@ -114,20 +114,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
 
   /**
-   * Json serializer.
-   */
-  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .create();
-
-  /**
-   * Store manages non-runtime lifecycle.
-   */
-  protected final Store store;
-
-  protected final WorkflowClient workflowClient;
-
-  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -137,13 +123,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final CConfiguration configuration;
 
-  /**
-   * Runtime program service for running and managing programs.
-   */
-  protected final ProgramRuntimeService runtimeService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
-  protected final Scheduler scheduler;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -189,17 +170,37 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Json serializer.
+   */
+  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
+
+  /**
+   * Store manages non-runtime lifecycle.
+   */
+  protected final Store store;
+
+  /**
+   * Runtime program service for running and managing programs.
+   */
+  protected final ProgramRuntimeService runtimeService;
+
+  /**
+   * Scheduler provides ability to schedule/un-schedule the jobs.
+   */
+  protected final Scheduler scheduler;
+
   @Inject
   public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                                     WorkflowClient workflowClient, CConfiguration configuration,
-                                     ProgramRuntimeService runtimeService,
+                                     CConfiguration configuration, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = storeFactory.create();
-    this.workflowClient = workflowClient;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);

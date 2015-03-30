@@ -615,25 +615,6 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  protected void setAndTestRuntimeArgs(String namespace, String appId, String runnableType, String runnableId,
-                                     Map<String, String> args) throws Exception {
-    HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
-                                                           "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                         namespace);
-    response = doPut(versionedRuntimeArgsUrl, argString);
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet(versionedRuntimeArgsUrl);
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String responseEntity = EntityUtils.toString(response.getEntity());
-    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
-
-    Assert.assertEquals(args.size(), argsRead.size());
-  }
-
   protected String getRunnableStatus(String namespaceId, String appId, String runnableType, String runnableId)
     throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +

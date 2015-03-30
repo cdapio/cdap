@@ -64,13 +64,16 @@ import javax.ws.rs.PathParam;
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
 
+  private final WorkflowClient workflowClient;
+
   @Inject
   public WorkflowHttpHandler(Authenticator authenticator, StoreFactory storeFactory, WorkflowClient workflowClient,
                              CConfiguration configuration, ProgramRuntimeService runtimeService,
                              DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin, Scheduler scheduler,
                              PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory) {
-    super(authenticator, storeFactory, workflowClient, configuration, runtimeService, discoveryServiceClient,
+    super(authenticator, storeFactory, configuration, runtimeService, discoveryServiceClient,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory);
+    this.workflowClient = workflowClient;
   }
 
   @POST

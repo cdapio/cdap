@@ -76,14 +76,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(Id.Program program) {
-    Map<RunId, RuntimeInfo> runtimeInfoMap = Maps.newHashMap();
-    for (Map.Entry<RunId, RuntimeInfo> entry : list(program.getType()).entrySet()) {
-      if (program.equals(entry.getValue().getProgramId())) {
-        runtimeInfoMap.put(entry.getKey(), entry.getValue());
+  public synchronized Map<RunId, RuntimeInfo> list(final Id.Program program) {
+    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
+      @Override
+      public boolean apply(RuntimeInfo info) {
+        return info.getProgramId().equals(program);
       }
-    }
-    return runtimeInfoMap;
+    });
   }
 
   @Override
