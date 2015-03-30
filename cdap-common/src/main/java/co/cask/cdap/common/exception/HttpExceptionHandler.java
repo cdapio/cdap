@@ -33,17 +33,12 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
-    if (t instanceof IllegalArgumentException) {
-      // TODO: use BadRequestException instead
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
-    } else if (t instanceof BadRequestException) {
+    if (t instanceof BadRequestException) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
     } else if (t instanceof ConflictException) {
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
     } else if (t instanceof NotFoundException) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
-    } else if (t instanceof UnsupportedOperationException) {
-      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
     } else if (t instanceof UnauthorizedException) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } else {
