@@ -510,6 +510,12 @@
         </description>
     </property>
 
+    <property>
+        <name>data.queue.table.presplits</name>
+        <value>16</value>
+        <description>Number of splits in the queue table.</description>
+    </property>
+
     <!--
         Metadata Service Configuration
     -->
