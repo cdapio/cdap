@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -33,18 +32,18 @@ import java.util.List;
 public class GetProgramRunsCommandSet extends CommandSet<Command> {
 
   @Inject
-  public GetProgramRunsCommandSet(ProgramClient programClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
-    super(generateCommands(programClient, cliConfig, tableRenderer));
+  public GetProgramRunsCommandSet(ProgramClient programClient, CLIConfig cliConfig) {
+    super(generateCommands(programClient, cliConfig));
   }
 
-  private static Iterable<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig,
-                                                    TableRenderer tableRenderer) {
+  private static Iterable<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.hasRuns()) {
-        commands.add(new GetProgramRunsCommand(elementType, programClient, cliConfig, tableRenderer));
+        commands.add(new GetProgramRunsCommand(elementType, programClient, cliConfig));
       }
     }
+    commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));
     return commands;
   }
 }

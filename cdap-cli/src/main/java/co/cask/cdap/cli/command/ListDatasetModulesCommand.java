@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
@@ -37,13 +36,11 @@ import java.util.List;
 public class ListDatasetModulesCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient client;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -57,7 +54,7 @@ public class ListDatasetModulesCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getClassName());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

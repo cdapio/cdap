@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
@@ -101,6 +103,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
     framework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                            new LocalDatasetTypeClassLoaderFactory());
 
@@ -120,7 +123,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
-                                 locationFactory,
+                                 namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
@@ -130,7 +133,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  mdsDatasetsRegistry,
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                         exploreFacade));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

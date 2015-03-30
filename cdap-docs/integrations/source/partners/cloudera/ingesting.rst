@@ -65,21 +65,21 @@ the top of this page.
 
 You can now examine the contents of your stream by executing a SQL query::
 
-  > execute 'select * from cdap_stream_trades limit 5'
-  +==================================================================================================================+
-  | cdap_stream_trades.ts: BIGINT | cdap_stream_trades.headers: map<string,string> | cdap_stream_trades.body: STRING |
-  +==================================================================================================================+
-  | 1422924257559                 | {}                                             | NFLX,441.07,50                  |
-  | 1422924261588                 | {}                                             | AAPL,118.63,100                 |
-  | 1422924265441                 | {}                                             | GOOG,528.48,10                  |
-  | 1422924291009                 | {"content.type":"text/csv"}                    | GOOG,538.53,18230               |
-  | 1422924291009                 | {"content.type":"text/csv"}                    | GOOG,538.17,100                 |
-  +==================================================================================================================+
+  > execute 'select * from stream_trades limit 5'
+  +===================================================================================================+
+  | stream_trades.ts: BIGINT | stream_trades.headers: map<string,string> | stream_trades.body: STRING |
+  +===================================================================================================+
+  | 1422493022983            | {}                                        | NFLX,441.07,50             |
+  | 1422493027358            | {}                                        | AAPL,118.63,100            |
+  | 1422493031802            | {}                                        | GOOG,528.48,10             |
+  | 1422493036080            | {"content.type":"text/csv"}               | GOOG,538.53,18230          |
+  | 1422493036080            | {"content.type":"text/csv"}               | GOOG,538.17,100            |
+  +===================================================================================================+
 
 You can also attach a schema to your stream to enable more powerful queries::
 
   > set stream format trades csv 'ticker string, price double, trades int'
-  > execute 'select ticker, sum(price * trades) / 1000000 as millions from cdap_stream_trades group by ticker order by millions desc'
+  > execute 'select ticker, sum(price * trades) / 1000000 as millions from stream_trades group by ticker order by millions desc'
   +=====================================+
   | ticker: STRING | millions: DOUBLE   |
   +=====================================+
@@ -110,7 +110,7 @@ cluster, use the Impala shell to connect to Impala::
 
   $ impala-shell -i <impala-host>
   > invalidate metadata
-  > select ticker, sum(price * trades) / 1000000 as millions from cdap_user_trades_converted group by ticker order by millions desc
+  > select ticker, sum(price * trades) / 1000000 as millions from dataset_trades_converted group by ticker order by millions desc
   +--------+-------------------+
   | ticker | millions          |
   +--------+-------------------+

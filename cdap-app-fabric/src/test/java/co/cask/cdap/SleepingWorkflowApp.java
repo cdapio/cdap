@@ -91,7 +91,8 @@ public class SleepingWorkflowApp extends AbstractApplication {
     public void run() {
       LOG.info("Custom action run");
       try {
-        Thread.sleep(2000);
+        String sleepTime = getContext().getRuntimeArguments().get("sleep.ms");
+        Thread.sleep(sleepTime == null ? 2000 : Long.parseLong(sleepTime));
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

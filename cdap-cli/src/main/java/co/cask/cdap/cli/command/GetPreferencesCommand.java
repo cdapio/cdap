@@ -33,7 +33,7 @@ public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s preferences [<%s>]", type.getName(), type.getArgumentName());
+    return String.format("get preferences %s [<%s>]", type.getName(), type.getArgumentName());
   }
 
   @Override

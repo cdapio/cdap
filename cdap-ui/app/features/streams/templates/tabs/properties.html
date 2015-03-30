@@ -1,0 +1,92 @@
+<div class="container" ng-controller="StreamDetailPropertiesController">
+  <h3>Set Stream Properties:</h3>
+
+  <form class="form-horizontal">
+
+    <div class="row form-group">
+      <label class="col-sm-2 control-label">TTL</label>
+      <div class="col-sm-4">
+        <input type="number" class="form-control" ng-model="ttl" placeholder="# seconds">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Format</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" ng-model="format" placeholder="ie. csv">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Type</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" ng-model="type" placeholder="ie. record">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Schema Name</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" ng-model="schemaName" placeholder="ie. event">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Delimiter</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" ng-model="delimiter" placeholder="delimiter">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Notification Threshold</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" ng-model="threshold" placeholder="in MB">
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Fields</label>
+      <div class="col-sm-10">
+
+        <div class="row">
+          <div class="col-sm-10" ng-show="properties.length > 0">
+            <div ng-repeat="property in properties" class="h4">
+              <div class="row">
+                <div class="col-sm-4">
+                  <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
+                </div>
+                <div class="col-sm-6">
+                  <input type="text" class="form-control" ng-model="property.type" placeholder="type"/>
+
+                </div>
+                <div class="col-sm-2">
+                  <a href="" class="btn btn-danger btn-xs" ng-click="removeProperty(property)">
+                    <span class="fa fa-fw fa-trash"> </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-10" ng-show="properties.length === 0">
+            <div class="well well-sm text-center h4">
+              <h4> No Properties </h4>
+            </div>
+          </div>
+          <div class="col-sm-2 h4">
+            <button class="btn btn-info" ng-click="addProperties()">
+              <span class="fa fa-fw fa-plus"></span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </form>
+
+  <button class="btn btn-danger" ng-click="reload()">Reset</button>
+  <button class="btn btn-success" ng-click="save()">Save</button>
+
+</div>

@@ -6,9 +6,9 @@
 
 .. _operations-index:
 
-============================================
+==========
 Operations
-============================================
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -17,7 +17,10 @@ Operations
     Metrics <metrics>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
+    Resource Guarantees in YARN <resource-guarantees>
     CDAP Console <cdap-console>
+    Master Services Logback <logback>
+    Transaction Service Maintenance <tx-maintenance>
     Troubleshooting <troubleshooting>
 
 .. |logging| replace:: **Logging:**
@@ -35,7 +38,8 @@ Operations
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments:**
+- |preferences|_ **Preferences** provide the ability to save configuration information. 
+  Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
@@ -44,10 +48,28 @@ Operations
 - |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
 
 
+.. |resource-guarantees| replace:: **Resource Guarantees:**
+.. _resource-guarantees: resource-guarantees.html
+
+- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+
+
 .. |cdap-console| replace:: **CDAP Console:**
 .. _cdap-console: cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+
+
+.. |logback| replace:: **Master Services Logging Configuration:**
+.. _logback: logback.html
+
+- |logback|_ This section describes the logging configuration used by CDAP Master Services.
+
+
+.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+.. _tx-maintenance: tx-maintenance.html
+
+- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
 
 
 .. |troubleshooting| replace:: **Troubleshooting:**

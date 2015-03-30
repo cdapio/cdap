@@ -28,7 +28,6 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
@@ -123,7 +122,6 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     public void configure() {
       setName("dummy-batch");
       setDescription("batch job that copies from foo to bar");
-      useDatasets("foo");
       setInputDataset("foo");
       setOutputDataset("bar");
     }

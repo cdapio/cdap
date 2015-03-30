@@ -17,7 +17,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.internal.app.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;

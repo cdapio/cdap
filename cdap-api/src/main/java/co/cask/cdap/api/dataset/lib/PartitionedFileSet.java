@@ -41,45 +41,42 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   /**
    * Get the partitioning declared for the file set.
    */
-  public Partitioning getPartitioning();
+  Partitioning getPartitioning();
 
   /**
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path).
    */
-  public void addPartition(PartitionKey key, String path);
+  void addPartition(PartitionKey key, String path);
 
   /**
    * Remove a partition for a given partition key.
    */
-  public void dropPartition(PartitionKey key);
+  void dropPartition(PartitionKey key);
 
   /**
-   * @return the relative path of the partition for a specific partition key.
+   * Return the partition for a specific partition key.
    */
   @Nullable
-  public String getPartition(PartitionKey key);
+  Partition getPartition(PartitionKey key);
 
   /**
-   * @return the relative paths of all partitions matching a filter.
-   *
+   * Return all partitions matching the partition filter.
    * @param filter If non null, only partitions that match this filter are returned. If null,
    *               all partitions are returned.
    */
-  public Set<String> getPartitionPaths(@Nullable PartitionFilter filter);
+  Set<Partition> getPartitions(@Nullable PartitionFilter filter);
 
   /**
-   * @return a mapping from the partition key to the relative path, of all partitions whose
-   *  partitions keys match the filter.
-   *
-   * @param filter If non null, only partitions that match this filter are returned. If null,
-   *               all partitions are returned.
+   * Return a partition output for a specific partition key, in preparation for creating a new partition.
+   * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
+   * to add the partition to this dataset.
    */
-  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter);
+  PartitionOutput getPartitionOutput(PartitionKey key);
 
   /**
    * @return the underlying (embedded) file set.
    */
-  public FileSet getEmbeddedFileSet();
+  FileSet getEmbeddedFileSet();
 
   /**
    * Allow direct access to the runtime arguments of this partitioned file set.
@@ -87,4 +84,5 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * @return the runtime arguments specified for this dataset.
    */
   Map<String, String> getRuntimeArguments();
+
 }

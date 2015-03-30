@@ -20,6 +20,9 @@ import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
+import java.io.File;
+import java.util.concurrent.TimeUnit;
+
 /**
  *
  */
@@ -30,11 +33,23 @@ public class FakeWorkflow implements Workflow {
   @Override
   public void configure(WorkflowConfigurer configurer) {
     configurer.setName(NAME);
-    configurer.addAction(new AbstractWorkflowAction() {
-      @Override
-      public void run() {
-        // NO-OP
+    configurer.addAction(new FakeAction());
+  }
+
+  /**
+   * DummyAction
+   */
+  public static class FakeAction extends AbstractWorkflowAction {
+    @Override
+    public void run() {
+      File doneFile = new File("/tmp/fakeworkflow.done");
+      while (!doneFile.exists()) {
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+          // no-op
+        }
       }
-    });
+    }
   }
 }

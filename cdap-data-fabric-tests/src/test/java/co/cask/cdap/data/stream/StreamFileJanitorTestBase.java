@@ -19,6 +19,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -26,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -41,13 +43,24 @@ public abstract class StreamFileJanitorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static CConfiguration cConf = CConfiguration.create();
+
   protected abstract LocationFactory getLocationFactory();
+
+  protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
 
   protected abstract StreamAdmin getStreamAdmin();
 
   protected abstract CConfiguration getCConfiguration();
 
   protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
+
+  @Before
+  public void setup() throws IOException {
+    // FileStreamAdmin expects namespace directory to exist.
+    // Simulate namespace create
+    getNamespacedLocationFactory().get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
+  }
 
   @Test
   public void testCleanupGeneration() throws Exception {
@@ -58,7 +71,8 @@ public abstract class StreamFileJanitorTestBase {
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
+                                                      getNamespacedLocationFactory());
 
     for (int i = 0; i < 5; i++) {
       FileWriter<StreamEvent> writer = createWriter(streamId);
@@ -66,7 +80,7 @@ public abstract class StreamFileJanitorTestBase {
       writer.close();
 
       // Call cleanup before truncate. The current generation should stand.
-      janitor.clean(streamConfig, System.currentTimeMillis());
+      janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
       verifyGeneration(streamConfig, i);
 
       streamAdmin.truncate(streamId);
@@ -75,7 +89,7 @@ public abstract class StreamFileJanitorTestBase {
     int generation = StreamUtils.getGeneration(streamConfig);
     Assert.assertEquals(5, generation);
 
-    janitor.clean(streamConfig, System.currentTimeMillis());
+    janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
 
     // Verify the stream directory should only contains the generation directory
     for (Location location : streamConfig.getLocation().list()) {
@@ -92,7 +106,8 @@ public abstract class StreamFileJanitorTestBase {
     Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
 
     StreamAdmin streamAdmin = getStreamAdmin();
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
+                                                      getNamespacedLocationFactory());
 
     Properties properties = new Properties();
     properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
@@ -118,13 +133,37 @@ public abstract class StreamFileJanitorTestBase {
 
     // Perform clean with current time = 10000 (10 seconds since epoch).
     // Since TTL = 5 seconds, 2 partitions will be remove (Ends at 2000 and ends at 4000).
-    janitor.clean(config, 10000);
+    janitor.clean(config.getLocation(), config.getTTL(), 10000);
 
     Assert.assertEquals(3, generationLocation.list().size());
 
     // Cleanup again with current time = 16000, all partitions should be deleted.
-    janitor.clean(config, 16000);
+    janitor.clean(config.getLocation(), config.getTTL(), 16000);
     Assert.assertTrue(generationLocation.list().isEmpty());
+  }
+
+  @Test
+  public void testCleanupDeletedStream() throws Exception {
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "cleanupDelete");
+    StreamAdmin streamAdmin = getStreamAdmin();
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory());
+    streamAdmin.create(streamId);
+
+    // Write some data
+    FileWriter<StreamEvent> writer = createWriter(streamId);
+    try {
+      for (int i = 0; i < 10; i++) {
+        writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
+      }
+    } finally {
+      writer.close();
+    }
+
+    // Delete the stream
+    streamAdmin.drop(streamId);
+
+    // Run janitor. Should be running fine without exception.
+    janitor.cleanAll();
   }
 
   private void verifyGeneration(StreamConfig config, int generation) throws IOException {

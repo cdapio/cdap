@@ -29,6 +29,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -82,7 +83,7 @@ public class ScheduleSpecificationCodecTest {
 
     // Use default Gson to serialize
     String jsonStr = new Gson().toJson(specification);
-    
+
     ScheduleSpecification deserialized = GSON.fromJson(jsonStr, ScheduleSpecification.class);
     ScheduleSpecification expectedSpec = new ScheduleSpecification(
       Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry()),

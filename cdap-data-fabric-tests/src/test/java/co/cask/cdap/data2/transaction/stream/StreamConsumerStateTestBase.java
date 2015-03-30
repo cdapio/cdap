@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -38,8 +40,14 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
 
+  protected static CConfiguration cConf = CConfiguration.create();
   protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerStateTestNamespace");
   protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
+
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+  }
 
   @Test
   public void testStateExists() throws Exception {

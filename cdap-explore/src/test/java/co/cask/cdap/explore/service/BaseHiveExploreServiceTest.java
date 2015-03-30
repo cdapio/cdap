@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -35,11 +36,13 @@ import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -76,7 +79,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -129,8 +131,10 @@ public class BaseHiveExploreServiceTest {
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
-  protected static LocationFactory locationFactory;
+  protected static NamespacedLocationFactory namespacedLocationFactory;
   protected static ExploreTableManager exploreTableManager;
+  private static StreamAdmin streamAdmin;
+  private static StreamMetaStore streamMetaStore;
 
   protected static Injector injector;
 
@@ -176,10 +180,14 @@ public class BaseHiveExploreServiceTest {
 
     exploreTableManager = injector.getInstance(ExploreTableManager.class);
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    streamMetaStore = injector.getInstance(StreamMetaStore.class);
+
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
-    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
-    Locations.mkdirsIfNotExists(locationFactory.create(OTHER_NAMESPACE_ID.getId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(OTHER_NAMESPACE_ID));
 
     waitForCompletionStatus(exploreService.createNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
@@ -196,8 +204,8 @@ public class BaseHiveExploreServiceTest {
       waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     }
 
-    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
-    Locations.deleteQuietly(locationFactory.create(OTHER_NAMESPACE_ID.getId()), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(NAMESPACE_ID), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     exploreClient.close();
@@ -276,11 +284,9 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(String namespace, String streamName) throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
-    urlConn.setRequestMethod(HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-    urlConn.disconnect();
+  protected static void createStream(Id.Stream streamId) throws Exception {
+    streamAdmin.create(streamId);
+    streamMetaStore.addStream(streamId);
   }
 
   protected static void setStreamProperties(String namespace, String streamName,
@@ -296,29 +302,30 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  protected static void sendStreamEvent(String namespace, String streamName, byte[] body) throws IOException {
-    sendStreamEvent(namespace, streamName, Collections.<String, String>emptyMap(), body);
+  protected static void sendStreamEvent(Id.Stream streamId, byte[] body) throws IOException {
+    sendStreamEvent(streamId, Collections.<String, String>emptyMap(), body);
   }
 
-  protected static void sendStreamEvent(String namespace, String streamName, Map<String, String> headers, byte[] body)
+  protected static void sendStreamEvent(Id.Stream streamId, Map<String, String> headers, byte[] body)
     throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(namespace, streamName);
+    HttpURLConnection urlConn = openStreamConnection(streamId);
     urlConn.setRequestMethod(HttpMethod.POST);
     urlConn.setDoOutput(true);
     for (Map.Entry<String, String> header : headers.entrySet()) {
       // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
       // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamName + "." + header.getKey(), header.getValue());
+      urlConn.addRequestProperty(streamId.getName() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
-  private static HttpURLConnection openStreamConnection(String namespace, String streamName) throws IOException {
+  private static HttpURLConnection openStreamConnection(Id.Stream streamId) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
     URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
-                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
+                                    port, Constants.Gateway.API_VERSION_3,
+                                    streamId.getNamespaceId(), streamId.getName()));
     return (HttpURLConnection) url.openConnection();
   }
 

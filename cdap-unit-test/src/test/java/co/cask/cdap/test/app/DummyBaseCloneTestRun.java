@@ -51,7 +51,6 @@ public class DummyBaseCloneTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();
-
     }
   }
 }

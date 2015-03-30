@@ -33,7 +33,10 @@ angular.module(PKG.name + '.feature.flows')
       dataSrc.request({
         method: 'POST',
         _cdapNsPath: basePath + '/' + action
-      });
+      })
+        .then(function() {
+          $state.go('flows.detail.runs', {}, {reload: true});
+        });
     };
 
 });

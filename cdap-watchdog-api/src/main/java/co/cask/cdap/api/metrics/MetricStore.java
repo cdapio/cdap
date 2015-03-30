@@ -31,6 +31,13 @@ public interface MetricStore {
   void add(MetricValue metricValue) throws Exception;
 
   /**
+   * Adds {@link MetricValue}s to the store.
+   * @param metricValues metric values to add.
+   * @throws Exception
+   */
+  void add(Collection<? extends MetricValue> metricValues) throws Exception;
+
+  /**
    * Queries metrics data.
    * @param query query to execute
    * @return time series that satisfy the query
@@ -49,6 +56,12 @@ public interface MetricStore {
    * @param query specifies what to delete
    */
   void delete(MetricDeleteQuery query) throws Exception;
+
+  /**
+   * Deletes all metrics data. NOTE: dangerous, all data will be lost. Likely you only need to use it in tests.
+   * @throws Exception
+   */
+  void deleteAll() throws Exception;
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of next available tags

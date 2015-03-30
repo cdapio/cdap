@@ -49,9 +49,9 @@ public class CConfigurationUtil extends Configuration {
 
   private static void assertAlphanumeric(CConfiguration cConf, String key) {
     String value = cConf.get(key);
-    Preconditions.checkNotNull(value, "Entry of CConf with key: {} is null", key);
+    Preconditions.checkNotNull(value, "Entry of CConf with key: %s is null", key);
     Preconditions.checkArgument(value.matches("[a-zA-Z0-9]+"),
-                                "CConf entry with key: {} must consist " +
-                                  "of only alphanumeric characters; it is: {}", key, value);
+                                "CConf entry with key: %s must consist " +
+                                  "of only alphanumeric characters; it is: %s", key, value);
   }
 }
