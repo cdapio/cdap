@@ -245,7 +245,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
 
       <span class="nd">@Override</span>
       <span class="kd">public</span> <span class="n">Entry</span> <span class="nf">getCurrentRecord</span><span class="o">()</span>  <span class="o">{</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="nf">Entry</span><span class="o">(</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">(</span>
           <span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">reader</span><span class="o">.</span><span class="na">getCurrentKey</span><span class="o">()),</span>
           <span class="n">reader</span><span class="o">.</span><span class="na">getCurrentValue</span><span class="o">().</span><span class="na">getInt</span><span class="o">(</span><span class="n">VALUE_COLUMN</span><span class="o">));</span>
       <span class="o">}</span>
@@ -273,7 +273,7 @@ into a record:</p>
     <span class="k">new</span> <span class="n">Scannables</span><span class="o">.</span><span class="na">RecordMaker</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Row</span><span class="o">,</span> <span class="n">Entry</span><span class="o">&gt;()</span> <span class="o">{</span>
       <span class="nd">@Override</span>
       <span class="kd">public</span> <span class="n">Entry</span> <span class="nf">makeRecord</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">key</span><span class="o">,</span> <span class="n">Row</span> <span class="n">row</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="nf">Entry</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">key</span><span class="o">),</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">VALUE_COLUMN</span><span class="o">));</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="n">Entry</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">key</span><span class="o">),</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">VALUE_COLUMN</span><span class="o">));</span>
       <span class="o">}</span>
     <span class="o">});</span>
 <span class="o">}</span>

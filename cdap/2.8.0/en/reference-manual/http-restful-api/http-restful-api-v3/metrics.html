@@ -137,14 +137,8 @@ enclosing context. These are the available Application contexts of CDAP:</p>
 <tr class="row-even"><td>All Flowlets of all app of an Application</td>
 <td><tt class="docutils literal"><span class="pre">namespace.&lt;namespace&gt;.app.&lt;app-id&gt;.flow.*</span></tt></td>
 </tr>
-<tr class="row-odd"><td>One Procedure</td>
-<td><tt class="docutils literal"><span class="pre">namespace.&lt;namespace&gt;.app.&lt;app-id&gt;.procedure.&lt;procedure-id&gt;</span></tt></td>
-</tr>
-<tr class="row-even"><td>One Worker</td>
+<tr class="row-odd"><td>One Worker</td>
 <td><tt class="docutils literal"><span class="pre">namespace.&lt;namespace&gt;.app.&lt;app-id&gt;.worker.&lt;worker-id&gt;</span></tt></td>
-</tr>
-<tr class="row-odd"><td>All Procedures of an Application</td>
-<td><tt class="docutils literal"><span class="pre">namespace.&lt;namespace&gt;.app.&lt;app-id&gt;.procedure.*</span></tt></td>
 </tr>
 <tr class="row-even"><td>All Workers of an Application</td>
 <td><tt class="docutils literal"><span class="pre">namespace.&lt;namespace&gt;.app.&lt;app-id&gt;.workers.*</span></tt></td>
@@ -196,7 +190,7 @@ enclosing context. These are the available Application contexts of CDAP:</p>
 </tbody>
 </table>
 <p>Dataset metrics are available at the Dataset level, but they can also be queried down to the
-Flowlet, Worker, Procedure, Mapper, or Reducer level:</p>
+Flowlet, Worker, Service, Mapper, or Reducer level:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -228,15 +222,39 @@ Flowlet, Worker, Procedure, Mapper, or Reducer level:</p>
 </div>
 <div class="section" id="available-system-metrics">
 <span id="id1"></span><h3>Available System Metrics<a class="headerlink" href="#available-system-metrics" title="Permalink to this headline">¶</a></h3>
-<p>For CDAP metrics (system metrics), the available metrics depend on the context.
-User-defined metrics are available in the context that they are emitted from.</p>
 <p>Note that a user metric may have the same name as a system metric; they are distinguished
 by prepending the respective prefix when querying: <tt class="docutils literal"><span class="pre">user</span></tt> or <tt class="docutils literal"><span class="pre">system</span></tt>.</p>
+<p>These metrics are available in a Datasets context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Datasets Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.store.bytes</span></tt></td>
+<td>Number of bytes written</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.store.ops</span></tt></td>
+<td>Operations (reads and writes) performed</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.store.reads</span></tt></td>
+<td>Read operations performed</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.store.writes</span></tt></td>
+<td>Write operations performed</td>
+</tr>
+</tbody>
+</table>
 <p>These metrics are available in a Flowlet context:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="40%" />
 <col width="60%" />
+<col width="40%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Flowlet Metric</th>
@@ -244,21 +262,20 @@ by prepending the respective prefix when querying: <tt class="docutils literal">
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.busyness</span></tt></td>
-<td>A number from 0 to 100 indicating how “busy” the Flowlet is;
-note that you cannot aggregate over this metric</td>
-</tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.process.errors</span></tt></td>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.errors</span></tt></td>
 <td>Number of errors while processing</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.events.processed</span></tt></td>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.process.events.processed</span></tt></td>
 <td>Number of events/data objects processed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.process.events.in</span></tt></td>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.events.in</span></tt></td>
 <td>Number of events read in by the Flowlet</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.events.out</span></tt></td>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.process.events.out</span></tt></td>
 <td>Number of events emitted by the Flowlet</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.process.tuples.read</span></tt></td>
+<td>Number of tuples read by the Flowlet</td>
 </tr>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.store.bytes</span></tt></td>
 <td>Number of bytes written to Datasets</td>
@@ -277,8 +294,8 @@ note that you cannot aggregate over this metric</td>
 <p>These metrics are available in a Mappers and Reducers context:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="40%" />
 <col width="60%" />
+<col width="40%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Mappers and Reducers Metric</th>
@@ -297,12 +314,35 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </tbody>
 </table>
+<p>These metrics are available in a Services context:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Services Metric</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.requests.count</span></tt></td>
+<td>Number of requests made to the Service</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.response.successful.count</span></tt></td>
+<td>Number of successful requests completed by the Service</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.response.server.error.count</span></tt></td>
+<td>Number of failures seen by the Service</td>
+</tr>
+</tbody>
+</table>
 <p>These metrics are available in a Spark context, where <tt class="docutils literal"><span class="pre">&lt;spark-id&gt;</span></tt>
 depends on the Spark program being queried:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="40%" />
 <col width="60%" />
+<col width="40%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Spark Metric</th>
@@ -339,31 +379,11 @@ depends on the Spark program being queried:</p>
 </tr>
 </tbody>
 </table>
-<p>These metrics are available in a Procedures context:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="40%" />
-<col width="60%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Procedures Metric</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.query.requests</span></tt></td>
-<td>Number of requests made to the Procedure</td>
-</tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.query.failures</span></tt></td>
-<td>Number of failures seen by the Procedure</td>
-</tr>
-</tbody>
-</table>
 <p>These metrics are available in a Streams context:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="40%" />
 <col width="60%" />
+<col width="40%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Streams Metric</th>
@@ -379,32 +399,6 @@ depends on the Spark program being queried:</p>
 </tr>
 </tbody>
 </table>
-<p>These metrics are available in a Datasets context:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="40%" />
-<col width="60%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Datasets Metric</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.store.bytes</span></tt></td>
-<td>Number of bytes written</td>
-</tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.store.ops</span></tt></td>
-<td>Operations (reads and writes) performed</td>
-</tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">system.store.reads</span></tt></td>
-<td>Read operations performed</td>
-</tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">system.store.writes</span></tt></td>
-<td>Write operations performed</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 <div class="section" id="searches-and-queries">
@@ -412,14 +406,14 @@ depends on the Spark program being queried:</p>
 <p>The process of retrieving a metric involves these steps:</p>
 <ol class="arabic simple">
 <li>Obtain (usually through a search) the correct context for a metric;</li>
-<li>Obtain (usually through a search of the context) the available metrics;</li>
+<li>Obtain (usually through a search within the context) the available metrics;</li>
 <li>Querying for a specific metric, supplying the context and any parameters.</li>
 </ol>
 </div>
 <div class="section" id="search-for-contexts">
 <h2>Search for Contexts<a class="headerlink" href="#search-for-contexts" title="Permalink to this headline">¶</a></h2>
 <p>To search for the available contexts, perform an HTTP request:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/search?target=childContext[&amp;context=&lt;context&gt;]</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/search?target=childContext[&amp;context=&lt;context&gt;]&#39;</span>
 </pre></div>
 </div>
 <p>The optional <tt class="docutils literal"><span class="pre">&lt;context&gt;</span></tt> defines a metrics context to search within. If it is not
@@ -439,7 +433,7 @@ examples below for its use.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;context&gt;</span></tt> (Optional)</td>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;context&gt;</span></tt> <em>[Optional]</em></td>
 <td>Metrics context to search within. If not provided, the search is provided across
 all contexts.</td>
 </tr>
@@ -453,10 +447,10 @@ all contexts.</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/metrics/search?target=childContext</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/search?target=childContext'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[</span> <span class="pre">&quot;namespace.default&quot;,</span> <span class="pre">&quot;namespace.system&quot;</span> <span class="pre">]</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">[&quot;namespace.default&quot;,</span> <span class="pre">&quot;namespace.system&quot;]</span></tt></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Returns all first-level contexts; in this case, two namespaces.</td>
@@ -465,11 +459,11 @@ all contexts.</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/metrics/search?target=childContext&amp;context=namespace.default</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/search?target=childContext&amp;context=namespace.default'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[</span> <span class="pre">&quot;namespace.default.app.HelloWorld&quot;,</span> <span class="pre">&quot;namespace.default.app.PurchaseHistory&quot;,</span> <span class="pre">&quot;namespace.default.dataset.purchases&quot;,</span>
-<span class="pre">&quot;namespace.default.dataset.whom&quot;,</span> <span class="pre">&quot;namespace.default.stream.purchaseStream&quot;,</span> <span class="pre">&quot;namespace.default.stream.who&quot;</span> <span class="pre">]</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">[&quot;namespace.default.app.HelloWorld&quot;,</span> <span class="pre">&quot;namespace.default.app.PurchaseHistory&quot;,</span> <span class="pre">&quot;namespace.default.dataset.purchases&quot;,</span>
+<span class="pre">&quot;namespace.default.dataset.whom&quot;,</span> <span class="pre">&quot;namespace.default.stream.purchaseStream&quot;,</span> <span class="pre">...,</span> <span class="pre">&quot;namespace.default.stream.who&quot;]</span></tt></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Returns all child contexts of the given parent context; in this case, all entities in the default namespace.</td>
@@ -478,14 +472,15 @@ all contexts.</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/metrics/search?target=childContext&amp;context=namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/search?target=childContext&amp;context=</span></tt>
+<tt class="docutils literal"><span class="pre">namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[</span> <span class="pre">&quot;namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector&quot;,</span>
-<span class="pre">&quot;namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader&quot;</span> <span class="pre">]</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">[&quot;namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.collector&quot;,</span>
+<span class="pre">&quot;namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.reader&quot;]</span></tt></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
-<td>Queries all available contexts within the <em>PurchaseHistory</em>&#8216;s <em>PurchaseFlow</em> for any dataset and any run;
+<td>Queries all available contexts within the <em>PurchaseHistory</em>&#8216;s <em>PurchaseFlow</em> for any run;
 in this case, it returns all available Flowlets.</td>
 </tr>
 </tbody>
@@ -494,7 +489,7 @@ in this case, it returns all available Flowlets.</td>
 <div class="section" id="search-for-metrics">
 <h2>Search for Metrics<a class="headerlink" href="#search-for-metrics" title="Permalink to this headline">¶</a></h2>
 <p>To search for the available metrics within a given context, perform an HTTP POST request:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/search?target=metric&amp;context=&lt;context&gt;</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/search?target=metric&amp;context=&lt;context&gt;&#39;</span>
 </pre></div>
 </div>
 <table border="1" class="docutils">
@@ -521,14 +516,16 @@ in this case, it returns all available Flowlets.</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/metrics/search?target=metric&amp;context=namespace.default.app.PurchaseHistory</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/search?target=metric&amp;</span></tt>
+<tt class="docutils literal"><span class="pre">context=namespace.default.app.PurchaseHistory'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[</span> <span class="pre">&quot;user.customers.count”,</span> <span class="pre">“system.events.processed”</span> <span class="pre">]</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">[&quot;system.dataset.store.bytes&quot;,&quot;system.dataset.store.ops&quot;,&quot;system.dataset.store.reads&quot;,</span></tt>
+<tt class="docutils literal"><span class="pre">&quot;system.dataset.store.writes&quot;,&quot;system.process.bytes&quot;,...,&quot;user.customers.count&quot;]</span></tt></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Returns all metrics in the context of the application <em>PurchaseHistory</em> of the
-<em>default</em> namespace; in this case, returns a user-defined metric and a system metric.</td>
+<em>default</em> namespace; in this case, returns a list of system and user-defined metrics.</td>
 </tr>
 </tbody>
 </table>
@@ -538,7 +535,7 @@ in this case, it returns all available Flowlets.</td>
 <p>Once you know the context and the metric to query, you can formulate a request for the
 metrics data.</p>
 <p>To query a metric within a given context, perform an HTTP GET request:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=&lt;context&gt;[&amp;groupBy=&lt;tags&gt;]&amp;metric=&lt;metric&gt;&amp;&lt;time-range&gt;</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=&lt;context&gt;[&amp;groupBy=&lt;tags&gt;]&amp;metric=&lt;metric&gt;&amp;&lt;time-range&gt;&#39;</span>
 </pre></div>
 </div>
 <table border="1" class="docutils">
@@ -576,18 +573,18 @@ all since the Application was deployed</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.</span></tt>
-<tt class="docutils literal"><span class="pre">WhoFlow.flowlet.saver&amp;metric=system.process.busyness?aggregate=true</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.</span></tt>
+<tt class="docutils literal"><span class="pre">WhoFlow.flowlet.saver&amp;metric=system.process.events.processed?aggregate=true'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
-<td>Using a <em>System</em> metric, <em>system.process.busyness</em></td>
+<td>Using a <em>System</em> metric, <em>system.process.events.processed</em></td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.</span></tt>
-<tt class="docutils literal"><span class="pre">WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&amp;metric=user.names.bytes?aggregate=true</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.</span></tt>
+<tt class="docutils literal"><span class="pre">WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&amp;metric=user.names.bytes?aggregate=true'</span></tt></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Querying the <em>User-defined</em> metric <em>names.bytes</em>, of the Flow <em>saver</em>, by its run-ID</td>
@@ -596,8 +593,8 @@ all since the Application was deployed</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.services</span></tt>
-<tt class="docutils literal"><span class="pre">WhoService.runnables.WhoRun&amp;metric=user.names.bytes?aggregate=true</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.services</span></tt>
+<tt class="docutils literal"><span class="pre">WhoService.runnables.WhoRun&amp;metric=user.names.bytes'</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Using a <em>User-defined</em> metric, <em>names.bytes</em> in a Service&#8217;s Handler</td>
@@ -610,18 +607,45 @@ all since the Application was deployed</td>
 <li><p class="first">To retrieve the number of input data objects (“events”) processed by the Flowlet named <em>splitter</em>,
 in the Flow <em>CountRandom</em> of the example application <em>CountRandom</em>, over the last 5 seconds, you can issue an HTTP
 POST method:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.</span>
-<span class="go">  flowlet.splitter&amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.</span>
+<span class="go">  flowlet.splitter&amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5&#39;</span>
 </pre></div>
 </div>
 <p>This returns a JSON response that has one entry for every second in the requested time interval. It will have
 values only for the times where the metric was actually emitted (shown here &#8220;pretty-printed&#8221;):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;start&quot;:1382637108,&quot;end&quot;:1382637112,&quot;series&quot;:[</span>
-<span class="go">  {&quot;time&quot;:1382637108,&quot;value&quot;:6868},</span>
-<span class="go">  {&quot;time&quot;:1382637109,&quot;value&quot;:6895},</span>
-<span class="go">  {&quot;time&quot;:1382637110,&quot;value&quot;:6856},</span>
-<span class="go">  {&quot;time&quot;:1382637111,&quot;value&quot;:6816},</span>
-<span class="go">  {&quot;time&quot;:1382637112,&quot;value&quot;:6765}]</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;startTime&quot;: 1427225350,</span>
+<span class="go">  &quot;endTime&quot;: 1427225354,</span>
+<span class="go">  &quot;series&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;system.process.events.processed&quot;,</span>
+<span class="go">      &quot;grouping&quot;: {</span>
+
+<span class="go">      },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225350,</span>
+<span class="go">          &quot;value&quot;: 760</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225351,</span>
+<span class="go">          &quot;value&quot;: 774</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225352,</span>
+<span class="go">          &quot;value&quot;: 792</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225353,</span>
+<span class="go">          &quot;value&quot;: 756</span>
+<span class="go">        },</span>
+<span class="go">        {</span>
+<span class="go">          &quot;time&quot;: 1427225354,</span>
+<span class="go">          &quot;value&quot;: 766</span>
+<span class="go">        }</span>
+<span class="go">      ]</span>
+<span class="go">    }</span>
+<span class="go">  ]</span>
 <span class="go">}</span>
 </pre></div>
 </div>
@@ -636,29 +660,29 @@ retrieved will be a sum across all Flowlets of the Flow.</p>
 </li>
 <li><p class="first">If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
 API at the Flow context:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*</span>
-<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*</span>
+<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5&#39;</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Similarly, you can address the context of all Flows of an Application, an entire Application, or the entire
 namespace of a CDAP instance:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.*</span>
-<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.*</span>
+<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5&#39;</span>
 
-<span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom</span>
-<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+<span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom</span>
+<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5&#39;</span>
 
-<span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default</span>
-<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5</span>
+<span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default</span>
+<span class="go">  &amp;metric=system.process.events.processed&amp;start=now-5s&amp;count=5&#39;</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">To request user-defined metrics instead of system metrics, specify <tt class="docutils literal"><span class="pre">user</span></tt> instead of <tt class="docutils literal"><span class="pre">cdap</span></tt> in the URL
 and specify the user-defined metric at the end of the request.</p>
 <p>For example, to request a user-defined metric for the <em>HelloWorld</em> Application&#8217;s <em>WhoFlow</em> Flow:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver</span>
-<span class="go">  &amp;metric=user.names.bytes&amp;aggregate=true</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver</span>
+<span class="go">  &amp;metric=user.names.bytes&amp;aggregate=true&#39;</span>
 </pre></div>
 </div>
 </li>
@@ -666,7 +690,7 @@ and specify the user-defined metric at the end of the request.</p>
 <ul class="simple" id="http-restful-api-metrics-multiple">
 <span id="http-restful-api-v3-metrics-multiple"></span><li>Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
 the request body that enumerates the name and attributes for each metric, is currently not
-supported in this API. Instead, use the <a class="reference internal" href="../http-restful-api-v2/metrics.html#http-restful-api-v2-metrics-multiple"><em>v2 API</em></a>. It will be supported in a future release.</li>
+supported in this API. Instead, use the <a class="reference internal" href="../http-restful-api-v2/metrics.html#http-restful-api-v2-metrics-multiple"><em>v2 API</em></a> until it is supported in a future release.</li>
 </ul>
 </div>
 <div class="section" id="querying-for-multiple-time-series">
@@ -694,6 +718,39 @@ multiple tags for grouping by providing a comma-separated list.</p>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Example</p>
+<p>The method:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory&amp;</span>
+<span class="go">  groupBy=flow&amp;metric=user.customers.count&amp;start=now-2s&amp;end=now&#39;</span>
+</pre></div>
+</div>
+<p>returns the <em>user.customers.count</em> metric in the context of the application
+<em>PurchaseHistory</em> of the <em>default</em> namespace, for the specified time range, and grouped by
+<tt class="docutils literal"><span class="pre">flow</span></tt> (results reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;startTime&quot;: 1421188775,</span>
+<span class="go">  &quot;endTime&quot;: 1421188777,</span>
+<span class="go">  &quot;series&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;user.customers.count&quot;,</span>
+<span class="go">      &quot;grouping&quot;: { &quot;flow&quot;: &quot;PurchaseHistoryFlow&quot; },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        { &quot;time&quot;: 1421188776, &quot;value&quot;: 3 },</span>
+<span class="go">        { &quot;time&quot;: 1421188777, &quot;value&quot;: 2 }</span>
+<span class="go">      ]</span>
+<span class="go">    },</span>
+<span class="go">    {</span>
+<span class="go">      &quot;metricName&quot;: &quot;user.customers.count&quot;,</span>
+<span class="go">      &quot;grouping&quot;: { &quot;flow&quot;: &quot;PurchaseAnalysisFlow&quot; },</span>
+<span class="go">      &quot;data&quot;: [</span>
+<span class="go">        { &quot;time&quot;: 1421188775, &quot;value&quot;: 1 },</span>
+<span class="go">        { &quot;time&quot;: 1421188777, &quot;value&quot;: 2 }</span>
+<span class="go">      ]</span>
+<span class="go">    }</span>
+<span class="go">  ]</span>
+<span class="go">}</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="querying-by-a-time-range">
 <span id="http-restful-api-metrics-time-range"></span><h3>Querying by a Time Range<a class="headerlink" href="#querying-by-a-time-range" title="Permalink to this headline">¶</a></h3>
@@ -775,18 +832,25 @@ with 1 hour resolution, will return 3 data points with metrics aggregated for ea
 </tr>
 </tbody>
 </table>
-<p>As an example, to return the total number of input objects processed since the
-Application <em>CountRandom</em> was deployed, assuming that CDAP has not been stopped or
-restarted (you cannot specify a time range for aggregates):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.</span>
-<span class="go">    CountRandom.system.process.events.processed?aggregate=true</span>
+<p>Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom&amp;</span>
+<span class="go">  metric=system.process.events.processed&amp;start=now-1h&amp;end=now&amp;resolution=1m&#39;</span>
+</pre></div>
+</div>
+<p>This will return the value of the metric <em>system.process.events.processed</em> for the last
+hour at one-second intervals.</p>
+<p>For aggregates, you cannot specify a time range. As an example, to return the total number
+of input objects processed since the Application <em>CountRandom</em> was deployed, assuming that
+CDAP has not been stopped or restarted:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom</span>
+<span class="go">  &amp;metric=system.process.events.processed?aggregate=true&#39;</span>
 </pre></div>
 </div>
 <p>If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
 <tt class="docutils literal"><span class="pre">PurchaseHistoryWorkflow_PurchaseHistoryBuilder</span></tt> (reformatted to fit):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.</span>
-<span class="go">    PurchaseHistoryWorkflow_PurchaseHistoryBuilder&amp;metric=system.process.completion&amp;aggregate=true</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.</span>
+<span class="go">    PurchaseHistoryWorkflow_PurchaseHistoryBuilder&amp;metric=system.process.completion&amp;aggregate=true&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -802,17 +866,17 @@ program runs.</p>
 </pre></div>
 </div>
 <p>Examples of using a run-ID (reformatted to fit):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.flow.</span>
-<span class="go">    MyFlow.run.364-789-1636765&amp;metric=system.process.completion</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.flow.</span>
+<span class="go">    MyFlow.run.364-789-1636765&amp;metric=system.process.completion&#39;</span>
 
-<span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.</span>
-<span class="go">    PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&amp;metric=system.process.completion</span>
+<span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.</span>
+<span class="go">    PurchaseHistoryBuilder.run.453-454-447683&amp;metric=system.process.completion&#39;</span>
 
-<span class="go">POST &lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.</span>
-<span class="go">  bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&amp;metric=system.process.events.processed&amp;aggregate=true</span>
+<span class="go">POST &#39;&lt;base-url&gt;/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.</span>
+<span class="go">  bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&amp;metric=system.process.events.processed&amp;aggregate=true&#39;</span>
 </pre></div>
 </div>
-<p>The last example will return something similar to (where <tt class="docutils literal"><span class="pre">time=0</span></tt> means aggregated total number):</p>
+<p>The last example will return something similar to (where <tt class="docutils literal"><span class="pre">&quot;time&quot;=0</span></tt> means aggregated total number):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;startTime&quot;:0,&quot;endTime&quot;:0,&quot;series&quot;:[{&quot;metricName&quot;:&quot;system.process.events.processed&quot;,</span>
 <span class="go"> &quot;grouping&quot;:{},&quot;data&quot;:[{&quot;time&quot;:0,&quot;value&quot;:11188}]}]}</span>
 </pre></div>

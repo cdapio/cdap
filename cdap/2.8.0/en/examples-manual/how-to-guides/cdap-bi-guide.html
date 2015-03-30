@@ -267,7 +267,7 @@ integration with Hive:</p>
     <span class="k">try</span> <span class="o">{</span>
       <span class="k">return</span> <span class="n">ObjectStores</span><span class="o">.</span><span class="na">objectStoreProperties</span><span class="o">(</span><span class="n">Purchase</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">EMPTY</span><span class="o">);</span>
     <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedTypeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">&quot;This should never be thrown - Purchase is a supported type&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="s">&quot;This should never be thrown - Purchase is a supported type&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
     <span class="o">}</span>
   <span class="o">}</span>
 

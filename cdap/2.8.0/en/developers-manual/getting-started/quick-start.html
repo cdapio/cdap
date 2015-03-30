@@ -357,39 +357,39 @@ bounce counts with SQL. Let&#8217;s take a look at the schema first:</p>
 </pre></div>
 </div>
 <p>For example, to get the five URLs with the highest bounce-to-visit ratio (or bounce rate):</p>
-<div class="highlight-console"><div class="highlight"><pre>$ &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute &quot;\&quot;SELECT uri, bounces/totalvisits AS ratio \
-  FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\&quot;&quot;
-+===================================+
-| uri: STRING | ratio: DOUBLE       |
-+===================================+
-| /cdap.html  | 0.18867924528301888 |
-| /world.html | 0.1875              |
-| /news.html  | 0.18545454545454546 |
-| /team.html  | 0.18181818181818182 |
-| /intro.html | 0.18072289156626506 |
-+===================================+
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT uri, bounces/totalvisits AS ratio \</span>
+<span class="go">  FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\&quot;&quot;</span>
+<span class="go">+===================================+</span>
+<span class="go">| uri: STRING | ratio: DOUBLE       |</span>
+<span class="go">+===================================+</span>
+<span class="go">| /cdap.html  | 0.18867924528301888 |</span>
+<span class="go">| /world.html | 0.1875              |</span>
+<span class="go">| /news.html  | 0.18545454545454546 |</span>
+<span class="go">| /team.html  | 0.18181818181818182 |</span>
+<span class="go">| /intro.html | 0.18072289156626506 |</span>
+<span class="go">+===================================+</span>
 </pre></div>
 </div>
 <p>Apparently, the <tt class="docutils literal"><span class="pre">/cdap.html</span></tt> has the highest bounce rate of all the URLs.</p>
 <p>We can also use the full power of the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual">Hive query language</a> in formulating our
 queries. For example, Hive allows us to explode the page view counts into a table with
 fixed columns:</p>
-<div class="highlight-console"><div class="highlight"><pre>$ &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute &quot;\&quot;SELECT key AS ip, uri, count FROM dataset_pageviewstore \
-  LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\&quot;&quot;
-+====================================================+
-| ip: STRING      | uri: STRING      | count: BIGINT |
-+====================================================+
-| 255.255.255.113 | /home.html       | 9             |
-| 255.255.255.131 | /home.html       | 9             |
-| 255.255.255.246 | /quickstart.html | 8             |
-| 255.255.255.153 | /quickstart.html | 8             |
-| 255.255.255.236 | /quickstart.html | 8             |
-| 255.255.255.181 | /index.html      | 8             |
-| 255.255.255.198 | /index.html      | 7             |
-| 255.255.255.249 | /index.html      | 7             |
-| 255.255.255.194 | /cdap.html       | 7             |
-| 255.255.255.180 | /index.html      | 7             |
-+====================================================+
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT key AS ip, uri, count FROM dataset_pageviewstore \</span>
+<span class="go">  LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\&quot;&quot;</span>
+<span class="go">+====================================================+</span>
+<span class="go">| ip: STRING      | uri: STRING      | count: BIGINT |</span>
+<span class="go">+====================================================+</span>
+<span class="go">| 255.255.255.113 | /home.html       | 9             |</span>
+<span class="go">| 255.255.255.131 | /home.html       | 9             |</span>
+<span class="go">| 255.255.255.246 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.153 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.236 | /quickstart.html | 8             |</span>
+<span class="go">| 255.255.255.181 | /index.html      | 8             |</span>
+<span class="go">| 255.255.255.198 | /index.html      | 7             |</span>
+<span class="go">| 255.255.255.249 | /index.html      | 7             |</span>
+<span class="go">| 255.255.255.194 | /cdap.html       | 7             |</span>
+<span class="go">| 255.255.255.180 | /index.html      | 7             |</span>
+<span class="go">+====================================================+</span>
 </pre></div>
 </div>
 <p>We can even join two datasets: the one produced by the realtime flow; and the other one
@@ -397,36 +397,36 @@ produced by the MapReduce. The query below returns, for each of the three URLs w
 highest bounce ratio, the IP addresses that have made more than three requests for that
 URL. In other words: who are the users who are most interested in the least interesting
 pages?</p>
-<div class="highlight-console"><div class="highlight"><pre>$ &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute &quot;\&quot;SELECT views.uri, ratio, ip, count FROM \
-     (SELECT uri, totalvisits/bounces AS ratio \
-        FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
-     (SELECT key AS ip, uri, count \
-        FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
-  WHERE views.uri = bounce.uri AND views.count &gt;= 3\&quot;&quot;
-+=========================================================================+
-| views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |
-+=========================================================================+
-| /contact.html     | 8.666666666666666 | 255.255.255.166 | 3             |
-| /contact.html     | 8.666666666666666 | 255.255.255.199 | 3             |
-| /contact.html     | 8.666666666666666 | 255.255.255.216 | 3             |
-| /about.html       | 7.333333333333333 | 255.255.255.227 | 3             |
-| /home.html        | 6.551724137931035 | 255.255.255.105 | 3             |
-| /home.html        | 6.551724137931035 | 255.255.255.106 | 6             |
-| /home.html        | 6.551724137931035 | 255.255.255.107 | 4             |
-| /home.html        | 6.551724137931035 | 255.255.255.111 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.112 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.113 | 9             |
-| /home.html        | 6.551724137931035 | 255.255.255.114 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.115 | 4             |
-| /home.html        | 6.551724137931035 | 255.255.255.117 | 4             |
-| /home.html        | 6.551724137931035 | 255.255.255.118 | 3             |
-| /home.html        | 6.551724137931035 | 255.255.255.120 | 3             |
-| /home.html        | 6.551724137931035 | 255.255.255.123 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.124 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.126 | 5             |
-| /home.html        | 6.551724137931035 | 255.255.255.127 | 4             |
-| /home.html        | 6.551724137931035 | 255.255.255.129 | 4             |
-+=========================================================================+
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT views.uri, ratio, ip, count FROM \</span>
+<span class="go">     (SELECT uri, totalvisits/bounces AS ratio \</span>
+<span class="go">        FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \</span>
+<span class="go">     (SELECT key AS ip, uri, count \</span>
+<span class="go">        FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \</span>
+<span class="go">  WHERE views.uri = bounce.uri AND views.count &gt;= 3\&quot;&quot;</span>
+<span class="go">+=========================================================================+</span>
+<span class="go">| views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |</span>
+<span class="go">+=========================================================================+</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.166 | 3             |</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.199 | 3             |</span>
+<span class="go">| /contact.html     | 8.666666666666666 | 255.255.255.216 | 3             |</span>
+<span class="go">| /about.html       | 7.333333333333333 | 255.255.255.227 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.105 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.106 | 6             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.107 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.111 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.112 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.113 | 9             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.114 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.115 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.117 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.118 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.120 | 3             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.123 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.124 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.126 | 5             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.127 | 4             |</span>
+<span class="go">| /home.html        | 6.551724137931035 | 255.255.255.129 | 4             |</span>
+<span class="go">+=========================================================================+</span>
 </pre></div>
 </div>
 </div>

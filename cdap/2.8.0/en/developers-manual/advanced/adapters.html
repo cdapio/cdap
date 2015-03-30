@@ -134,7 +134,7 @@ start will be 5:00:00 and the run will read Stream events that were added from 4
 <p>As there are so many properties, and because properties such as schema must be string values of
 escaped JSON Objects, it is highly recommended that you use the CLI to create stream-conversion Adapters.
 For example:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="n">cdap</span> <span class="o">(</span><span class="nl">http:</span><span class="c1">//127.0.0.1:10000)&gt; create stream-conversion adapter convert_tickers on tickers frequency 10m format csv schema &quot;ticker string, trades int, price double&quot;</span>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">cdap</span> <span class="o">(</span><span class="n">http</span><span class="o">:</span><span class="c1">//127.0.0.1:10000)&gt; create stream-conversion adapter convert_tickers on tickers frequency 10m format csv schema &quot;ticker string, trades int, price double&quot;</span>
 </pre></div>
 </div>
 <p>The command above will create a stream-conversion Adapter named <tt class="docutils literal"><span class="pre">convert_tickers</span></tt> that runs every ten minutes.

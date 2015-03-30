@@ -90,7 +90,7 @@ context to decide which tokenizer to use:</p>
     <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WhiteSpaceTokenizer</span><span class="o">();</span>
   <span class="o">}</span>
   <span class="c1">// Is this code? If its origin is named &quot;code&quot;, then assume yes</span>
-  <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getOrigin</span><span class="o">()))</span> <span class="o">{</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="s">&quot;code&quot;</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getOrigin</span><span class="o">()))</span> <span class="o">{</span>
     <span class="n">tokenizer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodeTokenizer</span><span class="o">();</span>
   <span class="o">}</span>
   <span class="k">else</span> <span class="o">{</span>
