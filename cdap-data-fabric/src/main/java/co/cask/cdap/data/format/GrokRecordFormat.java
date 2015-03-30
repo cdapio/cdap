@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Resources;
 import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import oi.thekraken.grok.api.exception.GrokException;
@@ -30,8 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -160,13 +160,11 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
     }
 
     try {
-      InputStream input = url.openStream();
+      String patternFile = Resources.toString(url, Charsets.UTF_8);
       try {
-        grok.addPatternFromReader(new InputStreamReader(input));
+        grok.addPatternFromReader(new StringReader(patternFile));
       } catch (GrokException e) {
         LOG.error("Invalid grok pattern from resource '{}'", resource, e);
-      } finally {
-        input.close();
       }
     } catch (IOException e) {
       LOG.error("Failed to load resource '{}' for grok pattern", resource, e);
