@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailRunController', function($scope, $state, MyDataSource, $timeout, EventPipe) {
+  .controller('FlowsDetailRunController', function($scope, $state, MyDataSource, $timeout) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -20,17 +20,6 @@ angular.module(PKG.name + '.feature.flows')
           $scope.currentRun = $state.params.runId || res[0].runid;
         }
       });
-
-
-    EventPipe.on('flows.startRun', function() {
-      dataSrc.request({
-        _cdapNsPath: basePath + '/runs'
-      })
-        .then(function(res) {
-          $scope.runs = res;
-          $scope.currentRun = res[0].runid;
-        });
-    });
 
     $scope.$watch('runTabs.activeTab', function(newVal, oldVal) {
       var toState;
