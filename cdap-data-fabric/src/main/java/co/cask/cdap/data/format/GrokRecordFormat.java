@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -46,7 +45,6 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
   private static final Logger LOG = LoggerFactory.getLogger(GrokRecordFormat.class);
   private static final String DEFAULT_PATTERN = "%{GREEDYDATA:body}";
 
-  private final Charset charset = Charsets.UTF_8;
   private final Grok grok = new Grok();
   private String pattern = null;
 
@@ -56,7 +54,7 @@ public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> 
 
   @Override
   public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
-    String bodyAsStr = Bytes.toString(event.getBody(), charset);
+    String bodyAsStr = Bytes.toString(event.getBody(), Charsets.UTF_8);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
 
     Match gm = grok.match(bodyAsStr);
