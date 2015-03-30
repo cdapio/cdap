@@ -19,16 +19,12 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
-import com.clearspring.analytics.util.Lists;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.List;
-import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,6 +36,9 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/templates")
 public class MockETLHandler extends AuthenticatedHttpHandler {
 
+  private static final String REALTIME = "etlrealtime";
+  private static final String BATCH = "etlbatch";
+
   @Inject
   public MockETLHandler(Authenticator authenticator) {
     super(authenticator);
@@ -48,9 +47,15 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   @Path("/")
   @GET
   public void getTemplates(HttpRequest request, HttpResponder responder) throws Exception {
-    List<Map<String, String>> templates = Lists.newArrayList();
-    templates.add(ImmutableMap.of("name", "etl.realtime", "description", "ETL Realtime Adapter"));
-    templates.add(ImmutableMap.of("name", "etl.batch", "description", "ETL Batch Adapter"));
+    JsonArray templates = new JsonArray();
+    JsonObject realtime = new JsonObject();
+    JsonObject batch = new JsonObject();
+    realtime.addProperty("name", REALTIME);
+    realtime.addProperty("description", "ETL Realtime Adapter");
+    batch.addProperty("name", BATCH);
+    batch.addProperty("description", "ETL Batch Adapter");
+    templates.add(realtime);
+    templates.add(batch);
     responder.sendJson(HttpResponseStatus.OK, templates);
   }
 
@@ -58,8 +63,9 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   @GET
   public void getTemplate(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
-    Map<String, String> template = ImmutableMap.of("name", templateId,
-                                                   "description", "Template used to create ETL Adapters");
+    JsonObject template = new JsonObject();
+    template.addProperty("name", templateId);
+    template.addProperty("description", "Template used to create ETL Adapters");
     responder.sendJson(HttpResponseStatus.OK, template);
   }
 
@@ -67,14 +73,29 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   @GET
   public void getSources(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
-    List<Map<String, String>> sources = Lists.newArrayList();
-    if (templateId.equalsIgnoreCase("etl.realtime")) {
-      sources.add(ImmutableMap.of("name", "Kafka", "description", "Kafka Source"));
-      sources.add(ImmutableMap.of("name", "JMS", "description", "JMS Source"));
-      sources.add(ImmutableMap.of("name", "Twitter", "description", "Twitter Source"));
+    JsonArray sources = new JsonArray();
+    if (templateId.equalsIgnoreCase(REALTIME)) {
+      JsonObject kafka = new JsonObject();
+      JsonObject jms = new JsonObject();
+      JsonObject twitter = new JsonObject();
+      kafka.addProperty("name", "Kafka");
+      kafka.addProperty("description", "Kafka Source");
+      jms.addProperty("name", "JMS");
+      jms.addProperty("description", "JMS Source");
+      twitter.addProperty("name", "Twitter");
+      twitter.addProperty("description", "Twitter Source");
+      sources.add(kafka);
+      sources.add(jms);
+      sources.add(twitter);
     } else {
-      sources.add(ImmutableMap.of("name", "DB", "description", "RDBMS Source"));
-      sources.add(ImmutableMap.of("name", "Stream", "description", "Stream Source"));
+      JsonObject db = new JsonObject();
+      JsonObject stream = new JsonObject();
+      db.addProperty("name", "DB");
+      db.addProperty("description", "RDBMS Source");
+      stream.addProperty("name", "Stream");
+      stream.addProperty("description", "Stream Source");
+      sources.add(db);
+      sources.add(stream);
     }
     responder.sendJson(HttpResponseStatus.OK, sources);
   }
@@ -83,23 +104,35 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   @GET
   public void getSinks(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
-    List<Map<String, String>> sources = Lists.newArrayList();
-    if (templateId.equalsIgnoreCase("etl.realtime")) {
-      sources.add(ImmutableMap.of("name", "Stream", "description", "Stream Sink"));
+    JsonArray sinks = new JsonArray();
+    if (templateId.equalsIgnoreCase(REALTIME)) {
+      JsonObject stream = new JsonObject();
+      stream.addProperty("name", "Stream");
+      stream.addProperty("description", "Stream Sink");
+      sinks.add(stream);
     } else {
-      sources.add(ImmutableMap.of("name", "DB", "description", "RDBMS Sink"));
+      JsonObject db = new JsonObject();
+      db.addProperty("name", "DB");
+      db.addProperty("description", "RDBMS Sink");
+      sinks.add(db);
     }
-    responder.sendJson(HttpResponseStatus.OK, sources);
+    responder.sendJson(HttpResponseStatus.OK, sinks);
   }
 
   @Path("/{template-id}/transforms")
   @GET
   public void getTransforms(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
-    List<Map<String, String>> transforms = Lists.newArrayList();
-    //TODO: Transforms will be shared between etl.batch, etl.realtime -> to be placed in both dir?
-    transforms.add(ImmutableMap.of("name", "FilterTransform", "description", "Filter Data"));
-    transforms.add(ImmutableMap.of("name", "ProjectionTransform", "description", "Projection Transform"));
+    JsonArray transforms = new JsonArray();
+    //TODO: Transforms will be shared between batch, realtime -> to be placed in both dir?
+    JsonObject filter = new JsonObject();
+    JsonObject projection = new JsonObject();
+    filter.addProperty("name", "FilterTransform");
+    filter.addProperty("description", "Filter Data");
+    projection.addProperty("name", "ProjectionTransform");
+    projection.addProperty("description", "Projection Transform");
+    transforms.add(filter);
+    transforms.add(projection);
     responder.sendJson(HttpResponseStatus.OK, transforms);
   }
 
