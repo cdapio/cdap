@@ -42,10 +42,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
     } else if (t instanceof NotFoundException) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
-    } else if (t instanceof NotImplementedException) {
-      LOG.info("Not implemented: request={} {} user={}:",
-               request.getMethod().getName(), request.getUri(),
-               SecurityRequestContext.getUserId().or("<null>"), t);
+    } else if (t instanceof UnsupportedOperationException) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
     } else if (t instanceof UnauthorizedException) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
