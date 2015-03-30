@@ -110,11 +110,21 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @return InetSocketAddress of server.
    */
   public InetSocketAddress getSocketAddress() {
-    return new InetSocketAddress(address, port);
+    if (!server.isRunning()) {
+      return new InetSocketAddress(address, port);
+    } else {
+      // assumes we only have one connector
+      final Connector connector = server.getConnectors()[0];
+      return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+    }
   }
 
   @Override
   protected void run() throws Exception {
+    server.start();
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
     serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
@@ -123,10 +133,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
-        return new InetSocketAddress(address, port);
+        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
     }));
-    server.start();
   }
 
   @Override
