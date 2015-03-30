@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -49,6 +48,7 @@ import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
