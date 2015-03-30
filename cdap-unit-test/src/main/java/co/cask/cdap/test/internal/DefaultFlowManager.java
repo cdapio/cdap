@@ -49,7 +49,7 @@ public class DefaultFlowManager implements FlowManager {
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      appFabricClient.setFlowletInstances(applicationId, flowName, flowletName, instances);
+      appFabricClient.setFlowletInstances(namespace, applicationId, flowName, flowletName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

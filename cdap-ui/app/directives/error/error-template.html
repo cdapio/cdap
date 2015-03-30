@@ -1,0 +1,11 @@
+<div class="nav navbar-nav navbar-right error-button">
+  <button class="btn"
+        ng-class="{'btn-danger': !emptyError(), disabled: emptyError()}"
+        data-placement="bottom"
+        data-auto-close="1"
+        data-template="error/error-popover.html"
+        bs-popover>
+    <i class="fa fa-exclamation-triangle"></i>
+    <span class="badge" ng-hide="emptyError()">{{ errorCount() }}</span>
+  </button>
+</div>

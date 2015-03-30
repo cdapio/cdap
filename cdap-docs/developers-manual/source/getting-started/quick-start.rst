@@ -259,14 +259,14 @@ convenient to send it as the body of a POST request.
 We can also use SQL to bypass the service and query the raw contents of the underlying
 table (reformatted to fit)::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT * FROM cdap_user_pageviewstore WHERE key = '255.255.255.249'\""
-  +===============================================================================================+
-  | cdap_user_pageviewstore.key: STRING | cdap_user_pageviewstore.value: map<string,bigint>       |
-  +===============================================================================================+
-  | 255.255.255.249                     | {"/about.html":2,"/world.html":4,"/index.html":14,      |
-  |                                     |  "/news.html":4,"/team.html":2,"/cdap.html":4,          |
-  |                                     |  "/contact.html":2,"/home.html":6,"/developers.html":4} |
-  +===============================================================================================+
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
+  +===========================================================================================+
+  | dataset_pageviewstore.key: STRING | dataset_pageviewstore.value: map<string,bigint>       |
+  +===========================================================================================+
+  | 255.255.255.249                 | {"/about.html":2,"/world.html":4,"/index.html":14,      |
+  |                                 |  "/news.html":4,"/team.html":2,"/cdap.html":4,          |
+  |                                 |  "/contact.html":2,"/home.html":6,"/developers.html":4} |
+  +===========================================================================================+
 
 Here we can see that the storage format is one table row per IP address, with a column for
 each URL that was requested from that IP address. This is an implementation detail that
@@ -308,7 +308,7 @@ We can inquire as to the status of the MapReduce::
 When the job has finished, the returned status will be *STOPPED*. Now we can query the
 bounce counts with SQL. Let's take a look at the schema first::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"DESCRIBE cdap_user_bouncecountstore\""
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
   Successfully connected CDAP instance at 127.0.0.1:10000
   +==========================================================+
   | col_name: STRING | data_type: STRING | comment: STRING   |
@@ -321,7 +321,7 @@ bounce counts with SQL. Let's take a look at the schema first::
 For example, to get the five URLs with the highest bounce-to-visit ratio (or bounce rate)::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
-    FROM cdap_user_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
+    FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
   +===================================+
   | uri: STRING | ratio: DOUBLE       |
   +===================================+
@@ -339,7 +339,7 @@ We can also use the full power of the `Hive query language
 queries. For example, Hive allows us to explode the page view counts into a table with
 fixed columns::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM cdap_user_pageviewstore \
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
     LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
   +====================================================+
   | ip: STRING      | uri: STRING      | count: BIGINT |
@@ -366,9 +366,9 @@ pages?
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT views.uri, ratio, ip, count FROM \
        (SELECT uri, totalvisits/bounces AS ratio \
-          FROM cdap_user_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
+          FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
        (SELECT key AS ip, uri, count \
-          FROM cdap_user_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
+          FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
     WHERE views.uri = bounce.uri AND views.count >= 3\""
   +=========================================================================+
   | views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |

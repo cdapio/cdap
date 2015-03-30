@@ -70,6 +70,6 @@ public class RenderAsCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Modifies how table data is rendererd. Valid options are: \"csv\" and \"alt\" (default).";
+    return "Modifies how table data is rendered. Valid options are \"alt\" (default) and \"csv\".";
   }
 }

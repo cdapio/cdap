@@ -137,19 +137,11 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
   @Override
   public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
     DequeueResult<byte[]> result = performDequeue(maxBatchSize);
-    if (scanStartRow != null) {
-      if (!consumingEntries.isEmpty()) {
-        // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-        // that is smaller than or equal to scanStartRow
-        byte[] floorKey = consumingEntries.floorKey(scanStartRow);
-        if (floorKey != null) {
-          updateStartRow(floorKey);
-        }
-      } else {
-        // If the dequeue has empty result, startRow can advance to scanStartRow
-        updateStartRow(scanStartRow);
-      }
-    }
+    // Start row can be updated to the largest rowKey in the consumingEntries
+    // that is smaller than or equal to scanStartRow. If no such key exists, update start row to scanStartRow
+    byte[] floorKey = consumingEntries.floorKey(scanStartRow);
+    updateStartRow(floorKey == null ? scanStartRow : floorKey);
+
     return result;
   }
 

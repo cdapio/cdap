@@ -196,7 +196,12 @@ public class ExploreTableManager {
       }
     }
 
-    return exploreService.execute(datasetID.getNamespace(), createStatement);
+    if (createStatement != null) {
+      return exploreService.execute(datasetID.getNamespace(), createStatement);
+    } else {
+      // if the dataset is not explorable, this is a no op.
+      return QueryHandle.NO_OP;
+    }
   }
 
   /**

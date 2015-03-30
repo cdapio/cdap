@@ -19,6 +19,7 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -114,7 +115,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Override
   protected void run() throws Exception {
-    serviceCancellable = discoveryService.register(new Discoverable() {
+    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.EXTERNAL_AUTHENTICATION;
@@ -124,7 +125,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       public InetSocketAddress getSocketAddress() throws RuntimeException {
         return new InetSocketAddress(address, port);
       }
-    });
+    }));
     server.start();
   }
 

@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -78,7 +79,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -131,7 +131,7 @@ public class BaseHiveExploreServiceTest {
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
-  protected static LocationFactory locationFactory;
+  protected static NamespacedLocationFactory namespacedLocationFactory;
   protected static ExploreTableManager exploreTableManager;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
@@ -180,14 +180,14 @@ public class BaseHiveExploreServiceTest {
 
     exploreTableManager = injector.getInstance(ExploreTableManager.class);
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
 
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
-    Locations.mkdirsIfNotExists(locationFactory.create(Constants.DEFAULT_NAMESPACE));
-    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
-    Locations.mkdirsIfNotExists(locationFactory.create(OTHER_NAMESPACE_ID.getId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(OTHER_NAMESPACE_ID));
 
     waitForCompletionStatus(exploreService.createNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
@@ -204,8 +204,8 @@ public class BaseHiveExploreServiceTest {
       waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     }
 
-    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
-    Locations.deleteQuietly(locationFactory.create(OTHER_NAMESPACE_ID.getId()), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(NAMESPACE_ID), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     exploreClient.close();

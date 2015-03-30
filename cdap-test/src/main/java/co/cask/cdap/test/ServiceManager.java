@@ -26,26 +26,23 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ServiceManager {
   /**
-   * Changes the number of runnable instances.
+   * Changes the number of instances.
    *
-   * @param runnable Name of the runnable (can be either handler or worker).
    * @param instances Number of instances to change to.
    */
-  void setRunnableInstances(String runnable, int instances);
+  void setInstances(int instances);
+
+  /**
+   * Returns the number of requested instances.
+   *
+   */
+  int getRequestedInstances();
 
   /**
    * Returns the number of requested runnable instances.
    *
-   * @param runnableName Name of the runnable (can be either handler or worker).
    */
-  int getRequestedInstances(String runnableName);
-
-  /**
-   * Returns the number of requested runnable instances.
-   *
-   * @param runnableName Name of the runnable (can be either handler or worker).
-   */
-  int getProvisionedInstances(String runnableName);
+  int getProvisionedInstances();
 
   /**
    * Stops the running service.
@@ -75,7 +72,7 @@ public interface ServiceManager {
   URL getServiceURL(long timeout, TimeUnit timeoutUnit);
 
   /**
-   * Wait for the status of the Service with default retries of 5 and a timeout of 1 second between retry attempts.
+   * Wait for the status of the Service with 5 seconds timeout.
    * @param status true if waiting for started, false if waiting for stopped.
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */

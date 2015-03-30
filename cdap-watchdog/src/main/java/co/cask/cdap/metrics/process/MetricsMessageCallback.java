@@ -77,16 +77,13 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       return;
     }
 
-    for (MetricValue value : records) {
-      // todo: change method signature to allow adding list?
-      try {
-        metricStore.add(value);
-      } catch (Exception e) {
-        String msg = "Failed to add metric data to a store";
-        LOG.error(msg);
-        // todo: will it shut down the whole the metrics processor service??
-        throw new RuntimeException(msg, e);
-      }
+    try {
+      metricStore.add(records);
+    } catch (Exception e) {
+      String msg = "Failed to add metrics data to a store";
+      LOG.error(msg);
+      // todo: will it shut down the whole the metrics processor service??
+      throw new RuntimeException(msg, e);
     }
 
     recordProcessed += records.size();

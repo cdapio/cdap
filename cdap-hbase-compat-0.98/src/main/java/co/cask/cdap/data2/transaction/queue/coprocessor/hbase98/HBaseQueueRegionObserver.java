@@ -20,6 +20,7 @@ import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSu
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import co.cask.cdap.data2.transaction.queue.hbase.SaltedHBaseQueueStrategy;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
@@ -46,7 +47,6 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,12 +83,12 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       String prefixBytes = tableDesc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES);
       try {
         // Default to SALT_BYTES for the older salted queue implementation.
-        this.prefixBytes = prefixBytes == null ? HBaseQueueAdmin.SALT_BYTES : Integer.parseInt(prefixBytes);
+        this.prefixBytes = prefixBytes == null ? SaltedHBaseQueueStrategy.SALT_BYTES : Integer.parseInt(prefixBytes);
       } catch (NumberFormatException e) {
         // Shouldn't happen for table created by cdap.
         LOG.error("Unable to parse value of '" + HBaseQueueAdmin.PROPERTY_PREFIX_BYTES + "' property. " +
-                    "Default to " + HBaseQueueAdmin.SALT_BYTES, e);
-        this.prefixBytes = HBaseQueueAdmin.SALT_BYTES;
+                    "Default to " + SaltedHBaseQueueStrategy.SALT_BYTES, e);
+        this.prefixBytes = SaltedHBaseQueueStrategy.SALT_BYTES;
       }
 
       HTable98NameConverter nameConverter = new HTable98NameConverter();

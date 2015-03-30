@@ -16,17 +16,17 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager implements WorkerManager {
+public class DefaultWorkerManager extends AbstractWorkerManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultWorkerManager.class);
 
@@ -36,10 +36,11 @@ public class DefaultWorkerManager implements WorkerManager {
 
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
+  private final String namespace;
 
-  public DefaultWorkerManager(String accountId, DefaultApplicationManager.ProgramId programId,
-                              AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
-                              DefaultApplicationManager applicationManager) {
+  public DefaultWorkerManager(String namespace, DefaultApplicationManager.ProgramId programId,
+                              AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
+    this.namespace = namespace;
     this.programId = programId;
     this.appId = programId.getApplicationId();
     this.workerId = programId.getRunnableId();
@@ -48,10 +49,10 @@ public class DefaultWorkerManager implements WorkerManager {
   }
 
   @Override
-  public void setRunnableInstances(int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(appId, workerId, instances);
+      appFabricClient.setWorkerInstances(namespace, appId, workerId, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -65,5 +66,10 @@ public class DefaultWorkerManager implements WorkerManager {
   @Override
   public boolean isRunning() {
     return applicationManager.isRunning(programId);
+  }
+
+  @Override
+  public int getInstances() {
+    return appFabricClient.getWorkerInstances(namespace, appId, workerId).getInstances();
   }
 }

@@ -54,6 +54,7 @@ public enum ArgumentName {
   TIMEOUT("timeout"),
   LIMIT("limit"),
   RUN_STATUS("status"),
+  RUN_ID("runid"),
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),

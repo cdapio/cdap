@@ -151,9 +151,10 @@ public class LogSaverTest extends KafkaTestBase {
 
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    Location ns1LogBaseDir = locationFactory.create("NS_1").append(logBaseDir);
-    Location ns2LogBaseDir = locationFactory.create("NS_2").append(logBaseDir);
-    Location systemLogBaseDir = locationFactory.create("system").append(logBaseDir);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    Location ns1LogBaseDir = locationFactory.create(namespacesDir).append("NS_1").append(logBaseDir);
+    Location ns2LogBaseDir = locationFactory.create(namespacesDir).append("NS_2").append(logBaseDir);
+    Location systemLogBaseDir = locationFactory.create(namespacesDir).append("system").append(logBaseDir);
 
     waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     waitTillLogSaverDone(ns2LogBaseDir, "APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");

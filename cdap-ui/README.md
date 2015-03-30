@@ -21,7 +21,7 @@ UI work generally requires having a running CDAP-standalone instance. To build a
 * `git clone git@github.com:caskdata/cdap.git`
 * `cd cdap`
 * `mvn package -pl cdap-standalone -am -DskipTests -P dist,release`
-* `cd cdap-standalone/target && unzip cdap-sdk-2.8.0-SNAPSHOT.zip`
+* `cd cdap-standalone/target && unzip cdap-sdk-{version}.zip`
 
 You can start the standalone backend from the `cdap-ui/` directory with:
 

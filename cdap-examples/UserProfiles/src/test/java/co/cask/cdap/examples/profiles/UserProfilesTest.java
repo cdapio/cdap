@@ -52,7 +52,7 @@ public class UserProfilesTest extends TestBase {
     FlowManager flowManager = applicationManager.startFlow("ActivityFlow");
 
     ServiceManager serviceManager = applicationManager.startService("UserProfileService");
-    serviceManager.waitForStatus(true, 3, 60); // should be much faster, but justin case... wait 3x60sec
+    serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 
     // create a user through the service

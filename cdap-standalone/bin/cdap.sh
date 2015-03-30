@@ -30,7 +30,7 @@ CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.k
 
 # Specifies Web App Path
 WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
-BETA_WEB_APP_PATH=${BETA_WEB_APP_PATH:-"web-app/beta/server.js"}
+ALPHA_WEB_APP_PATH=${ALPHA_WEB_APP_PATH:-"web-app/alpha/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`
@@ -210,7 +210,7 @@ rotate_log () {
 
 start() {
     debug=$1; shift
-    beta_ui=$1; shift
+    alpha_ui=$1; shift
     port=$1; shift
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_OPTS
@@ -223,8 +223,8 @@ start() {
         ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
 
-    if $beta_ui; then
-      WEB_APP_PATH=$BETA_WEB_APP_PATH
+    if [ "$alpha_ui" == "true" ]; then
+      WEB_APP_PATH=$ALPHA_WEB_APP_PATH
     fi 
 
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
@@ -308,12 +308,12 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
-    beta_ui=false
+    alpha_ui=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
-        --enable-beta-ui) shift; beta_ui=true;;
+        --enable-alpha-ui) shift; alpha_ui=true;;
         *) shift; break;;
       esac
     done
@@ -328,7 +328,7 @@ case "$1" in
       fi
       CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    $command $debug $beta_ui $port
+    $command $debug $alpha_ui $port
   ;;
 
   stop)
@@ -347,7 +347,7 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
-    echo "--enable-beta-ui Start new ui"
+    echo "--enable-alpha-ui Start new ui"
     exit 1
   ;;
 

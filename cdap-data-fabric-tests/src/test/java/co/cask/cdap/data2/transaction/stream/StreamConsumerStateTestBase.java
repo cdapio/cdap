@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -23,7 +25,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,12 +40,13 @@ public abstract class StreamConsumerStateTestBase {
   protected abstract StreamConsumerStateStore createStateStore(StreamConfig streamConfig) throws Exception;
   protected abstract StreamAdmin getStreamAdmin();
 
+  protected static CConfiguration cConf = CConfiguration.create();
   protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerStateTestNamespace");
   protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
 
-  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
-    locationFactory.create(TEST_NAMESPACE.getId()).mkdirs();
-    locationFactory.create(OTHER_NAMESPACE.getId()).mkdirs();
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @Test

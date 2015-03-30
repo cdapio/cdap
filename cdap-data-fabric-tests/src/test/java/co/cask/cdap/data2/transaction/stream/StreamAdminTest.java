@@ -17,12 +17,15 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,6 +33,7 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class StreamAdminTest {
+  protected static CConfiguration cConf = CConfiguration.create();
   protected static final String FOO_NAMESPACE = "fooNamespace";
   protected static final String OTHER_NAMESPACE = "otherNamespace";
 
@@ -37,9 +41,9 @@ public abstract class StreamAdminTest {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
-  protected static void setupNamespaces(LocationFactory locationFactory) throws IOException {
-    locationFactory.create(FOO_NAMESPACE).mkdirs();
-    locationFactory.create(OTHER_NAMESPACE).mkdirs();
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+    namespacedLocationFactory.get(Id.Namespace.from(FOO_NAMESPACE)).mkdirs();
+    namespacedLocationFactory.get(Id.Namespace.from(OTHER_NAMESPACE)).mkdirs();
   }
 
   @Test
@@ -87,9 +91,9 @@ public abstract class StreamAdminTest {
 
     streamAdmin.dropAllInNamespace(Id.Namespace.from(FOO_NAMESPACE));
 
-    // All of the streams within the default namespace should have no data in them
+    // All of the streams within the default namespace should no longer exist
     for (Id.Stream defaultStream : fooStreams) {
-      Assert.assertEquals(0, getStreamSize(defaultStream));
+      Assert.assertFalse(streamAdmin.exists(defaultStream));
     }
     // otherStream isn't in the foo namespace so its data is not deleted in the above call to dropAllInNamespace.
     Assert.assertNotEquals(0, getStreamSize(otherStream));
@@ -102,7 +106,10 @@ public abstract class StreamAdminTest {
   private long getStreamSize(Id.Stream streamId) throws IOException {
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamConfig config = streamAdmin.getConfig(streamId);
-    return streamAdmin.fetchStreamSize(config);
+
+    Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(),
+                                                                       StreamUtils.getGeneration(config));
+    return StreamUtils.fetchStreamFilesSize(generationLocation);
   }
 
   // simply writes a static string to a stream

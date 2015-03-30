@@ -109,10 +109,10 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
+  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
 
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      $alert({
+      myAlert({
         title: 'Error',
         content: sockEvent.reason || 'could not connect to the server',
         type: 'danger'
@@ -122,7 +122,7 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
 
       if(data.statusCode>399) {
-        $alert({
+        myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Something went terribly wrong',
           type: 'danger'
@@ -130,7 +130,7 @@ angular
       }
 
       if(data.warning) {
-        $alert({
+        myAlert({
           content: data.warning,
           type: 'warning'
         });
@@ -138,12 +138,35 @@ angular
     });
   })
 
+  .run(function(MyDataSource, EventPipe, MY_CONFIG, $rootScope) {
+    // verify backend server is running
+    var dataSrc = new MyDataSource($rootScope.$new());
+    function pingBackend() {
+      dataSrc.poll({
+        url: ['http://',
+              MY_CONFIG.cdap.routerServerUrl,
+              ':',
+              MY_CONFIG.cdap.routerServerPort,
+              '/status'].join('')
+      }, function(res) {
+        EventPipe.emit('backendUp');
+      }, function(res) {
+        if (res.error.code === 'ECONNREFUSED') {
+          EventPipe.emit('backendDown');
+        }
+      });
+    }
+
+    pingBackend(); // execute immediately when initially opening a page
+
+  })
+
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -172,31 +195,6 @@ angular
 
       $scope.bodyClass = classes.join(' ');
     });
-
-
-    // verify backend server is running
-    var modalInstance = $modal({
-          scope: $scope,
-          template: '/assets/features/backendstatus/errorModal.html',
-          show: false,
-          backdrop: 'static',
-          keyboard: false
-        });
-
-    function pingBackend() {
-      $http.get('/backendstatus')
-        .success(function() {
-          modalInstance.$promise.then(modalInstance.hide);
-        })
-        .error (function() {
-          modalInstance.$promise.then(modalInstance.show);
-        });
-    }
-
-    pingBackend(); // execute immediately when initially opening a page
-    $interval(pingBackend, 60000); // ping every 60 seconds
-
-
 
     console.timeEnd(PKG.name);
   });

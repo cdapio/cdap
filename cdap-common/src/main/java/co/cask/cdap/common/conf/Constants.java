@@ -789,4 +789,11 @@ public final class Constants {
     */
     public static final String STATUS = "/status";
   }
+
+  /**
+   * Constants for namespaces
+   */
+  public static final class Namespace {
+    public static final String NAMESPACES_DIR = "namespaces.dir";
+  }
 }
