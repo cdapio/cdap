@@ -1,0 +1,32 @@
+{#
+    basic/relations.html
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Sphinx sidebar template: relation links.
+
+    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+    
+    Removes relations on specified pages.
+    To hide, set in a field list at the top as
+:hide-relations: true
+#}
+{%- set hiderel = '' %}
+{%- set hiderel_key = 'hide-relations' %}
+{%- if meta is defined %}
+    {%- if hiderel_key in meta.viewkeys() %}
+        {%- set hiderel = meta.get(hiderel_key) %}
+    {%- endif %}
+{%- endif %}
+{%- if not hiderel %}
+{%- if prev %}
+  <h4>{{ _('Previous topic') }}</h4>
+  <p class="topless"><a href="{{ prev.link|e }}"
+                        title="{{ _('previous chapter') }}">{{ prev.title }}</a></p>
+{%- endif %}
+{%- if next %}
+  <h4>{{ _('Next topic') }}</h4>
+  <p class="topless"><a href="{{ next.link|e }}"
+                        title="{{ _('next chapter') }}">{{ next.title }}</a></p>
+{%- endif %}
+{%- endif %}
