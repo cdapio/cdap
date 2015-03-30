@@ -23,6 +23,7 @@ import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -39,6 +40,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/templates")
 public class MockETLHandler extends AuthenticatedHttpHandler {
 
+  @Inject
   public MockETLHandler(Authenticator authenticator) {
     super(authenticator);
   }
@@ -77,7 +79,7 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, sources);
   }
 
-  @Path("/{template-id}/sources")
+  @Path("/{template-id}/sinks")
   @GET
   public void getSinks(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
@@ -91,6 +93,7 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   }
 
   @Path("/{template-id}/transforms")
+  @GET
   public void getTransforms(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
     List<Map<String, String>> transforms = Lists.newArrayList();
