@@ -37,13 +37,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * GrokRecordFormat
+ * GrokRecordFormat. Grok parses a string and outputs a map of field name (string) to value (string).
  */
 public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
 
-  public static final String PATTERN_SETTING = "pattern";
   private static final Logger LOG = LoggerFactory.getLogger(GrokRecordFormat.class);
   private static final String DEFAULT_PATTERN = "%{GREEDYDATA:body}";
+  private static final String PATTERN_SETTING = "pattern";
 
   private final Grok grok = new Grok();
   private String pattern = null;
