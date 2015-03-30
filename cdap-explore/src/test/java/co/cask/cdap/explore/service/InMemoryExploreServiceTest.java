@@ -54,8 +54,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.URL;
@@ -67,6 +69,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class InMemoryExploreServiceTest {
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static TransactionManager transactionManager;
   private static ExploreService exploreService;
   private static DatasetOpExecutor dsOpService;
@@ -79,8 +84,7 @@ public class InMemoryExploreServiceTest {
     CConfiguration configuration = CConfiguration.create();
     Configuration hConf = new Configuration();
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
-                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
         new ConfigModule(configuration, hConf),

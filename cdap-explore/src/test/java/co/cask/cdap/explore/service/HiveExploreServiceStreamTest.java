@@ -39,8 +39,10 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,6 +57,9 @@ import java.util.concurrent.ExecutionException;
  */
 @Category(SlowTests.class)
 public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static final Gson GSON = new Gson();
   private static final String body1 = "userX,actionA,item123";
   private static final String body2 = "userY,actionB,item123";
@@ -69,7 +74,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     // use leveldb implementations, since stream input format examines the filesystem
     // to determine input splits.
-    initialize(CConfiguration.create(), true);
+    initialize(CConfiguration.create(), tmpFolder, true);
 
     Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, streamName);
     createStream(streamId);

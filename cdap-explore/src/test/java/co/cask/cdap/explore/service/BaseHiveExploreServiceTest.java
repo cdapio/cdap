@@ -64,6 +64,10 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.LocalFileTransactionStateStorage;
+import co.cask.tephra.persist.TransactionStateStorage;
+import co.cask.tephra.runtime.TransactionStateStorageProvider;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -75,14 +79,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -119,6 +124,7 @@ public class BaseHiveExploreServiceTest {
   protected static final String OTHER_MY_TABLE_NAME = getDatasetHiveName(OTHER_MY_TABLE);
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
+  // Make sure to reset it back to true after using it in a test class
   public static boolean runBefore = true;
   public static boolean runAfter = true;
 
@@ -138,24 +144,23 @@ public class BaseHiveExploreServiceTest {
 
   protected static Injector injector;
 
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  protected static void initialize() throws Exception {
-    initialize(CConfiguration.create());
+  protected static void initialize(TemporaryFolder tmpFolder) throws Exception {
+    initialize(CConfiguration.create(), tmpFolder);
   }
 
-  protected static void initialize(CConfiguration cConf) throws Exception {
-    initialize(cConf, false);
+  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder) throws Exception {
+    initialize(cConf, tmpFolder, false);
   }
 
-  protected static void initialize(CConfiguration cConf, boolean useStandalone) throws Exception {
+  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone)
+    throws Exception {
     if (!runBefore) {
       return;
     }
 
     Configuration hConf = new Configuration();
-    List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf) : createInMemoryModules(cConf, hConf);
+    List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
+      : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -198,11 +203,8 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
-    // Some tests (for example HiveExploreServiceStopTestRun) stop the ExploreService on their own. In that case
-    // the test is responsible for deleting this namespace.
-    if (exploreService.isRunning()) {
-      waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-    }
+    // Delete namespace created earlier for testing
+    waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 
     Locations.deleteQuietly(namespacedLocationFactory.get(NAMESPACE_ID), true);
     Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
@@ -289,6 +291,11 @@ public class BaseHiveExploreServiceTest {
     streamMetaStore.addStream(streamId);
   }
 
+  protected static void dropStream(Id.Stream streamId) throws Exception {
+    streamAdmin.drop(streamId);
+    streamMetaStore.removeStream(streamId);
+  }
+
   protected static void setStreamProperties(String namespace, String streamName,
                                             StreamProperties properties) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
@@ -329,18 +336,19 @@ public class BaseHiveExploreServiceTest {
     return (HttpURLConnection) url.openConnection();
   }
 
-  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
+  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
+                                                    TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
     configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
-                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
+    configuration.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, tmpFolder.newFolder("tx").getAbsolutePath());
+    configuration.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -367,6 +375,17 @@ public class BaseHiveExploreServiceTest {
                     .build(StoreFactory.class)
           );
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
+
+          // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
+          install(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+            @Override
+            protected void configure() {
+              bind(TransactionStateStorage.class)
+                .annotatedWith(Names.named("persist"))
+                .to(LocalFileTransactionStateStorage.class).in(Scopes.SINGLETON);
+              bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
+            }
+          }));
         }
       }
     );
@@ -374,8 +393,8 @@ public class BaseHiveExploreServiceTest {
 
   // these are needed if we actually want to query streams, as the stream input format looks at the filesystem
   // to figure out splits.
-  private static List<Module> createStandaloneModules(CConfiguration cConf, Configuration hConf)
-    throws IOException {
+  private static List<Module> createStandaloneModules(CConfiguration cConf, Configuration hConf,
+                                                      TemporaryFolder tmpFolder) throws IOException {
     File localDataDir = tmpFolder.newFolder();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
