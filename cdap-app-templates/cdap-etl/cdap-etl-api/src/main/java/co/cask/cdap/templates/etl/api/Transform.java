@@ -18,6 +18,8 @@ package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.ProgramLifecycle;
 
+import javax.annotation.Nullable;
+
 /**
  * Transform Stage.
  *
@@ -51,36 +53,16 @@ public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements
   /**
    * Process input Key and Value and emit output using {@link Emitter}.
    *
-   * @param inputKey input key
+   * @param inputKey input key, can be null if key is not available/applicable
    * @param inputValue input value
    * @param emitter {@link Emitter} to emit data to the next stage
    * @throws Exception
    */
-  public void transform(final KEY_IN inputKey, VALUE_IN inputValue, final Emitter<KEY_OUT, VALUE_OUT> emitter)
-    throws Exception {
-    transform(inputValue, new ValueEmitter<VALUE_OUT>() {
-      @Override
-      public void emit(VALUE_OUT value) {
-        emitter.emit((KEY_OUT) inputKey, value);
-      }
-
-      @Override
-      public void emit(Void key, VALUE_OUT value) {
-        emitter.emit(null, value);
-      }
-    });
-  }
-
-  /**
-   * Process input and emit output using {@link ValueEmitter}
-   *
-   * @param input input
-   * @param emitter {@link ValueEmitter} to emit data to the next stage
-   * @throws Exception
-   */
-  public void transform(VALUE_IN input, ValueEmitter<VALUE_OUT> emitter) throws Exception {
+  public void transform(@Nullable final KEY_IN inputKey, VALUE_IN inputValue,
+                                 final Emitter<KEY_OUT, VALUE_OUT> emitter) throws Exception {
     throw new UnsupportedOperationException();
   }
+
 
   @Override
   public void destroy() {
