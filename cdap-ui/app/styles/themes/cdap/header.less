@@ -34,7 +34,7 @@ body.theme-cdap header {
         bottom: -5px;
         left: 24px;
         letter-spacing: 2px;
-        padding:1px 0;
+        padding: 1px 0;
       }
 
     }
@@ -90,15 +90,10 @@ body.theme-cdap header {
           margin: 0;
           padding: 0;
           li {
-            padding: 10px 20px;
             &:hover, &:focus {
-              &:not(.dropdown-header) {
-                background-color: @cdap-darkblue;
-              }
+              &:not(.dropdown-header) { background-color: @cdap-darkblue; }
             }
-            &:hover {
-              a { color: lightgray; }
-            }
+            &:hover { a { color: lightgray; } }
             &.dropdown-header, &.disabled a { color: lightgray; }
             &.divider {
               background-color: @cdap-header;
@@ -108,7 +103,7 @@ body.theme-cdap header {
           }
           a {
             color: white;
-            padding: 0;
+            padding: 10px 20px;
             &:hover, &:focus {
               background-color: transparent;
               outline: none;
