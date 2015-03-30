@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
@@ -50,13 +51,16 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
   DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
-                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               TransactionExecutorFactory txExecutorFactory) {
     super(twillRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
@@ -75,16 +79,17 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
       LOG.info("Configuring flowlets queues");
-      Multimap<String, QueueName> flowletQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
+      Multimap<String, QueueName> flowletQueues = FlowUtils.configureQueue(program, flowSpec,
+                                                                           streamAdmin, queueAdmin, txExecutorFactory);
 
       // Launch flowlet program runners
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
                                                                             hConfFile, cConfFile, eventHandler));
-      DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
-                                                                                                queueAdmin, streamAdmin,
-                                                                                                flowletQueues);
+      DistributedFlowletInstanceUpdater instanceUpdater =
+        new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
+                                              streamAdmin, flowletQueues, txExecutorFactory);
       return new FlowTwillProgramController(program.getName(), controller, instanceUpdater).startListen();
     } catch (Exception e) {
       throw Throwables.propagate(e);

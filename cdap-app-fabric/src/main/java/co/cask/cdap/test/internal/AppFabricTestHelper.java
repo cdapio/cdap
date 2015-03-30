@@ -27,8 +27,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
@@ -49,7 +47,6 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
  * TODO: remove it, see CDAP-5
- * 
+ *
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
@@ -78,6 +75,7 @@ public class AppFabricTestHelper {
       configuration = conf;
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
+      configuration.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(TransactionManager.class).startAndWait();
@@ -106,20 +104,27 @@ public class AppFabricTestHelper {
     });
   }
 
+  public static void deployApplication(Id.Namespace namespace, Class<?> application) throws Exception {
+    long time = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    deployApplication(namespace, application, "app-" + time);
+  }
+
   public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(application,
-                      "app-" + TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) + ".jar");
+    deployApplication(Constants.DEFAULT_NAMESPACE_ID, application);
   }
 
   /**
    *
    */
-  public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
-    AppFabricClient appFabricClient = new AppFabricClient(getInjector().getInstance(AppFabricHttpHandler.class),
-                                                          getInjector().getInstance(ServiceHttpHandler.class),
-                                                          getInjector().getInstance(LocationFactory.class));
-    Location deployedJar = appFabricClient.deployApplication(fileName, applicationClz);
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       String appName) throws Exception {
+    AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
+    Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz);
     deployedJar.delete(true);
+  }
+
+  public static void deployApplication(Class<?> applicationClz, String appName) throws Exception {
+    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,

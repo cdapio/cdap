@@ -40,7 +40,7 @@ public class SportResults extends AbstractApplication {
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
-      .setInputProperty(TextOutputFormat.SEPERATOR, ",")
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
       // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")
@@ -54,7 +54,7 @@ public class SportResults extends AbstractApplication {
       // Properties for file set
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
-      .setInputProperty(TextOutputFormat.SEPERATOR, ",")
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
       // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("csv")

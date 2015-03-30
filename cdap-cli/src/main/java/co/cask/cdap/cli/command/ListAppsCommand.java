@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.common.cli.Arguments;
@@ -37,13 +36,11 @@ import java.util.List;
 public class ListAppsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListAppsCommand(ApplicationClient appClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListAppsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -56,7 +53,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

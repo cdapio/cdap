@@ -17,6 +17,7 @@ package co.cask.cdap.common.zookeeper.coordination;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -93,7 +94,7 @@ public class ResourceCoordinatorTest {
 
           // Register a discovery endpoint
           final Discoverable discoverable1 = createDiscoverable(serviceName, 10000);
-          Cancellable cancelDiscoverable1 = discoveryService.register(discoverable1);
+          Cancellable cancelDiscoverable1 = discoveryService.register(ResolvingDiscoverable.of(discoverable1));
 
           // Add a change handler for this discoverable.
           final BlockingQueue<Collection<PartitionReplica>> assignmentQueue =
@@ -111,14 +112,14 @@ public class ResourceCoordinatorTest {
           Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
 
           // Register to discovery again, would receive changes.
-          cancelDiscoverable1 = discoveryService.register(discoverable1);
+          cancelDiscoverable1 = discoveryService.register(ResolvingDiscoverable.of(discoverable1));
           assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
           // Register another discoverable
           final Discoverable discoverable2 = createDiscoverable(serviceName, 10001);
-          Cancellable cancelDiscoverable2 = discoveryService.register(discoverable2);
+          Cancellable cancelDiscoverable2 = discoveryService.register(ResolvingDiscoverable.of(discoverable2));
 
           // Changes should be received by the handler, with only 3 resources,
           // as 2 out of 5 should get moved to the new discoverable.

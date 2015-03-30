@@ -35,11 +35,14 @@ public final class LogCleanup implements Runnable {
 
   private final FileMetaDataManager fileMetaDataManager;
   private final Location rootDir;
+  private final String namespacesDir;
   private final long retentionDurationMs;
 
-  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location rootDir, long retentionDurationMs) {
+  public LogCleanup(FileMetaDataManager fileMetaDataManager, Location rootDir, String namespacesDir,
+                    long retentionDurationMs) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.rootDir = rootDir;
+    this.namespacesDir = namespacesDir;
     this.retentionDurationMs = retentionDurationMs;
 
     LOG.info("Log retention duration = {} ms", retentionDurationMs);
@@ -92,7 +95,7 @@ public final class LogCleanup implements Runnable {
    */
   void deleteEmptyDir(String namespacedLogBaseDir, Location dir) throws IOException {
     LOG.debug("Got path {}", dir.toURI());
-    Location namespacedLogBaseLocation = rootDir.append(namespacedLogBaseDir);
+    Location namespacedLogBaseLocation = rootDir.append(namespacesDir).append(namespacedLogBaseDir);
     deleteEmptyDirsInNamespace(namespacedLogBaseLocation, dir);
   }
 

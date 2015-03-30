@@ -35,12 +35,6 @@ public final class SparkProgramController extends ProgramControllerServiceAdapte
     this.context = context;
   }
 
-  @Override
-  protected boolean propagateServiceError() {
-    // Don't propagate Spark failure as failure. Similar reason as in MapReduce case (CDAP-749).
-    return false;
-  }
-
   /**
    * Returns the {@link SparkContext} for Spark run represented by this controller.
    */

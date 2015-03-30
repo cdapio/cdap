@@ -56,7 +56,7 @@ function makeApp (authAddress, cdapConfig) {
         routerServerPort: cdapConfig['router.server.port']
       },
       securityEnabled: authAddress.enabled,
-      isEnterprise: process.env.CDAP_MODE === 'enterprise'
+      isEnterprise: process.env.NODE_ENV === 'production'
     });
 
     res.header({
@@ -146,6 +146,31 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
+  app.get('/backendstatus', [
+    function (req, res) {
+
+      var link = 'http://' + cdapConfig['router.server.address'] +
+              ':' +
+              cdapConfig['router.server.port'] +
+              '/v3/ping';
+      console.log('url', link);
+
+      request({
+          method: 'GET',
+          url: link,
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false
+        }, function(err) {
+        if (!err) {
+          res.status(200).send();
+        } else {
+          res.status(404).send();
+        }
+      });
+    }
+  ]);
+
   // any other path, serve index.html
   app.all('*', [
     httpIndexLogger,
@@ -153,6 +178,7 @@ function makeApp (authAddress, cdapConfig) {
       res.sendFile(DIST_PATH + '/index.html');
     }
   ]);
+
 
   return app;
 

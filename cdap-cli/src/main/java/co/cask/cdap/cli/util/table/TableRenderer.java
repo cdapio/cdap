@@ -24,8 +24,9 @@ public interface TableRenderer {
   /**
    * Renders the table to the output.
    *
+   * @param config specifies the width of the table
    * @param output the output to render to
    * @param table the table to render
    */
-  void render(PrintStream output, Table table);
+  void render(TableRendererConfig config, PrintStream output, Table table);
 }

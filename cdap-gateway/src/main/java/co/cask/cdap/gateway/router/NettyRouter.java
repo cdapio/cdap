@@ -25,7 +25,6 @@ import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -50,9 +49,7 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientBossPool;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioWorker;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
-import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
@@ -62,7 +59,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -255,15 +251,6 @@ public class NettyRouter extends AbstractIdleService {
       }
     );
 
-    InetAddress address = hostname;
-    if (address.isAnyLocalAddress()) {
-      try {
-        address = InetAddress.getLocalHost();
-      } catch (UnknownHostException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
     // Start listening on ports.
     ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
     for (Map.Entry<String, Integer> forward : serviceToPortMap.entrySet()) {
@@ -277,7 +264,7 @@ public class NettyRouter extends AbstractIdleService {
         continue;
       }
 
-      InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
+      InetSocketAddress bindAddress = new InetSocketAddress(hostname, port);
       LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
       Channel channel = serverBootstrap.bind(bindAddress);
       InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();

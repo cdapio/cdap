@@ -16,10 +16,11 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
@@ -33,19 +34,18 @@ import java.util.List;
 /**
  * {@link Command} to list namespaces.
  */
-public class ListNamespacesCommand implements Command {
+public class ListNamespacesCommand extends AbstractCommand {
 
   private final NamespaceClient namespaceClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListNamespacesCommand(NamespaceClient namespaceClient, TableRenderer tableRenderer) {
+  public ListNamespacesCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+    super(cliConfig);
     this.namespaceClient = namespaceClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
-  public void execute(Arguments arguments, PrintStream output) throws Exception {
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("name", "description")
       .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
@@ -54,7 +54,7 @@ public class ListNamespacesCommand implements Command {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

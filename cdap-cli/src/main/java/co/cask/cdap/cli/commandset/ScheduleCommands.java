@@ -26,7 +26,6 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -181,18 +180,15 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
   private static final class ListWorkflowSchedulesCommand extends AbstractCommand {
 
     private final ScheduleClient scheduleClient;
-    private final TableRenderer tableRenderer;
 
     @Inject
-    public ListWorkflowSchedulesCommand(CLIConfig cliConfig, ScheduleClient scheduleClient,
-                                        TableRenderer tableRenderer) {
+    public ListWorkflowSchedulesCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
       super(cliConfig);
       this.scheduleClient = scheduleClient;
-      this.tableRenderer = tableRenderer;
     }
 
     @Override
-    public void perform(Arguments arguments, PrintStream printStream) throws Exception {
+    public void perform(Arguments arguments, PrintStream output) throws Exception {
       String[] programIdParts = arguments.get(ElementType.WORKFLOW.getArgumentName().toString()).split("\\.");
       if (programIdParts.length < 2) {
         throw new CommandInputError(this);
@@ -217,7 +213,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
                                       GSON.toJson(object.getProperties()));
           }
         }).build();
-      tableRenderer.render(printStream, table);
+      cliConfig.getTableRenderer().render(cliConfig, output, table);
     }
 
     private String getScheduleType(Schedule schedule) {

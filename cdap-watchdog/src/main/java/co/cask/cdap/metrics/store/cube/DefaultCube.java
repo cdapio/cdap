@@ -26,6 +26,7 @@ import co.cask.cdap.metrics.store.timeseries.FactScanner;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
 import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -67,19 +68,26 @@ public class DefaultCube implements Cube {
 
   @Override
   public void add(CubeFact fact) throws Exception {
-    List<Fact> facts = Lists.newArrayList();
-    for (Aggregation agg : aggregations) {
-      if (agg.accept(fact)) {
-        List<TagValue> tagValues = Lists.newArrayList();
-        for (String tagName : agg.getTagNames()) {
-          tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+    add(ImmutableList.of(fact));
+  }
+
+  @Override
+  public void add(Collection<? extends CubeFact> facts) throws Exception {
+    List<Fact> toWrite = Lists.newArrayList();
+    for (CubeFact fact : facts) {
+      for (Aggregation agg : aggregations) {
+        if (agg.accept(fact)) {
+          List<TagValue> tagValues = Lists.newArrayList();
+          for (String tagName : agg.getTagNames()) {
+            tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+          }
+          toWrite.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
         }
-        facts.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
       }
     }
 
     for (FactTable table : resolutionToFactTable.values()) {
-      table.add(facts);
+      table.add(toWrite);
     }
   }
 
@@ -155,10 +163,9 @@ public class DefaultCube implements Cube {
         for (String tagName : agg.getTagNames()) {
           tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
         }
-        for (FactTable factTable : resolutionToFactTable.values()) {
-          FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
-          factTable.delete(scan);
-        }
+        FactTable factTable = resolutionToFactTable.get(query.getResolution());
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+        factTable.delete(scan);
       }
     }
   }

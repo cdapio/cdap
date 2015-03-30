@@ -18,8 +18,10 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
@@ -43,6 +45,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +60,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   static final long YEAR = TimeUnit.DAYS.toMillis(365);
   static final long MAX = Long.MAX_VALUE;
 
-  private static final Id.DatasetInstance TPFS_INSTANCE =
-    DS_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "tpfs"));
+  private static final Id.DatasetInstance TPFS_INSTANCE = Id.DatasetInstance.from(NAMESPACE_ID, "tpfs");
 
   @Before
   public void before() throws Exception {
@@ -77,57 +79,46 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // this is an arbitrary data to use as the test time
     long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
+    long time2 = time + HOUR;
+    String firstPath = "first/partition";
+    String secondPath = "second/partition";
 
     // make sure the file set has no partitions initially
-    Assert.assertTrue("should return no partitions", fileSet.getPartitionPaths(0L, MAX).isEmpty());
-    Assert.assertNull("should return null", fileSet.getPartition(time));
+    validateTimePartition(fileSet, time, null);
+    validateTimePartitions(fileSet, 0L, MAX, Collections.<Long, String>emptyMap());
 
     // add a partition, verify getPartition() works
-    fileSet.addPartition(time, "first/partition");
-    Assert.assertEquals("first/partition", fileSet.getPartition(time));
-    Assert.assertTrue("should return no partitions",
-                      fileSet.getPartitionPaths(time + MINUTE, MAX).isEmpty());
-    Assert.assertTrue("should return no partitions", fileSet.getPartitionPaths(0L, time).isEmpty());
+    fileSet.addPartition(time, firstPath);
+    validateTimePartition(fileSet, time, firstPath);
 
-    // verify getPartitionPaths() works with various ranges
-    Collection<String> paths = fileSet.getPartitionPaths(0L, MAX);
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitionPaths(0L, time + MINUTE);
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitionPaths(time, time + TimeUnit.HOURS.toMillis(1));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertEquals("first/partition", paths.iterator().next());
-    paths = fileSet.getPartitionPaths(time - TimeUnit.HOURS.toMillis(1), time + TimeUnit.HOURS.toMillis(1));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertEquals("first/partition", paths.iterator().next());
+    Map<Long, String> expectNone = Collections.emptyMap();
+    Map<Long, String> expectFirst = ImmutableMap.of(time, firstPath);
+    Map<Long, String> expectSecond = ImmutableMap.of(time2, secondPath);
+    Map<Long, String> expectBoth = ImmutableMap.of(time, firstPath, time2, secondPath);
+
+    // verify various ways to list partitions with various ranges
+    validateTimePartitions(fileSet, time + MINUTE, MAX, expectNone);
+    validateTimePartitions(fileSet, 0L, time, expectNone);
+    validateTimePartitions(fileSet, 0L, MAX, expectFirst);
+    validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
+    validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
+    validateTimePartitions(fileSet, 0L, time + HOUR, expectFirst);
+    validateTimePartitions(fileSet, time - HOUR, time + HOUR, expectFirst);
 
     // add and verify another partition
-    long time1 = time + TimeUnit.HOURS.toMillis(1);
-    fileSet.addPartition(time1, "second/partition");
-    Assert.assertEquals("second/partition", fileSet.getPartition(time1));
+    fileSet.addPartition(time2, secondPath);
+    validateTimePartition(fileSet, time2, secondPath);
 
-    paths = fileSet.getPartitionPaths(0L, MAX);
-    Assert.assertEquals("should return two partitions", 2, paths.size());
-    Assert.assertTrue(paths.contains("first/partition"));
-    Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitionPaths(time, time + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertTrue(paths.contains("first/partition"));
-    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1);
-    Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitionPaths(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertEquals("should return two partition", 2, paths.size());
-    Assert.assertTrue(paths.contains("first/partition"));
-    Assert.assertTrue(paths.contains("second/partition"));
+    // verify various ways to list partitions with various ranges
+    validateTimePartitions(fileSet, 0L, MAX, expectBoth);
+    validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectFirst);
+    validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
+    validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
+    validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectBoth);
 
     // try to add another partition with the same key
     try {
-      fileSet.addPartition(time1, "third/partition");
+      fileSet.addPartition(time2, "third/partition");
       Assert.fail("Should have thrown Exception for duplicate partition");
     } catch (DataSetException e) {
       //expected
@@ -135,21 +126,14 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // remove first partition and validate
     fileSet.dropPartition(time);
-    Assert.assertNull("should return null", fileSet.getPartition(time));
+    validateTimePartition(fileSet, time, null);
 
-    paths = fileSet.getPartitionPaths(0L, MAX);
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitionPaths(time, time + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1);
-    Assert.assertTrue(paths.isEmpty());
-    paths = fileSet.getPartitionPaths(time + TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertTrue(paths.contains("second/partition"));
-    paths = fileSet.getPartitionPaths(time - TimeUnit.MINUTES.toMillis(30), time1 + TimeUnit.MINUTES.toMillis(30));
-    Assert.assertEquals("should return one partition", 1, paths.size());
-    Assert.assertTrue(paths.contains("second/partition"));
+    // verify various ways to list partitions with various ranges
+    validateTimePartitions(fileSet, 0L, MAX, expectSecond);
+    validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectNone);
+    validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
+    validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
+    validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
 
     // try to delete  another partition with the same key
     try {
@@ -212,7 +196,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   public void testInputPartitionPaths() throws Exception {
     // make sure the dataset has no partitions
     final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE);
-    Assert.assertTrue(tpfs.getPartitionPaths(0L, Long.MAX_VALUE).isEmpty());
+    validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
@@ -442,11 +426,11 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp(), dataset.getPartitionPaths(null));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42"), dataset.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42"), dataset.getPartitions(0, MAX));
+        Assert.assertEquals(Collections.<Partition>emptySet(), dataset.getPartitions(null));
+        // querying with time range sees legacy partitions
+        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
+                                                                time +     HOUR,  "9:42",
+                                                                time + 2 * HOUR, "10:42"));
       }
     });
 
@@ -463,13 +447,13 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), dataset.getPartitionPaths(null));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), dataset.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), dataset.getPartitions(0, MAX));
+        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
+        // querying with time range sees legacy partitions
+        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
+                                                                time +     HOUR,  "9:42",
+                                                                time + 2 * HOUR, "10:42",
+                                                                time + 3 * HOUR, "11:42",
+                                                                time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -490,13 +474,13 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), dataset.getPartitionPaths(null));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), dataset.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), dataset.getPartitions(0, MAX));
+        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
+        // querying with time range sees legacy partitions
+        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
+                                                                time +     HOUR,  "9:42",
+                                                                time + 2 * HOUR, "10:42",
+                                                                time + 3 * HOUR, "11:42",
+                                                                time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -512,12 +496,12 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), dataset.getPartitionPaths(null));
-        Assert.assertEquals(pp("9:42", "10:42", "11:42", "12:42"), dataset.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), dataset.getPartitions(0, MAX));
+        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
+        // querying with time range sees legacy partitions
+        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time +     HOUR,  "9:42",
+                                                                time + 2 * HOUR, "10:42",
+                                                                time + 3 * HOUR, "11:42",
+                                                                time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -533,15 +517,13 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), dataset.getPartitionPaths(null));
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), dataset.getPartitionPaths(null));
+        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(dataset.getPartitions(null)));
         // querying with time range sees legacy partitions
-        Assert.assertEquals(pp("18:42", "9:42", "10:42", "11:42", "12:42"), dataset.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "18:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), dataset.getPartitions(0, MAX));
+        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,            "18:42",
+                                                                time +     HOUR,  "9:42",
+                                                                time + 2 * HOUR, "10:42",
+                                                                time + 3 * HOUR, "11:42",
+                                                                time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -553,12 +535,12 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), tpfs.getPartitionPaths(null));
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), tpfs.getPartitionPaths(filter2014));
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), tpfs.getPartitionPaths(0, time + YEAR));
-        Assert.assertEquals(ImmutableMap.of(time, "18:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), tpfs.getPartitions(0, time + YEAR));
+        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(tpfs.getPartitions(null)));
+        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(tpfs.getPartitions(filter2014)));
+        // querying with time range sees legacy partitions
+        validateTimePartitions(tpfs, 0, time + YEAR, ImmutableMap.of(time,            "18:42",
+                                                                     time + 3 * HOUR, "11:42",
+                                                                     time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -566,12 +548,39 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     newTransactionExecutor(txAware, (TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(pp("10:42", "11:42"), dataset.getPartitionPaths(time + HOUR + 20 * MINUTE,
-                                                                            time + 3 * HOUR + 20 * MINUTE));
-        Assert.assertEquals(pp("11:42"), tpfs.getPartitionPaths(time + HOUR + 20 * MINUTE,
-                                                                time + 3 * HOUR + 20 * MINUTE));
+        validateTimePartitions(dataset,
+                               time +     HOUR + 20 * MINUTE,
+                               time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 2 * HOUR, "10:42",
+                                                                              time + 3 * HOUR, "11:42"));
+        validateTimePartitions(tpfs,
+                               time +     HOUR + 20 * MINUTE,
+                               time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 3 * HOUR, "11:42"));
       }
     });
+  }
+
+  private void validateTimePartition(TimePartitionedFileSet dataset, long time, String path) {
+    Partition partition = dataset.getPartitionByTime(time);
+    Assert.assertEquals(path == null, partition == null);
+    Assert.assertTrue(path == null || partition == null || path.equals(partition.getRelativePath()));
+    Assert.assertEquals(path, dataset.getPartition(time));
+  }
+
+  private void validateTimePartitions(TimePartitionedFileSet dataset,
+    long startTime, long endTime, Map<Long, String> expected) {
+    // validate getPartitionPaths(). This is deprecated but we still want to test it
+    Collection<String> paths = dataset.getPartitionPaths(startTime, endTime);
+    Assert.assertEquals(expected.size(), paths.size());
+    Assert.assertEquals(ImmutableSet.copyOf(expected.values()), ImmutableSet.copyOf(paths));
+    // validate getPartitions(). This is deprecated but we still want to test it
+    Map<Long, String> timeToPaths = dataset.getPartitions(startTime, endTime);
+    Assert.assertEquals(expected, timeToPaths);
+    // validate getPartitionsByTime()
+    Set<TimePartition> partitions = dataset.getPartitionsByTime(startTime, endTime);
+    Assert.assertEquals(expected.size(), partitions.size());
+    for (TimePartition partition : partitions) {
+      Assert.assertEquals(expected.get(partition.getTime()), partition.getRelativePath());
+    }
   }
 
   // tests that 2.8+ tpfs can upgrade legacy partitions to new format
@@ -608,16 +617,17 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
+    final Map<Long, String> expectAll = ImmutableMap.of(time,             "8:42",
+                                                        time +     HOUR,  "9:42",
+                                                        time + 2 * HOUR, "10:42",
+                                                        time + 3 * HOUR, "11:42",
+                                                        time + 4 * HOUR, "12:42");
+
     // with compatibility on, we should see all partitions
     newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), withCompat.getPartitions(0, MAX));
+        validateTimePartitions(withCompat, 0, MAX, expectAll);
       }
     });
 
@@ -628,11 +638,10 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(null));
-        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(filter2014));
-        Assert.assertEquals(pp("11:42", "12:42"), withoutCompat.getPartitionPaths(0, time + YEAR));
-        Assert.assertEquals(ImmutableMap.of(time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), withoutCompat.getPartitions(0, time + YEAR));
+        Assert.assertEquals(pp("11:42", "12:42"), paths(withoutCompat.getPartitions(null)));
+        Assert.assertEquals(pp("11:42", "12:42"), paths(withoutCompat.getPartitions(filter2014)));
+        validateTimePartitions(withoutCompat, 0, time + YEAR, ImmutableMap.of(time + 3 * HOUR, "11:42",
+                                                                              time + 4 * HOUR, "12:42"));
       }
     });
 
@@ -652,31 +661,24 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(null));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withCompat.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), withCompat.getPartitions(0, MAX));
-      }
-    });
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withoutCompat.getPartitionPaths(null));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), withoutCompat.getPartitionPaths(0, MAX));
-        Assert.assertEquals(ImmutableMap.of(time, "8:42",
-                                            time + HOUR, "9:42",
-                                            time + 2 * HOUR, "10:42",
-                                            time + 3 * HOUR, "11:42",
-                                            time + 4 * HOUR, "12:42"), withoutCompat.getPartitions(0, MAX));
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), paths(withCompat.getPartitions(null)));
+        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), paths(withoutCompat.getPartitions(null)));
+        validateTimePartitions(withCompat, 0, MAX, expectAll);
+        validateTimePartitions(withoutCompat, 0, MAX, expectAll);
       }
     });
   }
 
   private static Set<String> pp(String... paths) {
     return ImmutableSet.copyOf(paths);
+  }
+
+  private static Set<String> paths(Iterable<Partition> partitions) {
+    Set<String> set = Sets.newHashSet();
+    for (Partition partition : partitions) {
+      set.add(partition.getRelativePath());
+    }
+    return set;
   }
 
   @Test

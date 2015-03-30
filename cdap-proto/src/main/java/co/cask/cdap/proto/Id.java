@@ -180,6 +180,10 @@ public final class Id  {
       return application.getNamespaceId();
     }
 
+    public Namespace getNamespace() {
+      return application.getNamespace();
+    }
+
     public Application getApplication() {
       return application;
     }
@@ -236,6 +240,34 @@ public final class Id  {
       }
       sb.append(")");
       return sb.toString();
+    }
+  }
+
+  /**
+   * Uniquely identifies a Procedure.
+   */
+  public static class Procedure extends Program {
+
+    public Procedure(Application application, String id) {
+      super(application, ProgramType.PROCEDURE, id);
+    }
+
+    public static Procedure from(Application application, String id) {
+      return new Procedure(application, id);
+    }
+  }
+
+  /**
+   * Uniquely identifies a Service.
+   */
+  public static class Service extends Program {
+
+    public Service(Application application, String id) {
+      super(application, ProgramType.SERVICE, id);
+    }
+
+    public static Service from(Application application, String id) {
+      return new Service(application, id);
     }
   }
 
@@ -394,8 +426,8 @@ public final class Id  {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(streamName),
-                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+      Preconditions.checkArgument(isId(streamName), "Stream name can only contain alphanumeric, " +
+                                    "'-' and '_' characters: %s", streamName);
 
       this.namespace = namespace;
       this.streamName = streamName;

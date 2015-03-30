@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
 
-import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 
@@ -46,20 +45,9 @@ public interface QueueAdmin {
   void clearAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
-   * Sets the number of consumer instances for the given consumer group in a queue.
-   * @param queueName Name of the queue.
-   * @param groupId The consumer group to alter.
-   * @param instances Number of instances.
+   * Returns a {@link QueueConfigurer} for configuring the queue.
    */
-  void configureInstances(QueueName queueName, long groupId, int instances) throws Exception;
-
-
-  /**
-   * Sets the consumer groups information for the given queue.
-   * @param queueName Name of the queue.
-   * @param groupInfo A map from groupId to number of instances of each group.
-   */
-  void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception;
+  QueueConfigurer getQueueConfigurer(QueueName queueName) throws Exception;
 
   /**
    * Performs upgrade action for all queues.

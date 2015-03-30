@@ -17,13 +17,16 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.internal.app.runtime.batch.WordCount;
-import org.apache.hadoop.mapreduce.Job;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -33,59 +36,7 @@ public class WorkflowAppWithFork extends AbstractApplication {
   public void configure() {
     setName("WorkflowAppWithFork");
     setDescription("Workflow App containing fork");
-    addMapReduce(new OneWordCountMapReduce());
-    addMapReduce(new AnotherWordCountMapReduce());
     addWorkflow(new WorkflowWithFork());
-  }
-
-  /**
-   *
-   */
-  public static final class OneWordCountMapReduce extends AbstractMapReduce {
-
-    @Override
-    public void configure() {
-      setName("OneWordCountMapReduce");
-      setDescription("WordCount job from Hadoop examples");
-    }
-
-    @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String, String> args = context.getRuntimeArguments();
-      String inputPath = args.get("oneInputPath");
-      String outputPath = args.get("oneOutputPath");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      // No-op
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class AnotherWordCountMapReduce extends AbstractMapReduce {
-
-    @Override
-    public void configure() {
-      setName("AnotherWordCountMapReduce");
-      setDescription("WordCount job from Hadoop examples");
-    }
-
-    @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      Map<String, String> args = context.getRuntimeArguments();
-      String inputPath = args.get("anotherInputPath");
-      String outputPath = args.get("anotherOutputPath");
-      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      // No-op
-    }
   }
 
   /**
@@ -97,7 +48,67 @@ public class WorkflowAppWithFork extends AbstractApplication {
     public void configure() {
       setName("WorkflowWithFork");
       setDescription("WorkflowWithFork description");
-      fork().addMapReduce("AnotherWordCountMapReduce").also().addMapReduce("OneWordCountMapReduce").join();
+      fork().addAction(new OneAction()).also().addAction(new AnotherAction()).join();
+    }
+  }
+
+  /**
+   *
+   */
+  static class OneAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
+    private String filePath = "";
+    private String doneFilePath = "";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      filePath = context.getRuntimeArguments().get("oneaction.file");
+      doneFilePath = context.getRuntimeArguments().get("done.file");
+    }
+
+    @Override
+    public void run() {
+      LOG.info("Ran one action");
+      try {
+        File file = new File(filePath);
+        file.createNewFile();
+        File doneFile = new File(doneFilePath);
+        while (!doneFile.exists()) {
+          TimeUnit.SECONDS.sleep(1);
+        }
+      } catch (Exception e) {
+        // no-op
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  static class AnotherAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
+    private String filePath = "";
+    private String doneFilePath = "";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      filePath = context.getRuntimeArguments().get("anotheraction.file");
+      doneFilePath = context.getRuntimeArguments().get("done.file");
+    }
+
+    @Override
+    public void run() {
+      LOG.info("Ran another action");
+      try {
+        File file = new File(filePath);
+        file.createNewFile();
+        File doneFile = new File(doneFilePath);
+        while (!doneFile.exists()) {
+          TimeUnit.SECONDS.sleep(1);
+        }
+      } catch (Exception e) {
+        // no-op
+      }
     }
   }
 }

@@ -228,7 +228,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
           LOG.error("Could not decode Kafka message {} using Gson.", message, e);
         }
       }
-      LOG.debug("Handled {} messages from kafka", count);
+      LOG.trace("Handled {} messages from kafka", count);
     }
 
     @Override

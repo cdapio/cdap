@@ -45,7 +45,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
-  private final String accountId;
+  private final String namespace;
   private final String applicationId;
   private final String serviceName;
 
@@ -53,11 +53,11 @@ public class DefaultServiceManager extends AbstractServiceManager {
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
 
-  public DefaultServiceManager(String accountId, DefaultApplicationManager.ProgramId serviceId,
+  public DefaultServiceManager(String namespace, DefaultApplicationManager.ProgramId serviceId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager) {
     this.serviceId = serviceId;
-    this.accountId = accountId;
+    this.namespace = namespace;
     this.applicationId = serviceId.getApplicationId();
     this.serviceName = serviceId.getRunnableId();
 
@@ -68,30 +68,30 @@ public class DefaultServiceManager extends AbstractServiceManager {
   }
 
   @Override
-  public void setRunnableInstances(String runnableName, int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
+      appFabricClient.setServiceInstances(namespace, applicationId, serviceName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public int getRequestedInstances(String runnableName) {
-    ServiceInstances instances = getRunnableInstances(runnableName);
+  public int getRequestedInstances() {
+    ServiceInstances instances = getInstances();
     return instances.getRequested();
   }
 
   @Override
-  public int getProvisionedInstances(String runnableName) {
-    ServiceInstances instances = getRunnableInstances(runnableName);
+  public int getProvisionedInstances() {
+    ServiceInstances instances = getInstances();
     return instances.getProvisioned();
   }
 
-  private ServiceInstances getRunnableInstances(String runnableName) {
+  private ServiceInstances getInstances() {
     try {
-      return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
+      return appFabricClient.getServiceInstances(namespace, applicationId, serviceName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -113,14 +113,14 @@ public class DefaultServiceManager extends AbstractServiceManager {
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceName);
+    String discoveryName = String.format("service.%s.%s.%s", namespace, applicationId, serviceName);
     ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
     return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
   }
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return RuntimeStats.getServiceMetrics(applicationId, serviceName);
+    return RuntimeStats.getServiceMetrics(namespace, applicationId, serviceName);
   }
 
   @Nullable
@@ -131,7 +131,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/",
                                 address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, accountId, applicationId, serviceName);
+                                Constants.Gateway.API_VERSION_3, namespace, applicationId, serviceName);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

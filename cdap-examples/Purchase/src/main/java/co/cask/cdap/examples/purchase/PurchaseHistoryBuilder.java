@@ -18,7 +18,6 @@ package co.cask.cdap.examples.purchase;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -50,7 +49,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   @Override
   public void configure() {
     setDescription("Purchase History Builder");
-    useDatasets("frequentCustomers");
     setInputDataset("purchases");
     setOutputDataset("history");
     setMapperResources(new Resources(1024));

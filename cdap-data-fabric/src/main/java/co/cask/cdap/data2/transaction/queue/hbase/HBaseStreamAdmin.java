@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -25,6 +26,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,10 +46,15 @@ import javax.annotation.Nullable;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
+  private final TransactionExecutorFactory txExecutorFactory;
+
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, locationFactory, tableUtil, QueueConstants.QueueType.STREAM);
+                          HBaseTableUtil tableUtil, DatasetFramework datasetFramework,
+                          TransactionExecutorFactory txExecutorFactory) throws IOException {
+    super(hConf, cConf, locationFactory, tableUtil,
+          datasetFramework, txExecutorFactory, QueueConstants.QueueType.STREAM);
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
@@ -85,13 +92,17 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+  public void configureInstances(Id.Stream streamId, final long groupId, final int instances) throws Exception {
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class.
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+  public void configureGroups(Id.Stream streamId, final Map<Long, Integer> groupInfo) throws Exception {
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override
@@ -102,11 +113,6 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
-  }
-
-  @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    return 0;
   }
 
   @Override

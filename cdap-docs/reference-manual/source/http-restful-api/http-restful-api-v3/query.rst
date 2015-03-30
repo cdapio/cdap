@@ -23,7 +23,7 @@ Submitting a Query
 ------------------
 To submit a SQL query, post the query string to the ``queries`` URL::
 
-  POST <base-url>/namespaces/<namespace-id>/data/explore/queries
+  POST <base-url>/namespaces/<namespace>/data/explore/queries
 
 .. list-table::
    :widths: 20 80
@@ -31,7 +31,7 @@ To submit a SQL query, post the query string to the ``queries`` URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
 
 The body of the request must contain a JSON string of the form::
@@ -70,7 +70,7 @@ used to identify the query in subsequent requests::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Body
-     - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
+     - ``{"query":"SELECT * FROM dataset_mydataset LIMIT 5"}``
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
@@ -82,7 +82,7 @@ Status of a Query
 -----------------
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
-  GET <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/status
+  GET <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/status
 
 .. list-table::
    :widths: 20 80
@@ -90,7 +90,7 @@ The status of a query is obtained using a HTTP GET request to the query's URL::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
@@ -138,7 +138,7 @@ Obtaining the Result Schema
 ---------------------------
 If the query's status is ``FINISHED`` and it has results, you can obtain the schema of the results::
 
-  GET <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/schema
+  GET <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/schema
 
 .. list-table::
    :widths: 20 80
@@ -146,7 +146,7 @@ If the query's status is ``FINISHED`` and it has results, you can obtain the sch
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
@@ -186,8 +186,8 @@ The type of each column is a data type as defined in the `Hive language manual
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
    * - HTTP Response
-     - ``[{"name":"cdap_user_mydataset.key","type":"array<tinyint>","position":1},``
-       ``{"name":"cdap_user_mydataset.value","type":"array<tinyint>","position":2}]``
+     - ``[{"name":"dataset_mydataset.key","type":"array<tinyint>","position":1},``
+       ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
      - Retrieve the schema of the result of the query in the namespace *default* which has
        the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
@@ -198,7 +198,7 @@ Retrieving Query Results
 Query results can be retrieved in batches after the query is finished, optionally specifying the batch
 size in the body of the request::
 
-  POST <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/next
+  POST <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/next
 
 The body of the request can contain a JSON string specifying the batch size::
 
@@ -214,7 +214,7 @@ If the batch size is not specified, the default is 20.
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
@@ -268,7 +268,7 @@ Closing a Query
 ---------------
 The query can be closed by issuing an HTTP DELETE against its URL::
 
-  DELETE <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>
+  DELETE <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>
 
 This frees all resources that are held by this query.
 
@@ -278,7 +278,7 @@ This frees all resources that are held by this query.
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted
@@ -311,7 +311,7 @@ List of Queries
 ---------------
 To return a list of queries, use::
 
-   GET <base-url>/namespaces/<namespace-id>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
+   GET <base-url>/namespaces/<namespace>/data/explore/queries?limit=<limit>&cursor=<cursor>&offset=<offset>
 
 .. list-table::
    :widths: 20 80
@@ -319,7 +319,7 @@ To return a list of queries, use::
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<limit>``
      - Optional number indicating how many results to return in the response; by default, 50 results are returned
@@ -356,7 +356,7 @@ The results are returned as a JSON array, with each element containing informati
    * - HTTP Response
      - ``[{``
        ``   "timestamp": 1411266478717,``
-       ``   "statement": "SELECT * FROM cdap_user_mydataset",``
+       ``   "statement": "SELECT * FROM dataset_mydataset",``
        ``   "status": "FINISHED",``
        ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
        ``   "has_results": true,
@@ -369,7 +369,7 @@ Download Query Results
 ----------------------
 To download the results of a query, use::
 
-  POST <base-url>/namespaces/<namespace-id>/data/explore/queries/<query-handle>/download
+  POST <base-url>/namespaces/<namespace>/data/explore/queries/<query-handle>/download
 
 The results of the query are returned in CSV format.
 
@@ -379,7 +379,7 @@ The results of the query are returned in CSV format.
 
    * - Parameter
      - Description
-   * - ``<namespace-id>``
+   * - ``<namespace>``
      - Namespace ID
    * - ``<query-handle>``
      - Handle obtained when the query was submitted or via a list of queries
@@ -402,43 +402,3 @@ if results for the ``query-handle`` are attempted to be downloaded again.
      - The query handle does not match any current query
    * - ``409 Conflict``
      - The query results were already downloaded
-
-Hive Table Schema
------------------
-You can obtain the schema of the underlying Hive Table with::
-
-  GET <base-url>/namespaces/<namespace-id>/data/explore/datasets/<dataset-name>/schema
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<namespace-id>``
-     - Namespace ID
-   * - ``<dataset-name>``
-     - Name of the Dataset whose schema is to be retrieved
-
-.. rubric:: HTTP Responses
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The HTTP call was successful
-   * - ``404 Not Found``
-     - The dataset was not found
-     
-.. rubric:: Comments
-
-The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
-``value`` containing the column types of the underlying table::
-
-  {
-    "key": "array<tinyint>",
-    "value": "array<tinyint>"
-  }
-

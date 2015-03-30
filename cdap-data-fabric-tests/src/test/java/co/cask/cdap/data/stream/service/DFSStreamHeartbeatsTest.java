@@ -22,8 +22,10 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -80,14 +82,17 @@ public class DFSStreamHeartbeatsTest {
 
   private static String hostname;
   private static int port;
-  private static CConfiguration conf;
 
-  private static Injector injector;
   private static StreamHttpService streamHttpService;
   private static StreamService streamService;
   private static MockHeartbeatPublisher heartbeatPublisher;
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
+  private static StreamAdmin streamAdmin;
+  private static StreamFetchHandler streamFetchHandler;
+  private static StreamHandler streamHandler;
+  private static StreamMetaStore streamMetaStore;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -97,16 +102,16 @@ public class DFSStreamHeartbeatsTest {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    conf = CConfiguration.create();
-    conf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
-    conf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, 0);
 
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    injector = Guice.createInjector(
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    Injector injector = Guice.createInjector(
       Modules.override(
         new ZKClientModule(),
         new DataFabricModules().getInMemoryModules(),
-        new ConfigModule(conf, new Configuration()),
+        new ConfigModule(cConf, new Configuration()),
         new AuthModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
@@ -147,10 +152,19 @@ public class DFSStreamHeartbeatsTest {
 
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
+
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    streamHandler = injector.getInstance(StreamHandler.class);
+    streamFetchHandler = injector.getInstance(StreamFetchHandler.class);
+    streamMetaStore = injector.getInstance(StreamMetaStore.class);
+
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws IOException {
+    Locations.deleteQuietly(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID), true);
     streamService.stopAndWait();
     streamHttpService.stopAndWait();
     zkClient.stopAndWait();
@@ -170,14 +184,13 @@ public class DFSStreamHeartbeatsTest {
     final String streamName = "test_stream";
     final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Create a new stream.
-    HttpURLConnection urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName),
-                                        HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-    urlConn.disconnect();
+    streamAdmin.create(streamId);
+    streamMetaStore.addStream(streamId);
 
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
-      urlConn = openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
+      HttpURLConnection urlConn =
+        openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);

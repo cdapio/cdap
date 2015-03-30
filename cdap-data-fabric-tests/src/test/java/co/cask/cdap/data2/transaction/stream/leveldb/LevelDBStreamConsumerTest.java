@@ -15,10 +15,10 @@
  */
 package co.cask.cdap.data2.transaction.stream.leveldb;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -51,7 +51,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static CConfiguration cConf;
   private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
@@ -62,7 +61,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -90,6 +88,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     streamCoordinatorClient.startAndWait();
 
     txManager.startAndWait();
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass

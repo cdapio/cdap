@@ -21,7 +21,6 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -119,7 +118,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
-      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+      programClient.waitForStatus(appId, programType, programId, programStatus, 60, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
       // NO-OP
     }
