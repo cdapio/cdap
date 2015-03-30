@@ -42,81 +42,34 @@ public class PauseResumeWorklowApp extends AbstractApplication {
     protected void configure() {
       setName("PauseResumeWorkflow");
       setDescription("Workflow to pause and resume");
-      addAction(new FirstSimpleAction());
+      addAction(new SimpleAction("first"));
       fork()
-        .addAction(new ForkedSimpleAction())
+        .addAction(new SimpleAction("forked"))
       .also()
-        .addAction(new AnotherForkedSimpleAction())
+        .addAction(new SimpleAction("anotherforked"))
       .join();
-      addAction(new LastSimpleAction());
+      addAction(new SimpleAction("last"));
     }
   }
 
-  static final class FirstSimpleAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(FirstSimpleAction.class);
-    @Override
-    public void run() {
-      LOG.info("Running FirstSimpleAction");
-      try {
-        File file = new File(getContext().getRuntimeArguments().get("first.simple.action.file"));
-        file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get("first.simple.action.donefile"));
-        while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
-        }
-      } catch (Exception e) {
-        // no-op
-      }
-    }
-  }
+  static final class SimpleAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
-  static final class ForkedSimpleAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(ForkedSimpleAction.class);
-    @Override
-    public void run() {
-      try {
-        LOG.info("Running ForkedSimpleAction");
-        File file = new File(getContext().getRuntimeArguments().get("forked.simple.action.file"));
-        file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get("forked.simple.action.donefile"));
-        while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
-        }
-      } catch (Exception e) {
-        // no-op
-      }
+    public SimpleAction(String name) {
+      super(name);
     }
-  }
 
-  static final class AnotherForkedSimpleAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(AnotherForkedSimpleAction.class);
     @Override
     public void run() {
+      LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
       try {
-        LOG.info("Running AnotherForkedSimpleAction");
-        File file = new File(getContext().getRuntimeArguments().get("anotherforked.simple.action.file"));
+        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                      ".simple.action.file"));
         file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get("anotherforked.simple.action.donefile"));
+        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                          ".simple.action.donefile"));
         while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
-        }
-      } catch (Exception e) {
-        // no-op
-      }
-    }
-  }
-
-  static final class LastSimpleAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(LastSimpleAction.class);
-    @Override
-    public void run() {
-      LOG.info("Running LastSimpleAction");
-      try {
-        File file = new File(getContext().getRuntimeArguments().get("last.simple.action.file"));
-        file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get("last.simple.action.donefile"));
-        while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
+          TimeUnit.MILLISECONDS.sleep(50);
         }
       } catch (Exception e) {
         // no-op

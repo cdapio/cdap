@@ -27,6 +27,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -58,6 +59,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -69,28 +71,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
-
-  private static final String PAUSE_RESUME_WORKFLOW_APP = "PauseResumeWorkflowApp";
-  private static final String PAUSE_RESUME_WORKFLOW = "PauseResumeWorkflow";
-  private static final String APP_WITH_CONCURRENT_WORKFLOW = "ConcurrentWorkflowApp";
-  private static final String APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_1 = "concurrentWorkflowSchedule1";
-  private static final String APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_2 = "concurrentWorkflowSchedule2";
-  private static final String CONCURRENT_WORKFLOW_NAME = "ConcurrentWorkflow";
-  private static final String WORKFLOW_APP_WITH_FORK = "WorkflowAppWithFork";
-  private static final String WORKFLOW_WITH_FORK = "WorkflowWithFork";
-  private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS = "WorkflowAppWithScopedParameters";
-  private static final String WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW = "OneWorkflow";
-  private static final String APP_WITH_SCHEDULE_APP_NAME = "AppWithSchedule";
-  private static final String APP_WITH_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_SCHEDULE_SCHEDULE_NAME = "SampleSchedule";
-  private static final String APP_WITH_STREAM_SCHEDULE_APP_NAME = "AppWithStreamSizeSchedule";
-  private static final String APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_1 = "SampleSchedule1";
-  private static final String APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_2 = "SampleSchedule2";
-  private static final String APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_STREAM_SCHEDULE_STREAM_NAME = "stream";
-  private static final String WORKFLOW_APP_WITH_ERROR_RUNS = "WorkflowAppWithErrorRuns";
-  private static final String WORKFLOW_WITH_ERROR_RUNS = "WorkflowWithErrorRuns";
-  private static final String WORKFLOW_WITH_ERROR_RUNS_SCHEDULE = "SampleSchedule";
 
   protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>()
   { }.getType();
@@ -128,25 +108,27 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return history;
   }
 
-  private void verifyRunningProgramCount(Id.Program program, String runId, int expected) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(), runId);
-    int trial = 0, retries = 10;
-    String json;
-    List<WorkflowActionNode> output = null;
-    HttpResponse response;
-    while (trial++ < retries) {
-      response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-      if (response.getStatusLine().getStatusCode() == 200) {
-        json = EntityUtils.toString(response.getEntity());
-        output = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-        if (output.size() == expected) {
-          break;
-        }
+  private void verifyRunningProgramCount(final Id.Program program, final String runId, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return runningProgramCountMatches(program, runId, expected);
       }
-      TimeUnit.SECONDS.sleep(1);
+    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+  }
+
+  private boolean runningProgramCountMatches(Id.Program program, String runId, int expectedCount) throws Exception {
+    String path = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(), runId);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    if (response.getStatusLine().getStatusCode() == 200) {
+      String json = EntityUtils.toString(response.getEntity());
+      List<WorkflowActionNode> output = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
+      if (output.size() == expectedCount) {
+        return true;
+      }
     }
-    Assert.assertNotNull(output);
-    Assert.assertTrue(output.size() == expected);
+    return false;
   }
 
   private void suspendWorkflow(Id.Program program, String runId, int expectedStatusCode) throws Exception {
@@ -173,7 +155,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Assert.assertEquals(args.size(), argsRead.size());
   }
-
 
   /**
    * Tries to resume a Workflow and expect the call completed with the status.
@@ -230,6 +211,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   @Test
   public void testWorkflowPauseResume() throws Exception {
+    String pauseResumeWorkflowApp = "PauseResumeWorkflowApp";
+    String pauseResumeWorkflow = "PauseResumeWorkflow";
+
     // Files used to synchronize between this test and workflow execution
     File firstSimpleActionFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file");
     File firstSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file.done");
@@ -246,8 +230,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     HttpResponse response = deploy(PauseResumeWorklowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, PAUSE_RESUME_WORKFLOW_APP, ProgramType.WORKFLOW,
-                                           PAUSE_RESUME_WORKFLOW);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, pauseResumeWorkflowApp, ProgramType.WORKFLOW,
+                                           pauseResumeWorkflow);
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("first.simple.action.file", firstSimpleActionFile.getAbsolutePath());
@@ -360,34 +344,39 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
+    String appWithConcurrentWorkflow = "ConcurrentWorkflowApp";
+    String appWithConcurrentWorkflowSchedule1 = "concurrentWorkflowSchedule1";
+    String appWithConcurrentWorkflowSchedule2 = "concurrentWorkflowSchedule2";
+    String concurrentWorkflowName = "ConcurrentWorkflow";
+
     // create app in default namespace so that v2 and v3 api can be tested in the same test
     String defaultNamespace = "default";
     HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
-                                            APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_1));
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
-                                            APP_WITH_CONCURRENT_WORKFLOW_SCHEDULE_2));
+    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
+                                            appWithConcurrentWorkflowSchedule1));
+    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
+                                            appWithConcurrentWorkflowSchedule2));
 
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW.getCategoryName(),
-                        CONCURRENT_WORKFLOW_NAME, propMap);
+    store.setProperties(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW.getCategoryName(),
+                        concurrentWorkflowName, propMap);
 
-    Id.Program programId = Id.Program.from(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW, ProgramType.WORKFLOW,
-                                           CONCURRENT_WORKFLOW_NAME);
+    Id.Program programId = Id.Program.from(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
+                                           concurrentWorkflowName);
 
     List<Map<String, String>> historyRuns = verifyAndGetWorkflowRuns(programId, "RUNNING", 1);
 
     // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
-                                                         CONCURRENT_WORKFLOW_NAME);
+    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, appWithConcurrentWorkflow,
+                                                         concurrentWorkflowName);
 
     for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(defaultNamespace, APP_WITH_CONCURRENT_WORKFLOW,
+      Assert.assertEquals(200, suspendSchedule(defaultNamespace, appWithConcurrentWorkflow,
                                                spec.getSchedule().getName()));
     }
 
@@ -406,13 +395,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals("SleepAction", nodes.get(0).getProgram().getProgramName());
 
     // delete the application
-    String deleteURL = getVersionedAPIPath("apps/" + APP_WITH_CONCURRENT_WORKFLOW, Constants.Gateway
+    String deleteURL = getVersionedAPIPath("apps/" + appWithConcurrentWorkflow, Constants.Gateway
       .API_VERSION_3_TOKEN, defaultNamespace);
     deleteApplication(60, deleteURL, 200);
   }
 
   @Test
   public void testWorkflowForkApp() throws Exception {
+    String workflowAppWithFork = "WorkflowAppWithFork";
+    String workflowWithFork = "WorkflowWithFork";
+
     File doneFile = new File(tmpFolder.newFolder() + "/testWorkflowForkApp.done");
     File oneActionFile = new File(tmpFolder.newFolder() + "/oneAction.done");
     File anotherActionFile = new File(tmpFolder.newFolder() + "/anotherAction.done");
@@ -420,8 +412,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, WORKFLOW_APP_WITH_FORK, ProgramType.WORKFLOW,
-                                           WORKFLOW_WITH_FORK);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithFork, ProgramType.WORKFLOW,
+                                           workflowWithFork);
 
     Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath(),
                                                            "oneaction.file", oneActionFile.getAbsolutePath(),
@@ -473,13 +465,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowScopedArguments() throws Exception {
+    String workflowAppWithScopedParameters = "WorkflowAppWithScopedParameters";
+    String workflowAppWithScopedParameterWorkflow = "OneWorkflow";
+
     HttpResponse response = deploy(WorkflowAppWithScopedParameters.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, WORKFLOW_APP_WITH_SCOPED_PARAMETERS, ProgramType.WORKFLOW,
-                                           WORKFLOW_APP_WITH_SCOPED_PARAMETERS_WORKFLOW);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.WORKFLOW,
+                                           workflowAppWithScopedParameterWorkflow);
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
 
@@ -524,12 +519,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // 6. Resume the schedule
     // 7. Verify there are runs after the resume by looking at the history
 
+    String appName = "AppWithSchedule";
+    String workflowName = "SampleWorkflow";
+    String sampleSchedule = "SampleSchedule";
+
     // deploy app with schedule in namespace 2
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, ProgramType.WORKFLOW,
-                                           APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW,
+                                           workflowName);
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("someKey", "someWorkflowValue");
@@ -538,11 +537,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     Assert.assertEquals(200,
-                        resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, APP_WITH_SCHEDULE_SCHEDULE_NAME));
+                        resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME,
-                                                         APP_WITH_SCHEDULE_WORKFLOW_NAME);
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName,
+                                                         workflowName);
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
@@ -556,10 +555,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyAndGetWorkflowRuns(programId, "completed");
 
     //Check schedule status
-    String statusURL = getStatusURL(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName);
+    String statusURL = getStatusURL(TEST_NAMESPACE2, appName, scheduleName);
     scheduleStatusCheck(5, statusURL, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
     //check paused state
     scheduleStatusCheck(5, statusURL, "SUSPENDED");
 
@@ -573,7 +572,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     int workflowRunsAfterSuspend = verifyAndGetWorkflowRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName));
 
     verifyAndGetWorkflowRuns(programId, "completed", workflowRunsAfterSuspend);
 
@@ -581,19 +580,19 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     scheduleStatusCheck(5, statusURL, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String invalid = getStatusURL(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, "invalid");
+    String invalid = getStatusURL(TEST_NAMESPACE2, appName, "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
 
     //check paused state
     scheduleStatusCheck(5, statusURL, "SUSPENDED");
 
     //Schedule operations using invalid namespace
-    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName);
+    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, appName, scheduleName);
     scheduleStatusCheck(5, inValidNamespaceURL, "NOT_FOUND");
-    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
-    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_SCHEDULE_APP_NAME, scheduleName));
+    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName));
+    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
   }
@@ -611,6 +610,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // 8. Resume the schedule
     // 9. Verify there are runs after the resume by looking at the history
 
+    String appName = "AppWithStreamSizeSchedule";
+    String sampleSchedule1 = "SampleSchedule1";
+    String sampleSchedule2 = "SampleSchedule2";
+    String workflowName = "SampleWorkflow";
+    String streamName = "stream";
+
     StringBuilder longStringBuilder = new StringBuilder();
     for (int i = 0; i < 10000; i++) {
       longStringBuilder.append("dddddddddd");
@@ -622,14 +627,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
-                                            APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_1));
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
-                                            APP_WITH_STREAM_SCHEDULE_SCHEDULE_NAME_2));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
+                                            sampleSchedule1));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
+                                            sampleSchedule2));
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
-                                                         APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME);
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName,
+                                                         workflowName);
     Assert.assertEquals(2, schedules.size());
     String scheduleName1 = schedules.get(0).getSchedule().getName();
     String scheduleName2 = schedules.get(1).getSchedule().getName();
@@ -638,12 +643,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Change notification threshold for stream
     response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2,
-                                   APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                                   streamName),
                      "{'notification.threshold.mb': 1}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                   APP_WITH_STREAM_SCHEDULE_STREAM_NAME));
+                                   streamName));
     String json = EntityUtils.toString(response.getEntity());
     StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
     Assert.assertEquals(1, properties.getNotificationThresholdMB().intValue());
@@ -651,26 +656,26 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Ingest over 1MB of data in stream
     for (int i = 0; i < 12; ++i) {
       response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                      APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                                      streamName),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     TimeUnit.SECONDS.sleep(10);
-    String runsURL = getRunsUrl(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
-                                APP_WITH_STREAM_SCHEDULE_WORKFLOW_NAME,
+    String runsURL = getRunsUrl(TEST_NAMESPACE2, appName,
+                                workflowName,
                                 "completed");
     scheduleHistoryRuns(5, runsURL, 0);
 
     //Check schedule status
-    String statusURL1 = getStatusURL(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
-    String statusURL2 = getStatusURL(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName2);
+    String statusURL1 = getStatusURL(TEST_NAMESPACE2, appName, scheduleName1);
+    String statusURL2 = getStatusURL(TEST_NAMESPACE2, appName, scheduleName2);
     scheduleStatusCheck(5, statusURL1, "SCHEDULED");
     scheduleStatusCheck(5, statusURL2, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
                                              scheduleName1));
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
                                              scheduleName2));
     //check paused state
     scheduleStatusCheck(5, statusURL1, "SUSPENDED");
@@ -683,7 +688,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     for (int i = 0; i < 12; ++i) {
       response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                      APP_WITH_STREAM_SCHEDULE_STREAM_NAME),
+                                      streamName),
                         longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
@@ -692,7 +697,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsURL);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME,
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
                                             scheduleName1));
 
     scheduleHistoryRuns(5, runsURL, workflowRunsAfterSuspend);
@@ -701,45 +706,49 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     scheduleStatusCheck(5, statusURL1, "SCHEDULED");
 
     //Check status of a non existing schedule
-    String invalid = getStatusURL(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, "invalid");
+    String invalid = getStatusURL(TEST_NAMESPACE2, appName, "invalid");
     scheduleStatusCheck(5, invalid, "NOT_FOUND");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
 
     //check paused state
     scheduleStatusCheck(5, statusURL1, "SUSPENDED");
 
     //Schedule operations using invalid namespace
-    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1);
+    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, appName, scheduleName1);
     scheduleStatusCheck(5, inValidNamespaceURL, "NOT_FOUND");
-    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
-    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, APP_WITH_STREAM_SCHEDULE_APP_NAME, scheduleName1));
+    Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName1));
+    Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName1));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
   }
 
   @Test
   public void testWorkflowRuns() throws Exception {
+    String appName = "WorkflowAppWithErrorRuns";
+    String workflowName = "WorkflowWithErrorRuns";
+    String sampleSchedule = "SampleSchedule";
+
     HttpResponse response = deploy(WorkflowAppWithErrorRuns.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS,
-                                            WORKFLOW_WITH_ERROR_RUNS_SCHEDULE));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
+                                            sampleSchedule));
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, ProgramType.WORKFLOW,
-                                           WORKFLOW_WITH_ERROR_RUNS);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW,
+                                           workflowName);
 
     verifyAndGetWorkflowRuns(programId, "completed");
 
     Map<String, String> propMap = ImmutableMap.of("ThrowError", "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS, ProgramType.WORKFLOW.getCategoryName(),
-                        WORKFLOW_WITH_ERROR_RUNS, propMap);
+    store.setProperties(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW.getCategoryName(),
+                        workflowName, propMap);
 
     verifyAndGetWorkflowRuns(programId, "failed");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, WORKFLOW_APP_WITH_ERROR_RUNS,
-                                             WORKFLOW_WITH_ERROR_RUNS_SCHEDULE));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
+                                             sampleSchedule));
   }
 }
