@@ -3,11 +3,11 @@
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
 
-      <div class="btn-group pull-right">
+      <!-- <div class="btn-group pull-right">
         <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
         <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
         <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
-      </div>
+      </div> -->
 
       Programs
     </div>
@@ -27,7 +27,7 @@
             <td>
               <a ng-bind="program.name"
                   href=""
-                  ng-click="goToDetail(program.type_plural, program.id)"></a>
+                  ng-click="goToDetail(program.type_plural, program.name)"></a>
             </td>
             <td ng-bind="program.status"></td>
             <td ng-bind="program.description"></td>

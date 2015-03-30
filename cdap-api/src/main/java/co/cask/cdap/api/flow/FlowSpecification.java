@@ -117,7 +117,7 @@ public interface FlowSpecification extends ProgramSpecification {
       /**
        * Sets the description for the flow.
        * @param description of the flow.
-       * @return A instance of {@link AfterDescription}
+       * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
         Preconditions.checkArgument(description != null, UserMessages.getMessage(UserErrors.FLOW_SPEC_DESC));
@@ -254,7 +254,7 @@ public interface FlowSpecification extends ProgramSpecification {
       /**
        * Defines the flowlet that is at the beginning of the connection by the flowlet name.
        * @param flowlet Name of the flowlet.
-       * @return And instance of {@link ConnectTo} specifying the flowlet it will connect to.
+       * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       ConnectTo from(String flowlet);
 
@@ -274,14 +274,14 @@ public interface FlowSpecification extends ProgramSpecification {
       /**
        * Defines the flowlet that the connection is connecting to.
        * @param flowlet the connection connects to.
-       * @return A instance of {@link MoreConnect} to define more connections of flowlets in a flow.
+       * @return An instance of {@link MoreConnect} to define more connections of flowlets in a flow.
        */
       MoreConnect to(Flowlet flowlet);
 
       /**
        * Defines the flowlet that connection is connecting to by the flowlet name.
        * @param flowlet Name of the flowlet the connection connects to.
-       * @return A instance of {@link MoreConnect} to define more connections of flowlets in a flow.
+       * @return An instance of {@link MoreConnect} to define more connections of flowlets in a flow.
        */
       MoreConnect to(String flowlet);
     }

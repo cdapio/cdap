@@ -23,7 +23,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
@@ -40,13 +39,11 @@ import java.util.List;
 public class DescribeStreamCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -55,15 +52,16 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
     StreamProperties config = streamClient.getConfig(streamId);
 
     Table table = Table.builder()
-      .setHeader("ttl", "format", "schema")
+      .setHeader("ttl", "format", "schema", "notification.threshold.mb")
       .setRows(ImmutableList.of(config), new RowMaker<StreamProperties>() {
         @Override
         public List<?> makeRow(StreamProperties object) {
           FormatSpecification format = object.getFormat();
-          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString());
+          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString(),
+                                    object.getNotificationThresholdMB());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

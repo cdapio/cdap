@@ -52,7 +52,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * TODO: We can remove this, now that there is no DatasetsProxyRule
  */
 public class RoutingToExploreTest {
   private static NettyRouter nettyRouter;
@@ -111,7 +111,7 @@ public class RoutingToExploreTest {
 
   @Test
   public void testExploreExecutorHandlerRequests() throws Exception {
-    Assert.assertEquals("schema:cdap.default.foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
+    Assert.assertEquals("schema:foobar", doRequest("/data/explore/datasets/foobar/schema", "GET"));
   }
 
   @Test

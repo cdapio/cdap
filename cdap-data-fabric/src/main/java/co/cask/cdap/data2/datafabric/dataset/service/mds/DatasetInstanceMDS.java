@@ -39,7 +39,7 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
    * NOTE: even though we don't have to have it now we may want to store different type of data in one table, so
    *       the prefix may help us in future
    */
-  private static final String INSTANCE_PREFIX = "i_";
+  static final String INSTANCE_PREFIX = "i_";
 
   public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") Table table) {
     super(table);

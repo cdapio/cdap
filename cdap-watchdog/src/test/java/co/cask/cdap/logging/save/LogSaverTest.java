@@ -32,10 +32,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -46,7 +44,6 @@ import co.cask.cdap.logging.read.AvroFileLogReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
@@ -57,7 +54,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FilenameUtils;
@@ -100,10 +96,11 @@ public class LogSaverTest extends KafkaTestBase {
 
   private static Injector injector;
   private static TransactionManager txManager;
+  private static String logBaseDir;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, getZkConnectString());
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -126,20 +123,13 @@ public class LogSaverTest extends KafkaTestBase {
       new KafkaClientModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
-        }
-      });
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules()
+    );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-
-    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
-                          new InMemoryTableModule());
+    logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
@@ -160,11 +150,15 @@ public class LogSaverTest extends KafkaTestBase {
     publishLogs();
 
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Location logBaseDir = locationFactory.create(cConf.get(LoggingConfiguration.LOG_BASE_DIR));
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    Location ns1LogBaseDir = locationFactory.create(namespacesDir).append("NS_1").append(logBaseDir);
+    Location ns2LogBaseDir = locationFactory.create(namespacesDir).append("NS_2").append(logBaseDir);
+    Location systemLogBaseDir = locationFactory.create(namespacesDir).append("system").append(logBaseDir);
 
-    waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(logBaseDir, "cdap/services/service-metrics/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(ns2LogBaseDir, "APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(systemLogBaseDir, "services/service-metrics/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
     multiElection.stopAndWait();
@@ -183,21 +177,21 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead2() throws Exception {
-    testLogRead(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", ""));
+    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", ""));
   }
 
   @Test
   public void testLogRead1() throws Exception {
-    testLogRead(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", ""));
+    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", ""));
   }
 
   @Test
   public void testLogRead3() throws Exception {
-    testLogRead(new ServiceLoggingContext("cdap", "services", "metrics"));
+    testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
   }
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
-    LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment());
+    LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
     DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
 
     LogCallback logCallback1 = new LogCallback();
@@ -320,9 +314,9 @@ public class LogSaverTest extends KafkaTestBase {
 
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
-    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("cdap", "services", "metrics"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
+    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("system", "services", "metrics"))));
 
     Futures.allAsList(futures).get();
 

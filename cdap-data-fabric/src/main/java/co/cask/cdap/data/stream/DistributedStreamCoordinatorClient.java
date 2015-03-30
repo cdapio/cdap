@@ -18,7 +18,6 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PropertyStore;
 import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.zookeeper.ReentrantDistributedLock;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
@@ -28,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
@@ -107,6 +107,29 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
           return builder.build();
         }
       });
+  }
+
+  @Override
+  protected void streamDeleted(final Id.Stream streamId) {
+    resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
+      @Nullable
+      @Override
+      public ResourceRequirement apply(@Nullable ResourceRequirement existingRequirement) {
+        LOG.debug("Modifying requirement to remove stream {}", streamId);
+        if (existingRequirement == null) {
+          return null;
+        }
+
+        Set<ResourceRequirement.Partition> partitions = existingRequirement.getPartitions();
+        ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
+        for (ResourceRequirement.Partition partition : partitions) {
+          if (!partition.getName().equals(streamId.toId())) {
+            builder.addPartition(partition);
+          }
+        }
+        return builder.build();
+      }
+    });
   }
 
   private ZKClient getCoordinatorZKClient() {

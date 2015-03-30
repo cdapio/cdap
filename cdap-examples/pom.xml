@@ -22,7 +22,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.8.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
@@ -37,6 +37,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>SportResults</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
@@ -83,6 +84,7 @@
                   <exclude>**/limits.d/**</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
                   <exclude>**/resources/**/*.log</exclude>
+                  <exclude>**/resources/**/*.csv</exclude>
                   <exclude>**/resources/**/*.css</exclude>
                   <exclude>**/resources/**/*.scss</exclude>
                   <exclude>**/resources/**/*.js</exclude>

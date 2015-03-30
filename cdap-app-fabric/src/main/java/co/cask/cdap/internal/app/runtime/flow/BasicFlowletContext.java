@@ -62,11 +62,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework dsFramework,
-                      CConfiguration conf) {
+                      DatasetFramework dsFramework) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;

@@ -147,6 +147,7 @@ A ``put`` operation writes data into a row::
   // Write a set of columns with their values
   t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
 
+Note that the column value cannot be empty, that is, it must have at least length one.
 
 Compare and Swap
 ================
@@ -160,6 +161,8 @@ The operation returns ``true`` if it succeeds and ``false`` otherwise::
         expectedCurrentValue, newValue)) {
     LOG.info("Current value was different from expected");
   }
+
+Note that the column value cannot be empty, that is, it must have at least length one.
 
 Increment
 =========

@@ -165,7 +165,7 @@ public abstract class Id {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(id);
+      return id.hashCode();
     }
 
     public static Namespace from(String namespace) {
@@ -365,6 +365,41 @@ public abstract class Id {
     @Override
     public Id getParent() {
       return namespace;
+    }
+  }
+
+
+  /**
+   * Uniquely identifies a Program run.
+   */
+  public static class Run extends NamespacedId {
+
+    private final Program program;
+    private final String id;
+
+    public Run(Program program, String id) {
+      this.program = program;
+      this.id = id;
+    }
+
+    public Program getProgram() {
+      return program;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return program.getNamespace();
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return program;
+    }
+
+    @Override
+    public String getId() {
+      return id;
     }
   }
 
@@ -872,15 +907,14 @@ public abstract class Id {
     private transient String id;
     private transient byte[] idBytes;
 
-    private Stream(final String namespace, final String streamName) {
+    private Stream(final Namespace namespace, final String streamName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(namespace), "Stream namespace has an incorrect format.");
-      Preconditions.checkArgument(isId(streamName),
-                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+      Preconditions.checkArgument(isId(streamName), "Stream name can only contain alphanumeric, " +
+                                    "'-' and '_' characters: %s", streamName);
 
-      this.namespace = Id.Namespace.from(namespace);
+      this.namespace = namespace;
       this.streamName = streamName;
     }
 
@@ -895,21 +929,21 @@ public abstract class Id {
       return namespace;
     }
 
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
     @Override
     public String getId() {
       return streamName;
     }
 
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
     public static Stream from(Namespace id, String streamName) {
-      return new Stream(id.getId(), streamName);
+      return new Stream(id, streamName);
     }
 
     public static Stream from(String namespaceId, String streamName) {
-      return new Stream(namespaceId, streamName);
+      return from(Id.Namespace.from(namespaceId), streamName);
     }
 
     public static Stream fromId(String id) {

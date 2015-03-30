@@ -47,12 +47,14 @@ public enum ArgumentName {
   NEW_STREAM("new-stream-id"),
   PARAMETER_MAP("parameter-map"),
   TTL_IN_SECONDS("ttl-in-seconds"),
+  NOTIFICATION_THRESHOLD_MB("notification-threshold-mb"),
   NUM_INSTANCES("num-instances"),
   START_TIME("start-time"),
   END_TIME("end-time"),
   TIMEOUT("timeout"),
   LIMIT("limit"),
   RUN_STATUS("status"),
+  RUN_ID("runid"),
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
@@ -67,8 +69,7 @@ public enum ArgumentName {
   SETTINGS("settings"),
   FREQUENCY("frequency"),
 
-  NAMESPACE_ID("namespace-id"),
-  NAMESPACE_DISPLAY_NAME("namespace-display-name"),
+  NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),
@@ -79,7 +80,9 @@ public enum ArgumentName {
   ADAPTER_SINK("adapter-sink"),
   ADAPTER_SINK_PROPS("adapter-sink-config"),
   ADAPTER("adapter-name"),
-  COMMAND_CATEGORY("command-category");
+  COMMAND_CATEGORY("command-category"),
+
+  TABLE_RENDERER("table-renderer");
 
   private final String name;
 

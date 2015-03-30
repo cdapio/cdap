@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
 
-import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 
@@ -46,20 +45,9 @@ public interface QueueAdmin {
   void clearAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
-   * Sets the number of consumer instances for the given consumer group in a queue.
-   * @param queueName Name of the queue.
-   * @param groupId The consumer group to alter.
-   * @param instances Number of instances.
+   * Returns a {@link QueueConfigurer} for configuring the queue.
    */
-  void configureInstances(QueueName queueName, long groupId, int instances) throws Exception;
-
-
-  /**
-   * Sets the consumer groups information for the given queue.
-   * @param queueName Name of the queue.
-   * @param groupInfo A map from groupId to number of instances of each group.
-   */
-  void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception;
+  QueueConfigurer getQueueConfigurer(QueueName queueName) throws Exception;
 
   /**
    * Performs upgrade action for all queues.
@@ -67,46 +55,31 @@ public interface QueueAdmin {
   void upgrade() throws Exception;
 
   /**
-   * @param name entity name
-   * @return true if entity with given name exists, otherwise false
+   * @param queueName Name of the queue
+   * @return true if queue with given name exists, otherwise false
    * @throws Exception if check fails
    */
-  boolean exists(String name) throws Exception;
+  boolean exists(QueueName queueName) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
    * @throws Exception if creation fails
    */
-  void create(String name) throws Exception;
+  void create(QueueName queueName) throws Exception;
 
   /**
-   * Creates entity if doesn't exist. If entity exists does nothing.
-   * @param name name of the entity to create
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
    * @param props additional properties
    * @throws Exception if creation fails
    */
-  void create(String name, @Nullable Properties props) throws Exception;
+  void create(QueueName queueName, @Nullable Properties props) throws Exception;
 
   /**
-   * Wipes out entity data.
-   * @param name entity name
+   * Wipes out queue data.
+   * @param queueName Name of the queue
    * @throws Exception if cleanup fails
    */
-  void truncate(String name) throws Exception;
-
-  /**
-   * Deletes entity from the system completely.
-   * @param name entity name
-   * @throws Exception if deletion fails
-   */
-  void drop(String name) throws Exception;
-
-  /**
-   * Performs update of entity.
-   *
-   * @param name Name of the entity to update
-   * @throws Exception if update fails
-   */
-  void upgrade(String name, Properties properties) throws Exception;
+  void truncate(QueueName queueName) throws Exception;
 }

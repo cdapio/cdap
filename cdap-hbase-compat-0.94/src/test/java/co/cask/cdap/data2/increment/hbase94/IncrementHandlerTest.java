@@ -19,6 +19,9 @@ package co.cask.cdap.data2.increment.hbase94;
 import co.cask.cdap.data2.increment.hbase.AbstractIncrementHandlerTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -105,26 +108,28 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   }
 
   @Override
-  public RegionWrapper createRegion(String tableName, Map<String, String> familyProperties) throws Exception {
+  public RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception {
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     for (Map.Entry<String, String> prop : familyProperties.entrySet()) {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase94RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), tableName, columnDesc));
+        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   @Override
-  public void createTable(String tableName) throws Exception {
-    HTableDescriptor tableDesc = new HTableDescriptor(tableName);
+  public HTable createTable(TableId tableId) throws Exception {
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    HTableDescriptor tableDesc = tableUtil.createHTableDescriptor(tableId);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     columnDesc.setValue(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false");
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     testUtil.getHBaseAdmin().createTable(tableDesc);
-    testUtil.waitUntilTableAvailable(Bytes.toBytes(tableName), 5000);
+    testUtil.waitUntilTableAvailable(tableDesc.getName(), 5000);
+    return tableUtil.createHTable(conf, tableId);
   }
 
   public static ColumnCell convertCell(KeyValue cell) {

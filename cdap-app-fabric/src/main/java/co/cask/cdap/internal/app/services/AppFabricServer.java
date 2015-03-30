@@ -19,11 +19,15 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -49,6 +53,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -66,6 +71,8 @@ public final class AppFabricServer extends AbstractIdleService {
   private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
+  private final NamespaceAdmin namespaceAdmin;
+  private final StreamCoordinatorClient streamCoordinatorClient;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -82,8 +89,10 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
-                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames) {
+                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+                         NamespaceAdmin namespaceAdmin) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -95,6 +104,8 @@ public final class AppFabricServer extends AbstractIdleService {
     this.notificationService = notificationService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
+    this.namespaceAdmin = namespaceAdmin;
+    this.streamCoordinatorClient = streamCoordinatorClient;
   }
 
   /**
@@ -102,7 +113,7 @@ public final class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
     // Delete app fabric temp directory
@@ -114,6 +125,7 @@ public final class AppFabricServer extends AbstractIdleService {
     schedulerService.start();
     adapterService.start();
     programRuntimeService.start();
+    streamCoordinatorClient.start();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
@@ -150,7 +162,7 @@ public final class AppFabricServer extends AbstractIdleService {
         // TODO accept a list of services, and start them here
         // When it is running, register it with service discovery
         for (final String serviceName : servicesNames) {
-          cancellables.add(discoveryService.register(new Discoverable() {
+          cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
             @Override
             public String getName() {
               return serviceName;
@@ -160,7 +172,7 @@ public final class AppFabricServer extends AbstractIdleService {
             public InetSocketAddress getSocketAddress() {
               return socketAddress;
             }
-          }));
+          })));
         }
       }
 
@@ -186,6 +198,9 @@ public final class AppFabricServer extends AbstractIdleService {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     httpService.startAndWait();
+
+    Thread defaultNamespaceEnsurer = new Thread(new DefaultNamespaceEnsurer(namespaceAdmin, 1, TimeUnit.SECONDS));
+    defaultNamespaceEnsurer.start();
   }
 
   @Override

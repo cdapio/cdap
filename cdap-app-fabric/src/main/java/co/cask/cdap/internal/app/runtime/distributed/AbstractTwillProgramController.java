@@ -33,6 +33,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
 
   protected final String programName;
   protected final TwillController twillController;
+  private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(String programName, TwillController twillController) {
     super(programName, twillController.getRunId());
@@ -63,6 +64,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
 
   @Override
   protected final void doStop() throws Exception {
+    stopRequested = true;
     twillController.stopAndWait();
   }
 
@@ -78,7 +80,13 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
       @Override
       public void terminated(Service.State from) {
         LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
-        stop();
+        if (stopRequested) {
+          // Service was killed
+          stop();
+        } else {
+          // Service completed by itself. Simply signal the state change of this controller.
+          complete();
+        }
       }
 
       @Override

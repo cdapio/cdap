@@ -43,7 +43,7 @@ import javax.ws.rs.QueryParam;
 /**
  * Program Preferences HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration/preferences")
+@Path(Constants.Gateway.API_VERSION_3)
 public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreferencesHttpHandler.class);
 
@@ -59,20 +59,20 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   //Instance Level Properties
-  @Path("/")
+  @Path("/preferences")
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, preferencesStore.getProperties());
   }
 
-  @Path("/")
+  @Path("/preferences")
   @DELETE
   public void deleteInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     preferencesStore.deleteProperties();
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  @Path("/")
+  @Path("/preferences")
   @PUT
   public void setInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     try {
@@ -86,7 +86,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   //Namespace Level Properties
   //Resolved field, if set to true, returns the collapsed property map (Instance < Namespace)
-  @Path("/namespaces/{namespace-id}")
+  @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace, @QueryParam("resolved") String resolved)
@@ -102,7 +102,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}")
+  @Path("/namespaces/{namespace-id}/preferences")
   @PUT
   public void setNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
@@ -120,7 +120,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}")
+  @Path("/namespaces/{namespace-id}/preferences")
   @DELETE
   public void deleteNamespacePrefs(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespace) throws Exception {
@@ -134,7 +134,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   //Application Level Properties
   //Resolved field, if set to true, returns the collapsed property map (Instance < Namespace < Application)
-  @Path("/namespaces/{namespace-id}/apps/{application-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @GET
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
@@ -151,7 +151,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}/apps/{application-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @PUT
   public void putAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
@@ -171,7 +171,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}/apps/{application-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @DELETE
   public void deleteAppPrefs(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
@@ -187,7 +187,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   //Program Level Properties
   //Resolved field, if set to true, returns the collapsed property map (Instance < Namespace < Application < Program)
-  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @GET
   public void getProgramPrefs(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
@@ -204,7 +204,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @PUT
   public void putProgramPrefs(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
@@ -221,7 +221,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}")
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @DELETE
   public void deleteProgramPrefs(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,

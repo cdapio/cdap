@@ -21,11 +21,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import com.google.common.collect.Maps;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -34,10 +32,10 @@ import java.util.Map;
 /**
  * Dataset definition for File datasets.
  */
-public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> {
+public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmin> {
 
   @Inject
-  private LocationFactory locationFactory;
+  private NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
   private CConfiguration cConf;
@@ -59,26 +57,19 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> 
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    Map<String, String> props = properties.getProperties();
-    String basePath = FileSetProperties.getBasePath(props);
-    if (basePath == null) {
-      basePath = instanceName.replace('.', '/');
-      props = Maps.newHashMap(props);
-      props.put(FileSetProperties.BASE_PATH, basePath);
-    }
-    return DatasetSpecification.builder(instanceName, getName()).properties(props).build();
+    return DatasetSpecification.builder(instanceName, getName()).properties(properties.getProperties()).build();
   }
 
   @Override
-  public FileAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+  public FileSetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                             ClassLoader classLoader) throws IOException {
-    return new FileAdmin(cConf, locationFactory, spec);
+    return new FileSetAdmin(datasetContext, cConf, namespacedLocationFactory, spec);
   }
 
   @Override
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(cConf, spec.getName(), locationFactory, spec.getProperties(),
+    return new FileSetDataset(datasetContext, cConf, spec, namespacedLocationFactory,
                               arguments == null ? Collections.<String, String>emptyMap() : arguments,
                               classLoader);
   }

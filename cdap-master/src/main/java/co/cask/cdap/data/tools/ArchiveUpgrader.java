@@ -19,6 +19,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.LoggingConfiguration;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -38,8 +39,9 @@ public class ArchiveUpgrader extends AbstractUpgrader {
   private final CConfiguration cConf;
 
   @Inject
-  private ArchiveUpgrader(LocationFactory locationFactory, CConfiguration cConf) {
-    super(locationFactory);
+  private ArchiveUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                          CConfiguration cConf) {
+    super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
   }
 
@@ -55,7 +57,7 @@ public class ArchiveUpgrader extends AbstractUpgrader {
   private void upgradeStream() throws IOException {
     LOG.info("Upgrading stream files ...");
     Location oldLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
-    Location newLocation = Locations.getParent(oldLocation).append(Constants.DEFAULT_NAMESPACE)
+    Location newLocation = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID)
       .append(cConf.get(Constants.Stream.BASE_DIR));
     if (renameLocation(oldLocation, newLocation) != null) {
       LOG.info("Upgraded streams archives from {} to {}", oldLocation, newLocation);
@@ -68,13 +70,13 @@ public class ArchiveUpgrader extends AbstractUpgrader {
   private void upgradeLogs() throws IOException {
     LOG.info("Upgrading log files ...");
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    renameLocation(locationFactory.create(logBaseDir).append(Constants.Logging.SYSTEM_NAME),
-                   locationFactory.create(Constants.SYSTEM_NAMESPACE)
-                     .append(cConf.get(LoggingConfiguration.LOG_BASE_DIR)));
+    Location defaultNamespacedLogDir = namespacedLocationFactory.get(Constants.SYSTEM_NAMESPACE_ID)
+        .append(cConf.get(LoggingConfiguration.LOG_BASE_DIR));
+    renameLocation(locationFactory.create(logBaseDir).append(Constants.CDAP_NAMESPACE), defaultNamespacedLogDir);
     //TODO: This developer string in 2.7 is default so we need to handle that here when we improvise on this tool for
     //2.7 version
-    renameLocation(locationFactory.create(logBaseDir).append(DEVELOPER_ACCOUNT),
-                   locationFactory.create(Constants.DEFAULT_NAMESPACE)
-                     .append(cConf.get(LoggingConfiguration.LOG_BASE_DIR)));
+    Location systemNamespacedLogDir = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID)
+        .append(cConf.get(LoggingConfiguration.LOG_BASE_DIR));
+    renameLocation(locationFactory.create(logBaseDir).append(Constants.DEVELOPER_ACCOUNT), systemNamespacedLogDir);
   }
 }

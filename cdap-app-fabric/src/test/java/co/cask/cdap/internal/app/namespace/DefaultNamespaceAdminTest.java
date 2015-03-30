@@ -50,7 +50,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
       Assert.fail("Should not create duplicate namespace.");
     } catch (NamespaceAlreadyExistsException e) {
-      Assert.assertEquals(Id.Namespace.from(TEST_NAMESPACE_META1.getId()), e.getId());
+      Assert.assertEquals(Id.Namespace.from(TEST_NAMESPACE_META1.getName()), e.getId());
     }
 
     // "random" namespace should not exist
@@ -73,7 +73,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     try {
       namespaceAdmin.createNamespace(builder.build());
-      Assert.fail("Namespace with no id should fail");
+      Assert.fail("Namespace with no name should fail");
     } catch (IllegalArgumentException e) {
       Assert.assertEquals("Namespace id cannot be null.", e.getMessage());
     }
@@ -82,12 +82,11 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     Assert.assertFalse(namespaceAdmin.hasNamespace(namespaceId));
 
     // namespace with default fields
-    namespaceAdmin.createNamespace(builder.setId(namespace).build());
+    namespaceAdmin.createNamespace(builder.setName(namespace).build());
     Assert.assertEquals(initialCount + 1, namespaceAdmin.listNamespaces().size());
     Assert.assertTrue(namespaceAdmin.hasNamespace(namespaceId));
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.getNamespace(namespaceId);
-      Assert.assertEquals(namespaceId.getId(), namespaceMeta.getId());
       Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
       Assert.assertEquals("", namespaceMeta.getDescription());
 
@@ -96,14 +95,13 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       Assert.fail(String.format("Namespace '%s' should be found since it was just created.", namespaceId.getId()));
     }
 
-    namespaceAdmin.createNamespace(builder.setName("name").setDescription("describes " + namespace).build());
+    namespaceAdmin.createNamespace(builder.setDescription("describes " + namespace).build());
     Assert.assertEquals(initialCount + 1, namespaceAdmin.listNamespaces().size());
     Assert.assertTrue(namespaceAdmin.hasNamespace(namespaceId));
 
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.getNamespace(namespaceId);
-      Assert.assertEquals(namespaceId.getId(), namespaceMeta.getId());
-      Assert.assertEquals("name", namespaceMeta.getName());
+      Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
       Assert.assertEquals("describes " + namespaceId.getId(), namespaceMeta.getDescription());
 
       namespaceAdmin.deleteNamespace(namespaceId);

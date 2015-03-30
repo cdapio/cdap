@@ -46,8 +46,9 @@ public interface LoggingContext {
    * Returns the path fragment that will be part of the log file name. The grouping of log messages into partitions
    * should be consistent with the value returned as path fragment.
    * @return the path fragment that will be part of the log file name.
+   * @param logBaseDir base dir for logs
    */
-  String getLogPathFragment();
+  String getLogPathFragment(String logBaseDir);
 
   /**
    * Defines the interface for the system tag associated with LoggingContext.

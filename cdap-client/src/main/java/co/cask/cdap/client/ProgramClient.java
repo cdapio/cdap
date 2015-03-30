@@ -18,6 +18,8 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.client.util.VersionMigrationUtils;
@@ -34,6 +36,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -42,6 +45,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -59,15 +63,25 @@ import javax.inject.Inject;
  */
 public class ProgramClient {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+    .create();
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private final ApplicationClient applicationClient;
 
   @Inject
+  public ProgramClient(ClientConfig config, RESTClient restClient, ApplicationClient applicationClient) {
+    this.config = config;
+    this.restClient = restClient;
+    this.applicationClient = applicationClient;
+  }
+
   public ProgramClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
+    this.applicationClient = new ApplicationClient(config, restClient);
   }
 
   /**
@@ -152,16 +166,16 @@ public class ProgramClient {
    * @throws TimeoutException
    */
   public void stopAll() throws IOException, UnauthorizedException, InterruptedException, TimeoutException {
-    Map<ProgramType, List<ProgramRecord>> allPrograms = new ApplicationClient(config).listAllPrograms();
+    Map<ProgramType, List<ProgramRecord>> allPrograms = applicationClient.listAllPrograms();
     for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
       ProgramType programType = entry.getKey();
       List<ProgramRecord> programRecords = entry.getValue();
       for (ProgramRecord programRecord : programRecords) {
         try {
-          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getId());
+          String status = this.getStatus(programRecord.getApp(), programType, programRecord.getName());
           if (!status.equals("STOPPED")) {
-            this.stop(programRecord.getApp(), programType, programRecord.getId());
-            this.waitForStatus(programRecord.getApp(), programType, programRecord.getId(),
+            this.stop(programRecord.getApp(), programType, programRecord.getName());
+            this.waitForStatus(programRecord.getApp(), programType, programRecord.getName(),
                                "STOPPED", 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {
@@ -573,14 +587,13 @@ public class ProgramClient {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programId);
-    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state,
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
+                                       Constants.AppFabric.QUERY_PARAM_STATUS, state,
                                        Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    String path = String.format("apps/%s/%s/%s/runs?%s",
-                                appId, programType.getCategoryName(),
-                                programId, queryParams);
+    String path = String.format("apps/%s/%s/%s/runs?%s", appId, programType.getCategoryName(), programId, queryParams);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -591,6 +604,34 @@ public class ProgramClient {
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
   }
+
+  /**
+   * Get the current run information for the Workflow based on the runid
+   * @param appId ID of the application
+   * @param workflowId ID of the workflow
+   * @param runId ID of the run for which the details are to be returned
+   * @return list of {@link WorkflowActionNode} currently running for the given runid
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application, workflow, or runid could not be found
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<WorkflowActionNode> getWorkflowCurrent(String appId, String workflowId, String runId)
+    throws IOException, NotFoundException, UnauthorizedException {
+    String path = String.format("/apps/%s/workflows/%s/%s/current", appId, workflowId, runId);
+    URL url = VersionMigrationUtils.resolveURL(config, ProgramType.WORKFLOW, path);
+
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      Id.Program program = Id.Program.from(config.getNamespace(), appId, ProgramType.WORKFLOW, workflowId);
+      throw new NotFoundException(new Id.Run(program, runId));
+    }
+
+    ObjectResponse<List<WorkflowActionNode>> objectResponse = ObjectResponse.fromJsonBody(
+      response, new TypeToken<List<WorkflowActionNode>>() { }.getType(), GSON);
+
+    return objectResponse.getResponseObject();
+}
 
   /**
    * Gets the run records of a program.
@@ -647,8 +688,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programId);
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
-                                appId, programType.getCategoryName(),
-                                programId, start, stop);
+                                appId, programType.getCategoryName(), programId, start, stop);
     URL url = VersionMigrationUtils.resolveURL(config, programType, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

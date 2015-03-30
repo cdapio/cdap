@@ -23,18 +23,15 @@ import com.google.common.base.Preconditions;
  * Represents metadata for namespaces
  */
 public final class NamespaceMeta {
-  private final String id;
+
   private final String name;
   private final String description;
+  private NamespaceConfig config;
 
-  private NamespaceMeta(String id, String name, String description) {
-    this.id = id;
+  private NamespaceMeta(String name, String description, NamespaceConfig config) {
     this.name = name;
     this.description = description;
-  }
-
-  public String getId() {
-    return id;
+    this.config = config;
   }
 
   public String getName() {
@@ -45,21 +42,31 @@ public final class NamespaceMeta {
     return description;
   }
 
+  public NamespaceConfig getConfig() {
+    return config;
+  }
+
+
   /**
    * Builder used to build {@link NamespaceMeta}
    */
   public static final class Builder {
-    private String id;
     private String name;
     private String description;
+    private String schedulerQueueName;
 
-    public Builder setId(final String id) {
-      this.id = id;
-      return this;
+    public Builder() {
+     // No-Op
     }
 
-    public Builder setId(final Id.Namespace id) {
-      this.id = id.getId();
+    public Builder(NamespaceMeta meta) {
+      this.name = meta.getName();
+      this.description = meta.getDescription();
+      this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
+    }
+
+    public Builder setName(final Id.Namespace id) {
+      this.name = id.getId();
       return this;
     }
 
@@ -73,15 +80,21 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setSchedulerQueueName(final String schedulerQueueName) {
+      this.schedulerQueueName = schedulerQueueName;
+      return this;
+    }
+
     public NamespaceMeta build() {
-      Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-      if (name == null) {
-        name = id;
-      }
+      Preconditions.checkArgument(name != null, "Namespace id cannot be null.");
       if (description == null) {
         description = "";
       }
-      return new NamespaceMeta(id, name, description);
+
+      if (schedulerQueueName == null) {
+        schedulerQueueName = "";
+      }
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName));
     }
   }
 
@@ -93,21 +106,23 @@ public final class NamespaceMeta {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    return id.equals(((NamespaceMeta) o).id);
+    NamespaceMeta other = (NamespaceMeta) o;
+    return Objects.equal(name, other.name)
+      && Objects.equal(description, other.description)
+      && Objects.equal(config, other.config);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(name, description, config);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("id", id)
       .add("name", name)
       .add("description", description)
+      .add("config", getConfig())
       .toString();
   }
 }

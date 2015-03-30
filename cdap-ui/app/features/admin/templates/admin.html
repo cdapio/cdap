@@ -4,12 +4,16 @@
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
         <a ui-sref="admin.overview"
-           ui-sref-active="current">
-          Management Home
+           ui-sref-active="current"
+           class="abstract">
+          Management
         </a>
       </li>
       <li class="list-group-item">
-        <a href="" ng-click="submenu.system=!submenu.system">
+        <a href=""
+           class="abstract"
+           ng-click="submenu.system=!submenu.system"
+           ng-class="{ current: $state.includes('admin.system.services.**') }">
           System Configuration
         </a>
         <ul class="list-unstyled"
@@ -58,21 +62,25 @@
       </li> -->
 
       <li class="list-group-item">
-        <a href="" ng-click="submenu.namespaces=!submenu.namespaces">
+        <a href=""
+           class="abstract pull-left"
+           ng-click="submenu.namespaces=!submenu.namespaces"
+           ng-class="{ current: $state.includes('admin.namespace.**') }">
           Namespaces
         </a>
+        <a ui-sref="admin.namespace.create"
+           class="text-center">
+          <span class="fa fa-plus text-center"></span>
+        </a>
+        </span>
         <ul class="list-unstyled"
             ng-show="submenu.namespaces">
-          <li>
-            <a ui-sref="admin.namespace.create"
-               ui-sref-active="current">
-              Create Namespace
-            </a>
-          </li>
           <li ng-repeat="ns in nsList">
             <a href=""
                ng-click="submenu.perNs[ns.name]=!submenu.perNs[ns.name]">
               <span ng-bind="ns.name | myEllipsis: 15"></span>
+              <span ng-class="{ 'fa-caret-down': submenu.perNs[ns.name], 'fa-caret-right': !submenu.perNs[ns.name] }"
+              class="fa pull-right"></span>
             </a>
             <ul class="list-unstyled" ng-show="submenu.perNs[ns.name]">
 <!--               <li>
@@ -83,8 +91,14 @@
               </li> -->
               <li>
                 <a ui-sref-active="current"
-                   ui-sref="admin.namespace.detail.apps({nsadmin: ns.id})">
+                   ui-sref="admin.namespace.detail.apps({nsadmin: ns.name})">
                   Apps
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current"
+                    ui-sref="admin.namespace.detail.data({nsadmin: ns.name})">
+                  Data
                 </a>
               </li>
             </ul>

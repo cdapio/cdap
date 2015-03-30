@@ -30,11 +30,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -86,28 +84,28 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          datasetFramework, cConf, discoveryServiceClient);
+          datasetFramework, discoveryServiceClient);
     this.program = program;
     this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
-    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(cConf));
+    this.datasetFramework = datasetFramework;
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  spec.getName(), runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
 
-    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
+    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
     // the same instance is always returned.
     long cacheExpiryTimeout =
-      Math.max(2, 2 * TimeUnit.SECONDS.toMinutes(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
-                                                              TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
+      Math.max(2, 2 * TimeUnit.SECONDS.toHours(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
+                                                            TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.MINUTES)
+      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.HOURS)
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault

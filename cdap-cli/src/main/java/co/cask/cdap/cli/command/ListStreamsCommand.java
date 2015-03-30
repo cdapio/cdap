@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.common.cli.Arguments;
@@ -37,13 +36,11 @@ import java.util.List;
 public class ListStreamsCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -53,10 +50,10 @@ public class ListStreamsCommand extends AbstractAuthCommand {
       .setRows(streamClient.list(), new RowMaker<StreamRecord>() {
         @Override
         public List<?> makeRow(StreamRecord object) {
-          return Lists.newArrayList(object.getId());
+          return Lists.newArrayList(object.getName());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

@@ -54,10 +54,10 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
                         Set<String> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
                         DiscoveryServiceClient discoveryServiceClient,
-                        DatasetFramework dsFramework, CConfiguration conf) {
+                        DatasetFramework dsFramework) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(collectionService, program, runId.getId(), instanceId),
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, discoveryServiceClient);
     this.procedureId = program.getName();
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -57,6 +58,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -99,8 +103,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File cConfFile;
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
+    final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
     try {
+      if (schedulerQueueName != null) {
+        hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
+        LOG.info("Setting scheduler queue to {}", schedulerQueueName);
+      }
+
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
@@ -112,6 +122,33 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       throw Throwables.propagate(e);
     }
 
+    final File tempDir = Files.createTempDir();
+    URI logbackURI = null;
+    try {
+      // TODO: When CDAP-1273 is fixed you can get the resource directly from the program classloader.
+      // Make an unused call to getClassloader() to ensure that the jar is expanded into programDir.
+      copiedProgram.getClassLoader();
+      File logbackFile = new File(programDir, "logback.xml");
+      if (logbackFile.exists()) {
+        logbackURI = logbackFile.toURI();
+      } else {
+        URL containerLogbackURL = getClass().getResource("/logback-container.xml");
+        if (containerLogbackURL != null) {
+          File file = new File(tempDir.getPath(), "logback.xml");
+
+          try {
+            Files.copy(new File(containerLogbackURL.toURI()), file);
+            logbackURI = file.toURI();
+          } catch (IOException e) {
+            LOG.error("Error copying container logback.", e);
+          }
+        }
+      }
+    } catch (URISyntaxException e) {
+      LOG.error("Error getting logback for program.", e);
+    }
+
+    final URI programLogbackURI = logbackURI;
     final String programOptions = GSON.toJson(options);
 
     // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
@@ -120,21 +157,29 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
       @Override
       public TwillController launch(TwillApplication twillApplication) {
-        TwillPreparer twillPreparer = twillRunner
-          .prepare(twillApplication);
+        TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
         if (options.isDebug()) {
-          LOG.info("Starting {} with debugging enabled.", program.getId());
+          LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
+                   program.getId(), programOptions, programLogbackURI);
           twillPreparer.enableDebugging();
         }
+        // Add scheduler queue name if defined
+        if (schedulerQueueName != null) {
+          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+          twillPreparer.setSchedulerQueue(schedulerQueueName);
+        }
+        if (programLogbackURI != null) {
+          twillPreparer.withResources(programLogbackURI);
+        }
         TwillController twillController = twillPreparer
-          .withDependencies(new HBaseTableUtilFactory().get().getClass())
+          .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
           ).start();
-        return addCleanupListener(twillController, hConfFile, cConfFile, copiedProgram, programDir);
+        return addCleanupListener(twillController, hConfFile, cConfFile, tempDir, copiedProgram, programDir);
       }
     });
   }
@@ -191,7 +236,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller, final File hConfFile,
-                                             final File cConfFile, final Program program, final File programDir) {
+                                             final File cConfFile, final File tempDir,
+                                             final Program program, final File programDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     controller.addListener(new ServiceListenerAdapter() {
@@ -216,6 +262,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                     program.getName(), hConfFile, cConfFile, program.getJarLocation().toURI());
           hConfFile.delete();
           cConfFile.delete();
+          tempDir.delete();
           try {
             program.getJarLocation().delete();
           } catch (IOException e) {

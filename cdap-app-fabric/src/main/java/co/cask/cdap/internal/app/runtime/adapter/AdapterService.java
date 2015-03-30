@@ -32,11 +32,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
@@ -62,7 +61,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +87,6 @@ public class AdapterService extends AbstractIdleService {
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String DATASET_CLASS = "dataset.class";
-  private final LocationFactory locationFactory;
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final CConfiguration configuration;
   private final DatasetFramework datasetFramework;
@@ -97,20 +94,20 @@ public class AdapterService extends AbstractIdleService {
   private final Scheduler scheduler;
   private final Store store;
   private final PreferencesStore preferencesStore;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private Map<String, AdapterTypeInfo> adapterTypeInfos;
 
   @Inject
   public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
-                        StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
+                        StreamAdmin streamAdmin, StoreFactory storeFactory,
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
-                        PreferencesStore preferencesStore) {
+                        PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory) {
     this.configuration = configuration;
-    this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
-                                                           new DefaultDatasetNamespace(configuration));
+    this.datasetFramework = datasetFramework;
     this.scheduler = scheduler;
     this.streamAdmin = streamAdmin;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = storeFactory.create();
-    this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
     this.adapterTypeInfos = Maps.newHashMap();
     this.preferencesStore = preferencesStore;
@@ -336,7 +333,7 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-      Location namespaceHomeLocation = locationFactory.create(namespaceId);
+      Location namespaceHomeLocation = namespacedLocationFactory.get(Id.Namespace.from(namespaceId));
       if (!namespaceHomeLocation.exists()) {
         String msg = String.format("Home directory %s for namespace %s not found",
                                    namespaceHomeLocation.toURI().getPath(), namespaceId);

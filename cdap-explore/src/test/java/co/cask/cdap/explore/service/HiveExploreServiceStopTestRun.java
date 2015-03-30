@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests whether txns get closed on stopping explore service.
@@ -43,6 +44,8 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
+
+    waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 
     // Stop explore service
     exploreService.stopAndWait();

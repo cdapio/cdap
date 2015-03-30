@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -34,14 +34,13 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -113,13 +112,9 @@ public class MapReduceWithPartitionedTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator =
-      new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework, injector.getInstance(CConfiguration.class),
-                              MapReduceWithPartitionedTest.class.getClassLoader(), null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceWithPartitionedTest.class.getClassLoader(), null);
 
     txService.startAndWait();
   }
@@ -132,7 +127,7 @@ public class MapReduceWithPartitionedTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }
@@ -170,7 +165,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time);
+          Partition partition = tpfs.getPartitionByTime(time);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
         }
@@ -196,7 +193,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time5);
+          Partition partition = tpfs.getPartitionByTime(time5);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-20"));
         }
@@ -277,8 +276,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = dataset.getPartition(keyX);
-          Assert.assertNotNull(path);
+          Partition partition = dataset.getPartition(keyX);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertTrue(path.contains("x"));
           Assert.assertTrue(path.contains("150000"));
         }
@@ -310,7 +310,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = dataset.getPartition(keyY);
+          Partition partition = dataset.getPartition(keyY);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("y"));
           Assert.assertTrue(path.contains("200000"));
@@ -376,14 +378,7 @@ public class MapReduceWithPartitionedTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 

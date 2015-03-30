@@ -27,18 +27,17 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
-import co.cask.cdap.data2.util.DiscoveryNamespaceClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -78,8 +77,8 @@ public final class AppFabricTestModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
-    install(new DataSetsModules().getLocalModule());
-    install(new DataSetServiceModules().getInMemoryModule());
+    install(new DataSetsModules().getStandaloneModules());
+    install(new DataSetServiceModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
     install(new AuthModule());
@@ -90,12 +89,6 @@ public final class AppFabricTestModule extends AbstractModule {
       @Override
       protected void configure() {
         bind(Scheduler.class).annotatedWith(Assisted.class).toInstance(createNoopScheduler());
-      }
-    });
-    install(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class);
       }
     });
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
@@ -150,6 +143,10 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      }
+
+      @Override
+      public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
       }
 
       @Override

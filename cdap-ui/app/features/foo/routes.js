@@ -15,6 +15,7 @@ angular.module(PKG.name+'.feature.foo')
         url: '/test/edwin',
         templateUrl: '/assets/features/foo/edwin.html',
         controller: function ($scope, $timeout) {
+          $scope.testNumber = 10000;
           $scope.data = {};
           $timeout(function() {
             $scope.data = {

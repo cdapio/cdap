@@ -90,7 +90,6 @@ public class LocalQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
     LevelDBTableService.getInstance().clearTables();
   }
@@ -103,7 +102,7 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
+      new DataSetsModules().getStandaloneModules(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {
           @Override

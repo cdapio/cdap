@@ -16,14 +16,13 @@
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -37,28 +36,26 @@ import java.util.List;
 public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   private final DatasetClient datasetClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetSpecification> datasetMetas = datasetClient.list();
+    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list();
 
     Table table = Table.builder()
       .setHeader("name", "type")
-      .setRows(datasetMetas, new RowMaker<DatasetSpecification>() {
+      .setRows(datasetMetas, new RowMaker<DatasetSpecificationSummary>() {
         @Override
-        public List<?> makeRow(DatasetSpecification object) {
+        public List<?> makeRow(DatasetSpecificationSummary object) {
           return Lists.newArrayList(object.getName(), object.getType());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

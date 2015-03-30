@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
@@ -74,4 +73,22 @@ public interface NamespaceAdmin {
    */
   public void deleteNamespace(Id.Namespace namespaceId)
     throws NamespaceNotFoundException, NamespaceCannotBeDeletedException;
+
+  /**
+   * Deletes all datasets in the specified namespace
+   *
+   * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @throws NotFoundException if the specified namespace does not exist
+   * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
+   */
+  public void deleteDatasets(Id.Namespace namespaceId) throws NotFoundException, NamespaceCannotBeDeletedException;
+
+  /**
+   * Update namespace properties for a given namespace.
+   *
+   * @param namespaceId  the {@link Id.Namespace} of the namespace to be updated
+   * @param namespaceMeta namespacemeta to update
+   * @throws NotFoundException if the specified namespace is not found
+   */
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException;
 }

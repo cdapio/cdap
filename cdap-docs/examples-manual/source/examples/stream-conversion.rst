@@ -30,7 +30,7 @@ Let's look at some of these components, and then run the Application and see the
 The Stream Conversion Application
 ---------------------------------
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by the class ``StreamConversionApp``:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
@@ -89,9 +89,9 @@ The Mapper itself is straight-forward: for each event, it emits an Avro record:
      :lines: 104-111
 
 In the ``afterSubmit`` method of the MapReduce program, if the run succeeds, the output file is
-registered as a new partition in the ``converted`` dataset. This is due to a limitation in the
-implementation of ``TimePartitionedFileSet``; itself should add the partition in the output
-committer of its output format (this will be addressed in a future CDAP release):
+registered as a new partition in the ``converted`` dataset. Note that this is only needed due to a
+current limitation in the ``TimePartitionedFileSet`` implementation: the partition should be added
+by the output committer of the dataset's output format (this will be addressed in a future CDAP release):
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
@@ -125,7 +125,7 @@ to send 10000 events at a rate of roughly two per second::
 You can now wait for the Workflow to run, after which you can query the partitions in the
 ``converted`` dataset::
 
-  $ cdap-cli.sh execute \"show partitions cdap_user_converted\"
+  $ cdap-cli.sh execute \"show partitions dataset_converted\"
   +============================================+
   | partition: STRING                          |
   +============================================+
@@ -139,7 +139,7 @@ than the time since the Epoch: the year, month, day of the month, hour and minut
 
 You can also query the data in the dataset. For example, to find the five most frequent body texts, issue::
 
-  $ cdap-cli.sh execute '"select count(*) as count, body from cdap_user_converted group by body order by count desc limit 5"'
+  $ cdap-cli.sh execute '"select count(*) as count, body from dataset_converted group by body order by count desc limit 5"'
   +==============================+
   | count: BIGINT | body: STRING |
   +==============================+
@@ -153,7 +153,7 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from cdap_user_converted where month=1 group by body order by count desc limit 5
+  select count(*) as count, body from dataset_converted where month=1 group by body order by count desc limit 5
 
 Stopping the Application
 ------------------------

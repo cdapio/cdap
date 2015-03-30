@@ -30,7 +30,6 @@ import java.util.Set;
  * in particular, it makes sure that Explore is working properly.
  */
 public class DummyBaseTestRun extends TestFrameworkTestBase {
-
   @Test
   public void test() throws Exception {
     deployApplication(DummyApp.class);
@@ -45,9 +44,10 @@ public class DummyBaseTestRun extends TestFrameworkTestBase {
       } finally {
         resultSet.close();
       }
+
       // Since this test can runs in test suite that may contains other tests,
       // use intersect to verify to avoid seeing tables created by other tests
-      Set<String> expected = Sets.newHashSet("cdap_stream_default_who", "cdap_default_whom");
+      Set<String> expected = Sets.newHashSet("stream_who", "dataset_whom");
       Assert.assertEquals(expected, Sets.intersection(expected, tables));
     } finally {
       connection.close();

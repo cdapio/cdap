@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -24,6 +26,7 @@ import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -48,8 +55,6 @@ public abstract class TableConcurrentTest<T extends Table>
   private static final byte[] COLUMN_TO_INCREMENT = Bytes.toBytes("column_to_increment");
 
   private static final byte[][] ROWS_TO_APPEND_TO;
-
-  private static final String concCreate = DS_NAMESPACE.namespace(NAMESPACE_ID, "conccreate");
 
   static {
     ROWS_TO_APPEND_TO = new byte[6][];
@@ -80,30 +85,23 @@ public abstract class TableConcurrentTest<T extends Table>
     // * n clients append 100 columns to a set of 4 rows which includes the row that gets incremented (2 at a time).
     //   Append is: read all columns, add <last_column+1>
     // todo: improve to use deletes. E.g. in append - remove all existing before appending new
-    int n = 5;
-    getTableAdmin(MY_TABLE).create();
+    final int n = 5;
+    getTableAdmin(CONTEXT1, MY_TABLE).create();
     try {
-      final Thread[] incrementingClients = new Thread[n];
-      final Thread[] appendingClients = new Thread[n];
-      for (int i = 0; i < incrementingClients.length; i++) {
-        incrementingClients[i] = new Thread(new IncrementingClient(txExecutorFactory));
-        appendingClients[i] = new Thread(new AppendingClient(txExecutorFactory));
-      }
+      ExecutorService executor = Executors.newFixedThreadPool(n * 2);
 
       // start threads
-      for (int i = 0; i < incrementingClients.length; i++) {
-        incrementingClients[i].start();
-        appendingClients[i].start();
+      for (int i = 0; i < n; i++) {
+        executor.submit(new IncrementingClient(txExecutorFactory));
+        executor.submit(new AppendingClient(txExecutorFactory));
       }
 
       // wait for finish
-      for (int i = 0; i < incrementingClients.length; i++) {
-        incrementingClients[i].join();
-        appendingClients[i].join();
-      }
+      executor.shutdown();
+      executor.awaitTermination(2, TimeUnit.MINUTES);
 
       // verify result
-      final T table = getTable(MY_TABLE);
+      final T table = getTable(CONTEXT1, MY_TABLE);
       TransactionExecutor txExecutor =
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
       txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -120,9 +118,9 @@ public abstract class TableConcurrentTest<T extends Table>
 
             // +1 because there was one extra column that we incremented
             boolean isIncrementedColumn = Arrays.equals(ROW_TO_INCREMENT, row);
-            Assert.assertEquals(appendingClients.length * 100 + (isIncrementedColumn ? 1 : 0), cols.size());
+            Assert.assertEquals(n * 100 + (isIncrementedColumn ? 1 : 0), cols.size());
 
-            for (int i = 0; i < appendingClients.length * 100; i++) {
+            for (int i = 0; i < n * 100; i++) {
               Assert.assertArrayEquals(Bytes.toBytes("foo" + i), cols.get(Bytes.toBytes("column" + i)));
             }
           }
@@ -133,12 +131,12 @@ public abstract class TableConcurrentTest<T extends Table>
           Assert.assertFalse(result.isEmpty());
           byte[] val = result.get(COLUMN_TO_INCREMENT);
           long sum1to100 = ((1 + 99) * 99 / 2);
-          Assert.assertEquals(incrementingClients.length * sum1to100, Bytes.toLong(val));
+          Assert.assertEquals(n * sum1to100, Bytes.toLong(val));
         }
       });
 
     } finally {
-      getTableAdmin(MY_TABLE).drop();
+      getTableAdmin(CONTEXT1, MY_TABLE).drop();
     }
   }
 
@@ -148,7 +146,7 @@ public abstract class TableConcurrentTest<T extends Table>
 
     public IncrementingClient(TransactionExecutorFactory txExecutorFactory) throws Exception {
       this.txExecutorFactory = txExecutorFactory;
-      this.table = getTable(MY_TABLE);
+      this.table = getTable(CONTEXT1, MY_TABLE);
     }
 
     @Override
@@ -185,7 +183,7 @@ public abstract class TableConcurrentTest<T extends Table>
 
     public AppendingClient(TransactionExecutorFactory txExecutorFactory) throws Exception {
       this.txExecutorFactory = txExecutorFactory;
-      this.table = getTable(MY_TABLE);
+      this.table = getTable(CONTEXT1, MY_TABLE);
     }
 
     @Override
@@ -195,20 +193,21 @@ public abstract class TableConcurrentTest<T extends Table>
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
       for (int k = 0; k < 100; k++) {
         for (int i = 0; i < ROWS_TO_APPEND_TO.length / 2; i++) {
-          final byte[] row1 = ROWS_TO_APPEND_TO[i * 2];
-          final byte[] row2 = ROWS_TO_APPEND_TO[i * 2 + 1];
+          final List<Get> gets = ImmutableList.of(new Get(ROWS_TO_APPEND_TO[i * 2]),
+                                                  new Get(ROWS_TO_APPEND_TO[i * 2 + 1]));
           boolean appended = false;
           while (!appended) {
             try {
               txExecutor.execute(new TransactionExecutor.Subroutine() {
                 @Override
                 public void apply() throws Exception {
-                  appendColumn(row1);
-                  appendColumn(row2);
+                  List<Row> rows = table.get(gets);
+                  for (int i = 0; i < gets.size(); i++) {
+                    appendColumn(gets.get(i).getRow(), rows.get(i).getColumns());
+                  }
                 }
 
-                private void appendColumn(byte[] row) throws Exception {
-                  Map<byte[], byte[]> columns = table.get(row).getColumns();
+                private void appendColumn(byte[] row, Map<byte[], byte[]> columns) throws Exception {
                   int columnsCount;
                   if (columns.isEmpty()) {
                     columnsCount = 0;
@@ -257,7 +256,7 @@ public abstract class TableConcurrentTest<T extends Table>
     Assert.assertTrue("First thread failed. ", success1.get());
     Assert.assertTrue("Second thread failed. ", success2.get());
     // perform a read - if the table was not opened successfully this will fail
-    getTable(concCreate).get(new byte[]{'a'}, new byte[][]{{'b'}});
+    getTable(CONTEXT1, "conccreate").get(new byte[]{'a'}, new byte[][]{{'b'}});
   }
 
   class CreateThread extends Thread {
@@ -271,7 +270,7 @@ public abstract class TableConcurrentTest<T extends Table>
     public void run() {
       try {
         success.set(false);
-        getTableAdmin(concCreate).create();
+        getTableAdmin(CONTEXT1, "conccreate").create();
         success.set(true);
       } catch (Throwable throwable) {
         success.set(false);

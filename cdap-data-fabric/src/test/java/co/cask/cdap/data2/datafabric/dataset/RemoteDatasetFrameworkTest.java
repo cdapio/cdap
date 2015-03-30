@@ -17,11 +17,12 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
@@ -85,7 +86,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Before
   public void before() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
     File dataDir = new File(tmpFolder.newFolder(), "data");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
@@ -103,7 +103,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
     locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
-    framework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
+    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
+    framework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                            new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
@@ -115,24 +116,25 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     opExecutorService.startAndWait();
 
     InMemoryDatasetFramework mdsFramework =
-      new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
+      new InMemoryDatasetFramework(registryFactory,
                                    ImmutableMap.of("memoryTable", new InMemoryTableModule(),
-                                                   "core", new CoreDatasetsModule()));
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
+                                                   "core", new CoreDatasetsModule()), cConf);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
-                                 locationFactory,
+                                 namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                         exploreFacade));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

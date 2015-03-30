@@ -17,9 +17,7 @@
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.annotation.Batch;
-import co.cask.cdap.api.annotation.HashPartition;
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.RoundRobin;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -44,7 +42,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.async.ExecutorUtils;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -58,10 +55,10 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -132,7 +129,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
-  private final CConfiguration configuration;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -142,8 +138,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
-                              DatasetFramework dsFramework,
-                              CConfiguration configuration) {
+                              DatasetFramework dsFramework) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -151,7 +146,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.configuration = configuration;
     this.dsFramework = dsFramework;
   }
 
@@ -204,8 +198,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient,
-                                               dsFramework, configuration);
+                                               metricsCollectionService, discoveryServiceClient, dsFramework);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
@@ -224,12 +217,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Thread.currentThread().setContextClassLoader(FlowletProgramRunner.class.getClassLoader());
 
       // Inject DataSet, OutputEmitter, Metric fields
+      ImmutableList.Builder<ProducerSupplier> queueProducerSupplierBuilder = ImmutableList.builder();
       Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
                         new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
                         new DataSetFieldSetter(flowletContext),
                         new MetricsFieldSetter(flowletContext.getMetrics()),
                         new OutputEmitterFieldSetter(outputEmitterFactory(flowletContext, flowletName,
-                                                                          dataFabricFacade, queueSpecs)));
+                                                                          dataFabricFacade,
+                                                                          queueProducerSupplierBuilder,
+                                                                          queueSpecs)));
 
       ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification<?>> processSpecs =
@@ -249,7 +245,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              dataFabricFacade, serviceHook);
 
       FlowletProgramController controller = new FlowletProgramController(program.getName(), flowletName,
-                                                                         flowletContext, driver, consumerSuppliers);
+                                                                         flowletContext, driver,
+                                                                         queueProducerSupplierBuilder.build(),
+                                                                         consumerSuppliers);
       controllerRef.set(controller);
 
       LOG.info("Starting flowlet: {}", flowletContext);
@@ -371,25 +369,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
    * @return A new instance of {@link ConsumerConfig}.
    */
   private ConsumerConfig getConsumerConfig(BasicFlowletContext flowletContext, Method method) {
-    // Determine input queue partition type
-    HashPartition hashPartition = method.getAnnotation(HashPartition.class);
-    RoundRobin roundRobin = method.getAnnotation(RoundRobin.class);
-    DequeueStrategy strategy = DequeueStrategy.FIFO;
-    String hashKey = null;
-
-    Preconditions.checkArgument(!(hashPartition != null && roundRobin != null),
-                                "Only one strategy allowed for process() method: %s", method.getName());
-
-    if (hashPartition != null) {
-      strategy = DequeueStrategy.HASH;
-      hashKey = hashPartition.value();
-      Preconditions.checkArgument(!hashKey.isEmpty(), "Partition key cannot be empty: %s", method.getName());
-    } else if (roundRobin != null) {
-      strategy = DequeueStrategy.ROUND_ROBIN;
-    }
-
-    return new ConsumerConfig(flowletContext.getGroupId(), flowletContext.getInstanceId(),
-                              flowletContext.getInstanceCount(), strategy, hashKey);
+    ConsumerGroupConfig groupConfig = FlowUtils.createConsumerGroupConfig(flowletContext.getGroupId(),
+                                                                          flowletContext.getInstanceCount(), method);
+    return new ConsumerConfig(groupConfig, flowletContext.getInstanceId());
   }
 
   /**
@@ -437,6 +419,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private OutputEmitterFactory outputEmitterFactory(final BasicFlowletContext flowletContext,
                                                     final String flowletName,
                                                     final QueueClientFactory queueClientFactory,
+                                                    final ImmutableList.Builder<ProducerSupplier> producerBuilder,
                                                     final Table<Node, String, Set<QueueSpecification>> queueSpecs) {
     return new OutputEmitterFactory() {
       @Override
@@ -450,7 +433,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
               final MetricsCollector metrics = flowletContext.getProgramMetrics().childCollector(
                 Constants.Metrics.Tag.FLOWLET_QUEUE, queueSpec.getQueueName().getSimpleName());
-              QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
+              ProducerSupplier producerSupplier = new ProducerSupplier(queueSpec.getQueueName(),
+                                                                       queueClientFactory, new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
                   metrics.increment("process.events.out", count);
@@ -461,7 +445,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   // no-op
                 }
               });
-              return new DatumOutputEmitter<T>(producer, schema, datumWriterFactory.create(type, schema));
+              producerBuilder.add(producerSupplier);
+              return new DatumOutputEmitter<T>(producerSupplier, schema, datumWriterFactory.create(type, schema));
             }
           }
 

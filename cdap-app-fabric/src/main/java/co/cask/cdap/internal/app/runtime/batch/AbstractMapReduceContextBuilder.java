@@ -22,7 +22,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
@@ -83,7 +82,6 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing dataset context and hooking it up with mapreduce job transaction
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
     ApplicationSpecification programSpec = program.getApplicationSpecification();
 
@@ -99,7 +97,7 @@ public abstract class AbstractMapReduceContextBuilder {
       new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId,
                                 runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework, configuration);
+                                datasetFramework);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

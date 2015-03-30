@@ -58,7 +58,7 @@ and executes a query over a CDAP dataset ``mydataset``::
   Connection connection = DriverManager.getConnection(connectionUrl);
 
   // Execute a query over CDAP Datasets and retrieve the results
-  ResultSet resultSet = connection.prepareStatement("select * from cdap_user_mydataset").executeQuery();
+  ResultSet resultSet = connection.prepareStatement("select * from dataset_mydataset").executeQuery();
   ...
 
 JDBC drivers are a standard in the Java ecosystem, with many `resources about them available

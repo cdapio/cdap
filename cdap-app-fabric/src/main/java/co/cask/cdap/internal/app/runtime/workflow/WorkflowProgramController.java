@@ -43,7 +43,7 @@ final class WorkflowProgramController extends AbstractProgramController {
   WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
     super(program.getName(), runId);
     this.driver = driver;
-    this.serviceName = getServiceName(program);
+    this.serviceName = getServiceName(program, runId);
     this.serviceAnnouncer = serviceAnnouncer;
     startListen(driver);
   }
@@ -84,7 +84,13 @@ final class WorkflowProgramController extends AbstractProgramController {
         LOG.info("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
         cancelAnnounce.cancel();
         LOG.info("Service {} unregistered.", serviceName);
-        stop();
+        if (getState() != State.STOPPING) {
+          // service completed itself.
+          complete();
+        } else {
+          // service was terminated
+          stop();
+        }
       }
 
       @Override
@@ -97,8 +103,8 @@ final class WorkflowProgramController extends AbstractProgramController {
     }, Threads.SAME_THREAD_EXECUTOR);
   }
 
-  private String getServiceName(Program program) {
-    return String.format("workflow.%s.%s.%s",
-                         program.getNamespaceId(), program.getApplicationId(), program.getName());
+  private String getServiceName(Program program, RunId runId) {
+    return String.format("workflow.%s.%s.%s.%s",
+                         program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
   }
 }

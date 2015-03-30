@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -52,7 +53,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -76,6 +76,7 @@ public class OpenCloseDataSetTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  private static Location namespaceHomeLocation;
 
   private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
 
@@ -91,15 +92,15 @@ public class OpenCloseDataSetTest {
 
   @BeforeClass
   public static void setup() throws IOException {
-    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
-      .create(DefaultId.NAMESPACE.getId());
-    Locations.mkdirsIfNotExists(location);
+    NamespacedLocationFactory namespacedLocationFactory =
+      AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
+    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
+    Locations.mkdirsIfNotExists(namespaceHomeLocation);
   }
 
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
-    final String fooTableName = String.format("cdap.%s.foo", DefaultId.NAMESPACE);
-    final String barTableName = String.format("cdap.%s.bar", DefaultId.NAMESPACE);
+    final String tableName = "foo";
 
     TrackingTable.resetTracker();
     ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
@@ -140,14 +141,14 @@ public class OpenCloseDataSetTest {
     ((TransactionAware) producer).commitTx();
     txSystemClient.commit(tx);
 
-    while (TrackingTable.getTracker(fooTableName, "write") < 4) {
+    while (TrackingTable.getTracker(tableName, "write") < 4) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
     // get the number of writes to the foo table
-    Assert.assertEquals(4, TrackingTable.getTracker(fooTableName, "write"));
+    Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
     // only the flow has started with s single flowlet (procedure is loaded lazily on 1sy request
-    Assert.assertEquals(1, TrackingTable.getTracker(fooTableName, "open"));
+    Assert.assertEquals(1, TrackingTable.getTracker(tableName, "open"));
 
     // now send a request to the procedure
     Gson gson = new Gson();
@@ -171,15 +172,15 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals("x1", responseContent);
 
     // now the dataset must have a read and another open operation
-    Assert.assertEquals(1, TrackingTable.getTracker(fooTableName, "read"));
-    Assert.assertEquals(2, TrackingTable.getTracker(fooTableName, "open"));
-    Assert.assertEquals(0, TrackingTable.getTracker(fooTableName, "close"));
+    Assert.assertEquals(1, TrackingTable.getTracker(tableName, "read"));
+    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
+    Assert.assertEquals(0, TrackingTable.getTracker(tableName, "close"));
 
     // stop flow and procedure, they shuld both close the data set foo
     for (ProgramController controller : controllers) {
       controller.stop().get();
     }
-    Assert.assertEquals(2, TrackingTable.getTracker(fooTableName, "close"));
+    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "close"));
 
     // now start the m/r job
     // start the flow and procedure
@@ -193,26 +194,24 @@ public class OpenCloseDataSetTest {
     }
     Assert.assertNotNull(controller);
 
-    while (!controller.getState().equals(ProgramController.State.STOPPED)) {
+    while (!controller.getState().equals(ProgramController.State.COMPLETED)) {
       TimeUnit.MILLISECONDS.sleep(100);
     }
 
     // M/r job is done, one mapper and the m/r client should have opened and closed the data set foo
     // we don't know the exact number of times opened, but it is at least once, and it must be closed the same number
     // of times.
-    Assert.assertTrue(2 < TrackingTable.getTracker(fooTableName, "open"));
-    Assert.assertEquals(TrackingTable.getTracker(fooTableName, "open"),
-                        TrackingTable.getTracker(fooTableName, "close"));
-    Assert.assertTrue(0 < TrackingTable.getTracker(barTableName, "open"));
-    Assert.assertEquals(TrackingTable.getTracker(barTableName, "open"),
-                        TrackingTable.getTracker(barTableName, "close"));
+    Assert.assertTrue(2 < TrackingTable.getTracker(tableName, "open"));
+    Assert.assertEquals(TrackingTable.getTracker(tableName, "open"),
+                        TrackingTable.getTracker(tableName, "close"));
+    Assert.assertTrue(0 < TrackingTable.getTracker("bar", "open"));
+    Assert.assertEquals(TrackingTable.getTracker("bar", "open"),
+                        TrackingTable.getTracker("bar", "close"));
 
   }
 
   @AfterClass
   public static void tearDown() throws IOException {
-    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
-      .create(DefaultId.NAMESPACE.getId());
-    Locations.deleteQuietly(location, true);
+    Locations.deleteQuietly(namespaceHomeLocation, true);
   }
 }

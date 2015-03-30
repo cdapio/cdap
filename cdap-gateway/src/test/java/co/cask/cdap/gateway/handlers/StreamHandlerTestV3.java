@@ -17,8 +17,9 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.query.MetricQueryResult;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetricQueryResult;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -27,6 +28,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.apache.commons.lang3.ArrayUtils;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,11 +64,23 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   }
 
   @Test
+  public void testStreamCreateInNonexistentNamespace() throws Exception {
+    Id.Namespace originallyNonExistentNamespace = Id.Namespace.from("originallyNonExistentNamespace");
+    Id.Stream streamId = Id.Stream.from(originallyNonExistentNamespace, "streamName");
+    HttpResponse response = createStream(streamId, 400);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getResponseCode());
+
+    // once the namespace exists, the same stream create works.
+    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
+    createStream(streamId);
+  }
+
+  @Test
   public void testNamespacedStreamEvents() throws Exception {
     // Create two streams with the same name, in different namespaces.
     String streamName = "testNamespacedEvents";
-    Id.Stream streamId1 = Id.Stream.from("namespace1", streamName);
-    Id.Stream streamId2 = Id.Stream.from("namespace2", streamName);
+    Id.Stream streamId1 = Id.Stream.from(TEST_NAMESPACE1, streamName);
+    Id.Stream streamId2 = Id.Stream.from(TEST_NAMESPACE2, streamName);
 
     createStream(streamId1);
     createStream(streamId2);
@@ -98,9 +113,9 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   @Test
   public void testNamespacedMetrics() throws Exception {
     // Create two streams with the same name, in different namespaces.
-    String streamName = "testNamespacedMetrics";
-    Id.Stream streamId1 = Id.Stream.from("namespace1", streamName);
-    Id.Stream streamId2 = Id.Stream.from("namespace2", streamName);
+    String streamName = "testNamespacedStreamMetrics";
+    Id.Stream streamId1 = Id.Stream.from(TEST_NAMESPACE1, streamName);
+    Id.Stream streamId2 = Id.Stream.from(TEST_NAMESPACE2, streamName);
 
     createStream(streamId1);
     createStream(streamId2);
@@ -121,11 +136,15 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   }
 
 
-  private void createStream(Id.Stream streamId) throws Exception {
+  private HttpResponse createStream(Id.Stream streamId, int... allowedErrorCodes) throws Exception {
     URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId());
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
+    int responseCode = response.getResponseCode();
+    if (!ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+      Assert.assertEquals(200, responseCode);
+    }
+    return response;
   }
 
   private void sendEvent(Id.Stream streamId, String body) throws Exception {

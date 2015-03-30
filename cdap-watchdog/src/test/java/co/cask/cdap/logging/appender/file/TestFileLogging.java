@@ -24,10 +24,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -37,10 +35,8 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.StandaloneLogReader;
-import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -72,7 +68,7 @@ public class TestFileLogging {
   @BeforeClass
   public static void setUpContext() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
-    CConfiguration cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
 
@@ -81,20 +77,12 @@ public class TestFileLogging {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(DatasetFramework.class)
-            .toInstance(new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory()));
-        }
-      });
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules()
+    );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-
-    DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
-    dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "table"),
-                          new InMemoryTableModule());
 
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
 

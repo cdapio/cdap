@@ -18,7 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
@@ -33,6 +33,8 @@ import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamRecord;
@@ -115,10 +117,10 @@ public class IntegrationTestBase {
     if (streamRecords.size() > 0) {
       for (StreamRecord streamRecord : streamRecords) {
         try {
-          streamClient.truncate(streamRecord.getId());
+          streamClient.truncate(streamRecord.getName());
         } catch (Exception e) {
           Assert.fail("All existing streams must be truncated" +
-                      " - failed to truncate stream '" + streamRecord.getId() + "'");
+                      " - failed to truncate stream '" + streamRecord.getName() + "'");
         }
       }
     }
@@ -143,19 +145,21 @@ public class IntegrationTestBase {
   protected static ClientConfig getClientConfig() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     if (INSTANCE_URI.isEmpty()) {
-      builder.setUri(StandaloneContainer.DEFAULT_CONNECTION_URI);
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        StandaloneContainer.DEFAULT_CONNECTION_URI.toString()));
     } else {
-      builder.setUri(URI.create(INSTANCE_URI));
+      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+        URI.create(INSTANCE_URI).toString()));
     }
 
     if (!ACCESS_TOKEN.isEmpty()) {
       builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
     }
 
-    builder.setDefaultConnectTimeoutMs(120000);
-    builder.setDefaultReadTimeoutMs(120000);
-    builder.setUploadConnectTimeoutMs(0);
-    builder.setUploadConnectTimeoutMs(0);
+    builder.setDefaultConnectTimeout(120000);
+    builder.setDefaultReadTimeout(120000);
+    builder.setUploadConnectTimeout(0);
+    builder.setUploadConnectTimeout(0);
 
     return builder.build();
   }
@@ -180,27 +184,39 @@ public class IntegrationTestBase {
     return new DatasetClient(getClientConfig());
   }
 
+  protected ApplicationManager deployApplication(Id.Namespace namespace,
+                                                 Class<? extends Application> applicationClz,
+                                                 File...bundleEmbeddedJars) throws IOException {
+    return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
+  }
+
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return getTestManager().deployApplication(applicationClz, bundleEmbeddedJars);
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+  }
+
+  protected ApplicationManager deployApplication(Id.Namespace namespace,
+                                                 Class<? extends Application> applicationClz) throws IOException {
+    return deployApplication(namespace, applicationClz, new File[0]);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(applicationClz, new File[0]);
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, new File[0]);
   }
 
-  private boolean isUserDataset(DatasetSpecification specification) {
+  private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
     return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
   }
 
   private void assertNoUserDatasets() throws Exception {
     DatasetClient datasetClient = getDatasetClient();
-    List<DatasetSpecification> datasets = datasetClient.list();
+    List<DatasetSpecificationSummary> datasets = datasetClient.list();
 
-    Iterable<DatasetSpecification> filteredDatasts = Iterables.filter(datasets, new Predicate<DatasetSpecification>() {
+    Iterable<DatasetSpecificationSummary> filteredDatasts = Iterables.filter(
+      datasets, new Predicate<DatasetSpecificationSummary>() {
       @Override
-      public boolean apply(@Nullable DatasetSpecification input) {
+      public boolean apply(@Nullable DatasetSpecificationSummary input) {
         if (input == null) {
           return true;
         }
@@ -209,11 +225,11 @@ public class IntegrationTestBase {
       }
     });
 
-    Iterable<String> filteredDatasetsNames = Iterables.transform(filteredDatasts,
-                                                                 new Function<DatasetSpecification, String>() {
+    Iterable<String> filteredDatasetsNames = Iterables.transform(
+      filteredDatasts, new Function<DatasetSpecificationSummary, String>() {
       @Nullable
       @Override
-      public String apply(@Nullable DatasetSpecification input) {
+      public String apply(@Nullable DatasetSpecificationSummary input) {
         if (input == null) {
           throw new IllegalStateException();
         }
@@ -231,7 +247,7 @@ public class IntegrationTestBase {
     List<ApplicationRecord> applicationRecords = applicationClient.list();
     List<String> applicationIds = Lists.newArrayList();
     for (ApplicationRecord applicationRecord : applicationRecords) {
-      applicationIds.add(applicationRecord.getId());
+      applicationIds.add(applicationRecord.getName());
     }
 
     Assert.assertEquals("Must have no deployed apps, but found the following apps: "
@@ -241,7 +257,7 @@ public class IntegrationTestBase {
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+      Assert.assertTrue(expected.contains(actualProgramRecord.getName()));
     }
   }
 

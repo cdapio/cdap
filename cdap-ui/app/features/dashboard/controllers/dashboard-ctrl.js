@@ -3,30 +3,31 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, myDashboardsModel) {
+function ($scope, $state, $dropdown, rDashboardsModel) {
 
-  $scope.dashboards = myDashboardsModel.data;
+  $scope.dashboards = rDashboardsModel.data;
 
-  myDashboardsModel.$promise.then(function() {
+  if(!rDashboardsModel.data.length) {
+    rDashboardsModel.add();
+  }
 
-    $scope.$watch('dashboards.activeIndex', function (newVal) {
-      $state.go($state.current, {tab:newVal});
-    });
-
-    function checkTabParam() {
-      var tab = parseInt($state.params.tab, 10) || 0;
-      if((tab<0 || tab>=$scope.dashboards.length)) {
-        tab = 0;
-      }
-      if($scope.dashboards.activeIndex !== tab) {
-        $scope.dashboards.activeIndex = tab;
-      }
-      $scope.currentBoard = myDashboardsModel.current();
-    }
-
-    $scope.$on('$stateChangeSuccess', checkTabParam);
-    checkTabParam();
+  $scope.$watch('dashboards.activeIndex', function (newVal) {
+    $state.go($state.current, {tab:newVal});
   });
+
+  function checkTabParam() {
+    var tab = parseInt($state.params.tab, 10) || 0;
+    if((tab<0 || tab>=$scope.dashboards.length)) {
+      tab = 0;
+    }
+    if($scope.dashboards.activeIndex !== tab) {
+      $scope.dashboards.activeIndex = tab;
+    }
+    $scope.currentBoard = rDashboardsModel.current();
+  }
+
+  $scope.$on('$stateChangeSuccess', checkTabParam);
+  checkTabParam();
 
 
 
@@ -66,16 +67,17 @@ function ($scope, $state, $dropdown, myDashboardsModel) {
 
 
   $scope.addDashboard = function (title) {
-    myDashboardsModel.add({title: title});
-    $state.go($state.current, {tab: 0}, {reload: true});
+    rDashboardsModel.add({title: title}).then(function() {
+      $state.go($state.current, {tab: 0}, {reload: true});
+    });
   };
 
   $scope.removeDashboard = function () {
-    myDashboardsModel.remove($scope.dashboards.activeIndex);
+    rDashboardsModel.remove($scope.dashboards.activeIndex);
   };
 
   $scope.reorderDashboard = function (reverse) {
-    var newIndex = myDashboardsModel.reorder(reverse);
+    var newIndex = rDashboardsModel.reorder(reverse);
     $state.go($state.current, {tab: newIndex}, {reload: true});
   };
 
@@ -85,7 +87,7 @@ function ($scope, $state, $dropdown, myDashboardsModel) {
     },
     dragEnd: function (drag) {
       console.log('dragEnd', drag.source, drag.dest);
-      myDashboardsModel.current().persist();
+      rDashboardsModel.current().persist();
     }
   };
 

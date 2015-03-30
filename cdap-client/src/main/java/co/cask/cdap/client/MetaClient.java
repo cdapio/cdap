@@ -41,9 +41,14 @@ public class MetaClient {
   private final ClientConfig config;
 
   @Inject
+  public MetaClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public MetaClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   public void ping() throws IOException, UnauthorizedException {

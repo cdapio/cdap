@@ -56,7 +56,7 @@ function makeApp (authAddress, cdapConfig) {
         routerServerPort: cdapConfig['router.server.port']
       },
       securityEnabled: authAddress.enabled,
-      isEnterprise: process.env.CDAP_MODE === 'enterprise'
+      isEnterprise: process.env.NODE_ENV === 'production'
     });
 
     res.header({
@@ -101,7 +101,7 @@ function makeApp (authAddress, cdapConfig) {
 
   // serve static assets
   app.use('/assets', [
-    httpStaticLogger,
+    //httpStaticLogger,
     express.static(DIST_PATH + '/assets', {
       index: false
     }),
@@ -111,7 +111,7 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
   app.get('/robots.txt', [
-    httpStaticLogger,
+    //httpStaticLogger,
     function (req, res) {
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
@@ -140,9 +140,34 @@ function makeApp (authAddress, cdapConfig) {
   }
 
   app.get('/test/playground', [
-    httpStaticLogger,
+    //httpStaticLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/test.html');
+    }
+  ]);
+
+  app.get('/backendstatus', [
+    function (req, res) {
+
+      var link = 'http://' + cdapConfig['router.server.address'] +
+              ':' +
+              cdapConfig['router.server.port'] +
+              '/v3/ping';
+      console.log('url', link);
+
+      request({
+          method: 'GET',
+          url: link,
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false
+        }, function(err) {
+        if (!err) {
+          res.status(200).send();
+        } else {
+          res.status(404).send();
+        }
+      });
     }
   ]);
 
@@ -153,6 +178,7 @@ function makeApp (authAddress, cdapConfig) {
       res.sendFile(DIST_PATH + '/index.html');
     }
   ]);
+
 
   return app;
 

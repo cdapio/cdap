@@ -22,6 +22,7 @@ import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.ProcedureHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
+import co.cask.cdap.gateway.run.StreamWriterTestRun;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -45,7 +46,6 @@ import org.junit.runners.Suite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
@@ -62,7 +62,8 @@ import javax.annotation.Nullable;
   PingHandlerTestRun.class,
   ProcedureHandlerTestRun.class,
   MetricsReporterHookTestRun.class,
-  RuntimeArgumentTestRun.class
+  RuntimeArgumentTestRun.class,
+  StreamWriterTestRun.class
 })
 
 public class GatewayFastTestsSuite {
@@ -207,7 +208,7 @@ public class GatewayFastTestsSuite {
   }
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     GatewayTestBase.beforeClass();
     GatewayTestBase.runBefore = false;
     GatewayTestBase.runAfter = false;
@@ -215,7 +216,7 @@ public class GatewayFastTestsSuite {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws Exception {
     GatewayTestBase.runAfter = true;
     GatewayTestBase.afterClass();
   }

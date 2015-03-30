@@ -47,12 +47,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+    // No-op
   }
 
   @Override
   public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+    // No-op
   }
 
   @Override
@@ -66,37 +66,28 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
-  }
-
-  private String fromStream(Id.Stream streamId) {
-    return QueueName.fromStream(streamId).toURI().toString();
-  }
-
-  @Override
   public boolean exists(Id.Stream streamId) throws Exception {
-    return exists(fromStream(streamId));
+    return exists(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId) throws Exception {
-    create(fromStream(streamId));
+    create(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
-    create(fromStream(streamId), props);
+    create(QueueName.fromStream(streamId), props);
   }
 
   @Override
   public void truncate(Id.Stream streamId) throws Exception {
-    truncate(fromStream(streamId));
+    truncate(QueueName.fromStream(streamId));
   }
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
-    drop(fromStream(streamId));
+    drop(QueueName.fromStream(streamId));
   }
 
 }

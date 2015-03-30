@@ -2,7 +2,7 @@
   <div class="input-group-btn">
     <button type="button" class="btn btn-default"
       ng-model="metric.type"
-      ng-options="t for t in available.types"
+      bs-options="t for t in available.types"
       data-container="body"
       bs-select>
         <strong ng-bind="metric.type"></strong>
@@ -12,7 +12,7 @@
   <input type="text" class="form-control"
     placeholder="Context"
     ng-model="metric.context"
-    ng-options="c for c in available.contexts"
+    bs-options="c.value as c.display for c in available.contexts"
     data-watch-options="1"
     data-min-length="0"
     data-container="body"
@@ -29,7 +29,7 @@
     placeholder="Metric Name"
     ng-model="metric.name"
     ng-disabled="!metric.context"
-    ng-options="m for m in available.names"
+    bs-options="m for m in available.names"
     data-watch-options="1"
     data-min-length="0"
     data-container="body"

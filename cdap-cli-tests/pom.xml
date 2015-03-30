@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>2.8.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -36,6 +36,12 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test-standalone</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-client-tests</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

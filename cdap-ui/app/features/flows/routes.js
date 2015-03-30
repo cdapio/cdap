@@ -57,24 +57,33 @@ angular.module(PKG.name + '.feature.flows')
                 controller: 'FlowsDetailRunStatusController',
                 ncyBreadcrumb: {
                   parent: 'apps.detail.overview',
-                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                  label: '{{$state.params.programId}} < {{$state.params.runId}}'
                 }
               })
-              .state('flows.detail.runs.tabs.flowlets', {
-                url: '/flowlets',
-                templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets.html',
+              .state('flows.detail.runs.tabs.status.flowletsDetail', {
+                url: '/:flowletId',
+                templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
+                controller: 'FlowsFlowletDetailController',
                 ncyBreadcrumb: {
                   skip: true
                 }
               })
-                .state('flows.detail.runs.tabs.flowlets.detail', {
-                  url: '/:flowletId',
-                  templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
-                  controller: 'FlowsFlowletDetaiController',
-                  ncyBreadcrumb: {
-                    skip: true
-                  }
-                })
+              .state('flows.detail.runs.tabs.status.streamsDetail', {
+                url: '/:streamId', // Doesn't work with ngStrap
+                onEnter: function ($rootScope, $stateParams, $state, $modal) {
+                  var scope = $rootScope.$new();
+                  scope.streamId = $stateParams.streamId;
+                  $modal({
+                    template: '/assets/features/flows/templates/tabs/runs/streams/detail.html',
+                    scope: scope
+                  }).$promise.then(function () {
+                    $state.go('^', $state.params);
+                  });
+                },
+                ncyBreadcrumb: {
+                  skip: true
+                }
+              })
               .state('flows.detail.runs.tabs.data', {
                 url: '/data',
                 templateUrl: '/assets/features/flows/templates/tabs/runs/data.html',
@@ -117,7 +126,7 @@ angular.module(PKG.name + '.feature.flows')
             templateUrl: '/assets/features/flows/templates/tabs/history.html',
             ncyBreadcrumb: {
               parent: 'apps.detail.overview',
-              label: '{{$state.params.programId}} / History'
+              label: '{{$state.params.programId}} < History'
             }
           })
           .state('flows.detail.resources', {

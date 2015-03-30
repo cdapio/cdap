@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
@@ -34,7 +35,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -63,14 +63,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
   private final DatasetTypeManager manager;
-  private final LocationFactory locationFactory;
   private final CConfiguration cConf;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
-  public DatasetTypeHandler(DatasetTypeManager manager, LocationFactory locationFactory, CConfiguration conf) {
+  public DatasetTypeHandler(DatasetTypeManager manager, CConfiguration conf,
+                            NamespacedLocationFactory namespacedLocationFactory) {
     this.manager = manager;
-    this.locationFactory = locationFactory;
     this.cConf = conf;
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   @Override
@@ -127,7 +128,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     // verify namespace directory exists
     // TODO: CDAP-1366 - should have a namespaceClient to make a REST API call to check if the namespace exists
-    final Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    final Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation.toURI().getPath(), namespaceId);
@@ -137,13 +139,16 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     }
 
     // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", cConf.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
-    File tempDir = new File(tempBase, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(localDataDir, namespacesDir);
+    File tempDir = new File(new File(namespaceBase, namespaceId),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    final Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespaceId, name);
+    final Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespace, name);
 
     return new AbstractBodyConsumer(File.createTempFile("dataset-", ".jar", tempDir)) {
       @Override
@@ -280,6 +285,9 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
    * @throws DatasetModuleConflictException if the module exists
    */
   private void conflictIfModuleExists(Id.DatasetModule datasetModuleId) throws DatasetModuleConflictException {
+    if (cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE)) {
+      return;
+    }
     DatasetModuleMeta existing = manager.getModule(datasetModuleId);
     if (existing != null) {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",

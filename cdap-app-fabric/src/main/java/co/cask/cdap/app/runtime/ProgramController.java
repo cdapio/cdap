@@ -22,6 +22,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -38,7 +39,8 @@ public interface ProgramController {
    *   |                                    |
    *   |        |-----------------------|   |
    *   v        v                       |   |
-   * ALIVE -> STOPPING ---> STOPPED     |   |
+   * ALIVE ---------------> COMPLETED   |   |
+   *   |   -> STOPPING ---> KILLED      |   |
    *   |                                |   |
    *   |----> SUSPENDING -> SUSPENDED --|   |
    *                            |           |
@@ -85,9 +87,14 @@ public interface ProgramController {
     STOPPING(ProgramRunStatus.RUNNING),
 
     /**
-     * Program stopped. It is a terminal state, no more state transition is allowed.
+     * Program completed. It is a terminal state, no more state transition is allowed.
      */
-    STOPPED(ProgramRunStatus.COMPLETED),
+    COMPLETED(ProgramRunStatus.COMPLETED),
+
+    /**
+     * Program was killed by user.
+     */
+    KILLED(ProgramRunStatus.KILLED),
 
     /**
      * Program runs into error. It is a terminal state, no more state transition is allowed.
@@ -102,6 +109,10 @@ public interface ProgramController {
 
     public ProgramRunStatus getRunStatus() {
       return runStatus;
+    }
+
+    public boolean isDone() {
+      return this == COMPLETED || this == KILLED || this == ERROR;
     }
   }
 
@@ -154,8 +165,9 @@ public interface ProgramController {
      * method in this interface is called.
      *
      * @param currentState The state of the program by the time when the listener is added.
+     * @param cause The cause of failure if the program failed by the time when the listener is added.
      */
-    void init(State currentState);
+    void init(State currentState, @Nullable Throwable cause);
 
     void suspending();
 
@@ -167,7 +179,9 @@ public interface ProgramController {
 
     void stopping();
 
-    void stopped();
+    void completed();
+
+    void killed();
 
     void error(Throwable cause);
   }

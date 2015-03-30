@@ -125,15 +125,32 @@ public abstract class AbstractProgramController implements ProgramController {
         try {
           caller.stopping();
           doStop();
-          state.set(State.STOPPED);
+          state.set(State.KILLED);
           result.set(AbstractProgramController.this);
-          caller.stopped();
+          caller.killed();
         } catch (Throwable t) {
           error(t, result);
         }
       }
     });
     return result;
+  }
+
+  /**
+   * Children call this method to signal the program is completed.
+   */
+  protected void complete() {
+    if (!state.compareAndSet(State.ALIVE, State.COMPLETED)) {
+      LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
+      return;
+    }
+    executor(State.COMPLETED).execute(new Runnable() {
+      @Override
+      public void run() {
+        state.set(State.COMPLETED);
+        caller.completed();
+      }
+    });
   }
 
   @Override
@@ -153,7 +170,7 @@ public abstract class AbstractProgramController implements ProgramController {
       return result;
     }
 
-    caller.init(state.get());
+    caller.init(state.get(), getFailureCause());
     return cancellable;
   }
 
@@ -249,9 +266,9 @@ public abstract class AbstractProgramController implements ProgramController {
   private final class MultiListenerCaller implements Listener {
 
     @Override
-    public void init(State currentState) {
+    public void init(State currentState, @Nullable Throwable cause) {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.init(currentState);
+        caller.init(currentState, cause);
       }
     }
 
@@ -291,9 +308,16 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void stopped() {
+    public void completed() {
       for (ListenerCaller caller : listeners.keySet()) {
-        caller.stopped();
+        caller.completed();
+      }
+    }
+
+    @Override
+    public void killed() {
+      for (ListenerCaller caller : listeners.keySet()) {
+        caller.killed();
       }
     }
 
@@ -321,8 +345,9 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void init(final State currentState) {
-      // The init state is being passed from constructor, hence ignoring the state passed to this method
+    public void init(final State currentState, @Nullable Throwable cause) {
+      // The init state is being passed from constructor, hence ignoring the state and failure cause
+      // passed to this method
       addTask(null);
     }
 
@@ -352,8 +377,13 @@ public abstract class AbstractProgramController implements ProgramController {
     }
 
     @Override
-    public void stopped() {
-      addTask(State.STOPPED);
+    public void completed() {
+      addTask(State.COMPLETED);
+    }
+
+    @Override
+    public void killed() {
+      addTask(State.KILLED);
     }
 
     @Override
@@ -474,7 +504,7 @@ public abstract class AbstractProgramController implements ProgramController {
     @Override
     public void run() {
       if (initTask) {
-        listener.init(state);
+        listener.init(state, failureCause);
         return;
       }
 
@@ -497,8 +527,11 @@ public abstract class AbstractProgramController implements ProgramController {
         case STOPPING:
           listener.stopping();
           break;
-        case STOPPED:
-          listener.stopped();
+        case COMPLETED:
+          listener.completed();
+          break;
+        case KILLED:
+          listener.killed();
           break;
         case ERROR:
           listener.error(failureCause);

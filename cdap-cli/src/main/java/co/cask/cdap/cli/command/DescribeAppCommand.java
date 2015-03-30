@@ -22,17 +22,14 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Shows detailed information about an application.
@@ -40,34 +37,27 @@ import java.util.Map;
 public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String appId = arguments.get(ArgumentName.APP.toString());
-    Map<ProgramType, List<ProgramRecord>> programs = applicationClient.listPrograms(appId);
-    List<ProgramRecord> programsList = Lists.newArrayList();
-    for (List<ProgramRecord> subList : programs.values()) {
-      programsList.addAll(subList);
-    }
+    final String appId = arguments.get(ArgumentName.APP.toString());
+    List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
     Table table = Table.builder()
-      .setHeader("app", "type", "id", "description")
+      .setHeader("type", "id", "description")
       .setRows(programsList, new RowMaker<ProgramRecord>() {
         @Override
         public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(object.getApp(), object.getType().getCategoryName(),
-                                    object.getId(), object.getDescription());
+          return Lists.newArrayList(object.getType().getPrettyName(), object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

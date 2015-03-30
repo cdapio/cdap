@@ -21,9 +21,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -46,6 +45,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -59,43 +59,41 @@ import javax.annotation.Nullable;
  */
 public class LocalManager<I, O> implements Manager<I, O> {
   private final PipelineFactory pipelineFactory;
-  private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final CConfiguration configuration;
   private final Store store;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final DatasetFramework datasetFramework;
   private final ExploreFacade exploreFacade;
   private final Scheduler scheduler;
   private final boolean exploreEnabled;
-
   private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
-
-
+  private final DatasetFramework datasetFramework;
+  private final DatasetFramework inMemoryDatasetFramework;
 
   @Inject
   public LocalManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                      LocationFactory locationFactory, StoreFactory storeFactory,
-                      StreamConsumerFactory streamConsumerFactory,
+                      NamespacedLocationFactory namespacedLocationFactory,
+                      StoreFactory storeFactory, StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
+                      @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                       StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                       Scheduler scheduler, AdapterService adapterService,
                       @Assisted ProgramTerminator programTerminator) {
-
     this.configuration = configuration;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
-    this.locationFactory = locationFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = storeFactory.create();
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
-    this.datasetFramework =
-      new NamespacedDatasetFramework(datasetFramework, new DefaultDatasetNamespace(configuration));
+    this.datasetFramework = datasetFramework;
+    this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
     this.scheduler = scheduler;
@@ -108,12 +106,12 @@ public class LocalManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, appId));
     pipeline.addLast(new VerificationStage(store, datasetFramework, adapterService));
-    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
-    pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
+    pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.setFinally(new DeployCleanupStage());

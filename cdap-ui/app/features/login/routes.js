@@ -9,7 +9,19 @@ angular.module(PKG.name+'.feature.login')
       .state('login', {
         url: '/login?next',
         templateUrl: '/assets/features/login/login.html',
-        controller: 'LoginCtrl'
+        controller: 'LoginCtrl',
+        onEnter: function(MY_CONFIG, myLoadingService, myAuth) {
+          if(!MY_CONFIG.securityEnabled) {
+            myLoadingService
+              .showLoadingIcon()
+              .then(function() {
+                return myAuth.login({username:'admin'});
+              })
+              .then(function() {
+                myLoadingService.hideLoadingIcon();
+              });
+          }
+        }
       })
 
       ;
@@ -36,7 +48,7 @@ angular.module(PKG.name+'.feature.login')
     });
 
   })
-  .run(function ($rootScope, $state, $alert, MYAUTH_EVENT, MY_CONFIG) {
+  .run(function ($rootScope, $state, $alert, MYAUTH_EVENT, MY_CONFIG, myAlert) {
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
       $alert({title:'Bye!', content:'You are now logged out.', type:'info'});
@@ -44,7 +56,7 @@ angular.module(PKG.name+'.feature.login')
     });
 
     $rootScope.$on(MYAUTH_EVENT.notAuthorized, function () {
-      $alert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
+      myAlert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
     });
 
     if(MY_CONFIG.securityEnabled) {

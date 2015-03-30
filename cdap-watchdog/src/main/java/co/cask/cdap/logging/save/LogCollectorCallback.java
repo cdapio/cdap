@@ -49,15 +49,18 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private final long maxNumberOfBucketsInTable;
   private final CountDownLatch kafkaCancelCallbackLatch;
   private static final long SLEEP_TIME_MS = 100;
+  private final String logBaseDir;
 
   public LogCollectorCallback(RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
                               LoggingEventSerializer serializer, long eventBucketIntervalMs,
-                              long maxNumberOfBucketsInTable, CountDownLatch kafkaCancelCallbackLatch) {
+                              long maxNumberOfBucketsInTable, CountDownLatch kafkaCancelCallbackLatch,
+                              String logBaseDir) {
     this.messageTable = messageTable;
     this.serializer = serializer;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
     this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
     this.kafkaCancelCallbackLatch = kafkaCancelCallbackLatch;
+    this.logBaseDir = logBaseDir;
   }
 
   @Override
@@ -102,7 +105,7 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
           if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
+            LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
                      key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
 
             if (kafkaCancelCallbackLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
@@ -116,15 +119,15 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
         }
 
         synchronized (messageTable) {
-          Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key, loggingContext.getLogPathFragment());
+          Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir));
           List<KafkaLogEvent> msgList = null;
           if (entry == null) {
             long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
             msgList = Lists.newArrayList();
-            messageTable.put(key, loggingContext.getLogPathFragment(),
+            messageTable.put(key, loggingContext.getLogPathFragment(logBaseDir),
                              new AbstractMap.SimpleEntry<Long, List<KafkaLogEvent>>(eventArrivalBucketKey, msgList));
           } else {
-           msgList = messageTable.get(key, loggingContext.getLogPathFragment()).getValue();
+           msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
           }
           msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext,
                                         message.getTopicPartition().getPartition(), message.getNextOffset()));
@@ -135,9 +138,6 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
       ++count;
     }
     LOG.trace("Got {} messages from kafka", count);
-    if (count > 0) {
-      LOG.debug("Got {} messages from kafka", count);
-    }
   }
 
   @Override

@@ -16,8 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
@@ -27,8 +29,8 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,8 +40,8 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Test partitioned file sets without map/reduce and without explore.
@@ -60,8 +62,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     .addStringField("x")
     .build();
 
-  private static final Id.DatasetInstance pfsInstance =
-    DS_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "pfs"));
+  private static final Id.DatasetInstance pfsInstance = Id.DatasetInstance.from(NAMESPACE_ID, "pfs");
 
   @Before
   public void before() throws Exception {
@@ -118,7 +119,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];
-    final Map<PartitionKey, String> allPartitions = Maps.newHashMap();
+    final Set<Partition> allPartitions = Sets.newHashSet();
 
     // add a bunch of partitions
     for (int s = 0; s < 4; s++) {
@@ -129,16 +130,18 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
             .addField("i", i * 100)
             .addField("l", 15L - 10 * l)
             .build();
-          final String path = String.format("%s-%d-%d", s, i, l);
-          newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
-            @Override
-            public void apply() throws Exception {
-              dataset.addPartition(key, path);
-            }
-          });
+          Partition partition = newTransactionExecutor((TransactionAware) dataset)
+            .execute(new Callable<PartitionOutput>() {
+              @Override
+              public PartitionOutput call() throws Exception {
+                PartitionOutput p = dataset.getPartitionOutput(key);
+                p.addPartition();
+                return p;
+              }
+            });
           keys[s][i][l] = key;
-          paths[s][i][l] = path;
-          allPartitions.put(key, path);
+          paths[s][i][l] = partition.getRelativePath();
+          allPartitions.add(partition);
         }
       }
     }
@@ -152,7 +155,9 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
           newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
             @Override
             public void apply() throws Exception {
-              Assert.assertEquals(path, dataset.getPartition(key));
+              Partition partition = dataset.getPartition(key);
+              Assert.assertNotNull(partition);
+              Assert.assertEquals(path, partition.getRelativePath());
             }
           });
           // also test getPartitionPaths() and getPartitions() for the filter matching this
@@ -178,7 +183,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
 
     // remove a few of the partitions and test again, repeatedly
     PartitionKey[] keysToRemove = { keys[1][2][3], keys[0][1][0], keys[2][3][2], keys[3][1][2] };
-    for (PartitionKey key : keysToRemove) {
+    for (final PartitionKey key : keysToRemove) {
 
       // remove in a transaction
       newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Procedure<PartitionKey>() {
@@ -189,14 +194,20 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
       }, key);
 
       // test all filters
-      allPartitions.remove(key);
+      Partition toRemove = Iterables.tryFind(allPartitions, new Predicate<Partition>() {
+        @Override
+        public boolean apply(Partition partition) {
+          return key.equals(partition.getPartitionKey());
+        }
+      }).get();
+      allPartitions.remove(toRemove);
       testAllFilters(dataset, allPartitions, filters);
     }
 
   }
 
   private void testAllFilters(PartitionedFileSet dataset,
-                              Map<PartitionKey, String> allPartitions,
+                              Set<Partition> allPartitions,
                               List<PartitionFilter> filters) throws Exception {
     for (PartitionFilter filter : filters) {
       try {
@@ -208,23 +219,21 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
   }
 
   private boolean testFilter(final PartitionedFileSet dataset,
-                             Map<PartitionKey, String> allPartitions,
+                             Set<Partition> allPartitions,
                              final PartitionFilter filter) throws Exception {
 
     // determine the keys and paths that match the filter
-    final Map<PartitionKey, String> matching = filter == null ? allPartitions :
-      Maps.filterEntries(allPartitions, new Predicate<Map.Entry<PartitionKey, String>>() {
+    final Set<Partition> matching = filter == null ? allPartitions :
+      Sets.filter(allPartitions, new Predicate<Partition>() {
         @Override
-        public boolean apply(Map.Entry<PartitionKey, String> entry) {
-          return filter.match(entry.getKey());
+        public boolean apply(Partition partition) {
+          return filter.match(partition.getPartitionKey());
         }
       });
-    final Set<String> matchingPaths = Sets.newHashSet(matching.values());
 
     newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(matchingPaths, dataset.getPartitionPaths(filter));
         Assert.assertEquals(matching, dataset.getPartitions(filter));
       }
     });

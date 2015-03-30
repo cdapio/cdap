@@ -60,7 +60,7 @@ angular.module(PKG.name + '.feature.mapreduce')
               '</div>',
               ncyBreadcrumb: {
                 parent: 'apps.detail.overview',
-                label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                label: '{{$state.params.programId}} < {{$state.params.runId}}'
               }
             })
             .state('mapreduce.detail.runs.tab.distribution', {
@@ -119,7 +119,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}} / History'
+            label: '{{$state.params.programId}} < History'
           }
         })
         .state('mapreduce.detail.resources', {

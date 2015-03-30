@@ -19,10 +19,10 @@ package co.cask.cdap.examples.profiles;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamWriter;
@@ -52,7 +52,7 @@ public class UserProfilesTest extends TestBase {
     FlowManager flowManager = applicationManager.startFlow("ActivityFlow");
 
     ServiceManager serviceManager = applicationManager.startService("UserProfileService");
-    serviceManager.waitForStatus(true, 3, 60); // should be much faster, but justin case... wait 3x60sec
+    serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 
     // create a user through the service

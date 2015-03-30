@@ -155,25 +155,6 @@ if exist %~dsp0MyProg.pid (
 )
 attrib +h %~dsp0MyProg.pid >NUL
 
-REM Check for new version of CDAP
-bitsadmin /Transfer NAME http://docs.cask.co/cdap/version %~f0_version.txt > NUL 2>&1
-if exist %~f0_version.txt (
-  for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
-    SET new_version = %%f
-  )
-  for /f "tokens=* delims= " %%g in (%~f0\..\..\VERSION) do (
-    SET current_version = %%g
-  )
-  del %~f0_version.txt > NUL 2>&1
-
-  if not "%current_version%" == "%new_version%" (
-    echo UPDATE: There is a newer version of the CDAP SDK available.
-    echo         New version: %new_version%
-    echo         Current version: %current_version%
-    echo         Download it from http://cask.co/downloads
-  )
-)
-
 mkdir %CDAP_HOME%\logs > NUL 2>&1
 
 REM Log rotation
@@ -246,25 +227,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
-
-REM Disable NUX
-REM TODO: Enable NUX with new app, see CDAP-22
-REM CALL :NUX
 GOTO :FINALLY
-
-:NUX
-REM New user experience, enable if it is not enabled already
-if not exist %CDAP_HOME%\.nux_dashboard (
-
-  REM Deploy app
-  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%JAR_PATH%" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
-  REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
-  REM Start flow
-  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
-  REM Start procedure
-  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
-)
-GOTO :EOF
 
 :STOP
 echo Stopping Standalone CDAP ...

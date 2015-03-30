@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -47,12 +48,14 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   static LevelDBTableService service;
   static Injector injector = null;
 
+  private static CConfiguration cConf;
+
   @BeforeClass
   public static void init() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
-      new ConfigModule(conf),
+      new ConfigModule(cConf),
       new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
@@ -60,17 +63,16 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   }
 
   @Override
-  protected LevelDBTable getTable(String name, ConflictDetection level) throws IOException {
-    return new LevelDBTable(name,
-                                   ConflictDetection.valueOf(level.name()),
-                                   service);
+  protected LevelDBTable getTable(DatasetContext datasetContext, String name,
+                                  ConflictDetection level) throws IOException {
+    return new LevelDBTable(datasetContext, name, ConflictDetection.valueOf(level.name()), service, cConf);
   }
 
   @Override
-  protected LevelDBTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
-    DatasetSpecification spec =
-      new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
-    return new LevelDBTableAdmin(spec, service);
+  protected LevelDBTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
+                                            DatasetProperties ignored) throws IOException {
+    DatasetSpecification spec = new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
+    return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 
   @Test
@@ -81,7 +83,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
-      LevelDBTableAdmin admin = getTableAdmin(tableName, DatasetProperties.EMPTY);
+      LevelDBTableAdmin admin = getTableAdmin(CONTEXT1, tableName, DatasetProperties.EMPTY);
       admin.create();
       Assert.assertTrue(admin.exists());
     }

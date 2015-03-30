@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,14 @@ import java.util.Map;
 public abstract class AbstractLoggingContext implements LoggingContext {
   // Map looks not efficient here, it might be better to use set
   private Map<String, SystemTag> systemTags = Maps.newHashMap();
+
+  /**
+   * Returns the base dir for logs under the namespace directory
+   *
+   * @param logBaseDir the base dir
+   * @return log base dir in the namespace directory
+   */
+  protected abstract String getNamespacedLogBaseDir(String logBaseDir);
 
   /**
    * Sets system tag.

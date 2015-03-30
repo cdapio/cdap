@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -29,6 +28,7 @@ import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -50,6 +50,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collection;
@@ -64,6 +65,8 @@ import javax.annotation.Nullable;
  */
 class DatasetServiceClient {
   private static final Gson GSON = new Gson();
+  private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
+  private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final Id.Namespace namespaceId;
@@ -92,15 +95,14 @@ class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetMeta.class);
   }
 
-  public Collection<DatasetSpecification> getAllInstances() throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                         new TypeToken<List<DatasetSpecification>>() { }.getType());
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), SUMMARY_LIST_TYPE);
   }
 
   public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
@@ -110,8 +112,7 @@ class DatasetServiceClient {
                                                          getDetails(response)));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                         new TypeToken<List<DatasetModuleMeta>>() { }.getType());
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), MODULE_META_LIST_TYPE);
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
@@ -237,11 +238,6 @@ class DatasetServiceClient {
     throws DatasetManagementException {
 
     return doRequest(HttpMethod.PUT, resource, null, body);
-  }
-
-  private HttpResponse doPost(String resource)
-    throws DatasetManagementException {
-    return doRequest(HttpMethod.POST, resource);
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {

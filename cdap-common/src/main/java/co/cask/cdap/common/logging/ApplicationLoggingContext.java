@@ -38,7 +38,7 @@ public abstract class ApplicationLoggingContext extends NamespaceLoggingContext 
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/%s", super.getLogPathFragment(), getSystemTag(TAG_APPLICATION_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_APPLICATION_ID));
   }
 }

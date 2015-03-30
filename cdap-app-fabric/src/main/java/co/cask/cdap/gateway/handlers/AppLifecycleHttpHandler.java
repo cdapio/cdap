@@ -20,6 +20,8 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -32,10 +34,10 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -61,7 +63,7 @@ import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramDetail;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.Sink;
@@ -71,7 +73,6 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -81,11 +82,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -103,7 +99,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -119,16 +114,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
 
   /**
    * Configuration object passed from higher up.
@@ -156,10 +141,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final PreferencesStore preferencesStore;
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
+  private final MetricStore metricStore;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -167,8 +153,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  LocationFactory locationFactory, Scheduler scheduler,
                                  ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
+                                 PreferencesStore preferencesStore, AdapterService adapterService,
+                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore, NamespacedLocationFactory
+    namespacedLocationFactory) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -176,12 +163,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.locationFactory = locationFactory;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = storeFactory.create();
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
+    this.metricStore = metricStore;
   }
 
   /**
@@ -194,7 +182,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      return deployApplication(request, responder, namespaceId, appId, archiveName);
+      return deployApplication(responder, namespaceId, appId, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -212,7 +200,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      return deployApplication(request, responder, namespaceId, null, archiveName);
+      return deployApplication(responder, namespaceId, null, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -460,7 +448,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
   }
 
-  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
+  private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
@@ -471,7 +459,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation.toURI().getPath(), namespaceId);
@@ -488,8 +476,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
-    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
+    File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(localDataDir, namespacesDir);
+    File tempDir = new File(new File(namespaceBase, namespaceId),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
@@ -584,7 +575,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void getAppDetails(HttpResponder responder, String namespace, String name) {
     try {
-      ApplicationSpecification appSpec =  store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
       if (appSpec == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -609,7 +600,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     //Check if any App associated with this namespace is running
     final Id.Namespace accId = Id.Namespace.from(identifier.getId());
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().getNamespace().equals(accId);
@@ -630,7 +621,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
-    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
       public boolean apply(Id.Program programId) {
         return programId.getApplication().equals(appId);
@@ -692,7 +683,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
    * the reset API has a v3 version
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException {
+  protected void deleteMetrics(String namespaceId, String applicationId) throws Exception {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -701,55 +692,28 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         (new Id.Application(new Id.Namespace(namespaceId), applicationId));
       applications.add(spec);
     }
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
-                                                                            TimeUnit.SECONDS);
 
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
     for (ApplicationSpecification application : applications) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.API_VERSION_2,
-                                 "ignored",
-                                 application.getName());
-      sendMetricsDelete(url);
-    }
-
-    if (applicationId == null) {
-      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
-      sendMetricsDelete(url);
+      // add or replace application name in the tagMap
+      tags.put(Constants.Metrics.Tag.APP, application.getName());
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      metricStore.delete(deleteQuery);
     }
   }
 
-  private void sendMetricsDelete(String url) {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
-
-    try {
-      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
-  }
 
   private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(appSpec.getFlows().values(),
-                                                                   appSpec.getMapReduce().values(),
-                                                                   appSpec.getProcedures().values(),
-                                                                   appSpec.getWorkflows().values());
-    return programSpecs;
+    return Iterables.concat(appSpec.getFlows().values(),
+                            appSpec.getMapReduce().values(),
+                            appSpec.getProcedures().values(),
+                            appSpec.getServices().values(),
+                            appSpec.getSpark().values(),
+                            appSpec.getWorkers().values(),
+                            appSpec.getWorkflows().values());
   }
 
   /**
@@ -765,7 +729,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
-        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
         location.delete();
       } catch (FileNotFoundException e) {
         LOG.warn("Program jar for program {} not found.", programId.toString(), e);
@@ -777,7 +741,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
                                              ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
+      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
+                                                   ProgramType.WEBAPP);
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.
@@ -801,54 +766,35 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
   }
 
-  /**
-   * Check if any program that satisfy the given {@link Predicate} is running.
-   * Protected only to support v2 APIs
-   *
-   * @param predicate Get call on each running {@link Id.Program}.
-   * @param types Types of program to check
-   * returns True if a program is running as defined by the predicate.
-   */
-  protected boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
-    for (ProgramType type : types) {
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
-        ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
-          continue;
-        }
-        Id.Program programId = entry.getValue().getProgramId();
-        if (predicate.apply(programId)) {
-          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
-                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
-    List<ProgramDetail> programs = Lists.newArrayList();
+    List<ProgramRecord> programs = Lists.newArrayList();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
-      programs.add(new ProgramDetail(ProgramType.FLOW, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
-      programs.add(new ProgramDetail(ProgramType.MAPREDUCE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getProcedures().values()) {
-      programs.add(new ProgramDetail(ProgramType.PROCEDURE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.PROCEDURE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {
-      programs.add(new ProgramDetail(ProgramType.SERVICE, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.SERVICE, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getSpark().values()) {
-      programs.add(new ProgramDetail(ProgramType.SPARK, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.SPARK, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkers().values()) {
-      programs.add(new ProgramDetail(ProgramType.WORKER, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.WORKER, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
-      programs.add(new ProgramDetail(ProgramType.WORKFLOW, programSpec.getName(), programSpec.getDescription()));
+      programs.add(new ProgramRecord(ProgramType.WORKFLOW, spec.getName(),
+                                     programSpec.getName(), programSpec.getDescription()));
     }
 
     List<StreamDetail> streams = Lists.newArrayList();

@@ -24,13 +24,11 @@
   </div>
 </div>
 
-
-<div class="row">
-
-  <div ng-class="'col-sm-'+(12/currentBoard.columns.length)"
-    ng-repeat="column in currentBoard.columns"
-    ng-model="column"
-    as-sortable="dragdrop">
+<div class="row" ng-controller="WidgetColCtrl">
+  <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-4': colWidth.oneThird }"
+       ng-repeat="column in currentBoard.columns"
+       ng-model="column"
+       as-sortable="dragdrop">
 
     <div class="panel"
       ng-class="wdgt.getClassName()"

@@ -29,7 +29,6 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -80,11 +79,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                String workflowBatch,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               DatasetFramework dsFramework,
-                               CConfiguration conf) {
+                               DatasetFramework dsFramework) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, type, runId.getId(), taskId),
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.metricsCollectionService = metricsCollectionService;

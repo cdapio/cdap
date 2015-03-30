@@ -31,7 +31,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -62,9 +61,6 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   @Inject
   private Injector injector;
 
-  @Inject
-  private CConfiguration cConf;
-
   public PartitionedFileSetDefinition(String name,
                                       DatasetDefinition<? extends FileSet, ?> filesetDef,
                                       DatasetDefinition<? extends Table, ?> tableDef) {
@@ -87,9 +83,10 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(
-      filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
-      tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+    return new PartitionedFileSetAdmin(
+        datasetContext, spec, getExploreProvider(),
+        filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
+        tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
   }
 
   @Override
@@ -106,7 +103,7 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
                                       classLoader);
 
-    return new PartitionedFileSetDataset(cConf, spec.getName(), partitioning, fileset, table, spec, arguments,
+    return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset, table, spec, arguments,
                                          getExploreProvider());
   }
 
@@ -116,15 +113,8 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     if (FileSetArguments.getOutputPath(arguments) == null) {
       PartitionKey key = PartitionedFileSetArguments.getOutputPartitionKey(arguments, partitioning);
       if (key != null) {
-        StringBuilder builder = new StringBuilder();
-        String sep = "";
-        for (String fieldName : partitioning.getFields().keySet()) {
-          builder.append(sep).append(key.getField(fieldName).toString());
-          sep = "/";
-        }
-        String path = builder.toString();
         arguments = Maps.newHashMap(arguments);
-        FileSetArguments.setOutputPath(arguments, path);
+        FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(partitioning, key));
       }
     }
     return arguments;

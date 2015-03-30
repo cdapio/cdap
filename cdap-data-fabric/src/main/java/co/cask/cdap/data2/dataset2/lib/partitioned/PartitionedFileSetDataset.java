@@ -18,12 +18,15 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
@@ -32,12 +35,10 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -73,10 +74,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected final Partitioning partitioning;
   protected boolean ignoreInvalidRowsSilently = false;
 
-  private final DatasetNamespace dsNamespace;
+  private final Id.DatasetInstance datasetInstanceId;
 
-  public PartitionedFileSetDataset(CConfiguration cConf, String name, Partitioning partitioning,
-                                   FileSet fileSet, Table partitionTable,
+  public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
+                                   Partitioning partitioning, FileSet fileSet, Table partitionTable,
                                    DatasetSpecification spec, Map<String, String> arguments,
                                    Provider<ExploreFacade> exploreFacadeProvider) {
     super(name, partitionTable);
@@ -86,7 +87,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     this.exploreFacadeProvider = exploreFacadeProvider;
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
-    this.dsNamespace = new DefaultDatasetNamespace(cConf);
+    this.datasetInstanceId = Id.DatasetInstance.from(datasetContext.getNamespaceId(), name);
   }
 
   @Override
@@ -124,9 +125,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          Id.Namespace namespace = dsNamespace.fromNamespaced(getName()).getNamespace();
-          exploreFacade.addPartition(Id.DatasetInstance.from(namespace, getName()), key,
-                                     files.getLocation(path).toURI().getPath());
+          exploreFacade.addPartition(datasetInstanceId, key, files.getLocation(path).toURI().getPath());
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to add partition for key %s with path %s to explore table.", key.toString(), path), e);
@@ -148,8 +147,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
-          Id.Namespace namespace = dsNamespace.fromNamespaced(getName()).getNamespace();
-          exploreFacade.dropPartition(Id.DatasetInstance.from(namespace, getName()), key);
+          exploreFacade.dropPartition(datasetInstanceId, key);
         } catch (Exception e) {
           throw new DataSetException(String.format(
             "Unable to drop partition for key %s from explore table.", key.toString()), e);
@@ -159,7 +157,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public String getPartition(PartitionKey key) {
+  public PartitionOutput getPartitionOutput(PartitionKey key) {
+    return new BasicPartitionOutput(getOutputPath(partitioning, key), key);
+  }
+
+  @Override
+  public Partition getPartition(PartitionKey key) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row == null) {
@@ -169,28 +172,29 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (pathBytes == null) {
       return null;
     }
-    return Bytes.toString(pathBytes);
+    return new BasicPartition(Bytes.toString(pathBytes), key);
   }
 
   @Override
-  public Set<String> getPartitionPaths(@Nullable PartitionFilter filter) {
+  public Set<Partition> getPartitions(@Nullable PartitionFilter filter) {
+    final Set<Partition> partitions = Sets.newHashSet();
+    getPartitions(filter, new PartitionConsumer() {
+      @Override
+      public void consume(PartitionKey key, String path) {
+        partitions.add(new BasicPartition(path, key));
+      }
+    });
+    return partitions;
+  }
+
+  @VisibleForTesting
+  Set<String> getPartitionPaths(@Nullable PartitionFilter filter) {
+    // this avoids constructing the Partition object for every partition.
     final Set<String> paths = Sets.newHashSet();
     getPartitions(filter, new PartitionConsumer() {
       @Override
       public void consume(PartitionKey key, String path) {
         paths.add(path);
-      }
-    });
-    return paths;
-  }
-
-  @Override
-  public Map<PartitionKey, String> getPartitions(@Nullable PartitionFilter filter) {
-    final Map<PartitionKey, String> paths = Maps.newHashMap();
-    getPartitions(filter, new PartitionConsumer() {
-      @Override
-      public void consume(PartitionKey key, String path) {
-        paths.put(key, path);
       }
     });
     return paths;
@@ -229,7 +233,24 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
-  private interface PartitionConsumer {
+  /**
+   * Generate an output path for a given partition key.
+   */
+  // package visible for PartitionedFileSetDefinition
+  static String getOutputPath(Partitioning partitioning, PartitionKey key) {
+    StringBuilder builder = new StringBuilder();
+    String sep = "";
+    for (String fieldName : partitioning.getFields().keySet()) {
+      builder.append(sep).append(key.getField(fieldName).toString());
+      sep = "/";
+    }
+    return builder.toString();
+  }
+
+  /**
+   * Interface use internally to build different types of results when scanning partitions.
+   */
+  protected interface PartitionConsumer {
     void consume(PartitionKey key, String path);
   }
 
@@ -273,7 +294,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    // we set the fileset's output path in the definition's getDataset(), so there is no need to configure it again.
+    // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
     // here we just want to validate that an output partition key was specified in the arguments.
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey == null) {
@@ -464,5 +485,65 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
                       offset, rowKey.length - offset));
     }
     return builder.build();
+  }
+
+  /**
+   * Simple Implementation of Partition.
+   */
+  protected class BasicPartition implements Partition {
+    protected final String relativePath;
+    protected final PartitionKey key;
+
+    protected BasicPartition(String relativePath, PartitionKey key) {
+      this.relativePath = relativePath;
+      this.key = key;
+    }
+
+    @Override
+    public Location getLocation() {
+      return files.getLocation(relativePath);
+    }
+
+    @Override
+    public String getRelativePath() {
+      return relativePath;
+    }
+
+    @Override
+    public PartitionKey getPartitionKey() {
+      return key;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || !(o instanceof BasicPartition)) {
+        return false;
+      }
+      BasicPartition that = (BasicPartition) o;
+      return key.equals(that.key) && relativePath.equals(that.relativePath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(key, relativePath);
+    }
+  }
+
+  /**
+   * Simple Implementation of PartitionOutput.
+   */
+  protected class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
+
+    protected BasicPartitionOutput(String relativePath, PartitionKey key) {
+      super(relativePath, key);
+    }
+
+    @Override
+    public void addPartition() {
+      PartitionedFileSetDataset.this.addPartition(key, getRelativePath());
+    }
   }
 }

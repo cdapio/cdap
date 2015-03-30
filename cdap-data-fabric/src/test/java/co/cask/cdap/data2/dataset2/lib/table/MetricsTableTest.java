@@ -19,11 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -47,8 +43,6 @@ public abstract class MetricsTableTest {
 
   protected abstract MetricsTable getTable(String name) throws Exception;
 
-  protected static final DefaultDatasetNamespace DS_NAMESPACE = new DefaultDatasetNamespace(CConfiguration.create());
-
   protected static final byte[] A = Bytes.toBytes(1L);
   protected static final byte[] B = Bytes.toBytes(2L);
   protected static final byte[] C = Bytes.toBytes(3L);
@@ -61,8 +55,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testGetPutSwap() throws Exception {
-    String testGetPutSwap = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testGetPutSwap");
-    MetricsTable table = getTable(testGetPutSwap);
+    MetricsTable table = getTable("testGetPutSwap");
     // put two rows
     table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
               .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), Q, Bytes.toLong(Y)))
@@ -172,8 +165,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testConcurrentIncrement() throws Exception {
-    String testConcurrentIncrement = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentIncrement");
-    final MetricsTable table = getTable(testConcurrentIncrement);
+    final MetricsTable table = getTable("testConcurrentIncrement");
     final int rounds = 500;
     Map<byte[], Long> inc1 = ImmutableMap.of(X, 1L, Y, 2L);
     Map<byte[], Long> inc2 = ImmutableMap.of(Y, 1L, Z, 2L);
@@ -226,8 +218,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testConcurrentSwap() throws Exception {
-    String testConcurrentSwap = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testConcurrentSwap");
-    MetricsTable table = getTable(testConcurrentSwap);
+    MetricsTable table = getTable("testConcurrentSwap");
     final long rounds = 500;
     table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                 .put(A, Bytes.immutableSortedMapOf(B, 0L)).build());
@@ -245,8 +236,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testDelete() throws Exception {
-    String testDelete = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testDelete");
-    MetricsTable table = getTable(testDelete);
+    MetricsTable table = getTable("testDelete");
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < 1024; i++) {
       writes.put(Bytes.toBytes(i << 22), Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
@@ -295,8 +285,7 @@ public abstract class MetricsTableTest {
   @Test
   public void testDeleteIncrements() throws Exception {
     // note: this is pretty important test case for tables with counters, e.g. metrics
-    String testDeleteIncrements = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testDeleteIncrements");
-    MetricsTable table = getTable(testDeleteIncrements);
+    MetricsTable table = getTable("testDeleteIncrements");
     // delete increment and increment again
     table.increment(A, ImmutableMap.of(B, 5L));
     table.increment(A, ImmutableMap.of(B, 2L));
@@ -326,8 +315,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testFuzzyScan() throws Exception {
-    String testFuzzyScan = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "testFuzzyScan");
-    MetricsTable table = getTable(testFuzzyScan);
+    MetricsTable table = getTable("testFuzzyScan");
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
@@ -366,8 +354,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testRangeDeleteWithoutFilter() throws Exception {
-    String rangeDeleteWithoutFilter = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "rangeDeleteWithoutFilter");
-    MetricsTable table = getTable(rangeDeleteWithoutFilter);
+    MetricsTable table = getTable("rangeDeleteWithoutFilter");
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
@@ -415,8 +402,7 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testRangeDeleteWithFilter() throws Exception {
-    String rangeDelete = DS_NAMESPACE.namespace(Constants.SYSTEM_NAMESPACE_ID, "rangeDelete");
-    MetricsTable table = getTable(rangeDelete);
+    MetricsTable table = getTable("rangeDelete");
     NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {

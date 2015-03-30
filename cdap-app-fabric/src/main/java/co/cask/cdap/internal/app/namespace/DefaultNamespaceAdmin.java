@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
@@ -28,20 +30,26 @@ import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
- * {@link AbstractIdleService} for managing namespaces
+ * Admin for managing namespaces
  */
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
@@ -51,35 +59,26 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final PreferencesStore preferencesStore;
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
+  private final ProgramRuntimeService runtimeService;
+  private final QueueAdmin queueAdmin;
+  private final StreamAdmin streamAdmin;
+  private final MetricStore metricStore;
+  private final Scheduler scheduler;
 
   @Inject
   public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
-                               DashboardStore dashboardStore, DatasetFramework dsFramework) {
+                               DashboardStore dashboardStore, DatasetFramework dsFramework,
+                               ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               MetricStore metricStore, Scheduler scheduler) {
+    this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
-  }
-
-  /**
-   * This should be removed once we stop support for v2 APIs, since 'default' namespace is only reserved for v2 APIs.
-   */
-  private void createDefaultNamespace() {
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    NamespaceMeta defaultNamespace = builder.setId(Constants.DEFAULT_NAMESPACE)
-      .setName(Constants.DEFAULT_NAMESPACE)
-      .setDescription(Constants.DEFAULT_NAMESPACE)
-      .build();
-
-    try {
-      createNamespace(defaultNamespace);
-      LOG.info("Successfully created 'default' namespace.");
-    } catch (AlreadyExistsException e) {
-      LOG.info("'default' namespace already exists.");
-    } catch (NamespaceCannotBeCreatedException e) {
-      LOG.error("Error while creating default namespace", e);
-      Throwables.propagate(e);
-    }
+    this.runtimeService = runtimeService;
+    this.scheduler = scheduler;
+    this.metricStore = metricStore;
   }
 
   /**
@@ -113,18 +112,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return true, if the specifed namespace exists, false otherwise
    */
   public boolean hasNamespace(Id.Namespace namespaceId) {
-    boolean exists = true;
     try {
       getNamespace(namespaceId);
     } catch (NotFoundException e) {
-      // TODO: CDAP-1213 this will move to StandaloneMain/MasterServiceMain very soon
-      if (Constants.DEFAULT_NAMESPACE.equals(namespaceId.getId())) {
-        createDefaultNamespace();
-      } else {
-        exists = false;
-      }
+      return false;
     }
-    return exists;
+    return true;
   }
 
   /**
@@ -137,14 +130,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    Id.Namespace namespace = Id.Namespace.from(metadata.getId());
-    NamespaceMeta existing = store.getNamespace(namespace);
-    if (existing != null) {
+    Id.Namespace namespace = Id.Namespace.from(metadata.getName());
+    if (hasNamespace(Id.Namespace.from(metadata.getName()))) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
 
     try {
-      dsFramework.createNamespace(namespace);
+      dsFramework.createNamespace(Id.Namespace.from(metadata.getName()));
     } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace, e);
     }
@@ -159,33 +151,124 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(Id.Namespace namespaceId)
+  public void deleteNamespace(final Id.Namespace namespaceId)
     throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
-
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
+    if (!hasNamespace(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+
+    if (areProgramsRunning(namespaceId)) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
+                                                  "Some programs are currently running in namespace " + namespaceId);
+    }
+
+    LOG.info("Deleting namespace '{}'.", namespaceId);
+    try {
+      // Delete Preferences associated with this namespace
+      preferencesStore.deleteProperties(namespaceId.getId());
+      // Delete all dashboards associated with this namespace
+      dashboardStore.delete(namespaceId.getId());
+      // Delete datasets and modules
+      dsFramework.deleteAllInstances(namespaceId);
+      dsFramework.deleteAllModules(namespaceId);
+      // Delete queues and streams data
+      queueAdmin.dropAllInNamespace(namespaceId.getId());
+      streamAdmin.dropAllInNamespace(namespaceId);
+      // Delete all the schedules
+      scheduler.deleteAllSchedules(namespaceId);
+      // Delete all meta data
+      store.removeAll(namespaceId);
+
+      deleteMetrics(namespaceId);
+
+      // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
+      // create default namespace, and hence deleting it may cause undeterministic behavior.
+      // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
+      // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
+      // This condition is only required to support the v2 unrecoverable reset API, since that uses NamespaceAdmin
+      // directly. If you go through the Namespace delete REST API, this condition will already be met, since that
+      // disallows deletion of reserved namespaces altogether.
+      // TODO: Remove this check when the v2 unrecoverable reset API is removed
+      if (!Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
+        // Delete namespace in storage providers
+        dsFramework.deleteNamespace(namespaceId);
+        // Finally delete namespace from MDS
+        store.deleteNamespace(namespaceId);
+      }
+    } catch (Exception e) {
+      LOG.warn("Error while deleting namespace {}", namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+    }
+    LOG.info("All data for namespace '{}' deleted.", namespaceId);
+  }
+
+  private void deleteMetrics(Id.Namespace namespaceId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+    metricStore.delete(deleteQuery);
+  }
+
+  @Override
+  public void deleteDatasets(Id.Namespace namespaceId)
+    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException {
+    // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
+    if (!hasNamespace(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+
+    if (areProgramsRunning(namespaceId)) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
+                                                  "Some programs are currently running in namespace " + namespaceId);
+    }
+
+    LOG.info("Deleting data in namespace '{}'.", namespaceId);
+    try {
+      dsFramework.deleteAllInstances(namespaceId);
+    } catch (DatasetManagementException e) {
+      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+    } catch (IOException e) {
+      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+    }
+    LOG.info("Deleted data in namespace '{}'.", namespaceId);
+  }
+
+  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)
+    throws NamespaceNotFoundException {
+
     if (store.getNamespace(namespaceId) == null) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    // TODO: CDAP-870: Check if apps are running and abort if they are
-    // Delete Preferences associated with this namespace
-    preferencesStore.deleteProperties(namespaceId.getId());
+    NamespaceMeta metadata = store.getNamespace(namespaceId);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(metadata);
 
-    // Delete all dashboards associated with this namespace
-    dashboardStore.delete(namespaceId.getId());
-
-    // move data directory and try to remove HBase namespace
-    try {
-      dsFramework.deleteAllInstances(namespaceId);
-      dsFramework.deleteAllModules(namespaceId);
-      dsFramework.deleteNamespace(namespaceId);
-    } catch (DatasetManagementException e) {
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
-    } catch (IOException e) {
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+    if (namespaceMeta.getDescription() != null) {
+      builder.setDescription(namespaceMeta.getDescription());
     }
 
-    // TODO: CDAP-870: Delete streams, queues, apps
+    if (namespaceMeta.getName() != null) {
+      builder.setName(namespaceMeta.getName());
+    }
 
-    store.deleteNamespace(namespaceId);
+    NamespaceConfig config = namespaceMeta.getConfig();
+
+    if (config != null && config.getSchedulerQueueName() != null && !config.getSchedulerQueueName().isEmpty()) {
+      builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    store.updateNamespace(builder.build());
+  }
+
+  private boolean areProgramsRunning(final Id.Namespace namespaceId) {
+    return runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program program) {
+        return program.getNamespaceId().equals(namespaceId.getId());
+      }
+    }, ProgramType.values());
   }
 }

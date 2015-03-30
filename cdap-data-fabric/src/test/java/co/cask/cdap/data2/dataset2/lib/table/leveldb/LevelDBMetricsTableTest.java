@@ -73,7 +73,7 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
         }
       });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
+    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class), conf);
     dsFramework.addModule(metricsLevelDBModule, new LevelDBMetricsTableModule());
   }
 

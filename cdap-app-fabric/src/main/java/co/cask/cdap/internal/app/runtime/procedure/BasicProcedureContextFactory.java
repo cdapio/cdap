@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,13 +40,12 @@ final class BasicProcedureContextFactory {
   private final MetricsCollectionService collectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
-  private final CConfiguration conf;
 
   BasicProcedureContextFactory(Program program, RunId runId, int instanceId, int instanceCount,
                                Arguments userArguments, ProcedureSpecification procedureSpec,
                                MetricsCollectionService collectionService,
                                DiscoveryServiceClient discoveryServiceClient,
-                               DatasetFramework dsFramework, CConfiguration conf) {
+                               DatasetFramework dsFramework) {
     this.program = program;
     this.runId = runId;
     this.instanceId = instanceId;
@@ -56,12 +55,11 @@ final class BasicProcedureContextFactory {
     this.collectionService = collectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
-    this.conf = conf;
   }
 
   BasicProcedureContext create() {
     return new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                      procedureSpec.getDataSets(), userArguments, procedureSpec,
-                                     collectionService, discoveryServiceClient, dsFramework, conf);
+                                     collectionService, discoveryServiceClient, dsFramework);
   }
 }

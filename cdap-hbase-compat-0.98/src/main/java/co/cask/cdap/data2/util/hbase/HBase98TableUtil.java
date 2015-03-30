@@ -16,13 +16,14 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase98.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase98.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase98.HBaseQueueRegionObserver;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -48,23 +49,25 @@ import java.util.Map;
  */
 public class HBase98TableUtil extends HBaseTableUtil {
 
+  private final HTable98NameConverter nameConverter = new HTable98NameConverter();
+
   @Override
-  public HTable getHTable(Configuration conf, TableId tableId) throws IOException {
+  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, toTableName(tableId));
+    return new HTable(conf, nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
-  public HTableDescriptor getHTableDescriptor(TableId tableId) {
+  public HTableDescriptor createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(toTableName(tableId));
+    return new HTableDescriptor(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableDescriptor(toTableName(tableId));
+    return admin.getTableDescriptor(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -72,7 +75,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
-      admin.getNamespaceDescriptor(toHBaseNamespace(namespace));
+      admin.getNamespaceDescriptor(nameConverter.toHBaseNamespace(tablePrefix, namespace));
       return true;
     } catch (NamespaceNotFoundException e) {
       return false;
@@ -85,7 +88,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (!hasNamespace(admin, namespace)) {
       NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(toHBaseNamespace(namespace)).build();
+        NamespaceDescriptor.create(nameConverter.toHBaseNamespace(tablePrefix, namespace)).build();
       admin.createNamespace(namespaceDescriptor);
     }
   }
@@ -95,7 +98,7 @@ public class HBase98TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     if (hasNamespace(admin, namespace)) {
-      admin.deleteNamespace(toHBaseNamespace(namespace));
+      admin.deleteNamespace(nameConverter.toHBaseNamespace(tablePrefix, namespace));
     }
   }
 
@@ -103,28 +106,28 @@ public class HBase98TableUtil extends HBaseTableUtil {
   public void disableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.disableTable(toTableName(tableId));
+    admin.disableTable(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void enableTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.enableTable(toTableName(tableId));
+    admin.enableTable(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.tableExists(toTableName(tableId));
+    return admin.tableExists(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public void deleteTable(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    admin.deleteTable(toTableName(tableId));
+    admin.deleteTable(nameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -138,7 +141,32 @@ public class HBase98TableUtil extends HBaseTableUtil {
   public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
-    return admin.getTableRegions(toTableName(tableId));
+    return admin.getTableRegions(nameConverter.toTableName(tablePrefix, tableId));
+  }
+
+  @Override
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, Id.Namespace namespaceId) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    HTableDescriptor[] hTableDescriptors =
+      admin.listTableDescriptorsByNamespace(nameConverter.toHBaseNamespace(tablePrefix, namespaceId));
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(nameConverter.from(hTableDescriptor));
+      }
+    }
+    return tableIds;
+  }
+
+  @Override
+  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+    List<TableId> tableIds = Lists.newArrayList();
+    HTableDescriptor[] hTableDescriptors = admin.listTables();
+    for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
+      if (isCDAPTable(hTableDescriptor)) {
+        tableIds.add(nameConverter.from(hTableDescriptor));
+      }
+    }
+    return tableIds;
   }
 
   @Override
@@ -231,21 +259,27 @@ public class HBase98TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
-    Map<String, TableStats> datasetStat = Maps.newHashMap();
+    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
     ClusterStatus clusterStatus = admin.getClusterStatus();
 
     for (ServerName serverName : clusterStatus.getServers()) {
       Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
-        String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
-        TableStats stat = datasetStat.get(tableName);
+        //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        TableName tableName = HRegionInfo.getTable(regionLoad.getName());
+        if (!admin.tableExists(tableName) || !isCDAPTable(admin.getTableDescriptor(tableName))) {
+          continue;
+        }
+        HTableNameConverter hTableNameConverter = new HTable98NameConverter();
+        TableId tableId = hTableNameConverter.from(new HTableDescriptor(tableName));
+        TableStats stat = datasetStat.get(tableId);
         if (stat == null) {
           stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
-          datasetStat.put(tableName, stat);
+          datasetStat.put(tableId, stat);
         } else {
           stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
           stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());
@@ -253,9 +287,5 @@ public class HBase98TableUtil extends HBaseTableUtil {
       }
     }
     return datasetStat;
-  }
-
-  private TableName toTableName(TableId tableId) {
-    return TableName.valueOf(toHBaseNamespace(tableId.getNamespace()), tableId.getTableName());
   }
 }

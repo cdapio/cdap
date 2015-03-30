@@ -33,7 +33,7 @@ Let's look at some of these components, and then run the Application and see the
 Introducing a Feature: Column-Level Conflict Detection
 ======================================================
 
-As in the other :ref:`examples,<examples-index>` the components
+As in the other :ref:`examples <examples-index>`, the components
 of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java

@@ -17,6 +17,8 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -24,6 +26,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -33,11 +36,13 @@ import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -45,6 +50,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -69,10 +75,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -99,10 +105,18 @@ public class BaseHiveExploreServiceTest {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  // TODO: When datasets are namespaced, we should add tests for multiple, non-default namespaces.
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("default");
+  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("namespace");
+  protected static final Id.Namespace OTHER_NAMESPACE_ID = Id.Namespace.from("other");
+  protected static final String DEFAULT_DATABASE = "default";
+  protected static final String NAMESPACE_DATABASE = "cdap_namespace";
+  protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
   protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
   protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+  protected static final String MY_TABLE_NAME = getDatasetHiveName(MY_TABLE);
+  protected static final Id.DatasetModule OTHER_KEY_STRUCT_VALUE =
+    Id.DatasetModule.from(OTHER_NAMESPACE_ID, "keyStructValue");
+  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "my_table");
+  protected static final String OTHER_MY_TABLE_NAME = getDatasetHiveName(OTHER_MY_TABLE);
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
   public static boolean runBefore = true;
@@ -117,7 +131,10 @@ public class BaseHiveExploreServiceTest {
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
-  protected static LocationFactory locationFactory;
+  protected static NamespacedLocationFactory namespacedLocationFactory;
+  protected static ExploreTableManager exploreTableManager;
+  private static StreamAdmin streamAdmin;
+  private static StreamMetaStore streamMetaStore;
 
   protected static Injector injector;
 
@@ -161,9 +178,18 @@ public class BaseHiveExploreServiceTest {
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamHttpService.startAndWait();
 
-    locationFactory = injector.getInstance(LocationFactory.class);
+    exploreTableManager = injector.getInstance(ExploreTableManager.class);
+
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+    streamMetaStore = injector.getInstance(StreamMetaStore.class);
+
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
-    Locations.mkdirsIfNotExists(locationFactory.create(NAMESPACE_ID.getId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(OTHER_NAMESPACE_ID));
+
+    waitForCompletionStatus(exploreService.createNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @AfterClass
@@ -172,7 +198,14 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
-    Locations.deleteQuietly(locationFactory.create(NAMESPACE_ID.getId()), true);
+    // Some tests (for example HiveExploreServiceStopTestRun) stop the ExploreService on their own. In that case
+    // the test is responsible for deleting this namespace.
+    if (exploreService.isRunning()) {
+      waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
+    }
+
+    Locations.deleteQuietly(namespacedLocationFactory.get(NAMESPACE_ID), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     exploreClient.close();
@@ -180,6 +213,10 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+  }
+
+  protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {
+    return "dataset_" + datasetID.getId().replaceAll("\\.", "_").replaceAll("-", "_");
   }
 
   protected static ExploreClient getExploreClient() {
@@ -237,7 +274,7 @@ public class BaseHiveExploreServiceTest {
           newCols.add(((String) obj).trim());
         } else if (obj instanceof Double) {
           // NOTE: this means only use 4 decimals for double and float values in test cases
-          newCols.add((double) Math.round(((Double) obj).doubleValue() * 10000) / 10000);
+          newCols.add((double) Math.round((Double) obj * 10000) / 10000);
         } else {
           newCols.add(obj);
         }
@@ -247,17 +284,16 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(String streamName) throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(streamName);
-    urlConn.setRequestMethod(HttpMethod.PUT);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-    urlConn.disconnect();
+  protected static void createStream(Id.Stream streamId) throws Exception {
+    streamAdmin.create(streamId);
+    streamMetaStore.addStream(streamId);
   }
 
-  protected static void setStreamProperties(String streamName, StreamProperties properties) throws IOException {
+  protected static void setStreamProperties(String namespace, String streamName,
+                                            StreamProperties properties) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s/config",
-                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s/properties",
+                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(HttpMethod.PUT);
     urlConn.setDoOutput(true);
@@ -266,29 +302,30 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  protected static void sendStreamEvent(String streamName, byte[] body) throws IOException {
-    sendStreamEvent(streamName, Collections.<String, String>emptyMap(), body);
+  protected static void sendStreamEvent(Id.Stream streamId, byte[] body) throws IOException {
+    sendStreamEvent(streamId, Collections.<String, String>emptyMap(), body);
   }
 
-  protected static void sendStreamEvent(String streamName, Map<String, String> headers, byte[] body)
+  protected static void sendStreamEvent(Id.Stream streamId, Map<String, String> headers, byte[] body)
     throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(streamName);
+    HttpURLConnection urlConn = openStreamConnection(streamId);
     urlConn.setRequestMethod(HttpMethod.POST);
     urlConn.setDoOutput(true);
     for (Map.Entry<String, String> header : headers.entrySet()) {
       // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
       // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamName + "." + header.getKey(), header.getValue());
+      urlConn.addRequestProperty(streamId.getName() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
-  private static HttpURLConnection openStreamConnection(String streamName) throws IOException {
+  private static HttpURLConnection openStreamConnection(Id.Stream streamId) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s",
-                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
+                                    port, Constants.Gateway.API_VERSION_3,
+                                    streamId.getNamespaceId(), streamId.getName()));
     return (HttpURLConnection) url.openConnection();
   }
 
@@ -304,8 +341,8 @@ public class BaseHiveExploreServiceTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new ExploreRuntimeModule().getInMemoryModules(),
@@ -325,7 +362,10 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-
+          install(new FactoryModuleBuilder()
+                    .implement(Store.class, DefaultStore.class)
+                    .build(StoreFactory.class)
+          );
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }
@@ -352,8 +392,8 @@ public class BaseHiveExploreServiceTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getLocalModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new AuthModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
@@ -373,7 +413,10 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-
+          install(new FactoryModuleBuilder()
+                    .implement(Store.class, DefaultStore.class)
+                    .build(StoreFactory.class)
+          );
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }

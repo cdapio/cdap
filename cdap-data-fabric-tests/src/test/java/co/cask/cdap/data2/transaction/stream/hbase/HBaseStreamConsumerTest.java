@@ -15,15 +15,17 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -34,7 +36,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -70,7 +71,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static HBaseTestBase testHBase;
-  private static CConfiguration cConf;
   private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
@@ -92,7 +92,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
     Configuration hConf = testHBase.getConfiguration();
 
-    cConf = CConfiguration.create();
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCES, 1);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -103,6 +102,8 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -126,10 +127,11 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
     txManager.startAndWait();
 
-    tableUtil = new HBaseTableUtilFactory().get();
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass
@@ -142,7 +144,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    testHBase.deleteTables(tableUtil.toHBaseNamespace(namespace));
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), namespace);
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
   }
 

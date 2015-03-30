@@ -15,7 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -28,6 +30,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -44,9 +47,17 @@ public abstract class StreamCoordinatorTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamCoordinatorTestBase.class);
 
+  protected static CConfiguration cConf = CConfiguration.create();
+
   protected abstract StreamCoordinatorClient getStreamCoordinator();
 
   protected abstract StreamAdmin getStreamAdmin();
+
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+    // FileStreamAdmin expects namespace directory to exist.
+    // Simulate namespace create
+    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
+  }
 
   @Test
   public void testGeneration() throws Exception {
@@ -136,7 +147,7 @@ public abstract class StreamCoordinatorTestBase {
       t.start();
     }
 
-    Assert.assertTrue(completeLatch.await(20, TimeUnit.SECONDS));
+    Assert.assertTrue(completeLatch.await(60, TimeUnit.SECONDS));
 
     // Check the last threshold and ttl are correct. We don't check if the listener gets every update as it's
     // possible that it doesn't see every updates, but only the latest value (that's what ZK watch guarantees).

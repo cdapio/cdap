@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
@@ -41,11 +42,11 @@ public class DatasetNameCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetSpecification> list = datasetClient.list();
+          List<DatasetSpecificationSummary> list = datasetClient.list();
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetSpecification, String>() {
+            Iterables.transform(list, new Function<DatasetSpecificationSummary, String>() {
               @Override
-              public String apply(DatasetSpecification input) {
+              public String apply(DatasetSpecificationSummary input) {
                 // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
                 String[] tokens = input.getName().split("\\.");
                 return tokens[tokens.length - 1];

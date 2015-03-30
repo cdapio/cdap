@@ -169,7 +169,19 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
       // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
       return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
+      (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
+      // namespaced app fabric data operations:
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
+      return Constants.Service.APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
+      // other data operations. For example:
+      // /v3/namespaces/{namespace-id}/data/datasets
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return Constants.Service.DATASET_MANAGER;
     }
     return Constants.Service.APP_FABRIC_HTTP;

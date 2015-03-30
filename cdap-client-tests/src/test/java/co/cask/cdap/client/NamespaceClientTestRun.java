@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.BadRequestException;
@@ -32,6 +31,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link NamespaceClient}
@@ -40,32 +40,19 @@ public class NamespaceClientTestRun extends ClientTestBase {
   private NamespaceClient namespaceClient;
 
   private static final Id.Namespace DOES_NOT_EXIST = Id.Namespace.from("doesnotexist");
-  private static final Id.Namespace DEFAULT = Id.Namespace.from("default");
-  private static final Id.Namespace SYSTEM = Id.Namespace.from("system");
-  private static final Id.Namespace TEST_NAMESPACE_ID = Id.Namespace.from("testnamespace");
-  private static final String TEST_NAME = "testname";
+  private static final Id.Namespace TEST_NAMESPACE_NAME = Id.Namespace.from("testnamespace");
   private static final String TEST_DESCRIPTION = "testdescription";
   private static final Id.Namespace TEST_DEFAULT_FIELDS = Id.Namespace.from("testdefaultfields");
 
   @Before
   public void setup() {
-    ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setHostname(HOSTNAME).setPort(PORT);
-    namespaceClient = new NamespaceClient(builder.build());
+    namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Test
-  public void testNamespaces() throws IOException, UnauthorizedException, CannotBeDeletedException,
-    NotFoundException, AlreadyExistsException, BadRequestException {
-
+  public void testNamespaces() throws Exception {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     int initialNamespaceCount = namespaces.size();
-
-    if (namespaces.size() == 1) {
-      Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaces.get(0).getId());
-    } else {
-      Assert.assertEquals(0, namespaces.size());
-    }
 
     verifyDoesNotExist(DOES_NOT_EXIST);
     verifyReservedCreate();
@@ -73,43 +60,41 @@ public class NamespaceClientTestRun extends ClientTestBase {
 
     // create a valid namespace
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_NAMESPACE_ID).setName(TEST_NAME).setDescription(TEST_DESCRIPTION);
+    builder.setName(TEST_NAMESPACE_NAME).setDescription(TEST_DESCRIPTION);
     namespaceClient.create(builder.build());
+    waitForNamespaceCreation(TEST_NAMESPACE_NAME.getId());
 
     // verify that the namespace got created correctly
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 1, namespaces.size());
-    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
-    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
-    Assert.assertEquals(TEST_NAME, meta.getName());
+    NamespaceMeta meta = namespaceClient.get(TEST_NAMESPACE_NAME.getId());
+    Assert.assertEquals(TEST_NAMESPACE_NAME.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
     // try creating a namespace with the same id again
-    builder.setName("existing").setDescription("existing");
+    builder.setName(TEST_NAMESPACE_NAME).setDescription("existing");
     try {
       namespaceClient.create(builder.build());
       Assert.fail("Should not be able to re-create an existing namespace");
     } catch (AlreadyExistsException e) {
     }
     // verify that the existing namespace was not updated
-    meta = namespaceClient.get(TEST_NAMESPACE_ID.getId());
-    Assert.assertEquals(TEST_NAMESPACE_ID.getId(), meta.getId());
-    Assert.assertEquals(TEST_NAME, meta.getName());
+    meta = namespaceClient.get(TEST_NAMESPACE_NAME.getId());
+    Assert.assertEquals(TEST_NAMESPACE_NAME.getId(), meta.getName());
     Assert.assertEquals(TEST_DESCRIPTION, meta.getDescription());
 
     // create and verify namespace without name and description
     builder = new NamespaceMeta.Builder();
-    builder.setId(TEST_DEFAULT_FIELDS);
+    builder.setName(TEST_DEFAULT_FIELDS);
     namespaceClient.create(builder.build());
     namespaces = namespaceClient.list();
     Assert.assertEquals(initialNamespaceCount + 2, namespaces.size());
     meta = namespaceClient.get(TEST_DEFAULT_FIELDS.getId());
-    Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getId());
     Assert.assertEquals(TEST_DEFAULT_FIELDS.getId(), meta.getName());
     Assert.assertEquals("", meta.getDescription());
 
     // cleanup
-    namespaceClient.delete(TEST_NAMESPACE_ID.getId());
+    namespaceClient.delete(TEST_NAMESPACE_NAME.getId());
     namespaceClient.delete(TEST_DEFAULT_FIELDS.getId());
 
     Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
@@ -131,32 +116,45 @@ public class NamespaceClientTestRun extends ClientTestBase {
     }
   }
 
-  private void verifyReservedCreate() throws AlreadyExistsException, IOException, UnauthorizedException {
+  private void verifyReservedCreate() throws Exception {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setId(DEFAULT);
+    builder.setName(Constants.DEFAULT_NAMESPACE_ID);
     try {
       namespaceClient.create(builder.build());
-      Assert.fail(String.format("Must not create '%s' namespace", DEFAULT));
+      Assert.fail(String.format("Must not create '%s' namespace", Constants.DEFAULT_NAMESPACE_ID));
     } catch (BadRequestException e) {
     }
-    builder.setId(SYSTEM);
+    builder.setName(Constants.SYSTEM_NAMESPACE_ID);
     try {
       namespaceClient.create(builder.build());
-      Assert.fail(String.format("Must not create '%s' namespace", SYSTEM));
+      Assert.fail(String.format("Must not create '%s' namespace", Constants.SYSTEM_NAMESPACE_ID));
     } catch (BadRequestException e) {
     }
   }
 
-  private void verifyReservedDelete() throws NotFoundException, IOException, UnauthorizedException {
+  private void verifyReservedDelete() throws Exception {
+    // For the purposes of NamespaceClientTestRun, deleting default namespace has no effect.
+    // Its lifecycle is already tested in NamespaceHttpHandlerTest
+    namespaceClient.delete(Constants.DEFAULT_NAMESPACE);
+    namespaceClient.get(Constants.DEFAULT_NAMESPACE);
     try {
-      namespaceClient.delete(DEFAULT.getId());
-      Assert.fail(String.format("Must not delete '%s' namespace", DEFAULT));
-    } catch (CannotBeDeletedException e) {
+      namespaceClient.delete(Constants.SYSTEM_NAMESPACE);
+      Assert.fail(String.format("'%s' namespace must not exist", Constants.SYSTEM_NAMESPACE));
+    } catch (NotFoundException e) {
     }
-    try {
-      namespaceClient.delete(SYSTEM.getId());
-      Assert.fail(String.format("Must not delete '%s' namespace", SYSTEM));
-    } catch (CannotBeDeletedException e) {
+  }
+
+  private void waitForNamespaceCreation(String namespace) throws IOException, UnauthorizedException,
+    InterruptedException {
+    int count = 0;
+    while (count < 10) {
+      try {
+        namespaceClient.get(namespace);
+        return;
+      } catch (Throwable t) {
+        count++;
+        TimeUnit.SECONDS.sleep(1);
+      }
     }
   }
 }

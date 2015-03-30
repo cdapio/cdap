@@ -17,6 +17,7 @@ package co.cask.cdap.api.dataset;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -77,8 +78,8 @@ public final class DatasetSpecification {
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
-    this.datasetSpecs = datasetSpecs;
+    this.properties = ImmutableSortedMap.copyOfSorted(properties);
+    this.datasetSpecs = ImmutableSortedMap.copyOfSorted(datasetSpecs);
   }
 
   /**
@@ -177,6 +178,33 @@ public final class DatasetSpecification {
         && this.type.equals(ds.type)
         && this.properties.equals(ds.properties)
         && this.datasetSpecs.equals(ds.datasetSpecs);
+  }
+
+  /**
+   * Returns true if the tableName corresponds to the dataset specification.
+   * @param tableName
+   * @return <code>true</code> if the tableName represents the dataset spec;
+   *         <code>false</code> otherwise
+   */
+  public boolean isParent(String tableName) {
+    return isParent(tableName, this);
+  }
+
+  private boolean isParent(String tableName, DatasetSpecification specification) {
+    if (tableName == null) {
+      return false;
+    }
+    if (specification.getSpecifications().size() == 0 && specification.getName().equals(tableName)) {
+      return true;
+    }
+    if (tableName.startsWith(specification.getName())) {
+      for (DatasetSpecification spec : specification.getSpecifications().values()) {
+        if (isParent(tableName, spec)) {
+          return true;
+        }
+      }
+    }
+    return  false;
   }
 
   /**

@@ -18,12 +18,15 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -43,17 +46,23 @@ import javax.annotation.Nullable;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
+  private final TransactionExecutorFactory txExecutorFactory;
+
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil) throws IOException {
-    super(hConf, cConf, locationFactory, tableUtil, QueueConstants.QueueType.STREAM);
+                          HBaseTableUtil tableUtil, DatasetFramework datasetFramework,
+                          TransactionExecutorFactory txExecutorFactory) throws IOException {
+    super(hConf, cConf, locationFactory, tableUtil,
+          datasetFramework, txExecutorFactory, QueueConstants.QueueType.STREAM);
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
-  public String getActualTableName(QueueName queueName) {
+  public TableId getDataTableId(QueueName queueName) {
+    // tableName = system.stream.<stream name>
     if (queueName.isStream()) {
-      // <root namespace>.<stream namespace>.system.stream.<stream name>
-      return getTableNamePrefix(queueName.getFirstComponent()) + "." + queueName.getSecondComponent();
+      String tableName = unqualifiedTableNamePrefix + "." + queueName.getSecondComponent();
+      return TableId.from(queueName.getFirstComponent(), tableName);
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }
@@ -83,13 +92,17 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+  public void configureInstances(Id.Stream streamId, final long groupId, final int instances) throws Exception {
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class.
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+  public void configureGroups(Id.Stream streamId, final Map<Long, Integer> groupInfo) throws Exception {
+    // TODO: The HBase stream is actually not used anymore. We have to decide what to do with this class
+    // Probably we have to modify StreamAdmin in the same way as QueueAdmin does (CDAP-1810)
+    throw new UnsupportedOperationException("Configuration of consumer instances not supported");
   }
 
   @Override
@@ -103,37 +116,28 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    return 0;
-  }
-
-  private String fromStream(Id.Stream streamId) {
-    return QueueName.fromStream(streamId).toURI().toString();
-  }
-
-  @Override
   public boolean exists(Id.Stream streamId) throws Exception {
-    return exists(fromStream(streamId));
+    return exists(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId) throws Exception {
-    create(fromStream(streamId));
+    create(QueueName.fromStream(streamId));
   }
 
   @Override
   public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
-    create(fromStream(streamId), props);
+    create(QueueName.fromStream(streamId), props);
   }
 
   @Override
   public void truncate(Id.Stream streamId) throws Exception {
-    truncate(fromStream(streamId));
+    truncate(QueueName.fromStream(streamId));
   }
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
-    drop(fromStream(streamId));
+    drop(QueueName.fromStream(streamId));
   }
 
 }

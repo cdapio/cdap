@@ -56,13 +56,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   protected void publish(Iterator<MetricValue> metrics) throws Exception {
     List<MetricValue> records = ImmutableList.copyOf(metrics);
 
-    for (MetricValue value : records) {
-      // todo: change method signature to allow adding multiple at once?
-      try {
-        metricStore.add(value);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to add metric data to a store", e);
-      }
+    try {
+      metricStore.add(records);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to add metrics data to a store", e);
     }
   }
 

@@ -74,6 +74,11 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
 
+## Sports
+
+- An application that illustrates the use of partitioned file sets.
+- It loads game results into a file set partitioned by league and season, and processes them with MapReduce.
+
 ## StreamConversion
 
 - An application that illustrates the use of time-partitioned file sets.
