@@ -108,7 +108,7 @@ Stream metrics are only available at the Stream level and the only available con
      - ``namespace.<namespace>.stream.<stream-id>``
 
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
-Flowlet, Worker, Procedure, Mapper, or Reducer level:
+Flowlet, Worker, Service, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
@@ -131,11 +131,25 @@ Flowlet, Worker, Procedure, Mapper, or Reducer level:
 
 Available System Metrics
 ------------------------
-For CDAP metrics (system metrics), the available metrics depend on the context.
-User-defined metrics are available in the context that they are emitted from.
-
 Note that a user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
+
+These metrics are available in a Datasets context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Datasets Metric
+     - Description
+   * - ``system.store.bytes``
+     - Number of bytes written
+   * - ``system.store.ops``
+     - Operations (reads and writes) performed
+   * - ``system.store.reads``
+     - Read operations performed
+   * - ``system.store.writes``
+     - Write operations performed
 
 These metrics are available in a Flowlet context:
 
@@ -153,6 +167,8 @@ These metrics are available in a Flowlet context:
      - Number of events read in by the Flowlet
    * - ``system.process.events.out``
      - Number of events emitted by the Flowlet
+   * - ``system.process.tuples.read``
+     - Number of tuples read by the Flowlet
    * - ``system.store.bytes``
      - Number of bytes written to Datasets
    * - ``system.store.ops``
@@ -176,6 +192,21 @@ These metrics are available in a Mappers and Reducers context:
      - Number of entries read in by the Map or Reduce phase
    * - ``system.process.entries.out``
      - Number of entries written out by the Map or Reduce phase
+
+These metrics are available in a Services context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Services Metric
+     - Description
+   * - ``system.requests.count``
+     - Number of requests made to the Service
+   * - ``system.response.successful.count``
+     - Number of successful requests completed by the Service
+   * - ``system.response.server.error.count``
+     - Number of failures seen by the Service
 
 These metrics are available in a Spark context, where ``<spark-id>``
 depends on the Spark program being queried:
@@ -205,19 +236,6 @@ depends on the Spark program being queried:
    * - ``system.<spark-id>.DAGScheduler.stage.waitingStages``
      - Number of waiting stages
 
-These metrics are available in a Procedures context:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 60 40
-
-   * - Procedures Metric
-     - Description
-   * - ``system.query.requests``
-     - Number of requests made to the Procedure
-   * - ``system.query.failures``
-     - Number of failures seen by the Procedure
-
 These metrics are available in a Streams context:
 
 .. list-table::
@@ -230,23 +248,6 @@ These metrics are available in a Streams context:
      - Number of events collected by the Stream
    * - ``system.collect.bytes``
      - Number of bytes collected by the Stream
-
-These metrics are available in a Datasets context:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 60 40
-
-   * - Datasets Metric
-     - Description
-   * - ``system.store.bytes``
-     - Number of bytes written
-   * - ``system.store.ops``
-     - Operations (reads and writes) performed
-   * - ``system.store.reads``
-     - Read operations performed
-   * - ``system.store.writes``
-     - Write operations performed
 
 
 Searches and Queries

@@ -178,7 +178,7 @@ exclude_patterns = ['_examples', '_includes']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # The default language to highlight source code in.
 highlight_language = 'java'
