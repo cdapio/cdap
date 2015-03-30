@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('FlowsDetailController', function($scope, $state, $timeout, MyDataSource, EventPipe) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' +
             $state.params.appId +
@@ -33,7 +33,10 @@ angular.module(PKG.name + '.feature.flows')
       dataSrc.request({
         method: 'POST',
         _cdapNsPath: basePath + '/' + action
-      });
+      })
+        .then(function() {
+          EventPipe.emit('flows.startRun');
+        });
     };
 
 });
