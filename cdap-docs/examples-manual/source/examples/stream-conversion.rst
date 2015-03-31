@@ -56,35 +56,33 @@ In its ``beforeSubmit`` method, the ``StreamConversionMapReduce`` determines its
 and it configures the ``events`` stream as its input and the ``converted`` dataset as its output:
 
 - This is a map-only MapReduce program; in other words, it has no reducers,
-  and the mappers write directly to the output in Avro format::
+  and the mappers write directly to the output in Avro format:
 
-    Job job = context.getHadoopJob();
-    job.setMapperClass(StreamConversionMapper.class);
-    job.setNumReduceTasks(0);
-    job.setMapOutputKeyClass(AvroKey.class);
-    job.setMapOutputValueClass(NullWritable.class);
-    AvroJob.setOutputKeySchema(job, SCHEMA);
+  .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+     :language: java
+     :lines: 63-68
 
-- Based on the logical start time, the MapReduce determines the range of events to read from the stream::
+- Based on the logical start time, the MapReduce determines the range of events to read from the stream:
 
-    // read 5 minutes of events from the stream, ending at the logical start time of this run
-    long logicalTime = context.getLogicalStartTime();
-    StreamBatchReadable.useStreamInput(context, "events", logicalTime - TimeUnit.MINUTES.toMillis(5), logicalTime);
+  .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+     :language: java
+     :lines: 70-72
 
-- Each MapReduce run writes its output to a partition with the logical start time::
+- Each MapReduce run writes its output to a partition with the logical start time:
 
-    TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
-    TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
-    context.setOutput("converted", partitionedFileSet);
+  .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+     :language: java
+     :lines: 75-77
 
-- Note that the output file path is derived from the output partition time by the dataset itself::
+- Note that the output file path is derived from the output partition time by the dataset itself:
 
-    LOG.info("Output location for new partition is: {}",
-             partitionedFileSet.getUnderlyingFileSet().getOutputLocation().toURI().toString());
+  .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+     :language: java
+     :lines: 79-80
 
-The Mapper itself is straight-forward: for each event, it emits an Avro record:
+- The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
-.. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+  .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 86-98
 
@@ -111,7 +109,7 @@ The ``StreamConversionWorkflow`` will run automatically every five minutes based
 To give it some data, you can use a provided script to send events to the stream, for example,
 to send 10000 events at a rate of roughly two per second::
 
-  bin/send-events.sh --events 10000 --delay 0.5
+  $ bin/send-events.sh --events 10000 --delay 0.5
 
 You can now wait for the Workflow to run, after which you can query the partitions in the
 ``converted`` dataset::
@@ -152,5 +150,5 @@ Stopping the Application
 The only thing you need to do to stop the application is suspend the schedule. This is not possible
 with the CLI; instead you can use ``curl`` to make a RESTful request::
 
-  curl -X POST http://localhost:10000/v3/namespaces/default/apps/StreamConversionApp/schedules/every5min/suspend
+  $ curl -X POST http://localhost:10000/v3/namespaces/default/apps/StreamConversionApp/schedules/every5min/suspend
 
