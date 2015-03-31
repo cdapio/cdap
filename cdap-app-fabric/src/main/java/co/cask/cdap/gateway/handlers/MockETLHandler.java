@@ -44,7 +44,6 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     super(authenticator);
   }
 
-  @Path("/")
   @GET
   public void getTemplates(HttpRequest request, HttpResponder responder) throws Exception {
     JsonArray templates = new JsonArray();
