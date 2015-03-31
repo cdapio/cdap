@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 
 /**
  * This interface is implemented by a dataset if at the end of a batch job (MapReduce, Spark, ...)
- * the output needs to be committed, or rolled back, depending one success of the job. This is
+ * the output needs to be committed, or rolled back, depending on success of the job. This is
  * similar to what Hadoop's OutputCommitter does, however, this is dataset-centric and does not
  * assume any dependencies on Hadoop.
  */

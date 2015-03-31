@@ -401,8 +401,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                 ((DatasetOutputCommitter) outputDataset).onFailure();
               }
             } catch (Throwable t) {
-              LOG.error("Error from {} method of output dataset {}.",
-                        succeeded ? "onSuccess" : "onFailure", outputDataset);
+              LOG.error(String.format("Error from %s method of output dataset %s.",
+                        succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
               success = false;
             }
           }
