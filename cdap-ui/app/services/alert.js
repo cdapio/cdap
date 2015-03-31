@@ -23,5 +23,9 @@ angular.module(PKG.name+'.services')
       return __list.length;
     };
 
+    alert['remove'] = function(item) {
+      __list.splice(__list.indexOf(item), 1);
+    };
+
     return alert;
   });
