@@ -869,10 +869,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
-  public void setFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                  @PathParam("flowlet-id") String flowletId) {
+  public synchronized void setFlowletInstances(HttpRequest request, HttpResponder responder,
+                                               @PathParam("namespace-id") String namespaceId,
+                                               @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
+                                               @PathParam("flowlet-id") String flowletId) {
     int instances;
     try {
       try {
