@@ -135,50 +135,36 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
-    MDSKey key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(program.getType().name())
-      .add(program.getId())
-      .add(pid)
-      .build();
-    RunRecord started = get(key, RunRecord.class);
-    if (started == null) {
-      String msg = String.format("No meta for started run record for namespace %s app %s program type %s " +
-                                   "program %s pid %s exists",
-                                 program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
-                                 program.getId(), pid);
-      LOG.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    deleteAll(key);
-
-    key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_SUSPENDED)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(program.getType().name())
-      .add(program.getId())
-      .add(pid)
-      .build();
-    write(key, new RunRecord(started.getPid(), started.getStartTs(), null, ProgramRunStatus.SUSPENDED));
+    recordProgramSuspendResume(program, pid, "suspend");
   }
 
   public void recordProgramResumed(Id.Program program, String pid) {
+    recordProgramSuspendResume(program, pid, "resume");
+  }
+
+  private void recordProgramSuspendResume(Id.Program program, String pid, String action) {
+    String fromType = TYPE_RUN_RECORD_STARTED;
+    String toType = TYPE_RUN_RECORD_SUSPENDED;
+    ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
+
+    if (action.equals("resume")) {
+      fromType = TYPE_RUN_RECORD_SUSPENDED;
+      toType = TYPE_RUN_RECORD_STARTED;
+      toStatus = ProgramRunStatus.RUNNING;
+    }
+
     MDSKey key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_SUSPENDED)
+      .add(fromType)
       .add(program.getNamespaceId())
       .add(program.getApplicationId())
       .add(program.getType().name())
       .add(program.getId())
       .add(pid)
       .build();
-    RunRecord suspended = get(key, RunRecord.class);
-    if (suspended == null) {
-      String msg = String.format("No meta for suspended run record for namespace %s app %s program type %s " +
-                                   "program %s pid %s exists",
+    RunRecord record = get(key, RunRecord.class);
+    if (record == null) {
+      String msg = String.format("No meta for %s run record for namespace %s app %s program type %s " +
+                                   "program %s pid %s exists", action.equals("suspend") ? "started" : "suspended",
                                  program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
                                  program.getId(), pid);
       LOG.error(msg);
@@ -188,14 +174,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(key);
 
     key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
+      .add(toType)
       .add(program.getNamespaceId())
       .add(program.getApplicationId())
       .add(program.getType().name())
       .add(program.getId())
       .add(pid)
       .build();
-    write(key, new RunRecord(suspended.getPid(), suspended.getStartTs(), null, ProgramRunStatus.RUNNING));
+    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus));
   }
 
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
