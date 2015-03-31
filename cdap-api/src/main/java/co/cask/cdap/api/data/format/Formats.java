@@ -26,4 +26,5 @@ public final class Formats {
   public static final String TEXT = "text";
   public static final String COMBINED_LOG_FORMAT = "clf";
   public static final String GROK = "grok";
+  public static final String SYSLOG = "syslog";
 }
